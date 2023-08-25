@@ -13,12 +13,12 @@ class RWLock;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace object_map {
+    namespace object_map {
 
-class SnapshotCreateRequest : public Request {
-public:
+        class SnapshotCreateRequest:public Request {
+          public:
   /**
    * Snapshot create goes through the following state machine:
    *
@@ -39,42 +39,39 @@ public:
    *
    * The _ADD_SNAPSHOT state is skipped if the FAST_DIFF feature isn't enabled.
    */
-  enum State {
-    STATE_READ_MAP,
-    STATE_WRITE_MAP,
-    STATE_ADD_SNAPSHOT
-  };
+            enum State {
+                STATE_READ_MAP,
+                STATE_WRITE_MAP,
+                STATE_ADD_SNAPSHOT
+            };
 
-  SnapshotCreateRequest(ImageCtx &image_ctx, ceph::shared_mutex* object_map_lock,
-                        ceph::BitVector<2> *object_map, uint64_t snap_id,
-                        Context *on_finish)
-    : Request(image_ctx, snap_id, on_finish),
-      m_object_map_lock(object_map_lock), m_object_map(*object_map),
-      m_ret_val(0) {
-  }
+             SnapshotCreateRequest(ImageCtx & image_ctx,
+                                   ceph::shared_mutex * object_map_lock,
+                                   ceph::BitVector < 2 > *object_map,
+                                   uint64_t snap_id, Context * on_finish)
+            :Request(image_ctx, snap_id, on_finish),
+                m_object_map_lock(object_map_lock), m_object_map(*object_map),
+                m_ret_val(0) {
+            } void send() override;
 
-  void send() override;
+          protected:
+             bool should_complete(int r) override;
 
-protected:
-  bool should_complete(int r) override;
+          private:
+             ceph::shared_mutex * m_object_map_lock;
+             ceph::BitVector < 2 > &m_object_map;
 
-private:
-  ceph::shared_mutex* m_object_map_lock;
-  ceph::BitVector<2> &m_object_map;
+            State m_state = STATE_READ_MAP;
+            bufferlist m_read_bl;
+            int m_ret_val;
 
-  State m_state = STATE_READ_MAP;
-  bufferlist m_read_bl;
-  int m_ret_val;
+            void send_read_map();
+            void send_write_map();
+            bool send_add_snapshot();
 
-  void send_read_map();
-  void send_write_map();
-  bool send_add_snapshot();
+            void update_object_map();
 
-  void update_object_map();
+        };
 
-};
-
-} // namespace object_map
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_OBJECT_MAP_SNAPSHOT_CREATE_REQUEST_H
+} // namespace object_map }     // namespace librbd
+#endif                          // CEPH_LIBRBD_OBJECT_MAP_SNAPSHOT_CREATE_REQUEST_H

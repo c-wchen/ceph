@@ -28,107 +28,109 @@
 #include "rgw_dmclock_scheduler_ctx.h"
 #include "rgw_ratelimit.h"
 
+class RGWPauser:public RGWRealmReloader::Pauser {
+    std::vector < Pauser * >pausers;
 
-class RGWPauser : public RGWRealmReloader::Pauser {
-  std::vector<Pauser*> pausers;
+  public:
+    ~RGWPauser() override = default;
 
-public:
-  ~RGWPauser() override = default;
-
-  void add_pauser(Pauser* pauser) {
-    pausers.push_back(pauser);
-  }
-
-  void pause() override {
-    std::for_each(pausers.begin(), pausers.end(), [](Pauser* p){p->pause();});
-  }
-  void resume(rgw::sal::Driver* driver) override {
-    std::for_each(pausers.begin(), pausers.end(), [driver](Pauser* p){p->resume(driver);});
-  }
+    void add_pauser(Pauser * pauser) {
+        pausers.push_back(pauser);
+    } void pause() override {
+        std::for_each(pausers.begin(), pausers.end(),[](Pauser * p) {
+                      p->pause();
+                      });
+    }
+    void resume(rgw::sal::Driver * driver) override {
+        std::for_each(pausers.begin(), pausers.end(),[driver] (Pauser * p) {
+                      p->resume(driver);
+                      });
+    }
 
 };
 
 namespace rgw {
 
-namespace lua { class Background; }
+    namespace lua {
+        class Background;
+    } class RGWLib;
+    class AppMain {
+        /* several components should be initalized only if librgw is
+         * also serving HTTP */
+        bool have_http_frontend {
+        false};
+        bool nfs {
+        false};
 
-class RGWLib;
-class AppMain {
-  /* several components should be initalized only if librgw is
-    * also serving HTTP */
-  bool have_http_frontend{false};
-  bool nfs{false};
+        std::vector < RGWFrontend * >fes;
+        std::vector < RGWFrontendConfig * >fe_configs;
+        std::multimap < string, RGWFrontendConfig * >fe_map;
+        std::unique_ptr < rgw::LDAPHelper > ldh;
+        OpsLogSink *olog;
+        RGWREST rest;
+        std::unique_ptr < rgw::lua::Background > lua_background;
+        std::unique_ptr < rgw::auth::ImplicitTenants > implicit_tenant_context;
+        std::unique_ptr < rgw::dmclock::SchedulerCtx > sched_ctx;
+        std::unique_ptr < ActiveRateLimiter > ratelimiter;
+        std::map < std::string, std::string > service_map_meta;
+        // wow, realm reloader has a lot of parts
+        std::unique_ptr < RGWRealmReloader > reloader;
+        std::unique_ptr < RGWPeriodPusher > pusher;
+        std::unique_ptr < RGWFrontendPauser > fe_pauser;
+        std::unique_ptr < RGWRealmWatcher > realm_watcher;
+        std::unique_ptr < RGWPauser > rgw_pauser;
+        DoutPrefixProvider *dpp;
+        RGWProcessEnv env;
 
-  std::vector<RGWFrontend*> fes;
-  std::vector<RGWFrontendConfig*> fe_configs;
-  std::multimap<string, RGWFrontendConfig*> fe_map;
-  std::unique_ptr<rgw::LDAPHelper> ldh;
-  OpsLogSink* olog;
-  RGWREST rest;
-  std::unique_ptr<rgw::lua::Background> lua_background;
-  std::unique_ptr<rgw::auth::ImplicitTenants> implicit_tenant_context;
-  std::unique_ptr<rgw::dmclock::SchedulerCtx> sched_ctx;
-  std::unique_ptr<ActiveRateLimiter> ratelimiter;
-  std::map<std::string, std::string> service_map_meta;
-  // wow, realm reloader has a lot of parts
-  std::unique_ptr<RGWRealmReloader> reloader;
-  std::unique_ptr<RGWPeriodPusher> pusher;
-  std::unique_ptr<RGWFrontendPauser> fe_pauser;
-  std::unique_ptr<RGWRealmWatcher> realm_watcher;
-  std::unique_ptr<RGWPauser> rgw_pauser;
-  DoutPrefixProvider* dpp;
-  RGWProcessEnv env;
+      public:
+        AppMain(DoutPrefixProvider * dpp)
+        :dpp(dpp) {
+        } void shutdown(std::function < void (void) > finalize_async_signals =[]() {    /* nada */
+                        });
 
-public:
-  AppMain(DoutPrefixProvider* dpp)
-    : dpp(dpp)
-    {}
+        rgw::sal::Driver * get_driver() {
+            return env.driver;
+        }
 
-  void shutdown(std::function<void(void)> finalize_async_signals
-	       = []() { /* nada */});
+        rgw::LDAPHelper * get_ldh() {
+            return ldh.get();
+        }
 
-  rgw::sal::Driver* get_driver() {
-    return env.driver;
-  }
+        void init_frontends1(bool nfs = false);
+        void init_numa();
+        void init_storage();
+        void init_perfcounters();
+        void init_http_clients();
+        void cond_init_apis();
+        void init_ldap();
+        void init_opslog();
+        int init_frontends2(RGWLib * rgwlib = nullptr);
+        void init_tracepoints();
+        void init_notification_endpoints();
+        void init_lua();
 
-  rgw::LDAPHelper* get_ldh() {
-    return ldh.get();
-  }
+        bool have_http() {
+            return have_http_frontend;
+        }
 
-  void init_frontends1(bool nfs = false);
-  void init_numa();
-  void init_storage();
-  void init_perfcounters();
-  void init_http_clients();
-  void cond_init_apis();
-  void init_ldap();
-  void init_opslog();
-  int init_frontends2(RGWLib* rgwlib = nullptr);
-  void init_tracepoints();
-  void init_notification_endpoints();
-  void init_lua();
+        static OpsLogFile *ops_log_file;
+    };                          /* AppMain */
+}                               // namespace rgw
 
-  bool have_http() {
-    return have_http_frontend;
-  }
-
-  static OpsLogFile* ops_log_file;
-}; /* AppMain */
-} // namespace rgw
-
-static inline RGWRESTMgr *set_logging(RGWRESTMgr* mgr)
+static inline RGWRESTMgr *set_logging(RGWRESTMgr * mgr)
 {
-  mgr->set_logging(true);
-  return mgr;
+    mgr->set_logging(true);
+    return mgr;
 }
 
-static inline RGWRESTMgr *rest_filter(rgw::sal::Driver* driver, int dialect, RGWRESTMgr* orig)
+static inline RGWRESTMgr *rest_filter(rgw::sal::Driver * driver, int dialect,
+                                      RGWRESTMgr * orig)
 {
-  RGWSyncModuleInstanceRef sync_module = driver->get_sync_module();
-  if (sync_module) {
-    return sync_module->get_rest_filter(dialect, orig);
-  } else {
-    return orig;
-  }
+    RGWSyncModuleInstanceRef sync_module = driver->get_sync_module();
+    if (sync_module) {
+        return sync_module->get_rest_filter(dialect, orig);
+    }
+    else {
+        return orig;
+    }
 }
-

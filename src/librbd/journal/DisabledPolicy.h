@@ -8,24 +8,19 @@
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace journal {
+    namespace journal {
 
-class DisabledPolicy : public Policy {
-public:
-  bool append_disabled() const override {
-    return true;
-  }
-  bool journal_disabled() const override {
-    return true;
-  }
-  void allocate_tag_on_lock(Context *on_finish) override {
-    ceph_abort();
-  }
-};
+        class DisabledPolicy:public Policy {
+          public:
+            bool append_disabled() const override {
+                return true;
+            } bool journal_disabled() const override {
+                return true;
+            } void allocate_tag_on_lock(Context * on_finish) override {
+                ceph_abort();
+        }};
 
-} // namespace journal
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_JOURNAL_DISABLED_POLICY_H
+} // namespace journal }        // namespace librbd
+#endif                          // CEPH_LIBRBD_JOURNAL_DISABLED_POLICY_H

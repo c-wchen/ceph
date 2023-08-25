@@ -5,12 +5,10 @@
 
 namespace journal {
 
-MockFuture *MockFuture::s_instance = nullptr;
-MockReplayEntry *MockReplayEntry::s_instance = nullptr;
-MockJournaler *MockJournaler::s_instance = nullptr;
+    MockFuture *MockFuture::s_instance = nullptr;
+    MockReplayEntry *MockReplayEntry::s_instance = nullptr;
+    MockJournaler *MockJournaler::s_instance = nullptr;
 
-std::ostream &operator<<(std::ostream &os, const MockJournalerProxy &) {
-  return os;
-}
-
-} // namespace journal
+     std::ostream & operator<<(std::ostream & os, const MockJournalerProxy &) {
+        return os;
+}}                              // namespace journal

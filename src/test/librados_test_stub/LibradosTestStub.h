@@ -8,35 +8,29 @@
 #include <boost/shared_ptr.hpp>
 
 namespace neorados {
-struct IOContext;
-struct RADOS;
-} // namespace neorados
+    struct IOContext;
+    struct RADOS;
+} // namespace neorados namespace librados {
 
-namespace librados {
+    class MockTestMemIoCtxImpl;
+    class MockTestMemRadosClient;
+    class TestCluster;
+    class TestClassHandler;
 
-class MockTestMemIoCtxImpl;
-class MockTestMemRadosClient;
-class TestCluster;
-class TestClassHandler;
+     MockTestMemIoCtxImpl & get_mock_io_ctx(IoCtx & ioctx);
+     MockTestMemIoCtxImpl & get_mock_io_ctx(neorados::RADOS & rados,
+                                            neorados::IOContext & io_context);
 
-MockTestMemIoCtxImpl &get_mock_io_ctx(IoCtx &ioctx);
-MockTestMemIoCtxImpl &get_mock_io_ctx(neorados::RADOS& rados,
-                                      neorados::IOContext& io_context);
+     MockTestMemRadosClient & get_mock_rados_client(neorados::RADOS & rados);
 
-MockTestMemRadosClient &get_mock_rados_client(neorados::RADOS& rados);
+} // namespace librados namespace librados_test_stub {
 
-} // namespace librados
+    typedef boost::shared_ptr < librados::TestCluster > TestClusterRef;
 
-namespace librados_test_stub {
+    void set_cluster(TestClusterRef cluster);
+    TestClusterRef get_cluster();
 
-typedef boost::shared_ptr<librados::TestCluster> TestClusterRef;
+     librados::TestClassHandler * get_class_handler();
 
-void set_cluster(TestClusterRef cluster);
-TestClusterRef get_cluster();
-
-librados::TestClassHandler* get_class_handler();
-
-} // namespace librados_test_stub
-
-
-#endif // LIBRADOS_TEST_STUB_H
+}                               // namespace librados_test_stub
+#endif                          // LIBRADOS_TEST_STUB_H

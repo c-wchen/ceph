@@ -22,57 +22,50 @@
 
 class KeyRing;
 
-class CephxClientHandler : public AuthClientHandler {
-  bool starting;
+class CephxClientHandler:public AuthClientHandler {
+    bool starting;
 
-  /* envelope protocol parameters */
-  uint64_t server_challenge;
+    /* envelope protocol parameters */
+    uint64_t server_challenge;
 
-  CephXTicketManager tickets;
-  CephXTicketHandler* ticket_handler;
+    CephXTicketManager tickets;
+    CephXTicketHandler *ticket_handler;
 
-  RotatingKeyRing* rotating_secrets;
-  KeyRing *keyring;
+    RotatingKeyRing *rotating_secrets;
+    KeyRing *keyring;
 
-public:
-  CephxClientHandler(CephContext *cct_,
-		     RotatingKeyRing *rsecrets)
-    : AuthClientHandler(cct_),
-      starting(false),
-      server_challenge(0),
-      tickets(cct_),
-      ticket_handler(NULL),
-      rotating_secrets(rsecrets),
-      keyring(rsecrets->get_keyring())
-  {
-    reset();
-  }
+  public:
+     CephxClientHandler(CephContext * cct_, RotatingKeyRing * rsecrets)
+    :AuthClientHandler(cct_),
+        starting(false),
+        server_challenge(0),
+        tickets(cct_),
+        ticket_handler(NULL),
+        rotating_secrets(rsecrets), keyring(rsecrets->get_keyring()) {
+        reset();
+    } CephxClientHandler *clone() const override {
+        return new CephxClientHandler(*this);
+    } void reset() override;
+    void prepare_build_request() override;
+    int build_request(ceph::buffer::list & bl) const override;
+    int handle_response(int ret, ceph::buffer::list::const_iterator & iter,
+                        CryptoKey * session_key,
+                        std::string * connection_secret) override;
+    bool build_rotating_request(ceph::buffer::list & bl) const override;
 
-  CephxClientHandler* clone() const override {
-    return new CephxClientHandler(*this);
-  }
+    int get_protocol() const override {
+        return CEPH_AUTH_CEPHX;
+    } AuthAuthorizer *build_authorizer(uint32_t service_id) const override;
 
-  void reset() override;
-  void prepare_build_request() override;
-  int build_request(ceph::buffer::list& bl) const override;
-  int handle_response(int ret, ceph::buffer::list::const_iterator& iter,
-		      CryptoKey *session_key,
-		      std::string *connection_secret) override;
-  bool build_rotating_request(ceph::buffer::list& bl) const override;
+    bool need_tickets() override;
 
-  int get_protocol() const override { return CEPH_AUTH_CEPHX; }
-
-  AuthAuthorizer *build_authorizer(uint32_t service_id) const override;
-
-  bool need_tickets() override;
-
-  void set_global_id(uint64_t id) override {
-    global_id = id;
-    tickets.global_id = id;
-  }
-private:
-  void validate_tickets() override;
-  bool _need_tickets() const;
+    void set_global_id(uint64_t id) override {
+        global_id = id;
+        tickets.global_id = id;
+    }
+  private:
+    void validate_tickets() override;
+    bool _need_tickets() const;
 };
 
 #endif

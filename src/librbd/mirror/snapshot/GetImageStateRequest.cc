@@ -16,99 +16,99 @@
                            << this << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
-namespace snapshot {
+    namespace mirror {
+        namespace snapshot {
 
-using librbd::util::create_rados_callback;
+            using librbd::util::create_rados_callback;
 
-template <typename I>
-void GetImageStateRequest<I>::send() {
-  read_object();
-}
+             template < typename I > void GetImageStateRequest < I >::send() {
+                read_object();
+            } template < typename I >
+                void GetImageStateRequest < I >::read_object() {
+                CephContext *cct = m_image_ctx->cct;
 
+                auto oid = util::image_state_object_name(m_image_ctx, m_snap_id,
+                                                         m_object_index);
+                 ldout(cct, 15) << oid << dendl;
 
-template <typename I>
-void GetImageStateRequest<I>::read_object() {
-  CephContext *cct = m_image_ctx->cct;
+                 librados::ObjectReadOperation op;
+                 m_bl.clear();
+                 op.read(0, 0, &m_bl, nullptr);
 
-  auto oid = util::image_state_object_name(m_image_ctx, m_snap_id,
-                                           m_object_index);
-  ldout(cct, 15) << oid << dendl;
+                 librados::AioCompletion * comp = create_rados_callback <
+                    GetImageStateRequest < I >,
+                    &GetImageStateRequest < I >::handle_read_object > (this);
+                int r =
+                    m_image_ctx->md_ctx.aio_operate(oid, comp, &op, nullptr);
+                 ceph_assert(r == 0);
+                 comp->release();
+            } template < typename I >
+                void GetImageStateRequest < I >::handle_read_object(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                 ldout(cct, 15) << "r=" << r << dendl;
 
-  librados::ObjectReadOperation op;
-  m_bl.clear();
-  op.read(0, 0, &m_bl, nullptr);
+                if (r < 0) {
+                    lderr(cct) << "failed to read image state object: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                } auto iter = m_bl.cbegin();
 
-  librados::AioCompletion *comp = create_rados_callback<
-    GetImageStateRequest<I>,
-    &GetImageStateRequest<I>::handle_read_object>(this);
-  int r = m_image_ctx->md_ctx.aio_operate(oid, comp, &op, nullptr);
-  ceph_assert(r == 0);
-  comp->release();
-}
+                if (m_object_index == 0) {
+                    ImageStateHeader header;
+                    try {
+                        using ceph::decode;
+                        decode(header, iter);
+                    }
+                    catch(const buffer::error & err) {
+                        lderr(cct) <<
+                            "failed to decode image state object header" <<
+                            dendl;
+                        finish(-EBADMSG);
+                        return;
+                    }
+                    m_object_count = header.object_count;
+                }
 
-template <typename I>
-void GetImageStateRequest<I>::handle_read_object(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+                bufferlist bl;
+                bl.substr_of(m_bl, iter.get_off(),
+                             m_bl.length() - iter.get_off());
+                m_state_bl.claim_append(bl);
 
-  if (r < 0) {
-    lderr(cct) << "failed to read image state object: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+                m_object_index++;
 
-  auto iter = m_bl.cbegin();
+                if (m_object_index >= m_object_count) {
+                    finish(0);
+                    return;
+                }
 
-  if (m_object_index == 0) {
-    ImageStateHeader header;
-    try {
-      using ceph::decode;
-      decode(header, iter);
-    } catch (const buffer::error &err) {
-      lderr(cct) << "failed to decode image state object header" << dendl;
-      finish(-EBADMSG);
-      return;
-    }
-    m_object_count = header.object_count;
-  }
+                read_object();
+            }
 
-  bufferlist bl;
-  bl.substr_of(m_bl, iter.get_off(), m_bl.length() - iter.get_off());
-  m_state_bl.claim_append(bl);
+            template < typename I >
+                void GetImageStateRequest < I >::finish(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  m_object_index++;
+                if (r == 0) {
+                    try {
+                        using ceph::decode;
+                        decode(*m_image_state, m_state_bl);
+                    }
+                    catch(const buffer::error & err) {
+                        lderr(cct) << "failed to decode image state" << dendl;
+                        r = -EBADMSG;
+                    }
+                }
 
-  if (m_object_index >= m_object_count) {
-    finish(0);
-    return;
-  }
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  read_object();
-}
+        }                       // namespace snapshot
+    }                           // namespace mirror
+}                               // namespace librbd
 
-template <typename I>
-void GetImageStateRequest<I>::finish(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
-
-  if (r == 0) {
-    try {
-      using ceph::decode;
-      decode(*m_image_state, m_state_bl);
-    } catch (const buffer::error &err) {
-      lderr(cct) << "failed to decode image state" << dendl;
-      r = -EBADMSG;
-    }
-  }
-
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace snapshot
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::snapshot::GetImageStateRequest<librbd::ImageCtx>;
+template class librbd::mirror::snapshot::GetImageStateRequest <
+    librbd::ImageCtx >;

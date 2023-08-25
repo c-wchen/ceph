@@ -37,108 +37,99 @@ class MServiceMap;
 class Objecter;
 class Client;
 
-class Mgr : public AdminSocketHook {
-protected:
-  MonClient *monc;
-  Objecter  *objecter;
-  Client    *client;
-  Messenger *client_messenger;
+class Mgr:public AdminSocketHook {
+  protected:
+    MonClient * monc;
+    Objecter *objecter;
+    Client *client;
+    Messenger *client_messenger;
 
-  mutable ceph::mutex lock = ceph::make_mutex("Mgr::lock");
-  Finisher finisher;
+    mutable ceph::mutex lock = ceph::make_mutex("Mgr::lock");
+    Finisher finisher;
 
-  // Track receipt of initial data during startup
-  ceph::condition_variable fs_map_cond;
-  bool digest_received;
-  ceph::condition_variable digest_cond;
+    // Track receipt of initial data during startup
+     ceph::condition_variable fs_map_cond;
+    bool digest_received;
+     ceph::condition_variable digest_cond;
 
-  PyModuleRegistry *py_module_registry;
-  DaemonStateIndex daemon_state;
-  ClusterState cluster_state;
+    PyModuleRegistry *py_module_registry;
+    DaemonStateIndex daemon_state;
+    ClusterState cluster_state;
 
-  DaemonServer server;
+    DaemonServer server;
 
-  LogChannelRef clog;
-  LogChannelRef audit_clog;
+    LogChannelRef clog;
+    LogChannelRef audit_clog;
 
-  std::map<std::string, std::string> pre_init_store;
+     std::map < std::string, std::string > pre_init_store;
 
-  void load_all_metadata();
-  std::map<std::string, std::string> load_store();
-  void init();
+    void load_all_metadata();
+     std::map < std::string, std::string > load_store();
+    void init();
 
-  bool initialized;
-  bool initializing;
+    bool initialized;
+    bool initializing;
 
-public:
-  Mgr(MonClient *monc_, const MgrMap& mgrmap,
-      PyModuleRegistry *py_module_registry_,
-      Messenger *clientm_, Objecter *objecter_,
-      Client *client_, LogChannelRef clog_, LogChannelRef audit_clog_);
-  ~Mgr();
+  public:
+     Mgr(MonClient * monc_, const MgrMap & mgrmap,
+         PyModuleRegistry * py_module_registry_,
+         Messenger * clientm_, Objecter * objecter_,
+         Client * client_, LogChannelRef clog_, LogChannelRef audit_clog_);
+    ~Mgr();
 
-  bool is_initialized() const {return initialized;}
-  entity_addrvec_t get_server_addrs() const {
-    return server.get_myaddrs();
-  }
+    bool is_initialized() const {
+        return initialized;
+    } entity_addrvec_t get_server_addrs() const {
+        return server.get_myaddrs();
+    } void handle_mgr_digest(ceph::ref_t < MMgrDigest > m);
+    void handle_fs_map(ceph::ref_t < MFSMap > m);
+    void handle_osd_map();
+    void handle_log(ceph::ref_t < MLog > m);
+    void handle_service_map(ceph::ref_t < MServiceMap > m);
+    void handle_mon_map();
 
-  void handle_mgr_digest(ceph::ref_t<MMgrDigest> m);
-  void handle_fs_map(ceph::ref_t<MFSMap> m);
-  void handle_osd_map();
-  void handle_log(ceph::ref_t<MLog> m);
-  void handle_service_map(ceph::ref_t<MServiceMap> m);
-  void handle_mon_map();
+    bool got_mgr_map(const MgrMap & m);
 
-  bool got_mgr_map(const MgrMap& m);
+    bool ms_dispatch2(const ceph::ref_t < Message > &m);
 
-  bool ms_dispatch2(const ceph::ref_t<Message>& m);
+    void background_init(Context * completion);
+    void shutdown();
 
-  void background_init(Context *completion);
-  void shutdown();
+    void handle_signal(int signum);
 
-  void handle_signal(int signum);
+     std::map < std::string, std::string > get_services() const;
 
-  std::map<std::string, std::string> get_services() const;
-
-  int call(
-    std::string_view command,
-    const cmdmap_t& cmdmap,
-    const bufferlist& inbl,
-    Formatter *f,
-    std::ostream& errss,
-    ceph::buffer::list& out) override;
+    int call(std::string_view command,
+             const cmdmap_t & cmdmap,
+             const bufferlist & inbl,
+             Formatter * f,
+             std::ostream & errss, ceph::buffer::list & out) override;
 };
 
 /**
  * Context for completion of metadata mon commands: take
  * the result and stash it in DaemonStateIndex
  */
-class MetadataUpdate : public Context
-{
+class MetadataUpdate:public Context {
 
-private:
-  DaemonStateIndex &daemon_state;
-  DaemonKey key;
+  private:
+    DaemonStateIndex & daemon_state;
+    DaemonKey key;
 
-  std::map<std::string, std::string> defaults;
+     std::map < std::string, std::string > defaults;
 
-public:
-  bufferlist outbl;
-  std::string outs;
+  public:
+     bufferlist outbl;
+     std::string outs;
 
-  MetadataUpdate(DaemonStateIndex &daemon_state_, const DaemonKey &key_)
-    : daemon_state(daemon_state_), key(key_)
-  {
-      daemon_state.notify_updating(key);
-  }
+     MetadataUpdate(DaemonStateIndex & daemon_state_, const DaemonKey & key_)
+    :daemon_state(daemon_state_), key(key_) {
+        daemon_state.notify_updating(key);
+    } void set_default(const std::string & k, const std::string & v) {
+        defaults[k] = v;
+    }
 
-  void set_default(const std::string &k, const std::string &v)
-  {
-    defaults[k] = v;
-  }
-
-  void finish(int r) override;
+    void finish(int r) override;
 };
-
 
 #endif

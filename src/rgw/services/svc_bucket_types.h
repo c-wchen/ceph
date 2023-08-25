@@ -14,7 +14,6 @@
  *
  */
 
-
 #pragma once
 
 #include "common/ptr_wrapper.h"
@@ -24,15 +23,17 @@
 
 class RGWSI_MetaBackend_Handler;
 
-using RGWSI_Bucket_BE_Handler = ptr_wrapper<RGWSI_MetaBackend_Handler, RGWSI_META_BE_TYPES::BUCKET>;
-using RGWSI_BucketInstance_BE_Handler = ptr_wrapper<RGWSI_MetaBackend_Handler, RGWSI_META_BE_TYPES::BI>;
+using RGWSI_Bucket_BE_Handler =
+    ptr_wrapper < RGWSI_MetaBackend_Handler, RGWSI_META_BE_TYPES::BUCKET >;
+using RGWSI_BucketInstance_BE_Handler =
+    ptr_wrapper < RGWSI_MetaBackend_Handler, RGWSI_META_BE_TYPES::BI >;
 
-
-using RGWSI_Bucket_EP_Ctx = ptr_wrapper<RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::BUCKET>;
-using RGWSI_Bucket_BI_Ctx = ptr_wrapper<RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::BI>;
+using RGWSI_Bucket_EP_Ctx =
+    ptr_wrapper < RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::BUCKET >;
+using RGWSI_Bucket_BI_Ctx =
+    ptr_wrapper < RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::BI >;
 
 struct RGWSI_Bucket_X_Ctx {
-  RGWSI_Bucket_EP_Ctx ep;
-  RGWSI_Bucket_BI_Ctx bi;
+    RGWSI_Bucket_EP_Ctx ep;
+    RGWSI_Bucket_BI_Ctx bi;
 };
-

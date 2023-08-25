@@ -16,37 +16,36 @@
 #include <string>
 #include <vector>
 
-namespace ZTracer { struct Trace; }
+namespace ZTracer {
+    struct Trace;
+} namespace librbd {
 
-namespace librbd {
+    struct ImageCtx;
 
-struct ImageCtx;
+    namespace io {
 
-namespace io {
+        template < typename I > class AbstractObjectWriteRequest;
 
-template <typename I> class AbstractObjectWriteRequest;
+        template < typename ImageCtxT = librbd::ImageCtx > class CopyupRequest {
+          public:
+            static CopyupRequest *create(ImageCtxT * ictx, uint64_t objectno,
+                                         Extents
+                                         && image_extents, ImageArea area,
+                                         const ZTracer::Trace & parent_trace) {
+                return new CopyupRequest(ictx, objectno,
+                                         std::move(image_extents), area,
+                                         parent_trace);
+            } CopyupRequest(ImageCtxT * ictx, uint64_t objectno, Extents
+                            && image_extents, ImageArea area,
+                            const ZTracer::Trace & parent_trace);
+            ~CopyupRequest();
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class CopyupRequest {
-public:
-  static CopyupRequest* create(ImageCtxT *ictx, uint64_t objectno,
-                               Extents &&image_extents, ImageArea area,
-                               const ZTracer::Trace &parent_trace) {
-    return new CopyupRequest(ictx, objectno, std::move(image_extents), area,
-                             parent_trace);
-  }
+            void append_request(AbstractObjectWriteRequest < ImageCtxT > *req,
+                                const Extents & object_extents);
 
-  CopyupRequest(ImageCtxT *ictx, uint64_t objectno,
-                Extents &&image_extents, ImageArea area,
-                const ZTracer::Trace &parent_trace);
-  ~CopyupRequest();
+            void send();
 
-  void append_request(AbstractObjectWriteRequest<ImageCtxT> *req,
-                      const Extents& object_extents);
-
-  void send();
-
-private:
+          private:
   /**
    * Copyup requests go through the following state machine to read from the
    * parent image, update the object map, and copyup the object:
@@ -79,67 +78,68 @@ private:
    * no data was read from the parent *and* there are no additional ops.
    */
 
-  typedef std::vector<AbstractObjectWriteRequest<ImageCtxT> *> WriteRequests;
+            typedef std::vector < AbstractObjectWriteRequest < ImageCtxT >
+                *>WriteRequests;
 
-  ImageCtxT *m_image_ctx;
-  uint64_t m_object_no;
-  Extents m_image_extents;
-  ImageArea m_image_area;
-  ZTracer::Trace m_trace;
+            ImageCtxT *m_image_ctx;
+            uint64_t m_object_no;
+            Extents m_image_extents;
+            ImageArea m_image_area;
+             ZTracer::Trace m_trace;
 
-  bool m_flatten = false;
-  bool m_copyup_required = true;
-  bool m_copyup_is_zero = true;
-  bool m_deep_copied = false;
+            bool m_flatten = false;
+            bool m_copyup_required = true;
+            bool m_copyup_is_zero = true;
+            bool m_deep_copied = false;
 
-  Extents m_copyup_extent_map;
-  ceph::bufferlist m_copyup_data;
+            Extents m_copyup_extent_map;
+             ceph::bufferlist m_copyup_data;
 
-  AsyncOperation m_async_op;
+            AsyncOperation m_async_op;
 
-  std::vector<uint64_t> m_snap_ids;
-  bool m_first_snap_is_clean = false;
+             std::vector < uint64_t > m_snap_ids;
+            bool m_first_snap_is_clean = false;
 
-  ceph::mutex m_lock = ceph::make_mutex("CopyupRequest", false);
-  WriteRequests m_pending_requests;
-  unsigned m_pending_copyups = 0;
-  int m_copyup_ret_val = 0;
+             ceph::mutex m_lock = ceph::make_mutex("CopyupRequest", false);
+            WriteRequests m_pending_requests;
+            unsigned m_pending_copyups = 0;
+            int m_copyup_ret_val = 0;
 
-  WriteRequests m_restart_requests;
-  bool m_append_request_permitted = true;
+            WriteRequests m_restart_requests;
+            bool m_append_request_permitted = true;
 
-  interval_set<uint64_t> m_write_object_extents;
+             interval_set < uint64_t > m_write_object_extents;
 
-  void read_from_parent();
-  void handle_read_from_parent(int r);
+            void read_from_parent();
+            void handle_read_from_parent(int r);
 
-  void deep_copy();
-  void handle_deep_copy(int r);
+            void deep_copy();
+            void handle_deep_copy(int r);
 
-  void update_object_maps();
-  void handle_update_object_maps(int r);
+            void update_object_maps();
+            void handle_update_object_maps(int r);
 
-  void copyup();
-  void handle_copyup(int r);
+            void copyup();
+            void handle_copyup(int r);
 
-  void finish(int r);
-  void complete_requests(bool override_restart_retval, int r);
+            void finish(int r);
+            void complete_requests(bool override_restart_retval, int r);
 
-  void disable_append_requests();
-  void remove_from_list();
+            void disable_append_requests();
+            void remove_from_list();
 
-  bool is_copyup_required();
-  bool is_update_object_map_required(int r);
-  bool is_deep_copy() const;
+            bool is_copyup_required();
+            bool is_update_object_map_required(int r);
+            bool is_deep_copy() const;
 
-  void compute_deep_copy_snap_ids();
-  void convert_copyup_extent_map();
-  int prepare_copyup_data();
-};
+            void compute_deep_copy_snap_ids();
+            void convert_copyup_extent_map();
+            int prepare_copyup_data();
+        };
 
-} // namespace io
-} // namespace librbd
+    }                           // namespace io
+}                               // namespace librbd
 
-extern template class librbd::io::CopyupRequest<librbd::ImageCtx>;
+extern template class librbd::io::CopyupRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IO_COPYUP_REQUEST_H

@@ -24,242 +24,251 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace operation {
+    namespace operation {
 
-using util::create_context_callback;
-using util::create_rados_callback;
+        using util::create_context_callback;
+        using util::create_rados_callback;
 
-template <typename I>
-class C_FlattenObject : public C_AsyncObjectThrottle<I> {
-public:
-  C_FlattenObject(AsyncObjectThrottle<I> &throttle, I *image_ctx,
-                  IOContext io_context, uint64_t object_no)
-    : C_AsyncObjectThrottle<I>(throttle, *image_ctx), m_io_context(io_context),
-      m_object_no(object_no) {
-  }
+         template < typename I >
+            class C_FlattenObject:public C_AsyncObjectThrottle < I > {
+          public:
+            C_FlattenObject(AsyncObjectThrottle < I > &throttle, I * image_ctx,
+                            IOContext io_context, uint64_t object_no)
+          :    
+            C_AsyncObjectThrottle < I > (throttle, *image_ctx),
+            m_io_context(io_context), m_object_no(object_no) {
+            } int send() override {
+                I & image_ctx = this->m_image_ctx;
+                ceph_assert(ceph_mutex_is_locked(image_ctx.owner_lock));
+                CephContext *cct = image_ctx.cct;
 
-  int send() override {
-    I &image_ctx = this->m_image_ctx;
-    ceph_assert(ceph_mutex_is_locked(image_ctx.owner_lock));
-    CephContext *cct = image_ctx.cct;
+                if (image_ctx.exclusive_lock != nullptr &&
+                    !image_ctx.exclusive_lock->is_lock_owner()) {
+                    ldout(cct,
+                          1) << "lost exclusive lock during flatten" << dendl;
+                    return -ERESTART;
+                } {
+                    std::shared_lock image_lock {
+                    image_ctx.image_lock};
+                    if (image_ctx.object_map != nullptr &&
+                        !image_ctx.object_map->
+                        object_may_not_exist(m_object_no)) {
+                        // can skip because the object already exists
+                        return 1;
+                    }
+                }
 
-    if (image_ctx.exclusive_lock != nullptr &&
-        !image_ctx.exclusive_lock->is_lock_owner()) {
-      ldout(cct, 1) << "lost exclusive lock during flatten" << dendl;
-      return -ERESTART;
-    }
+                if (!io::util::
+                    trigger_copyup(&image_ctx, m_object_no, m_io_context,
+                                   this)) {
+                    // stop early if the parent went away - it just means
+                    // another flatten finished first or the image was resized
+                    return 1;
+                }
 
-    {
-      std::shared_lock image_lock{image_ctx.image_lock};
-      if (image_ctx.object_map != nullptr &&
-          !image_ctx.object_map->object_may_not_exist(m_object_no)) {
-        // can skip because the object already exists
-        return 1;
-      }
-    }
+                return 0;
+            }
 
-    if (!io::util::trigger_copyup(
-            &image_ctx, m_object_no, m_io_context, this)) {
-      // stop early if the parent went away - it just means
-      // another flatten finished first or the image was resized
-      return 1;
-    }
+          private:
+            IOContext m_io_context;
+            uint64_t m_object_no;
+        };
 
-    return 0;
-  }
+        template < typename I >
+            bool FlattenRequest < I >::should_complete(int r) {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << "r=" << r << dendl;
+            if (r < 0) {
+                lderr(cct) << "encountered error: " << cpp_strerror(r) << dendl;
+            }
+            return true;
+        }
 
-private:
-  IOContext m_io_context;
-  uint64_t m_object_no;
-};
+        template < typename I > void FlattenRequest < I >::send_op() {
+            flatten_objects();
+        }
 
-template <typename I>
-bool FlattenRequest<I>::should_complete(int r) {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << "r=" << r << dendl;
-  if (r < 0) {
-    lderr(cct) << "encountered error: " << cpp_strerror(r) << dendl;
-  }
-  return true;
-}
+        template < typename I > void FlattenRequest < I >::flatten_objects() {
+            I & image_ctx = this->m_image_ctx;
+            ceph_assert(ceph_mutex_is_locked(image_ctx.owner_lock));
 
-template <typename I>
-void FlattenRequest<I>::send_op() {
-  flatten_objects();
-}
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << dendl;
 
-template <typename I>
-void FlattenRequest<I>::flatten_objects() {
-  I &image_ctx = this->m_image_ctx;
-  ceph_assert(ceph_mutex_is_locked(image_ctx.owner_lock));
+            assert(ceph_mutex_is_locked(image_ctx.owner_lock));
+            auto ctx = create_context_callback <
+                FlattenRequest < I >,
+                &FlattenRequest < I >::handle_flatten_objects > (this);
+            typename AsyncObjectThrottle <
+                I >::ContextFactory context_factory(boost::lambda::
+                                                    bind(boost::lambda::
+                                                         new_ptr <
+                                                         C_FlattenObject < I >
+                                                         >(), boost::lambda::_1,
+                                                         &image_ctx,
+                                                         image_ctx.
+                                                         get_data_io_context(),
+                                                         boost::lambda::_2));
+            AsyncObjectThrottle < I > *throttle =
+                new AsyncObjectThrottle < I > (this, image_ctx, context_factory,
+                                               ctx, &m_prog_ctx,
+                                               m_start_object_no,
+                                               m_start_object_no +
+                                               m_overlap_objects);
+            throttle->start_ops(image_ctx.config.template get_val < uint64_t >
+                                ("rbd_concurrent_management_ops"));
+        }
 
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << dendl;
+        template < typename I >
+            void FlattenRequest < I >::handle_flatten_objects(int r) {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << "r=" << r << dendl;
 
-  assert(ceph_mutex_is_locked(image_ctx.owner_lock));
-  auto ctx = create_context_callback<
-    FlattenRequest<I>,
-    &FlattenRequest<I>::handle_flatten_objects>(this);
-  typename AsyncObjectThrottle<I>::ContextFactory context_factory(
-    boost::lambda::bind(boost::lambda::new_ptr<C_FlattenObject<I> >(),
-      boost::lambda::_1, &image_ctx, image_ctx.get_data_io_context(),
-      boost::lambda::_2));
-  AsyncObjectThrottle<I> *throttle = new AsyncObjectThrottle<I>(
-      this, image_ctx, context_factory, ctx, &m_prog_ctx, m_start_object_no,
-      m_start_object_no + m_overlap_objects);
-  throttle->start_ops(
-    image_ctx.config.template get_val<uint64_t>("rbd_concurrent_management_ops"));
-}
+            if (r == -ERESTART) {
+                ldout(cct, 5) << "flatten operation interrupted" << dendl;
+                this->complete(r);
+                return;
+            }
+            else if (r < 0) {
+                lderr(cct) << "flatten encountered an error: " <<
+                    cpp_strerror(r) << dendl;
+                this->complete(r);
+                return;
+            }
 
-template <typename I>
-void FlattenRequest<I>::handle_flatten_objects(int r) {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << "r=" << r << dendl;
+            crypto_flatten();
+        }
 
-  if (r == -ERESTART) {
-    ldout(cct, 5) << "flatten operation interrupted" << dendl;
-    this->complete(r);
-    return;
-  } else if (r < 0) {
-    lderr(cct) << "flatten encountered an error: " << cpp_strerror(r) << dendl;
-    this->complete(r);
-    return;
-  }
+        template < typename I > void FlattenRequest < I >::crypto_flatten() {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
 
-  crypto_flatten();
-}
+            auto encryption_format = image_ctx.encryption_format.get();
+            if (encryption_format == nullptr) {
+                detach_child();
+                return;
+            }
 
+            ldout(cct, 5) << dendl;
 
-template <typename I>
-void FlattenRequest<I>::crypto_flatten() {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
+            auto ctx = create_context_callback <
+                FlattenRequest < I >,
+                &FlattenRequest < I >::handle_crypto_flatten > (this);
+            encryption_format->flatten(&image_ctx, ctx);
+        }
 
-  auto encryption_format = image_ctx.encryption_format.get();
-  if (encryption_format == nullptr) {
-    detach_child();
-    return;
-  }
+        template < typename I >
+            void FlattenRequest < I >::handle_crypto_flatten(int r) {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << "r=" << r << dendl;
 
-  ldout(cct, 5) << dendl;
+            if (r < 0) {
+                lderr(cct) << "error flattening crypto: " << cpp_strerror(r) <<
+                    dendl;
+                this->complete(r);
+                return;
+            }
 
-  auto ctx = create_context_callback<
-          FlattenRequest<I>,
-          &FlattenRequest<I>::handle_crypto_flatten>(this);
-  encryption_format->flatten(&image_ctx, ctx);
-}
+            detach_child();
+        }
 
-template <typename I>
-void FlattenRequest<I>::handle_crypto_flatten(int r) {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << "r=" << r << dendl;
+        template < typename I > void FlattenRequest < I >::detach_child() {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
 
-  if (r < 0) {
-    lderr(cct) << "error flattening crypto: " << cpp_strerror(r) << dendl;
-    this->complete(r);
-    return;
-  }
+            // should have been canceled prior to releasing lock
+            image_ctx.owner_lock.lock_shared();
+            ceph_assert(image_ctx.exclusive_lock == nullptr ||
+                        image_ctx.exclusive_lock->is_lock_owner());
 
-  detach_child();
-}
+            // if there are no snaps, remove from the children object as well
+            // (if snapshots remain, they have their own parent info, and the child
+            // will be removed when the last snap goes away)
+            image_ctx.image_lock.lock_shared();
+            if ((image_ctx.features & RBD_FEATURE_DEEP_FLATTEN) == 0 &&
+                !image_ctx.snaps.empty()) {
+                image_ctx.image_lock.unlock_shared();
+                image_ctx.owner_lock.unlock_shared();
+                detach_parent();
+                return;
+            }
+            image_ctx.image_lock.unlock_shared();
 
-template <typename I>
-void FlattenRequest<I>::detach_child() {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << dendl;
+            auto ctx = create_context_callback <
+                FlattenRequest < I >,
+                &FlattenRequest < I >::handle_detach_child > (this);
+            auto req = image::DetachChildRequest < I >::create(image_ctx, ctx);
+            req->send();
+            image_ctx.owner_lock.unlock_shared();
+        }
 
-  // should have been canceled prior to releasing lock
-  image_ctx.owner_lock.lock_shared();
-  ceph_assert(image_ctx.exclusive_lock == nullptr ||
-              image_ctx.exclusive_lock->is_lock_owner());
+        template < typename I >
+            void FlattenRequest < I >::handle_detach_child(int r) {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << "r=" << r << dendl;
 
-  // if there are no snaps, remove from the children object as well
-  // (if snapshots remain, they have their own parent info, and the child
-  // will be removed when the last snap goes away)
-  image_ctx.image_lock.lock_shared();
-  if ((image_ctx.features & RBD_FEATURE_DEEP_FLATTEN) == 0 &&
-      !image_ctx.snaps.empty()) {
-    image_ctx.image_lock.unlock_shared();
-    image_ctx.owner_lock.unlock_shared();
-    detach_parent();
-    return;
-  }
-  image_ctx.image_lock.unlock_shared();
+            if (r < 0 && r != -ENOENT) {
+                lderr(cct) << "detach encountered an error: " << cpp_strerror(r)
+                    << dendl;
+                this->complete(r);
+                return;
+            }
 
-  ldout(cct, 5) << dendl;
-  auto ctx = create_context_callback<
-    FlattenRequest<I>,
-    &FlattenRequest<I>::handle_detach_child>(this);
-  auto req = image::DetachChildRequest<I>::create(image_ctx, ctx);
-  req->send();
-  image_ctx.owner_lock.unlock_shared();
-}
+            detach_parent();
+        }
 
-template <typename I>
-void FlattenRequest<I>::handle_detach_child(int r) {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << "r=" << r << dendl;
+        template < typename I > void FlattenRequest < I >::detach_parent() {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << dendl;
 
-  if (r < 0 && r != -ENOENT) {
-    lderr(cct) << "detach encountered an error: " << cpp_strerror(r) << dendl;
-    this->complete(r);
-    return;
-  }
+            // should have been canceled prior to releasing lock
+            image_ctx.owner_lock.lock_shared();
+            ceph_assert(image_ctx.exclusive_lock == nullptr ||
+                        image_ctx.exclusive_lock->is_lock_owner());
 
-  detach_parent();
-}
+            // stop early if the parent went away - it just means
+            // another flatten finished first, so this one is useless.
+            image_ctx.image_lock.lock_shared();
+            if (!image_ctx.parent) {
+                ldout(cct, 5) << "image already flattened" << dendl;
+                image_ctx.image_lock.unlock_shared();
+                image_ctx.owner_lock.unlock_shared();
+                this->complete(0);
+                return;
+            }
+            image_ctx.image_lock.unlock_shared();
 
-template <typename I>
-void FlattenRequest<I>::detach_parent() {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << dendl;
+            // remove parent from this (base) image
+            auto ctx = create_context_callback <
+                FlattenRequest < I >,
+                &FlattenRequest < I >::handle_detach_parent > (this);
+            auto req = image::DetachParentRequest < I >::create(image_ctx, ctx);
+            req->send();
+            image_ctx.owner_lock.unlock_shared();
+        }
 
-  // should have been canceled prior to releasing lock
-  image_ctx.owner_lock.lock_shared();
-  ceph_assert(image_ctx.exclusive_lock == nullptr ||
-              image_ctx.exclusive_lock->is_lock_owner());
+        template < typename I >
+            void FlattenRequest < I >::handle_detach_parent(int r) {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 5) << "r=" << r << dendl;
 
-  // stop early if the parent went away - it just means
-  // another flatten finished first, so this one is useless.
-  image_ctx.image_lock.lock_shared();
-  if (!image_ctx.parent) {
-    ldout(cct, 5) << "image already flattened" << dendl;
-    image_ctx.image_lock.unlock_shared();
-    image_ctx.owner_lock.unlock_shared();
-    this->complete(0);
-    return;
-  }
-  image_ctx.image_lock.unlock_shared();
+            if (r < 0) {
+                lderr(cct) << "remove parent encountered an error: " <<
+                    cpp_strerror(r)
+                    << dendl;
+            }
 
-  // remove parent from this (base) image
-  auto ctx = create_context_callback<
-    FlattenRequest<I>,
-    &FlattenRequest<I>::handle_detach_parent>(this);
-  auto req = image::DetachParentRequest<I>::create(image_ctx, ctx);
-  req->send();
-  image_ctx.owner_lock.unlock_shared();
-}
+            this->complete(r);
+        }
 
-template <typename I>
-void FlattenRequest<I>::handle_detach_parent(int r) {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 5) << "r=" << r << dendl;
+    }                           // namespace operation
+}                               // namespace librbd
 
-  if (r < 0) {
-    lderr(cct) << "remove parent encountered an error: " << cpp_strerror(r)
-               << dendl;
-  }
-
-  this->complete(r);
-}
-
-} // namespace operation
-} // namespace librbd
-
-template class librbd::operation::FlattenRequest<librbd::ImageCtx>;
+template class librbd::operation::FlattenRequest < librbd::ImageCtx >;

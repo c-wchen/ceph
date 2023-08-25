@@ -11,35 +11,28 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace object_map {
+    namespace object_map {
 
-class Request : public AsyncRequest<> {
-public:
-  Request(ImageCtx &image_ctx, uint64_t snap_id, Context *on_finish)
-    : AsyncRequest(image_ctx, on_finish), m_snap_id(snap_id),
-      m_state(STATE_REQUEST)
-  {
-  }
+        class Request:public AsyncRequest <> {
+          public:
+            Request(ImageCtx & image_ctx, uint64_t snap_id, Context * on_finish)
+            :AsyncRequest(image_ctx, on_finish), m_snap_id(snap_id),
+                m_state(STATE_REQUEST) {
+            } void send() override = 0;
 
-  void send() override = 0;
+          protected:
+            const uint64_t m_snap_id;
 
-protected:
-  const uint64_t m_snap_id;
-
-  bool should_complete(int r) override;
-  int filter_return_code(int r) const override {
-    if (m_state == STATE_REQUEST) {
-      // never propagate an error back to the caller
-      return 0;
-    }
-    return r;
-  }
-  virtual void finish_request() {
-  }
-
-private:
+            bool should_complete(int r) override;
+            int filter_return_code(int r) const override {
+                if (m_state == STATE_REQUEST) {
+                    // never propagate an error back to the caller
+                    return 0;
+                } return r;
+            } virtual void finish_request() {
+          } private:
   /**
    *              STATE_TIMEOUT --------\
    *                   ^                |
@@ -49,18 +42,18 @@ private:
    *                   v                |
    *            STATE_INVALIDATE -------/
    */
-  enum State {
-    STATE_REQUEST,
-    STATE_TIMEOUT,
-    STATE_INVALIDATE
-  };
+            enum State {
+                STATE_REQUEST,
+                STATE_TIMEOUT,
+                STATE_INVALIDATE
+            };
 
-  State m_state;
+            State m_state;
 
-  bool invalidate();
-};
+            bool invalidate();
+        };
 
-} // namespace object_map
-} // namespace librbd
+    }                           // namespace object_map
+}                               // namespace librbd
 
 #endif // CEPH_LIBRBD_OBJECT_MAP_REQUEST_H

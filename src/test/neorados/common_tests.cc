@@ -28,7 +28,7 @@ namespace R = neorados;
 
 std::string get_temp_pool_name(std::string_view prefix)
 {
-  static auto hostname = ba::ip::host_name();
-  static auto num = 1ull;
-  return fmt::format("{}{}-{}-{}", prefix, hostname, getpid(), num++);
+    static auto hostname = ba::ip::host_name();
+    static auto num = 1ull;
+    return fmt::format("{}{}-{}-{}", prefix, hostname, getpid(), num++);
 }

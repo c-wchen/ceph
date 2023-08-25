@@ -10,20 +10,17 @@
 struct Context;
 
 namespace rbd {
-namespace mirror {
-namespace image_sync {
+    namespace mirror {
+        namespace image_sync {
 
-struct MockSyncPointHandler : public SyncPointHandler{
-  MOCK_CONST_METHOD0(get_sync_points, SyncPoints());
-  MOCK_CONST_METHOD0(get_snap_seqs, librbd::SnapSeqs());
+            struct MockSyncPointHandler:public SyncPointHandler {
+                MOCK_CONST_METHOD0(get_sync_points, SyncPoints());
+                MOCK_CONST_METHOD0(get_snap_seqs, librbd::SnapSeqs());
 
-  MOCK_METHOD4(update_sync_points, void(const librbd::SnapSeqs&,
-                                        const SyncPoints&,
-                                        bool, Context*));
-};
+                MOCK_METHOD4(update_sync_points, void (const librbd::SnapSeqs &,
+                                                       const SyncPoints &,
+                                                       bool, Context *));
+            };
 
-} // namespace image_sync
-} // namespace mirror
-} // namespace rbd
-
-#endif // CEPH_MOCK_IMAGE_SYNC_SYNC_POINT_HANDLER_H
+} // namespace image_sync } // namespace mirror }   // namespace rbd
+#endif                          // CEPH_MOCK_IMAGE_SYNC_SYNC_POINT_HANDLER_H

@@ -115,13 +115,13 @@
 #define QCOW_L2_CACHE_SIZE 16
 
 /* Must be at least 2 to cover COW */
-#define QCOW_MIN_L2_CACHE_SIZE 2 /* cache entries */
+#define QCOW_MIN_L2_CACHE_SIZE 2    /* cache entries */
 
 /* Must be at least 4 to cover all cases of refcount table growth */
-#define QCOW_MIN_REFCOUNT_CACHE_SIZE 4 /* clusters */
+#define QCOW_MIN_REFCOUNT_CACHE_SIZE 4  /* clusters */
 
 #define QCOW_DEFAULT_L2_CACHE_MAX_SIZE (1ULL << 25)
-#define QCOW_DEFAULT_CACHE_CLEAN_INTERVAL 600  /* seconds */
+#define QCOW_DEFAULT_CACHE_CLEAN_INTERVAL 600   /* seconds */
 
 #define QCOW_DEFAULT_CLUSTER_SIZE 65536
 
@@ -150,22 +150,21 @@
 typedef struct QCowHeaderProbe {
     uint32_t magic;
     uint32_t version;
-} __attribute__((__packed__)) QCowHeaderProbe;
+} __attribute__ ((__packed__)) QCowHeaderProbe;
 
-typedef struct QCowHeaderV1
-{
+typedef struct QCowHeaderV1 {
     uint32_t magic;
     uint32_t version;
     uint64_t backing_file_offset;
     uint32_t backing_file_size;
     uint32_t mtime;
-    uint64_t size; /* in bytes */
+    uint64_t size;              /* in bytes */
     uint8_t cluster_bits;
     uint8_t l2_bits;
     uint16_t padding;
     uint32_t crypt_method;
     uint64_t l1_table_offset;
-} __attribute__((__packed__)) QCowHeaderV1;
+} __attribute__ ((__packed__)) QCowHeaderV1;
 
 typedef struct QCowHeader {
     uint32_t magic;
@@ -173,9 +172,9 @@ typedef struct QCowHeader {
     uint64_t backing_file_offset;
     uint32_t backing_file_size;
     uint32_t cluster_bits;
-    uint64_t size; /* in bytes */
+    uint64_t size;              /* in bytes */
     uint32_t crypt_method;
-    uint32_t l1_size; /* XXX: save number of clusters instead ? */
+    uint32_t l1_size;           /* XXX: save number of clusters instead ? */
     uint64_t l1_table_offset;
     uint64_t refcount_table_offset;
     uint32_t refcount_table_clusters;
@@ -195,7 +194,7 @@ typedef struct QCowHeader {
 
     /* header must be a multiple of 8 */
     uint8_t padding[7];
-} __attribute__((__packed__)) QCowHeader;
+} __attribute__ ((__packed__)) QCowHeader;
 
 typedef struct QCowSnapshotHeader {
     /* header is 8 byte aligned */
@@ -211,18 +210,17 @@ typedef struct QCowSnapshotHeader {
     uint64_t vm_clock_nsec;
 
     uint32_t vm_state_size;
-    uint32_t extra_data_size; /* for extension */
+    uint32_t extra_data_size;   /* for extension */
     /* extra data follows */
     /* id_str follows */
     /* name follows  */
-} __attribute__((__packed__)) QCowSnapshotHeader;
+} __attribute__ ((__packed__)) QCowSnapshotHeader;
 
 typedef struct QCowSnapshotExtraData {
     uint64_t vm_state_size_large;
     uint64_t disk_size;
     uint64_t icount;
-} __attribute__((__packed__)) QCowSnapshotExtraData;
-
+} __attribute__ ((__packed__)) QCowSnapshotExtraData;
 
 typedef struct QCowSnapshot {
     uint64_t l1_table_offset;
@@ -245,7 +243,7 @@ typedef struct QCowSnapshot {
 typedef struct Qcow2CryptoHeaderExtension {
     uint64_t offset;
     uint64_t length;
-} __attribute__((__packed__)) Qcow2CryptoHeaderExtension;
+} __attribute__ ((__packed__)) Qcow2CryptoHeaderExtension;
 
 typedef struct Qcow2UnknownHeaderExtension {
     uint32_t magic;
@@ -254,48 +252,47 @@ typedef struct Qcow2UnknownHeaderExtension {
 } Qcow2UnknownHeaderExtension;
 
 enum {
-    QCOW2_FEAT_TYPE_INCOMPATIBLE    = 0,
-    QCOW2_FEAT_TYPE_COMPATIBLE      = 1,
-    QCOW2_FEAT_TYPE_AUTOCLEAR       = 2,
+    QCOW2_FEAT_TYPE_INCOMPATIBLE = 0,
+    QCOW2_FEAT_TYPE_COMPATIBLE = 1,
+    QCOW2_FEAT_TYPE_AUTOCLEAR = 2,
 };
 
 /* Incompatible feature bits */
 enum {
-    QCOW2_INCOMPAT_DIRTY_BITNR      = 0,
-    QCOW2_INCOMPAT_CORRUPT_BITNR    = 1,
-    QCOW2_INCOMPAT_DATA_FILE_BITNR  = 2,
+    QCOW2_INCOMPAT_DIRTY_BITNR = 0,
+    QCOW2_INCOMPAT_CORRUPT_BITNR = 1,
+    QCOW2_INCOMPAT_DATA_FILE_BITNR = 2,
     QCOW2_INCOMPAT_COMPRESSION_BITNR = 3,
-    QCOW2_INCOMPAT_EXTL2_BITNR      = 4,
-    QCOW2_INCOMPAT_DIRTY            = 1 << QCOW2_INCOMPAT_DIRTY_BITNR,
-    QCOW2_INCOMPAT_CORRUPT          = 1 << QCOW2_INCOMPAT_CORRUPT_BITNR,
-    QCOW2_INCOMPAT_DATA_FILE        = 1 << QCOW2_INCOMPAT_DATA_FILE_BITNR,
-    QCOW2_INCOMPAT_COMPRESSION      = 1 << QCOW2_INCOMPAT_COMPRESSION_BITNR,
-    QCOW2_INCOMPAT_EXTL2            = 1 << QCOW2_INCOMPAT_EXTL2_BITNR,
+    QCOW2_INCOMPAT_EXTL2_BITNR = 4,
+    QCOW2_INCOMPAT_DIRTY = 1 << QCOW2_INCOMPAT_DIRTY_BITNR,
+    QCOW2_INCOMPAT_CORRUPT = 1 << QCOW2_INCOMPAT_CORRUPT_BITNR,
+    QCOW2_INCOMPAT_DATA_FILE = 1 << QCOW2_INCOMPAT_DATA_FILE_BITNR,
+    QCOW2_INCOMPAT_COMPRESSION = 1 << QCOW2_INCOMPAT_COMPRESSION_BITNR,
+    QCOW2_INCOMPAT_EXTL2 = 1 << QCOW2_INCOMPAT_EXTL2_BITNR,
 
-    QCOW2_INCOMPAT_MASK             = QCOW2_INCOMPAT_DIRTY
-                                    | QCOW2_INCOMPAT_CORRUPT
-                                    | QCOW2_INCOMPAT_DATA_FILE
-                                    | QCOW2_INCOMPAT_COMPRESSION
-                                    | QCOW2_INCOMPAT_EXTL2,
+    QCOW2_INCOMPAT_MASK = QCOW2_INCOMPAT_DIRTY
+        | QCOW2_INCOMPAT_CORRUPT
+        | QCOW2_INCOMPAT_DATA_FILE
+        | QCOW2_INCOMPAT_COMPRESSION | QCOW2_INCOMPAT_EXTL2,
 };
 
 /* Compatible feature bits */
 enum {
     QCOW2_COMPAT_LAZY_REFCOUNTS_BITNR = 0,
-    QCOW2_COMPAT_LAZY_REFCOUNTS       = 1 << QCOW2_COMPAT_LAZY_REFCOUNTS_BITNR,
+    QCOW2_COMPAT_LAZY_REFCOUNTS = 1 << QCOW2_COMPAT_LAZY_REFCOUNTS_BITNR,
 
-    QCOW2_COMPAT_FEAT_MASK            = QCOW2_COMPAT_LAZY_REFCOUNTS,
+    QCOW2_COMPAT_FEAT_MASK = QCOW2_COMPAT_LAZY_REFCOUNTS,
 };
 
 /* Autoclear feature bits */
 enum {
-    QCOW2_AUTOCLEAR_BITMAPS_BITNR       = 0,
+    QCOW2_AUTOCLEAR_BITMAPS_BITNR = 0,
     QCOW2_AUTOCLEAR_DATA_FILE_RAW_BITNR = 1,
-    QCOW2_AUTOCLEAR_BITMAPS             = 1 << QCOW2_AUTOCLEAR_BITMAPS_BITNR,
-    QCOW2_AUTOCLEAR_DATA_FILE_RAW       = 1 << QCOW2_AUTOCLEAR_DATA_FILE_RAW_BITNR,
+    QCOW2_AUTOCLEAR_BITMAPS = 1 << QCOW2_AUTOCLEAR_BITMAPS_BITNR,
+    QCOW2_AUTOCLEAR_DATA_FILE_RAW = 1 << QCOW2_AUTOCLEAR_DATA_FILE_RAW_BITNR,
 
-    QCOW2_AUTOCLEAR_MASK                = QCOW2_AUTOCLEAR_BITMAPS
-                                        | QCOW2_AUTOCLEAR_DATA_FILE_RAW,
+    QCOW2_AUTOCLEAR_MASK = QCOW2_AUTOCLEAR_BITMAPS
+        | QCOW2_AUTOCLEAR_DATA_FILE_RAW,
 };
 
 enum qcow2_discard_type {
@@ -310,8 +307,8 @@ enum qcow2_discard_type {
 typedef struct Qcow2Feature {
     uint8_t type;
     uint8_t bit;
-    char    name[46];
-} __attribute__((__packed__)) Qcow2Feature;
+    char name[46];
+} __attribute__ ((__packed__)) Qcow2Feature;
 
 typedef struct Qcow2DiscardRegion {
     uint64_t offset;
@@ -328,7 +325,7 @@ typedef struct Qcow2BitmapHeaderExt {
     uint32_t reserved32;
     uint64_t bitmap_directory_size;
     uint64_t bitmap_directory_offset;
-} __attribute__((__packed__)) Qcow2BitmapHeaderExt;
+} __attribute__ ((__packed__)) Qcow2BitmapHeaderExt;
 
 #define QCOW_RC_CACHE_SIZE QCOW_L2_CACHE_SIZE;
 
@@ -337,18 +334,17 @@ typedef struct Qcow2COWRegion {
      * Offset of the COW region in bytes from the start of the first cluster
      * touched by the request.
      */
-    unsigned    offset;
+    unsigned offset;
 
     /** Number of bytes to copy */
-    unsigned    nb_bytes;
+    unsigned nb_bytes;
 } Qcow2COWRegion;
 
 /**
  * Describes an in-flight (part of a) write request that writes to clusters
  * that are not referenced in their L2 table yet.
  */
-typedef struct QCowL2Meta
-{
+typedef struct QCowL2Meta {
     /** Guest offset of the first newly allocated cluster */
     uint64_t offset;
 
@@ -400,29 +396,29 @@ typedef enum QCow2ClusterType {
 } QCow2ClusterType;
 
 typedef enum QCow2MetadataOverlap {
-    QCOW2_OL_MAIN_HEADER_BITNR      = 0,
-    QCOW2_OL_ACTIVE_L1_BITNR        = 1,
-    QCOW2_OL_ACTIVE_L2_BITNR        = 2,
-    QCOW2_OL_REFCOUNT_TABLE_BITNR   = 3,
-    QCOW2_OL_REFCOUNT_BLOCK_BITNR   = 4,
-    QCOW2_OL_SNAPSHOT_TABLE_BITNR   = 5,
-    QCOW2_OL_INACTIVE_L1_BITNR      = 6,
-    QCOW2_OL_INACTIVE_L2_BITNR      = 7,
+    QCOW2_OL_MAIN_HEADER_BITNR = 0,
+    QCOW2_OL_ACTIVE_L1_BITNR = 1,
+    QCOW2_OL_ACTIVE_L2_BITNR = 2,
+    QCOW2_OL_REFCOUNT_TABLE_BITNR = 3,
+    QCOW2_OL_REFCOUNT_BLOCK_BITNR = 4,
+    QCOW2_OL_SNAPSHOT_TABLE_BITNR = 5,
+    QCOW2_OL_INACTIVE_L1_BITNR = 6,
+    QCOW2_OL_INACTIVE_L2_BITNR = 7,
     QCOW2_OL_BITMAP_DIRECTORY_BITNR = 8,
 
-    QCOW2_OL_MAX_BITNR              = 9,
+    QCOW2_OL_MAX_BITNR = 9,
 
-    QCOW2_OL_NONE             = 0,
-    QCOW2_OL_MAIN_HEADER      = (1 << QCOW2_OL_MAIN_HEADER_BITNR),
-    QCOW2_OL_ACTIVE_L1        = (1 << QCOW2_OL_ACTIVE_L1_BITNR),
-    QCOW2_OL_ACTIVE_L2        = (1 << QCOW2_OL_ACTIVE_L2_BITNR),
-    QCOW2_OL_REFCOUNT_TABLE   = (1 << QCOW2_OL_REFCOUNT_TABLE_BITNR),
-    QCOW2_OL_REFCOUNT_BLOCK   = (1 << QCOW2_OL_REFCOUNT_BLOCK_BITNR),
-    QCOW2_OL_SNAPSHOT_TABLE   = (1 << QCOW2_OL_SNAPSHOT_TABLE_BITNR),
-    QCOW2_OL_INACTIVE_L1      = (1 << QCOW2_OL_INACTIVE_L1_BITNR),
+    QCOW2_OL_NONE = 0,
+    QCOW2_OL_MAIN_HEADER = (1 << QCOW2_OL_MAIN_HEADER_BITNR),
+    QCOW2_OL_ACTIVE_L1 = (1 << QCOW2_OL_ACTIVE_L1_BITNR),
+    QCOW2_OL_ACTIVE_L2 = (1 << QCOW2_OL_ACTIVE_L2_BITNR),
+    QCOW2_OL_REFCOUNT_TABLE = (1 << QCOW2_OL_REFCOUNT_TABLE_BITNR),
+    QCOW2_OL_REFCOUNT_BLOCK = (1 << QCOW2_OL_REFCOUNT_BLOCK_BITNR),
+    QCOW2_OL_SNAPSHOT_TABLE = (1 << QCOW2_OL_SNAPSHOT_TABLE_BITNR),
+    QCOW2_OL_INACTIVE_L1 = (1 << QCOW2_OL_INACTIVE_L1_BITNR),
     /* NOTE: Checking overlaps with inactive L2 tables will result in bdrv
      * reads. */
-    QCOW2_OL_INACTIVE_L2      = (1 << QCOW2_OL_INACTIVE_L2_BITNR),
+    QCOW2_OL_INACTIVE_L2 = (1 << QCOW2_OL_INACTIVE_L2_BITNR),
     QCOW2_OL_BITMAP_DIRECTORY = (1 << QCOW2_OL_BITMAP_DIRECTORY_BITNR),
 } QCow2MetadataOverlap;
 
@@ -448,12 +444,12 @@ typedef enum QCow2MetadataOverlap {
 
 #define INV_OFFSET (-1ULL)
 
-static inline uint64_t l2meta_cow_start(QCowL2Meta *m)
+static inline uint64_t l2meta_cow_start(QCowL2Meta * m)
 {
     return m->offset + m->cow_start.offset;
 }
 
-static inline uint64_t l2meta_cow_end(QCowL2Meta *m)
+static inline uint64_t l2meta_cow_end(QCowL2Meta * m)
 {
     return m->offset + m->cow_end.offset + m->cow_end.nb_bytes;
 }

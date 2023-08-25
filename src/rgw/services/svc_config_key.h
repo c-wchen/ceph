@@ -1,5 +1,4 @@
 
-
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab ft=cpp
 
@@ -15,17 +14,16 @@
  *
  */
 
-
 #pragma once
 
 #include "rgw_service.h"
 
-class RGWSI_ConfigKey : public RGWServiceInstance
-{
-public:
-  RGWSI_ConfigKey(CephContext *cct) : RGWServiceInstance(cct) {}
-  virtual ~RGWSI_ConfigKey() {}
+class RGWSI_ConfigKey:public RGWServiceInstance {
+  public:
+    RGWSI_ConfigKey(CephContext * cct):RGWServiceInstance(cct) {
+    } virtual ~ RGWSI_ConfigKey() {
+    }
 
-  virtual int get(const std::string& key, bool secure, bufferlist *result) = 0;
+    virtual int get(const std::string & key, bool secure, bufferlist * result) =
+        0;
 };
-

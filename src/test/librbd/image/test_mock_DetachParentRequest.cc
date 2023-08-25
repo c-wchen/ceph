@@ -11,125 +11,119 @@
 #include "gtest/gtest.h"
 
 namespace librbd {
-namespace {
+    namespace {
 
-struct MockTestImageCtx : public MockImageCtx {
-  MockTestImageCtx(ImageCtx &image_ctx) : MockImageCtx(image_ctx) {
-  }
-};
+        struct MockTestImageCtx:public MockImageCtx {
+            MockTestImageCtx(ImageCtx & image_ctx):MockImageCtx(image_ctx) {
+        }};
 
-} // anonymous namespace
-} // namespace librbd
+    }                           // anonymous namespace
+}                               // namespace librbd
 
 // template definitions
 #include "librbd/image/DetachParentRequest.cc"
 
 namespace librbd {
-namespace image {
+    namespace image {
 
-using ::testing::_;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::StrEq;
+        using::testing::_;
+        using::testing::InSequence;
+        using::testing::Return;
+        using::testing::StrEq;
 
-class TestMockImageDetachParentRequest : public TestMockFixture {
-public:
-  typedef DetachParentRequest<MockTestImageCtx> MockDetachParentRequest;
+        class TestMockImageDetachParentRequest:public TestMockFixture {
+          public:
+            typedef DetachParentRequest < MockTestImageCtx >
+                MockDetachParentRequest;
 
-  void SetUp() override {
-    TestMockFixture::SetUp();
+            void SetUp() override {
+                TestMockFixture::SetUp();
 
-    ASSERT_EQ(0, open_image(m_image_name, &image_ctx));
-  }
+                ASSERT_EQ(0, open_image(m_image_name, &image_ctx));
+            } void expect_parent_detach(MockImageCtx & mock_image_ctx, int r) {
+                EXPECT_CALL(get_mock_io_ctx(mock_image_ctx.md_ctx),
+                            exec(mock_image_ctx.header_oid, _, StrEq("rbd"),
+                                 StrEq("parent_detach"), _, _, _, _))
+                    .WillOnce(Return(r));
+            } void expect_remove_parent(MockImageCtx & mock_image_ctx, int r) {
+                EXPECT_CALL(get_mock_io_ctx(mock_image_ctx.md_ctx),
+                            exec(mock_image_ctx.header_oid, _, StrEq("rbd"),
+                                 StrEq("remove_parent"), _, _, _, _))
+                    .WillOnce(Return(r));
+            } librbd::ImageCtx * image_ctx;
+        };
 
-  void expect_parent_detach(MockImageCtx &mock_image_ctx, int r) {
-    EXPECT_CALL(get_mock_io_ctx(mock_image_ctx.md_ctx),
-                exec(mock_image_ctx.header_oid, _, StrEq("rbd"),
-                     StrEq("parent_detach"), _, _, _, _))
-      .WillOnce(Return(r));
-  }
+        TEST_F(TestMockImageDetachParentRequest, ParentDetachSuccess) {
+            REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
 
-  void expect_remove_parent(MockImageCtx &mock_image_ctx, int r) {
-    EXPECT_CALL(get_mock_io_ctx(mock_image_ctx.md_ctx),
-                exec(mock_image_ctx.header_oid, _, StrEq("rbd"),
-                     StrEq("remove_parent"), _, _, _, _))
-      .WillOnce(Return(r));
-  }
+            MockTestImageCtx mock_image_ctx(*image_ctx);
 
-  librbd::ImageCtx *image_ctx;
-};
+            InSequence seq;
+            expect_parent_detach(mock_image_ctx, 0);
 
-TEST_F(TestMockImageDetachParentRequest, ParentDetachSuccess) {
-  REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
+            C_SaferCond ctx;
+            auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
+            req->send();
+            ASSERT_EQ(0, ctx.wait());
+        }
 
-  MockTestImageCtx mock_image_ctx(*image_ctx);
+        TEST_F(TestMockImageDetachParentRequest, RemoveParentSuccess) {
+            REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
 
-  InSequence seq;
-  expect_parent_detach(mock_image_ctx, 0);
+            MockTestImageCtx mock_image_ctx(*image_ctx);
 
-  C_SaferCond ctx;
-  auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
-  req->send();
-  ASSERT_EQ(0, ctx.wait());
-}
+            InSequence seq;
+            expect_parent_detach(mock_image_ctx, -EOPNOTSUPP);
+            expect_remove_parent(mock_image_ctx, 0);
 
-TEST_F(TestMockImageDetachParentRequest, RemoveParentSuccess) {
-  REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
+            C_SaferCond ctx;
+            auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
+            req->send();
+            ASSERT_EQ(0, ctx.wait());
+        }
 
-  MockTestImageCtx mock_image_ctx(*image_ctx);
+        TEST_F(TestMockImageDetachParentRequest, ParentDNE) {
+            REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
 
-  InSequence seq;
-  expect_parent_detach(mock_image_ctx, -EOPNOTSUPP);
-  expect_remove_parent(mock_image_ctx, 0);
+            MockTestImageCtx mock_image_ctx(*image_ctx);
 
-  C_SaferCond ctx;
-  auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
-  req->send();
-  ASSERT_EQ(0, ctx.wait());
-}
+            InSequence seq;
+            expect_parent_detach(mock_image_ctx, -ENOENT);
 
-TEST_F(TestMockImageDetachParentRequest, ParentDNE) {
-  REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
+            C_SaferCond ctx;
+            auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
+            req->send();
+            ASSERT_EQ(0, ctx.wait());
+        }
 
-  MockTestImageCtx mock_image_ctx(*image_ctx);
+        TEST_F(TestMockImageDetachParentRequest, ParentDetachError) {
+            REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
 
-  InSequence seq;
-  expect_parent_detach(mock_image_ctx, -ENOENT);
+            MockTestImageCtx mock_image_ctx(*image_ctx);
 
-  C_SaferCond ctx;
-  auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
-  req->send();
-  ASSERT_EQ(0, ctx.wait());
-}
+            InSequence seq;
+            expect_parent_detach(mock_image_ctx, -EPERM);
 
-TEST_F(TestMockImageDetachParentRequest, ParentDetachError) {
-  REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
+            C_SaferCond ctx;
+            auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
+            req->send();
+            ASSERT_EQ(-EPERM, ctx.wait());
+        }
 
-  MockTestImageCtx mock_image_ctx(*image_ctx);
+        TEST_F(TestMockImageDetachParentRequest, RemoveParentError) {
+            REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
 
-  InSequence seq;
-  expect_parent_detach(mock_image_ctx, -EPERM);
+            MockTestImageCtx mock_image_ctx(*image_ctx);
 
-  C_SaferCond ctx;
-  auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
-  req->send();
-  ASSERT_EQ(-EPERM, ctx.wait());
-}
+            InSequence seq;
+            expect_parent_detach(mock_image_ctx, -EOPNOTSUPP);
+            expect_remove_parent(mock_image_ctx, -EINVAL);
 
-TEST_F(TestMockImageDetachParentRequest, RemoveParentError) {
-  REQUIRE_FEATURE(RBD_FEATURE_LAYERING);
+            C_SaferCond ctx;
+            auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
+            req->send();
+            ASSERT_EQ(-EINVAL, ctx.wait());
+        }
 
-  MockTestImageCtx mock_image_ctx(*image_ctx);
-
-  InSequence seq;
-  expect_parent_detach(mock_image_ctx, -EOPNOTSUPP);
-  expect_remove_parent(mock_image_ctx, -EINVAL);
-
-  C_SaferCond ctx;
-  auto req = MockDetachParentRequest::create(mock_image_ctx, &ctx);
-  req->send();
-  ASSERT_EQ(-EINVAL, ctx.wait());
-}
-
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd

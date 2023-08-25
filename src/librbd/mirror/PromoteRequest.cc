@@ -18,98 +18,106 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
+    namespace mirror {
 
-using librbd::util::create_context_callback;
+        using librbd::util::create_context_callback;
 
-template <typename I>
-void PromoteRequest<I>::send() {
-  get_info();
-}
+         template < typename I > void PromoteRequest < I >::send() {
+            get_info();
+        } template < typename I > void PromoteRequest < I >::get_info() {
+            CephContext *cct = m_image_ctx.cct;
+             ldout(cct, 20) << dendl;
 
-template <typename I>
-void PromoteRequest<I>::get_info() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            auto ctx = create_context_callback <
+                PromoteRequest < I >,
+                &PromoteRequest < I >::handle_get_info > (this);
+            auto req =
+                GetInfoRequest < I >::create(m_image_ctx, &m_mirror_image,
+                                             &m_promotion_state,
+                                             &m_primary_mirror_uuid, ctx);
+             req->send();
+        } template < typename I >
+            void PromoteRequest < I >::handle_get_info(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    PromoteRequest<I>, &PromoteRequest<I>::handle_get_info>(this);
-  auto req = GetInfoRequest<I>::create(m_image_ctx, &m_mirror_image,
-                                       &m_promotion_state,
-                                       &m_primary_mirror_uuid, ctx);
-  req->send();
-}
+            if (r < 0) {
+                lderr(cct) << "failed to retrieve mirroring state: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
+            else if (m_mirror_image.state !=
+                     cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
+                lderr(cct) << "mirroring is not currently enabled" << dendl;
+                finish(-EINVAL);
+                return;
+            }
+            else if (m_promotion_state == PROMOTION_STATE_PRIMARY) {
+                lderr(cct) << "image is already primary" << dendl;
+                finish(-EINVAL);
+                return;
+            }
+            else if (m_promotion_state == PROMOTION_STATE_NON_PRIMARY
+                     && !m_force) {
+                lderr(cct) <<
+                    "image is primary within a remote cluster or demotion is not propagated yet"
+                    << dendl;
+                finish(-EBUSY);
+                return;
+            }
 
-template <typename I>
-void PromoteRequest<I>::handle_get_info(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            promote();
+        }
 
-  if (r < 0) {
-    lderr(cct) << "failed to retrieve mirroring state: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  } else if (m_mirror_image.state != cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
-    lderr(cct) << "mirroring is not currently enabled" << dendl;
-    finish(-EINVAL);
-    return;
-  } else if (m_promotion_state == PROMOTION_STATE_PRIMARY) {
-    lderr(cct) << "image is already primary" << dendl;
-    finish(-EINVAL);
-    return;
-  } else if (m_promotion_state == PROMOTION_STATE_NON_PRIMARY && !m_force) {
-    lderr(cct) << "image is primary within a remote cluster or demotion is not propagated yet"
-               << dendl;
-    finish(-EBUSY);
-    return;
-  }
+        template < typename I > void PromoteRequest < I >::promote() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  promote();
-}
+            auto ctx = create_context_callback <
+                PromoteRequest < I >,
+                &PromoteRequest < I >::handle_promote > (this);
+            if (m_mirror_image.mode == cls::rbd::MIRROR_IMAGE_MODE_JOURNAL) {
+                Journal < I >::promote(&m_image_ctx, ctx);
+            }
+            else if (m_mirror_image.mode ==
+                     cls::rbd::MIRROR_IMAGE_MODE_SNAPSHOT) {
+                auto req =
+                    mirror::snapshot::PromoteRequest < I >::create(&m_image_ctx,
+                                                                   m_mirror_image.
+                                                                   global_image_id,
+                                                                   ctx);
+                req->send();
+            }
+            else {
+                lderr(cct) << "unknown image mirror mode: " << m_mirror_image.
+                    mode << dendl;
+                finish(-EOPNOTSUPP);
+            }
+        }
 
-template <typename I>
-void PromoteRequest<I>::promote() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+        template < typename I > void PromoteRequest < I >::handle_promote(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    PromoteRequest<I>, &PromoteRequest<I>::handle_promote>(this);
-  if (m_mirror_image.mode == cls::rbd::MIRROR_IMAGE_MODE_JOURNAL) {
-    Journal<I>::promote(&m_image_ctx, ctx);
-  } else if (m_mirror_image.mode == cls::rbd::MIRROR_IMAGE_MODE_SNAPSHOT) {
-    auto req = mirror::snapshot::PromoteRequest<I>::create(
-      &m_image_ctx, m_mirror_image.global_image_id, ctx);
-    req->send();
-  } else {
-    lderr(cct) << "unknown image mirror mode: " << m_mirror_image.mode << dendl;
-    finish(-EOPNOTSUPP);
-  }
-}
+            if (r < 0) {
+                lderr(cct) << "failed to promote image: " << cpp_strerror(r)
+                    << dendl;
+            }
 
-template <typename I>
-void PromoteRequest<I>::handle_promote(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            finish(r);
+        }
 
-  if (r < 0) {
-    lderr(cct) << "failed to promote image: " << cpp_strerror(r)
-               << dendl;
-  }
+        template < typename I > void PromoteRequest < I >::finish(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  finish(r);
-}
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-template <typename I>
-void PromoteRequest<I>::finish(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+    }                           // namespace mirror
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::PromoteRequest<librbd::ImageCtx>;
+template class librbd::mirror::PromoteRequest < librbd::ImageCtx >;

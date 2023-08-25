@@ -25,19 +25,18 @@ class CrossProcessSem;
  * Waits on pool_setup_sem, posts to it,
  * deletes a pool, and posts to delete_pool_sem.
  */
-class StRadosDeletePool : public SysTestRunnable
-{
-public:
-  StRadosDeletePool(int argc, const char **argv,
-		    CrossProcessSem *pool_setup_sem,
-		    CrossProcessSem *delete_pool_sem,
-		    const std::string &pool_name);
-  ~StRadosDeletePool() override;
-  int run() override;
-private:
-  CrossProcessSem *m_pool_setup_sem;
-  CrossProcessSem *m_delete_pool_sem;
-  std::string m_pool_name;
+class StRadosDeletePool:public SysTestRunnable {
+  public:
+    StRadosDeletePool(int argc, const char **argv,
+                      CrossProcessSem * pool_setup_sem,
+                      CrossProcessSem * delete_pool_sem,
+                      const std::string & pool_name);
+    ~StRadosDeletePool() override;
+    int run() override;
+  private:
+     CrossProcessSem * m_pool_setup_sem;
+    CrossProcessSem *m_delete_pool_sem;
+     std::string m_pool_name;
 };
 
 #endif

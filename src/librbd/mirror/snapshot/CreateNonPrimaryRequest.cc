@@ -19,255 +19,285 @@
                            << this << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
-namespace snapshot {
+    namespace mirror {
+        namespace snapshot {
 
-using librbd::util::create_context_callback;
-using librbd::util::create_rados_callback;
+            using librbd::util::create_context_callback;
+            using librbd::util::create_rados_callback;
 
-template <typename I>
-CreateNonPrimaryRequest<I>::CreateNonPrimaryRequest(
-    I* image_ctx, bool demoted, const std::string &primary_mirror_uuid,
-    uint64_t primary_snap_id, const SnapSeqs& snap_seqs,
-    const ImageState &image_state, uint64_t *snap_id, Context *on_finish)
-  : m_image_ctx(image_ctx), m_demoted(demoted),
-    m_primary_mirror_uuid(primary_mirror_uuid),
-    m_primary_snap_id(primary_snap_id), m_snap_seqs(snap_seqs),
-    m_image_state(image_state), m_snap_id(snap_id), m_on_finish(on_finish) {
-  m_default_ns_ctx.dup(m_image_ctx->md_ctx);
-  m_default_ns_ctx.set_namespace("");
-}
+             template < typename I >
+                CreateNonPrimaryRequest <
+                I >::CreateNonPrimaryRequest(I * image_ctx, bool demoted,
+                                             const std::
+                                             string & primary_mirror_uuid,
+                                             uint64_t primary_snap_id,
+                                             const SnapSeqs & snap_seqs,
+                                             const ImageState & image_state,
+                                             uint64_t * snap_id,
+                                             Context * on_finish)
+            :m_image_ctx(image_ctx), m_demoted(demoted),
+                m_primary_mirror_uuid(primary_mirror_uuid),
+                m_primary_snap_id(primary_snap_id), m_snap_seqs(snap_seqs),
+                m_image_state(image_state), m_snap_id(snap_id),
+                m_on_finish(on_finish) {
+                m_default_ns_ctx.dup(m_image_ctx->md_ctx);
+                m_default_ns_ctx.set_namespace("");
+            } template < typename I > void CreateNonPrimaryRequest < I >::send() {
+                refresh_image();
+            } template < typename I >
+                void CreateNonPrimaryRequest < I >::refresh_image() {
+                if (!m_image_ctx->state->is_refresh_required()) {
+                    get_mirror_image();
+                    return;
+                } CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << dendl;
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::send() {
-  refresh_image();
-}
+                auto ctx = create_context_callback <
+                    CreateNonPrimaryRequest < I >,
+                    &CreateNonPrimaryRequest < I >::handle_refresh_image >
+                    (this);
+                m_image_ctx->state->refresh(ctx);
+            }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::refresh_image() {
-  if (!m_image_ctx->state->is_refresh_required()) {
-    get_mirror_image();
-    return;
-  }
+            template < typename I >
+                void CreateNonPrimaryRequest <
+                I >::handle_refresh_image(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << dendl;
+                if (r < 0) {
+                    lderr(cct) << "failed to refresh image: " << cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-  auto ctx = create_context_callback<
-    CreateNonPrimaryRequest<I>,
-    &CreateNonPrimaryRequest<I>::handle_refresh_image>(this);
-  m_image_ctx->state->refresh(ctx);
-}
+                get_mirror_image();
+            }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::handle_refresh_image(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+            template < typename I >
+                void CreateNonPrimaryRequest < I >::get_mirror_image() {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << dendl;
 
-  if (r < 0) {
-    lderr(cct) << "failed to refresh image: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+                librados::ObjectReadOperation op;
+                cls_client::mirror_image_get_start(&op, m_image_ctx->id);
 
-  get_mirror_image();
-}
+                librados::AioCompletion * comp = create_rados_callback <
+                    CreateNonPrimaryRequest < I >,
+                    &CreateNonPrimaryRequest < I >::handle_get_mirror_image >
+                    (this);
+                int r =
+                    m_image_ctx->md_ctx.aio_operate(RBD_MIRRORING, comp, &op,
+                                                    &m_out_bl);
+                ceph_assert(r == 0);
+                comp->release();
+            }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::get_mirror_image() {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << dendl;
+            template < typename I >
+                void CreateNonPrimaryRequest <
+                I >::handle_get_mirror_image(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  librados::ObjectReadOperation op;
-  cls_client::mirror_image_get_start(&op, m_image_ctx->id);
+                cls::rbd::MirrorImage mirror_image;
+                if (r == 0) {
+                    auto iter = m_out_bl.cbegin();
+                    r = cls_client::mirror_image_get_finish(&iter,
+                                                            &mirror_image);
+                }
 
-  librados::AioCompletion *comp = create_rados_callback<
-    CreateNonPrimaryRequest<I>,
-    &CreateNonPrimaryRequest<I>::handle_get_mirror_image>(this);
-  int r = m_image_ctx->md_ctx.aio_operate(RBD_MIRRORING, comp, &op, &m_out_bl);
-  ceph_assert(r == 0);
-  comp->release();
-}
+                if (r < 0 && r != -ENOENT) {
+                    lderr(cct) << "failed to retrieve mirroring state: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::handle_get_mirror_image(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+                if (mirror_image.mode != cls::rbd::MIRROR_IMAGE_MODE_SNAPSHOT) {
+                    lderr(cct) << "snapshot based mirroring is not enabled" <<
+                        dendl;
+                    finish(-EINVAL);
+                    return;
+                }
 
-  cls::rbd::MirrorImage mirror_image;
-  if (r == 0) {
-    auto iter = m_out_bl.cbegin();
-    r = cls_client::mirror_image_get_finish(&iter, &mirror_image);
-  }
+                if (!is_orphan()
+                    && !util::can_create_non_primary_snapshot(m_image_ctx)) {
+                    finish(-EINVAL);
+                    return;
+                }
 
-  if (r < 0 && r != -ENOENT) {
-    lderr(cct) << "failed to retrieve mirroring state: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+                uuid_d uuid_gen;
+                uuid_gen.generate_random();
+                m_snap_name =
+                    ".mirror.non_primary." + mirror_image.global_image_id +
+                    "." + uuid_gen.to_string();
 
-  if (mirror_image.mode != cls::rbd::MIRROR_IMAGE_MODE_SNAPSHOT) {
-    lderr(cct) << "snapshot based mirroring is not enabled" << dendl;
-    finish(-EINVAL);
-    return;
-  }
+                get_mirror_peers();
+            }
 
-  if (!is_orphan() && !util::can_create_non_primary_snapshot(m_image_ctx)) {
-    finish(-EINVAL);
-    return;
-  }
+            template < typename I >
+                void CreateNonPrimaryRequest < I >::get_mirror_peers() {
+                if (!m_demoted) {
+                    create_snapshot();
+                    return;
+                }
 
-  uuid_d uuid_gen;
-  uuid_gen.generate_random();
-  m_snap_name = ".mirror.non_primary." + mirror_image.global_image_id + "." +
-    uuid_gen.to_string();
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << dendl;
 
-  get_mirror_peers();
-}
+                librados::ObjectReadOperation op;
+                cls_client::mirror_peer_list_start(&op);
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::get_mirror_peers() {
-  if (!m_demoted) {
-    create_snapshot();
-    return;
-  }
+                auto aio_comp = create_rados_callback <
+                    CreateNonPrimaryRequest < I >,
+                    &CreateNonPrimaryRequest < I >::handle_get_mirror_peers >
+                    (this);
+                m_out_bl.clear();
+                int r =
+                    m_default_ns_ctx.aio_operate(RBD_MIRRORING, aio_comp, &op,
+                                                 &m_out_bl);
+                ceph_assert(r == 0);
+                aio_comp->release();
+            }
 
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << dendl;
+            template < typename I >
+                void CreateNonPrimaryRequest <
+                I >::handle_get_mirror_peers(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  librados::ObjectReadOperation op;
-  cls_client::mirror_peer_list_start(&op);
+                std::vector < cls::rbd::MirrorPeer > peers;
+                if (r == 0) {
+                    auto iter = m_out_bl.cbegin();
+                    r = cls_client::mirror_peer_list_finish(&iter, &peers);
+                }
 
-  auto aio_comp = create_rados_callback<
-    CreateNonPrimaryRequest<I>,
-    &CreateNonPrimaryRequest<I>::handle_get_mirror_peers>(this);
-  m_out_bl.clear();
-  int r = m_default_ns_ctx.aio_operate(RBD_MIRRORING, aio_comp, &op, &m_out_bl);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+                if (r < 0) {
+                    lderr(cct) << "failed to retrieve mirror peers: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::handle_get_mirror_peers(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+              for (auto & peer:peers) {
+                    if (peer.mirror_peer_direction ==
+                        cls::rbd::MIRROR_PEER_DIRECTION_RX) {
+                        continue;
+                    }
+                    m_mirror_peer_uuids.insert(peer.uuid);
+                }
 
-  std::vector<cls::rbd::MirrorPeer> peers;
-  if (r == 0) {
-    auto iter = m_out_bl.cbegin();
-    r = cls_client::mirror_peer_list_finish(&iter, &peers);
-  }
+                create_snapshot();
+            }
 
-  if (r < 0) {
-    lderr(cct) << "failed to retrieve mirror peers: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void CreateNonPrimaryRequest < I >::create_snapshot() {
+                CephContext *cct = m_image_ctx->cct;
 
-  for (auto &peer : peers) {
-    if (peer.mirror_peer_direction == cls::rbd::MIRROR_PEER_DIRECTION_RX) {
-      continue;
-    }
-    m_mirror_peer_uuids.insert(peer.uuid);
-  }
+                cls::rbd::MirrorSnapshotNamespace ns {
+                    (m_demoted ? cls::rbd::
+                     MIRROR_SNAPSHOT_STATE_NON_PRIMARY_DEMOTED : cls::rbd::
+                     MIRROR_SNAPSHOT_STATE_NON_PRIMARY), {
+                }, m_primary_mirror_uuid, m_primary_snap_id};
+                if (m_demoted) {
+                    ns.mirror_peer_uuids = m_mirror_peer_uuids;
+                }
+                ns.snap_seqs = m_snap_seqs;
+                ns.complete = is_orphan();
+                ldout(cct, 15) << "ns=" << ns << dendl;
 
-  create_snapshot();
-}
+                auto ctx = create_context_callback <
+                    CreateNonPrimaryRequest < I >,
+                    &CreateNonPrimaryRequest < I >::handle_create_snapshot >
+                    (this);
+                m_image_ctx->operations->snap_create(ns, m_snap_name, 0,
+                                                     m_prog_ctx, ctx);
+            }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::create_snapshot() {
-  CephContext *cct = m_image_ctx->cct;
+            template < typename I >
+                void CreateNonPrimaryRequest <
+                I >::handle_create_snapshot(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  cls::rbd::MirrorSnapshotNamespace ns{
-    (m_demoted ? cls::rbd::MIRROR_SNAPSHOT_STATE_NON_PRIMARY_DEMOTED :
-                 cls::rbd::MIRROR_SNAPSHOT_STATE_NON_PRIMARY), {},
-    m_primary_mirror_uuid, m_primary_snap_id};
-  if (m_demoted) {
-    ns.mirror_peer_uuids = m_mirror_peer_uuids;
-  }
-  ns.snap_seqs = m_snap_seqs;
-  ns.complete = is_orphan();
-  ldout(cct, 15) << "ns=" << ns << dendl;
+                if (r < 0) {
+                    lderr(cct) << "failed to create mirror snapshot: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-  auto ctx = create_context_callback<
-    CreateNonPrimaryRequest<I>,
-    &CreateNonPrimaryRequest<I>::handle_create_snapshot>(this);
-  m_image_ctx->operations->snap_create(ns, m_snap_name, 0, m_prog_ctx, ctx);
-}
+                write_image_state();
+            }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::handle_create_snapshot(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+            template < typename I >
+                void CreateNonPrimaryRequest < I >::write_image_state() {
+                uint64_t snap_id;
+                {
+                    std::shared_lock image_locker {
+                    m_image_ctx->image_lock};
+                    snap_id =
+                        m_image_ctx->
+                        get_snap_id(cls::rbd::MirrorSnapshotNamespace {
+                                    }, m_snap_name);
+                }
 
-  if (r < 0) {
-    lderr(cct) << "failed to create mirror snapshot: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+                if (m_snap_id != nullptr) {
+                    *m_snap_id = snap_id;
+                }
 
-  write_image_state();
-}
+                if (is_orphan()) {
+                    finish(0);
+                    return;
+                }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::write_image_state() {
-  uint64_t snap_id;
-  {
-    std::shared_lock image_locker{m_image_ctx->image_lock};
-    snap_id = m_image_ctx->get_snap_id(
-      cls::rbd::MirrorSnapshotNamespace{}, m_snap_name);
-  }
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << dendl;
 
-  if (m_snap_id != nullptr) {
-    *m_snap_id = snap_id;
-  }
+                auto ctx = create_context_callback <
+                    CreateNonPrimaryRequest < I >,
+                    &CreateNonPrimaryRequest < I >::handle_write_image_state >
+                    (this);
 
-  if (is_orphan()) {
-    finish(0);
-    return;
-  }
+                auto req =
+                    WriteImageStateRequest < I >::create(m_image_ctx, snap_id,
+                                                         m_image_state, ctx);
+                req->send();
+            }
 
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << dendl;
+            template < typename I >
+                void CreateNonPrimaryRequest <
+                I >::handle_write_image_state(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    CreateNonPrimaryRequest<I>,
-    &CreateNonPrimaryRequest<I>::handle_write_image_state>(this);
+                if (r < 0) {
+                    lderr(cct) << "failed to write image state: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-  auto req = WriteImageStateRequest<I>::create(m_image_ctx, snap_id,
-                                               m_image_state, ctx);
-  req->send();
-}
+                finish(0);
+            }
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::handle_write_image_state(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+            template < typename I >
+                void CreateNonPrimaryRequest < I >::finish(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  if (r < 0) {
-    lderr(cct) << "failed to write image state: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  finish(0);
-}
+        }                       // namespace snapshot
+    }                           // namespace mirror
+}                               // namespace librbd
 
-template <typename I>
-void CreateNonPrimaryRequest<I>::finish(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
-
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace snapshot
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::snapshot::CreateNonPrimaryRequest<librbd::ImageCtx>;
+template class librbd::mirror::snapshot::CreateNonPrimaryRequest <
+    librbd::ImageCtx >;

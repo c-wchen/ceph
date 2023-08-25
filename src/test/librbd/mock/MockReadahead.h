@@ -11,11 +11,10 @@ class Context;
 
 namespace librbd {
 
-struct MockReadahead {
-  MOCK_METHOD1(set_max_readahead_size, void(uint64_t));
-  MOCK_METHOD1(wait_for_pending, void(Context *));
-};
+    struct MockReadahead {
+        MOCK_METHOD1(set_max_readahead_size, void (uint64_t));
+         MOCK_METHOD1(wait_for_pending, void (Context *));
+    };
 
-} // namespace librbd
-
-#endif // CEPH_TEST_LIBRBD_MOCK_READAHEAD_H
+}                               // namespace librbd
+#endif                          // CEPH_TEST_LIBRBD_MOCK_READAHEAD_H

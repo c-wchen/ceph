@@ -23,12 +23,12 @@
 
 #include "ExtBlkDevVdo.h"
 
-class ExtBlkDevPluginVdo : public ceph::ExtBlkDevPlugin {
-public:
-  explicit ExtBlkDevPluginVdo(CephContext *cct) : ExtBlkDevPlugin(cct) {}
-  int get_required_cap_set(cap_t caps) override;
-  int factory(const std::string& logdevname,
-	      ceph::ExtBlkDevInterfaceRef& ext_blk_dev) override;
+class ExtBlkDevPluginVdo:public ceph::ExtBlkDevPlugin {
+  public:
+    explicit ExtBlkDevPluginVdo(CephContext * cct):ExtBlkDevPlugin(cct) {
+    } int get_required_cap_set(cap_t caps) override;
+    int factory(const std::string & logdevname,
+                ceph::ExtBlkDevInterfaceRef & ext_blk_dev) override;
 };
 
 #endif

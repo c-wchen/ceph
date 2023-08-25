@@ -33,7 +33,6 @@
 #include "include/compact_set.h"
 #include "include/compat.h"
 
-
 /*
 
 Memory Pools
@@ -51,7 +50,6 @@ tracked independently of the pool total.  This additional accounting
 is optional and only incurs an overhead if the debugging is enabled at
 runtime.  This allows developers to see what types are consuming the
 pool resources.
-
 
 Declaring
 ---------
@@ -76,7 +74,6 @@ Thus for mempool "osd" we have automatically available to us:
    mempool::osd::list
    mempool::osd::vector
    mempool::osd::unordered_map
-
 
 Putting objects in a mempool
 ----------------------------
@@ -177,29 +174,28 @@ namespace mempool {
   f(unittest_1)			      \
   f(unittest_2)
 
-
 // give them integer ids
 #define P(x) mempool_##x,
-enum pool_index_t {
-  DEFINE_MEMORY_POOLS_HELPER(P)
-  num_pools        // Must be last.
-};
+    enum pool_index_t {
+        DEFINE_MEMORY_POOLS_HELPER(P)
+            num_pools           // Must be last.
+    };
 #undef P
 
-extern bool debug_mode;
-extern void set_debug_mode(bool d);
+    extern bool debug_mode;
+    extern void set_debug_mode(bool d);
 
 // --------------------------------------------------------------
-class pool_t;
+    class pool_t;
 
 // we shard pool stats across many shard_t's to reduce the amount
 // of cacheline ping pong.
-enum {
-  num_shard_bits = 5
-};
-enum {
-  num_shards = 1 << num_shard_bits
-};
+    enum {
+        num_shard_bits = 5
+    };
+    enum {
+        num_shards = 1 << num_shard_bits
+    };
 
 //
 // Align shard to a cacheline.
@@ -211,203 +207,200 @@ enum {
 // linesize is smaller on a given processor, it will just waste a few
 // bytes.
 //
-struct shard_t {
-  ceph::atomic<size_t> bytes = {0};
-  ceph::atomic<size_t> items = {0};
-  char __padding[128 - sizeof(ceph::atomic<size_t>)*2];
-} __attribute__ ((aligned (128)));
-
-static_assert(sizeof(shard_t) == 128, "shard_t should be cacheline-sized");
-
-struct stats_t {
-  ssize_t items = 0;
-  ssize_t bytes = 0;
-  void dump(ceph::Formatter *f) const {
-    f->dump_int("items", items);
-    f->dump_int("bytes", bytes);
-  }
-
-  stats_t& operator+=(const stats_t& o) {
-    items += o.items;
-    bytes += o.bytes;
-    return *this;
-  }
-};
-
-pool_t& get_pool(pool_index_t ix);
-const char *get_pool_name(pool_index_t ix);
-
-struct type_t {
-  const char *type_name;
-  size_t item_size;
-  ceph::atomic<ssize_t> items = {0};  // signed
-};
-
-struct type_info_hash {
-  std::size_t operator()(const std::type_info& k) const {
-    return k.hash_code();
-  }
-};
-
-class pool_t {
-  shard_t shard[num_shards];
-
-  mutable std::mutex lock;  // only used for types list
-  std::unordered_map<const char *, type_t> type_map;
-
-public:
-  //
-  // How much this pool consumes. O(<num_shards>)
-  //
-  size_t allocated_bytes() const;
-  size_t allocated_items() const;
-
-  void adjust_count(ssize_t items, ssize_t bytes);
-
-  static size_t pick_a_shard_int() {
-    // Dirt cheap, see:
-    //   https://fossies.org/dox/glibc-2.32/pthread__self_8c_source.html
-    size_t me = (size_t)pthread_self();
-    size_t i = (me >> CEPH_PAGE_SHIFT) & ((1 << num_shard_bits) - 1);
-    return i;
-  }
-
-  shard_t* pick_a_shard() {
-    size_t i = pick_a_shard_int();
-    return &shard[i];
-  }
-
-  type_t *get_type(const std::type_info& ti, size_t size) {
-    std::lock_guard<std::mutex> l(lock);
-    auto p = type_map.find(ti.name());
-    if (p != type_map.end()) {
-      return &p->second;
+    struct shard_t {
+        ceph::atomic < size_t > bytes = {
+        0};
+         ceph::atomic < size_t > items = {
+        0};
+        char __padding[128 - sizeof(ceph::atomic < size_t >) * 2];
     }
-    type_t &t = type_map[ti.name()];
-    t.type_name = ti.name();
-    t.item_size = size;
-    return &t;
-  }
+    __attribute__ ((aligned(128)));
 
-  // get pool stats.  by_type is not populated if !debug
-  void get_stats(stats_t *total,
-		 std::map<std::string, stats_t> *by_type) const;
+    static_assert(sizeof(shard_t) == 128, "shard_t should be cacheline-sized");
 
-  void dump(ceph::Formatter *f, stats_t *ptotal=0) const;
-};
+    struct stats_t {
+        ssize_t items = 0;
+        ssize_t bytes = 0;
+        void dump(ceph::Formatter * f) const {
+            f->dump_int("items", items);
+            f->dump_int("bytes", bytes);
+        } stats_t & operator+=(const stats_t & o) {
+            items += o.items;
+            bytes += o.bytes;
+            return *this;
+    }};
 
-void dump(ceph::Formatter *f);
+    pool_t & get_pool(pool_index_t ix);
+    const char *get_pool_name(pool_index_t ix);
 
+    struct type_t {
+        const char *type_name;
+        size_t item_size;
+         ceph::atomic < ssize_t > items = {
+        0};                     // signed
+    };
+
+    struct type_info_hash {
+        std::size_t operator() (const std::type_info & k)const {
+            return k.hash_code();
+    }};
+
+    class pool_t {
+        shard_t shard[num_shards];
+
+        mutable std::mutex lock;    // only used for types list
+         std::unordered_map < const char *, type_t > type_map;
+
+      public:
+        //
+        // How much this pool consumes. O(<num_shards>)
+        //
+         size_t allocated_bytes() const;
+        size_t allocated_items() const;
+
+        void adjust_count(ssize_t items, ssize_t bytes);
+
+        static size_t pick_a_shard_int() {
+            // Dirt cheap, see:
+            //   https://fossies.org/dox/glibc-2.32/pthread__self_8c_source.html
+            size_t me = (size_t) pthread_self();
+            size_t i = (me >> CEPH_PAGE_SHIFT) & ((1 << num_shard_bits) - 1);
+             return i;
+        } shard_t *pick_a_shard() {
+            size_t i = pick_a_shard_int();
+            return &shard[i];
+        }
+
+        type_t *get_type(const std::type_info & ti, size_t size) {
+            std::lock_guard < std::mutex > l(lock);
+            auto p = type_map.find(ti.name());
+            if (p != type_map.end()) {
+                return &p->second;
+            }
+            type_t & t = type_map[ti.name()];
+            t.type_name = ti.name();
+            t.item_size = size;
+            return &t;
+        }
+
+        // get pool stats.  by_type is not populated if !debug
+        void get_stats(stats_t * total,
+                       std::map < std::string, stats_t > *by_type) const;
+
+        void dump(ceph::Formatter * f, stats_t * ptotal = 0) const;
+    };
+
+    void dump(ceph::Formatter * f);
 
 // STL allocator for use with containers.  All actual state
 // is stored in the static pool_allocator_base_t, which saves us from
 // passing the allocator to container constructors.
 
-template<pool_index_t pool_ix, typename T>
-class pool_allocator {
-  pool_t *pool;
-  type_t *type = nullptr;
+    template < pool_index_t pool_ix, typename T > class pool_allocator {
+        pool_t *pool;
+        type_t *type = nullptr;
 
-public:
-  typedef pool_allocator<pool_ix, T> allocator_type;
-  typedef T value_type;
-  typedef value_type *pointer;
-  typedef const value_type * const_pointer;
-  typedef value_type& reference;
-  typedef const value_type& const_reference;
-  typedef std::size_t size_type;
-  typedef std::ptrdiff_t difference_type;
+      public:
+        typedef pool_allocator < pool_ix, T > allocator_type;
+        typedef T value_type;
+        typedef value_type *pointer;
+        typedef const value_type *const_pointer;
+        typedef value_type & reference;
+        typedef const value_type & const_reference;
+        typedef std::size_t size_type;
+        typedef std::ptrdiff_t difference_type;
 
-  template<typename U> struct rebind {
-    typedef pool_allocator<pool_ix,U> other;
-  };
+        template < typename U > struct rebind {
+            typedef pool_allocator < pool_ix, U > other;
+        };
 
-  void init(bool force_register) {
-    pool = &get_pool(pool_ix);
-    if (debug_mode || force_register) {
-      type = pool->get_type(typeid(T), sizeof(T));
-    }
-  }
+        void init(bool force_register) {
+            pool = &get_pool(pool_ix);
+            if (debug_mode || force_register) {
+                type = pool->get_type(typeid(T), sizeof(T));
+            }
+        }
 
-  pool_allocator(bool force_register=false) {
-    init(force_register);
-  }
-  template<typename U>
-  pool_allocator(const pool_allocator<pool_ix,U>&) {
-    init(false);
-  }
+        pool_allocator(bool force_register = false) {
+            init(force_register);
+        }
+        template < typename U >
+            pool_allocator(const pool_allocator < pool_ix, U > &) {
+            init(false);
+        }
 
-  T* allocate(size_t n, void *p = nullptr) {
-    size_t total = sizeof(T) * n;
-    shard_t *shard = pool->pick_a_shard();
-    shard->bytes += total;
-    shard->items += n;
-    if (type) {
-      type->items += n;
-    }
-    T* r = reinterpret_cast<T*>(new char[total]);
-    return r;
-  }
+        T *allocate(size_t n, void *p = nullptr) {
+            size_t total = sizeof(T) * n;
+            shard_t *shard = pool->pick_a_shard();
+            shard->bytes += total;
+            shard->items += n;
+            if (type) {
+                type->items += n;
+            }
+            T *r = reinterpret_cast < T * >(new char[total]);
+            return r;
+        }
 
-  void deallocate(T* p, size_t n) {
-    size_t total = sizeof(T) * n;
-    shard_t *shard = pool->pick_a_shard();
-    shard->bytes -= total;
-    shard->items -= n;
-    if (type) {
-      type->items -= n;
-    }
-    delete[] reinterpret_cast<char*>(p);
-  }
+        void deallocate(T * p, size_t n) {
+            size_t total = sizeof(T) * n;
+            shard_t *shard = pool->pick_a_shard();
+            shard->bytes -= total;
+            shard->items -= n;
+            if (type) {
+                type->items -= n;
+            }
+            delete[]reinterpret_cast < char *>(p);
+        }
 
-  T* allocate_aligned(size_t n, size_t align, void *p = nullptr) {
-    size_t total = sizeof(T) * n;
-    shard_t *shard = pool->pick_a_shard();
-    shard->bytes += total;
-    shard->items += n;
-    if (type) {
-      type->items += n;
-    }
-    char *ptr;
-    int rc = ::posix_memalign((void**)(void*)&ptr, align, total);
-    if (rc)
-      throw std::bad_alloc();
-    T* r = reinterpret_cast<T*>(ptr);
-    return r;
-  }
+        T *allocate_aligned(size_t n, size_t align, void *p = nullptr) {
+            size_t total = sizeof(T) * n;
+            shard_t *shard = pool->pick_a_shard();
+            shard->bytes += total;
+            shard->items += n;
+            if (type) {
+                type->items += n;
+            }
+            char *ptr;
+            int rc =::posix_memalign((void **)(void *)&ptr, align, total);
+            if (rc)
+                throw std::bad_alloc();
+            T *r = reinterpret_cast < T * >(ptr);
+            return r;
+        }
 
-  void deallocate_aligned(T* p, size_t n) {
-    size_t total = sizeof(T) * n;
-    shard_t *shard = pool->pick_a_shard();
-    shard->bytes -= total;
-    shard->items -= n;
-    if (type) {
-      type->items -= n;
-    }
-    aligned_free(p);
-  }
+        void deallocate_aligned(T * p, size_t n) {
+            size_t total = sizeof(T) * n;
+            shard_t *shard = pool->pick_a_shard();
+            shard->bytes -= total;
+            shard->items -= n;
+            if (type) {
+                type->items -= n;
+            }
+            aligned_free(p);
+        }
 
-  void destroy(T* p) {
-    p->~T();
-  }
+        void destroy(T * p) {
+            p->~T();
+        }
 
-  template<class U>
-  void destroy(U *p) {
-    p->~U();
-  }
+        template < class U > void destroy(U * p) {
+            p->~U();
+        }
 
-  void construct(T* p, const T& val) {
-    ::new ((void *)p) T(val);
-  }
+        void construct(T * p, const T & val) {
+            ::new((void *)p) T(val);
+        }
 
-  template<class U, class... Args> void construct(U* p,Args&&... args) {
-    ::new((void *)p) U(std::forward<Args>(args)...);
-  }
+        template < class U, class ... Args > void construct(U * p, Args
+                                                            && ... args) {
+            ::new((void *)p) U(std::forward < Args > (args) ...);
+        }
 
-  bool operator==(const pool_allocator&) const { return true; }
-  bool operator!=(const pool_allocator&) const { return false; }
-};
-
+        bool operator==(const pool_allocator &) const {
+            return true;
+        } bool operator!=(const pool_allocator &)const {
+            return false;
+    }};
 
 // Namespace mempool
 
@@ -470,10 +463,8 @@ public:
     }									\
   };
 
-DEFINE_MEMORY_POOLS_HELPER(P)
-
+    DEFINE_MEMORY_POOLS_HELPER(P)
 #undef P
-
 };
 
 // the elements allocated by mempool is in the same memory space as the ones
@@ -482,33 +473,37 @@ DEFINE_MEMORY_POOLS_HELPER(P)
 // pointer. this is good enough for our usecase. use
 // std::is_trivially_copyable<T> to expand the support to more types if
 // nececssary.
-template<typename T, mempool::pool_index_t pool_index>
-bool operator==(const std::vector<T, std::allocator<T>>& lhs,
-		const std::vector<T, mempool::pool_allocator<pool_index, T>>& rhs)
+template < typename T, mempool::pool_index_t pool_index >
+    bool operator==(const std::vector < T, std::allocator < T >> &lhs,
+                    const std::vector < T, mempool::pool_allocator < pool_index,
+                    T >> &rhs)
 {
-  return (lhs.size() == rhs.size() &&
-	  std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+    return (lhs.size() == rhs.size() &&
+            std::equal(lhs.begin(), lhs.end(), rhs.begin()));
 }
 
-template<typename T, mempool::pool_index_t pool_index>
-bool operator!=(const std::vector<T, std::allocator<T>>& lhs,
-		const std::vector<T, mempool::pool_allocator<pool_index, T>>& rhs)
+template < typename T, mempool::pool_index_t pool_index >
+    bool operator!=(const std::vector < T, std::allocator < T >> &lhs,
+                    const std::vector < T, mempool::pool_allocator < pool_index,
+                    T >> &rhs)
 {
-  return !(lhs == rhs);
+    return !(lhs == rhs);
 }
 
-template<typename T, mempool::pool_index_t pool_index>
-bool operator==(const std::vector<T, mempool::pool_allocator<pool_index, T>>& lhs,
-		const std::vector<T, std::allocator<T>>& rhs)
+template < typename T, mempool::pool_index_t pool_index >
+    bool operator==(const std::vector < T, mempool::pool_allocator < pool_index,
+                    T >> &lhs, const std::vector < T,
+                    std::allocator < T >> &rhs)
 {
-  return rhs == lhs;
+    return rhs == lhs;
 }
 
-template<typename T, mempool::pool_index_t pool_index>
-bool operator!=(const std::vector<T, mempool::pool_allocator<pool_index, T>>& lhs,
-		const std::vector<T, std::allocator<T>>& rhs)
+template < typename T, mempool::pool_index_t pool_index >
+    bool operator!=(const std::vector < T, mempool::pool_allocator < pool_index,
+                    T >> &lhs, const std::vector < T,
+                    std::allocator < T >> &rhs)
 {
-  return !(lhs == rhs);
+    return !(lhs == rhs);
 }
 
 // Use this for any type that is contained by a container (unless it
@@ -541,7 +536,6 @@ bool operator!=(const std::vector<T, mempool::pool_allocator<pool_index, T>>& lh
     return nullptr; }							\
   void  operator delete(void *);					\
   void  operator delete[](void *) { ceph_abort_msg("no array delete"); }
-
 
 // Use this in some particular .cc file to match each class with a
 // MEMPOOL_CLASS_HELPERS().

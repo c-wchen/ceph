@@ -17,11 +17,10 @@
 extern "C" {
 #endif
 
-int module_has_param(const char *module, const char *param);
-int module_load(const char *module, const char *options);
+    int module_has_param(const char *module, const char *param);
+    int module_load(const char *module, const char *options);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* CEPH_MODULE_H */
+#endif                          /* CEPH_MODULE_H */

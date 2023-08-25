@@ -14,41 +14,42 @@ struct Context;
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace migration {
+    namespace migration {
 
-struct FormatInterface;
-struct SnapshotInterface;
-struct StreamInterface;
+        struct FormatInterface;
+        struct SnapshotInterface;
+        struct StreamInterface;
 
-template <typename ImageCtxT>
-class SourceSpecBuilder {
-public:
-  SourceSpecBuilder(ImageCtxT* image_ctx) : m_image_ctx(image_ctx) {
-  }
+         template < typename ImageCtxT > class SourceSpecBuilder {
+          public:
+          SourceSpecBuilder(ImageCtxT * image_ctx):m_image_ctx(image_ctx)
+            {
+            } int parse_source_spec(const std::string & source_spec,
+                                    json_spirit::mObject *
+                                    source_spec_object) const;
 
-  int parse_source_spec(const std::string& source_spec,
-                        json_spirit::mObject* source_spec_object) const;
+            int build_format(const json_spirit::mObject & format_object,
+                             bool import_only,
+                             std::unique_ptr < FormatInterface > *format) const;
 
-  int build_format(const json_spirit::mObject& format_object, bool import_only,
-                   std::unique_ptr<FormatInterface>* format) const;
+            int build_snapshot(const json_spirit::mObject & source_spec_object,
+                               uint64_t index,
+                               std::shared_ptr < SnapshotInterface >
+                               *snapshot) const;
 
-  int build_snapshot(const json_spirit::mObject& source_spec_object,
-                     uint64_t index,
-                     std::shared_ptr<SnapshotInterface>* snapshot) const;
+            int build_stream(const json_spirit::mObject & source_spec_object,
+                             std::shared_ptr < StreamInterface > *stream) const;
 
-  int build_stream(const json_spirit::mObject& source_spec_object,
-                   std::shared_ptr<StreamInterface>* stream) const;
+          private:
+             ImageCtxT * m_image_ctx;
 
-private:
-  ImageCtxT* m_image_ctx;
+        };
 
-};
+    }                           // namespace migration
+}                               // namespace librbd
 
-} // namespace migration
-} // namespace librbd
-
-extern template class librbd::migration::SourceSpecBuilder<librbd::ImageCtx>;
+extern template class librbd::migration::SourceSpecBuilder < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIGRATION_SOURCE_SPEC_BUILDER_H

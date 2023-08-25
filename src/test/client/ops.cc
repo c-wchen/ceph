@@ -21,25 +21,36 @@
 #include "gmock/gmock-matchers.h"
 #include "gmock/gmock-more-matchers.h"
 
-TEST_F(TestClient, CheckDummyOP) {
-  ASSERT_EQ(client->check_dummy_op(myperm), -EOPNOTSUPP);
+TEST_F(TestClient, CheckDummyOP)
+{
+    ASSERT_EQ(client->check_dummy_op(myperm), -EOPNOTSUPP);
 }
 
-TEST_F(TestClient, CheckUnknownSessionOp) {
-  ASSERT_EQ(client->send_unknown_session_op(-1), 0);
-  sleep(5);
-  ASSERT_EQ(client->check_client_blocklisted(), true);
+TEST_F(TestClient, CheckUnknownSessionOp)
+{
+    ASSERT_EQ(client->send_unknown_session_op(-1), 0);
+    sleep(5);
+    ASSERT_EQ(client->check_client_blocklisted(), true);
 }
 
-TEST_F(TestClient, CheckZeroReclaimFlag) {
-  ASSERT_EQ(client->check_unknown_reclaim_flag(0), true);
+TEST_F(TestClient, CheckZeroReclaimFlag)
+{
+    ASSERT_EQ(client->check_unknown_reclaim_flag(0), true);
 }
-TEST_F(TestClient, CheckUnknownReclaimFlag) {
-  ASSERT_EQ(client->check_unknown_reclaim_flag(2), true);
+
+TEST_F(TestClient, CheckUnknownReclaimFlag)
+{
+    ASSERT_EQ(client->check_unknown_reclaim_flag(2), true);
 }
-TEST_F(TestClient, CheckNegativeReclaimFlagUnmasked) {
-  ASSERT_EQ(client->check_unknown_reclaim_flag(-1 & ~MClientReclaim::FLAG_FINISH), true);
+
+TEST_F(TestClient, CheckNegativeReclaimFlagUnmasked)
+{
+    ASSERT_EQ(client->
+              check_unknown_reclaim_flag(-1 & ~MClientReclaim::FLAG_FINISH),
+              true);
 }
-TEST_F(TestClient, CheckNegativeReclaimFlag) {
-  ASSERT_EQ(client->check_unknown_reclaim_flag(-1), true);
+
+TEST_F(TestClient, CheckNegativeReclaimFlag)
+{
+    ASSERT_EQ(client->check_unknown_reclaim_flag(-1), true);
 }

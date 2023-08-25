@@ -17,21 +17,22 @@
 // debug logging settings, and some other "unnamed" settings, like entity name of
 // the daemon.
 class ConfigValues {
-  using values_t = std::map<std::string_view, std::map<int32_t,Option::value_t>>;
-  values_t values;
-  // for populating md_config_impl::legacy_values in ctor
-  friend struct md_config_t;
+    using values_t =
+        std::map < std::string_view, std::map < int32_t, Option::value_t >>;
+    values_t values;
+    // for populating md_config_impl::legacy_values in ctor
+    friend struct md_config_t;
 
-public:
-  EntityName name;
-  /// cluster name
-  std::string cluster;
-  ceph::logging::SubsystemMap subsys;
-  bool no_mon_config = false;
-  // Set of configuration options that have changed since the last
-  // apply_changes
-  using changed_set_t = std::set<std::string>;
-  changed_set_t changed;
+  public:
+     EntityName name;
+    /// cluster name
+     std::string cluster;
+     ceph::logging::SubsystemMap subsys;
+    bool no_mon_config = false;
+    // Set of configuration options that have changed since the last
+    // apply_changes
+    using changed_set_t = std::set < std::string >;
+    changed_set_t changed;
 
 // This macro block defines C members of the md_config_t struct
 // corresponding to the definitions in legacy_config_opts.h.
@@ -52,10 +53,10 @@ public:
 #define OPTION_OPT_SIZE(name) uint64_t name;
 #define OPTION(name, ty)       \
   public:                      \
-    OPTION_##ty(name)          
+    OPTION_##ty(name)
 #define SAFE_OPTION(name, ty)       \
   protected:                        \
-    OPTION_##ty(name)               
+    OPTION_##ty(name)
 #include "common/options/legacy_config_opts.h"
 #undef OPTION_OPT_INT
 #undef OPTION_OPT_LONGLONG
@@ -71,30 +72,27 @@ public:
 #undef OPTION
 #undef SAFE_OPTION
 
-public:
-  enum set_value_result_t {
-    SET_NO_CHANGE,
-    SET_NO_EFFECT,
-    SET_HAVE_EFFECT,
-  };
+  public:
+    enum set_value_result_t {
+        SET_NO_CHANGE,
+        SET_NO_EFFECT,
+        SET_HAVE_EFFECT,
+    };
   /**
    * @return true if changed, false otherwise
    */
-  set_value_result_t set_value(std::string_view key,
-                               Option::value_t&& value,
-                               int level);
-  int rm_val(const std::string_view key, int level);
-  void set_logging(int which, const char* val);
+    set_value_result_t set_value(std::string_view key,
+                                 Option::value_t && value, int level);
+    int rm_val(const std::string_view key, int level);
+    void set_logging(int which, const char *val);
   /**
    * @param level the level of the setting, -1 for the one with the 
    *              highest-priority
    */
-  std::pair<Option::value_t, bool> get_value(const std::string_view name,
-                                             int level) const;
-  template<typename Func> void for_each(Func&& func) const {
-    for (const auto& [name,configs] : values) {
-      func(name, configs);
-    }
-  }
-  bool contains(const std::string_view key) const;
+     std::pair < Option::value_t, bool > get_value(const std::string_view name,
+                                                   int level) const;
+     template < typename Func > void for_each(Func && func) const {
+        for (const auto &[name, configs]:values) {
+            func(name, configs);
+    }} bool contains(const std::string_view key) const;
 };

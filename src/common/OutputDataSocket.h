@@ -20,48 +20,46 @@
 #include "include/common_fwd.h"
 #include "include/buffer.h"
 
+class OutputDataSocket:public Thread {
+  public:
+    OutputDataSocket(CephContext * cct, uint64_t _backlog);
+    ~OutputDataSocket() override;
 
-class OutputDataSocket : public Thread
-{
-public:
-  OutputDataSocket(CephContext *cct, uint64_t _backlog);
-  ~OutputDataSocket() override;
+    bool init(const std::string & path);
 
-  bool init(const std::string &path);
-  
-  void append_output(ceph::buffer::list& bl);
+    void append_output(ceph::buffer::list & bl);
 
-protected:
-  virtual void init_connection(ceph::buffer::list& bl) {}
-  void shutdown();
+  protected:
+     virtual void init_connection(ceph::buffer::list & bl) {
+    } void shutdown();
 
-  std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
-  std::string bind_and_listen(const std::string &sock_path, int *fd);
+    std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
+    std::string bind_and_listen(const std::string & sock_path, int *fd);
 
-  void *entry() override;
-  bool do_accept();
+    void *entry() override;
+    bool do_accept();
 
-  void handle_connection(int fd);
-  void close_connection(int fd);
+    void handle_connection(int fd);
+    void close_connection(int fd);
 
-  int dump_data(int fd);
+    int dump_data(int fd);
 
-  CephContext *m_cct;
-  uint64_t data_max_backlog;
-  std::string m_path;
-  int m_sock_fd;
-  int m_shutdown_rd_fd;
-  int m_shutdown_wr_fd;
-  bool going_down;
+    CephContext *m_cct;
+    uint64_t data_max_backlog;
+    std::string m_path;
+    int m_sock_fd;
+    int m_shutdown_rd_fd;
+    int m_shutdown_wr_fd;
+    bool going_down;
 
-  uint64_t data_size;
-  uint32_t skipped;
+    uint64_t data_size;
+    uint32_t skipped;
 
-  std::vector<ceph::buffer::list> data;
+    std::vector < ceph::buffer::list > data;
 
-  ceph::mutex m_lock = ceph::make_mutex("OutputDataSocket::m_lock");
-  ceph::condition_variable cond;
-  ceph::buffer::list delim;
+    ceph::mutex m_lock = ceph::make_mutex("OutputDataSocket::m_lock");
+    ceph::condition_variable cond;
+    ceph::buffer::list delim;
 };
 
 #endif

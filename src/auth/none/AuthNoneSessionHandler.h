@@ -14,6 +14,5 @@
 
 #include "auth/AuthSessionHandler.h"
 
-struct AuthNoneSessionHandler : DummyAuthSessionHandler {
+struct AuthNoneSessionHandler:DummyAuthSessionHandler {
 };
-

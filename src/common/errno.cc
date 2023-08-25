@@ -7,16 +7,16 @@
 
 std::string cpp_strerror(int err)
 {
-  char buf[128];
-  char *errmsg;
+    char buf[128];
+    char *errmsg;
 
-  if (err < 0)
-    err = -err;
-  std::ostringstream oss;
+    if (err < 0)
+        err = -err;
+    std::ostringstream oss;
 
-  errmsg = ceph_strerror_r(err, buf, sizeof(buf));
+    errmsg = ceph_strerror_r(err, buf, sizeof(buf));
 
-  oss << "(" << err << ") " << errmsg;
+    oss << "(" << err << ") " << errmsg;
 
-  return oss.str();
+    return oss.str();
 }

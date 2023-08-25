@@ -12,49 +12,51 @@
  * 
  */
 
-
 #ifndef CEPH_MMGRMAP_H
 #define CEPH_MMGRMAP_H
 
 #include "msg/Message.h"
 #include "mon/MgrMap.h"
 
-class MMgrMap final : public Message {
-protected:
-  MgrMap map;
+class MMgrMap final:public Message {
+  protected:
+    MgrMap map;
 
-public:
-  const MgrMap & get_map() {return map;}
+  public:
+    const MgrMap & get_map() {
+        return map;
+  } private:
+     MMgrMap():Message {
+    MSG_MGR_MAP}
+    {
+    }
+  MMgrMap(const MgrMap & map_):
+    Message {
+    MSG_MGR_MAP}, map(map_) {
+    }
+    ~MMgrMap()final {
+    }
 
-private:
-  MMgrMap() : 
-    Message{MSG_MGR_MAP} {}
-  MMgrMap(const MgrMap &map_) :
-    Message{MSG_MGR_MAP}, map(map_)
-  {}
-  ~MMgrMap() final {}
-
-public:
-  std::string_view get_type_name() const override { return "mgrmap"; }
-  void print(std::ostream& out) const override {
-    out << get_type_name() << "(e " << map.epoch << ")";
-  }
-
-  void decode_payload() override {
-    auto p = payload.cbegin();
-    decode(map, p);
-  }
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(map, payload, features);
-  }
-private:
-  using RefCountedObject::put;
-  using RefCountedObject::get;
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "mgrmap";
+    } void print(std::ostream & out) const override {
+        out << get_type_name() << "(e " << map.epoch << ")";
+    } void decode_payload() override {
+        auto p = payload.cbegin();
+        decode(map, p);
+    }
+    void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(map, payload, features);
+    }
+  private:
+    using RefCountedObject::put;
+    using RefCountedObject::get;
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

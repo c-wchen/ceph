@@ -13,24 +13,20 @@
 class Context;
 
 namespace librbd {
-namespace image {
+    namespace image {
 
-template <typename ImageCtxT>
-class PreRemoveRequest {
-public:
+        template < typename ImageCtxT > class PreRemoveRequest {
+          public:
 
-  static PreRemoveRequest *create(ImageCtxT *image_ctx, bool force,
-                                  Context *on_finish) {
-    return new PreRemoveRequest(image_ctx, force, on_finish);
-  }
+            static PreRemoveRequest *create(ImageCtxT * image_ctx, bool force,
+                                            Context * on_finish) {
+                return new PreRemoveRequest(image_ctx, force, on_finish);
+            } PreRemoveRequest(ImageCtxT * image_ctx, bool force,
+                               Context * on_finish)
+            :m_image_ctx(image_ctx), m_force(force), m_on_finish(on_finish) {
+            } void send();
 
-  PreRemoveRequest(ImageCtxT *image_ctx, bool force, Context *on_finish)
-    : m_image_ctx(image_ctx), m_force(force), m_on_finish(on_finish) {
-  }
-
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -56,45 +52,45 @@ private:
    * @endverbatim
    */
 
-  ImageCtxT* m_image_ctx;
-  bool m_force;
-  Context* m_on_finish;
+            ImageCtxT * m_image_ctx;
+            bool m_force;
+            Context *m_on_finish;
 
-  decltype(m_image_ctx->exclusive_lock) m_exclusive_lock = nullptr;
+            decltype(m_image_ctx->exclusive_lock) m_exclusive_lock = nullptr;
 
-  bufferlist m_out_bl;
-  std::list<obj_watch_t> m_watchers;
+            bufferlist m_out_bl;
+            std::list < obj_watch_t > m_watchers;
 
-  std::map<uint64_t, SnapInfo> m_snap_infos;
-  int m_ret_val = 0;
+            std::map < uint64_t, SnapInfo > m_snap_infos;
+            int m_ret_val = 0;
 
-  void acquire_exclusive_lock();
-  void handle_exclusive_lock(int r);
+            void acquire_exclusive_lock();
+            void handle_exclusive_lock(int r);
 
-  void shut_down_exclusive_lock();
-  void handle_shut_down_exclusive_lock(int r);
+            void shut_down_exclusive_lock();
+            void handle_shut_down_exclusive_lock(int r);
 
-  void validate_image_removal();
-  void check_image_snaps();
+            void validate_image_removal();
+            void check_image_snaps();
 
-  void list_image_watchers();
-  void handle_list_image_watchers(int r);
+            void list_image_watchers();
+            void handle_list_image_watchers(int r);
 
-  void check_image_watchers();
+            void check_image_watchers();
 
-  void check_group();
-  void handle_check_group(int r);
+            void check_group();
+            void handle_check_group(int r);
 
-  void remove_snapshot();
-  void handle_remove_snapshot(int r);
+            void remove_snapshot();
+            void handle_remove_snapshot(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd
 
-extern template class librbd::image::PreRemoveRequest<librbd::ImageCtx>;
+extern template class librbd::image::PreRemoveRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IMAGE_PRE_REMOVE_REQUEST_H

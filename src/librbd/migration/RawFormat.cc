@@ -14,222 +14,246 @@
 #include "librbd/migration/Utils.h"
 
 namespace librbd {
-namespace migration {
+    namespace migration {
 
-namespace {
+        namespace {
 
-static const std::string SNAPSHOTS_KEY {"snapshots"};
+            static const std::string SNAPSHOTS_KEY {
+            "snapshots"};
 
-
-} // anonymous namespace
-
+        }                       // anonymous namespace
 #define dout_subsys ceph_subsys_rbd
 #undef dout_prefix
 #define dout_prefix *_dout << "librbd::migration::RawFormat: " << this \
                            << " " << __func__ << ": "
+        template < typename I >
+            RawFormat < I >::RawFormat(I * image_ctx,
+                                       const json_spirit::mObject & json_object,
+                                       const SourceSpecBuilder < I >
+                                       *source_spec_builder)
+        :m_image_ctx(image_ctx), m_json_object(json_object),
+            m_source_spec_builder(source_spec_builder) {
+        } template < typename I > void RawFormat <
+            I >::open(Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 10) << dendl;
 
-template <typename I>
-RawFormat<I>::RawFormat(
-    I* image_ctx, const json_spirit::mObject& json_object,
-    const SourceSpecBuilder<I>* source_spec_builder)
-  : m_image_ctx(image_ctx), m_json_object(json_object),
-    m_source_spec_builder(source_spec_builder) {
-}
+            on_finish = new LambdaContext([this, on_finish] (int r) {
+                                          handle_open(r, on_finish);
+                                          });
 
-template <typename I>
-void RawFormat<I>::open(Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 10) << dendl;
+            // treat the base image as a HEAD-revision snapshot
+            Snapshots snapshots;
+            int r =
+                m_source_spec_builder->build_snapshot(m_json_object,
+                                                      CEPH_NOSNAP,
+                                                      &snapshots[CEPH_NOSNAP]);
+            if (r < 0) {
+                lderr(cct) << "failed to build HEAD revision handler: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                on_finish->complete(r);
+                return;
+            }
 
-  on_finish = new LambdaContext([this, on_finish](int r) {
-    handle_open(r, on_finish); });
+            auto & snapshots_val = m_json_object[SNAPSHOTS_KEY];
+            if (snapshots_val.type() == json_spirit::array_type) {
+                auto & snapshots_arr = snapshots_val.get_array();
+              for (auto & snapshot_val:snapshots_arr) {
+                    uint64_t index = snapshots.size();
+                    if (snapshot_val.type() != json_spirit::obj_type) {
+                        lderr(cct) << "invalid snapshot " << index << " JSON: "
+                            << cpp_strerror(r) << dendl;
+                        on_finish->complete(-EINVAL);
+                        return;
+                    }
 
-  // treat the base image as a HEAD-revision snapshot
-  Snapshots snapshots;
-  int r = m_source_spec_builder->build_snapshot(m_json_object, CEPH_NOSNAP,
-                                                &snapshots[CEPH_NOSNAP]);
-  if (r < 0) {
-    lderr(cct) << "failed to build HEAD revision handler: " << cpp_strerror(r)
-               << dendl;
-    on_finish->complete(r);
-    return;
-  }
+                    auto & snapshot_obj = snapshot_val.get_obj();
+                    r = m_source_spec_builder->build_snapshot(snapshot_obj,
+                                                              index,
+                                                              &snapshots
+                                                              [index]);
+                    if (r < 0) {
+                        lderr(cct) << "failed to build snapshot " << index <<
+                            " handler: " << cpp_strerror(r) << dendl;
+                        on_finish->complete(r);
+                        return;
+                    }
+                }
+            }
+            else if (snapshots_val.type() != json_spirit::null_type) {
+                lderr(cct) << "invalid snapshots array" << dendl;
+                on_finish->complete(-EINVAL);
+                return;
+            }
 
-  auto& snapshots_val = m_json_object[SNAPSHOTS_KEY];
-  if (snapshots_val.type() == json_spirit::array_type) {
-    auto& snapshots_arr = snapshots_val.get_array();
-    for (auto& snapshot_val : snapshots_arr) {
-      uint64_t index = snapshots.size();
-      if (snapshot_val.type() != json_spirit::obj_type) {
-        lderr(cct) << "invalid snapshot " << index << " JSON: "
-                   << cpp_strerror(r) << dendl;
-        on_finish->complete(-EINVAL);
-        return;
-      }
+            m_snapshots = std::move(snapshots);
 
-      auto& snapshot_obj = snapshot_val.get_obj();
-      r = m_source_spec_builder->build_snapshot(snapshot_obj, index,
-                                                &snapshots[index]);
-      if (r < 0) {
-        lderr(cct) << "failed to build snapshot " << index << " handler: "
-                   << cpp_strerror(r) << dendl;
-        on_finish->complete(r);
-        return;
-      }
-    }
-  } else if (snapshots_val.type() != json_spirit::null_type) {
-    lderr(cct) << "invalid snapshots array" << dendl;
-    on_finish->complete(-EINVAL);
-    return;
-  }
+            auto gather_ctx = new C_Gather(cct, on_finish);
+            SnapshotInterface *previous_snapshot = nullptr;
+          for (auto &[_, snapshot]:m_snapshots) {
+                snapshot->open(previous_snapshot, gather_ctx->new_sub());
+                previous_snapshot = snapshot.get();
+            }
+            gather_ctx->activate();
+        }
 
-  m_snapshots = std::move(snapshots);
+        template < typename I >
+            void RawFormat < I >::handle_open(int r, Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 10) << "r=" << r << dendl;
 
-  auto gather_ctx = new C_Gather(cct, on_finish);
-  SnapshotInterface* previous_snapshot = nullptr;
-  for (auto& [_, snapshot] : m_snapshots) {
-    snapshot->open(previous_snapshot, gather_ctx->new_sub());
-    previous_snapshot = snapshot.get();
-  }
-  gather_ctx->activate();
-}
+            if (r < 0) {
+                lderr(cct) << "failed to open raw image: " << cpp_strerror(r)
+                    << dendl;
 
-template <typename I>
-void RawFormat<I>::handle_open(int r, Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 10) << "r=" << r << dendl;
+                auto gather_ctx = new C_Gather(cct, on_finish);
+              for (auto &[_, snapshot]:m_snapshots) {
+                    snapshot->close(gather_ctx->new_sub());
+                }
 
-  if (r < 0) {
-    lderr(cct) << "failed to open raw image: " << cpp_strerror(r)
-               << dendl;
+                m_image_ctx->state->close(new LambdaContext([r, on_finish =
+                                                             gather_ctx->
+                                                             new_sub()](int _) {
+                                                            on_finish->
+                                                            complete(r);
+                                                            }));
 
-    auto gather_ctx = new C_Gather(cct, on_finish);
-    for (auto& [_, snapshot] : m_snapshots) {
-      snapshot->close(gather_ctx->new_sub());
-    }
+                gather_ctx->activate();
+                return;
+            }
 
-    m_image_ctx->state->close(new LambdaContext(
-      [r, on_finish=gather_ctx->new_sub()](int _) { on_finish->complete(r); }));
+            on_finish->complete(0);
+        }
 
-    gather_ctx->activate();
-    return;
-  }
+        template < typename I > void RawFormat < I >::close(Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 10) << dendl;
 
-  on_finish->complete(0);
-}
+            auto gather_ctx = new C_Gather(cct, on_finish);
+          for (auto &[snap_id, snapshot]:m_snapshots) {
+                snapshot->close(gather_ctx->new_sub());
+            }
 
-template <typename I>
-void RawFormat<I>::close(Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 10) << dendl;
+            gather_ctx->activate();
+        }
 
-  auto gather_ctx = new C_Gather(cct, on_finish);
-  for (auto& [snap_id, snapshot] : m_snapshots) {
-    snapshot->close(gather_ctx->new_sub());
-  }
+        template < typename I >
+            void RawFormat < I >::get_snapshots(SnapInfos * snap_infos,
+                                                Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 10) << dendl;
 
-  gather_ctx->activate();
-}
+            snap_infos->clear();
+          for (auto &[snap_id, snapshot]:m_snapshots) {
+                if (snap_id == CEPH_NOSNAP) {
+                    continue;
+                }
+                snap_infos->emplace(snap_id, snapshot->get_snap_info());
+            }
+            on_finish->complete(0);
+        }
 
-template <typename I>
-void RawFormat<I>::get_snapshots(SnapInfos* snap_infos, Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 10) << dendl;
+        template < typename I >
+            void RawFormat < I >::get_image_size(uint64_t snap_id,
+                                                 uint64_t * size,
+                                                 Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 10) << dendl;
 
-  snap_infos->clear();
-  for (auto& [snap_id, snapshot] : m_snapshots) {
-    if (snap_id == CEPH_NOSNAP) {
-      continue;
-    }
-    snap_infos->emplace(snap_id, snapshot->get_snap_info());
-  }
-  on_finish->complete(0);
-}
+            auto snapshot_it = m_snapshots.find(snap_id);
+            if (snapshot_it == m_snapshots.end()) {
+                on_finish->complete(-ENOENT);
+                return;
+            }
 
-template <typename I>
-void RawFormat<I>::get_image_size(uint64_t snap_id, uint64_t* size,
-                                  Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 10) << dendl;
+            *size = snapshot_it->second->get_snap_info().size;
+            on_finish->complete(0);
+        }
 
-  auto snapshot_it = m_snapshots.find(snap_id);
-  if (snapshot_it == m_snapshots.end()) {
-    on_finish->complete(-ENOENT);
-    return;
-  }
+        template < typename I >
+            bool RawFormat < I >::read(io::AioCompletion * aio_comp,
+                                       uint64_t snap_id, io::Extents
+                                       && image_extents, io::ReadResult
+                                       && read_result, int op_flags,
+                                       int read_flags,
+                                       const ZTracer::Trace & parent_trace) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 20) << "snap_id=" << snap_id << ", "
+                << "image_extents=" << image_extents << dendl;
 
-  *size = snapshot_it->second->get_snap_info().size;
-  on_finish->complete(0);
-}
+            auto snapshot_it = m_snapshots.find(snap_id);
+            if (snapshot_it == m_snapshots.end()) {
+                aio_comp->fail(-ENOENT);
+                return true;
+            }
 
-template <typename I>
-bool RawFormat<I>::read(
-    io::AioCompletion* aio_comp, uint64_t snap_id, io::Extents&& image_extents,
-    io::ReadResult&& read_result, int op_flags, int read_flags,
-    const ZTracer::Trace &parent_trace) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 20) << "snap_id=" << snap_id << ", "
-                 << "image_extents=" << image_extents << dendl;
+            snapshot_it->second->read(aio_comp, std::move(image_extents),
+                                      std::move(read_result), op_flags,
+                                      read_flags, parent_trace);
+            return true;
+        }
 
-  auto snapshot_it = m_snapshots.find(snap_id);
-  if (snapshot_it == m_snapshots.end()) {
-    aio_comp->fail(-ENOENT);
-    return true;
-  }
+        template < typename I >
+            void RawFormat < I >::list_snaps(io::Extents && image_extents,
+                                             io::SnapIds
+                                             && snap_ids, int list_snaps_flags,
+                                             io::SnapshotDelta * snapshot_delta,
+                                             const ZTracer::
+                                             Trace & parent_trace,
+                                             Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 20) << "image_extents=" << image_extents << dendl;
 
-  snapshot_it->second->read(aio_comp, std::move(image_extents),
-                            std::move(read_result), op_flags, read_flags,
-                            parent_trace);
-  return true;
-}
+            on_finish = new LambdaContext([this, snap_ids = std::move(snap_ids),
+                                           snapshot_delta,
+                                           on_finish] (int r)mutable {
+                                          handle_list_snaps(r,
+                                                            std::move(snap_ids),
+                                                            snapshot_delta,
+                                                            on_finish);});
 
-template <typename I>
-void RawFormat<I>::list_snaps(io::Extents&& image_extents,
-                              io::SnapIds&& snap_ids, int list_snaps_flags,
-                              io::SnapshotDelta* snapshot_delta,
-                              const ZTracer::Trace &parent_trace,
-                              Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 20) << "image_extents=" << image_extents << dendl;
+            auto gather_ctx = new C_Gather(cct, on_finish);
 
-  on_finish = new LambdaContext([this, snap_ids=std::move(snap_ids),
-                                 snapshot_delta, on_finish](int r) mutable {
-    handle_list_snaps(r, std::move(snap_ids), snapshot_delta, on_finish);
-  });
+            std::optional < uint64_t > previous_size = std::nullopt;
+          for (auto &[snap_id, snapshot]:m_snapshots) {
+                auto & sparse_extents = (*snapshot_delta)[ {
+                                                          snap_id, snap_id}
+                ];
 
-  auto gather_ctx = new C_Gather(cct, on_finish);
+                // zero out any space between the previous snapshot end and this
+                // snapshot's end
+                auto & snap_info = snapshot->get_snap_info();
+                util::zero_shrunk_snapshot(cct, image_extents, snap_id,
+                                           snap_info.size, &previous_size,
+                                           &sparse_extents);
 
-  std::optional<uint64_t> previous_size = std::nullopt;
-  for (auto& [snap_id, snapshot] : m_snapshots) {
-    auto& sparse_extents = (*snapshot_delta)[{snap_id, snap_id}];
+                // build set of data/zeroed extents for the current snapshot
+                snapshot->list_snap(io::Extents {
+                                    image_extents}
+                                    , list_snaps_flags,
+                                    &sparse_extents, parent_trace,
+                                    gather_ctx->new_sub());
+            }
 
-    // zero out any space between the previous snapshot end and this
-    // snapshot's end
-    auto& snap_info = snapshot->get_snap_info();
-    util::zero_shrunk_snapshot(cct, image_extents, snap_id, snap_info.size,
-                               &previous_size, &sparse_extents);
+            gather_ctx->activate();
+        }
 
-    // build set of data/zeroed extents for the current snapshot
-    snapshot->list_snap(io::Extents{image_extents}, list_snaps_flags,
-                        &sparse_extents, parent_trace, gather_ctx->new_sub());
-  }
+        template < typename I >
+            void RawFormat < I >::handle_list_snaps(int r, io::SnapIds
+                                                    && snap_ids,
+                                                    io::SnapshotDelta *
+                                                    snapshot_delta,
+                                                    Context * on_finish) {
+            auto cct = m_image_ctx->cct;
+            ldout(cct, 20) << "r=" << r << ", "
+                << "snapshot_delta=" << snapshot_delta << dendl;
 
-  gather_ctx->activate();
-}
+            util::merge_snapshot_delta(snap_ids, snapshot_delta);
+            on_finish->complete(r);
+        }
 
-template <typename I>
-void RawFormat<I>::handle_list_snaps(int r, io::SnapIds&& snap_ids,
-                                     io::SnapshotDelta* snapshot_delta,
-                                     Context* on_finish) {
-  auto cct = m_image_ctx->cct;
-  ldout(cct, 20) << "r=" << r << ", "
-                 << "snapshot_delta=" << snapshot_delta << dendl;
+    }                           // namespace migration
+}                               // namespace librbd
 
-  util::merge_snapshot_delta(snap_ids, snapshot_delta);
-  on_finish->complete(r);
-}
-
-} // namespace migration
-} // namespace librbd
-
-template class librbd::migration::RawFormat<librbd::ImageCtx>;
+template class librbd::migration::RawFormat < librbd::ImageCtx >;

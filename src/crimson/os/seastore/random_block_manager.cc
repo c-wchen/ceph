@@ -8,14 +8,9 @@
 
 namespace crimson::os::seastore {
 
-seastar::future<random_block_device::RBMDeviceRef>
-get_rb_device(
-  const std::string &device)
-{
-  return seastar::make_ready_future<random_block_device::RBMDeviceRef>(
-    std::make_unique<
-      random_block_device::nvme::NVMeBlockDevice
-    >(device + "/block"));
-}
-
-}
+    seastar::future < random_block_device::RBMDeviceRef >
+        get_rb_device(const std::string & device) {
+        return seastar::make_ready_future < random_block_device::RBMDeviceRef >
+            (std::make_unique < random_block_device::nvme::NVMeBlockDevice >
+             (device + "/block"));
+}}

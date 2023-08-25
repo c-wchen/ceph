@@ -5,11 +5,13 @@
 
 #include "rgw_sync_module.h"
 
-class RGWLogSyncModule : public RGWSyncModule {
-public:
-  RGWLogSyncModule() {}
-  bool supports_data_export() override {
-    return false;
-  }
-  int create_instance(const DoutPrefixProvider *dpp, CephContext *cct, const JSONFormattable& config, RGWSyncModuleInstanceRef *instance) override;
+class RGWLogSyncModule:public RGWSyncModule {
+  public:
+    RGWLogSyncModule() {
+    } bool supports_data_export() override {
+        return false;
+    }
+    int create_instance(const DoutPrefixProvider * dpp, CephContext * cct,
+                        const JSONFormattable & config,
+                        RGWSyncModuleInstanceRef * instance) override;
 };

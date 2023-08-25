@@ -17,53 +17,51 @@
 
 #include "msg/Message.h"
 
-
-class MClientCapRelease final : public SafeMessage {
- public:
-  std::string_view get_type_name() const override { return "client_cap_release";}
-  void print(std::ostream& out) const override {
-    out << "client_cap_release(" << caps.size() << ")";
-  }
-
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(head, p);
-    ceph::decode_nohead(head.num, caps, p);
-    if (header.version >= 2) {
-      decode(osd_epoch_barrier, p);
+class MClientCapRelease final:public SafeMessage {
+  public:
+    std::string_view get_type_name() const override {
+        return "client_cap_release";
+    } void print(std::ostream & out) const override {
+        out << "client_cap_release(" << caps.size() << ")";
+    } void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+         decode(head, p);
+         ceph::decode_nohead(head.num, caps, p);
+        if (header.version >= 2) {
+            decode(osd_epoch_barrier, p);
+    }} void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        head.num = caps.size();
+        encode(head, payload);
+        ceph::encode_nohead(caps, payload);
+        encode(osd_epoch_barrier, payload);
     }
-  }
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    head.num = caps.size();
-    encode(head, payload);
-    ceph::encode_nohead(caps, payload);
-    encode(osd_epoch_barrier, payload);
-  }
 
-  struct ceph_mds_cap_release head;
-  std::vector<ceph_mds_cap_item> caps;
+    struct ceph_mds_cap_release head;
+    std::vector < ceph_mds_cap_item > caps;
 
-  // The message receiver must wait for this OSD epoch
-  // before actioning this cap release.
-  epoch_t osd_epoch_barrier = 0;
+    // The message receiver must wait for this OSD epoch
+    // before actioning this cap release.
+    epoch_t osd_epoch_barrier = 0;
 
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 
-  static constexpr int HEAD_VERSION = 2;
-  static constexpr int COMPAT_VERSION = 1;
+    static constexpr int HEAD_VERSION = 2;
+    static constexpr int COMPAT_VERSION = 1;
 
-  MClientCapRelease() : 
-    SafeMessage{CEPH_MSG_CLIENT_CAPRELEASE, HEAD_VERSION, COMPAT_VERSION}
-  {
-    memset(&head, 0, sizeof(head));
-  }
-  ~MClientCapRelease() final {}
+  MClientCapRelease():
+    SafeMessage {
+    CEPH_MSG_CLIENT_CAPRELEASE, HEAD_VERSION, COMPAT_VERSION}
+    {
+        memset(&head, 0, sizeof(head));
+    }
+    ~MClientCapRelease()final {
+    }
 };
 
 #endif

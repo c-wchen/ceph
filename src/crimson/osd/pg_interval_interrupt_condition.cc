@@ -10,34 +10,34 @@ SET_SUBSYS(osd);
 
 namespace crimson::osd {
 
-IOInterruptCondition::IOInterruptCondition(Ref<PG>& pg)
-  : pg(pg), e(pg->get_osdmap_epoch()) {}
+    IOInterruptCondition::IOInterruptCondition(Ref < PG > &pg)
+    :pg(pg), e(pg->get_osdmap_epoch()) {
+    } IOInterruptCondition::~IOInterruptCondition() {
+        // for the sake of forward declaring PG (which is a detivate of
+        // intrusive_ref_counter<...>)
+    }
 
-IOInterruptCondition::~IOInterruptCondition() {
-  // for the sake of forward declaring PG (which is a detivate of
-  // intrusive_ref_counter<...>)
-}
+    bool IOInterruptCondition::new_interval_created() {
+        LOG_PREFIX(IOInterruptCondition::new_interval_created);
+        const epoch_t interval_start = pg->get_interval_start_epoch();
+        bool ret = e < interval_start;
+        if (ret) {
+            DEBUGDPP("stored interval e{} < interval_start e{}", *pg, e,
+                     interval_start);
+        }
+        return ret;
+    }
 
-bool IOInterruptCondition::new_interval_created() {
-  LOG_PREFIX(IOInterruptCondition::new_interval_created);
-  const epoch_t interval_start = pg->get_interval_start_epoch();
-  bool ret = e < interval_start;
-  if (ret) {
-    DEBUGDPP("stored interval e{} < interval_start e{}", *pg, e, interval_start);
-  }
-  return ret;
-}
+    bool IOInterruptCondition::is_stopping() {
+        LOG_PREFIX(IOInterruptCondition::is_stopping);
+        if (pg->stopping) {
+            DEBUGDPP("pg stopping", *pg);
+        }
+        return pg->stopping;
+    }
 
-bool IOInterruptCondition::is_stopping() {
-  LOG_PREFIX(IOInterruptCondition::is_stopping);
-  if (pg->stopping) {
-    DEBUGDPP("pg stopping", *pg);
-  }
-  return pg->stopping;
-}
+    bool IOInterruptCondition::is_primary() {
+        return pg->is_primary();
+    }
 
-bool IOInterruptCondition::is_primary() {
-  return pg->is_primary();
-}
-
-} // namespace crimson::osd
+}                               // namespace crimson::osd

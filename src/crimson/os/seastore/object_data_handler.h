@@ -8,7 +8,7 @@
 
 #include "include/buffer.h"
 
-#include "test/crimson/seastore/test_block.h" // TODO
+#include "test/crimson/seastore/test_block.h"   // TODO
 
 #include "crimson/os/seastore/onode.h"
 #include "crimson/os/seastore/transaction_manager.h"
@@ -16,113 +16,94 @@
 
 namespace crimson::os::seastore {
 
-struct ObjectDataBlock : crimson::os::seastore::LogicalCachedExtent {
-  using Ref = TCachedExtentRef<ObjectDataBlock>;
+    struct ObjectDataBlock:crimson::os::seastore::LogicalCachedExtent {
+        using Ref = TCachedExtentRef < ObjectDataBlock >;
 
-  ObjectDataBlock(ceph::bufferptr &&ptr)
-    : LogicalCachedExtent(std::move(ptr)) {}
-  ObjectDataBlock(const ObjectDataBlock &other)
-    : LogicalCachedExtent(other) {}
+        ObjectDataBlock(ceph::bufferptr && ptr)
+        :LogicalCachedExtent(std::move(ptr)) {
+        } ObjectDataBlock(const ObjectDataBlock & other)
+        :LogicalCachedExtent(other) {
+        } CachedExtentRef duplicate_for_write(Transaction &) final {
+            return CachedExtentRef(new ObjectDataBlock(*this));
+        };
 
-  CachedExtentRef duplicate_for_write(Transaction&) final {
-    return CachedExtentRef(new ObjectDataBlock(*this));
-  };
+        static constexpr extent_types_t TYPE =
+            extent_types_t::OBJECT_DATA_BLOCK;
+        extent_types_t get_type() const final {
+            return TYPE;
+        } ceph::bufferlist get_delta() final {
+            /* Currently, we always allocate fresh ObjectDataBlock's rather than
+             * mutating existing ones. */
+            ceph_assert(0 == "Should be impossible");
+        }
 
-  static constexpr extent_types_t TYPE = extent_types_t::OBJECT_DATA_BLOCK;
-  extent_types_t get_type() const final {
-    return TYPE;
-  }
+        void apply_delta(const ceph::bufferlist & bl) final {
+            // See get_delta()
+            ceph_assert(0 == "Should be impossible");
+        }
+    };
+    using ObjectDataBlockRef = TCachedExtentRef < ObjectDataBlock >;
 
-  ceph::bufferlist get_delta() final {
-    /* Currently, we always allocate fresh ObjectDataBlock's rather than
-     * mutating existing ones. */
-    ceph_assert(0 == "Should be impossible");
-  }
+    class ObjectDataHandler {
+      public:
+        using base_iertr = TransactionManager::base_iertr;
 
-  void apply_delta(const ceph::bufferlist &bl) final {
-    // See get_delta()
-    ceph_assert(0 == "Should be impossible");
-  }
-};
-using ObjectDataBlockRef = TCachedExtentRef<ObjectDataBlock>;
+        ObjectDataHandler(uint32_t mos):max_object_size(mos) {
+        } struct context_t {
+            TransactionManager & tm;
+            Transaction & t;
+            Onode & onode;
+        };
 
-class ObjectDataHandler {
-public:
-  using base_iertr = TransactionManager::base_iertr;
+        /// Writes bl to [offset, offset + bl.length())
+        using write_iertr = base_iertr;
+        using write_ret = write_iertr::future <>;
+        write_ret write(context_t ctx, objaddr_t offset, const bufferlist & bl);
 
-  ObjectDataHandler(uint32_t mos) : max_object_size(mos) {}
+        using zero_iertr = base_iertr;
+        using zero_ret = zero_iertr::future <>;
+        zero_ret zero(context_t ctx, objaddr_t offset, extent_len_t len);
 
-  struct context_t {
-    TransactionManager &tm;
-    Transaction &t;
-    Onode &onode;
-  };
+        /// Reads data in [offset, offset + len)
+        using read_iertr = base_iertr;
+        using read_ret = read_iertr::future < bufferlist >;
+        read_ret read(context_t ctx, objaddr_t offset, extent_len_t len);
 
-  /// Writes bl to [offset, offset + bl.length())
-  using write_iertr = base_iertr;
-  using write_ret = write_iertr::future<>;
-  write_ret write(
-    context_t ctx,
-    objaddr_t offset,
-    const bufferlist &bl);
+        /// sparse read data, get range interval in [offset, offset + len)
+        using fiemap_iertr = base_iertr;
+        using fiemap_ret =
+            fiemap_iertr::future < std::map < uint64_t, uint64_t >>;
+        fiemap_ret fiemap(context_t ctx, objaddr_t offset, extent_len_t len);
 
-  using zero_iertr = base_iertr;
-  using zero_ret = zero_iertr::future<>;
-  zero_ret zero(
-    context_t ctx,
-    objaddr_t offset,
-    extent_len_t len);
+        /// Clears data past offset
+        using truncate_iertr = base_iertr;
+        using truncate_ret = truncate_iertr::future <>;
+        truncate_ret truncate(context_t ctx, objaddr_t offset);
 
-  /// Reads data in [offset, offset + len)
-  using read_iertr = base_iertr;
-  using read_ret = read_iertr::future<bufferlist>;
-  read_ret read(
-    context_t ctx,
-    objaddr_t offset,
-    extent_len_t len);
+        /// Clears data and reservation
+        using clear_iertr = base_iertr;
+        using clear_ret = clear_iertr::future <>;
+        clear_ret clear(context_t ctx);
 
-  /// sparse read data, get range interval in [offset, offset + len)
-  using fiemap_iertr = base_iertr;
-  using fiemap_ret = fiemap_iertr::future<std::map<uint64_t, uint64_t>>;
-  fiemap_ret fiemap(
-    context_t ctx,
-    objaddr_t offset,
-    extent_len_t len);
+      private:
+        /// Updates region [_offset, _offset + bl.length) to bl
+        write_ret overwrite(context_t ctx,  ///< [in] ctx
+                            laddr_t offset, ///< [in] write offset
+                            extent_len_t len,   ///< [in] len to write, len == bl->length() if bl
+                            std::optional < bufferlist > &&bl,  ///< [in] buffer to write, empty for zeros
+                            lba_pin_list_t && pins  ///< [in] set of pins overlapping above region
+            );
 
-  /// Clears data past offset
-  using truncate_iertr = base_iertr;
-  using truncate_ret = truncate_iertr::future<>;
-  truncate_ret truncate(
-    context_t ctx,
-    objaddr_t offset);
+        /// Ensures object_data reserved region is prepared
+        write_ret prepare_data_reservation(context_t ctx,
+                                           object_data_t & object_data,
+                                           extent_len_t size);
 
-  /// Clears data and reservation
-  using clear_iertr = base_iertr;
-  using clear_ret = clear_iertr::future<>;
-  clear_ret clear(context_t ctx);
-
-private:
-  /// Updates region [_offset, _offset + bl.length) to bl
-  write_ret overwrite(
-    context_t ctx,        ///< [in] ctx
-    laddr_t offset,       ///< [in] write offset
-    extent_len_t len,     ///< [in] len to write, len == bl->length() if bl
-    std::optional<bufferlist> &&bl, ///< [in] buffer to write, empty for zeros
-    lba_pin_list_t &&pins ///< [in] set of pins overlapping above region
-  );
-
-  /// Ensures object_data reserved region is prepared
-  write_ret prepare_data_reservation(
-    context_t ctx,
-    object_data_t &object_data,
-    extent_len_t size);
-
-  /// Trims data past size
-  clear_ret trim_data_reservation(
-    context_t ctx,
-    object_data_t &object_data,
-    extent_len_t size);
-private:
+        /// Trims data past size
+        clear_ret trim_data_reservation(context_t ctx,
+                                        object_data_t & object_data,
+                                        extent_len_t size);
+      private:
   /**
    * max_object_size
    *
@@ -131,11 +112,13 @@ private:
    * mappings (necessary for clone), we'll add the ability to grow and shrink
    * these regions and remove this assumption.
    */
-  const uint32_t max_object_size = 0;
-};
+        const uint32_t max_object_size = 0;
+    };
 
 }
 
 #if FMT_VERSION >= 90000
-template <> struct fmt::formatter<crimson::os::seastore::ObjectDataBlock> : fmt::ostream_formatter {};
+template <> struct fmt::formatter <
+    crimson::os::seastore::ObjectDataBlock >:fmt::ostream_formatter {
+};
 #endif

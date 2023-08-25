@@ -12,61 +12,59 @@
  * 
  */
 
-
 #ifndef CEPH_DISTRIBUTION_H
 #define CEPH_DISTRIBUTION_H
 
 #include <vector>
 
 class Distribution {
-  std::vector<float> p;
-  std::vector<int> v;
+    std::vector < float >p;
+     std::vector < int >v;
 
- public:
-  //Distribution() { 
-  //}
-  
-  unsigned get_width() {
-    return p.size();
-  }
+  public:
+    //Distribution() { 
+    //}
 
-  void clear() {
-    p.clear();
-    v.clear();
-  }
-  void add(int val, float pr) {
-    p.push_back(pr);
-    v.push_back(val);
-  }
-
-  void random() {
-    float sum = 0.0;
-    for (unsigned i=0; i<p.size(); i++) {
-      p[i] = (float)(rand() % 10000);
-      sum += p[i];
+    unsigned get_width() {
+        return p.size();
+    } void clear() {
+        p.clear();
+        v.clear();
     }
-    for (unsigned i=0; i<p.size(); i++) 
-      p[i] /= sum;
-  }
-
-  int sample() {
-    float s = (float)(rand() % 10000) / 10000.0;
-    for (unsigned i=0; i<p.size(); i++) {
-      if (s < p[i]) return v[i];
-      s -= p[i];
+    void add(int val, float pr) {
+        p.push_back(pr);
+        v.push_back(val);
     }
-    ceph_abort();
-    return v[p.size() - 1];  // hmm.  :/
-  }
 
-  float normalize() {
-    float s = 0.0;
-    for (unsigned i=0; i<p.size(); i++)
-      s += p[i];
-    for (unsigned i=0; i<p.size(); i++)
-      p[i] /= s;
-    return s;
-  }
+    void random() {
+        float sum = 0.0;
+        for (unsigned i = 0; i < p.size(); i++) {
+            p[i] = (float)(rand() % 10000);
+            sum += p[i];
+        }
+        for (unsigned i = 0; i < p.size(); i++)
+            p[i] /= sum;
+    }
+
+    int sample() {
+        float s = (float)(rand() % 10000) / 10000.0;
+        for (unsigned i = 0; i < p.size(); i++) {
+            if (s < p[i])
+                return v[i];
+            s -= p[i];
+        }
+        ceph_abort();
+        return v[p.size() - 1]; // hmm.  :/
+    }
+
+    float normalize() {
+        float s = 0.0;
+        for (unsigned i = 0; i < p.size(); i++)
+            s += p[i];
+        for (unsigned i = 0; i < p.size(); i++)
+            p[i] /= s;
+        return s;
+    }
 
 };
 

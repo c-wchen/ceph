@@ -19,19 +19,15 @@
 #include <functional>
 
 namespace ceph {
-  class Formatter;
-}
+    class Formatter;
+} extern void print_bit_str(uint64_t bits,
+                            std::ostream & out,
+                            const std::function < const char *(uint64_t) >
+                            &func, bool dump_bit_val = false);
 
-extern void print_bit_str(
-    uint64_t bits,
-    std::ostream &out,
-    const std::function<const char*(uint64_t)> &func,
-    bool dump_bit_val = false);
-
-extern void dump_bit_str(
-    uint64_t bits,
-    ceph::Formatter *f,
-    const std::function<const char*(uint64_t)> &func,
-    bool dump_bit_val = false);
+extern void dump_bit_str(uint64_t bits,
+                         ceph::Formatter * f,
+                         const std::function < const char *(uint64_t) > &func,
+                         bool dump_bit_val = false);
 
 #endif /* CEPH_COMMON_BIT_STR_H */

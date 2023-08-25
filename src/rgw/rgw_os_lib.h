@@ -6,4 +6,3 @@
 #include <functional>
 #include "rgw_common.h"
 #include "rgw_lib.h"
-

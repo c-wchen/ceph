@@ -8,72 +8,72 @@
 
 #include <boost/function.hpp>
 
-namespace librbd
-{
-template <typename ImageCtxT> class AsyncRequest;
-class ProgressContext;
-struct ImageCtx;
+namespace librbd {
+    template < typename ImageCtxT > class AsyncRequest;
+    class ProgressContext;
+    struct ImageCtx;
 
-class AsyncObjectThrottleFinisher {
-public:
-  virtual ~AsyncObjectThrottleFinisher() {};
-  virtual void finish_op(int r) = 0;
-};
+    class AsyncObjectThrottleFinisher {
+      public:
+        virtual ~ AsyncObjectThrottleFinisher() {
+        };
+        virtual void finish_op(int r) = 0;
+    };
 
-template <typename ImageCtxT = ImageCtx>
-class C_AsyncObjectThrottle : public Context {
-public:
-  C_AsyncObjectThrottle(AsyncObjectThrottleFinisher &finisher,
-                        ImageCtxT &image_ctx)
-    : m_image_ctx(image_ctx), m_finisher(finisher) {
-  }
+  template < typename ImageCtxT = ImageCtx > class C_AsyncObjectThrottle:public Context
+    {
+      public:
+        C_AsyncObjectThrottle(AsyncObjectThrottleFinisher & finisher,
+                              ImageCtxT & image_ctx)
+      :    m_image_ctx(image_ctx), m_finisher(finisher) {
+        }
 
-  virtual int send() = 0;
+        virtual int send() = 0;
 
-protected:
-  ImageCtxT &m_image_ctx;
+      protected:
+        ImageCtxT & m_image_ctx;
 
-  void finish(int r) override {
-    m_finisher.finish_op(r);
-  }
+        void finish(int r) override {
+            m_finisher.finish_op(r);
+        }
 
-private:
-  AsyncObjectThrottleFinisher &m_finisher;
-};
+      private:
+        AsyncObjectThrottleFinisher & m_finisher;
+    };
 
-template <typename ImageCtxT = ImageCtx>
-class AsyncObjectThrottle : public AsyncObjectThrottleFinisher {
-public:
-  typedef boost::function<
-    C_AsyncObjectThrottle<ImageCtxT>* (AsyncObjectThrottle&,
-                                       uint64_t)> ContextFactory;
+  template < typename ImageCtxT = ImageCtx > class AsyncObjectThrottle:public AsyncObjectThrottleFinisher
+    {
+      public:
+        typedef boost::function <
+            C_AsyncObjectThrottle < ImageCtxT > *(AsyncObjectThrottle &,
+                                                  uint64_t) > ContextFactory;
 
-  AsyncObjectThrottle(const AsyncRequest<ImageCtxT> *async_request,
-                      ImageCtxT &image_ctx,
-                      const ContextFactory& context_factory, Context *ctx,
-		      ProgressContext *prog_ctx, uint64_t object_no,
-		      uint64_t end_object_no);
+        AsyncObjectThrottle(const AsyncRequest < ImageCtxT > *async_request,
+                            ImageCtxT & image_ctx,
+                            const ContextFactory & context_factory,
+                            Context * ctx, ProgressContext * prog_ctx,
+                            uint64_t object_no, uint64_t end_object_no);
 
-  void start_ops(uint64_t max_concurrent);
-  void finish_op(int r) override;
+        void start_ops(uint64_t max_concurrent);
+        void finish_op(int r) override;
 
-private:
-  ceph::mutex m_lock;
-  const AsyncRequest<ImageCtxT> *m_async_request;
-  ImageCtxT &m_image_ctx;
-  ContextFactory m_context_factory;
-  Context *m_ctx;
-  ProgressContext *m_prog_ctx;
-  uint64_t m_object_no;
-  uint64_t m_end_object_no;
-  uint64_t m_current_ops;
-  int m_ret;
+      private:
+        ceph::mutex m_lock;
+        const AsyncRequest < ImageCtxT > *m_async_request;
+        ImageCtxT & m_image_ctx;
+        ContextFactory m_context_factory;
+        Context *m_ctx;
+        ProgressContext *m_prog_ctx;
+        uint64_t m_object_no;
+        uint64_t m_end_object_no;
+        uint64_t m_current_ops;
+        int m_ret;
 
-  void start_next_op();
-};
+        void start_next_op();
+    };
 
-} // namespace librbd
+}                               // namespace librbd
 
-extern template class librbd::AsyncObjectThrottle<librbd::ImageCtx>;
+extern template class librbd::AsyncObjectThrottle < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_ASYNC_OBJECT_THROTTLE_H

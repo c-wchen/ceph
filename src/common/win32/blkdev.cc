@@ -15,108 +15,108 @@
 #include <errno.h>
 #include "common/blkdev.h"
 
-int get_device_by_path(const char *path, char* partition, char* device,
-               size_t max)
+int get_device_by_path(const char *path, char *partition, char *device,
+                       size_t max)
 {
-  return -EOPNOTSUPP;
+    return -EOPNOTSUPP;
 }
-
 
 BlkDev::BlkDev(int f)
-  : fd(f)
-{}
-
-BlkDev::BlkDev(const std::string& devname)
-  : devname(devname)
-{}
-
-int BlkDev::get_devid(dev_t *id) const
-{
-  return -EOPNOTSUPP;
-}
-
-const char *BlkDev::sysfsdir() const {
-  assert(false);  // Should never be called on Windows
-  return "";
-}
-
-int BlkDev::dev(char *dev, size_t max) const
-{
-  return -EOPNOTSUPP;
-}
-
-int BlkDev::get_size(int64_t *psize) const
-{
-  return -EOPNOTSUPP;
-}
-
-bool BlkDev::support_discard() const
-{
-  return false;
-}
-
-int BlkDev::discard(int64_t offset, int64_t len) const
-{
-  return -EOPNOTSUPP;
-}
-
-bool BlkDev::is_rotational() const
-{
-  return false;
-}
-
-int BlkDev::model(char *model, size_t max) const
-{
-  return -EOPNOTSUPP;
-}
-
-int BlkDev::serial(char *serial, size_t max) const
-{
-  return -EOPNOTSUPP;
-}
-
-int BlkDev::partition(char *partition, size_t max) const
-{
-  return -EOPNOTSUPP;
-}
-
-int BlkDev::wholedisk(char *wd, size_t max) const
-{
-  return -EOPNOTSUPP;
-}
-
-void get_dm_parents(const std::string& dev, std::set<std::string> *ls)
+:  fd(f)
 {
 }
 
-void get_raw_devices(const std::string& in,
-             std::set<std::string> *ls)
+BlkDev::BlkDev(const std::string & devname)
+:devname(devname)
 {
 }
 
-std::string get_device_id(const std::string& devname,
-              std::string *err)
+int BlkDev::get_devid(dev_t * id) const const
 {
-  if (err) {
-    *err = "not implemented";
-  }
-  return std::string();
+    return -EOPNOTSUPP;
+}
+
+const char *BlkDev::sysfsdir() const const
+{
+    assert(false);              // Should never be called on Windows
+    return "";
+}
+
+int BlkDev::dev(char *dev, size_t max) const const
+{
+    return -EOPNOTSUPP;
+}
+
+int BlkDev::get_size(int64_t * psize) const const
+{
+    return -EOPNOTSUPP;
+}
+
+bool BlkDev::support_discard() const const
+{
+    return false;
+}
+
+int BlkDev::discard(int64_t offset, int64_t len) const const
+{
+    return -EOPNOTSUPP;
+}
+
+bool BlkDev::is_rotational() const const
+{
+    return false;
+}
+
+int BlkDev::model(char *model, size_t max) const const
+{
+    return -EOPNOTSUPP;
+}
+
+int BlkDev::serial(char *serial, size_t max) const const
+{
+    return -EOPNOTSUPP;
+}
+
+int BlkDev::partition(char *partition, size_t max) const const
+{
+    return -EOPNOTSUPP;
+}
+
+int BlkDev::wholedisk(char *wd, size_t max) const const
+{
+    return -EOPNOTSUPP;
+}
+
+void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
+{
+}
+
+void get_raw_devices(const std::string & in, std::set < std::string > *ls)
+{
+}
+
+std::string get_device_id(const std::string & devname, std::string * err)
+{
+    if (err) {
+        *err = "not implemented";
+    }
+    return std::string();
 }
 
 int block_device_run_smartctl(const char *device, int timeout,
-                  std::string *result)
+                              std::string * result)
 {
-  return -EOPNOTSUPP;
+    return -EOPNOTSUPP;
 }
 
-int block_device_get_metrics(const std::string& devname, int timeout,
-                             json_spirit::mValue *result)
+int block_device_get_metrics(const std::string & devname, int timeout,
+                             json_spirit::mValue * result)
 {
-  return -EOPNOTSUPP;
+    return -EOPNOTSUPP;
 }
 
 int block_device_run_nvme(const char *device, const char *vendor, int timeout,
-            std::string *result)
+                          std::string * result)
 {
-  return -EOPNOTSUPP;
+    return -EOPNOTSUPP;
 }

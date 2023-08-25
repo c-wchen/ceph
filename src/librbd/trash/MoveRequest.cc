@@ -15,112 +15,111 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace trash {
+    namespace trash {
 
-using util::create_context_callback;
-using util::create_rados_callback;
+        using util::create_context_callback;
+        using util::create_rados_callback;
 
-template <typename I>
-void MoveRequest<I>::send() {
-  trash_add();
-}
+         template < typename I > void MoveRequest < I >::send() {
+            trash_add();
+        } template < typename I > void MoveRequest < I >::trash_add() {
+            ldout(m_cct, 10) << dendl;
 
-template <typename I>
-void MoveRequest<I>::trash_add() {
-  ldout(m_cct, 10) << dendl;
+            librados::ObjectWriteOperation op;
+            librbd::cls_client::trash_add(&op, m_image_id, m_trash_image_spec);
 
-  librados::ObjectWriteOperation op;
-  librbd::cls_client::trash_add(&op, m_image_id, m_trash_image_spec);
+            auto aio_comp = create_rados_callback <
+                MoveRequest < I >,
+                &MoveRequest < I >::handle_trash_add > (this);
+            int r = m_io_ctx.aio_operate(RBD_TRASH, aio_comp, &op);
+             ceph_assert(r == 0);
+             aio_comp->release();
+        } template < typename I >
+            void MoveRequest < I >::handle_trash_add(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  auto aio_comp = create_rados_callback<
-    MoveRequest<I>, &MoveRequest<I>::handle_trash_add>(this);
-  int r = m_io_ctx.aio_operate(RBD_TRASH, aio_comp, &op);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+            if (r == -EEXIST) {
+                ldout(m_cct,
+                      10) << "previous unfinished deferred remove for image: "
+                    << m_image_id << dendl;
+            }
+            else if (r < 0) {
+                lderr(m_cct) << "failed to add image to trash: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void MoveRequest<I>::handle_trash_add(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            remove_id();
+        }
 
-  if (r == -EEXIST) {
-    ldout(m_cct, 10) << "previous unfinished deferred remove for image: "
-                     << m_image_id << dendl;
-  } else if (r < 0) {
-    lderr(m_cct) << "failed to add image to trash: " << cpp_strerror(r)
-                 << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void MoveRequest < I >::remove_id() {
+            ldout(m_cct, 10) << dendl;
 
-  remove_id();
-}
+            auto aio_comp = create_rados_callback <
+                MoveRequest < I >,
+                &MoveRequest < I >::handle_remove_id > (this);
+            int r =
+                m_io_ctx.aio_remove(util::id_obj_name(m_trash_image_spec.name),
+                                    aio_comp);
+            ceph_assert(r == 0);
+            aio_comp->release();
+        }
 
-template <typename I>
-void MoveRequest<I>::remove_id() {
-  ldout(m_cct, 10) << dendl;
+        template < typename I > void MoveRequest < I >::handle_remove_id(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  auto aio_comp = create_rados_callback<
-    MoveRequest<I>, &MoveRequest<I>::handle_remove_id>(this);
-  int r = m_io_ctx.aio_remove(util::id_obj_name(m_trash_image_spec.name),
-                              aio_comp);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+            if (r < 0 && r != -ENOENT) {
+                lderr(m_cct) << "failed to remove image id object: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void MoveRequest<I>::handle_remove_id(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            directory_remove();
+        }
 
-  if (r < 0 && r != -ENOENT) {
-    lderr(m_cct) << "failed to remove image id object: " << cpp_strerror(r)
-                 << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void MoveRequest < I >::directory_remove() {
+            ldout(m_cct, 10) << dendl;
 
-  directory_remove();
-}
+            librados::ObjectWriteOperation op;
+            librbd::cls_client::dir_remove_image(&op, m_trash_image_spec.name,
+                                                 m_image_id);
 
-template <typename I>
-void MoveRequest<I>::directory_remove() {
-  ldout(m_cct, 10) << dendl;
+            auto aio_comp = create_rados_callback <
+                MoveRequest < I >,
+                &MoveRequest < I >::handle_directory_remove > (this);
+            int r = m_io_ctx.aio_operate(RBD_DIRECTORY, aio_comp, &op);
+            ceph_assert(r == 0);
+            aio_comp->release();
+        }
 
-  librados::ObjectWriteOperation op;
-  librbd::cls_client::dir_remove_image(&op, m_trash_image_spec.name,
-                                       m_image_id);
+        template < typename I >
+            void MoveRequest < I >::handle_directory_remove(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  auto aio_comp = create_rados_callback<
-    MoveRequest<I>, &MoveRequest<I>::handle_directory_remove>(this);
-  int r = m_io_ctx.aio_operate(RBD_DIRECTORY, aio_comp, &op);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+            if (r == -ENOENT) {
+                r = 0;
+            }
+            if (r < 0) {
+                lderr(m_cct) << "failed to remove image from directory: " <<
+                    cpp_strerror(r)
+                    << dendl;
+            }
 
-template <typename I>
-void MoveRequest<I>::handle_directory_remove(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            finish(r);
+        }
 
-  if (r == -ENOENT) {
-    r = 0;
-  }
-  if (r < 0) {
-    lderr(m_cct) << "failed to remove image from directory: " << cpp_strerror(r)
-                 << dendl;
-  }
+        template < typename I > void MoveRequest < I >::finish(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  finish(r);
-}
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-template <typename I>
-void MoveRequest<I>::finish(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+    }                           // namespace trash
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace trash
-} // namespace librbd
-
-template class librbd::trash::MoveRequest<librbd::ImageCtx>;
+template class librbd::trash::MoveRequest < librbd::ImageCtx >;

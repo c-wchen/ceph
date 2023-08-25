@@ -20,40 +20,44 @@
 #include "msg/Message.h"
 #include "MCommand.h"
 
-class MCommandReply final : public Message {
-public:
-  errorcode32_t r;
-  std::string rs;
-  
-  MCommandReply()
-    : Message{MSG_COMMAND_REPLY} {}
-  MCommandReply(MCommand *m, int _r)
-    : Message{MSG_COMMAND_REPLY}, r(_r) {
-    header.tid = m->get_tid();
-  }
-  MCommandReply(int _r, std::string_view s)
-    : Message{MSG_COMMAND_REPLY},
-      r(_r), rs(s) { }
-private:
-  ~MCommandReply() final {}
+class MCommandReply final:public Message {
+  public:
+    errorcode32_t r;
+    std::string rs;
 
-public:
-  std::string_view get_type_name() const override { return "command_reply"; }
-  void print(std::ostream& o) const override {
-    o << "command_reply(tid " << get_tid() << ": " << r << " " << rs << ")";
-  }
-  
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(r, payload);
-    encode(rs, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(r, p);
-    decode(rs, p);
-  }
+    MCommandReply()
+    :Message {
+    MSG_COMMAND_REPLY} {
+    }
+    MCommandReply(MCommand * m, int _r)
+    :Message {
+    MSG_COMMAND_REPLY}, r(_r) {
+        header.tid = m->get_tid();
+    }
+    MCommandReply(int _r, std::string_view s)
+    :Message {
+    MSG_COMMAND_REPLY}, r(_r), rs(s) {
+    }
+  private:
+    ~MCommandReply()final {
+    }
+
+  public:
+    std::string_view get_type_name()const override {
+        return "command_reply";
+    } void print(std::ostream & o) const override {
+        o << "command_reply(tid " << get_tid() << ": " << r << " " << rs << ")";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(r, payload);
+        encode(rs, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(r, p);
+        decode(rs, p);
+    }
 };
 
 #endif

@@ -9,12 +9,11 @@
 struct Context;
 
 struct MockSafeTimer {
-  virtual ~MockSafeTimer() {
-  }
-
-  MOCK_METHOD2(add_event_after, Context*(double, Context *));
-  MOCK_METHOD2(add_event_at, Context*(ceph::real_clock::time_point, Context *));
-  MOCK_METHOD1(cancel_event, bool(Context *));
+    virtual ~ MockSafeTimer() {
+    } MOCK_METHOD2(add_event_after, Context * (double, Context *));
+    MOCK_METHOD2(add_event_at,
+                 Context * (ceph::real_clock::time_point, Context *));
+    MOCK_METHOD1(cancel_event, bool(Context *));
 };
 
 #endif // CEPH_MOCK_SAFE_TIMER_H

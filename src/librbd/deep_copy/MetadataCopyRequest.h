@@ -14,23 +14,23 @@
 class Context;
 
 namespace librbd {
-namespace deep_copy {
+    namespace deep_copy {
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class MetadataCopyRequest {
-public:
-  static MetadataCopyRequest* create(ImageCtxT *src_image_ctx,
-                                     ImageCtxT *dst_image_ctx,
-                                     Context *on_finish) {
-    return new MetadataCopyRequest(src_image_ctx, dst_image_ctx, on_finish);
-  }
+        template < typename ImageCtxT = librbd::ImageCtx >
+            class MetadataCopyRequest {
+          public:
+            static MetadataCopyRequest *create(ImageCtxT * src_image_ctx,
+                                               ImageCtxT * dst_image_ctx,
+                                               Context * on_finish) {
+                return new MetadataCopyRequest(src_image_ctx, dst_image_ctx,
+                                               on_finish);
+            } MetadataCopyRequest(ImageCtxT * src_image_ctx,
+                                  ImageCtxT * dst_image_ctx,
+                                  Context * on_finish);
 
-  MetadataCopyRequest(ImageCtxT *src_image_ctx, ImageCtxT *dst_image_ctx,
-                      Context *on_finish);
+            void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -47,32 +47,33 @@ private:
    *
    * @endverbatim
    */
-  typedef std::map<std::string, bufferlist> Metadata;
+            typedef std::map < std::string, bufferlist > Metadata;
 
-  ImageCtxT *m_src_image_ctx;
-  ImageCtxT *m_dst_image_ctx;
-  Context *m_on_finish;
+            ImageCtxT *m_src_image_ctx;
+            ImageCtxT *m_dst_image_ctx;
+            Context *m_on_finish;
 
-  CephContext *m_cct;
-  bufferlist m_out_bl;
+            CephContext *m_cct;
+            bufferlist m_out_bl;
 
-  std::map<std::string, bufferlist> m_metadata;
-  std::string m_last_metadata_key;
-  bool m_more_metadata = false;
+             std::map < std::string, bufferlist > m_metadata;
+             std::string m_last_metadata_key;
+            bool m_more_metadata = false;
 
-  void list_src_metadata();
-  void handle_list_src_metadata(int r);
+            void list_src_metadata();
+            void handle_list_src_metadata(int r);
 
-  void set_dst_metadata();
-  void handle_set_dst_metadata(int r);
+            void set_dst_metadata();
+            void handle_set_dst_metadata(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace deep_copy
-} // namespace librbd
+    }                           // namespace deep_copy
+}                               // namespace librbd
 
-extern template class librbd::deep_copy::MetadataCopyRequest<librbd::ImageCtx>;
+extern template class librbd::deep_copy::MetadataCopyRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_DEEP_COPY_METADATA_COPY_REQUEST_H

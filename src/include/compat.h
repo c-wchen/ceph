@@ -24,8 +24,8 @@
 
 #include <fcntl.h>
 #ifndef F_OFD_SETLK
-#define F_OFD_SETLK F_SETLK 
-#endif 
+#define F_OFD_SETLK F_SETLK
+#endif
 
 #include <sys/stat.h>
 
@@ -61,8 +61,7 @@
 #include <sys/param.h>
 #include <sys/cpuset.h>
 #define cpu_set_t cpuset_t
-int sched_setaffinity(pid_t pid, size_t cpusetsize,
-                      cpu_set_t *mask);
+int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t * mask);
 
 #endif /* __FreeBSD__ */
 
@@ -127,8 +126,8 @@ struct cpu_set_t;
 #endif /* __APPLE__ */
 
 #ifndef HOST_NAME_MAX
-#ifdef MAXHOSTNAMELEN 
-#define HOST_NAME_MAX MAXHOSTNAMELEN 
+#ifdef MAXHOSTNAMELEN
+#define HOST_NAME_MAX MAXHOSTNAMELEN
 #else
 #define HOST_NAME_MAX 255
 #endif
@@ -154,10 +153,10 @@ struct cpu_set_t;
 #endif
 
 #ifdef __cplusplus
-# define VOID_TEMP_FAILURE_RETRY(expression) \
+#define VOID_TEMP_FAILURE_RETRY(expression) \
    static_cast<void>(TEMP_FAILURE_RETRY(expression))
 #else
-# define VOID_TEMP_FAILURE_RETRY(expression) \
+#define VOID_TEMP_FAILURE_RETRY(expression) \
    do { (void)TEMP_FAILURE_RETRY(expression); } while (0)
 #endif
 
@@ -180,36 +179,36 @@ struct cpu_set_t;
 #endif
 
 #if defined(HAVE_PTHREAD_SETNAME_NP)
-  #if defined(__APPLE__)
-    #define ceph_pthread_setname(thread, name) ({ \
+#if defined(__APPLE__)
+#define ceph_pthread_setname(thread, name) ({ \
       int __result = 0;                         \
       if (thread == pthread_self())             \
         __result = pthread_setname_np(name);    \
       __result; })
-  #else
-    #define ceph_pthread_setname pthread_setname_np
-  #endif
+#else
+#define ceph_pthread_setname pthread_setname_np
+#endif
 #elif defined(HAVE_PTHREAD_SET_NAME_NP)
   /* Fix a small name diff and return 0 */
-  #define ceph_pthread_setname(thread, name) ({ \
+#define ceph_pthread_setname(thread, name) ({ \
     pthread_set_name_np(thread, name);          \
     0; })
 #else
   /* compiler warning free success noop */
-  #define ceph_pthread_setname(thread, name) ({ \
+#define ceph_pthread_setname(thread, name) ({ \
     int __i = 0;                              \
     __i; })
 #endif
 
 #if defined(HAVE_PTHREAD_GETNAME_NP)
-  #define ceph_pthread_getname pthread_getname_np
+#define ceph_pthread_getname pthread_getname_np
 #elif defined(HAVE_PTHREAD_GET_NAME_NP)
-  #define ceph_pthread_getname(thread, name, len) ({ \
+#define ceph_pthread_getname(thread, name, len) ({ \
     pthread_get_name_np(thread, name, len);          \
     0; })
 #else
   /* compiler warning free success noop */
-  #define ceph_pthread_getname(thread, name, len) ({ \
+#define ceph_pthread_getname(thread, name, len) ({ \
     if (name != NULL)                              \
       *name = '\0';                                \
     0; })
@@ -221,38 +220,28 @@ int ceph_posix_fallocate(int fd, off_t offset, off_t len);
 extern "C" {
 #endif
 
-int pipe_cloexec(int pipefd[2], int flags);
-char *ceph_strerror_r(int errnum, char *buf, size_t buflen);
-unsigned get_page_size();
+    int pipe_cloexec(int pipefd[2], int flags);
+    char *ceph_strerror_r(int errnum, char *buf, size_t buflen);
+    unsigned get_page_size();
 // On success, returns the number of bytes written to the buffer. On
 // failure, returns -1.
-ssize_t get_self_exe_path(char* path, int buff_length);
+    ssize_t get_self_exe_path(char *path, int buff_length);
 
-int ceph_memzero_s(void *dest, size_t destsz, size_t count);
+    int ceph_memzero_s(void *dest, size_t destsz, size_t count);
 
 #ifdef __cplusplus
 }
 #endif
-
 #if defined(_WIN32)
-
 #include "include/win32/winsock_compat.h"
-
 #include <windows.h>
 #include <time.h>
-
 #include "include/win32/win32_errno.h"
-
-// There are a few name collisions between Windows headers and Ceph.
-// Updating Ceph definitions would be the prefferable fix in order to avoid
-// confussion, unless it requires too many changes, in which case we're going
-// to redefine Windows values by adding the "WIN32_" prefix.
+// There are a few name collisions between Windows headers and Ceph.// Updating Ceph definitions would be the prefferable fix in order to avoid// confussion, unless it requires too many changes, in which case we're going// to redefine Windows values by adding the "WIN32_" prefix.
 #define WIN32_DELETE 0x00010000L
 #undef DELETE
-
 #define WIN32_ERROR 0
 #undef ERROR
-
 #ifndef uint
 typedef unsigned int uint;
 #endif
@@ -270,15 +259,14 @@ typedef long long loff_t;
 
 #define CPU_SETSIZE (sizeof(size_t)*8)
 
-typedef union
-{
-  char cpuset[CPU_SETSIZE/8];
-  size_t _align;
+typedef union {
+    char cpuset[CPU_SETSIZE / 8];
+    size_t _align;
 } cpu_set_t;
 
 struct iovec {
-  void *iov_base;
-  size_t iov_len;
+    void *iov_base;
+    size_t iov_len;
 };
 
 #define SHUT_RD SD_RECEIVE
@@ -299,38 +287,39 @@ struct iovec {
 extern "C" {
 #endif
 
-ssize_t readv(int fd, const struct iovec *iov, int iov_cnt);
-ssize_t writev(int fd, const struct iovec *iov, int iov_cnt);
+    ssize_t readv(int fd, const struct iovec *iov, int iov_cnt);
+    ssize_t writev(int fd, const struct iovec *iov, int iov_cnt);
 
-int fsync(int fd);
-ssize_t pread(int fd, void *buf, size_t count, off_t offset);
-ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+    int fsync(int fd);
+    ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+    ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 
-long int lrand48(void);
-int random();
+    long int lrand48(void);
+    int random();
 
-int pipe(int pipefd[2]);
+    int pipe(int pipefd[2]);
 
-int posix_memalign(void **memptr, size_t alignment, size_t size);
+    int posix_memalign(void **memptr, size_t alignment, size_t size);
 
-char *strptime(const char *s, const char *format, struct tm *tm);
+    char *strptime(const char *s, const char *format, struct tm *tm);
 
-int chown(const char *path, uid_t owner, gid_t group);
-int fchown(int fd, uid_t owner, gid_t group);
-int lchown(const char *path, uid_t owner, gid_t group);
-int setenv(const char *name, const char *value, int overwrite);
+    int chown(const char *path, uid_t owner, gid_t group);
+    int fchown(int fd, uid_t owner, gid_t group);
+    int lchown(const char *path, uid_t owner, gid_t group);
+    int setenv(const char *name, const char *value, int overwrite);
 
-int geteuid();
-int getegid();
-int getuid();
-int getgid();
+    int geteuid();
+    int getegid();
+    int getuid();
+    int getgid();
 
 #define unsetenv(name) _putenv_s(name, "")
 
-int win_socketpair(int socks[2]);
+    int win_socketpair(int socks[2]);
 
 #ifdef __MINGW32__
-extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,const char *_Value);
+    extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,
+                                             const char *_Value);
 
 #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #define htobe16(x) __builtin_bswap16(x)
@@ -347,19 +336,18 @@ extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,const char *_Value);
 #define htole64(x) (x)
 #define be64toh(x) __builtin_bswap64(x)
 #define le64toh(x) (x)
-#endif // defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#endif                          // defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
-#endif // __MINGW32__
+#endif                          // __MINGW32__
 
 #ifdef __cplusplus
 }
 #endif
-
 #define compat_closesocket closesocket
-// Use "aligned_free" when freeing memory allocated using posix_memalign or
-// _aligned_malloc. Using "free" will crash.
-static inline void aligned_free(void* ptr) {
-  _aligned_free(ptr);
+// Use "aligned_free" when freeing memory allocated using posix_memalign or// _aligned_malloc. Using "free" will crash.
+    static inline void aligned_free(void *ptr)
+{
+    _aligned_free(ptr);
 }
 
 // O_CLOEXEC is not defined on Windows. Since handles aren't inherited
@@ -370,15 +358,16 @@ static inline void aligned_free(void* ptr) {
 
 #define DEV_NULL "nul"
 
-#else /* WIN32 */
-
+#else                           /* WIN32 */
 #define SOCKOPT_VAL_TYPE void*
-
-static inline void aligned_free(void* ptr) {
-  free(ptr);
+static inline void aligned_free(void *ptr)
+{
+    free(ptr);
 }
-static inline int compat_closesocket(int fildes) {
-  return close(fildes);
+
+static inline int compat_closesocket(int fildes)
+{
+    return close(fildes);
 }
 
 #define DEV_NULL "/dev/null"
@@ -405,11 +394,12 @@ static inline int compat_closesocket(int fildes) {
 #endif
 
 /* This should only be used with the socket API. */
-static inline int ceph_sock_errno() {
+static inline int ceph_sock_errno()
+{
 #ifdef _WIN32
-  return wsae_to_errno(WSAGetLastError());
+    return wsae_to_errno(WSAGetLastError());
 #else
-  return errno;
+    return errno;
 #endif
 }
 

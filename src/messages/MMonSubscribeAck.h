@@ -17,39 +17,41 @@
 
 #include "msg/Message.h"
 
-class MMonSubscribeAck final : public Message {
-public:
-  __u32 interval;
-  uuid_d fsid;
-  
-  MMonSubscribeAck() : Message{CEPH_MSG_MON_SUBSCRIBE_ACK},
-		       interval(0) {
-  }
-  MMonSubscribeAck(uuid_d& f, int i) : Message{CEPH_MSG_MON_SUBSCRIBE_ACK},
-				       interval(i), fsid(f) { }
-private:
-  ~MMonSubscribeAck() final {}
+class MMonSubscribeAck final:public Message {
+  public:
+    __u32 interval;
+    uuid_d fsid;
 
-public:
-  std::string_view get_type_name() const override { return "mon_subscribe_ack"; }
-  void print(std::ostream& o) const override {
-    o << "mon_subscribe_ack(" << interval << "s)";
-  }
+     MMonSubscribeAck():Message {
+    CEPH_MSG_MON_SUBSCRIBE_ACK}
+    , interval(0) {
+    }
+  MMonSubscribeAck(uuid_d & f, int i):Message {
+    CEPH_MSG_MON_SUBSCRIBE_ACK}, interval(i), fsid(f) {
+    }
+  private:
+    ~MMonSubscribeAck()final {
+    }
 
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(interval, p);
-    decode(fsid, p);
-  }
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(interval, payload);
-    encode(fsid, payload);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "mon_subscribe_ack";
+    } void print(std::ostream & o) const override {
+        o << "mon_subscribe_ack(" << interval << "s)";
+    } void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(interval, p);
+        decode(fsid, p);
+    }
+    void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(interval, payload);
+        encode(fsid, payload);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

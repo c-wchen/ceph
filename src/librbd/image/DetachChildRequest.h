@@ -14,25 +14,22 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace image {
+    namespace image {
 
-template <typename ImageCtxT = ImageCtx>
-class DetachChildRequest {
-public:
-  static DetachChildRequest* create(ImageCtxT& image_ctx, Context* on_finish) {
-    return new DetachChildRequest(image_ctx, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class DetachChildRequest {
+          public:
+            static DetachChildRequest *create(ImageCtxT & image_ctx,
+                                              Context * on_finish) {
+                return new DetachChildRequest(image_ctx, on_finish);
+            } DetachChildRequest(ImageCtxT & image_ctx, Context * on_finish)
+            :m_image_ctx(image_ctx), m_on_finish(on_finish) {
+            } ~DetachChildRequest();
 
-  DetachChildRequest(ImageCtxT& image_ctx, Context* on_finish)
-    : m_image_ctx(image_ctx), m_on_finish(on_finish) {
-  }
-  ~DetachChildRequest();
+            void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -68,52 +65,52 @@ private:
    * @endverbatim
    */
 
-  ImageCtxT& m_image_ctx;
-  Context* m_on_finish;
+            ImageCtxT & m_image_ctx;
+            Context *m_on_finish;
 
-  librados::IoCtx m_parent_io_ctx;
-  cls::rbd::ParentImageSpec m_parent_spec;
-  std::string m_parent_header_name;
+            librados::IoCtx m_parent_io_ctx;
+            cls::rbd::ParentImageSpec m_parent_spec;
+            std::string m_parent_header_name;
 
-  cls::rbd::SnapshotNamespace m_parent_snap_namespace;
-  std::string m_parent_snap_name;
+            cls::rbd::SnapshotNamespace m_parent_snap_namespace;
+            std::string m_parent_snap_name;
 
-  ImageCtxT* m_parent_image_ctx = nullptr;
+            ImageCtxT *m_parent_image_ctx = nullptr;
 
-  ceph::bufferlist m_out_bl;
-  NoOpProgressContext m_no_op;
+            ceph::bufferlist m_out_bl;
+            NoOpProgressContext m_no_op;
 
-  void clone_v2_child_detach();
-  void handle_clone_v2_child_detach(int r);
+            void clone_v2_child_detach();
+            void handle_clone_v2_child_detach(int r);
 
-  void clone_v2_get_snapshot();
-  void handle_clone_v2_get_snapshot(int r);
+            void clone_v2_get_snapshot();
+            void handle_clone_v2_get_snapshot(int r);
 
-  void clone_v2_open_parent();
-  void handle_clone_v2_open_parent(int r);
+            void clone_v2_open_parent();
+            void handle_clone_v2_open_parent(int r);
 
-  void clone_v2_remove_snapshot();
-  void handle_clone_v2_remove_snapshot(int r);
+            void clone_v2_remove_snapshot();
+            void handle_clone_v2_remove_snapshot(int r);
 
-  void clone_v2_get_parent_trash_entry();
-  void handle_clone_v2_get_parent_trash_entry(int r);
+            void clone_v2_get_parent_trash_entry();
+            void handle_clone_v2_get_parent_trash_entry(int r);
 
-  void clone_v2_remove_parent_from_trash();
-  void handle_clone_v2_remove_parent_from_trash(int r);
+            void clone_v2_remove_parent_from_trash();
+            void handle_clone_v2_remove_parent_from_trash(int r);
 
-  void clone_v2_close_parent();
-  void handle_clone_v2_close_parent(int r);
+            void clone_v2_close_parent();
+            void handle_clone_v2_close_parent(int r);
 
-  void clone_v1_remove_child();
-  void handle_clone_v1_remove_child(int r);
+            void clone_v1_remove_child();
+            void handle_clone_v1_remove_child(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd
 
-extern template class librbd::image::DetachChildRequest<librbd::ImageCtx>;
+extern template class librbd::image::DetachChildRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IMAGE_DETACH_CHILD_REQUEST_H

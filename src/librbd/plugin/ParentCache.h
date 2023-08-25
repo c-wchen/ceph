@@ -9,30 +9,29 @@
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace plugin {
+    namespace plugin {
 
-template <typename ImageCtxT>
-class ParentCache : public Interface<ImageCtxT> {
-public:
-  ParentCache(CephContext* cct) : Interface<ImageCtxT>(cct) {
-  }
+        template < typename ImageCtxT >
+            class ParentCache:public Interface < ImageCtxT > {
+          public:
+          ParentCache(CephContext * cct):Interface < ImageCtxT >
+                (cct) {
+            } void init(ImageCtxT * image_ctx, Api < ImageCtxT > &api,
+                        cache::ImageWritebackInterface & image_writeback,
+                        PluginHookPoints & hook_points_list,
+                        Context * on_finish) override;
 
-  void init(ImageCtxT* image_ctx, Api<ImageCtxT>& api,
-            cache::ImageWritebackInterface& image_writeback,
-            PluginHookPoints& hook_points_list,
-            Context* on_finish) override;
+          private:
+            void handle_init_parent_cache(int r, Context * on_finish);
+            using ceph::Plugin::cct;
 
-private:
-  void handle_init_parent_cache(int r, Context* on_finish);
-  using ceph::Plugin::cct;
+        };
 
-};
+    }                           // namespace plugin
+}                               // namespace librbd
 
-} // namespace plugin
-} // namespace librbd
-
-extern template class librbd::plugin::ParentCache<librbd::ImageCtx>;
+extern template class librbd::plugin::ParentCache < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_PLUGIN_PARENT_CACHE_H

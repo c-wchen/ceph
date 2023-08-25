@@ -9,32 +9,28 @@
 #include "msg/msg_types.h"
 #include "MgrCap.h"
 
-
 /**
  * Session state associated with the Connection.
  */
-struct MgrSession : public RefCountedObject {
-  uint64_t global_id = 0;
-  EntityName entity_name;
-  entity_inst_t inst;
+struct MgrSession:public RefCountedObject {
+    uint64_t global_id = 0;
+    EntityName entity_name;
+    entity_inst_t inst;
 
-  int osd_id = -1;  ///< osd id (if an osd)
+    int osd_id = -1;            ///< osd id (if an osd)
 
-  MgrCap caps;
+    MgrCap caps;
 
-  std::set<std::string> declared_types;
+     std::set < std::string > declared_types;
 
-  const entity_addr_t& get_peer_addr() const {
-    return inst.addr;
-  }
-
-private:
-  FRIEND_MAKE_REF(MgrSession);
-  explicit MgrSession(CephContext *cct) : RefCountedObject(cct) {}
-  ~MgrSession() override = default;
+    const entity_addr_t & get_peer_addr() const {
+        return inst.addr;
+  } private:
+     FRIEND_MAKE_REF(MgrSession);
+    explicit MgrSession(CephContext * cct):RefCountedObject(cct) {
+    } ~MgrSession() override = default;
 };
 
-using MgrSessionRef = ceph::ref_t<MgrSession>;
-
+using MgrSessionRef = ceph::ref_t < MgrSession >;
 
 #endif

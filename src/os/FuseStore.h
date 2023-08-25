@@ -15,40 +15,40 @@
 class ObjectStore;
 
 class FuseStore {
-public:
-  ObjectStore *store;
-  std::string mount_point;
-  struct fs_info *info;
-  std::mutex lock;
-
-  struct OpenFile {
-    std::string path;
-    ceph::buffer::list bl;
-    bool dirty = false;
-    int ref = 0;
-  };
-  std::map<std::string,OpenFile*> open_files;
-
-  int open_file(std::string p, struct fuse_file_info *fi,
-		std::function<int(ceph::buffer::list *bl)> f);
-
-  class FuseThread : public Thread {
-    FuseStore *fs;
   public:
-    explicit FuseThread(FuseStore *f) : fs(f) {}
-    void *entry() override {
-      fs->loop();
-      return NULL;
-    }
-  } fuse_thread;
+    ObjectStore * store;
+    std::string mount_point;
+    struct fs_info *info;
+     std::mutex lock;
 
-  FuseStore(ObjectStore *s, std::string p);
-  ~FuseStore();
+    struct OpenFile {
+        std::string path;
+        ceph::buffer::list bl;
+        bool dirty = false;
+        int ref = 0;
+    };
+     std::map < std::string, OpenFile * >open_files;
 
-  int main();
-  int start();
-  int loop();
-  int stop();
+    int open_file(std::string p, struct fuse_file_info *fi,
+                  std::function < int (ceph::buffer::list * bl) > f);
+
+    class FuseThread:public Thread {
+        FuseStore *fs;
+      public:
+         explicit FuseThread(FuseStore * f):fs(f) {
+        } void *entry() override {
+            fs->loop();
+            return NULL;
+    }}
+    fuse_thread;
+
+    FuseStore(ObjectStore * s, std::string p);
+    ~FuseStore();
+
+    int main();
+    int start();
+    int loop();
+    int stop();
 };
 
 #endif

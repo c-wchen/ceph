@@ -12,146 +12,140 @@
 #include <string>
 
 namespace ceph {
-class Formatter;
-}
+    class Formatter;
+} namespace cls {
+    namespace journal {
 
-namespace cls {
-namespace journal {
+        static const uint64_t JOURNAL_MAX_RETURN = 256;
 
-static const uint64_t JOURNAL_MAX_RETURN = 256;
+        struct ObjectPosition {
+            uint64_t object_number;
+            uint64_t tag_tid;
+            uint64_t entry_tid;
 
-struct ObjectPosition {
-  uint64_t object_number;
-  uint64_t tag_tid;
-  uint64_t entry_tid;
+             ObjectPosition():object_number(0), tag_tid(0), entry_tid(0) {
+            } ObjectPosition(uint64_t _object_number, uint64_t _tag_tid,
+                             uint64_t _entry_tid)
+            :object_number(_object_number), tag_tid(_tag_tid),
+                entry_tid(_entry_tid) {
+            } inline bool operator==(const ObjectPosition & rhs) const {
+                return (object_number == rhs.object_number &&
+                        tag_tid == rhs.tag_tid && entry_tid == rhs.entry_tid);
+            } inline bool operator!=(const ObjectPosition & rhs)const {
+                return !(*this == rhs);
+            } void encode(ceph::buffer::list & bl) const;
+            void decode(ceph::buffer::list::const_iterator & iter);
+            void dump(ceph::Formatter * f) const;
 
-  ObjectPosition() : object_number(0), tag_tid(0), entry_tid(0) {}
-  ObjectPosition(uint64_t _object_number, uint64_t _tag_tid,
-                 uint64_t _entry_tid)
-    : object_number(_object_number), tag_tid(_tag_tid), entry_tid(_entry_tid) {}
+            inline bool operator<(const ObjectPosition & rhs) const {
+                if (object_number != rhs.object_number) {
+                    return object_number < rhs.object_number;
+                }
+                else if (tag_tid != rhs.tag_tid) {
+                    return tag_tid < rhs.tag_tid;
+                } return entry_tid < rhs.entry_tid;
+            }
 
-  inline bool operator==(const ObjectPosition& rhs) const {
-    return (object_number == rhs.object_number &&
-            tag_tid == rhs.tag_tid &&
-            entry_tid == rhs.entry_tid);
-  }
-  inline bool operator!=(const ObjectPosition& rhs) const {
-    return !(*this == rhs);
-  }
+            static void generate_test_instances(std::list <
+                                                ObjectPosition * >&o);
+        };
 
-  void encode(ceph::buffer::list& bl) const;
-  void decode(ceph::buffer::list::const_iterator& iter);
-  void dump(ceph::Formatter *f) const;
+        typedef std::list < ObjectPosition > ObjectPositions;
 
-  inline bool operator<(const ObjectPosition &rhs) const {
-    if (object_number != rhs.object_number) {
-      return object_number < rhs.object_number;
-    } else if (tag_tid != rhs.tag_tid) {
-      return tag_tid < rhs.tag_tid;
-    }
-    return entry_tid < rhs.entry_tid;
-  }
+        struct ObjectSetPosition {
+            // stored in most-recent -> least recent committed entry order
+            ObjectPositions object_positions;
 
-  static void generate_test_instances(std::list<ObjectPosition *> &o);
-};
+             ObjectSetPosition() {
+            } ObjectSetPosition(const ObjectPositions & _object_positions)
+            :object_positions(_object_positions) {
+            }
 
-typedef std::list<ObjectPosition> ObjectPositions;
+            void encode(ceph::buffer::list & bl) const;
+            void decode(ceph::buffer::list::const_iterator & iter);
+            void dump(ceph::Formatter * f) const;
 
-struct ObjectSetPosition {
-  // stored in most-recent -> least recent committed entry order
-  ObjectPositions object_positions;
+            inline bool operator==(const ObjectSetPosition & rhs) const {
+                return (object_positions == rhs.object_positions);
+            } static void generate_test_instances(std::list <
+                                                  ObjectSetPosition * >&o);
+        };
 
-  ObjectSetPosition() {}
-  ObjectSetPosition(const ObjectPositions &_object_positions)
-    : object_positions(_object_positions) {}
+        enum ClientState {
+            CLIENT_STATE_CONNECTED = 0,
+            CLIENT_STATE_DISCONNECTED = 1
+        };
 
-  void encode(ceph::buffer::list& bl) const;
-  void decode(ceph::buffer::list::const_iterator& iter);
-  void dump(ceph::Formatter *f) const;
+        struct Client {
+            std::string id;
+            ceph::buffer::list data;
+            ObjectSetPosition commit_position;
+            ClientState state;
 
-  inline bool operator==(const ObjectSetPosition &rhs) const {
-    return (object_positions == rhs.object_positions);
-  }
+             Client():state(CLIENT_STATE_CONNECTED) {
+            } Client(const std::string & _id, const ceph::buffer::list & _data,
+                     const ObjectSetPosition & _commit_position =
+                     ObjectSetPosition(), ClientState _state =
+                     CLIENT_STATE_CONNECTED)
+          :    id(_id), data(_data), commit_position(_commit_position),
+                state(_state) {
+            }
 
-  static void generate_test_instances(std::list<ObjectSetPosition *> &o);
-};
+            inline bool operator==(const Client & rhs) const {
+                return (id == rhs.id &&
+                        data.contents_equal(rhs.data) &&
+                        commit_position == rhs.commit_position &&
+                        state == rhs.state);
+            } inline bool operator<(const Client & rhs)const {
+                return (id < rhs.id);
+            } void encode(ceph::buffer::list & bl) const;
+            void decode(ceph::buffer::list::const_iterator & iter);
+            void dump(ceph::Formatter * f) const;
 
-enum ClientState {
-  CLIENT_STATE_CONNECTED = 0,
-  CLIENT_STATE_DISCONNECTED = 1
-};
+            static void generate_test_instances(std::list < Client * >&o);
+        };
 
-struct Client {
-  std::string id;
-  ceph::buffer::list data;
-  ObjectSetPosition commit_position;
-  ClientState state;
+        struct Tag {
+            static const uint64_t TAG_CLASS_NEW = static_cast < uint64_t > (-1);
 
-  Client() : state(CLIENT_STATE_CONNECTED) {}
-  Client(const std::string& _id, const ceph::buffer::list &_data,
-         const ObjectSetPosition &_commit_position = ObjectSetPosition(),
-         ClientState _state = CLIENT_STATE_CONNECTED)
-    : id(_id), data(_data), commit_position(_commit_position), state(_state) {}
+            uint64_t tid;
+            uint64_t tag_class;
+             ceph::buffer::list data;
 
-  inline bool operator==(const Client &rhs) const {
-    return (id == rhs.id &&
-            data.contents_equal(rhs.data) &&
-            commit_position == rhs.commit_position &&
-            state == rhs.state);
-  }
-  inline bool operator<(const Client &rhs) const {
-    return (id < rhs.id);
-  }
+             Tag():tid(0), tag_class(0) {
+            } Tag(uint64_t tid, uint64_t tag_class,
+                  const ceph::buffer::list & data)
+            :tid(tid), tag_class(tag_class), data(data) {
+            }
 
-  void encode(ceph::buffer::list& bl) const;
-  void decode(ceph::buffer::list::const_iterator& iter);
-  void dump(ceph::Formatter *f) const;
+            inline bool operator==(const Tag & rhs) const {
+                return (tid == rhs.tid &&
+                        tag_class == rhs.tag_class &&
+                        data.contents_equal(rhs.data));
+            } inline bool operator<(const Tag & rhs)const {
+                return (tid < rhs.tid);
+            } void encode(ceph::buffer::list & bl) const;
+            void decode(ceph::buffer::list::const_iterator & iter);
+            void dump(ceph::Formatter * f) const;
 
-  static void generate_test_instances(std::list<Client *> &o);
-};
+            static void generate_test_instances(std::list < Tag * >&o);
+        };
 
-struct Tag {
-  static const uint64_t TAG_CLASS_NEW = static_cast<uint64_t>(-1);
+        WRITE_CLASS_ENCODER(ObjectPosition);
+        WRITE_CLASS_ENCODER(ObjectSetPosition);
+        WRITE_CLASS_ENCODER(Client);
+        WRITE_CLASS_ENCODER(Tag);
 
-  uint64_t tid;
-  uint64_t tag_class;
-  ceph::buffer::list data;
+        std::ostream & operator<<(std::ostream & os, const ClientState & state);
+        std::ostream & operator<<(std::ostream & os,
+                                  const ObjectPosition & object_position);
+        std::ostream & operator<<(std::ostream & os,
+                                  const ObjectSetPosition &
+                                  object_set_position);
+        std::ostream & operator<<(std::ostream & os, const Client & client);
+        std::ostream & operator<<(std::ostream & os, const Tag & tag);
 
-  Tag() : tid(0), tag_class(0) {}
-  Tag(uint64_t tid, uint64_t tag_class, const ceph::buffer::list &data)
-    : tid(tid), tag_class(tag_class), data(data) {}
-
-  inline bool operator==(const Tag &rhs) const {
-    return (tid == rhs.tid &&
-            tag_class == rhs.tag_class &&
-            data.contents_equal(rhs.data));
-  }
-  inline bool operator<(const Tag &rhs) const {
-    return (tid < rhs.tid);
-  }
-
-  void encode(ceph::buffer::list& bl) const;
-  void decode(ceph::buffer::list::const_iterator& iter);
-  void dump(ceph::Formatter *f) const;
-
-  static void generate_test_instances(std::list<Tag *> &o);
-};
-
-WRITE_CLASS_ENCODER(ObjectPosition);
-WRITE_CLASS_ENCODER(ObjectSetPosition);
-WRITE_CLASS_ENCODER(Client);
-WRITE_CLASS_ENCODER(Tag);
-
-std::ostream &operator<<(std::ostream &os, const ClientState &state);
-std::ostream &operator<<(std::ostream &os,
-                         const ObjectPosition &object_position);
-std::ostream &operator<<(std::ostream &os,
-                         const ObjectSetPosition &object_set_position);
-std::ostream &operator<<(std::ostream &os,
-			 const Client &client);
-std::ostream &operator<<(std::ostream &os, const Tag &tag);
-
-} // namespace journal
-} // namespace cls
+    }                           // namespace journal
+}                               // namespace cls
 
 #endif // CEPH_CLS_JOURNAL_TYPES_H

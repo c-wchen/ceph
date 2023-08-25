@@ -7,19 +7,15 @@
 
 namespace crimson::os::seastore::journal {
 
-JournalRef make_segmented(
-  SegmentProvider &provider,
-  JournalTrimmer &trimmer)
-{
-  return std::make_unique<SegmentedJournal>(provider, trimmer);
-}
-
-JournalRef make_circularbounded(
-  JournalTrimmer &trimmer,
-  crimson::os::seastore::random_block_device::RBMDevice* device,
-  std::string path)
-{
-  return std::make_unique<CircularBoundedJournal>(trimmer, device, path);
-}
+    JournalRef make_segmented(SegmentProvider & provider,
+                              JournalTrimmer & trimmer) {
+        return std::make_unique < SegmentedJournal > (provider, trimmer);
+    } JournalRef make_circularbounded(JournalTrimmer & trimmer,
+                                      crimson::os::seastore::
+                                      random_block_device::RBMDevice * device,
+                                      std::string path) {
+        return std::make_unique < CircularBoundedJournal > (trimmer, device,
+                                                            path);
+    }
 
 }

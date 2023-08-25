@@ -29,24 +29,26 @@ namespace ceph {
 //
 // If a date is invalid, boost::none is returned.
 
-boost::optional<ceph::real_time> from_iso_8601(
-  std::string_view s, const bool ws_terminates = true) noexcept;
+    boost::optional < ceph::real_time > from_iso_8601(std::string_view s,
+                                                      const bool ws_terminates =
+                                                      true)noexcept;
 
-enum class iso_8601_format {
-  Y, YM, YMD, YMDh, YMDhm, YMDhms, YMDhmsn
-};
+    enum class iso_8601_format {
+        Y, YM, YMD, YMDh, YMDhm, YMDhms, YMDhmsn
+    };
 
-std::string to_iso_8601(const ceph::real_time t,
-			const iso_8601_format f = iso_8601_format::YMDhmsn,
-                        std::string_view date_separator = "-",
-                        std::string_view time_separator = ":")
-  noexcept;
+     std::string to_iso_8601(const ceph::real_time t,
+                             const iso_8601_format f = iso_8601_format::YMDhmsn,
+                             std::string_view date_separator = "-",
+                             std::string_view time_separator = ":")
+        noexcept;
 
-static inline std::string to_iso_8601_no_separators(const ceph::real_time t,
-                                                    const iso_8601_format f = iso_8601_format::YMDhmsn)
-  noexcept {
-    return to_iso_8601(t, f, "", "");
-  }
-}
-
+    static inline std::string to_iso_8601_no_separators(const ceph::real_time t,
+                                                        const iso_8601_format f
+                                                        =
+                                                        iso_8601_format::
+                                                        YMDhmsn)
+        noexcept {
+        return to_iso_8601(t, f, "", "");
+}}
 #endif

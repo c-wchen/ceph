@@ -14,89 +14,95 @@
 #define dout_prefix *_dout << "cephfs::mirror::watcher:RewatchRequest " << __func__
 
 namespace cephfs {
-namespace mirror {
-namespace watcher {
+    namespace mirror {
+        namespace watcher {
 
-RewatchRequest::RewatchRequest(librados::IoCtx &ioctx, const std::string &oid,
-                               ceph::shared_mutex &watch_lock,
-                               librados::WatchCtx2 *watch_ctx,
-                               uint64_t *watch_handle, Context *on_finish)
-  : m_ioctx(ioctx), m_oid(oid), m_lock(watch_lock),
-    m_watch_ctx(watch_ctx), m_watch_handle(watch_handle),
-    m_on_finish(on_finish) {
-}
+            RewatchRequest::RewatchRequest(librados::IoCtx & ioctx,
+                                           const std::string & oid,
+                                           ceph::shared_mutex & watch_lock,
+                                           librados::WatchCtx2 * watch_ctx,
+                                           uint64_t * watch_handle,
+                                           Context * on_finish)
+            :m_ioctx(ioctx), m_oid(oid), m_lock(watch_lock),
+                m_watch_ctx(watch_ctx), m_watch_handle(watch_handle),
+                m_on_finish(on_finish) {
+            } void RewatchRequest::send() {
+                unwatch();
+            } void RewatchRequest::unwatch() {
+                ceph_assert(ceph_mutex_is_wlocked(m_lock));
+                if (*m_watch_handle == 0) {
+                    rewatch();
+                    return;
+                } dout(10) << dendl;
 
-void RewatchRequest::send() {
-  unwatch();
-}
+                uint64_t watch_handle = 0;
+                std::swap(*m_watch_handle, watch_handle);
 
-void RewatchRequest::unwatch() {
-  ceph_assert(ceph_mutex_is_wlocked(m_lock));
-  if (*m_watch_handle == 0) {
-    rewatch();
-    return;
-  }
+                librados::AioCompletion * aio_comp =
+                    librados::Rados::aio_create_completion(this,
+                                                           &rados_callback <
+                                                           RewatchRequest,
+                                                           &RewatchRequest::
+                                                           handle_unwatch >);
+                int r = m_ioctx.aio_unwatch(watch_handle, aio_comp);
+                ceph_assert(r == 0);
+                aio_comp->release();
+            }
 
-  dout(10) << dendl;
+            void RewatchRequest::handle_unwatch(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  uint64_t watch_handle = 0;
-  std::swap(*m_watch_handle, watch_handle);
+                if (r == -EBLOCKLISTED) {
+                    derr << ": client blocklisted" << dendl;
+                    finish(r);
+                    return;
+                }
+                else if (r < 0) {
+                    derr << ": failed to unwatch: " << cpp_strerror(r) << dendl;
+                }
 
-  librados::AioCompletion *aio_comp =
-    librados::Rados::aio_create_completion(
-      this, &rados_callback<RewatchRequest, &RewatchRequest::handle_unwatch>);
-  int r = m_ioctx.aio_unwatch(watch_handle, aio_comp);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+                rewatch();
+            }
 
-void RewatchRequest::handle_unwatch(int r) {
-  dout(20) << ": r=" << r << dendl;
+            void RewatchRequest::rewatch() {
+                dout(20) << dendl;
 
-  if (r == -EBLOCKLISTED) {
-    derr << ": client blocklisted" << dendl;
-    finish(r);
-    return;
-  } else if (r < 0) {
-    derr << ": failed to unwatch: " << cpp_strerror(r) << dendl;
-  }
+                librados::AioCompletion * aio_comp =
+                    librados::Rados::aio_create_completion(this,
+                                                           &rados_callback <
+                                                           RewatchRequest,
+                                                           &RewatchRequest::
+                                                           handle_rewatch >);
+                int r =
+                    m_ioctx.aio_watch(m_oid, aio_comp, &m_rewatch_handle,
+                                      m_watch_ctx);
+                ceph_assert(r == 0);
+                aio_comp->release();
+            }
 
-  rewatch();
-}
+            void RewatchRequest::handle_rewatch(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-void RewatchRequest::rewatch() {
-  dout(20) << dendl;
+                if (r < 0) {
+                    derr << ": failed to watch object: " << cpp_strerror(r) <<
+                        dendl;
+                    m_rewatch_handle = 0;
+                }
 
-  librados::AioCompletion *aio_comp =
-    librados::Rados::aio_create_completion(
-      this, &rados_callback<RewatchRequest, &RewatchRequest::handle_rewatch>);
-  int r = m_ioctx.aio_watch(m_oid, aio_comp, &m_rewatch_handle, m_watch_ctx);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+                {
+                    std::unique_lock locker(m_lock);
+                    *m_watch_handle = m_rewatch_handle;
+                }
 
-void RewatchRequest::handle_rewatch(int r) {
-  dout(20) << ": r=" << r << dendl;
+                finish(r);
+            }
 
-  if (r < 0) {
-    derr << ": failed to watch object: " << cpp_strerror(r) << dendl;
-    m_rewatch_handle = 0;
-  }
+            void RewatchRequest::finish(int r) {
+                dout(20) << ": r=" << r << dendl;
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  {
-    std::unique_lock locker(m_lock);
-    *m_watch_handle = m_rewatch_handle;
-  }
-
-  finish(r);
-}
-
-void RewatchRequest::finish(int r) {
-  dout(20) << ": r=" << r << dendl;
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace watcher
-} // namespace mirror
-} // namespace cephfs
+        }                       // namespace watcher
+    }                           // namespace mirror
+}                               // namespace cephfs

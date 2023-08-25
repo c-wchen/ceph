@@ -23,44 +23,48 @@
 #include "msg/MessageRef.h"
 #include "messages/PaxosServiceMessage.h"
 
-class MAuth final : public PaxosServiceMessage {
-public:
-  __u32 protocol;
-  ceph::buffer::list auth_payload;
-  epoch_t monmap_epoch;
+class MAuth final:public PaxosServiceMessage {
+  public:
+    __u32 protocol;
+    ceph::buffer::list auth_payload;
+    epoch_t monmap_epoch;
 
-  /* if protocol == 0, then auth_payload is a set<__u32> listing protocols the client supports */
+    /* if protocol == 0, then auth_payload is a set<__u32> listing protocols the client supports */
 
-  MAuth() : PaxosServiceMessage{CEPH_MSG_AUTH, 0}, protocol(0), monmap_epoch(0) { }
-private:
-  ~MAuth() final {}
+     MAuth():PaxosServiceMessage {
+    CEPH_MSG_AUTH, 0}, protocol(0), monmap_epoch(0) {
+    }
+  private:
+    ~MAuth()final {
+    }
 
-public:
-  std::string_view get_type_name() const override { return "auth"; }
-  void print(std::ostream& out) const override {
-    out << "auth(proto " << protocol << " " << auth_payload.length() << " bytes"
-	<< " epoch " << monmap_epoch << ")";
-  }
-
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    paxos_decode(p);
-    decode(protocol, p);
-    decode(auth_payload, p);
-    if (!p.end())
-      decode(monmap_epoch, p);
-    else
-      monmap_epoch = 0;
-  }
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    paxos_encode();
-    encode(protocol, payload);
-    encode(auth_payload, payload);
-    encode(monmap_epoch, payload);
-  }
-  ceph::buffer::list& get_auth_payload() { return auth_payload; }
+  public:
+    std::string_view get_type_name()const override {
+        return "auth";
+    } void print(std::ostream & out) const override {
+        out << "auth(proto " << protocol << " " << auth_payload.
+            length() << " bytes" << " epoch " << monmap_epoch << ")";
+    } void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        paxos_decode(p);
+        decode(protocol, p);
+        decode(auth_payload, p);
+        if (!p.end())
+            decode(monmap_epoch, p);
+        else
+            monmap_epoch = 0;
+    }
+    void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        paxos_encode();
+        encode(protocol, payload);
+        encode(auth_payload, payload);
+        encode(monmap_epoch, payload);
+    }
+    ceph::buffer::list & get_auth_payload() {
+        return auth_payload;
+    }
 };
 
 #endif

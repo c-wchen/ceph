@@ -361,21 +361,20 @@ GLUE(.L,name): \
 #include "auto-host.h"
 
 #ifdef HAVE_GAS_CFI_DIRECTIVE
-# define CFI_STARTPROC			.cfi_startproc
-# define CFI_ENDPROC			.cfi_endproc
-# define CFI_OFFSET(reg, off)		.cfi_offset reg, off
-# define CFI_DEF_CFA_REGISTER(reg)	.cfi_def_cfa_register reg
-# define CFI_RESTORE(reg)		.cfi_restore reg
+#define CFI_STARTPROC			.cfi_startproc
+#define CFI_ENDPROC			.cfi_endproc
+#define CFI_OFFSET(reg, off)		.cfi_offset reg, off
+#define CFI_DEF_CFA_REGISTER(reg)	.cfi_def_cfa_register reg
+#define CFI_RESTORE(reg)		.cfi_restore reg
 #else
-# define CFI_STARTPROC
-# define CFI_ENDPROC
-# define CFI_OFFSET(reg, off)
-# define CFI_DEF_CFA_REGISTER(reg)
-# define CFI_RESTORE(reg)
+#define CFI_STARTPROC
+#define CFI_ENDPROC
+#define CFI_OFFSET(reg, off)
+#define CFI_DEF_CFA_REGISTER(reg)
+#define CFI_RESTORE(reg)
 #endif
 #endif
 
 #if defined __linux__
-	.section .note.GNU-stack
-	.previous
+.section.note.GNU - stack.previous
 #endif

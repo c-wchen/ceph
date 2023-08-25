@@ -35,75 +35,73 @@ class MDSRank;
 struct MDPeerUpdate;
 
 class LogSegment {
- public:
-  using seq_t = uint64_t;
+  public:
+    using seq_t = uint64_t;
 
-  LogSegment(uint64_t _seq, loff_t off=-1) :
+  LogSegment(uint64_t _seq, loff_t off = -1):
     seq(_seq), offset(off), end(off),
-    dirty_dirfrags(member_offset(CDir, item_dirty)),
-    new_dirfrags(member_offset(CDir, item_new)),
-    dirty_inodes(member_offset(CInode, item_dirty)),
-    dirty_dentries(member_offset(CDentry, item_dirty)),
-    open_files(member_offset(CInode, item_open_file)),
-    dirty_parent_inodes(member_offset(CInode, item_dirty_parent)),
-    dirty_dirfrag_dir(member_offset(CInode, item_dirty_dirfrag_dir)),
-    dirty_dirfrag_nest(member_offset(CInode, item_dirty_dirfrag_nest)),
-    dirty_dirfrag_dirfragtree(member_offset(CInode, item_dirty_dirfrag_dirfragtree))
-  {}
+        dirty_dirfrags(member_offset(CDir, item_dirty)),
+        new_dirfrags(member_offset(CDir, item_new)),
+        dirty_inodes(member_offset(CInode, item_dirty)),
+        dirty_dentries(member_offset(CDentry, item_dirty)),
+        open_files(member_offset(CInode, item_open_file)),
+        dirty_parent_inodes(member_offset(CInode, item_dirty_parent)),
+        dirty_dirfrag_dir(member_offset(CInode, item_dirty_dirfrag_dir)),
+        dirty_dirfrag_nest(member_offset(CInode, item_dirty_dirfrag_nest)),
+        dirty_dirfrag_dirfragtree(member_offset
+                                  (CInode, item_dirty_dirfrag_dirfragtree)) {
+    } void try_to_expire(MDSRank * mds, MDSGatherBuilder & gather_bld,
+                         int op_prio);
+    void purge_inodes_finish(interval_set < inodeno_t > &inos) {
+        purging_inodes.subtract(inos);
+        if (NULL != purged_cb && purging_inodes.empty())
+            purged_cb->complete(0);
+    }
+    void set_purged_cb(MDSContext * c) {
+        ceph_assert(purged_cb == NULL);
+        purged_cb = c;
+    }
+    void wait_for_expiry(MDSContext * c) {
+        ceph_assert(c != NULL);
+        expiry_waiters.push_back(c);
+    }
 
-  void try_to_expire(MDSRank *mds, MDSGatherBuilder &gather_bld, int op_prio);
-  void purge_inodes_finish(interval_set<inodeno_t>& inos){
-    purging_inodes.subtract(inos);
-    if (NULL != purged_cb &&
-	purging_inodes.empty())
-      purged_cb->complete(0);
-  }
-  void set_purged_cb(MDSContext* c){
-    ceph_assert(purged_cb == NULL);
-    purged_cb = c;
-  }
-  void wait_for_expiry(MDSContext *c)
-  {
-    ceph_assert(c != NULL);
-    expiry_waiters.push_back(c);
-  }
+    const seq_t seq;
+    uint64_t offset, end;
+    int num_events = 0;
 
-  const seq_t seq;
-  uint64_t offset, end;
-  int num_events = 0;
+    // dirty items
+    elist < CDir * >dirty_dirfrags, new_dirfrags;
+    elist < CInode * >dirty_inodes;
+    elist < CDentry * >dirty_dentries;
 
-  // dirty items
-  elist<CDir*>    dirty_dirfrags, new_dirfrags;
-  elist<CInode*>  dirty_inodes;
-  elist<CDentry*> dirty_dentries;
+    elist < CInode * >open_files;
+    elist < CInode * >dirty_parent_inodes;
+    elist < CInode * >dirty_dirfrag_dir;
+    elist < CInode * >dirty_dirfrag_nest;
+    elist < CInode * >dirty_dirfrag_dirfragtree;
 
-  elist<CInode*>  open_files;
-  elist<CInode*>  dirty_parent_inodes;
-  elist<CInode*>  dirty_dirfrag_dir;
-  elist<CInode*>  dirty_dirfrag_nest;
-  elist<CInode*>  dirty_dirfrag_dirfragtree;
+    std::set < CInode * >truncating_inodes;
+    interval_set < inodeno_t > purging_inodes;
+    MDSContext *purged_cb = nullptr;
 
-  std::set<CInode*> truncating_inodes;
-  interval_set<inodeno_t> purging_inodes;
-  MDSContext* purged_cb = nullptr;
+    std::map < int, ceph::unordered_set < version_t > >pending_commit_tids; // mdstable
+    std::set < metareqid_t > uncommitted_leaders;
+    std::set < metareqid_t > uncommitted_peers;
+    std::set < dirfrag_t > uncommitted_fragments;
 
-  std::map<int, ceph::unordered_set<version_t> > pending_commit_tids;  // mdstable
-  std::set<metareqid_t> uncommitted_leaders;
-  std::set<metareqid_t> uncommitted_peers;
-  std::set<dirfrag_t> uncommitted_fragments;
+    // client request ids
+    std::map < int, ceph_tid_t > last_client_tids;
 
-  // client request ids
-  std::map<int, ceph_tid_t> last_client_tids;
+    // potentially dirty sessions
+    std::set < entity_name_t > touched_sessions;
 
-  // potentially dirty sessions
-  std::set<entity_name_t> touched_sessions;
+    // table version
+    version_t inotablev = 0;
+    version_t sessionmapv = 0;
+    std::map < int, version_t > tablev;
 
-  // table version
-  version_t inotablev = 0;
-  version_t sessionmapv = 0;
-  std::map<int,version_t> tablev;
-
-  MDSContext::vec expiry_waiters;
+    MDSContext::vec expiry_waiters;
 };
 
 #endif

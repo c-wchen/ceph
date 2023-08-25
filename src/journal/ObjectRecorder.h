@@ -20,141 +20,135 @@
 
 namespace journal {
 
-class ObjectRecorder;
+    class ObjectRecorder;
 
-typedef std::pair<ceph::ref_t<FutureImpl>, bufferlist> AppendBuffer;
-typedef std::list<AppendBuffer> AppendBuffers;
+    typedef std::pair < ceph::ref_t < FutureImpl >, bufferlist > AppendBuffer;
+    typedef std::list < AppendBuffer > AppendBuffers;
 
-class ObjectRecorder : public RefCountedObject, boost::noncopyable {
-public:
-  struct Handler {
-    virtual ~Handler() {
-    }
-    virtual void closed(ObjectRecorder *object_recorder) = 0;
-    virtual void overflow(ObjectRecorder *object_recorder) = 0;
-  };
+    class ObjectRecorder:public RefCountedObject, boost::noncopyable {
+      public:
+        struct Handler {
+            virtual ~ Handler() {
+            } virtual void closed(ObjectRecorder * object_recorder) = 0;
+            virtual void overflow(ObjectRecorder * object_recorder) = 0;
+        };
 
-  void set_append_batch_options(int flush_interval, uint64_t flush_bytes,
-                                double flush_age);
+        void set_append_batch_options(int flush_interval, uint64_t flush_bytes,
+                                      double flush_age);
 
-  inline uint64_t get_object_number() const {
-    return m_object_number;
-  }
-  inline const std::string &get_oid() const {
-    return m_oid;
-  }
+        inline uint64_t get_object_number() const {
+            return m_object_number;
+        } inline const std::string & get_oid() const {
+            return m_oid;
+        } bool append(AppendBuffers && append_buffers);
+        void flush(Context * on_safe);
+        void flush(const ceph::ref_t < FutureImpl > &future);
 
-  bool append(AppendBuffers &&append_buffers);
-  void flush(Context *on_safe);
-  void flush(const ceph::ref_t<FutureImpl> &future);
+        void claim_append_buffers(AppendBuffers * append_buffers);
 
-  void claim_append_buffers(AppendBuffers *append_buffers);
+        bool is_closed() const {
+            ceph_assert(ceph_mutex_is_locked(*m_lock));
+            return (m_object_closed && m_in_flight_appends.empty());
+        } bool close();
 
-  bool is_closed() const {
-    ceph_assert(ceph_mutex_is_locked(*m_lock));
-    return (m_object_closed && m_in_flight_appends.empty());
-  }
-  bool close();
+        inline CephContext *cct() const {
+            return m_cct;
+        } inline size_t get_pending_appends() const {
+            std::lock_guard locker {
+            *m_lock};
+             return m_pending_buffers.size();
+      } private:
+         FRIEND_MAKE_REF(ObjectRecorder);
+        ObjectRecorder(librados::IoCtx & ioctx, std::string_view oid,
+                       uint64_t object_number, ceph::mutex * lock,
+                       ContextWQ * work_queue, Handler * handler, uint8_t order,
+                       int32_t max_in_flight_appends);
+        ~ObjectRecorder()override;
 
-  inline CephContext *cct() const {
-    return m_cct;
-  }
+        typedef std::set < uint64_t > InFlightTids;
+        typedef std::map < uint64_t, AppendBuffers > InFlightAppends;
 
-  inline size_t get_pending_appends() const {
-    std::lock_guard locker{*m_lock};
-    return m_pending_buffers.size();
-  }
+        struct FlushHandler:public FutureImpl::FlushHandler {
+            ceph::ref_t < ObjectRecorder > object_recorder;
+            virtual void flush(const ceph::ref_t < FutureImpl >
+                               &future) override {
+                object_recorder->flush(future);
+            } FlushHandler(ceph::ref_t < ObjectRecorder >
+                           o):object_recorder(std::move(o)) {
+            }
+        };
+        struct C_AppendFlush:public Context {
+            ceph::ref_t < ObjectRecorder > object_recorder;
+            uint64_t tid;
+             C_AppendFlush(ceph::ref_t < ObjectRecorder > o, uint64_t _tid)
+            :object_recorder(std::move(o)), tid(_tid) {
+            } void finish(int r) override {
+                object_recorder->handle_append_flushed(tid, r);
+            }
+        };
 
-private:
-  FRIEND_MAKE_REF(ObjectRecorder);
-  ObjectRecorder(librados::IoCtx &ioctx, std::string_view oid,
-                 uint64_t object_number, ceph::mutex* lock,
-                 ContextWQ *work_queue, Handler *handler, uint8_t order,
-                 int32_t max_in_flight_appends);
-  ~ObjectRecorder() override;
+        librados::IoCtx m_ioctx;
+        std::string m_oid;
+        uint64_t m_object_number;
+        CephContext *m_cct = nullptr;
 
-  typedef std::set<uint64_t> InFlightTids;
-  typedef std::map<uint64_t, AppendBuffers> InFlightAppends;
+        ContextWQ *m_op_work_queue;
 
-  struct FlushHandler : public FutureImpl::FlushHandler {
-    ceph::ref_t<ObjectRecorder> object_recorder;
-    virtual void flush(const ceph::ref_t<FutureImpl> &future) override {
-      object_recorder->flush(future);
-    }
-    FlushHandler(ceph::ref_t<ObjectRecorder> o) : object_recorder(std::move(o)) {}
-  };
-  struct C_AppendFlush : public Context {
-    ceph::ref_t<ObjectRecorder> object_recorder;
-    uint64_t tid;
-    C_AppendFlush(ceph::ref_t<ObjectRecorder> o, uint64_t _tid)
-        : object_recorder(std::move(o)), tid(_tid) {
-    }
-    void finish(int r) override {
-      object_recorder->handle_append_flushed(tid, r);
-    }
-  };
+        Handler *m_handler;
 
-  librados::IoCtx m_ioctx;
-  std::string m_oid;
-  uint64_t m_object_number;
-  CephContext *m_cct = nullptr;
+        uint8_t m_order;
+        uint64_t m_soft_max_size;
 
-  ContextWQ *m_op_work_queue;
+        uint32_t m_flush_interval = 0;
+        uint64_t m_flush_bytes = 0;
+        double m_flush_age = 0;
+        int32_t m_max_in_flight_appends;
 
-  Handler *m_handler;
+        bool m_compat_mode;
 
-  uint8_t m_order;
-  uint64_t m_soft_max_size;
+        /* So that ObjectRecorder::FlushHandler doesn't create a circular reference: */
+        std::weak_ptr < FlushHandler > m_flush_handler;
+        auto get_flush_handler() {
+            auto h = m_flush_handler.lock();
+            if (!h) {
+                h = std::make_shared < FlushHandler > (this);
+                m_flush_handler = h;
+            }
+            return h;
+        }
 
-  uint32_t m_flush_interval = 0;
-  uint64_t m_flush_bytes = 0;
-  double m_flush_age = 0;
-  int32_t m_max_in_flight_appends;
+        mutable ceph::mutex * m_lock;
+        AppendBuffers m_pending_buffers;
+        uint64_t m_pending_bytes = 0;
+        utime_t m_last_flush_time;
 
-  bool m_compat_mode;
+        uint64_t m_append_tid = 0;
 
-  /* So that ObjectRecorder::FlushHandler doesn't create a circular reference: */
-  std::weak_ptr<FlushHandler> m_flush_handler;
-  auto get_flush_handler() {
-    auto h = m_flush_handler.lock();
-    if (!h) {
-      h = std::make_shared<FlushHandler>(this);
-      m_flush_handler = h;
-    }
-    return h;
-  }
+        InFlightTids m_in_flight_tids;
+        InFlightAppends m_in_flight_appends;
+        uint64_t m_object_bytes = 0;
 
-  mutable ceph::mutex* m_lock;
-  AppendBuffers m_pending_buffers;
-  uint64_t m_pending_bytes = 0;
-  utime_t m_last_flush_time;
+        bool m_overflowed = false;
 
-  uint64_t m_append_tid = 0;
+        bool m_object_closed = false;
+        bool m_object_closed_notify = false;
 
-  InFlightTids m_in_flight_tids;
-  InFlightAppends m_in_flight_appends;
-  uint64_t m_object_bytes = 0;
+        bufferlist m_prefetch_bl;
 
-  bool m_overflowed = false;
+        uint32_t m_in_flight_callbacks = 0;
+        ceph::condition_variable m_in_flight_callbacks_cond;
+        uint64_t m_in_flight_bytes = 0;
 
-  bool m_object_closed = false;
-  bool m_object_closed_notify = false;
+        bool send_appends(bool force,
+                          ceph::ref_t < FutureImpl > flush_sentinal);
+        void handle_append_flushed(uint64_t tid, int r);
+        void append_overflowed();
 
-  bufferlist m_prefetch_bl;
+        void wake_up_flushes();
+        void notify_handler_unlock(std::unique_lock < ceph::mutex > &locker,
+                                   bool notify_overflowed);
+    };
 
-  uint32_t m_in_flight_callbacks = 0;
-  ceph::condition_variable m_in_flight_callbacks_cond;
-  uint64_t m_in_flight_bytes = 0;
-
-  bool send_appends(bool force, ceph::ref_t<FutureImpl> flush_sentinal);
-  void handle_append_flushed(uint64_t tid, int r);
-  void append_overflowed();
-
-  void wake_up_flushes();
-  void notify_handler_unlock(std::unique_lock<ceph::mutex>& locker,
-                             bool notify_overflowed);
-};
-
-} // namespace journal
+}                               // namespace journal
 
 #endif // CEPH_JOURNAL_OBJECT_RECORDER_H

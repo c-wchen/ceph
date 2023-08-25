@@ -5,4 +5,4 @@
 
 #include "boost/intrusive_ptr.hpp"
 
-template<typename T> using Ref = boost::intrusive_ptr<T>;
+template < typename T > using Ref = boost::intrusive_ptr < T >;

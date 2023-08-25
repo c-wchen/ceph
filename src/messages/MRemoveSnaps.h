@@ -17,42 +17,44 @@
 
 #include "messages/PaxosServiceMessage.h"
 
-class MRemoveSnaps final : public PaxosServiceMessage {
-public:
-  std::map<int32_t, std::vector<snapid_t>> snaps;
+class MRemoveSnaps final:public PaxosServiceMessage {
+  public:
+    std::map < int32_t, std::vector < snapid_t >> snaps;
 
-protected:
-  MRemoveSnaps() :
-    PaxosServiceMessage{MSG_REMOVE_SNAPS, 0} { }
-  MRemoveSnaps(std::map<int, std::vector<snapid_t>>& s) : 
-    PaxosServiceMessage{MSG_REMOVE_SNAPS, 0} {
-    snaps.swap(s);
-  }
-  ~MRemoveSnaps() final {}
+  protected:
+    MRemoveSnaps(): PaxosServiceMessage {
+    MSG_REMOVE_SNAPS, 0} {
+    }
+    MRemoveSnaps(std::map < int,
+                 std::vector < snapid_t >> &s):PaxosServiceMessage {
+    MSG_REMOVE_SNAPS, 0} {
+        snaps.swap(s);
+    }
+    ~MRemoveSnaps()final {
+    }
 
-public:
-  std::string_view get_type_name() const override { return "remove_snaps"; }
-  void print(std::ostream& out) const override {
-    out << "remove_snaps(" << snaps << " v" << version << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    paxos_encode();
-    encode(snaps, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    paxos_decode(p);
-    decode(snaps, p);
-    ceph_assert(p.end());
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "remove_snaps";
+    } void print(std::ostream & out) const override {
+        out << "remove_snaps(" << snaps << " v" << version << ")";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        paxos_encode();
+        encode(snaps, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        paxos_decode(p);
+        decode(snaps, p);
+        ceph_assert(p.end());
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

@@ -26,98 +26,111 @@
 
 using namespace std;
 
-class ErasureCodePluginRegistryTest : public ::testing::Test {};
+class ErasureCodePluginRegistryTest:public::testing::Test {
+};
 
-TEST_F(ErasureCodePluginRegistryTest, factory_mutex) {
-  ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
+TEST_F(ErasureCodePluginRegistryTest, factory_mutex)
+{
+    ErasureCodePluginRegistry & instance =
+        ErasureCodePluginRegistry::instance();
 
-  {
-    unique_lock l{instance.lock, std::try_to_lock};
-    EXPECT_TRUE(l.owns_lock());
-  }
-  // 
-  // Test that the loading of a plugin is protected by a mutex.
-
-  std::thread sleep_for_10_secs([] {
-    ErasureCodeProfile profile;
-    ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
-    ErasureCodeInterfaceRef erasure_code;
-    instance.factory("hangs",
-		     g_conf().get_val<std::string>("erasure_code_dir"),
-		     profile, &erasure_code, &cerr);
-  });
-  auto wait_until = [&instance](bool loading, unsigned max_secs) {
-    auto delay = 0ms;
-    const auto DELAY_MAX = std::chrono::seconds(max_secs);
-    for (; delay < DELAY_MAX; delay = (delay + 1ms) * 2) {
-      cout << "Trying (1) with delay " << delay << "us\n";
-      if (delay.count() > 0) {
-	std::this_thread::sleep_for(delay);
-      }
-      if (instance.loading == loading) {
-	return true;
-      }
+    {
+        unique_lock l {
+        instance.lock, std::try_to_lock};
+        EXPECT_TRUE(l.owns_lock());
     }
-    return false;
-  };
-  // should be loading in 5 seconds
-  ASSERT_TRUE(wait_until(true, 5));
-  {
-    unique_lock l{instance.lock, std::try_to_lock};
-    EXPECT_TRUE(!l.owns_lock());
-  }
-  // should finish loading in 15 seconds
-  ASSERT_TRUE(wait_until(false, 15));
-  {
-    unique_lock l{instance.lock, std::try_to_lock};
-    EXPECT_TRUE(l.owns_lock());
-  }
-  sleep_for_10_secs.join();
+    // 
+    // Test that the loading of a plugin is protected by a mutex.
+
+    std::thread sleep_for_10_secs([] {
+                                  ErasureCodeProfile profile;
+                                  ErasureCodePluginRegistry & instance =
+                                  ErasureCodePluginRegistry::instance();
+                                  ErasureCodeInterfaceRef erasure_code;
+                                  instance.factory("hangs",
+                                                   g_conf().get_val <
+                                                   std::string >
+                                                   ("erasure_code_dir"),
+                                                   profile, &erasure_code,
+                                                   &cerr);});
+    auto wait_until =[&instance] (bool loading, unsigned max_secs){
+        auto delay = 0 ms;
+        const auto DELAY_MAX = std::chrono::seconds(max_secs);
+        for (; delay < DELAY_MAX; delay = (delay + 1 ms) * 2) {
+            cout << "Trying (1) with delay " << delay << "us\n";
+            if (delay.count() > 0) {
+                std::this_thread::sleep_for(delay);
+            }
+            if (instance.loading == loading) {
+                return true;
+            }
+        }
+        return false;
+    };
+    // should be loading in 5 seconds
+    ASSERT_TRUE(wait_until(true, 5));
+    {
+        unique_lock l {
+        instance.lock, std::try_to_lock};
+        EXPECT_TRUE(!l.owns_lock());
+    }
+    // should finish loading in 15 seconds
+    ASSERT_TRUE(wait_until(false, 15));
+    {
+        unique_lock l {
+        instance.lock, std::try_to_lock};
+        EXPECT_TRUE(l.owns_lock());
+    }
+    sleep_for_10_secs.join();
 }
 
 TEST_F(ErasureCodePluginRegistryTest, all)
 {
-  ErasureCodeProfile profile;
-  string directory = g_conf().get_val<std::string>("erasure_code_dir");
-  ErasureCodeInterfaceRef erasure_code;
-  ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(-EIO, instance.factory("invalid",
-				   g_conf().get_val<std::string>("erasure_code_dir"),
-				   profile, &erasure_code, &cerr));
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(-EXDEV, instance.factory("missing_version",
-				     g_conf().get_val<std::string>("erasure_code_dir"),
-				     profile,
-				     &erasure_code, &cerr));
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(-ENOENT, instance.factory("missing_entry_point",
-				      g_conf().get_val<std::string>("erasure_code_dir"),
-				      profile,
-				      &erasure_code, &cerr));
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(-ESRCH, instance.factory("fail_to_initialize",
-				     g_conf().get_val<std::string>("erasure_code_dir"),
-				     profile,
-				     &erasure_code, &cerr));
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(-EBADF, instance.factory("fail_to_register",
-				     g_conf().get_val<std::string>("erasure_code_dir"),
-				     profile,
-				     &erasure_code, &cerr));
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(0, instance.factory("example",
-				g_conf().get_val<std::string>("erasure_code_dir"),
-				profile, &erasure_code, &cerr));
-  EXPECT_TRUE(erasure_code.get());
-  ErasureCodePlugin *plugin = 0;
-  {
-    std::lock_guard l{instance.lock};
-    EXPECT_EQ(-EEXIST, instance.load("example", directory, &plugin, &cerr));
-    EXPECT_EQ(-ENOENT, instance.remove("does not exist"));
-    EXPECT_EQ(0, instance.remove("example"));
-    EXPECT_EQ(0, instance.load("example", directory, &plugin, &cerr));
-  }
+    ErasureCodeProfile profile;
+    string directory = g_conf().get_val < std::string > ("erasure_code_dir");
+    ErasureCodeInterfaceRef erasure_code;
+    ErasureCodePluginRegistry & instance =
+        ErasureCodePluginRegistry::instance();
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(-EIO, instance.factory("invalid",
+                                     g_conf().get_val < std::string >
+                                     ("erasure_code_dir"), profile,
+                                     &erasure_code, &cerr));
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(-EXDEV, instance.factory("missing_version",
+                                       g_conf().get_val < std::string >
+                                       ("erasure_code_dir"), profile,
+                                       &erasure_code, &cerr));
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(-ENOENT, instance.factory("missing_entry_point",
+                                        g_conf().get_val < std::string >
+                                        ("erasure_code_dir"), profile,
+                                        &erasure_code, &cerr));
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(-ESRCH, instance.factory("fail_to_initialize",
+                                       g_conf().get_val < std::string >
+                                       ("erasure_code_dir"), profile,
+                                       &erasure_code, &cerr));
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(-EBADF, instance.factory("fail_to_register",
+                                       g_conf().get_val < std::string >
+                                       ("erasure_code_dir"), profile,
+                                       &erasure_code, &cerr));
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(0, instance.factory("example",
+                                  g_conf().get_val < std::string >
+                                  ("erasure_code_dir"), profile, &erasure_code,
+                                  &cerr));
+    EXPECT_TRUE(erasure_code.get());
+    ErasureCodePlugin *plugin = 0;
+    {
+        std::lock_guard l {
+        instance.lock};
+        EXPECT_EQ(-EEXIST, instance.load("example", directory, &plugin, &cerr));
+        EXPECT_EQ(-ENOENT, instance.remove("does not exist"));
+        EXPECT_EQ(0, instance.remove("example"));
+        EXPECT_EQ(0, instance.load("example", directory, &plugin, &cerr));
+    }
 }
 
 /*

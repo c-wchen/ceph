@@ -18,8 +18,8 @@
 #include <vector>
 #include <string>
 
-void cpu_profiler_handle_command(const std::vector<std::string> &cmd,
-				 std::ostream& out)
+void cpu_profiler_handle_command(const std::vector < std::string > &cmd,
+                                 std::ostream & out)
 {
-  out << "cpu_profiler support not linked in";
+    out << "cpu_profiler support not linked in";
 }

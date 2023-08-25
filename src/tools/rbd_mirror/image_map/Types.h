@@ -18,113 +18,100 @@
 struct Context;
 
 namespace ceph {
-class Formatter;
-}
+    class Formatter;
+} namespace rbd {
+    namespace mirror {
+        namespace image_map {
 
-namespace rbd {
-namespace mirror {
-namespace image_map {
+            extern const std::string UNMAPPED_INSTANCE_ID;
 
-extern const std::string UNMAPPED_INSTANCE_ID;
+            struct Listener {
+                virtual ~ Listener() {
+                } virtual void acquire_image(const std::
+                                             string & global_image_id,
+                                             const std::string & instance_id,
+                                             Context * on_finish) = 0;
+                virtual void release_image(const std::string & global_image_id,
+                                           const std::string & instance_id,
+                                           Context * on_finish) = 0;
+                virtual void remove_image(const std::string & mirror_uuid,
+                                          const std::string & global_image_id,
+                                          const std::string & instance_id,
+                                          Context * on_finish) = 0;
+            };
 
-struct Listener {
-  virtual ~Listener() {
-  }
+            struct LookupInfo {
+                std::string instance_id = UNMAPPED_INSTANCE_ID;
+                utime_t mapped_time;
+            };
 
-  virtual void acquire_image(const std::string &global_image_id,
-                             const std::string &instance_id,
-                             Context* on_finish) = 0;
-  virtual void release_image(const std::string &global_image_id,
-                             const std::string &instance_id,
-                             Context* on_finish) = 0;
-  virtual void remove_image(const std::string &mirror_uuid,
-                            const std::string &global_image_id,
-                            const std::string &instance_id,
-                            Context* on_finish) = 0;
-};
+            enum ActionType {
+                ACTION_TYPE_NONE,
+                ACTION_TYPE_MAP_UPDATE,
+                ACTION_TYPE_MAP_REMOVE,
+                ACTION_TYPE_ACQUIRE,
+                ACTION_TYPE_RELEASE
+            };
 
-struct LookupInfo {
-  std::string instance_id = UNMAPPED_INSTANCE_ID;
-  utime_t mapped_time;
-};
+            typedef std::vector < std::string > InstanceIds;
+            typedef std::set < std::string > GlobalImageIds;
+            typedef std::map < std::string, ActionType > ImageActionTypes;
 
-enum ActionType {
-  ACTION_TYPE_NONE,
-  ACTION_TYPE_MAP_UPDATE,
-  ACTION_TYPE_MAP_REMOVE,
-  ACTION_TYPE_ACQUIRE,
-  ACTION_TYPE_RELEASE
-};
+            enum PolicyMetaType {
+                POLICY_META_TYPE_NONE = 0,
+            };
 
-typedef std::vector<std::string> InstanceIds;
-typedef std::set<std::string> GlobalImageIds;
-typedef std::map<std::string, ActionType> ImageActionTypes;
+            struct PolicyMetaNone {
+                static const PolicyMetaType TYPE = POLICY_META_TYPE_NONE;
 
-enum PolicyMetaType {
-  POLICY_META_TYPE_NONE = 0,
-};
+                 PolicyMetaNone() {
+                } void encode(bufferlist & bl) const {
+                } void decode(__u8 version, bufferlist::const_iterator & it) {
+                } void dump(Formatter * f) const {
+            }};
 
-struct PolicyMetaNone {
-  static const PolicyMetaType TYPE = POLICY_META_TYPE_NONE;
+            struct PolicyMetaUnknown {
+                static const PolicyMetaType TYPE =
+                    static_cast < PolicyMetaType > (-1);
 
-  PolicyMetaNone() {
-  }
+                 PolicyMetaUnknown() {
+                } void encode(bufferlist & bl) const {
+                    ceph_abort();
+                } void decode(__u8 version, bufferlist::const_iterator & it) {
+                }
 
-  void encode(bufferlist& bl) const {
-  }
+                void dump(Formatter * f) const {
+            }};
 
-  void decode(__u8 version, bufferlist::const_iterator& it) {
-  }
+            typedef boost::variant < PolicyMetaNone,
+                PolicyMetaUnknown > PolicyMeta;
 
-  void dump(Formatter *f) const {
-  }
-};
+            struct PolicyData {
+                PolicyData()
+                :policy_meta(PolicyMetaUnknown()) {
+                } PolicyData(const PolicyMeta & policy_meta)
+                :policy_meta(policy_meta) {
+                }
 
-struct PolicyMetaUnknown {
-  static const PolicyMetaType TYPE = static_cast<PolicyMetaType>(-1);
+                PolicyMeta policy_meta;
 
-  PolicyMetaUnknown() {
-  }
+                PolicyMetaType get_policy_meta_type() const;
 
-  void encode(bufferlist& bl) const {
-    ceph_abort();
-  }
+                void encode(bufferlist & bl) const;
+                void decode(bufferlist::const_iterator & it);
+                void dump(Formatter * f) const;
 
-  void decode(__u8 version, bufferlist::const_iterator& it) {
-  }
+                static void generate_test_instances(std::list <
+                                                    PolicyData * >&o);
+            };
 
-  void dump(Formatter *f) const {
-  }
-};
+            WRITE_CLASS_ENCODER(PolicyData);
 
-typedef boost::variant<PolicyMetaNone,
-                       PolicyMetaUnknown> PolicyMeta;
+            std::ostream & operator<<(std::ostream & os,
+                                      const ActionType & action_type);
 
-struct PolicyData {
-  PolicyData()
-    : policy_meta(PolicyMetaUnknown()) {
-  }
-  PolicyData(const PolicyMeta &policy_meta)
-    : policy_meta(policy_meta) {
-  }
-
-  PolicyMeta policy_meta;
-
-  PolicyMetaType get_policy_meta_type() const;
-
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::const_iterator& it);
-  void dump(Formatter *f) const;
-
-  static void generate_test_instances(std::list<PolicyData *> &o);
-};
-
-WRITE_CLASS_ENCODER(PolicyData);
-
-std::ostream &operator<<(std::ostream &os, const ActionType &action_type);
-
-} // namespace image_map
-} // namespace mirror
-} // namespace rbd
+        }                       // namespace image_map
+    }                           // namespace mirror
+}                               // namespace rbd
 
 #endif // CEPH_RBD_MIRROR_IMAGE_MAP_TYPES_H

@@ -7,25 +7,19 @@
 #include "log/Log.h"
 
 namespace ceph {
-namespace logging {
-class SubsystemMap;
+    namespace logging {
+        class SubsystemMap;
+}} namespace seastar::alien {
+    class instance;
+} namespace ceph::logging {
+    class CnLog:public ceph::logging::Log {
+        seastar::alien::instance & inst;
+        unsigned shard;
+        void _flush(EntryVector & q, bool crash) override;
+      public:
+        CnLog(const SubsystemMap * s, seastar::alien::instance & inst,
+              unsigned shard);
+        ~CnLog() override;
+    };
 }
-}
-
-namespace seastar::alien {
-  class instance;
-}
-namespace ceph::logging
-{
-class CnLog : public ceph::logging::Log
-{
-  seastar::alien::instance& inst;
-  unsigned shard;
-  void _flush(EntryVector& q, bool crash) override;
-public:
-  CnLog(const SubsystemMap *s, seastar::alien::instance& inst, unsigned shard);
-  ~CnLog() override;
-};
-}
-
 #endif

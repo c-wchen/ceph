@@ -12,47 +12,46 @@
 #include "crimson/common/type_helpers.h"
 
 namespace ceph {
-  class Formatter;
-}
+    class Formatter;
+} namespace crimson::osd {
 
-namespace crimson::osd {
+    class ShardServices;
+    class PG;
 
-class ShardServices;
-class PG;
+    class PGAdvanceMap:public PhasedOperationT < PGAdvanceMap > {
+      public:
+        static constexpr OperationTypeCode type =
+            OperationTypeCode::pg_advance_map;
 
-class PGAdvanceMap : public PhasedOperationT<PGAdvanceMap> {
-public:
-  static constexpr OperationTypeCode type = OperationTypeCode::pg_advance_map;
+      protected:
+        ShardServices & shard_services;
+        Ref < PG > pg;
+        PipelineHandle handle;
 
-protected:
-  ShardServices &shard_services;
-  Ref<PG> pg;
-  PipelineHandle handle;
+        std::optional < epoch_t > from;
+        epoch_t to;
 
-  std::optional<epoch_t> from;
-  epoch_t to;
+        PeeringCtx rctx;
+        const bool do_init;
 
-  PeeringCtx rctx;
-  const bool do_init;
+      public:
+        PGAdvanceMap(ShardServices & shard_services, Ref < PG > pg, epoch_t to,
+                     PeeringCtx && rctx, bool do_init);
+        ~PGAdvanceMap();
 
-public:
-  PGAdvanceMap(
-    ShardServices &shard_services, Ref<PG> pg, epoch_t to,
-    PeeringCtx &&rctx, bool do_init);
-  ~PGAdvanceMap();
-
-  void print(std::ostream &) const final;
-  void dump_detail(ceph::Formatter *f) const final;
-  seastar::future<> start();
-  PipelineHandle &get_handle() { return handle; }
-
-  std::tuple<
-    PGPeeringPipeline::Process::BlockingEvent
-  > tracking_events;
-};
+        void print(std::ostream &) const final;
+        void dump_detail(ceph::Formatter * f) const final;
+        seastar::future <> start();
+        PipelineHandle & get_handle() {
+            return handle;
+        } std::tuple <
+            PGPeeringPipeline::Process::BlockingEvent > tracking_events;
+    };
 
 }
 
 #if FMT_VERSION >= 90000
-template <> struct fmt::formatter<crimson::osd::PGAdvanceMap> : fmt::ostream_formatter {};
+template <> struct fmt::formatter <
+    crimson::osd::PGAdvanceMap >:fmt::ostream_formatter {
+};
 #endif

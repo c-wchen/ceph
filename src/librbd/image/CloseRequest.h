@@ -10,20 +10,18 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace image {
+    namespace image {
 
-template <typename ImageCtxT = ImageCtx>
-class CloseRequest {
-public:
-  static CloseRequest *create(ImageCtxT *image_ctx, Context *on_finish) {
-    return new CloseRequest(image_ctx, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class CloseRequest {
+          public:
+            static CloseRequest *create(ImageCtxT * image_ctx,
+                                        Context * on_finish) {
+                return new CloseRequest(image_ctx, on_finish);
+            } void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -68,60 +66,58 @@ private:
    * @endverbatim
    */
 
-  CloseRequest(ImageCtxT *image_ctx, Context *on_finish);
+             CloseRequest(ImageCtxT * image_ctx, Context * on_finish);
 
-  ImageCtxT *m_image_ctx;
-  Context *m_on_finish;
+            ImageCtxT *m_image_ctx;
+            Context *m_on_finish;
 
-  int m_error_result;
+            int m_error_result;
 
-  decltype(m_image_ctx->exclusive_lock) m_exclusive_lock;
+             decltype(m_image_ctx->exclusive_lock) m_exclusive_lock;
 
-  void send_block_image_watcher();
-  void handle_block_image_watcher(int r);
+            void send_block_image_watcher();
+            void handle_block_image_watcher(int r);
 
-  void send_shut_down_update_watchers();
-  void handle_shut_down_update_watchers(int r);
+            void send_shut_down_update_watchers();
+            void handle_shut_down_update_watchers(int r);
 
-  void send_flush();
-  void handle_flush(int r);
+            void send_flush();
+            void handle_flush(int r);
 
-  void send_shut_down_exclusive_lock();
-  void handle_shut_down_exclusive_lock(int r);
+            void send_shut_down_exclusive_lock();
+            void handle_shut_down_exclusive_lock(int r);
 
-  void send_unregister_image_watcher();
-  void handle_unregister_image_watcher(int r);
+            void send_unregister_image_watcher();
+            void handle_unregister_image_watcher(int r);
 
-  void send_flush_readahead();
-  void handle_flush_readahead(int r);
+            void send_flush_readahead();
+            void handle_flush_readahead(int r);
 
-  void send_shut_down_image_dispatcher();
-  void handle_shut_down_image_dispatcher(int r);
+            void send_shut_down_image_dispatcher();
+            void handle_shut_down_image_dispatcher(int r);
 
-  void send_shut_down_object_dispatcher();
-  void handle_shut_down_object_dispatcher(int r);
+            void send_shut_down_object_dispatcher();
+            void handle_shut_down_object_dispatcher(int r);
 
-  void send_flush_op_work_queue();
-  void handle_flush_op_work_queue(int r);
+            void send_flush_op_work_queue();
+            void handle_flush_op_work_queue(int r);
 
-  void send_close_parent();
-  void handle_close_parent(int r);
+            void send_close_parent();
+            void handle_close_parent(int r);
 
-  void send_flush_image_watcher();
-  void handle_flush_image_watcher(int r);
+            void send_flush_image_watcher();
+            void handle_flush_image_watcher(int r);
 
-  void finish();
+            void finish();
 
-  void save_result(int result) {
-    if (m_error_result == 0 && result < 0) {
-      m_error_result = result;
-    }
-  }
-};
+            void save_result(int result) {
+                if (m_error_result == 0 && result < 0) {
+                    m_error_result = result;
+        }}};
 
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd
 
-extern template class librbd::image::CloseRequest<librbd::ImageCtx>;
+extern template class librbd::image::CloseRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IMAGE_CLOSE_REQUEST_H

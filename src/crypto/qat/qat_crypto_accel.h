@@ -19,17 +19,21 @@
 #include "crypto/crypto_accel.h"
 #include "crypto/qat/qcccrypto.h"
 
-class QccCryptoAccel : public CryptoAccel {
+class QccCryptoAccel:public CryptoAccel {
   public:
     QccCrypto qcccrypto;
-    QccCryptoAccel() { qcccrypto.init(); };
-    ~QccCryptoAccel() { qcccrypto.destroy(); };
+    QccCryptoAccel() {
+        qcccrypto.init();
+    };
+    ~QccCryptoAccel() {
+        qcccrypto.destroy();
+    };
 
-    bool cbc_encrypt(unsigned char* out, const unsigned char* in, size_t size,
-        const unsigned char (&iv)[AES_256_IVSIZE],
-        const unsigned char (&key)[AES_256_KEYSIZE]) override;
-    bool cbc_decrypt(unsigned char* out, const unsigned char* in, size_t size,
-        const unsigned char (&iv)[AES_256_IVSIZE],
-        const unsigned char (&key)[AES_256_KEYSIZE]) override;
+    bool cbc_encrypt(unsigned char *out, const unsigned char *in, size_t size,
+                     const unsigned char (&iv)[AES_256_IVSIZE],
+                     const unsigned char (&key)[AES_256_KEYSIZE]) override;
+    bool cbc_decrypt(unsigned char *out, const unsigned char *in, size_t size,
+                     const unsigned char (&iv)[AES_256_IVSIZE],
+                     const unsigned char (&key)[AES_256_KEYSIZE]) override;
 };
 #endif

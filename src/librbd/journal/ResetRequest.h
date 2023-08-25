@@ -15,38 +15,36 @@
 class Context;
 class ContextWQ;
 
-namespace journal { class Journaler; }
-
-namespace librbd {
-
-class ImageCtx;
-
 namespace journal {
+    class Journaler;
+} namespace librbd {
 
-template<typename ImageCtxT = ImageCtx>
-class ResetRequest {
-public:
-  static ResetRequest *create(librados::IoCtx &io_ctx,
-                              const std::string &image_id,
-                              const std::string &client_id,
-                              const std::string &mirror_uuid,
-                              ContextWQ *op_work_queue, Context *on_finish) {
-    return new ResetRequest(io_ctx, image_id, client_id, mirror_uuid,
-                            op_work_queue, on_finish);
-  }
+    class ImageCtx;
 
-  ResetRequest(librados::IoCtx &io_ctx, const std::string &image_id,
-               const std::string &client_id, const std::string &mirror_uuid,
-               ContextWQ *op_work_queue, Context *on_finish)
-    : m_io_ctx(io_ctx), m_image_id(image_id), m_client_id(client_id),
-      m_mirror_uuid(mirror_uuid), m_op_work_queue(op_work_queue),
-      m_on_finish(on_finish),
-      m_cct(reinterpret_cast<CephContext *>(m_io_ctx.cct())) {
-  }
+    namespace journal {
 
-  void send();
+        template < typename ImageCtxT = ImageCtx > class ResetRequest {
+          public:
+            static ResetRequest *create(librados::IoCtx & io_ctx,
+                                        const std::string & image_id,
+                                        const std::string & client_id,
+                                        const std::string & mirror_uuid,
+                                        ContextWQ * op_work_queue,
+                                        Context * on_finish) {
+                return new ResetRequest(io_ctx, image_id, client_id,
+                                        mirror_uuid, op_work_queue, on_finish);
+            } ResetRequest(librados::IoCtx & io_ctx,
+                           const std::string & image_id,
+                           const std::string & client_id,
+                           const std::string & mirror_uuid,
+                           ContextWQ * op_work_queue, Context * on_finish)
+            :m_io_ctx(io_ctx), m_image_id(image_id), m_client_id(client_id),
+                m_mirror_uuid(mirror_uuid), m_op_work_queue(op_work_queue),
+                m_on_finish(on_finish),
+                m_cct(reinterpret_cast < CephContext * >(m_io_ctx.cct())) {
+            } void send();
 
-private:
+          private:
   /**
    * @verbatim
    *
@@ -69,42 +67,42 @@ private:
    *
    * @endverbatim
    */
-  typedef typename TypeTraits<ImageCtxT>::Journaler Journaler;
+            typedef typename TypeTraits < ImageCtxT >::Journaler Journaler;
 
-  librados::IoCtx &m_io_ctx;
-  std::string m_image_id;
-  std::string m_client_id;
-  std::string m_mirror_uuid;
-  ContextWQ *m_op_work_queue;
-  Context *m_on_finish;
+            librados::IoCtx & m_io_ctx;
+            std::string m_image_id;
+            std::string m_client_id;
+            std::string m_mirror_uuid;
+            ContextWQ *m_op_work_queue;
+            Context *m_on_finish;
 
-  CephContext *m_cct;
-  Journaler *m_journaler = nullptr;
-  int m_ret_val = 0;
+            CephContext *m_cct;
+            Journaler *m_journaler = nullptr;
+            int m_ret_val = 0;
 
-  uint8_t m_order = 0;
-  uint8_t m_splay_width = 0;
-  std::string m_object_pool_name;
+            uint8_t m_order = 0;
+            uint8_t m_splay_width = 0;
+            std::string m_object_pool_name;
 
-  void init_journaler();
-  void handle_init_journaler(int r);
+            void init_journaler();
+            void handle_init_journaler(int r);
 
-  void shut_down_journaler();
-  void handle_journaler_shutdown(int r);
+            void shut_down_journaler();
+            void handle_journaler_shutdown(int r);
 
-  void remove_journal();
-  void handle_remove_journal(int r);
+            void remove_journal();
+            void handle_remove_journal(int r);
 
-  void create_journal();
-  void handle_create_journal(int r);
+            void create_journal();
+            void handle_create_journal(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace journal
-} // namespace librbd
+    }                           // namespace journal
+}                               // namespace librbd
 
-extern template class librbd::journal::ResetRequest<librbd::ImageCtx>;
+extern template class librbd::journal::ResetRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_JOURNAL_REMOVE_REQUEST_H

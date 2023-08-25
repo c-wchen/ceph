@@ -12,35 +12,29 @@
  * 
  */
 
-
 #ifndef CEPH_Sem_Posix__H
 #define CEPH_Sem_Posix__H
 
 #include "common/ceph_mutex.h"
 
-class Semaphore
-{
-  ceph::mutex m = ceph::make_mutex("Semaphore::m");
-  ceph::condition_variable c;
-  int count = 0;
+class Semaphore {
+    ceph::mutex m = ceph::make_mutex("Semaphore::m");
+    ceph::condition_variable c;
+    int count = 0;
 
   public:
 
-  void Put()
-  { 
-    std::lock_guard l(m);
-    count++;
-    c.notify_all();
-  }
-
-  void Get() 
-  {
-    std::unique_lock l(m);
-    while(count <= 0) {
-      c.wait(l);
+    void Put() {
+        std::lock_guard l(m);
+        count++;
+        c.notify_all();
+    } void Get() {
+        std::unique_lock l(m);
+        while (count <= 0) {
+            c.wait(l);
+        }
+        count--;
     }
-    count--;
-  }
 };
 
 #endif // !_Mutex_Posix_

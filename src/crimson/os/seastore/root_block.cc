@@ -7,21 +7,20 @@
 
 namespace crimson::os::seastore {
 
-void RootBlock::on_replace_prior(Transaction &t) {
-  if (!lba_root_node) {
-    auto &prior = static_cast<RootBlock&>(*get_prior_instance());
-    lba_root_node = prior.lba_root_node;
-    if (lba_root_node) {
-      ((lba_manager::btree::LBANode*)lba_root_node)->root_block = this;
+    void RootBlock::on_replace_prior(Transaction & t) {
+        if (!lba_root_node) {
+            auto & prior = static_cast < RootBlock & >(*get_prior_instance());
+            lba_root_node = prior.lba_root_node;
+            if (lba_root_node) {
+                ((lba_manager::btree::LBANode *) lba_root_node)->root_block =
+                    this;
+        }} if (!backref_root_node) {
+            auto & prior = static_cast < RootBlock & >(*get_prior_instance());
+            backref_root_node = prior.backref_root_node;
+            if (backref_root_node) {
+                ((backref::BackrefNode *) backref_root_node)->root_block = this;
+            }
+        }
     }
-  }
-  if (!backref_root_node) {
-    auto &prior = static_cast<RootBlock&>(*get_prior_instance());
-    backref_root_node = prior.backref_root_node;
-    if (backref_root_node) {
-      ((backref::BackrefNode*)backref_root_node)->root_block = this;
-    }
-  }
-}
 
-} // namespace crimson::os::seastore
+}                               // namespace crimson::os::seastore

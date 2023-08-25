@@ -30,54 +30,61 @@
 #include "byteorder.h"
 
 struct ethernet_address {
-  ethernet_address() {}
+    ethernet_address() {
+    } ethernet_address(const uint8_t * eaddr) {
+        std::copy(eaddr, eaddr + 6, mac.begin());
+    }
 
-  ethernet_address(const uint8_t *eaddr) {
-    std::copy(eaddr, eaddr + 6, mac.begin());
-  }
+    ethernet_address(std::initializer_list < uint8_t > eaddr) {
+        ceph_assert(eaddr.size() == mac.size());
+        std::copy(eaddr.begin(), eaddr.end(), mac.begin());
+    }
 
-  ethernet_address(std::initializer_list<uint8_t> eaddr) {
-    ceph_assert(eaddr.size() == mac.size());
-    std::copy(eaddr.begin(), eaddr.end(), mac.begin());
-  }
-
-  ethernet_address ntoh() {
-    return *this;
-  }
-  ethernet_address hton() {
-    return *this;
-  }
-  std::array<uint8_t, 6> mac;
-} __attribute__((packed));
-
-inline bool operator==(const ethernet_address& a, const ethernet_address& b) {
-  return a.mac == b.mac;
+    ethernet_address ntoh() {
+        return *this;
+    }
+    ethernet_address hton() {
+        return *this;
+    }
+    std::array < uint8_t, 6 > mac;
 }
-std::ostream& operator<<(std::ostream& os, const ethernet_address& ea);
+
+__attribute__ ((packed));
+
+inline bool operator==(const ethernet_address & a, const ethernet_address & b)
+{
+    return a.mac == b.mac;
+}
+
+std::ostream & operator<<(std::ostream & os, const ethernet_address & ea);
 
 struct ethernet {
-  using address = ethernet_address;
-  static address broadcast_address() {
-      return {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-  }
-  static constexpr uint16_t arp_hardware_type() { return 1; }
+    using address = ethernet_address;
+    static address broadcast_address() {
+        return {
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    }
+    static constexpr uint16_t arp_hardware_type() {
+        return 1;
+    }
 };
 
 struct eth_hdr {
-  ethernet_address dst_mac;
-  ethernet_address src_mac;
-  uint16_t eth_proto;
-  eth_hdr hton() {
-    eth_hdr hdr = *this;
-    hdr.eth_proto = ::hton(eth_proto);
-    return hdr;
-  }
-  eth_hdr ntoh() {
-    eth_hdr hdr = *this;
-    hdr.eth_proto = ::ntoh(eth_proto);
-    return hdr;
-  }
-} __attribute__((packed));
+    ethernet_address dst_mac;
+    ethernet_address src_mac;
+    uint16_t eth_proto;
+    eth_hdr hton() {
+        eth_hdr hdr = *this;
+         hdr.eth_proto =::hton(eth_proto);
+         return hdr;
+    } eth_hdr ntoh() {
+        eth_hdr hdr = *this;
+        hdr.eth_proto =::ntoh(eth_proto);
+        return hdr;
+    }
+}
+
+__attribute__ ((packed));
 
 ethernet_address parse_ethernet_address(std::string addr);
 

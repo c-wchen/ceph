@@ -12,128 +12,137 @@
                            << ": "
 
 namespace librbd {
-namespace crypto {
-namespace luks {
+    namespace crypto {
+        namespace luks {
 
-namespace {
+            namespace {
 
-constexpr uint64_t MAGIC_LENGTH = 6;
-const std::string LUKS_MAGIC = "LUKS\xba\xbe";
-const std::string RBD_CLONE_MAGIC = "RBDL\xba\xbe";
+                constexpr uint64_t MAGIC_LENGTH = 6;
+                const std::string LUKS_MAGIC = "LUKS\xba\xbe";
+                const std::string RBD_CLONE_MAGIC = "RBDL\xba\xbe";
 
-} // anonymous namespace
+            } // anonymous namespace
+                int Magic::read(ceph::bufferlist & bl, uint32_t bl_off,
+                                uint32_t read_size, char *result) {
+                if (bl_off + read_size > bl.length()) {
+                    return -EINVAL;
+                } memcpy(result, bl.c_str() + bl_off, read_size);
+                 return 0;
+            } int Magic::cmp(ceph::bufferlist & bl, uint32_t bl_off,
+                             const std::string & cmp_str) {
+                auto cmp_length = cmp_str.length();
 
-int Magic::read(ceph::bufferlist &bl, uint32_t bl_off,
-                uint32_t read_size, char* result) {
-  if (bl_off + read_size > bl.length()) {
-    return -EINVAL;
-  }
+                if (bl_off + cmp_length > bl.length()) {
+                    return -EINVAL;
+                }
 
-  memcpy(result, bl.c_str() + bl_off, read_size);
-  return 0;
-}
+                if (memcmp(bl.c_str() + bl_off, cmp_str.c_str(), cmp_length)) {
+                    return 0;
+                }
 
-int Magic::cmp(ceph::bufferlist &bl, uint32_t bl_off,
-               const std::string &cmp_str) {
-  auto cmp_length = cmp_str.length();
+                return 1;
+            }
 
-  if (bl_off + cmp_length > bl.length()) {
-    return -EINVAL;
-  }
+            int Magic::is_luks(ceph::bufferlist & bl) {
+                return cmp(bl, 0, LUKS_MAGIC);
+            }
 
-  if (memcmp(bl.c_str() + bl_off, cmp_str.c_str(), cmp_length)) {
-    return 0;
-  }
+            int Magic::is_rbd_clone(ceph::bufferlist & bl) {
+                return cmp(bl, 0, RBD_CLONE_MAGIC);
+            }
 
-  return 1;
-}
+            void Magic::transform_secondary_header_magic(char *magic) {
+                std::swap(magic[0], magic[3]);
+                std::swap(magic[1], magic[2]);
+            }
 
-int Magic::is_luks(ceph::bufferlist& bl) {
-  return cmp(bl, 0, LUKS_MAGIC);
-}
+            int Magic::replace_magic(CephContext * cct, ceph::bufferlist & bl) {
+                const std::string * old_magic, *new_magic;
+                if (is_luks(bl) > 0) {
+                    old_magic = &LUKS_MAGIC;
+                    new_magic = &RBD_CLONE_MAGIC;
+                }
+                else if (is_rbd_clone(bl) > 0) {
+                    old_magic = &RBD_CLONE_MAGIC;
+                    new_magic = &LUKS_MAGIC;
+                }
+                else {
+                    lderr(cct) << "invalid magic: " << dendl;
+                    return -EILSEQ;
+                }
 
-int Magic::is_rbd_clone(ceph::bufferlist& bl) {
-  return cmp(bl, 0, RBD_CLONE_MAGIC);
-}
+                // read luks version
+                uint16_t version;
+                auto r =
+                    read(bl, MAGIC_LENGTH, sizeof(version), (char *)&version);
+                if (r < 0) {
+                    lderr(cct) << "cannot read header version: " <<
+                        cpp_strerror(r) << dendl;
+                    return r;
+                }
+                boost::endian::big_to_native_inplace(version);
 
-void Magic::transform_secondary_header_magic(char* magic) {
-  std::swap(magic[0], magic[3]);
-  std::swap(magic[1], magic[2]);
-}
+                switch (version) {
+                case 1:{
+                        // LUKS1, no secondary header
+                        break;
+                    }
+                case 2:{
+                        // LUKS2, secondary header follows primary header
+                        // read header size
+                        uint64_t hdr_size;
+                        r = read(bl, MAGIC_LENGTH + sizeof(version),
+                                 sizeof(hdr_size), (char *)&hdr_size);
+                        if (r < 0) {
+                            lderr(cct) << "cannot read header size: " <<
+                                cpp_strerror(r) << dendl;
+                            return r;
+                        }
+                        boost::endian::big_to_native_inplace(hdr_size);
 
-int Magic::replace_magic(CephContext* cct, ceph::bufferlist& bl) {
-  const std::string *old_magic, *new_magic;
-  if (is_luks(bl) > 0) {
-    old_magic = &LUKS_MAGIC;
-    new_magic = &RBD_CLONE_MAGIC;
-  } else if (is_rbd_clone(bl) > 0) {
-    old_magic = &RBD_CLONE_MAGIC;
-    new_magic = &LUKS_MAGIC;
-  } else {
-    lderr(cct) << "invalid magic: " << dendl;
-    return -EILSEQ;
-  }
+                        if ((uint32_t) hdr_size + MAGIC_LENGTH > bl.length()) {
+                            ldout(cct,
+                                  20) << "cannot replace secondary header magic"
+                                << dendl;
+                            return -EINVAL;
+                        }
 
-  // read luks version
-  uint16_t version;
-  auto r = read(bl, MAGIC_LENGTH, sizeof(version), (char*)&version);
-  if (r < 0) {
-    lderr(cct) << "cannot read header version: " << cpp_strerror(r) << dendl;
-    return r;
-  }
-  boost::endian::big_to_native_inplace(version);
+                        // check secondary header magic
+                        auto secondary_header_magic = bl.c_str() + hdr_size;
+                        transform_secondary_header_magic
+                            (secondary_header_magic);
+                        auto is_secondary_header_magic_valid =
+                            !memcmp(secondary_header_magic, old_magic->c_str(),
+                                    MAGIC_LENGTH);
+                        if (!is_secondary_header_magic_valid) {
+                            transform_secondary_header_magic
+                                (secondary_header_magic);
+                            lderr(cct) << "invalid secondary header magic" <<
+                                dendl;
+                            return -EILSEQ;
+                        }
 
-  switch (version) {
-    case 1: {
-      // LUKS1, no secondary header
-      break;
-    }
-    case 2: {
-      // LUKS2, secondary header follows primary header
-      // read header size
-      uint64_t hdr_size;
-      r = read(bl, MAGIC_LENGTH + sizeof(version), sizeof(hdr_size),
-                    (char*)&hdr_size);
-      if (r < 0) {
-        lderr(cct) << "cannot read header size: " << cpp_strerror(r) << dendl;
-        return r;
-      }
-      boost::endian::big_to_native_inplace(hdr_size);
+                        // replace secondary header magic
+                        memcpy(secondary_header_magic, new_magic->c_str(),
+                               MAGIC_LENGTH);
+                        transform_secondary_header_magic
+                            (secondary_header_magic);
 
-      if ((uint32_t)hdr_size + MAGIC_LENGTH > bl.length()) {
-        ldout(cct, 20) << "cannot replace secondary header magic" << dendl;
-        return -EINVAL;
-      }
+                        break;
+                    }
+                default:{
+                        lderr(cct) << "bad header version: " << version <<
+                            dendl;
+                        return -EINVAL;
+                    }
+                }
 
-      // check secondary header magic
-      auto secondary_header_magic = bl.c_str() + hdr_size;
-      transform_secondary_header_magic(secondary_header_magic);
-      auto is_secondary_header_magic_valid =
-              !memcmp(secondary_header_magic, old_magic->c_str(), MAGIC_LENGTH);
-      if (!is_secondary_header_magic_valid) {
-        transform_secondary_header_magic(secondary_header_magic);
-        lderr(cct) << "invalid secondary header magic" << dendl;
-        return -EILSEQ;
-      }
+                // switch primary header magic
+                memcpy(bl.c_str(), new_magic->c_str(), MAGIC_LENGTH);
 
-      // replace secondary header magic
-      memcpy(secondary_header_magic, new_magic->c_str(), MAGIC_LENGTH);
-      transform_secondary_header_magic(secondary_header_magic);
+                return 0;
+            }
 
-      break;
-    }
-    default: {
-      lderr(cct) << "bad header version: " << version << dendl;
-      return -EINVAL;
-    }
-  }
-
-  // switch primary header magic
-  memcpy(bl.c_str(), new_magic->c_str(), MAGIC_LENGTH);
-
-  return 0;
-}
-
-} // namespace luks
-} // namespace crypto
-} // namespace librbd
+        }                       // namespace luks
+    }                           // namespace crypto
+}                               // namespace librbd

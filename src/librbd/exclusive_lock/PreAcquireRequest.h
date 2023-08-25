@@ -14,17 +14,17 @@ class Context;
 
 namespace librbd {
 
-namespace exclusive_lock {
+    namespace exclusive_lock {
 
-template <typename ImageCtxT = ImageCtx>
-class PreAcquireRequest {
-public:
-  static PreAcquireRequest* create(ImageCtxT &image_ctx, Context *on_finish);
+        template < typename ImageCtxT = ImageCtx > class PreAcquireRequest {
+          public:
+            static PreAcquireRequest *create(ImageCtxT & image_ctx,
+                                             Context * on_finish);
 
-  ~PreAcquireRequest();
-  void send();
+            ~PreAcquireRequest();
+            void send();
 
-private:
+          private:
 
   /**
    * @verbatim
@@ -45,31 +45,30 @@ private:
    * @endverbatim
    */
 
-  PreAcquireRequest(ImageCtxT &image_ctx, Context *on_finish);
+             PreAcquireRequest(ImageCtxT & image_ctx, Context * on_finish);
 
-  ImageCtxT &m_image_ctx;
-  Context *m_on_finish;
+             ImageCtxT & m_image_ctx;
+            Context *m_on_finish;
 
-  int m_error_result;
+            int m_error_result;
 
-  void send_prepare_lock();
-  void handle_prepare_lock(int r);
+            void send_prepare_lock();
+            void handle_prepare_lock(int r);
 
-  void send_flush_notifies();
-  void handle_flush_notifies(int r);
+            void send_flush_notifies();
+            void handle_flush_notifies(int r);
 
-  void finish();
+            void finish();
 
-  void save_result(int result) {
-    if (m_error_result == 0 && result < 0) {
-      m_error_result = result;
-    }
-  }
-};
+            void save_result(int result) {
+                if (m_error_result == 0 && result < 0) {
+                    m_error_result = result;
+        }}};
 
-} // namespace exclusive_lock
-} // namespace librbd
+    }                           // namespace exclusive_lock
+}                               // namespace librbd
 
-extern template class librbd::exclusive_lock::PreAcquireRequest<librbd::ImageCtx>;
+extern template class librbd::exclusive_lock::PreAcquireRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_EXCLUSIVE_LOCK_ACQUIRE_REQUEST_H

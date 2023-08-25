@@ -15,22 +15,21 @@ extern "C" {
 #include "icp_sal_user.h"
 #include "icp_sal_poll.h"
 #include "qae_mem_utils.h"
-}
-
-class QccCrypto {
+} class QccCrypto {
 
   public:
     CpaCySymCipherDirection qcc_op_type;
 
-    QccCrypto() {};
-    ~QccCrypto() {};
+    QccCrypto() {
+    };
+    ~QccCrypto() {
+    };
 
     bool init();
     bool destroy();
-    bool perform_op(unsigned char* out, const unsigned char* in, size_t size,
-        uint8_t *iv,
-        uint8_t *key,
-        CpaCySymCipherDirection op_type);
+    bool perform_op(unsigned char *out, const unsigned char *in, size_t size,
+                    uint8_t * iv,
+                    uint8_t * key, CpaCySymCipherDirection op_type);
 
   private:
 
@@ -49,9 +48,9 @@ class QccCrypto {
      * independently.
      */
     struct QCCINST {
-      CpaInstanceHandle *cy_inst_handles;
-      CpaBoolean *is_polled;
-      Cpa16U num_instances;
+        CpaInstanceHandle *cy_inst_handles;
+        CpaBoolean *is_polled;
+        Cpa16U num_instances;
     } *qcc_inst;
 
     /*
@@ -62,9 +61,9 @@ class QccCrypto {
      * single crypto or multi-buffer crypto.
      */
     struct QCCSESS {
-      CpaCySymSessionSetupData sess_stp_data;
-      Cpa32U sess_ctx_sz;
-      CpaCySymSessionCtx sess_ctx;
+        CpaCySymSessionSetupData sess_stp_data;
+        Cpa32U sess_ctx_sz;
+        CpaCySymSessionCtx sess_ctx;
     } *qcc_sess;
 
     /*
@@ -73,40 +72,39 @@ class QccCrypto {
      * by QAT to perform the operation. Also buffers for IV, SRC, DEST.
      */
     struct QCCOPMEM {
-      // Op common  items
-      bool is_mem_alloc;
-      bool op_complete;
-      CpaStatus op_result;
-      CpaCySymOpData *sym_op_data;
-      Cpa32U buff_meta_size;
-      Cpa32U num_buffers;
-      Cpa32U buff_size;
+        // Op common  items
+        bool is_mem_alloc;
+        bool op_complete;
+        CpaStatus op_result;
+        CpaCySymOpData *sym_op_data;
+        Cpa32U buff_meta_size;
+        Cpa32U num_buffers;
+        Cpa32U buff_size;
 
-      //Src data items
-      Cpa8U *src_buff_meta;
-      CpaBufferList *src_buff_list;
-      CpaFlatBuffer *src_buff_flat;
-      Cpa8U *src_buff;
-      Cpa8U *iv_buff;
+        //Src data items
+        Cpa8U *src_buff_meta;
+        CpaBufferList *src_buff_list;
+        CpaFlatBuffer *src_buff_flat;
+        Cpa8U *src_buff;
+        Cpa8U *iv_buff;
     } *qcc_op_mem;
 
     //QAT HW polling thread input structure
     struct qcc_thread_args {
-      QccCrypto* qccinstance;
-      int entry;
+        QccCrypto *qccinstance;
+        int entry;
     };
-
 
     /*
      * Function to handle the crypt operation. Will run while the main thread
      * runs the polling function on the instance doing the op
      */
-    void do_crypt(qcc_thread_args *thread_args);
+    void do_crypt(qcc_thread_args * thread_args);
 
     /*
      * Handle queue with free instances to handle op
      */
-    std::queue<int> open_instances;
+    std::queue < int >open_instances;
     int QccGetFreeInstance();
     void QccFreeInstance(int entry);
 
@@ -117,19 +115,19 @@ class QccCrypto {
      * To-Do: A kernel based one.
      */
     static inline void qcc_contig_mem_free(void **ptr) {
-      if (*ptr) {
-        qaeMemFreeNUMA(ptr);
-        *ptr = NULL;
-      }
+        if (*ptr) {
+            qaeMemFreeNUMA(ptr);
+            *ptr = NULL;
+        }
     }
 
-    static inline CpaStatus qcc_contig_mem_alloc(void **ptr, Cpa32U size, Cpa32U alignment = 1) {
-      *ptr = qaeMemAllocNUMA(size, 0, alignment);
-      if (NULL == *ptr)
-      {
-        return CPA_STATUS_RESOURCE;
-      }
-      return CPA_STATUS_SUCCESS;
+    static inline CpaStatus qcc_contig_mem_alloc(void **ptr, Cpa32U size,
+                                                 Cpa32U alignment = 1) {
+        *ptr = qaeMemAllocNUMA(size, 0, alignment);
+        if (NULL == *ptr) {
+            return CPA_STATUS_RESOURCE;
+        }
+        return CPA_STATUS_SUCCESS;
     }
 
     /*
@@ -137,22 +135,22 @@ class QccCrypto {
      * alloc support.
      */
     static inline void qcc_os_mem_free(void **ptr) {
-      if (*ptr) {
-        free(*ptr);
-        *ptr = NULL;
-      }
+        if (*ptr) {
+            free(*ptr);
+            *ptr = NULL;
+        }
     }
 
     static inline CpaStatus qcc_os_mem_alloc(void **ptr, Cpa32U size) {
-      *ptr = malloc(size);
-      if (*ptr == NULL)
-      {
-        return CPA_STATUS_RESOURCE;
-      }
-      return CPA_STATUS_SUCCESS;
+        *ptr = malloc(size);
+        if (*ptr == NULL) {
+            return CPA_STATUS_RESOURCE;
+        }
+        return CPA_STATUS_SUCCESS;
     }
 
-    std::atomic<bool> is_init = { false };
+    std::atomic < bool > is_init = {
+    false};
     CpaStatus init_stat, stat;
 
     /*
@@ -166,7 +164,7 @@ class QccCrypto {
      * associated callbacks. For synchronous operation (like this one), QAT
      * library creates an internal callback for the operation.
      */
-    static void* crypt_thread(void* entry);
+    static void *crypt_thread(void *entry);
     CpaStatus QccCyStartPoll(int entry);
     void poll_instance(int entry);
 

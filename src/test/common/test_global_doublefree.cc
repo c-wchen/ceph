@@ -12,7 +12,6 @@
  *
  */
 
-
 /*
  * This test is linked against librados and libcephfs to try and detect issues
  * with global, static, non-POD variables as seen in the following trackers.
@@ -24,7 +23,7 @@
  * Don't be fooled by its emptiness. It does serve a purpose :)
  */
 
-int main(int, char**)
+int main(int, char **)
 {
     return 0;
 }

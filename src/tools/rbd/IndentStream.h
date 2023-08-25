@@ -11,50 +11,44 @@
 
 namespace rbd {
 
-class IndentBuffer : public std::streambuf {
-public:
-  IndentBuffer(size_t indent, size_t initial_offset, size_t line_length,
-               std::streambuf *streambuf)
-    : m_indent(indent), m_initial_offset(initial_offset),
-      m_line_length(line_length), m_streambuf(streambuf),
-      m_delim(" "), m_indent_prefix(m_indent, ' ') {
-  }
+    class IndentBuffer:public std::streambuf {
+      public:
+        IndentBuffer(size_t indent, size_t initial_offset, size_t line_length,
+                     std::streambuf * streambuf)
+        :m_indent(indent), m_initial_offset(initial_offset),
+            m_line_length(line_length), m_streambuf(streambuf),
+            m_delim(" "), m_indent_prefix(m_indent, ' ') {
+        } void set_delimiter(const std::string & delim) {
+            m_delim = delim;
+      } protected:
+        int overflow(int c) override;
 
-  void set_delimiter(const std::string &delim) {
-    m_delim = delim;
-  }
+      private:
+        size_t m_indent;
+        size_t m_initial_offset;
+        size_t m_line_length;
+        std::streambuf * m_streambuf;
 
-protected:
-  int overflow (int c) override;
+        std::string m_delim;
+        std::string m_indent_prefix;
+        std::string m_buffer;
 
-private:
-  size_t m_indent;
-  size_t m_initial_offset;
-  size_t m_line_length;
-  std::streambuf *m_streambuf;
+        void flush_line();
+    };
 
-  std::string m_delim;
-  std::string m_indent_prefix;
-  std::string m_buffer;
+    class IndentStream:public std::ostream {
+      public:
+        IndentStream(size_t indent, size_t initial_offset, size_t line_length,
+                     std::ostream & os)
+        :std::ostream(&m_indent_buffer),
+            m_indent_buffer(indent, initial_offset, line_length, os.rdbuf()) {
+        } void set_delimiter(const std::string & delim) {
+            m_indent_buffer.set_delimiter(delim);
+        }
+      private:
+        IndentBuffer m_indent_buffer;
+    };
 
-  void flush_line();
-};
-
-class IndentStream : public std::ostream {
-public:
-  IndentStream(size_t indent, size_t initial_offset, size_t line_length,
-               std::ostream &os)
-    : std::ostream(&m_indent_buffer),
-      m_indent_buffer(indent, initial_offset, line_length, os.rdbuf()) {
-  }
-
-  void set_delimiter(const std::string &delim) {
-    m_indent_buffer.set_delimiter(delim);
-  }
-private:
-  IndentBuffer m_indent_buffer;
-};
-
-} // namespace rbd
+}                               // namespace rbd
 
 #endif // CEPH_RBD_INDENT_STREAM_ITERATOR_H

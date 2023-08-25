@@ -16,64 +16,60 @@
                            << this << " " << __func__ << " "
 
 namespace rbd {
-namespace mirror {
-namespace image_replayer {
+    namespace mirror {
+        namespace image_replayer {
 
-using librbd::util::create_context_callback;
+            using librbd::util::create_context_callback;
 
-template <typename I>
-OpenImageRequest<I>::OpenImageRequest(librados::IoCtx &io_ctx, I **image_ctx,
-                                      const std::string &image_id,
-                                      bool read_only, Context *on_finish)
-  : m_io_ctx(io_ctx), m_image_ctx(image_ctx), m_image_id(image_id),
-    m_read_only(read_only), m_on_finish(on_finish) {
-}
+             template < typename I >
+                OpenImageRequest <
+                I >::OpenImageRequest(librados::IoCtx & io_ctx, I ** image_ctx,
+                                      const std::string & image_id,
+                                      bool read_only, Context * on_finish)
+            :m_io_ctx(io_ctx), m_image_ctx(image_ctx), m_image_id(image_id),
+                m_read_only(read_only), m_on_finish(on_finish) {
+            } template < typename I > void OpenImageRequest < I >::send() {
+                send_open_image();
+            } template < typename I >
+                void OpenImageRequest < I >::send_open_image() {
+                dout(20) << dendl;
 
-template <typename I>
-void OpenImageRequest<I>::send() {
-  send_open_image();
-}
+                *m_image_ctx =
+                    I::create("", m_image_id, nullptr, m_io_ctx, m_read_only);
 
-template <typename I>
-void OpenImageRequest<I>::send_open_image() {
-  dout(20) << dendl;
+                if (!m_read_only) {
+                    // ensure non-primary images can be modified
+                    (*m_image_ctx)->read_only_mask =
+                        ~librbd::IMAGE_READ_ONLY_FLAG_NON_PRIMARY;
+                } Context *ctx =
+                    create_context_callback < OpenImageRequest < I >,
+                    &OpenImageRequest < I >::handle_open_image > (this);
+                (*m_image_ctx)->state->open(0, ctx);
+            }
 
-  *m_image_ctx = I::create("", m_image_id, nullptr, m_io_ctx, m_read_only);
+            template < typename I >
+                void OpenImageRequest < I >::handle_open_image(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  if (!m_read_only) {
-    // ensure non-primary images can be modified
-    (*m_image_ctx)->read_only_mask = ~librbd::IMAGE_READ_ONLY_FLAG_NON_PRIMARY;
-  }
+                if (r < 0) {
+                    derr << ": failed to open image '" << m_image_id << "': "
+                        << cpp_strerror(r) << dendl;
+                    *m_image_ctx = nullptr;
+                }
 
-  Context *ctx = create_context_callback<
-    OpenImageRequest<I>, &OpenImageRequest<I>::handle_open_image>(
-      this);
-  (*m_image_ctx)->state->open(0, ctx);
-}
+                finish(r);
+            }
 
-template <typename I>
-void OpenImageRequest<I>::handle_open_image(int r) {
-  dout(20) << ": r=" << r << dendl;
+            template < typename I > void OpenImageRequest < I >::finish(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  if (r < 0) {
-    derr << ": failed to open image '" << m_image_id << "': "
-         << cpp_strerror(r) << dendl;
-    *m_image_ctx = nullptr;
-  }
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  finish(r);
-}
+        }                       // namespace image_replayer
+    }                           // namespace mirror
+}                               // namespace rbd
 
-template <typename I>
-void OpenImageRequest<I>::finish(int r) {
-  dout(20) << ": r=" << r << dendl;
-
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::image_replayer::OpenImageRequest<librbd::ImageCtx>;
+template class rbd::mirror::image_replayer::OpenImageRequest <
+    librbd::ImageCtx >;

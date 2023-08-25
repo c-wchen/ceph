@@ -19,28 +19,29 @@
 #include "auth/Auth.h"
 #include "include/common_fwd.h"
 
-class AuthNoneServiceHandler  : public AuthServiceHandler {
-public:
-  explicit AuthNoneServiceHandler(CephContext *cct_)
-    : AuthServiceHandler(cct_) {}
-  ~AuthNoneServiceHandler() override {}
-  
-  int handle_request(ceph::buffer::list::const_iterator& indata,
-		     size_t connection_secret_required_length,
-		     ceph::buffer::list *result_bl,
-		     AuthCapsInfo *caps,
-		     CryptoKey *session_key,
-		     std::string *connection_secret) override {
-    return 0;
-  }
+class AuthNoneServiceHandler:public AuthServiceHandler {
+  public:
+    explicit AuthNoneServiceHandler(CephContext * cct_)
+    :AuthServiceHandler(cct_) {
+    } ~AuthNoneServiceHandler() override {
+    }
 
-private:
-  int do_start_session(bool is_new_global_id,
-		       ceph::buffer::list *result_bl,
-		       AuthCapsInfo *caps) override {
-    caps->allow_all = true;
-    return 1;
-  }
+    int handle_request(ceph::buffer::list::const_iterator & indata,
+                       size_t connection_secret_required_length,
+                       ceph::buffer::list * result_bl,
+                       AuthCapsInfo * caps,
+                       CryptoKey * session_key,
+                       std::string * connection_secret) override {
+        return 0;
+    }
+
+  private:
+    int do_start_session(bool is_new_global_id,
+                         ceph::buffer::list * result_bl,
+                         AuthCapsInfo * caps) override {
+        caps->allow_all = true;
+        return 1;
+    }
 };
 
 #endif

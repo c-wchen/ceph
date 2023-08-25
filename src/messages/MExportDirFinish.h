@@ -17,49 +17,54 @@
 
 #include "messages/MMDSOp.h"
 
-class MExportDirFinish final : public MMDSOp {
-private:
-  static constexpr int HEAD_VERSION = 1;
-  static constexpr int COMPAT_VERSION = 1;
+class MExportDirFinish final:public MMDSOp {
+  private:
+    static constexpr int HEAD_VERSION = 1;
+    static constexpr int COMPAT_VERSION = 1;
 
-  dirfrag_t dirfrag;
-  bool last;
+    dirfrag_t dirfrag;
+    bool last;
 
- public:
-  dirfrag_t get_dirfrag() const { return dirfrag; }
-  bool is_last() const { return last; }
-  
-protected:
-  MExportDirFinish() :
-    MMDSOp{MSG_MDS_EXPORTDIRFINISH, HEAD_VERSION, COMPAT_VERSION}, last(false) {}
-  MExportDirFinish(dirfrag_t df, bool l, uint64_t tid) :
-    MMDSOp{MSG_MDS_EXPORTDIRFINISH, HEAD_VERSION, COMPAT_VERSION}, dirfrag(df), last(l) {
-    set_tid(tid);
-  }
-  ~MExportDirFinish() final {}
+  public:
+     dirfrag_t get_dirfrag() const {
+        return dirfrag;
+    } bool is_last() const {
+        return last;
+  } protected:
+     MExportDirFinish():MMDSOp {
+    MSG_MDS_EXPORTDIRFINISH, HEAD_VERSION, COMPAT_VERSION}
+    , last(false) {
+    }
+  MExportDirFinish(dirfrag_t df, bool l, uint64_t tid):
+    MMDSOp {
+    MSG_MDS_EXPORTDIRFINISH, HEAD_VERSION, COMPAT_VERSION}
+    , dirfrag(df), last(l) {
+        set_tid(tid);
+    }
+    ~MExportDirFinish()final {
+    }
 
-public:
-  std::string_view get_type_name() const override { return "ExFin"; }
-  void print(std::ostream& o) const override {
-    o << "export_finish(" << dirfrag << (last ? " last" : "") << ")";
-  }
-  
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(dirfrag, payload);
-    encode(last, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(dirfrag, p);
-    decode(last, p);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "ExFin";
+    } void print(std::ostream & o) const override {
+        o << "export_finish(" << dirfrag << (last ? " last" : "") << ")";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(dirfrag, payload);
+        encode(last, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(dirfrag, p);
+        decode(last, p);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

@@ -13,7 +13,6 @@ constexpr int RGWBIAdvanceAndRetryError = -EFBIG;
 /* bucket index */
 #define RGW_BUCKET_INIT_INDEX "bucket_init_index"
 
-
 #define RGW_BUCKET_SET_TAG_TIMEOUT "bucket_set_tag_timeout"
 #define RGW_BUCKET_LIST "bucket_list"
 #define RGW_BUCKET_CHECK_INDEX "bucket_check_index"

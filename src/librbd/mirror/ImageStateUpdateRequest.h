@@ -15,33 +15,34 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace mirror {
+    namespace mirror {
 
-template <typename ImageCtxT = ImageCtx>
-class ImageStateUpdateRequest {
-public:
-  static ImageStateUpdateRequest *create(
-      librados::IoCtx& io_ctx,
-      const std::string& image_id,
-      cls::rbd::MirrorImageState mirror_image_state,
-      const cls::rbd::MirrorImage& mirror_image,
-      Context* on_finish) {
-    return new ImageStateUpdateRequest(
-      io_ctx, image_id, mirror_image_state, mirror_image, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class ImageStateUpdateRequest {
+          public:
+            static ImageStateUpdateRequest *create(librados::IoCtx & io_ctx,
+                                                   const std::string & image_id,
+                                                   cls::rbd::
+                                                   MirrorImageState
+                                                   mirror_image_state,
+                                                   const cls::rbd::
+                                                   MirrorImage & mirror_image,
+                                                   Context * on_finish) {
+                return new ImageStateUpdateRequest(io_ctx, image_id,
+                                                   mirror_image_state,
+                                                   mirror_image, on_finish);
+            } ImageStateUpdateRequest(librados::IoCtx & io_ctx,
+                                      const std::string & image_id,
+                                      cls::rbd::
+                                      MirrorImageState mirror_image_state,
+                                      const cls::rbd::
+                                      MirrorImage & mirror_image,
+                                      Context * on_finish);
 
-  ImageStateUpdateRequest(
-      librados::IoCtx& io_ctx,
-      const std::string& image_id,
-      cls::rbd::MirrorImageState mirror_image_state,
-      const cls::rbd::MirrorImage& mirror_image,
-      Context* on_finish);
+            void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -62,31 +63,32 @@ private:
    * @endverbatim
    */
 
-  librados::IoCtx& m_io_ctx;
-  std::string m_image_id;
-  cls::rbd::MirrorImageState m_mirror_image_state;
-  cls::rbd::MirrorImage m_mirror_image;
-  Context* m_on_finish;
+             librados::IoCtx & m_io_ctx;
+             std::string m_image_id;
+             cls::rbd::MirrorImageState m_mirror_image_state;
+             cls::rbd::MirrorImage m_mirror_image;
+            Context *m_on_finish;
 
-  CephContext* m_cct;
-  bufferlist m_out_bl;
+            CephContext *m_cct;
+            bufferlist m_out_bl;
 
-  void get_mirror_image();
-  void handle_get_mirror_image(int r);
+            void get_mirror_image();
+            void handle_get_mirror_image(int r);
 
-  void set_mirror_image();
-  void handle_set_mirror_image(int r);
+            void set_mirror_image();
+            void handle_set_mirror_image(int r);
 
-  void notify_mirroring_watcher();
-  void handle_notify_mirroring_watcher(int r);
+            void notify_mirroring_watcher();
+            void handle_notify_mirroring_watcher(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace mirror
-} // namespace librbd
+    }                           // namespace mirror
+}                               // namespace librbd
 
-extern template class librbd::mirror::ImageStateUpdateRequest<librbd::ImageCtx>;
+extern template class librbd::mirror::ImageStateUpdateRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIRROR_IMAGE_STATE_UPDATE_REQUEST_H

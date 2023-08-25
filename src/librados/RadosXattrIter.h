@@ -18,7 +18,7 @@
 #include <string>
 #include <map>
 
-#include "include/buffer.h"  // for bufferlist
+#include "include/buffer.h"     // for bufferlist
 
 namespace librados {
 
@@ -26,13 +26,13 @@ namespace librados {
    * iterator object used in implementation of the external
    * attributes part of the C interface of librados
    */
-  struct RadosXattrsIter {
-    RadosXattrsIter();
-    ~RadosXattrsIter();
-    std::map<std::string, bufferlist> attrset;
-    std::map<std::string, bufferlist>::iterator i;
-    char *val;
-  };
+    struct RadosXattrsIter {
+        RadosXattrsIter();
+        ~RadosXattrsIter();
+        std::map < std::string, bufferlist > attrset;
+        std::map < std::string, bufferlist >::iterator i;
+        char *val;
+    };
 };
 
 #endif

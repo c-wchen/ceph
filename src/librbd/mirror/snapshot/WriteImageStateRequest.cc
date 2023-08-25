@@ -16,105 +16,102 @@
                            << this << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
-namespace snapshot {
+    namespace mirror {
+        namespace snapshot {
 
-namespace {
+            namespace {
 
-static size_t header_length() {
-  bufferlist bl;
-  ImageStateHeader header;
+                static size_t header_length() {
+                    bufferlist bl;
+                    ImageStateHeader header;
 
-  using ceph::encode;
-  encode(header, bl);
+                    using ceph::encode;
+                     encode(header, bl);
 
-  return bl.length();
-}
+                     return bl.length();
+            }} using librbd::util::create_rados_callback;
 
-}
-using librbd::util::create_rados_callback;
+             template < typename I >
+                WriteImageStateRequest <
+                I >::WriteImageStateRequest(I * image_ctx, uint64_t snap_id,
+                                            const ImageState & image_state,
+                                            Context * on_finish)
+            :m_image_ctx(image_ctx), m_snap_id(snap_id),
+                m_image_state(image_state), m_on_finish(on_finish),
+                m_object_size(1 << image_ctx->config.template get_val <
+                              uint64_t > ("rbd_default_order")) {
+                bufferlist bl;
+                 encode(m_image_state, bl);
 
-template <typename I>
-WriteImageStateRequest<I>::WriteImageStateRequest(I *image_ctx,
-                                                  uint64_t snap_id,
-                                                  const ImageState &image_state,
-                                                  Context *on_finish)
-  : m_image_ctx(image_ctx), m_snap_id(snap_id), m_image_state(image_state),
-    m_on_finish(on_finish), m_object_size(
-      1 << image_ctx->config.template get_val<uint64_t>("rbd_default_order")) {
-  bufferlist bl;
-  encode(m_image_state, bl);
+                 m_object_count =
+                    1 + (header_length() + bl.length()) / m_object_size;
+                ImageStateHeader header(m_object_count);
 
-  m_object_count = 1 + (header_length() + bl.length()) / m_object_size;
-  ImageStateHeader header(m_object_count);
+                 encode(header, m_bl);
+                 m_bl.claim_append(bl);
+            } template < typename I > void WriteImageStateRequest < I >::send() {
+                write_object();
+            }
 
-  encode(header, m_bl);
-  m_bl.claim_append(bl);
-}
+            template < typename I >
+                void WriteImageStateRequest < I >::write_object() {
+                CephContext *cct = m_image_ctx->cct;
+                ceph_assert(m_object_count > 0);
 
-template <typename I>
-void WriteImageStateRequest<I>::send() {
-  write_object();
-}
+                m_object_count--;
 
-template <typename I>
-void WriteImageStateRequest<I>::write_object() {
-  CephContext *cct = m_image_ctx->cct;
-  ceph_assert(m_object_count > 0);
+                auto oid = util::image_state_object_name(m_image_ctx, m_snap_id,
+                                                         m_object_count);
+                ldout(cct, 15) << oid << dendl;
 
-  m_object_count--;
+                size_t off = m_object_count * m_object_size;
+                size_t len = std::min(m_bl.length() - off, m_object_size);
+                bufferlist bl;
+                bl.substr_of(m_bl, off, len);
 
-  auto oid = util::image_state_object_name(m_image_ctx, m_snap_id,
-                                           m_object_count);
-  ldout(cct, 15) << oid << dendl;
+                librados::ObjectWriteOperation op;
+                op.write_full(bl);
 
-  size_t off = m_object_count * m_object_size;
-  size_t len = std::min(m_bl.length() - off, m_object_size);
-  bufferlist bl;
-  bl.substr_of(m_bl, off, len);
+                librados::AioCompletion * comp = create_rados_callback <
+                    WriteImageStateRequest < I >,
+                    &WriteImageStateRequest < I >::handle_write_object > (this);
+                int r = m_image_ctx->md_ctx.aio_operate(oid, comp, &op);
+                ceph_assert(r == 0);
+                comp->release();
+            }
 
-  librados::ObjectWriteOperation op;
-  op.write_full(bl);
+            template < typename I >
+                void WriteImageStateRequest < I >::handle_write_object(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  librados::AioCompletion *comp = create_rados_callback<
-    WriteImageStateRequest<I>,
-    &WriteImageStateRequest<I>::handle_write_object>(this);
-  int r = m_image_ctx->md_ctx.aio_operate(oid, comp, &op);
-  ceph_assert(r == 0);
-  comp->release();
-}
+                if (r < 0) {
+                    lderr(cct) << "failed to write object: " << cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void WriteImageStateRequest<I>::handle_write_object(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+                if (m_object_count == 0) {
+                    finish(0);
+                    return;
+                }
 
-  if (r < 0) {
-    lderr(cct) << "failed to write object: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+                write_object();
+            }
 
-  if (m_object_count == 0) {
-    finish(0);
-    return;
-  }
+            template < typename I >
+                void WriteImageStateRequest < I >::finish(int r) {
+                CephContext *cct = m_image_ctx->cct;
+                ldout(cct, 15) << "r=" << r << dendl;
 
-  write_object();
-}
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-template <typename I>
-void WriteImageStateRequest<I>::finish(int r) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 15) << "r=" << r << dendl;
+        }                       // namespace snapshot
+    }                           // namespace mirror
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace snapshot
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::snapshot::WriteImageStateRequest<librbd::ImageCtx>;
+template class librbd::mirror::snapshot::WriteImageStateRequest <
+    librbd::ImageCtx >;

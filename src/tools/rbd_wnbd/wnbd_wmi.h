@@ -26,84 +26,66 @@
 // Windows COM library using "COINIT_MULTITHREADED" concurrency mode.
 // Any WMI objects (including connections, event subscriptions, etc)
 // must be released before the COM library gets closed.
-class COMBootstrapper
-{
-private:
-  bool initialized = false;
+class COMBootstrapper {
+  private:
+    bool initialized = false;
 
-  ceph::mutex init_lock = ceph::make_mutex("COMBootstrapper::InitLocker");
+    ceph::mutex init_lock = ceph::make_mutex("COMBootstrapper::InitLocker");
 
-public:
-  HRESULT initialize();
-  void cleanup();
+  public:
+    HRESULT initialize();
+    void cleanup();
 
-  ~COMBootstrapper()
-  {
-    cleanup();
-  }
-};
+    ~COMBootstrapper() {
+        cleanup();
+}};
 
-class WmiConnection
-{
-private:
-  std::wstring ns;
-public:
-  IWbemLocator* wbem_loc;
-  IWbemServices* wbem_svc;
+class WmiConnection {
+  private:
+    std::wstring ns;
+  public:
+    IWbemLocator * wbem_loc;
+    IWbemServices *wbem_svc;
 
-  WmiConnection(std::wstring ns)
-    : ns(ns)
+     WmiConnection(std::wstring ns)
+    :ns(ns)
     , wbem_loc(nullptr)
-    , wbem_svc(nullptr)
-  {
-  }
-  ~WmiConnection()
-  {
-    close();
-  }
+    , wbem_svc(nullptr) {
+    } ~WmiConnection() {
+        close();
+    }
 
-  HRESULT initialize();
-  void close();
+    HRESULT initialize();
+    void close();
 };
 
-HRESULT get_property_str(
-  IWbemClassObject* cls_obj,
-  const std::wstring& property,
-  std::wstring& value);
-HRESULT get_property_int(
-  IWbemClassObject* cls_obj,
-  const std::wstring& property,
-  uint32_t& value);
+HRESULT get_property_str(IWbemClassObject * cls_obj,
+                         const std::wstring & property, std::wstring & value);
+HRESULT get_property_int(IWbemClassObject * cls_obj,
+                         const std::wstring & property, uint32_t & value);
 
-class WmiSubscription
-{
-private:
-  std::wstring query;
+class WmiSubscription {
+  private:
+    std::wstring query;
 
-  WmiConnection conn;
-  IEnumWbemClassObject *event_enum;
+    WmiConnection conn;
+    IEnumWbemClassObject *event_enum;
 
-public:
-  WmiSubscription(std::wstring ns, std::wstring query)
-    : query(query)
+  public:
+     WmiSubscription(std::wstring ns, std::wstring query)
+    :query(query)
     , conn(WmiConnection(ns))
-    , event_enum(nullptr)
-  {
-  }
-  ~WmiSubscription()
-  {
-    close();
-  }
+    , event_enum(nullptr) {
+    } ~WmiSubscription() {
+        close();
+    }
 
-  HRESULT initialize();
-  void close();
+    HRESULT initialize();
+    void close();
 
-  // IEnumWbemClassObject::Next wrapper
-  HRESULT next(
-    long timeout,
-    ULONG count,
-    IWbemClassObject **objects,
-    ULONG *returned);
+    // IEnumWbemClassObject::Next wrapper
+    HRESULT next(long timeout,
+                 ULONG count, IWbemClassObject ** objects, ULONG * returned);
 };
 
 WmiSubscription subscribe_wnbd_adapter_events(uint32_t interval);

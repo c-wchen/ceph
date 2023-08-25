@@ -8,33 +8,27 @@
 
 namespace librbd {
 
-class ImageCtx;
-class ProgressContext;
+    class ImageCtx;
+    class ProgressContext;
 
-namespace operation {
+    namespace operation {
 
-template <typename ImageCtxT = ImageCtx>
-class SparsifyRequest : public Request<ImageCtxT>
-{
-public:
-  SparsifyRequest(ImageCtxT &image_ctx, size_t sparse_size, Context *on_finish,
-                  ProgressContext &prog_ctx)
-    : Request<ImageCtxT>(image_ctx, on_finish), m_sparse_size(sparse_size),
-      m_prog_ctx(prog_ctx) {
-  }
-
-protected:
-  void send_op() override;
-  bool should_complete(int r) override;
-  bool can_affect_io() const override {
-    return true;
-  }
-  journal::Event create_event(uint64_t op_tid) const override {
-    ceph_abort();
-    return journal::UnknownEvent();
-  }
-
-private:
+      template < typename ImageCtxT = ImageCtx > class SparsifyRequest:public Request < ImageCtxT >
+        {
+          public:
+            SparsifyRequest(ImageCtxT & image_ctx, size_t sparse_size,
+                            Context * on_finish, ProgressContext & prog_ctx)
+          :    Request < ImageCtxT > (image_ctx, on_finish),
+                m_sparse_size(sparse_size), m_prog_ctx(prog_ctx) {
+          } protected:
+            void send_op() override;
+            bool should_complete(int r) override;
+            bool can_affect_io() const override {
+                return true;
+            } journal::Event create_event(uint64_t op_tid) const override {
+                ceph_abort();
+                return journal::UnknownEvent();
+          } private:
   /**
    * @verbatim
    *
@@ -49,16 +43,16 @@ private:
    * @endverbatim
    */
 
-  size_t m_sparse_size;
-  ProgressContext &m_prog_ctx;
+             size_t m_sparse_size;
+             ProgressContext & m_prog_ctx;
 
-  void sparsify_objects();
-  void handle_sparsify_objects(int r);
-};
+            void sparsify_objects();
+            void handle_sparsify_objects(int r);
+        };
 
-} // namespace operation
-} // namespace librbd
+    }                           // namespace operation
+}                               // namespace librbd
 
-extern template class librbd::operation::SparsifyRequest<librbd::ImageCtx>;
+extern template class librbd::operation::SparsifyRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OPERATION_SPARSIFY_REQUEST_H

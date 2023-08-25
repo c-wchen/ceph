@@ -5,4 +5,4 @@
 #include <vector>
 #include "common/options.h"
 
-std::vector<Option> build_options();
+std::vector < Option > build_options();

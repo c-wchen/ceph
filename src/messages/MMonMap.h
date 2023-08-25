@@ -21,42 +21,48 @@
 #include "msg/MessageRef.h"
 #include "mon/MonMap.h"
 
-class MMonMap final : public Message {
-public:
-  ceph::buffer::list monmapbl;
+class MMonMap final:public Message {
+  public:
+    ceph::buffer::list monmapbl;
 
-  MMonMap() : Message{CEPH_MSG_MON_MAP} { }
-  explicit MMonMap(ceph::buffer::list &bl) : Message{CEPH_MSG_MON_MAP} {
-    monmapbl = std::move(bl);
-  }
-private:
-  ~MMonMap() final {}
-
-public:
-  std::string_view get_type_name() const override { return "mon_map"; }
-
-  void encode_payload(uint64_t features) override { 
-    if (monmapbl.length() &&
-	((features & CEPH_FEATURE_MONENC) == 0 ||
-	 (features & CEPH_FEATURE_MSG_ADDR2) == 0)) {
-      // reencode old-format monmap
-      MonMap t;
-      t.decode(monmapbl);
-      monmapbl.clear();
-      t.encode(monmapbl, features);
+    MMonMap():Message {
+    CEPH_MSG_MON_MAP}
+    {
+    }
+    explicit MMonMap(ceph::buffer::list & bl):Message {
+    CEPH_MSG_MON_MAP}
+    {
+        monmapbl = std::move(bl);
+    }
+  private:
+    ~MMonMap()final {
     }
 
-    using ceph::encode;
-    encode(monmapbl, payload);
-  }
-  void decode_payload() override { 
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(monmapbl, p);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "mon_map";
+    } void encode_payload(uint64_t features) override {
+        if (monmapbl.length() &&
+            ((features & CEPH_FEATURE_MONENC) == 0 ||
+             (features & CEPH_FEATURE_MSG_ADDR2) == 0)) {
+            // reencode old-format monmap
+            MonMap t;
+            t.decode(monmapbl);
+            monmapbl.clear();
+            t.encode(monmapbl, features);
+        }
+
+        using ceph::encode;
+        encode(monmapbl, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(monmapbl, p);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

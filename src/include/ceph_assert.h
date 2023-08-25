@@ -5,7 +5,7 @@
 #include <string>
 
 #ifndef __STRING
-# define __STRING(x) #x
+#define __STRING(x) #x
 #endif
 
 #if defined(__linux__)
@@ -20,50 +20,54 @@
 #endif
 
 #ifdef __CEPH__
-# include "acconfig.h"
+#include "acconfig.h"
 #endif
 
 #include "include/common_fwd.h"
 
 namespace ceph {
 
-struct BackTrace;
+    struct BackTrace;
 
 /*
  * Select a function-name variable based on compiler tests, and any compiler
  * specific overrides.
  */
 #if defined(HAVE_PRETTY_FUNC)
-# define __CEPH_ASSERT_FUNCTION __PRETTY_FUNCTION__
+#define __CEPH_ASSERT_FUNCTION __PRETTY_FUNCTION__
 #elif defined(HAVE_FUNC)
-# define __CEPH_ASSERT_FUNCTION __func__
+#define __CEPH_ASSERT_FUNCTION __func__
 #else
-# define __CEPH_ASSERT_FUNCTION ((__const char *) 0)
+#define __CEPH_ASSERT_FUNCTION ((__const char *) 0)
 #endif
 
-extern void register_assert_context(CephContext *cct);
+    extern void register_assert_context(CephContext * cct);
 
-struct assert_data {
-  const char *assertion;
-  const char *file;
-  const int line;
-  const char *function;
-};
+    struct assert_data {
+        const char *assertion;
+        const char *file;
+        const int line;
+        const char *function;
+    };
 
-extern void __ceph_assert_fail(const char *assertion, const char *file, int line, const char *function)
-  __attribute__ ((__noreturn__));
-extern void __ceph_assert_fail(const assert_data &ctx)
-  __attribute__ ((__noreturn__));
+    extern void __ceph_assert_fail(const char *assertion, const char *file,
+                                   int line, const char *function)
+        __attribute__ ((__noreturn__));
+    extern void __ceph_assert_fail(const assert_data & ctx)
+        __attribute__ ((__noreturn__));
 
-extern void __ceph_assertf_fail(const char *assertion, const char *file, int line, const char *function, const char* msg, ...)
-  __attribute__ ((__noreturn__));
-extern void __ceph_assert_warn(const char *assertion, const char *file, int line, const char *function);
+    extern void __ceph_assertf_fail(const char *assertion, const char *file,
+                                    int line, const char *function,
+                                    const char *msg, ...)
+        __attribute__ ((__noreturn__));
+    extern void __ceph_assert_warn(const char *assertion, const char *file,
+                                   int line, const char *function);
 
-[[noreturn]] void __ceph_abort(const char *file, int line, const char *func,
-                               const std::string& msg);
+    [[noreturn]] void __ceph_abort(const char *file, int line, const char *func,
+                                   const std::string & msg);
 
-[[noreturn]] void __ceph_abortf(const char *file, int line, const char *func,
-                                const char* msg, ...);
+    [[noreturn]] void __ceph_abortf(const char *file, int line,
+                                    const char *func, const char *msg, ...);
 
 #define _CEPH_ASSERT_VOID_CAST static_cast<void>
 
@@ -72,10 +76,7 @@ extern void __ceph_assert_warn(const char *assertion, const char *file, int line
    ? _CEPH_ASSERT_VOID_CAST (0)					\
    : ::ceph::__ceph_assert_warn (__STRING(expr), __FILE__, __LINE__, __CEPH_ASSERT_FUNCTION))
 
-}
-
-using namespace ceph;
-
+} using namespace ceph;
 
 /*
  * ceph_abort aborts the program with a nice backtrace.
@@ -87,7 +88,7 @@ using namespace ceph;
   ::ceph::__ceph_abort( __FILE__, __LINE__, __CEPH_ASSERT_FUNCTION, "abort() called")
 
 #define ceph_abort_msg(msg)                                             \
-  ::ceph::__ceph_abort( __FILE__, __LINE__, __CEPH_ASSERT_FUNCTION, msg) 
+  ::ceph::__ceph_abort( __FILE__, __LINE__, __CEPH_ASSERT_FUNCTION, msg)
 
 #define ceph_abort_msgf(...)                                             \
   ::ceph::__ceph_abortf( __FILE__, __LINE__, __CEPH_ASSERT_FUNCTION, __VA_ARGS__)

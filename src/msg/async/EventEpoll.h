@@ -22,28 +22,29 @@
 
 #include "Event.h"
 
-class EpollDriver : public EventDriver {
-  int epfd;
-  struct epoll_event *events;
-  CephContext *cct;
-  int nevent;
+class EpollDriver:public EventDriver {
+    int epfd;
+    struct epoll_event *events;
+    CephContext *cct;
+    int nevent;
 
- public:
-  explicit EpollDriver(CephContext *c): epfd(-1), events(NULL), cct(c), nevent(0) {}
-  ~EpollDriver() override {
-    if (epfd != -1)
-      close(epfd);
+  public:
+     explicit EpollDriver(CephContext * c):epfd(-1), events(NULL), cct(c),
+        nevent(0) {
+    } ~EpollDriver() override {
+        if (epfd != -1)
+            close(epfd);
 
-    if (events)
-      free(events);
-  }
+        if (events)
+            free(events);
+    }
 
-  int init(EventCenter *c, int nevent) override;
-  int add_event(int fd, int cur_mask, int add_mask) override;
-  int del_event(int fd, int cur_mask, int del_mask) override;
-  int resize_events(int newsize) override;
-  int event_wait(std::vector<FiredFileEvent> &fired_events,
-		 struct timeval *tp) override;
+    int init(EventCenter * c, int nevent) override;
+    int add_event(int fd, int cur_mask, int add_mask) override;
+    int del_event(int fd, int cur_mask, int del_mask) override;
+    int resize_events(int newsize) override;
+    int event_wait(std::vector < FiredFileEvent > &fired_events,
+                   struct timeval *tp) override;
 };
 
 #endif

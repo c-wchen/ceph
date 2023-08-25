@@ -19,12 +19,12 @@
 
 #include "erasure-code/ErasureCodePlugin.h"
 
-class ErasureCodePluginClay : public ceph::ErasureCodePlugin {
-public:
-  int factory(const std::string& directory,
-	      ceph::ErasureCodeProfile &profile,
-	      ceph::ErasureCodeInterfaceRef *erasure_code,
-	      std::ostream *ss) override;
+class ErasureCodePluginClay:public ceph::ErasureCodePlugin {
+  public:
+    int factory(const std::string & directory,
+                ceph::ErasureCodeProfile & profile,
+                ceph::ErasureCodeInterfaceRef * erasure_code,
+                std::ostream * ss) override;
 };
 
 #endif

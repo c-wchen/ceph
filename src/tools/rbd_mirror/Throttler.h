@@ -17,58 +17,55 @@
 
 class Context;
 
-namespace ceph { class Formatter; }
-namespace librbd { class ImageCtx; }
+namespace ceph {
+    class Formatter;
+} namespace librbd {
+    class ImageCtx;
+} namespace rbd {
+    namespace mirror {
 
-namespace rbd {
-namespace mirror {
+      template < typename ImageCtxT = librbd::ImageCtx > class Throttler:public md_config_obs_t
+        {
+          public:
+            static Throttler *create(CephContext * cct,
+                                     const std::string & config_key) {
+                return new Throttler(cct, config_key);
+            } void destroy() {
+                delete this;
+            } Throttler(CephContext * cct, const std::string & config_key);
+            ~Throttler()override;
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class Throttler : public md_config_obs_t {
-public:
-  static Throttler *create(
-      CephContext *cct,
-      const std::string &config_key) {
-    return new Throttler(cct, config_key);
-  }
-  void destroy() {
-    delete this;
-  }
+            void set_max_concurrent_ops(uint32_t max);
+            void start_op(const std::string & ns, const std::string & id,
+                          Context * on_start);
+            bool cancel_op(const std::string & ns, const std::string & id);
+            void finish_op(const std::string & ns, const std::string & id);
+            void drain(const std::string & ns, int r);
 
-  Throttler(CephContext *cct,
-            const std::string &config_key);
-  ~Throttler() override;
+            void print_status(ceph::Formatter * f);
 
-  void set_max_concurrent_ops(uint32_t max);
-  void start_op(const std::string &ns, const std::string &id,
-                Context *on_start);
-  bool cancel_op(const std::string &ns, const std::string &id);
-  void finish_op(const std::string &ns, const std::string &id);
-  void drain(const std::string &ns, int r);
+          private:
+            typedef std::pair < std::string, std::string > Id;
 
-  void print_status(ceph::Formatter *f);
+            CephContext *m_cct;
+            const std::string m_config_key;
+            mutable const char *m_config_keys[2];
 
-private:
-  typedef std::pair<std::string, std::string> Id;
+            ceph::mutex m_lock;
+            uint32_t m_max_concurrent_ops;
+            std::list < Id > m_queue;
+            std::map < Id, Context * >m_queued_ops;
+            std::set < Id > m_inflight_ops;
 
-  CephContext *m_cct;
-  const std::string m_config_key;
-  mutable const char* m_config_keys[2];
+            const char **get_tracked_conf_keys() const override;
+            void handle_conf_change(const ConfigProxy & conf,
+                                    const std::set < std::string >
+                                    &changed) override;
+        };
 
-  ceph::mutex m_lock;
-  uint32_t m_max_concurrent_ops;
-  std::list<Id> m_queue;
-  std::map<Id, Context *> m_queued_ops;
-  std::set<Id> m_inflight_ops;
+    }                           // namespace mirror
+}                               // namespace rbd
 
-  const char **get_tracked_conf_keys() const override;
-  void handle_conf_change(const ConfigProxy& conf,
-                          const std::set<std::string> &changed) override;
-};
-
-} // namespace mirror
-} // namespace rbd
-
-extern template class rbd::mirror::Throttler<librbd::ImageCtx>;
+extern template class rbd::mirror::Throttler < librbd::ImageCtx >;
 
 #endif // RBD_MIRROR_THROTTLER_H

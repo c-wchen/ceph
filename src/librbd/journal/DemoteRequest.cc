@@ -18,238 +18,254 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace journal {
+    namespace journal {
 
-using librbd::util::create_async_context_callback;
-using librbd::util::create_context_callback;
+        using librbd::util::create_async_context_callback;
+        using librbd::util::create_context_callback;
 
-template <typename I>
-DemoteRequest<I>::DemoteRequest(I &image_ctx, Context *on_finish)
-  : m_image_ctx(image_ctx), m_on_finish(on_finish),
-    m_lock(ceph::make_mutex("DemoteRequest::m_lock")) {
-}
+         template < typename I >
+            DemoteRequest < I >::DemoteRequest(I & image_ctx,
+                                               Context * on_finish)
+        :m_image_ctx(image_ctx), m_on_finish(on_finish),
+            m_lock(ceph::make_mutex("DemoteRequest::m_lock")) {
+        } template < typename I > DemoteRequest < I >::~DemoteRequest() {
+            ceph_assert(m_journaler == nullptr);
+        } template < typename I > void DemoteRequest < I >::send() {
+            open_journaler();
+        }
 
-template <typename I>
-DemoteRequest<I>::~DemoteRequest() {
-  ceph_assert(m_journaler == nullptr);
-}
+        template < typename I > void DemoteRequest < I >::open_journaler() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-template <typename I>
-void DemoteRequest<I>::send() {
-  open_journaler();
-}
+            m_journaler = new Journaler(m_image_ctx.md_ctx, m_image_ctx.id,
+                                        Journal <>::IMAGE_CLIENT_ID, {
+                                        }, nullptr);
+            auto ctx =
+                create_async_context_callback(m_image_ctx,
+                                              create_context_callback <
+                                              DemoteRequest < I >,
+                                              &DemoteRequest <
+                                              I >::handle_open_journaler >
+                                              (this));
+            auto req =
+                OpenRequest < I >::create(&m_image_ctx, m_journaler, &m_lock,
+                                          &m_client_meta, &m_tag_tid,
+                                          &m_tag_data,
+                                          ctx);
+            req->send();
+        }
 
-template <typename I>
-void DemoteRequest<I>::open_journaler() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+        template < typename I >
+            void DemoteRequest < I >::handle_open_journaler(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  m_journaler = new Journaler(m_image_ctx.md_ctx, m_image_ctx.id,
-                              Journal<>::IMAGE_CLIENT_ID, {}, nullptr);
-  auto ctx = create_async_context_callback(
-    m_image_ctx, create_context_callback<
-      DemoteRequest<I>, &DemoteRequest<I>::handle_open_journaler>(this));
-  auto req = OpenRequest<I>::create(&m_image_ctx, m_journaler, &m_lock,
-                                    &m_client_meta, &m_tag_tid, &m_tag_data,
-                                    ctx);
-  req->send();
-}
+            if (r < 0) {
+                m_ret_val = r;
+                lderr(cct) << "failed to open journal: " << cpp_strerror(r) <<
+                    dendl;
+                shut_down_journaler();
+                return;
+            }
+            else if (m_tag_data.mirror_uuid != Journal <>::LOCAL_MIRROR_UUID) {
+                m_ret_val = -EINVAL;
+                lderr(cct) << "image is not currently the primary" << dendl;
+                shut_down_journaler();
+                return;
+            }
 
-template <typename I>
-void DemoteRequest<I>::handle_open_journaler(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            allocate_tag();
+        }
 
-  if (r < 0) {
-    m_ret_val = r;
-    lderr(cct) << "failed to open journal: " << cpp_strerror(r) << dendl;
-    shut_down_journaler();
-    return;
-  } else if (m_tag_data.mirror_uuid != Journal<>::LOCAL_MIRROR_UUID) {
-    m_ret_val = -EINVAL;
-    lderr(cct) << "image is not currently the primary" << dendl;
-    shut_down_journaler();
-    return;
-  }
+        template < typename I > void DemoteRequest < I >::allocate_tag() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  allocate_tag();
-}
+            cls::journal::Client client;
+            int r =
+                m_journaler->get_cached_client(Journal <>::IMAGE_CLIENT_ID,
+                                               &client);
+            if (r < 0) {
+                m_ret_val = r;
+                lderr(cct) << "failed to retrieve client: " << cpp_strerror(r)
+                    << dendl;
+                shut_down_journaler();
+                return;
+            }
 
-template <typename I>
-void DemoteRequest<I>::allocate_tag() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            TagPredecessor predecessor;
+            predecessor.mirror_uuid = Journal <>::LOCAL_MIRROR_UUID;
+            if (!client.commit_position.object_positions.empty()) {
+                auto position = client.commit_position.object_positions.front();
+                predecessor.commit_valid = true;
+                predecessor.tag_tid = position.tag_tid;
+                predecessor.entry_tid = position.entry_tid;
+            }
 
-  cls::journal::Client client;
-  int r = m_journaler->get_cached_client(Journal<>::IMAGE_CLIENT_ID, &client);
-  if (r < 0) {
-    m_ret_val = r;
-    lderr(cct) << "failed to retrieve client: " << cpp_strerror(r) << dendl;
-    shut_down_journaler();
-    return;
-  }
+            TagData tag_data;
+            tag_data.mirror_uuid = Journal <>::ORPHAN_MIRROR_UUID;
+            tag_data.predecessor = std::move(predecessor);
 
-  TagPredecessor predecessor;
-  predecessor.mirror_uuid = Journal<>::LOCAL_MIRROR_UUID;
-  if (!client.commit_position.object_positions.empty()) {
-    auto position = client.commit_position.object_positions.front();
-    predecessor.commit_valid = true;
-    predecessor.tag_tid = position.tag_tid;
-    predecessor.entry_tid = position.entry_tid;
-  }
+            bufferlist tag_bl;
+            encode(tag_data, tag_bl);
 
-  TagData tag_data;
-  tag_data.mirror_uuid = Journal<>::ORPHAN_MIRROR_UUID;
-  tag_data.predecessor = std::move(predecessor);
+            auto ctx = create_context_callback <
+                DemoteRequest < I >,
+                &DemoteRequest < I >::handle_allocate_tag > (this);
+            m_journaler->allocate_tag(m_client_meta.tag_class, tag_bl, &m_tag,
+                                      ctx);
+        }
 
-  bufferlist tag_bl;
-  encode(tag_data, tag_bl);
+        template < typename I >
+            void DemoteRequest < I >::handle_allocate_tag(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    DemoteRequest<I>, &DemoteRequest<I>::handle_allocate_tag>(this);
-  m_journaler->allocate_tag(m_client_meta.tag_class, tag_bl, &m_tag, ctx);
-}
+            if (r < 0) {
+                m_ret_val = r;
+                lderr(cct) << "failed to allocate tag: " << cpp_strerror(r) <<
+                    dendl;
+                shut_down_journaler();
+                return;
+            }
 
-template <typename I>
-void DemoteRequest<I>::handle_allocate_tag(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            m_tag_tid = m_tag.tid;
+            append_event();
+        }
 
-  if (r < 0) {
-    m_ret_val = r;
-    lderr(cct) << "failed to allocate tag: " << cpp_strerror(r) << dendl;
-    shut_down_journaler();
-    return;
-  }
+        template < typename I > void DemoteRequest < I >::append_event() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  m_tag_tid = m_tag.tid;
-  append_event();
-}
+            EventEntry event_entry {
+                DemotePromoteEvent {
+                }, {
+            }};
+            bufferlist event_entry_bl;
+            encode(event_entry, event_entry_bl);
 
-template <typename I>
-void DemoteRequest<I>::append_event() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            m_journaler->start_append(0);
+            m_future = m_journaler->append(m_tag_tid, event_entry_bl);
 
-  EventEntry event_entry{DemotePromoteEvent{}, {}};
-  bufferlist event_entry_bl;
-  encode(event_entry, event_entry_bl);
+            auto ctx = create_context_callback <
+                DemoteRequest < I >,
+                &DemoteRequest < I >::handle_append_event > (this);
+            m_future.flush(ctx);
 
-  m_journaler->start_append(0);
-  m_future = m_journaler->append(m_tag_tid, event_entry_bl);
+        }
 
-  auto ctx = create_context_callback<
-    DemoteRequest<I>, &DemoteRequest<I>::handle_append_event>(this);
-  m_future.flush(ctx);
+        template < typename I >
+            void DemoteRequest < I >::handle_append_event(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-}
+            if (r < 0) {
+                m_ret_val = r;
+                lderr(cct) << "failed to append demotion journal event: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                stop_append();
+                return;
+            }
 
-template <typename I>
-void DemoteRequest<I>::handle_append_event(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            commit_event();
+        }
 
-  if (r < 0) {
-    m_ret_val = r;
-    lderr(cct) << "failed to append demotion journal event: " << cpp_strerror(r)
-               << dendl;
-    stop_append();
-    return;
-  }
+        template < typename I > void DemoteRequest < I >::commit_event() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  commit_event();
-}
+            m_journaler->committed(m_future);
 
-template <typename I>
-void DemoteRequest<I>::commit_event() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            auto ctx = create_context_callback <
+                DemoteRequest < I >,
+                &DemoteRequest < I >::handle_commit_event > (this);
+            m_journaler->flush_commit_position(ctx);
+        }
 
-  m_journaler->committed(m_future);
+        template < typename I >
+            void DemoteRequest < I >::handle_commit_event(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    DemoteRequest<I>, &DemoteRequest<I>::handle_commit_event>(this);
-  m_journaler->flush_commit_position(ctx);
-}
+            if (r < 0) {
+                m_ret_val = r;
+                lderr(cct) << "failed to flush demotion commit position: "
+                    << cpp_strerror(r) << dendl;
+            }
 
-template <typename I>
-void DemoteRequest<I>::handle_commit_event(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            stop_append();
+        }
 
-  if (r < 0) {
-    m_ret_val = r;
-    lderr(cct) << "failed to flush demotion commit position: "
-               << cpp_strerror(r) << dendl;
-  }
+        template < typename I > void DemoteRequest < I >::stop_append() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  stop_append();
-}
+            auto ctx = create_context_callback <
+                DemoteRequest < I >,
+                &DemoteRequest < I >::handle_stop_append > (this);
+            m_journaler->stop_append(ctx);
+        }
 
-template <typename I>
-void DemoteRequest<I>::stop_append() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+        template < typename I >
+            void DemoteRequest < I >::handle_stop_append(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    DemoteRequest<I>, &DemoteRequest<I>::handle_stop_append>(this);
-  m_journaler->stop_append(ctx);
-}
+            if (r < 0) {
+                if (m_ret_val == 0) {
+                    m_ret_val = r;
+                }
+                lderr(cct) << "failed to stop journal append: " <<
+                    cpp_strerror(r) << dendl;
+            }
 
-template <typename I>
-void DemoteRequest<I>::handle_stop_append(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            shut_down_journaler();
+        }
 
-  if (r < 0) {
-    if (m_ret_val == 0) {
-      m_ret_val = r;
-    }
-    lderr(cct) << "failed to stop journal append: " << cpp_strerror(r) << dendl;
-  }
+        template < typename I > void DemoteRequest < I >::shut_down_journaler() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  shut_down_journaler();
-}
+            Context *ctx =
+                create_async_context_callback(m_image_ctx,
+                                              create_context_callback <
+                                              DemoteRequest < I >,
+                                              &DemoteRequest <
+                                              I >::handle_shut_down_journaler >
+                                              (this));
+            m_journaler->shut_down(ctx);
+        }
 
-template <typename I>
-void DemoteRequest<I>::shut_down_journaler() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+        template < typename I >
+            void DemoteRequest < I >::handle_shut_down_journaler(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  Context *ctx = create_async_context_callback(
-    m_image_ctx, create_context_callback<
-      DemoteRequest<I>, &DemoteRequest<I>::handle_shut_down_journaler>(this));
-  m_journaler->shut_down(ctx);
-}
+            if (r < 0) {
+                lderr(cct) << "failed to shut down journal: " << cpp_strerror(r)
+                    << dendl;
+            }
 
-template <typename I>
-void DemoteRequest<I>::handle_shut_down_journaler(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            delete m_journaler;
+            m_journaler = nullptr;
+            finish(r);
+        }
 
-  if (r < 0) {
-    lderr(cct) << "failed to shut down journal: " << cpp_strerror(r) << dendl;
-  }
+        template < typename I > void DemoteRequest < I >::finish(int r) {
+            if (m_ret_val < 0) {
+                r = m_ret_val;
+            }
 
-  delete m_journaler;
-  m_journaler = nullptr;
-  finish(r);
-}
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-template <typename I>
-void DemoteRequest<I>::finish(int r) {
-  if (m_ret_val < 0) {
-    r = m_ret_val;
-  }
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+    }                           // namespace journal
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace journal
-} // namespace librbd
-
-template class librbd::journal::DemoteRequest<librbd::ImageCtx>;
+template class librbd::journal::DemoteRequest < librbd::ImageCtx >;

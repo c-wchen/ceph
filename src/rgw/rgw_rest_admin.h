@@ -5,8 +5,9 @@
 
 #include "rgw/rgw_rest.h"
 
-class RGWRESTMgr_Admin : public RGWRESTMgr {
-public:
-  RGWRESTMgr_Admin() {}
-  ~RGWRESTMgr_Admin() override {}
+class RGWRESTMgr_Admin:public RGWRESTMgr {
+  public:
+    RGWRESTMgr_Admin() {
+    } ~RGWRESTMgr_Admin() override {
+    }
 };

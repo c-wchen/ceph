@@ -31,103 +31,83 @@ class Finisher;
 /**
  * State that is read by all modules running in standby mode
  */
-class StandbyPyModuleState
-{
-  mutable ceph::mutex lock = ceph::make_mutex("StandbyPyModuleState::lock");
+class StandbyPyModuleState {
+    mutable ceph::mutex lock = ceph::make_mutex("StandbyPyModuleState::lock");
 
-  MgrMap mgr_map;
-  PyModuleConfig &module_config;
-  MonClient &monc;
-
-public:
-
-  
-  StandbyPyModuleState(PyModuleConfig &module_config_, MonClient &monc_)
-    : module_config(module_config_), monc(monc_)
-  {}
-
-  void set_mgr_map(const MgrMap &mgr_map_)
-  {
-    std::lock_guard l(lock);
-
-    mgr_map = mgr_map_;
-  }
-
-  // MonClient does all its own locking so we're happy to hand out
-  // references.
-  MonClient &get_monc() {return monc;};
-
-  template<typename Callback, typename...Args>
-  void with_mgr_map(Callback&& cb, Args&&...args) const
-  {
-    std::lock_guard l(lock);
-    std::forward<Callback>(cb)(mgr_map, std::forward<Args>(args)...);
-  }
-
-  template<typename Callback, typename...Args>
-  auto with_config(Callback&& cb, Args&&... args) const ->
-    decltype(cb(module_config, std::forward<Args>(args)...)) {
-    std::lock_guard l(lock);
-
-    return std::forward<Callback>(cb)(module_config, std::forward<Args>(args)...);
-  }
-};
-
-
-class StandbyPyModule : public PyModuleRunner
-{
-  StandbyPyModuleState &state;
+    MgrMap mgr_map;
+     PyModuleConfig & module_config;
+     MonClient & monc;
 
   public:
 
-  StandbyPyModule(
-      StandbyPyModuleState &state_,
-      const PyModuleRef &py_module_,
-      LogChannelRef clog_)
-    :
-      PyModuleRunner(py_module_, clog_),
-      state(state_)
-  {
-  }
+     StandbyPyModuleState(PyModuleConfig & module_config_, MonClient & monc_)
+    :module_config(module_config_), monc(monc_) {
+    } void set_mgr_map(const MgrMap & mgr_map_) {
+        std::lock_guard l(lock);
 
-  bool get_config(const std::string &key, std::string *value) const;
-  bool get_store(const std::string &key, std::string *value) const;
-  std::string get_active_uri() const;
-  entity_addrvec_t get_myaddrs() const {
-    return state.get_monc().get_myaddrs();
-  }
+        mgr_map = mgr_map_;
+    }
 
-  int load();
+    // MonClient does all its own locking so we're happy to hand out
+    // references.
+    MonClient & get_monc() {
+        return monc;
+    };
+
+    template < typename Callback, typename ... Args >
+        void with_mgr_map(Callback && cb, Args && ... args) const {
+        std::lock_guard l(lock);
+        std::forward < Callback > (cb) (mgr_map,
+                                        std::forward < Args > (args) ...);
+    } template < typename Callback,
+        typename ... Args > auto with_config(Callback && cb, Args
+                                             && ... args) const->
+        decltype(cb(module_config, std::forward < Args > (args) ...)) {
+        std::lock_guard l(lock);
+
+        return std::forward < Callback > (cb) (module_config,
+                                               std::forward < Args >
+                                               (args) ...);
+    }
 };
 
-class StandbyPyModules
-{
-private:
-  mutable ceph::mutex lock = ceph::make_mutex("StandbyPyModules::lock");
-  std::map<std::string, std::unique_ptr<StandbyPyModule>> modules;
+class StandbyPyModule:public PyModuleRunner {
+    StandbyPyModuleState & state;
 
-  StandbyPyModuleState state;
+  public:
 
-  LogChannelRef clog;
-
-  Finisher &finisher;
-
-public:
-
-  StandbyPyModules(
-      const MgrMap &mgr_map_,
-      PyModuleConfig &module_config,
-      LogChannelRef clog_,
-      MonClient &monc,
-      Finisher &f);
-
-  void start_one(PyModuleRef py_module);
-
-  void shutdown();
-
-  void handle_mgr_map(const MgrMap &mgr_map)
-  {
-    state.set_mgr_map(mgr_map);
-  }
-
+    StandbyPyModule(StandbyPyModuleState & state_,
+                    const PyModuleRef & py_module_, LogChannelRef clog_)
+    :PyModuleRunner(py_module_, clog_), state(state_) {
+    } bool get_config(const std::string & key, std::string * value) const;
+    bool get_store(const std::string & key, std::string * value) const;
+    std::string get_active_uri()const;
+    entity_addrvec_t get_myaddrs() const {
+        return state.get_monc().get_myaddrs();
+    } int load();
 };
+
+class StandbyPyModules {
+  private:
+    mutable ceph::mutex lock = ceph::make_mutex("StandbyPyModules::lock");
+    std::map < std::string, std::unique_ptr < StandbyPyModule >> modules;
+
+    StandbyPyModuleState state;
+
+    LogChannelRef clog;
+
+     Finisher & finisher;
+
+  public:
+
+     StandbyPyModules(const MgrMap & mgr_map_,
+                      PyModuleConfig & module_config,
+                      LogChannelRef clog_, MonClient & monc, Finisher & f);
+
+    void start_one(PyModuleRef py_module);
+
+    void shutdown();
+
+    void handle_mgr_map(const MgrMap & mgr_map) {
+        state.set_mgr_map(mgr_map);
+}};

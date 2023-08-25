@@ -13,20 +13,18 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace object_map {
+    namespace object_map {
 
-template <typename ImageCtxT = ImageCtx>
-class RemoveRequest {
-public:
-  static RemoveRequest *create(ImageCtxT *image_ctx, Context *on_finish) {
-    return new RemoveRequest(image_ctx, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class RemoveRequest {
+          public:
+            static RemoveRequest *create(ImageCtxT * image_ctx,
+                                         Context * on_finish) {
+                return new RemoveRequest(image_ctx, on_finish);
+            } void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -41,23 +39,23 @@ private:
    * @endverbatim
    */
 
-  RemoveRequest(ImageCtxT *image_ctx, Context *on_finish);
+             RemoveRequest(ImageCtxT * image_ctx, Context * on_finish);
 
-  ImageCtxT *m_image_ctx;
-  Context *m_on_finish;
+            ImageCtxT *m_image_ctx;
+            Context *m_on_finish;
 
-  int m_error_result = 0;
-  int m_ref_counter = 0;
-  mutable ceph::mutex m_lock =
-    ceph::make_mutex("object_map::RemoveRequest::m_lock");
+            int m_error_result = 0;
+            int m_ref_counter = 0;
+            mutable ceph::mutex m_lock =
+                ceph::make_mutex("object_map::RemoveRequest::m_lock");
 
-  void send_remove_object_map();
-  Context *handle_remove_object_map(int *result);
-};
+            void send_remove_object_map();
+            Context *handle_remove_object_map(int *result);
+        };
 
-} // namespace object_map
-} // namespace librbd
+    }                           // namespace object_map
+}                               // namespace librbd
 
-extern template class librbd::object_map::RemoveRequest<librbd::ImageCtx>;
+extern template class librbd::object_map::RemoveRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OBJECT_MAP_REMOVE_REQUEST_H

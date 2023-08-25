@@ -6,23 +6,23 @@
 
 namespace crimson::admin {
 
-class AdminSocketHook;
+    class AdminSocketHook;
 
-class AssertAlwaysHook;
-class DumpMetricsHook;
-class DumpPGStateHistory;
-class DumpPerfCountersHook;
-class FlushPgStatsHook;
-class InjectDataErrorHook;
-class InjectMDataErrorHook;
-class OsdStatusHook;
-class SendBeaconHook;
-class DumpInFlightOpsHook;
-class DumpHistoricOpsHook;
-class DumpSlowestHistoricOpsHook;
-class DumpRecoveryReservationsHook;
+    class AssertAlwaysHook;
+    class DumpMetricsHook;
+    class DumpPGStateHistory;
+    class DumpPerfCountersHook;
+    class FlushPgStatsHook;
+    class InjectDataErrorHook;
+    class InjectMDataErrorHook;
+    class OsdStatusHook;
+    class SendBeaconHook;
+    class DumpInFlightOpsHook;
+    class DumpHistoricOpsHook;
+    class DumpSlowestHistoricOpsHook;
+    class DumpRecoveryReservationsHook;
 
-template<class Hook, class... Args>
-std::unique_ptr<AdminSocketHook> make_asok_hook(Args&&... args);
+    template < class Hook, class ... Args >
+        std::unique_ptr < AdminSocketHook > make_asok_hook(Args && ... args);
 
-}  // namespace crimson::admin
+}                               // namespace crimson::admin

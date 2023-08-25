@@ -12,60 +12,62 @@
  * 
  */
 
-
 #ifndef CEPH_MOSDPGREMOVE_H
 #define CEPH_MOSDPGREMOVE_H
 
 #include "common/hobject.h"
 #include "msg/Message.h"
 
+class MOSDPGRemove final:public Message {
+  private:
+    static constexpr int HEAD_VERSION = 3;
+    static constexpr int COMPAT_VERSION = 3;
 
-class MOSDPGRemove final : public Message {
-private:
-  static constexpr int HEAD_VERSION = 3;
-  static constexpr int COMPAT_VERSION = 3;
+    epoch_t epoch = 0;
 
-  epoch_t epoch = 0;
+  public:
+     std::vector < spg_t > pg_list;
 
- public:
-  std::vector<spg_t> pg_list;
-
-  epoch_t get_epoch() const { return epoch; }
-
-  MOSDPGRemove() :
-    Message{MSG_OSD_PG_REMOVE, HEAD_VERSION, COMPAT_VERSION} {}
-  MOSDPGRemove(epoch_t e, std::vector<spg_t>& l) :
-    Message{MSG_OSD_PG_REMOVE, HEAD_VERSION, COMPAT_VERSION} {
-    this->epoch = e;
-    pg_list.swap(l);
-  }
-private:
-  ~MOSDPGRemove() final {}
-
-public:
-  std::string_view get_type_name() const override { return "PGrm"; }
-
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(epoch, payload);
-    encode(pg_list, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(epoch, p);
-    decode(pg_list, p);
-  }
-  void print(std::ostream& out) const override {
-    out << "osd pg remove(" << "epoch " << epoch << "; ";
-    for (auto i = pg_list.begin(); i != pg_list.end(); ++i) {
-      out << "pg" << *i << "; ";
+    epoch_t get_epoch() const {
+        return epoch;
+    } MOSDPGRemove():Message {
+    MSG_OSD_PG_REMOVE, HEAD_VERSION, COMPAT_VERSION}
+    {
     }
-    out << ")";
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
+  MOSDPGRemove(epoch_t e, std::vector < spg_t > &l):
+    Message {
+    MSG_OSD_PG_REMOVE, HEAD_VERSION, COMPAT_VERSION}
+    {
+        this->epoch = e;
+        pg_list.swap(l);
+    }
+  private:
+    ~MOSDPGRemove()final {
+    }
+
+  public:
+    std::string_view get_type_name()const override {
+        return "PGrm";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(epoch, payload);
+        encode(pg_list, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(epoch, p);
+        decode(pg_list, p);
+    }
+    void print(std::ostream & out) const override {
+        out << "osd pg remove(" << "epoch " << epoch << "; ";
+        for (auto i = pg_list.begin(); i != pg_list.end(); ++i) {
+            out << "pg" << *i << "; ";
+        } out << ")";
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

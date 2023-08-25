@@ -8,20 +8,15 @@
 #include <string>
 
 namespace rbd {
-namespace mirror {
-namespace pool_watcher {
+    namespace mirror {
+        namespace pool_watcher {
 
-struct Listener {
-  virtual ~Listener() {
-  }
+            struct Listener {
+                virtual ~ Listener() {
+                } virtual void handle_update(const std::string & mirror_uuid,
+                                             ImageIds && added_image_ids,
+                                             ImageIds && removed_image_ids) = 0;
+            };
 
-  virtual void handle_update(const std::string &mirror_uuid,
-                             ImageIds &&added_image_ids,
-                             ImageIds &&removed_image_ids) = 0;
-};
-
-} // namespace pool_watcher
-} // namespace mirror
-} // namespace rbd
-
-#endif // CEPH_RBD_MIRROR_POOL_WATCHER_TYPES_H
+} // namespace pool_watcher } // namespace mirror } // namespace rbd
+#endif                          // CEPH_RBD_MIRROR_POOL_WATCHER_TYPES_H

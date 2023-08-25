@@ -12,16 +12,14 @@
  * 
  */
 
-
 #ifndef COMMAND_HANDLER_H_
 #define COMMAND_HANDLER_H_
 
 #include <ostream>
 #include <string_view>
 
-class CommandHandler
-{
-public:
+class CommandHandler {
+  public:
   /**
    * Parse true|yes|1 style boolean string from `bool_str`
    * `result` must be non-null.
@@ -29,7 +27,7 @@ public:
    *
    * @return 0 on success, else -EINVAL
    */
-  int parse_bool(std::string_view str, bool* result, std::ostream& ss);
+    int parse_bool(std::string_view str, bool * result, std::ostream & ss);
 };
 
 #endif

@@ -12,37 +12,35 @@
 
 class OnExitManager {
   public:
-    typedef void (*callback_t)(void *arg);
+    typedef void (*callback_t) (void *arg);
 
-    OnExitManager() {
-      int ret = pthread_mutex_init(&lock_, NULL);
-      ceph_assert(ret == 0);
-    }
-
-    ~OnExitManager() {
-      pthread_mutex_lock(&lock_);
-      std::vector<struct cb>::iterator it;
-      for (it = funcs_.begin(); it != funcs_.end(); it++) {
-        it->func(it->arg);
-      }
-      funcs_.clear();
-      pthread_mutex_unlock(&lock_);
+     OnExitManager() {
+        int ret = pthread_mutex_init(&lock_, NULL);
+         ceph_assert(ret == 0);
+    } ~OnExitManager() {
+        pthread_mutex_lock(&lock_);
+        std::vector < struct cb >::iterator it;
+        for (it = funcs_.begin(); it != funcs_.end(); it++) {
+            it->func(it->arg);
+        }
+        funcs_.clear();
+        pthread_mutex_unlock(&lock_);
     }
 
     void add_callback(callback_t func, void *arg) {
-      pthread_mutex_lock(&lock_);
-      struct cb callback = { func, arg };
-      funcs_.push_back(callback);
-      pthread_mutex_unlock(&lock_);
+        pthread_mutex_lock(&lock_);
+        struct cb callback = { func, arg };
+        funcs_.push_back(callback);
+        pthread_mutex_unlock(&lock_);
     }
 
   private:
     struct cb {
-      callback_t func;
-      void *arg;
+        callback_t func;
+        void *arg;
     };
 
-    std::vector<struct cb> funcs_;
+    std::vector < struct cb >funcs_;
     pthread_mutex_t lock_;
 };
 

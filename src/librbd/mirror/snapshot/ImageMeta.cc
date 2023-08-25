@@ -19,157 +19,176 @@
                            << this << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
-namespace snapshot {
+    namespace mirror {
+        namespace snapshot {
 
-using librbd::util::create_rados_callback;
-using librbd::mirror::snapshot::util::get_image_meta_key;
+            using librbd::util::create_rados_callback;
+            using librbd::mirror::snapshot::util::get_image_meta_key;
 
-template <typename I>
-ImageMeta<I>::ImageMeta(I* image_ctx, const std::string& mirror_uuid)
-  : m_image_ctx(image_ctx), m_mirror_uuid(mirror_uuid) {
-}
+             template < typename I >
+                ImageMeta < I >::ImageMeta(I * image_ctx,
+                                           const std::string & mirror_uuid)
+            :m_image_ctx(image_ctx), m_mirror_uuid(mirror_uuid) {
+            } template < typename I >
+                void ImageMeta < I >::load(Context * on_finish) {
+                ldout(m_image_ctx->cct,
+                      15) << "oid=" << m_image_ctx->
+                    header_oid << ", " << "key=" <<
+                    get_image_meta_key(m_mirror_uuid)
+                    << dendl;
 
-template <typename I>
-void ImageMeta<I>::load(Context* on_finish) {
-  ldout(m_image_ctx->cct, 15) << "oid=" << m_image_ctx->header_oid << ", "
-                              << "key=" << get_image_meta_key(m_mirror_uuid)
-                              << dendl;
+                librados::ObjectReadOperation op;
+                cls_client::metadata_get_start(&op,
+                                               get_image_meta_key
+                                               (m_mirror_uuid));
 
-  librados::ObjectReadOperation op;
-  cls_client::metadata_get_start(&op, get_image_meta_key(m_mirror_uuid));
+                m_out_bl.clear();
+                auto ctx = new LambdaContext([this, on_finish] (int r){
+                                             handle_load(on_finish, r);});
+                auto aio_comp = create_rados_callback(ctx);
+                int r =
+                    m_image_ctx->md_ctx.aio_operate(m_image_ctx->header_oid,
+                                                    aio_comp,
+                                                    &op, &m_out_bl);
+                 ceph_assert(r == 0);
+                 aio_comp->release();
+            } template < typename I >
+                void ImageMeta < I >::handle_load(Context * on_finish, int r) {
+                ldout(m_image_ctx->cct, 15) << "r=" << r << dendl;
 
-  m_out_bl.clear();
-  auto ctx = new LambdaContext([this, on_finish](int r) {
-      handle_load(on_finish, r);
-    });
-  auto aio_comp = create_rados_callback(ctx);
-  int r = m_image_ctx->md_ctx.aio_operate(m_image_ctx->header_oid, aio_comp,
-                                          &op, &m_out_bl);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+                std::string data;
+                if (r == 0) {
+                    auto it = m_out_bl.cbegin();
+                    r = cls_client::metadata_get_finish(&it, &data);
+                }
 
-template <typename I>
-void ImageMeta<I>::handle_load(Context* on_finish, int r) {
-  ldout(m_image_ctx->cct, 15) << "r=" << r << dendl;
+                if (r == -ENOENT) {
+                    ldout(m_image_ctx->cct,
+                          15) << "no snapshot-based mirroring image-meta: " <<
+                        cpp_strerror(r) << dendl;
+                    on_finish->complete(r);
+                    return;
+                }
+                else if (r < 0) {
+                    lderr(m_image_ctx->
+                          cct) << "failed to load snapshot-based mirroring " <<
+                        "image-meta: " << cpp_strerror(r) << dendl;
+                    on_finish->complete(r);
+                    return;
+                }
 
-  std::string data;
-  if (r == 0) {
-    auto it = m_out_bl.cbegin();
-    r = cls_client::metadata_get_finish(&it, &data);
-  }
+                bool json_valid = false;
+                json_spirit::mValue json_root;
+                if (json_spirit::read(data, json_root)) {
+                    try {
+                        auto & json_obj = json_root.get_obj();
+                        resync_requested =
+                            json_obj["resync_requested"].get_bool();
+                        json_valid = true;
+                    }
+                    catch(std::runtime_error &) {
+                    }
+                }
 
-  if (r == -ENOENT) {
-    ldout(m_image_ctx->cct, 15) << "no snapshot-based mirroring image-meta: "
-                                << cpp_strerror(r) << dendl;
-    on_finish->complete(r);
-    return;
-  } else if (r < 0) {
-    lderr(m_image_ctx->cct) << "failed to load snapshot-based mirroring "
-                            << "image-meta: " << cpp_strerror(r) << dendl;
-    on_finish->complete(r);
-    return;
-  }
+                if (!json_valid) {
+                    lderr(m_image_ctx->
+                          cct) << "invalid image-meta JSON received" << dendl;
+                    on_finish->complete(-EBADMSG);
+                    return;
+                }
 
-  bool json_valid = false;
-  json_spirit::mValue json_root;
-  if (json_spirit::read(data, json_root)) {
-    try {
-      auto& json_obj = json_root.get_obj();
-      resync_requested = json_obj["resync_requested"].get_bool();
-      json_valid = true;
-    } catch (std::runtime_error&) {
-    }
-  }
+                on_finish->complete(0);
+            }
 
-  if (!json_valid) {
-    lderr(m_image_ctx->cct) << "invalid image-meta JSON received" << dendl;
-    on_finish->complete(-EBADMSG);
-    return;
-  }
+            template < typename I >
+                void ImageMeta < I >::save(Context * on_finish) {
+                ldout(m_image_ctx->cct,
+                      15) << "oid=" << m_image_ctx->
+                    header_oid << ", " << "key=" <<
+                    get_image_meta_key(m_mirror_uuid)
+                    << dendl;
 
-  on_finish->complete(0);
-}
+                // simple implementation for now
+                std::string json = "{\"resync_requested\": " +
+                    std::string(resync_requested ? "true" : "false") + "}";
 
-template <typename I>
-void ImageMeta<I>::save(Context* on_finish) {
-  ldout(m_image_ctx->cct, 15) << "oid=" << m_image_ctx->header_oid << ", "
-                              << "key=" << get_image_meta_key(m_mirror_uuid)
-                              << dendl;
+                bufferlist bl;
+                bl.append(json);
 
-  // simple implementation for now
-  std::string json = "{\"resync_requested\": " +
-                     std::string(resync_requested ? "true" : "false") + "}";
+                // avoid using built-in metadata_set operation since that would require
+                // opening the non-primary image in read/write mode which isn't supported
+                librados::ObjectWriteOperation op;
+                cls_client::metadata_set(&op, { {
+                                         get_image_meta_key(m_mirror_uuid),
+                                         bl}});
 
-  bufferlist bl;
-  bl.append(json);
+                auto ctx = new LambdaContext([this, on_finish] (int r){
+                                             handle_save(on_finish, r);});
+                auto aio_comp = create_rados_callback(ctx);
+                int r =
+                    m_image_ctx->md_ctx.aio_operate(m_image_ctx->header_oid,
+                                                    aio_comp,
+                                                    &op);
+                ceph_assert(r == 0);
+                aio_comp->release();
+            }
 
-  // avoid using built-in metadata_set operation since that would require
-  // opening the non-primary image in read/write mode which isn't supported
-  librados::ObjectWriteOperation op;
-  cls_client::metadata_set(&op, {{get_image_meta_key(m_mirror_uuid), bl}});
+            template < typename I >
+                void ImageMeta < I >::handle_save(Context * on_finish, int r) {
+                ldout(m_image_ctx->cct, 15) << "r=" << r << dendl;
 
-  auto ctx = new LambdaContext([this, on_finish](int r) {
-      handle_save(on_finish, r);
-    });
-  auto aio_comp = create_rados_callback(ctx);
-  int r = m_image_ctx->md_ctx.aio_operate(m_image_ctx->header_oid, aio_comp,
-                                          &op);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+                if (r < 0) {
+                    lderr(m_image_ctx->
+                          cct) << "failed to save snapshot-based mirroring " <<
+                        "image-meta: " << cpp_strerror(r) << dendl;
+                    on_finish->complete(r);
+                    return;
+                }
 
-template <typename I>
-void ImageMeta<I>::handle_save(Context* on_finish, int r) {
-  ldout(m_image_ctx->cct, 15) << "r=" << r << dendl;
+                notify_update(on_finish);
+            }
 
-  if (r < 0) {
-    lderr(m_image_ctx->cct) << "failed to save snapshot-based mirroring "
-                            << "image-meta: " << cpp_strerror(r) << dendl;
-    on_finish->complete(r);
-    return;
-  }
+            template < typename I >
+                void ImageMeta < I >::notify_update(Context * on_finish) {
+                ldout(m_image_ctx->cct, 15) << dendl;
 
-  notify_update(on_finish);
-}
+                // directly send header notification on image since you cannot
+                // open a non-primary image read/write and therefore cannot re-use
+                // the ImageWatcher to send the notification
+                bufferlist bl;
+                encode(watch_notify::
+                       NotifyMessage(new watch_notify::HeaderUpdatePayload()),
+                       bl);
 
-template <typename I>
-void ImageMeta<I>::notify_update(Context* on_finish) {
-  ldout(m_image_ctx->cct, 15) << dendl;
+                m_out_bl.clear();
+                auto ctx = new LambdaContext([this, on_finish] (int r){
+                                             handle_notify_update(on_finish,
+                                                                  r);});
+                auto aio_comp = create_rados_callback(ctx);
+                int r =
+                    m_image_ctx->md_ctx.aio_notify(m_image_ctx->header_oid,
+                                                   aio_comp, bl,
+                                                   watcher::Notifier::
+                                                   NOTIFY_TIMEOUT,
+                                                   &m_out_bl);
+                ceph_assert(r == 0);
+                aio_comp->release();
+            }
 
-  // directly send header notification on image since you cannot
-  // open a non-primary image read/write and therefore cannot re-use
-  // the ImageWatcher to send the notification
-  bufferlist bl;
-  encode(watch_notify::NotifyMessage(new watch_notify::HeaderUpdatePayload()),
-         bl);
+            template < typename I >
+                void ImageMeta < I >::handle_notify_update(Context * on_finish,
+                                                           int r) {
+                ldout(m_image_ctx->cct, 15) << "r=" << r << dendl;
 
-  m_out_bl.clear();
-  auto ctx = new LambdaContext([this, on_finish](int r) {
-      handle_notify_update(on_finish, r);
-    });
-  auto aio_comp = create_rados_callback(ctx);
-  int r = m_image_ctx->md_ctx.aio_notify(
-    m_image_ctx->header_oid, aio_comp, bl, watcher::Notifier::NOTIFY_TIMEOUT,
-    &m_out_bl);
-  ceph_assert(r == 0);
-  aio_comp->release();
-}
+                if (r < 0) {
+                    lderr(m_image_ctx->cct) << "failed to notify image update: "
+                        << cpp_strerror(r) << dendl;
+                }
+                on_finish->complete(r);
+            }
 
-template <typename I>
-void ImageMeta<I>::handle_notify_update(Context* on_finish, int r) {
-  ldout(m_image_ctx->cct, 15) << "r=" << r << dendl;
+        }                       // namespace snapshot
+    }                           // namespace mirror
+}                               // namespace librbd
 
-  if (r < 0) {
-    lderr(m_image_ctx->cct) << "failed to notify image update: "
-                            << cpp_strerror(r) << dendl;
-  }
-  on_finish->complete(r);
-}
-
-} // namespace snapshot
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::snapshot::ImageMeta<librbd::ImageCtx>;
+template class librbd::mirror::snapshot::ImageMeta < librbd::ImageCtx >;

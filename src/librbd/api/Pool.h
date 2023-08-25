@@ -11,28 +11,28 @@
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace api {
+    namespace api {
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class Pool {
-public:
-  typedef std::map<rbd_pool_stat_option_t, uint64_t*> StatOptions;
+        template < typename ImageCtxT = librbd::ImageCtx > class Pool {
+          public:
+            typedef std::map < rbd_pool_stat_option_t, uint64_t * >StatOptions;
 
-  static int init(librados::IoCtx& io_ctx, bool force);
+            static int init(librados::IoCtx & io_ctx, bool force);
 
-  static int add_stat_option(StatOptions* stat_options,
-                             rbd_pool_stat_option_t option,
-                             uint64_t* value);
+            static int add_stat_option(StatOptions * stat_options,
+                                       rbd_pool_stat_option_t option,
+                                       uint64_t * value);
 
-  static int get_stats(librados::IoCtx& io_ctx, StatOptions* stat_options);
+            static int get_stats(librados::IoCtx & io_ctx,
+                                 StatOptions * stat_options);
 
-};
+        };
 
 } // namespace api
-} // namespace librbd
-
-extern template class librbd::api::Pool<librbd::ImageCtx>;
+        }
+    // namespace librbd
+    extern template class librbd::api::Pool < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_API_POOL_H

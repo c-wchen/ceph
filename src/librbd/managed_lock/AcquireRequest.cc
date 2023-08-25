@@ -25,160 +25,164 @@ using std::string;
 
 namespace librbd {
 
-using librbd::util::detail::C_AsyncCallback;
-using librbd::util::create_context_callback;
-using librbd::util::create_rados_callback;
+    using librbd::util::detail::C_AsyncCallback;
+    using librbd::util::create_context_callback;
+    using librbd::util::create_rados_callback;
 
-namespace managed_lock {
+    namespace managed_lock {
 
-template <typename I>
-AcquireRequest<I>* AcquireRequest<I>::create(librados::IoCtx& ioctx,
-                                             Watcher *watcher,
-                                             AsioEngine& asio_engine,
-                                             const string& oid,
-                                             const string& cookie,
-                                             bool exclusive,
-					     bool blocklist_on_break_lock,
-					     uint32_t blocklist_expire_seconds,
-                                             Context *on_finish) {
-    return new AcquireRequest(ioctx, watcher, asio_engine, oid, cookie,
-                              exclusive, blocklist_on_break_lock,
-                              blocklist_expire_seconds, on_finish);
-}
+        template < typename I >
+            AcquireRequest < I > *AcquireRequest <
+            I >::create(librados::IoCtx & ioctx, Watcher * watcher,
+                        AsioEngine & asio_engine, const string & oid,
+                        const string & cookie, bool exclusive,
+                        bool blocklist_on_break_lock,
+                        uint32_t blocklist_expire_seconds,
+                        Context * on_finish) {
+            return new AcquireRequest(ioctx, watcher, asio_engine, oid, cookie,
+                                      exclusive, blocklist_on_break_lock,
+                                      blocklist_expire_seconds, on_finish);
+        } template < typename I > AcquireRequest <
+            I >::AcquireRequest(librados::IoCtx & ioctx, Watcher * watcher,
+                                AsioEngine & asio_engine, const string & oid,
+                                const string & cookie, bool exclusive,
+                                bool blocklist_on_break_lock,
+                                uint32_t blocklist_expire_seconds,
+                                Context * on_finish)
+        :m_ioctx(ioctx), m_watcher(watcher),
+            m_cct(reinterpret_cast < CephContext * >(m_ioctx.cct())),
+            m_asio_engine(asio_engine), m_oid(oid), m_cookie(cookie),
+            m_exclusive(exclusive),
+            m_blocklist_on_break_lock(blocklist_on_break_lock),
+            m_blocklist_expire_seconds(blocklist_expire_seconds),
+            m_on_finish(new C_AsyncCallback < asio::ContextWQ >
+                        (asio_engine.get_work_queue(), on_finish)) {
+        } template < typename I > AcquireRequest < I >::~AcquireRequest() {
+        }
 
-template <typename I>
-AcquireRequest<I>::AcquireRequest(librados::IoCtx& ioctx, Watcher *watcher,
-                                  AsioEngine& asio_engine,
-                                  const string& oid,
-                                  const string& cookie, bool exclusive,
-                                  bool blocklist_on_break_lock,
-                                  uint32_t blocklist_expire_seconds,
-                                  Context *on_finish)
-  : m_ioctx(ioctx), m_watcher(watcher),
-    m_cct(reinterpret_cast<CephContext *>(m_ioctx.cct())),
-    m_asio_engine(asio_engine), m_oid(oid), m_cookie(cookie),
-    m_exclusive(exclusive),
-    m_blocklist_on_break_lock(blocklist_on_break_lock),
-    m_blocklist_expire_seconds(blocklist_expire_seconds),
-    m_on_finish(new C_AsyncCallback<asio::ContextWQ>(
-      asio_engine.get_work_queue(), on_finish)) {
-}
+        template < typename I > void AcquireRequest < I >::send() {
+            send_get_locker();
+        }
 
-template <typename I>
-AcquireRequest<I>::~AcquireRequest() {
-}
+        template < typename I > void AcquireRequest < I >::send_get_locker() {
+            ldout(m_cct, 10) << dendl;
 
-template <typename I>
-void AcquireRequest<I>::send() {
-  send_get_locker();
-}
+            Context *ctx = create_context_callback <
+                AcquireRequest < I >,
+                &AcquireRequest < I >::handle_get_locker > (this);
+            auto req =
+                GetLockerRequest < I >::create(m_ioctx, m_oid, m_exclusive,
+                                               &m_locker, ctx);
+            req->send();
+        }
 
-template <typename I>
-void AcquireRequest<I>::send_get_locker() {
-  ldout(m_cct, 10) << dendl;
+        template < typename I >
+            void AcquireRequest < I >::handle_get_locker(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  Context *ctx = create_context_callback<
-    AcquireRequest<I>, &AcquireRequest<I>::handle_get_locker>(this);
-  auto req = GetLockerRequest<I>::create(m_ioctx, m_oid, m_exclusive,
-                                         &m_locker, ctx);
-  req->send();
-}
+            if (r == -ENOENT) {
+                ldout(m_cct, 20) << "no lockers detected" << dendl;
+                m_locker = {
+                };
+            }
+            else if (r == -EBUSY) {
+                ldout(m_cct, 5) << "incompatible lock detected" << dendl;
+                finish(r);
+                return;
+            }
+            else if (r < 0) {
+                lderr(m_cct) << "failed to retrieve lockers: " <<
+                    cpp_strerror(r) << dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void AcquireRequest<I>::handle_get_locker(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            send_lock();
+        }
 
-  if (r == -ENOENT) {
-    ldout(m_cct, 20) << "no lockers detected" << dendl;
-    m_locker = {};
-  } else if (r == -EBUSY) {
-    ldout(m_cct, 5) << "incompatible lock detected" << dendl;
-    finish(r);
-    return;
-  } else if (r < 0) {
-    lderr(m_cct) << "failed to retrieve lockers: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void AcquireRequest < I >::send_lock() {
+            ldout(m_cct,
+                  10) << "entity=client." << m_ioctx.
+                get_instance_id() << ", " << "cookie=" << m_cookie << dendl;
 
-  send_lock();
-}
+            librados::ObjectWriteOperation op;
+            rados::cls::lock::lock(&op, RBD_LOCK_NAME,
+                                   m_exclusive ? ClsLockType::
+                                   EXCLUSIVE : ClsLockType::SHARED, m_cookie,
+                                   util::get_watcher_lock_tag(), "", utime_t(),
+                                   0);
 
-template <typename I>
-void AcquireRequest<I>::send_lock() {
-  ldout(m_cct, 10) << "entity=client." << m_ioctx.get_instance_id() << ", "
-                   << "cookie=" << m_cookie << dendl;
+            using klass = AcquireRequest;
+            librados::AioCompletion * rados_completion =
+                create_rados_callback < klass, &klass::handle_lock > (this);
+            int r = m_ioctx.aio_operate(m_oid, rados_completion, &op);
+            ceph_assert(r == 0);
+            rados_completion->release();
+        }
 
-  librados::ObjectWriteOperation op;
-  rados::cls::lock::lock(&op, RBD_LOCK_NAME,
-                         m_exclusive ? ClsLockType::EXCLUSIVE : ClsLockType::SHARED, m_cookie,
-                         util::get_watcher_lock_tag(), "", utime_t(), 0);
+        template < typename I > void AcquireRequest < I >::handle_lock(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  using klass = AcquireRequest;
-  librados::AioCompletion *rados_completion =
-    create_rados_callback<klass, &klass::handle_lock>(this);
-  int r = m_ioctx.aio_operate(m_oid, rados_completion, &op);
-  ceph_assert(r == 0);
-  rados_completion->release();
-}
+            if (r == 0) {
+                finish(0);
+                return;
+            }
+            else if (r == -EBUSY && m_locker.cookie.empty()) {
+                ldout(m_cct, 5) << "already locked, refreshing locker" << dendl;
+                send_get_locker();
+                return;
+            }
+            else if (r != -EBUSY) {
+                lderr(m_cct) << "failed to lock: " << cpp_strerror(r) << dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void AcquireRequest<I>::handle_lock(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            send_break_lock();
+        }
 
-  if (r == 0) {
-    finish(0);
-    return;
-  } else if (r == -EBUSY && m_locker.cookie.empty()) {
-    ldout(m_cct, 5) << "already locked, refreshing locker" << dendl;
-    send_get_locker();
-    return;
-  } else if (r != -EBUSY) {
-    lderr(m_cct) << "failed to lock: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void AcquireRequest < I >::send_break_lock() {
+            ldout(m_cct, 10) << dendl;
 
-  send_break_lock();
-}
+            Context *ctx = create_context_callback <
+                AcquireRequest < I >,
+                &AcquireRequest < I >::handle_break_lock > (this);
+            auto req =
+                BreakRequest < I >::create(m_ioctx, m_asio_engine, m_oid,
+                                           m_locker, m_exclusive,
+                                           m_blocklist_on_break_lock,
+                                           m_blocklist_expire_seconds, false,
+                                           ctx);
+            req->send();
+        }
 
-template <typename I>
-void AcquireRequest<I>::send_break_lock() {
-  ldout(m_cct, 10) << dendl;
+        template < typename I >
+            void AcquireRequest < I >::handle_break_lock(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  Context *ctx = create_context_callback<
-    AcquireRequest<I>, &AcquireRequest<I>::handle_break_lock>(this);
-  auto req = BreakRequest<I>::create(
-    m_ioctx, m_asio_engine, m_oid, m_locker, m_exclusive,
-    m_blocklist_on_break_lock, m_blocklist_expire_seconds, false, ctx);
-  req->send();
-}
+            if (r == -EAGAIN) {
+                ldout(m_cct, 5) << "lock owner is still alive" << dendl;
+                finish(r);
+                return;
+            }
+            else if (r < 0) {
+                lderr(m_cct) << "failed to break lock : " << cpp_strerror(r) <<
+                    dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void AcquireRequest<I>::handle_break_lock(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            m_locker = {
+            };
+            send_lock();
+        }
 
-  if (r == -EAGAIN) {
-    ldout(m_cct, 5) << "lock owner is still alive" << dendl;
-    finish(r);
-    return;
-  } else if (r < 0) {
-    lderr(m_cct) << "failed to break lock : " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void AcquireRequest < I >::finish(int r) {
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-  m_locker = {};
-  send_lock();
-}
+    }                           // namespace managed_lock
+}                               // namespace librbd
 
-template <typename I>
-void AcquireRequest<I>::finish(int r) {
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace managed_lock
-} // namespace librbd
-
-template class librbd::managed_lock::AcquireRequest<librbd::ImageCtx>;
+template class librbd::managed_lock::AcquireRequest < librbd::ImageCtx >;

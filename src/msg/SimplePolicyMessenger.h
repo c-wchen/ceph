@@ -19,37 +19,35 @@
 #include "Messenger.h"
 #include "Policy.h"
 
-class SimplePolicyMessenger : public Messenger
-{
-private:
-  /// lock protecting policy
-  ceph::mutex policy_lock =
-    ceph::make_mutex("SimplePolicyMessenger::policy_lock");
-  // entity_name_t::type -> Policy
-  ceph::net::PolicySet<Throttle> policy_set;
+class SimplePolicyMessenger:public Messenger {
+  private:
+    /// lock protecting policy
+    ceph::mutex policy_lock =
+        ceph::make_mutex("SimplePolicyMessenger::policy_lock");
+    // entity_name_t::type -> Policy
+    ceph::net::PolicySet < Throttle > policy_set;
 
-public:
+  public:
 
-  SimplePolicyMessenger(CephContext *cct, entity_name_t name)
-    : Messenger(cct, name)
-    {
+    SimplePolicyMessenger(CephContext * cct, entity_name_t name)
+    :Messenger(cct, name) {
     }
-
     /**
    * Get the Policy associated with a type of peer.
    * @param t The peer type to get the default policy for.
    *
    * @return A const Policy reference.
-   */
-  Policy get_policy(int t) override {
-    std::lock_guard l{policy_lock};
-    return policy_set.get(t);
-  }
+   */ Policy get_policy(int t) override {
+        std::lock_guard l {
+        policy_lock};
+        return policy_set.get(t);
+    }
 
-  Policy get_default_policy() override {
-    std::lock_guard l{policy_lock};
-    return policy_set.get_default();
-  }
+    Policy get_default_policy() override {
+        std::lock_guard l {
+        policy_lock};
+        return policy_set.get_default();
+    }
 
   /**
    * Set a policy which is applied to all peers who do not have a type-specific
@@ -59,10 +57,11 @@ public:
    *
    * @param p The Policy to apply.
    */
-  void set_default_policy(Policy p) override {
-    std::lock_guard l{policy_lock};
-    policy_set.set_default(p);
-  }
+    void set_default_policy(Policy p) override {
+        std::lock_guard l {
+        policy_lock};
+        policy_set.set_default(p);
+    }
   /**
    * Set a policy which is applied to all peers of the given type.
    * This is an init-time function and cannot be called after calling
@@ -71,10 +70,11 @@ public:
    * @param type The peer type this policy applies to.
    * @param p The policy to apply.
    */
-  void set_policy(int type, Policy p) override {
-    std::lock_guard l{policy_lock};
-    policy_set.set(type, p);
-  }
+    void set_policy(int type, Policy p) override {
+        std::lock_guard l {
+        policy_lock};
+        policy_set.set(type, p);
+    }
 
   /**
    * Set a Throttler which is applied to all Messages from the given
@@ -87,13 +87,14 @@ public:
    * ownership of this pointer, but you must not destroy it before
    * you destroy messenger.
    */
-  void set_policy_throttlers(int type,
-			     Throttle* byte_throttle,
-			     Throttle* msg_throttle) override {
-    std::lock_guard l{policy_lock};
-    policy_set.set_throttlers(type, byte_throttle, msg_throttle);
-  }
+    void set_policy_throttlers(int type,
+                               Throttle * byte_throttle,
+                               Throttle * msg_throttle) override {
+        std::lock_guard l {
+        policy_lock};
+        policy_set.set_throttlers(type, byte_throttle, msg_throttle);
+    }
 
-}; /* SimplePolicyMessenger */
+};                              /* SimplePolicyMessenger */
 
 #endif /* SIMPLE_POLICY_MESSENGER_H */

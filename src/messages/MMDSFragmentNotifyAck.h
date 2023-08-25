@@ -17,48 +17,52 @@
 
 #include "messages/MMDSOp.h"
 
-class MMDSFragmentNotifyAck final : public MMDSOp {
-private:
-  dirfrag_t base_dirfrag;
-  int8_t bits = 0;
+class MMDSFragmentNotifyAck final:public MMDSOp {
+  private:
+    dirfrag_t base_dirfrag;
+    int8_t bits = 0;
 
- public:
-  dirfrag_t get_base_dirfrag() const { return base_dirfrag; }
-  int get_bits() const { return bits; }
+  public:
+     dirfrag_t get_base_dirfrag() const {
+        return base_dirfrag;
+    } int get_bits() const {
+        return bits;
+    } ceph::buffer::list basebl;
 
-  ceph::buffer::list basebl;
+  protected:
+     MMDSFragmentNotifyAck():MMDSOp {
+    MSG_MDS_FRAGMENTNOTIFYACK}
+    {
+    }
+  MMDSFragmentNotifyAck(dirfrag_t df, int b, uint64_t tid):
+    MMDSOp {
+    MSG_MDS_FRAGMENTNOTIFYACK}, base_dirfrag(df), bits(b) {
+        set_tid(tid);
+    }
+    ~MMDSFragmentNotifyAck()final {
+    }
 
-protected:
-  MMDSFragmentNotifyAck() : MMDSOp{MSG_MDS_FRAGMENTNOTIFYACK} {}
-  MMDSFragmentNotifyAck(dirfrag_t df, int b, uint64_t tid) :
-    MMDSOp{MSG_MDS_FRAGMENTNOTIFYACK},
-    base_dirfrag(df), bits(b) {
-    set_tid(tid);
-  }
-  ~MMDSFragmentNotifyAck() final {}
-
-public:
-  std::string_view get_type_name() const override { return "fragment_notify_ack"; }
-  void print(std::ostream& o) const override {
-    o << "fragment_notify_ack(" << base_dirfrag << " " << (int)bits << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(base_dirfrag, payload);
-    encode(bits, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(base_dirfrag, p);
-    decode(bits, p);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "fragment_notify_ack";
+    } void print(std::ostream & o) const override {
+        o << "fragment_notify_ack(" << base_dirfrag << " " << (int)bits << ")";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(base_dirfrag, payload);
+        encode(bits, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(base_dirfrag, p);
+        decode(bits, p);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

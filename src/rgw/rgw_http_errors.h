@@ -5,7 +5,8 @@
 
 #include "rgw_common.h"
 
-typedef const std::map<int,const std::pair<int, const char*>> rgw_http_errors;
+typedef const std::map < int, const std::pair < int,
+    const char *>>rgw_http_errors;
 
 extern rgw_http_errors rgw_http_s3_errors;
 
@@ -17,15 +18,15 @@ extern rgw_http_errors rgw_http_iam_errors;
 
 static inline int rgw_http_error_to_errno(int http_err)
 {
-  if (http_err >= 200 && http_err <= 299)
-    return 0;
-  switch (http_err) {
+    if (http_err >= 200 && http_err <= 299)
+        return 0;
+    switch (http_err) {
     case 304:
-      return -ERR_NOT_MODIFIED;
+        return -ERR_NOT_MODIFIED;
     case 400:
-      return -EINVAL;
+        return -EINVAL;
     case 401:
-      return -EPERM;
+        return -EPERM;
     case 403:
         return -EACCES;
     case 404:
@@ -38,7 +39,7 @@ static inline int rgw_http_error_to_errno(int http_err)
         return -EBUSY;
     default:
         return -EIO;
-  }
+    }
 
-  return 0; /* unreachable */
+    return 0;                   /* unreachable */
 }

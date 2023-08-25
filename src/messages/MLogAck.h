@@ -23,40 +23,44 @@
 
 #include "msg/Message.h"
 
-class MLogAck final : public Message {
-public:
-  uuid_d fsid;
-  version_t last = 0;
-  std::string channel;
+class MLogAck final:public Message {
+  public:
+    uuid_d fsid;
+    version_t last = 0;
+     std::string channel;
 
-  MLogAck() : Message{MSG_LOGACK} {}
-  MLogAck(uuid_d& f, version_t l) : Message{MSG_LOGACK}, fsid(f), last(l) {}
-private:
-  ~MLogAck() final {}
+     MLogAck():Message {
+    MSG_LOGACK} {
+    }
+  MLogAck(uuid_d & f, version_t l):Message {
+    MSG_LOGACK}, fsid(f), last(l) {
+    }
+  private:
+    ~MLogAck()final {
+    }
 
-public:
-  std::string_view get_type_name() const override { return "log_ack"; }
-  void print(std::ostream& out) const override {
-    out << "log(last " << last << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(fsid, payload);
-    encode(last, payload);
-    encode(channel, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(fsid, p);
-    decode(last, p);
-    if (!p.end())
-      decode(channel, p);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "log_ack";
+    } void print(std::ostream & out) const override {
+        out << "log(last " << last << ")";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(fsid, payload);
+        encode(last, payload);
+        encode(channel, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(fsid, p);
+        decode(last, p);
+        if (!p.end())
+            decode(channel, p);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

@@ -13,20 +13,17 @@
  *
  */
 
-
 #include "Inode.h"
 
 #include "Fh.h"
 
-Fh::Fh(InodeRef in, int flags, int cmode, uint64_t _gen, const UserPerm &perms) :
-    inode(in), flags(flags), gen(_gen), actor_perms(perms), mode(cmode),
-    readahead()
+Fh::Fh(InodeRef in, int flags, int cmode, uint64_t _gen, const UserPerm & perms):
+inode(in), flags(flags), gen(_gen), actor_perms(perms), mode(cmode), readahead()
 {
-  inode->add_fh(this);
+    inode->add_fh(this);
 }
 
 Fh::~Fh()
 {
-  inode->rm_fh(this);
+    inode->rm_fh(this);
 }
-

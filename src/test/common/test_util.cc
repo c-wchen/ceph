@@ -25,18 +25,18 @@ namespace fs = std::filesystem;
 #if defined(__linux__)
 TEST(util, collect_sys_info)
 {
-  if (!fs::exists("/etc/os-release")) {
-    GTEST_SKIP() << "skipping as '/etc/os-release' does not exist";
-  }
+    if (!fs::exists("/etc/os-release")) {
+        GTEST_SKIP() << "skipping as '/etc/os-release' does not exist";
+    }
 
-  map<string, string> sys_info;
+    map < string, string > sys_info;
 
-  CephContext *cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
-  collect_sys_info(&sys_info, cct);
+    CephContext *cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
+    collect_sys_info(&sys_info, cct);
 
-  ASSERT_TRUE(sys_info.find("distro") != sys_info.end());
-  ASSERT_TRUE(sys_info.find("distro_description") != sys_info.end());
+    ASSERT_TRUE(sys_info.find("distro") != sys_info.end());
+    ASSERT_TRUE(sys_info.find("distro_description") != sys_info.end());
 
-  cct->put();
+    cct->put();
 }
 #endif

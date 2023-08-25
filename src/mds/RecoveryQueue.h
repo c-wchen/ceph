@@ -26,31 +26,31 @@ class CInode;
 class MDSRank;
 
 class RecoveryQueue {
-public:
-  explicit RecoveryQueue(MDSRank *mds_);
+  public:
+    explicit RecoveryQueue(MDSRank * mds_);
 
-  void enqueue(CInode *in);
-  void advance();
-  void prioritize(CInode *in);   ///< do this inode now/soon
+    void enqueue(CInode * in);
+    void advance();
+    void prioritize(CInode * in);   ///< do this inode now/soon
 
-  void set_logger(PerfCounters *p) {logger=p;}
+    void set_logger(PerfCounters * p) {
+        logger = p;
+  } private:
+     friend class C_MDC_Recover;
 
-private:
-  friend class C_MDC_Recover;
+    void _start(CInode * in);   ///< start recovering this file
+    void _recovered(CInode * in, int r, uint64_t size, utime_t mtime);
 
-  void _start(CInode *in);  ///< start recovering this file
-  void _recovered(CInode *in, int r, uint64_t size, utime_t mtime);
+    size_t file_recover_queue_size = 0;
+    size_t file_recover_queue_front_size = 0;
 
-  size_t file_recover_queue_size = 0;
-  size_t file_recover_queue_front_size = 0;
+    elist < CInode * >file_recover_queue;   ///< the queue
+    elist < CInode * >file_recover_queue_front; ///< elevated priority items
+    std::map < CInode *, bool > file_recovering;    // inode -> need_restart
 
-  elist<CInode*> file_recover_queue;   ///< the queue
-  elist<CInode*> file_recover_queue_front;  ///< elevated priority items
-  std::map<CInode*, bool> file_recovering; // inode -> need_restart
-
-  MDSRank *mds;
-  PerfCounters *logger = nullptr;
-  Filer filer;
+    MDSRank *mds;
+    PerfCounters *logger = nullptr;
+    Filer filer;
 };
 
 #endif // RECOVERY_QUEUE_H

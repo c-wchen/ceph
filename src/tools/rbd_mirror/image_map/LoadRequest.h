@@ -9,24 +9,23 @@
 
 class Context;
 
-namespace librbd { class ImageCtx; }
+namespace librbd {
+    class ImageCtx;
+} namespace rbd {
+    namespace mirror {
+        namespace image_map {
 
-namespace rbd {
-namespace mirror {
-namespace image_map {
+            template < typename ImageCtxT = librbd::ImageCtx > class LoadRequest {
+              public:
+                static LoadRequest *create(librados::IoCtx & ioctx,
+                                           std::map < std::string,
+                                           cls::rbd::MirrorImageMap >
+                                           *image_mapping,
+                                           Context * on_finish) {
+                    return new LoadRequest(ioctx, image_mapping, on_finish);
+                } void send();
 
-template<typename ImageCtxT = librbd::ImageCtx>
-class LoadRequest {
-public:
-  static LoadRequest *create(librados::IoCtx &ioctx,
-                             std::map<std::string, cls::rbd::MirrorImageMap> *image_mapping,
-                             Context *on_finish) {
-    return new LoadRequest(ioctx, image_mapping, on_finish);
-  }
-
-  void send();
-
-private:
+              private:
   /**
    * @verbatim
    *
@@ -46,32 +45,31 @@ private:
    *
    * @endverbatim
    */
-  LoadRequest(librados::IoCtx &ioctx,
-              std::map<std::string, cls::rbd::MirrorImageMap> *image_mapping,
-              Context *on_finish);
+                 LoadRequest(librados::IoCtx & ioctx,
+                             std::map < std::string,
+                             cls::rbd::MirrorImageMap > *image_mapping,
+                             Context * on_finish);
 
-  librados::IoCtx &m_ioctx;
-  std::map<std::string, cls::rbd::MirrorImageMap> *m_image_mapping;
-  Context *m_on_finish;
+                 librados::IoCtx & m_ioctx;
+                 std::map < std::string,
+                    cls::rbd::MirrorImageMap > *m_image_mapping;
+                Context *m_on_finish;
 
-  std::set<std::string> m_global_image_ids;
+                 std::set < std::string > m_global_image_ids;
 
-  bufferlist m_out_bl;
-  std::string m_start_after;
+                bufferlist m_out_bl;
+                 std::string m_start_after;
 
-  void image_map_list();
-  void handle_image_map_list(int r);
+                void image_map_list();
+                void handle_image_map_list(int r);
 
-  void mirror_image_list();
-  void handle_mirror_image_list(int r);
+                void mirror_image_list();
+                void handle_mirror_image_list(int r);
 
-  void cleanup_image_map();
+                void cleanup_image_map();
 
-  void finish(int r);
-};
+                void finish(int r);
+            };
 
-} // namespace image_map
-} // namespace mirror
-} // namespace rbd
-
-#endif // CEPH_RBD_MIRROR_IMAGE_MAP_LOAD_REQUEST_H
+} // namespace image_map } // namespace mirror }    // namespace rbd
+#endif                          // CEPH_RBD_MIRROR_IMAGE_MAP_LOAD_REQUEST_H

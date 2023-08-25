@@ -26,15 +26,15 @@ class MCommand;
 
 namespace crimson::admin {
 
-class AdminSocket;
+    class AdminSocket;
 
-struct tell_result_t {
-  int ret = 0;
-  std::string err;
-  ceph::bufferlist out;
-  tell_result_t() = default;
-  tell_result_t(int ret, std::string&& err);
-  tell_result_t(int ret, std::string&& err, ceph::bufferlist&& out);
+    struct tell_result_t {
+        int ret = 0;
+        std::string err;
+        ceph::bufferlist out;
+        tell_result_t() = default;
+        tell_result_t(int ret, std::string && err);
+        tell_result_t(int ret, std::string && err, ceph::bufferlist && out);
   /**
    * create a \c tell_result_t indicating the successful completion
    * of command
@@ -42,19 +42,21 @@ struct tell_result_t {
    * \param formatter the content of formatter will be flushed to the
    *        output buffer
    */
-  tell_result_t(std::unique_ptr<Formatter> formatter);
-};
+        tell_result_t(std::unique_ptr < Formatter > formatter);
+    };
 
 /**
  * An abstract class to be inherited by implementations of asock hooks
  */
-class AdminSocketHook {
- public:
-  AdminSocketHook(std::string_view prefix,
-		  std::string_view desc,
-		  std::string_view help) :
-    prefix{prefix}, desc{desc}, help{help}
-  {}
+    class AdminSocketHook {
+      public:
+        AdminSocketHook(std::string_view prefix,
+                        std::string_view desc, std::string_view help):prefix {
+        prefix}, desc {
+        desc}, help {
+        help}
+        {
+        }
   /**
    * handle command defined by cmdmap
    *
@@ -68,32 +70,34 @@ class AdminSocketHook {
    *       failures. in that case, a brief reason of the failure should
    *       noted in \c err in the returned value
    */
-  virtual seastar::future<tell_result_t> call(const cmdmap_t& cmdmap,
-					      std::string_view format,
-					      ceph::bufferlist&& input) const = 0;
-  virtual ~AdminSocketHook() {}
-  const std::string_view prefix;
-  const std::string_view desc;
-  const std::string_view help;
-};
+        virtual seastar::future < tell_result_t > call(const cmdmap_t & cmdmap,
+                                                       std::string_view format,
+                                                       ceph::bufferlist
+                                                       && input) const = 0;
+        virtual ~ AdminSocketHook() {
+        }
+        const std::string_view prefix;
+        const std::string_view desc;
+        const std::string_view help;
+    };
 
-class AdminSocket : public seastar::enable_lw_shared_from_this<AdminSocket> {
- public:
-  AdminSocket() = default;
-  ~AdminSocket() = default;
+    class AdminSocket:public seastar::enable_lw_shared_from_this < AdminSocket > {
+      public:
+        AdminSocket() = default;
+        ~AdminSocket() = default;
 
-  AdminSocket(const AdminSocket&) = delete;
-  AdminSocket& operator=(const AdminSocket&) = delete;
-  AdminSocket(AdminSocket&&) = delete;
-  AdminSocket& operator=(AdminSocket&&) = delete;
+        AdminSocket(const AdminSocket &) = delete;
+        AdminSocket & operator=(const AdminSocket &) = delete;
+        AdminSocket(AdminSocket &&) = delete;
+        AdminSocket & operator=(AdminSocket &&) = delete;
 
   /**
    *  create the async Seastar thread that handles asok commands arriving
    *  over the socket.
    */
-  seastar::future<> start(const std::string& path);
+        seastar::future <> start(const std::string & path);
 
-  seastar::future<> stop();
+        seastar::future <> stop();
 
   /**
    * register an admin socket hook
@@ -110,52 +114,55 @@ class AdminSocket : public seastar::enable_lw_shared_from_this<AdminSocket> {
    * A note regarding the help text: if empty, command will not be
    * included in 'help' output.
    */
-  void register_command(std::unique_ptr<AdminSocketHook>&& hook);
+        void register_command(std::unique_ptr < AdminSocketHook > &&hook);
 
   /**
    * Registering the APIs that are served directly by the admin_socket server.
    */
-  void register_admin_commands();
+        void register_admin_commands();
   /**
    * handle a command message by replying an MCommandReply with the same tid
    *
    * \param conn connection over which the incoming command message is received
    * \param m message carrying the command vector and optional input buffer
    */
-  seastar::future<> handle_command(crimson::net::ConnectionRef conn,
-				   boost::intrusive_ptr<MCommand> m);
+        seastar::future <> handle_command(crimson::net::ConnectionRef conn,
+                                          boost::intrusive_ptr < MCommand > m);
 
-private:
+      private:
   /**
    * the result of analyzing an incoming command, and locating it in
    * the registered APIs collection.
    */
-  struct parsed_command_t {
-    cmdmap_t params;
-    std::string format;
-    const AdminSocketHook& hook;
-  };
-  // and the shorthand:
-  seastar::future<> handle_client(seastar::input_stream<char>& inp,
-                                  seastar::output_stream<char>& out);
+        struct parsed_command_t {
+            cmdmap_t params;
+            std::string format;
+            const AdminSocketHook & hook;
+        };
+        // and the shorthand:
+        seastar::future <> handle_client(seastar::input_stream < char >&inp,
+                                         seastar::output_stream < char >&out);
 
-  seastar::future<> execute_line(std::string cmdline,
-                                 seastar::output_stream<char>& out);
+        seastar::future <> execute_line(std::string cmdline,
+                                        seastar::output_stream < char >&out);
 
-  seastar::future<> finalize_response(seastar::output_stream<char>& out,
-                                      ceph::bufferlist&& msgs);
+        seastar::future <> finalize_response(seastar::output_stream <
+                                             char >&out, ceph::bufferlist
+                                             && msgs);
 
-  seastar::future<tell_result_t> execute_command(const std::vector<std::string>& cmd,
-						 ceph::bufferlist&& buf);
+        seastar::future < tell_result_t > execute_command(const std::vector <
+                                                          std::string > &cmd,
+                                                          ceph::bufferlist
+                                                          && buf);
 
-  std::optional<seastar::future<>> task;
-  std::optional<seastar::server_socket> server_sock;
-  std::optional<seastar::connected_socket> connected_sock;
+        std::optional < seastar::future <>> task;
+        std::optional < seastar::server_socket > server_sock;
+        std::optional < seastar::connected_socket > connected_sock;
 
   /**
    * stopping incoming ASOK requests at shutdown
    */
-  seastar::gate stop_gate;
+        seastar::gate stop_gate;
 
   /**
    * parse the incoming command vector, find a registered hook by looking up by
@@ -166,22 +173,21 @@ private:
    * \retval on success, a \c parsed_command_t is returned, tell_result_t with
    *         detailed error messages is returned otherwise
    */
-  std::variant<parsed_command_t, tell_result_t>
-  parse_cmd(const std::vector<std::string>& cmd);
+        std::variant < parsed_command_t, tell_result_t >
+            parse_cmd(const std::vector < std::string > &cmd);
 
-  using hooks_t = std::map<std::string_view, std::unique_ptr<AdminSocketHook>>;
-  hooks_t hooks;
+        using hooks_t =
+            std::map < std::string_view, std::unique_ptr < AdminSocketHook >>;
+        hooks_t hooks;
 
-public:
+      public:
   /**
    * iterator support
    */
-  hooks_t::const_iterator begin() const {
-    return hooks.cbegin();
-  }
-  hooks_t::const_iterator end() const {
-    return hooks.cend();
-  }
-};
+        hooks_t::const_iterator begin() const {
+            return hooks.cbegin();
+        } hooks_t::const_iterator end() const {
+            return hooks.cend();
+    }};
 
-}  // namespace crimson::admin
+}                               // namespace crimson::admin

@@ -32,26 +32,30 @@
 
 using namespace std;
 
-void RGWOp_ZoneConfig_Get::send_response() {
-  const RGWZoneParams& zone_params = static_cast<rgw::sal::RadosStore*>(driver)->svc()->zone->get_zone_params();
+void RGWOp_ZoneConfig_Get::send_response()
+{
+    const RGWZoneParams & zone_params =
+        static_cast <
+        rgw::sal::RadosStore * >(driver)->svc()->zone->get_zone_params();
 
-  set_req_state_err(s, op_ret);
-  dump_errno(s);
-  end_header(s);
+    set_req_state_err(s, op_ret);
+    dump_errno(s);
+    end_header(s);
 
-  if (op_ret < 0)
-    return;
+    if (op_ret < 0)
+        return;
 
-  encode_json("zone_params", zone_params, s->formatter);
-  flusher.flush();
+    encode_json("zone_params", zone_params, s->formatter);
+    flusher.flush();
 }
 
-RGWOp* RGWHandler_Config::op_get() {
-  bool exists;
-  string type = s->info.args.get("type", &exists);
+RGWOp *RGWHandler_Config::op_get()
+{
+    bool exists;
+    string type = s->info.args.get("type", &exists);
 
-  if (type.compare("zone") == 0) {
-    return new RGWOp_ZoneConfig_Get();
-  }
-  return nullptr;
+    if (type.compare("zone") == 0) {
+        return new RGWOp_ZoneConfig_Get();
+    }
+    return nullptr;
 }

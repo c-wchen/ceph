@@ -36,45 +36,44 @@ CEPH_CLS_API void __cls_init()
 /**
  * Initialize a class.
  */
-void __cls_init();
+    void __cls_init();
 
 /**
  * @typdef cls_handle_t
  *
  * A handle for interacting with the object class.
  */
-typedef void *cls_handle_t;
+    typedef void *cls_handle_t;
 
 /**
  * @typedef cls_method_handle_t
  *
  * A handle for interacting with the method of the object class.
  */
-typedef void *cls_method_handle_t;
+    typedef void *cls_method_handle_t;
 
 /**
  * @typedef cls_method_context_t
  *
  * A context for the method of the object class.
  */
-typedef void* cls_method_context_t;
+    typedef void *cls_method_context_t;
 
 /*class utils*/
-extern int cls_log(int level, const char *format, ...)
-  __attribute__((__format__(printf, 2, 3)));
+    extern int cls_log(int level, const char *format, ...)
+        __attribute__ ((__format__(printf, 2, 3)));
 
 /* class registration api */
-extern int cls_register(const char *name, cls_handle_t *handle);
+    extern int cls_register(const char *name, cls_handle_t * handle);
 
 #ifdef __cplusplus
 }
-
 /**
  * @typedef cls_method_cxx_call_t
  *
- */
-typedef int (*cls_method_cxx_call_t)(cls_method_context_t ctx,
-    class ceph::buffer::list *inbl, class ceph::buffer::list *outbl);
+ */ typedef int (*cls_method_cxx_call_t) (cls_method_context_t ctx,
+                                          class ceph::buffer::list * inbl,
+                                          class ceph::buffer::list * outbl);
 
 /**
  * Register a method.
@@ -85,8 +84,9 @@ typedef int (*cls_method_cxx_call_t)(cls_method_context_t ctx,
  * @param class_call
  * @param handle
  */
-extern int cls_register_cxx_method(cls_handle_t hclass, const char *method, int flags,
-                                   cls_method_cxx_call_t class_call, cls_method_handle_t *handle);
+extern int cls_register_cxx_method(cls_handle_t hclass, const char *method,
+                                   int flags, cls_method_cxx_call_t class_call,
+                                   cls_method_handle_t * handle);
 
 /**
  * Create an object.
@@ -110,7 +110,8 @@ extern int cls_cxx_remove(cls_method_context_t hctx);
  * @param size
  * @param mtime
  */
-extern int cls_cxx_stat(cls_method_context_t hctx, uint64_t *size, time_t *mtime);
+extern int cls_cxx_stat(cls_method_context_t hctx, uint64_t * size,
+                        time_t * mtime);
 
 /**
  * Read contents of an object.
@@ -120,7 +121,8 @@ extern int cls_cxx_stat(cls_method_context_t hctx, uint64_t *size, time_t *mtime
  * @param len
  * @param bl
  */
-extern int cls_cxx_read(cls_method_context_t hctx, int ofs, int len, ceph::bufferlist *bl);
+extern int cls_cxx_read(cls_method_context_t hctx, int ofs, int len,
+                        ceph::bufferlist * bl);
 
 /**
  * Write to the object.
@@ -130,7 +132,8 @@ extern int cls_cxx_read(cls_method_context_t hctx, int ofs, int len, ceph::buffe
  * @param len
  * @param bl
  */
-extern int cls_cxx_write(cls_method_context_t hctx, int ofs, int len, ceph::bufferlist *bl);
+extern int cls_cxx_write(cls_method_context_t hctx, int ofs, int len,
+                         ceph::bufferlist * bl);
 
 /**
  * Get xattr of the object.
@@ -140,7 +143,7 @@ extern int cls_cxx_write(cls_method_context_t hctx, int ofs, int len, ceph::buff
  * @param outbl
  */
 extern int cls_cxx_getxattr(cls_method_context_t hctx, const char *name,
-                            ceph::bufferlist *outbl);
+                            ceph::bufferlist * outbl);
 
 /**
  * Set xattr of the object.
@@ -150,7 +153,7 @@ extern int cls_cxx_getxattr(cls_method_context_t hctx, const char *name,
  * @param inbl
  */
 extern int cls_cxx_setxattr(cls_method_context_t hctx, const char *name,
-                            ceph::bufferlist *inbl);
+                            ceph::bufferlist * inbl);
 
 /**
  * Get value corresponding to a key from the map.
@@ -160,7 +163,8 @@ extern int cls_cxx_setxattr(cls_method_context_t hctx, const char *name,
  * @param outbl
  */
 extern int cls_cxx_map_get_val(cls_method_context_t hctx,
-                               const std::string &key, ceph::bufferlist *outbl);
+                               const std::string & key,
+                               ceph::bufferlist * outbl);
 
 /**
  * Set value corresponding to a key in the map.
@@ -170,7 +174,8 @@ extern int cls_cxx_map_get_val(cls_method_context_t hctx,
  * @param inbl
  */
 extern int cls_cxx_map_set_val(cls_method_context_t hctx,
-                               const std::string &key, ceph::bufferlist *inbl);
+                               const std::string & key,
+                               ceph::bufferlist * inbl);
 
 #endif
 

@@ -8,29 +8,27 @@
 
 namespace crimson::net {
 
-class Dispatcher;
+    class Dispatcher;
 
-class ChainedDispatchers {
-public:
-  void assign(const dispatchers_t& _dispatchers) {
-    assert(empty());
-    assert(!_dispatchers.empty());
-    dispatchers = _dispatchers;
-  }
-  void clear() {
-    dispatchers.clear();
-  }
-  bool empty() const {
-    return dispatchers.empty();
-  }
-  seastar::future<> ms_dispatch(crimson::net::ConnectionRef, MessageRef);
-  void ms_handle_accept(crimson::net::ConnectionRef conn);
-  void ms_handle_connect(crimson::net::ConnectionRef conn);
-  void ms_handle_reset(crimson::net::ConnectionRef conn, bool is_replace);
-  void ms_handle_remote_reset(crimson::net::ConnectionRef conn);
+    class ChainedDispatchers {
+      public:
+        void assign(const dispatchers_t & _dispatchers) {
+            assert(empty());
+            assert(!_dispatchers.empty());
+            dispatchers = _dispatchers;
+        } void clear() {
+            dispatchers.clear();
+        } bool empty() const {
+            return dispatchers.empty();
+        } seastar::future <> ms_dispatch(crimson::net::ConnectionRef,
+                                         MessageRef);
+        void ms_handle_accept(crimson::net::ConnectionRef conn);
+        void ms_handle_connect(crimson::net::ConnectionRef conn);
+        void ms_handle_reset(crimson::net::ConnectionRef conn, bool is_replace);
+        void ms_handle_remote_reset(crimson::net::ConnectionRef conn);
 
- private:
-  dispatchers_t dispatchers;
-};
+      private:
+        dispatchers_t dispatchers;
+    };
 
 }

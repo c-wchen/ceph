@@ -27,87 +27,82 @@
 
 using std::string;
 
-std::unique_ptr<ObjectStore> ObjectStore::create(
-  CephContext *cct,
-  const string& type,
-  const string& data)
+std::unique_ptr < ObjectStore > ObjectStore::create(CephContext * cct,
+                                                    const string & type,
+                                                    const string & data)
 {
-  if (type == "memstore") {
-    return std::make_unique<MemStore>(cct, data);
-  }
+    if (type == "memstore") {
+        return std::make_unique < MemStore > (cct, data);
+    }
 #if defined(WITH_BLUESTORE)
-  if (type == "bluestore" || type == "random") {
-    return std::make_unique<BlueStore>(cct, data);
-  }
+    if (type == "bluestore" || type == "random") {
+        return std::make_unique < BlueStore > (cct, data);
+    }
 #endif
-  return nullptr;
+    return nullptr;
 }
 
 #ifndef WITH_SEASTAR
-std::unique_ptr<ObjectStore> ObjectStore::create(
-  CephContext *cct,
-  const string& type,
-  const string& data,
-  const string& journal,
-  osflagbits_t flags)
+std::unique_ptr < ObjectStore > ObjectStore::create(CephContext * cct,
+                                                    const string & type,
+                                                    const string & data,
+                                                    const string & journal,
+                                                    osflagbits_t flags)
 {
-  if (type == "filestore") {
-    lgeneric_derr(cct) << __func__ << ": FileStore has been deprecated and is no longer supported" << dendl;
-    return nullptr;
-  }
-  if (type == "kstore" &&
-      cct->check_experimental_feature_enabled("kstore")) {
-    return std::make_unique<KStore>(cct, data);
-  }
-  return create(cct, type, data);
+    if (type == "filestore") {
+        lgeneric_derr(cct) << __func__ <<
+            ": FileStore has been deprecated and is no longer supported" <<
+            dendl;
+        return nullptr;
+    }
+    if (type == "kstore" && cct->check_experimental_feature_enabled("kstore")) {
+        return std::make_unique < KStore > (cct, data);
+    }
+    return create(cct, type, data);
 }
 #endif
 
-int ObjectStore::probe_block_device_fsid(
-  CephContext *cct,
-  const string& path,
-  uuid_d *fsid)
+int ObjectStore::probe_block_device_fsid(CephContext * cct,
+                                         const string & path, uuid_d * fsid)
 {
-  int r;
+    int r;
 
 #if defined(WITH_BLUESTORE)
-  // first try bluestore -- it has a crc on its header and will fail
-  // reliably.
-  r = BlueStore::get_block_device_fsid(cct, path, fsid);
-  if (r == 0) {
-    lgeneric_dout(cct, 0) << __func__ << " " << path << " is bluestore, "
-			  << *fsid << dendl;
-    return r;
-  }
+    // first try bluestore -- it has a crc on its header and will fail
+    // reliably.
+    r = BlueStore::get_block_device_fsid(cct, path, fsid);
+    if (r == 0) {
+        lgeneric_dout(cct, 0) << __func__ << " " << path << " is bluestore, "
+            << *fsid << dendl;
+        return r;
+    }
 #endif
 
-  return -EINVAL;
+    return -EINVAL;
 }
 
-int ObjectStore::write_meta(const std::string& key,
-			    const std::string& value)
+int ObjectStore::write_meta(const std::string & key, const std::string & value)
 {
-  string v = value;
-  v += "\n";
-  int r = safe_write_file(path.c_str(), key.c_str(),
-			  v.c_str(), v.length(), 0600);
-  if (r < 0)
-    return r;
-  return 0;
+    string v = value;
+    v += "\n";
+    int r = safe_write_file(path.c_str(), key.c_str(),
+                            v.c_str(), v.length(), 0600);
+    if (r < 0)
+        return r;
+    return 0;
 }
 
-int ObjectStore::read_meta(const std::string& key,
-			   std::string *value)
+int ObjectStore::read_meta(const std::string & key, std::string * value)
 {
-  char buf[4096];
-  int r = safe_read_file(path.c_str(), key.c_str(),
-			 buf, sizeof(buf));
-  if (r <= 0)
-    return r;
-  // drop trailing newlines
-  while (r && isspace(buf[r-1])) {
-    --r;
-  }
-  *value = string(buf, r);
-  return 0;
+    char buf[4096];
+    int r = safe_read_file(path.c_str(), key.c_str(),
+                           buf, sizeof(buf));
+    if (r <= 0)
+        return r;
+    // drop trailing newlines
+    while (r && isspace(buf[r - 1])) {
+        --r;
+    }
+    *value = string(buf, r);
+    return 0;
 }

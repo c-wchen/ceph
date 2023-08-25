@@ -22,33 +22,33 @@ class KeyServer;
 struct CephXAuthenticate;
 struct CephXServiceTicketInfo;
 
-class CephxServiceHandler  : public AuthServiceHandler {
-  KeyServer *key_server;
-  uint64_t server_challenge;
+class CephxServiceHandler:public AuthServiceHandler {
+    KeyServer *key_server;
+    uint64_t server_challenge;
 
-public:
-  CephxServiceHandler(CephContext *cct_, KeyServer *ks) 
-    : AuthServiceHandler(cct_), key_server(ks), server_challenge(0) {}
-  ~CephxServiceHandler() override {}
-  
-  int handle_request(
-    ceph::buffer::list::const_iterator& indata,
-    size_t connection_secret_required_length,
-    ceph::buffer::list *result_bl,
-    AuthCapsInfo *caps,
-    CryptoKey *session_key,
-    std::string *connection_secret) override;
+  public:
+     CephxServiceHandler(CephContext * cct_, KeyServer * ks)
+    :AuthServiceHandler(cct_), key_server(ks), server_challenge(0) {
+    } ~CephxServiceHandler() override {
+    }
 
-private:
-  int do_start_session(bool is_new_global_id,
-		       ceph::buffer::list *result_bl,
-		       AuthCapsInfo *caps) override;
+    int handle_request(ceph::buffer::list::const_iterator & indata,
+                       size_t connection_secret_required_length,
+                       ceph::buffer::list * result_bl,
+                       AuthCapsInfo * caps,
+                       CryptoKey * session_key,
+                       std::string * connection_secret) override;
 
-  int verify_old_ticket(const CephXAuthenticate& req,
-			CephXServiceTicketInfo& old_ticket_info,
-			bool& should_enc_ticket);
-  void build_cephx_response_header(int request_type, int status,
-				   ceph::buffer::list& bl);
+  private:
+    int do_start_session(bool is_new_global_id,
+                         ceph::buffer::list * result_bl,
+                         AuthCapsInfo * caps) override;
+
+    int verify_old_ticket(const CephXAuthenticate & req,
+                          CephXServiceTicketInfo & old_ticket_info,
+                          bool & should_enc_ticket);
+    void build_cephx_response_header(int request_type, int status,
+                                     ceph::buffer::list & bl);
 };
 
 #endif

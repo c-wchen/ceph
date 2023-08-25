@@ -15,97 +15,98 @@
 
 namespace librbd {
 
-namespace asio { struct ContextWQ; }
-namespace watcher { struct NotifyResponse; }
+    namespace asio {
+        struct ContextWQ;
+    } namespace watcher {
+        struct NotifyResponse;
+    } class Watcher {
+      public:
+        struct C_NotifyAck:public Context {
+            Watcher *watcher;
+            CephContext *cct;
+            uint64_t notify_id;
+            uint64_t handle;
+            bufferlist out;
 
-class Watcher {
-public:
-  struct C_NotifyAck : public Context {
-    Watcher *watcher;
-    CephContext *cct;
-    uint64_t notify_id;
-    uint64_t handle;
-    bufferlist out;
+             C_NotifyAck(Watcher * watcher, uint64_t notify_id,
+                         uint64_t handle);
+            void finish(int r) override;
+        };
 
-    C_NotifyAck(Watcher *watcher, uint64_t notify_id, uint64_t handle);
-    void finish(int r) override;
-  };
+         Watcher(librados::IoCtx & ioctx, asio::ContextWQ * work_queue,
+                 const std::string & oid);
+         virtual ~ Watcher();
 
-  Watcher(librados::IoCtx& ioctx, asio::ContextWQ *work_queue,
-          const std::string& oid);
-  virtual ~Watcher();
+        void register_watch(Context * on_finish);
+        virtual void unregister_watch(Context * on_finish);
+        void flush(Context * on_finish);
 
-  void register_watch(Context *on_finish);
-  virtual void unregister_watch(Context *on_finish);
-  void flush(Context *on_finish);
+        bool notifications_blocked() const;
+        virtual void block_notifies(Context * on_finish);
+        void unblock_notifies();
 
-  bool notifications_blocked() const;
-  virtual void block_notifies(Context *on_finish);
-  void unblock_notifies();
+         std::string get_oid() const;
+        void set_oid(const std::string & oid);
 
-  std::string get_oid() const;
-  void set_oid(const std::string& oid);
+        uint64_t get_watch_handle() const {
+            std::shared_lock watch_locker {
+            m_watch_lock};
+             return m_watch_handle;
+        } bool is_registered() const {
+            std::shared_lock locker {
+            m_watch_lock};
+             return is_registered(m_watch_lock);
+        } bool is_unregistered() const {
+            std::shared_lock locker {
+            m_watch_lock};
+            return is_unregistered(m_watch_lock);
+        }
+        bool is_blocklisted() const {
+            std::shared_lock locker {
+            m_watch_lock};
+            return m_watch_blocklisted;
+        }
 
-  uint64_t get_watch_handle() const {
-    std::shared_lock watch_locker{m_watch_lock};
-    return m_watch_handle;
-  }
+      protected:
+        enum WatchState {
+            WATCH_STATE_IDLE,
+            WATCH_STATE_REGISTERING,
+            WATCH_STATE_REWATCHING
+        };
 
-  bool is_registered() const {
-    std::shared_lock locker{m_watch_lock};
-    return is_registered(m_watch_lock);
-  }
-  bool is_unregistered() const {
-    std::shared_lock locker{m_watch_lock};
-    return is_unregistered(m_watch_lock);
-  }
-  bool is_blocklisted() const {
-    std::shared_lock locker{m_watch_lock};
-    return m_watch_blocklisted;
-  }
+        librados::IoCtx & m_ioctx;
+        asio::ContextWQ * m_work_queue;
+        std::string m_oid;
+        CephContext *m_cct;
+        mutable ceph::shared_mutex m_watch_lock;
+        uint64_t m_watch_handle;
+        watcher::Notifier m_notifier;
 
-protected:
-  enum WatchState {
-    WATCH_STATE_IDLE,
-    WATCH_STATE_REGISTERING,
-    WATCH_STATE_REWATCHING
-  };
+        WatchState m_watch_state;
+        bool m_watch_blocklisted = false;
 
-  librados::IoCtx& m_ioctx;
-  asio::ContextWQ *m_work_queue;
-  std::string m_oid;
-  CephContext *m_cct;
-  mutable ceph::shared_mutex m_watch_lock;
-  uint64_t m_watch_handle;
-  watcher::Notifier m_notifier;
+        AsyncOpTracker m_async_op_tracker;
 
-  WatchState m_watch_state;
-  bool m_watch_blocklisted = false;
+        bool is_registered(const ceph::shared_mutex &) const {
+            return (m_watch_state == WATCH_STATE_IDLE && m_watch_handle != 0);
+        } bool is_unregistered(const ceph::shared_mutex &)const {
+            return (m_watch_state == WATCH_STATE_IDLE && m_watch_handle == 0);
+        } void send_notify(bufferlist & payload,
+                           watcher::NotifyResponse * response = nullptr,
+                           Context * on_finish = nullptr);
 
-  AsyncOpTracker m_async_op_tracker;
+        virtual void handle_notify(uint64_t notify_id, uint64_t handle,
+                                   uint64_t notifier_id, bufferlist & bl) = 0;
 
-  bool is_registered(const ceph::shared_mutex&) const {
-    return (m_watch_state == WATCH_STATE_IDLE && m_watch_handle != 0);
-  }
-  bool is_unregistered(const ceph::shared_mutex&) const {
-    return (m_watch_state == WATCH_STATE_IDLE && m_watch_handle == 0);
-  }
+        virtual void handle_error(uint64_t cookie, int err);
 
-  void send_notify(bufferlist &payload,
-                   watcher::NotifyResponse *response = nullptr,
-                   Context *on_finish = nullptr);
+        void acknowledge_notify(uint64_t notify_id, uint64_t handle,
+                                bufferlist & out);
 
-  virtual void handle_notify(uint64_t notify_id, uint64_t handle,
-                             uint64_t notifier_id, bufferlist &bl) = 0;
+        virtual void handle_rewatch_complete(int r) {
+        }
 
-  virtual void handle_error(uint64_t cookie, int err);
-
-  void acknowledge_notify(uint64_t notify_id, uint64_t handle,
-                          bufferlist &out);
-
-  virtual void handle_rewatch_complete(int r) { }
-
-private:
+      private:
   /**
    * @verbatim
    *
@@ -139,45 +140,43 @@ private:
    * @endverbatim
    */
 
-  struct WatchCtx : public librados::WatchCtx2 {
-    Watcher &watcher;
+        struct WatchCtx:public librados::WatchCtx2 {
+            Watcher & watcher;
 
-    WatchCtx(Watcher &parent) : watcher(parent) {}
+            WatchCtx(Watcher & parent):watcher(parent) {
+            } void handle_notify(uint64_t notify_id,
+                                 uint64_t handle,
+                                 uint64_t notifier_id,
+                                 bufferlist & bl) override;
+            void handle_error(uint64_t handle, int err) override;
+        };
 
-    void handle_notify(uint64_t notify_id,
-                       uint64_t handle,
-                       uint64_t notifier_id,
-                       bufferlist& bl) override;
-    void handle_error(uint64_t handle, int err) override;
-  };
+        struct C_RegisterWatch:public Context {
+            Watcher *watcher;
+            Context *on_finish;
 
-  struct C_RegisterWatch : public Context {
-    Watcher *watcher;
-    Context *on_finish;
+             C_RegisterWatch(Watcher * watcher, Context * on_finish)
+            :watcher(watcher), on_finish(on_finish) {
+            } void finish(int r) override {
+                watcher->handle_register_watch(r, on_finish);
+            }
+        };
 
-    C_RegisterWatch(Watcher *watcher, Context *on_finish)
-       : watcher(watcher), on_finish(on_finish) {
-    }
-    void finish(int r) override {
-      watcher->handle_register_watch(r, on_finish);
-    }
-  };
+        WatchCtx m_watch_ctx;
+        Context *m_unregister_watch_ctx = nullptr;
 
-  WatchCtx m_watch_ctx;
-  Context *m_unregister_watch_ctx = nullptr;
+        bool m_watch_error = false;
 
-  bool m_watch_error = false;
+        uint32_t m_blocked_count = 0;
 
-  uint32_t m_blocked_count = 0;
+        void handle_register_watch(int r, Context * on_finish);
 
-  void handle_register_watch(int r, Context *on_finish);
+        void rewatch();
+        void handle_rewatch(int r);
+        void handle_rewatch_callback(int r);
 
-  void rewatch();
-  void handle_rewatch(int r);
-  void handle_rewatch_callback(int r);
+    };
 
-};
-
-} // namespace librbd
+}                               // namespace librbd
 
 #endif // CEPH_LIBRBD_WATCHER_H

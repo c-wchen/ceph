@@ -15,61 +15,62 @@
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace migration {
+    namespace migration {
 
-template <typename> struct SourceSpecBuilder;
-struct StreamInterface;
+        template < typename > struct SourceSpecBuilder;
+        struct StreamInterface;
 
-template <typename ImageCtxT>
-class RawSnapshot : public SnapshotInterface {
-public:
-  static RawSnapshot* create(
-      ImageCtx* image_ctx, const json_spirit::mObject& json_object,
-      const SourceSpecBuilder<ImageCtxT>* source_spec_builder, uint64_t index) {
-    return new RawSnapshot(image_ctx, json_object, source_spec_builder, index);
-  }
+         template < typename ImageCtxT >
+            class RawSnapshot:public SnapshotInterface {
+          public:
+            static RawSnapshot *create(ImageCtx * image_ctx,
+                                       const json_spirit::mObject & json_object,
+                                       const SourceSpecBuilder < ImageCtxT >
+                                       *source_spec_builder, uint64_t index) {
+                return new RawSnapshot(image_ctx, json_object,
+                                       source_spec_builder, index);
+            } RawSnapshot(ImageCtxT * image_ctx,
+                          const json_spirit::mObject & json_object,
+                          const SourceSpecBuilder < ImageCtxT >
+                          *source_spec_builder, uint64_t index);
+             RawSnapshot(const RawSnapshot &) = delete;
+             RawSnapshot & operator=(const RawSnapshot &) = delete;
 
-  RawSnapshot(ImageCtxT* image_ctx, const json_spirit::mObject& json_object,
-              const SourceSpecBuilder<ImageCtxT>* source_spec_builder,
-              uint64_t index);
-  RawSnapshot(const RawSnapshot&) = delete;
-  RawSnapshot& operator=(const RawSnapshot&) = delete;
+            void open(SnapshotInterface * previous_snapshot,
+                      Context * on_finish) override;
+            void close(Context * on_finish) override;
 
-  void open(SnapshotInterface* previous_snapshot, Context* on_finish) override;
-  void close(Context* on_finish) override;
+            const SnapInfo & get_snap_info() const override {
+                return m_snap_info;
+            } void read(io::AioCompletion * aio_comp, io::Extents
+                        && image_extents, io::ReadResult
+                        && read_result, int op_flags, int read_flags,
+                        const ZTracer::Trace & parent_trace) override;
 
-  const SnapInfo& get_snap_info() const override {
-    return m_snap_info;
-  }
+            void list_snap(io::Extents && image_extents, int list_snaps_flags,
+                           io::SparseExtents * sparse_extents,
+                           const ZTracer::Trace & parent_trace,
+                           Context * on_finish) override;
 
-  void read(io::AioCompletion* aio_comp, io::Extents&& image_extents,
-            io::ReadResult&& read_result, int op_flags, int read_flags,
-            const ZTracer::Trace &parent_trace) override;
+          private:
+            struct OpenRequest;
 
-  void list_snap(io::Extents&& image_extents, int list_snaps_flags,
-                 io::SparseExtents* sparse_extents,
-                 const ZTracer::Trace &parent_trace,
-                 Context* on_finish) override;
+            ImageCtxT *m_image_ctx;
+             json_spirit::mObject m_json_object;
+            const SourceSpecBuilder < ImageCtxT > *m_source_spec_builder;
+            uint64_t m_index = 0;
 
-private:
-  struct OpenRequest;
+            SnapInfo m_snap_info;
 
-  ImageCtxT* m_image_ctx;
-  json_spirit::mObject m_json_object;
-  const SourceSpecBuilder<ImageCtxT>* m_source_spec_builder;
-  uint64_t m_index = 0;
+             std::shared_ptr < StreamInterface > m_stream;
 
-  SnapInfo m_snap_info;
+        };
 
-  std::shared_ptr<StreamInterface> m_stream;
+    }                           // namespace migration
+}                               // namespace librbd
 
-};
-
-} // namespace migration
-} // namespace librbd
-
-extern template class librbd::migration::RawSnapshot<librbd::ImageCtx>;
+extern template class librbd::migration::RawSnapshot < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIGRATION_RAW_SNAPSHOT_H

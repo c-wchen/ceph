@@ -14,85 +14,89 @@
                            << this << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
+    namespace mirror {
 
-using util::create_rados_callback;
+        using util::create_rados_callback;
 
-template <typename I>
-ImageRemoveRequest<I>::ImageRemoveRequest(
-    librados::IoCtx& io_ctx, const std::string& global_image_id,
-    const std::string& image_id, Context* on_finish)
-  : m_io_ctx(io_ctx), m_global_image_id(global_image_id), m_image_id(image_id),
-    m_on_finish(on_finish), m_cct(static_cast<CephContext*>(m_io_ctx.cct())) {
-}
+         template < typename I >
+            ImageRemoveRequest <
+            I >::ImageRemoveRequest(librados::IoCtx & io_ctx,
+                                    const std::string & global_image_id,
+                                    const std::string & image_id,
+                                    Context * on_finish)
+        :m_io_ctx(io_ctx), m_global_image_id(global_image_id),
+            m_image_id(image_id), m_on_finish(on_finish),
+            m_cct(static_cast < CephContext * >(m_io_ctx.cct())) {
+        } template < typename I > void ImageRemoveRequest < I >::send() {
+            remove_mirror_image();
+        } template < typename I >
+            void ImageRemoveRequest < I >::remove_mirror_image() {
+            ldout(m_cct, 10) << dendl;
 
-template <typename I>
-void ImageRemoveRequest<I>::send() {
-  remove_mirror_image();
-}
+            librados::ObjectWriteOperation op;
+            cls_client::mirror_image_remove(&op, m_image_id);
 
-template <typename I>
-void ImageRemoveRequest<I>::remove_mirror_image() {
-  ldout(m_cct, 10) << dendl;
+            auto comp = create_rados_callback <
+                ImageRemoveRequest < I >,
+                &ImageRemoveRequest < I >::handle_remove_mirror_image > (this);
+            int r = m_io_ctx.aio_operate(RBD_MIRRORING, comp, &op);
+            ceph_assert(r == 0);
+            comp->release();
+        }
 
-  librados::ObjectWriteOperation op;
-  cls_client::mirror_image_remove(&op, m_image_id);
+        template < typename I >
+            void ImageRemoveRequest < I >::handle_remove_mirror_image(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  auto comp = create_rados_callback<
-    ImageRemoveRequest<I>,
-    &ImageRemoveRequest<I>::handle_remove_mirror_image>(this);
-  int r = m_io_ctx.aio_operate(RBD_MIRRORING, comp, &op);
-  ceph_assert(r == 0);
-  comp->release();
-}
+            if (r < 0 && r != -ENOENT) {
+                lderr(m_cct) << "failed to remove mirroring image: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void ImageRemoveRequest<I>::handle_remove_mirror_image(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            notify_mirroring_watcher();
+        }
 
-  if (r < 0 && r != -ENOENT) {
-    lderr(m_cct) << "failed to remove mirroring image: " << cpp_strerror(r)
-                 << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I >
+            void ImageRemoveRequest < I >::notify_mirroring_watcher() {
+            ldout(m_cct, 10) << dendl;
 
-  notify_mirroring_watcher();
-}
+            auto ctx = util::create_context_callback <
+                ImageRemoveRequest < I >,
+                &ImageRemoveRequest < I >::handle_notify_mirroring_watcher >
+                (this);
+            MirroringWatcher < I >::notify_image_updated(m_io_ctx,
+                                                         cls::rbd::
+                                                         MIRROR_IMAGE_STATE_DISABLED,
+                                                         m_image_id,
+                                                         m_global_image_id,
+                                                         ctx);
+        }
 
-template <typename I>
-void ImageRemoveRequest<I>::notify_mirroring_watcher() {
-  ldout(m_cct, 10) << dendl;
+        template < typename I >
+            void ImageRemoveRequest <
+            I >::handle_notify_mirroring_watcher(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  auto ctx = util::create_context_callback<
-    ImageRemoveRequest<I>,
-    &ImageRemoveRequest<I>::handle_notify_mirroring_watcher>(this);
-  MirroringWatcher<I>::notify_image_updated(
-    m_io_ctx, cls::rbd::MIRROR_IMAGE_STATE_DISABLED,
-    m_image_id, m_global_image_id, ctx);
-}
+            if (r < 0) {
+                lderr(m_cct) << "failed to notify mirror image update: " <<
+                    cpp_strerror(r)
+                    << dendl;
+            }
 
-template <typename I>
-void ImageRemoveRequest<I>::handle_notify_mirroring_watcher(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+            finish(0);
+        }
 
-  if (r < 0) {
-    lderr(m_cct) << "failed to notify mirror image update: " << cpp_strerror(r)
-                 << dendl;
-  }
+        template < typename I > void ImageRemoveRequest < I >::finish(int r) {
+            ldout(m_cct, 10) << "r=" << r << dendl;
 
-  finish(0);
-}
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-template <typename I>
-void ImageRemoveRequest<I>::finish(int r) {
-  ldout(m_cct, 10) << "r=" << r << dendl;
+    }                           // namespace mirror
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::ImageRemoveRequest<librbd::ImageCtx>;
+template class librbd::mirror::ImageRemoveRequest < librbd::ImageCtx >;

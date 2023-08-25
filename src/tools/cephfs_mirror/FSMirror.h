@@ -14,145 +14,136 @@
 class ContextWQ;
 
 namespace cephfs {
-namespace mirror {
+    namespace mirror {
 
-class MirrorAdminSocketHook;
-class PeerReplayer;
-class ServiceDaemon;
+        class MirrorAdminSocketHook;
+        class PeerReplayer;
+        class ServiceDaemon;
 
 // handle mirroring for a filesystem to a set of peers
 
-class FSMirror {
-public:
-  FSMirror(CephContext *cct, const Filesystem &filesystem, uint64_t pool_id,
-           ServiceDaemon *service_daemon, std::vector<const char*> args,
-           ContextWQ *work_queue);
-  ~FSMirror();
+        class FSMirror {
+          public:
+            FSMirror(CephContext * cct, const Filesystem & filesystem,
+                     uint64_t pool_id, ServiceDaemon * service_daemon,
+                     std::vector < const char *>args, ContextWQ * work_queue);
+            ~FSMirror();
 
-  void init(Context *on_finish);
-  void shutdown(Context *on_finish);
+            void init(Context * on_finish);
+            void shutdown(Context * on_finish);
 
-  void add_peer(const Peer &peer);
-  void remove_peer(const Peer &peer);
+            void add_peer(const Peer & peer);
+            void remove_peer(const Peer & peer);
 
-  bool is_stopping() {
-    std::scoped_lock locker(m_lock);
-    return m_stopping;
-  }
+            bool is_stopping() {
+                std::scoped_lock locker(m_lock);
+                return m_stopping;
+            } bool is_init_failed() {
+                std::scoped_lock locker(m_lock);
+                return m_init_failed;
+            } bool is_failed() {
+                std::scoped_lock locker(m_lock);
+                return m_init_failed ||
+                    m_instance_watcher->is_failed() ||
+                    m_mirror_watcher->is_failed();
+            } bool is_blocklisted() {
+                std::scoped_lock locker(m_lock);
+                return is_blocklisted(locker);
+            }
 
-  bool is_init_failed() {
-    std::scoped_lock locker(m_lock);
-    return m_init_failed;
-  }
+            Peers get_peers() {
+                std::scoped_lock locker(m_lock);
+                return m_all_peers;
+            }
 
-  bool is_failed() {
-    std::scoped_lock locker(m_lock);
-    return m_init_failed ||
-           m_instance_watcher->is_failed() ||
-           m_mirror_watcher->is_failed();
-  }
+            std::string get_instance_addr() {
+                std::scoped_lock locker(m_lock);
+                return m_addrs;
+            }
 
-  bool is_blocklisted() {
-    std::scoped_lock locker(m_lock);
-    return is_blocklisted(locker);
-  }
+            // admin socket helpers
+            void mirror_status(Formatter * f);
 
-  Peers get_peers() {
-    std::scoped_lock locker(m_lock);
-    return m_all_peers;
-  }
+            void reopen_logs();
 
-  std::string get_instance_addr() {
-    std::scoped_lock locker(m_lock);
-    return m_addrs;
-  }
+          private:
+            bool is_blocklisted(const std::scoped_lock < ceph::mutex > &locker) const {
+                bool blocklisted = false;
+                if (m_instance_watcher) {
+                    blocklisted = m_instance_watcher->is_blocklisted();
+                } if (m_mirror_watcher) {
+                    blocklisted |= m_mirror_watcher->is_blocklisted();
+                }
 
-  // admin socket helpers
-  void mirror_status(Formatter *f);
+                return blocklisted;
+            }
 
-  void reopen_logs();
+            struct SnapListener:public InstanceWatcher::Listener {
+                FSMirror *fs_mirror;
 
-private:
-  bool is_blocklisted(const std::scoped_lock<ceph::mutex> &locker) const {
-    bool blocklisted = false;
-    if (m_instance_watcher) {
-      blocklisted = m_instance_watcher->is_blocklisted();
-    }
-    if (m_mirror_watcher) {
-      blocklisted |= m_mirror_watcher->is_blocklisted();
-    }
+                 SnapListener(FSMirror * fs_mirror)
+                :fs_mirror(fs_mirror) {
+                } void acquire_directory(std::string_view dir_path) override {
+                    fs_mirror->handle_acquire_directory(dir_path);
+                }
 
-    return blocklisted;
-  }
+                void release_directory(std::string_view dir_path) override {
+                    fs_mirror->handle_release_directory(dir_path);
+                }
+            };
 
-  struct SnapListener : public InstanceWatcher::Listener {
-    FSMirror *fs_mirror;
+            CephContext *m_cct;
+            Filesystem m_filesystem;
+            uint64_t m_pool_id;
+            ServiceDaemon *m_service_daemon;
+            std::vector < const char *>m_args;
+            ContextWQ *m_work_queue;
 
-    SnapListener(FSMirror *fs_mirror)
-      : fs_mirror(fs_mirror) {
-    }
+            ceph::mutex m_lock = ceph::make_mutex("cephfs::mirror::fs_mirror");
+            SnapListener m_snap_listener;
+            std::set < std::string, std::less <>> m_directories;
+            Peers m_all_peers;
+            std::map < Peer, std::unique_ptr < PeerReplayer >> m_peer_replayers;
 
-    void acquire_directory(std::string_view dir_path) override {
-      fs_mirror->handle_acquire_directory(dir_path);
-    }
+            RadosRef m_cluster;
+            std::string m_addrs;
+            librados::IoCtx m_ioctx;
+            InstanceWatcher *m_instance_watcher = nullptr;
+            MirrorWatcher *m_mirror_watcher = nullptr;
 
-    void release_directory(std::string_view dir_path) override {
-      fs_mirror->handle_release_directory(dir_path);
-    }
-  };
+            int m_retval = 0;
+            bool m_stopping = false;
+            bool m_init_failed = false;
+            Context *m_on_init_finish = nullptr;
+            Context *m_on_shutdown_finish = nullptr;
 
-  CephContext *m_cct;
-  Filesystem m_filesystem;
-  uint64_t m_pool_id;
-  ServiceDaemon *m_service_daemon;
-  std::vector<const char *> m_args;
-  ContextWQ *m_work_queue;
+            MirrorAdminSocketHook *m_asok_hook = nullptr;
 
-  ceph::mutex m_lock = ceph::make_mutex("cephfs::mirror::fs_mirror");
-  SnapListener m_snap_listener;
-  std::set<std::string, std::less<>> m_directories;
-  Peers m_all_peers;
-  std::map<Peer, std::unique_ptr<PeerReplayer>> m_peer_replayers;
+            MountRef m_mount;
 
-  RadosRef m_cluster;
-  std::string m_addrs;
-  librados::IoCtx m_ioctx;
-  InstanceWatcher *m_instance_watcher = nullptr;
-  MirrorWatcher *m_mirror_watcher = nullptr;
+            int init_replayer(PeerReplayer * peer_replayer);
+            void shutdown_replayer(PeerReplayer * peer_replayer);
+            void cleanup();
 
-  int m_retval = 0;
-  bool m_stopping = false;
-  bool m_init_failed = false;
-  Context *m_on_init_finish = nullptr;
-  Context *m_on_shutdown_finish = nullptr;
+            void init_instance_watcher(Context * on_finish);
+            void handle_init_instance_watcher(int r);
 
-  MirrorAdminSocketHook *m_asok_hook = nullptr;
+            void init_mirror_watcher();
+            void handle_init_mirror_watcher(int r);
 
-  MountRef m_mount;
+            void shutdown_peer_replayers();
 
-  int init_replayer(PeerReplayer *peer_replayer);
-  void shutdown_replayer(PeerReplayer *peer_replayer);
-  void cleanup();
+            void shutdown_mirror_watcher();
+            void handle_shutdown_mirror_watcher(int r);
 
-  void init_instance_watcher(Context *on_finish);
-  void handle_init_instance_watcher(int r);
+            void shutdown_instance_watcher();
+            void handle_shutdown_instance_watcher(int r);
 
-  void init_mirror_watcher();
-  void handle_init_mirror_watcher(int r);
+            void handle_acquire_directory(std::string_view dir_path);
+            void handle_release_directory(std::string_view dir_path);
+        };
 
-  void shutdown_peer_replayers();
-
-  void shutdown_mirror_watcher();
-  void handle_shutdown_mirror_watcher(int r);
-
-  void shutdown_instance_watcher();
-  void handle_shutdown_instance_watcher(int r);
-
-  void handle_acquire_directory(std::string_view dir_path);
-  void handle_release_directory(std::string_view dir_path);
-};
-
-} // namespace mirror
-} // namespace cephfs
+    }                           // namespace mirror
+}                               // namespace cephfs
 
 #endif // CEPHFS_MIRROR_FS_MIRROR_H

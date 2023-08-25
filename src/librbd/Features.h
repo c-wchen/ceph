@@ -8,9 +8,8 @@
 
 namespace librbd {
 
-  std::string rbd_features_to_string(uint64_t features,
-				     std::ostream *err);
-  uint64_t rbd_features_from_string(const std::string& value,
-				    std::ostream *err);
+    std::string rbd_features_to_string(uint64_t features, std::ostream * err);
+    uint64_t rbd_features_from_string(const std::string & value,
+                                      std::ostream * err);
 
-} // librbd
+}                               // librbd

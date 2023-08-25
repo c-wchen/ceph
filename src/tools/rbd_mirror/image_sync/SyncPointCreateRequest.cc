@@ -19,154 +19,166 @@
                            << this << " " << __func__
 
 namespace rbd {
-namespace mirror {
-namespace image_sync {
+    namespace mirror {
+        namespace image_sync {
 
-using librbd::util::create_context_callback;
+            using librbd::util::create_context_callback;
 
-template <typename I>
-SyncPointCreateRequest<I>::SyncPointCreateRequest(
-    I *remote_image_ctx,
-    const std::string &local_mirror_uuid,
-    SyncPointHandler* sync_point_handler,
-    Context *on_finish)
-  : m_remote_image_ctx(remote_image_ctx),
-    m_local_mirror_uuid(local_mirror_uuid),
-    m_sync_point_handler(sync_point_handler),
-    m_on_finish(on_finish) {
-  m_sync_points_copy = m_sync_point_handler->get_sync_points();
-  ceph_assert(m_sync_points_copy.size() < 2);
+             template < typename I >
+                SyncPointCreateRequest <
+                I >::SyncPointCreateRequest(I * remote_image_ctx,
+                                            const std::
+                                            string & local_mirror_uuid,
+                                            SyncPointHandler *
+                                            sync_point_handler,
+                                            Context * on_finish)
+            :m_remote_image_ctx(remote_image_ctx),
+                m_local_mirror_uuid(local_mirror_uuid),
+                m_sync_point_handler(sync_point_handler),
+                m_on_finish(on_finish) {
+                m_sync_points_copy = m_sync_point_handler->get_sync_points();
+                ceph_assert(m_sync_points_copy.size() < 2);
 
-  // initialize the updated client meta with the new sync point
-  m_sync_points_copy.emplace_back();
-  if (m_sync_points_copy.size() > 1) {
-    m_sync_points_copy.back().from_snap_name =
-      m_sync_points_copy.front().snap_name;
-  }
-}
+                // initialize the updated client meta with the new sync point
+                m_sync_points_copy.emplace_back();
+                if (m_sync_points_copy.size() > 1) {
+                    m_sync_points_copy.back().from_snap_name =
+                        m_sync_points_copy.front().snap_name;
+            }} template < typename I > void SyncPointCreateRequest < I >::send() {
+                send_update_sync_points();
+            } template < typename I >
+                void SyncPointCreateRequest < I >::send_update_sync_points() {
+                uuid_d uuid_gen;
+                uuid_gen.generate_random();
 
-template <typename I>
-void SyncPointCreateRequest<I>::send() {
-  send_update_sync_points();
-}
+                auto & sync_point = m_sync_points_copy.back();
+                sync_point.snap_name =
+                    util::get_snapshot_name_prefix(m_local_mirror_uuid) +
+                    uuid_gen.to_string();
 
-template <typename I>
-void SyncPointCreateRequest<I>::send_update_sync_points() {
-  uuid_d uuid_gen;
-  uuid_gen.generate_random();
+                auto ctx = create_context_callback <
+                    SyncPointCreateRequest < I >,
+                    &SyncPointCreateRequest < I >::handle_update_sync_points >
+                    (this);
+                m_sync_point_handler->update_sync_points(m_sync_point_handler->
+                                                         get_snap_seqs(),
+                                                         m_sync_points_copy,
+                                                         false, ctx);
+            }
 
-  auto& sync_point = m_sync_points_copy.back();
-  sync_point.snap_name = util::get_snapshot_name_prefix(m_local_mirror_uuid) +
-                         uuid_gen.to_string();
+            template < typename I >
+                void SyncPointCreateRequest <
+                I >::handle_update_sync_points(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    SyncPointCreateRequest<I>,
-    &SyncPointCreateRequest<I>::handle_update_sync_points>(this);
-  m_sync_point_handler->update_sync_points(
-    m_sync_point_handler->get_snap_seqs(), m_sync_points_copy, false, ctx);
-}
+                if (r < 0) {
+                    derr << ": failed to update client data: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void SyncPointCreateRequest<I>::handle_update_sync_points(int r) {
-  dout(20) << ": r=" << r << dendl;
+                send_refresh_image();
+            }
 
-  if (r < 0) {
-    derr << ": failed to update client data: " << cpp_strerror(r)
-         << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void SyncPointCreateRequest < I >::send_refresh_image() {
+                dout(20) << dendl;
 
-  send_refresh_image();
-}
+                Context *ctx = create_context_callback <
+                    SyncPointCreateRequest < I >,
+                    &SyncPointCreateRequest < I >::handle_refresh_image >
+                    (this);
+                m_remote_image_ctx->state->refresh(ctx);
+            }
 
-template <typename I>
-void SyncPointCreateRequest<I>::send_refresh_image() {
-  dout(20) << dendl;
+            template < typename I >
+                void SyncPointCreateRequest < I >::handle_refresh_image(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  Context *ctx = create_context_callback<
-    SyncPointCreateRequest<I>, &SyncPointCreateRequest<I>::handle_refresh_image>(
-      this);
-  m_remote_image_ctx->state->refresh(ctx);
-}
+                if (r < 0) {
+                    derr << ": remote image refresh failed: " << cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void SyncPointCreateRequest<I>::handle_refresh_image(int r) {
-  dout(20) << ": r=" << r << dendl;
+                send_create_snap();
+            }
 
-  if (r < 0) {
-    derr << ": remote image refresh failed: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void SyncPointCreateRequest < I >::send_create_snap() {
+                dout(20) << dendl;
 
-  send_create_snap();
-}
+                auto & sync_point = m_sync_points_copy.back();
 
-template <typename I>
-void SyncPointCreateRequest<I>::send_create_snap() {
-  dout(20) << dendl;
+                Context *ctx = create_context_callback <
+                    SyncPointCreateRequest < I >,
+                    &SyncPointCreateRequest < I >::handle_create_snap > (this);
+                m_remote_image_ctx->operations->
+                    snap_create(cls::rbd::UserSnapshotNamespace(),
+                                sync_point.snap_name.c_str(),
+                                librbd::SNAP_CREATE_FLAG_SKIP_NOTIFY_QUIESCE,
+                                m_prog_ctx, ctx);
+            }
 
-  auto& sync_point = m_sync_points_copy.back();
+            template < typename I >
+                void SyncPointCreateRequest < I >::handle_create_snap(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  Context *ctx = create_context_callback<
-    SyncPointCreateRequest<I>, &SyncPointCreateRequest<I>::handle_create_snap>(
-      this);
-  m_remote_image_ctx->operations->snap_create(
-    cls::rbd::UserSnapshotNamespace(), sync_point.snap_name.c_str(),
-    librbd::SNAP_CREATE_FLAG_SKIP_NOTIFY_QUIESCE, m_prog_ctx, ctx);
-}
+                if (r == -EEXIST) {
+                    send_update_sync_points();
+                    return;
+                }
+                else if (r < 0) {
+                    derr << ": failed to create snapshot: " << cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void SyncPointCreateRequest<I>::handle_create_snap(int r) {
-  dout(20) << ": r=" << r << dendl;
+                send_final_refresh_image();
+            }
 
-  if (r == -EEXIST) {
-    send_update_sync_points();
-    return;
-  } else if (r < 0) {
-    derr << ": failed to create snapshot: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void SyncPointCreateRequest < I >::send_final_refresh_image() {
+                dout(20) << dendl;
 
-  send_final_refresh_image();
-}
+                Context *ctx = create_context_callback <
+                    SyncPointCreateRequest < I >,
+                    &SyncPointCreateRequest < I >::handle_final_refresh_image >
+                    (this);
+                m_remote_image_ctx->state->refresh(ctx);
+            }
 
-template <typename I>
-void SyncPointCreateRequest<I>::send_final_refresh_image() {
-  dout(20) << dendl;
+            template < typename I >
+                void SyncPointCreateRequest <
+                I >::handle_final_refresh_image(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  Context *ctx = create_context_callback<
-    SyncPointCreateRequest<I>,
-    &SyncPointCreateRequest<I>::handle_final_refresh_image>(this);
-  m_remote_image_ctx->state->refresh(ctx);
-}
+                if (r < 0) {
+                    derr << ": failed to refresh image for snapshot: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void SyncPointCreateRequest<I>::handle_final_refresh_image(int r) {
-  dout(20) << ": r=" << r << dendl;
+                finish(0);
+            }
 
-  if (r < 0) {
-    derr << ": failed to refresh image for snapshot: " << cpp_strerror(r)
-         << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void SyncPointCreateRequest < I >::finish(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  finish(0);
-}
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-template <typename I>
-void SyncPointCreateRequest<I>::finish(int r) {
-  dout(20) << ": r=" << r << dendl;
+        }                       // namespace image_sync
+    }                           // namespace mirror
+}                               // namespace rbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace image_sync
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::image_sync::SyncPointCreateRequest<librbd::ImageCtx>;
+template class rbd::mirror::image_sync::SyncPointCreateRequest <
+    librbd::ImageCtx >;

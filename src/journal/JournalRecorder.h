@@ -19,110 +19,108 @@
 
 namespace journal {
 
-class JournalRecorder {
-public:
-  JournalRecorder(librados::IoCtx &ioctx, std::string_view object_oid_prefix,
-                  ceph::ref_t<JournalMetadata> journal_metadata,
-                  uint64_t max_in_flight_appends);
-  ~JournalRecorder();
+    class JournalRecorder {
+      public:
+        JournalRecorder(librados::IoCtx & ioctx,
+                        std::string_view object_oid_prefix,
+                        ceph::ref_t < JournalMetadata > journal_metadata,
+                        uint64_t max_in_flight_appends);
+        ~JournalRecorder();
 
-  void shut_down(Context *on_safe);
+        void shut_down(Context * on_safe);
 
-  void set_append_batch_options(int flush_interval, uint64_t flush_bytes,
-                                double flush_age);
+        void set_append_batch_options(int flush_interval, uint64_t flush_bytes,
+                                      double flush_age);
 
-  Future append(uint64_t tag_tid, const bufferlist &bl);
-  void flush(Context *on_safe);
+        Future append(uint64_t tag_tid, const bufferlist & bl);
+        void flush(Context * on_safe);
 
-  ceph::ref_t<ObjectRecorder> get_object(uint8_t splay_offset);
+         ceph::ref_t < ObjectRecorder > get_object(uint8_t splay_offset);
 
-private:
-  typedef std::map<uint8_t, ceph::ref_t<ObjectRecorder>> ObjectRecorderPtrs;
-  typedef std::vector<std::unique_lock<ceph::mutex>> Lockers;
+      private:
+        typedef std::map < uint8_t,
+            ceph::ref_t < ObjectRecorder >> ObjectRecorderPtrs;
+        typedef std::vector < std::unique_lock < ceph::mutex >> Lockers;
 
-  struct Listener : public JournalMetadataListener {
-    JournalRecorder *journal_recorder;
+        struct Listener:public JournalMetadataListener {
+            JournalRecorder *journal_recorder;
 
-    Listener(JournalRecorder *_journal_recorder)
-      : journal_recorder(_journal_recorder) {}
+             Listener(JournalRecorder * _journal_recorder)
+            :journal_recorder(_journal_recorder) {
+            } void handle_update(JournalMetadata *) override {
+                journal_recorder->handle_update();
+        }};
 
-    void handle_update(JournalMetadata *) override {
-      journal_recorder->handle_update();
-    }
-  };
+        struct ObjectHandler:public ObjectRecorder::Handler {
+            JournalRecorder *journal_recorder;
 
-  struct ObjectHandler : public ObjectRecorder::Handler {
-    JournalRecorder *journal_recorder;
+             ObjectHandler(JournalRecorder * _journal_recorder)
+            :journal_recorder(_journal_recorder) {
+            } void closed(ObjectRecorder * object_recorder) override {
+                journal_recorder->handle_closed(object_recorder);
+            }
+            void overflow(ObjectRecorder * object_recorder) override {
+                journal_recorder->handle_overflow(object_recorder);
+            }
+        };
 
-    ObjectHandler(JournalRecorder *_journal_recorder)
-      : journal_recorder(_journal_recorder) {
-    }
+        struct C_AdvanceObjectSet:public Context {
+            JournalRecorder *journal_recorder;
 
-    void closed(ObjectRecorder *object_recorder) override {
-      journal_recorder->handle_closed(object_recorder);
-    }
-    void overflow(ObjectRecorder *object_recorder) override {
-      journal_recorder->handle_overflow(object_recorder);
-    }
-  };
+             C_AdvanceObjectSet(JournalRecorder * _journal_recorder)
+            :journal_recorder(_journal_recorder) {
+            } void finish(int r) override {
+                journal_recorder->handle_advance_object_set(r);
+            }
+        };
 
-  struct C_AdvanceObjectSet : public Context {
-    JournalRecorder *journal_recorder;
+        librados::IoCtx m_ioctx;
+        CephContext *m_cct = nullptr;
+        std::string m_object_oid_prefix;
 
-    C_AdvanceObjectSet(JournalRecorder *_journal_recorder)
-      : journal_recorder(_journal_recorder) {
-    }
-    void finish(int r) override {
-      journal_recorder->handle_advance_object_set(r);
-    }
-  };
+        ceph::ref_t < JournalMetadata > m_journal_metadata;
 
-  librados::IoCtx m_ioctx;
-  CephContext *m_cct = nullptr;
-  std::string m_object_oid_prefix;
+        uint32_t m_flush_interval = 0;
+        uint64_t m_flush_bytes = 0;
+        double m_flush_age = 0;
+        uint64_t m_max_in_flight_appends;
 
-  ceph::ref_t<JournalMetadata> m_journal_metadata;
+        Listener m_listener;
+        ObjectHandler m_object_handler;
 
-  uint32_t m_flush_interval = 0;
-  uint64_t m_flush_bytes = 0;
-  double m_flush_age = 0;
-  uint64_t m_max_in_flight_appends;
+        ceph::mutex m_lock = ceph::make_mutex("JournalerRecorder::m_lock");
 
-  Listener m_listener;
-  ObjectHandler m_object_handler;
+        uint32_t m_in_flight_advance_sets = 0;
+        uint32_t m_in_flight_object_closes = 0;
+        uint64_t m_current_set;
+        ObjectRecorderPtrs m_object_ptrs;
+        ceph::containers::tiny_vector < ceph::mutex > m_object_locks;
 
-  ceph::mutex m_lock = ceph::make_mutex("JournalerRecorder::m_lock");
+        ceph::ref_t < FutureImpl > m_prev_future;
 
-  uint32_t m_in_flight_advance_sets = 0;
-  uint32_t m_in_flight_object_closes = 0;
-  uint64_t m_current_set;
-  ObjectRecorderPtrs m_object_ptrs;
-  ceph::containers::tiny_vector<ceph::mutex> m_object_locks;
+        Context *m_on_object_set_advanced = nullptr;
 
-  ceph::ref_t<FutureImpl> m_prev_future;
+        void open_object_set();
+        bool close_object_set(uint64_t active_set);
 
-  Context *m_on_object_set_advanced = nullptr;
+        void advance_object_set();
+        void handle_advance_object_set(int r);
 
-  void open_object_set();
-  bool close_object_set(uint64_t active_set);
+        void close_and_advance_object_set(uint64_t object_set);
 
-  void advance_object_set();
-  void handle_advance_object_set(int r);
+        ceph::ref_t < ObjectRecorder >
+            create_object_recorder(uint64_t object_number, ceph::mutex * lock);
+        bool create_next_object_recorder(ceph::ref_t < ObjectRecorder >
+                                         object_recorder);
 
-  void close_and_advance_object_set(uint64_t object_set);
+        void handle_update();
 
-  ceph::ref_t<ObjectRecorder> create_object_recorder(uint64_t object_number,
-                                           ceph::mutex* lock);
-  bool create_next_object_recorder(ceph::ref_t<ObjectRecorder> object_recorder);
+        void handle_closed(ObjectRecorder * object_recorder);
+        void handle_overflow(ObjectRecorder * object_recorder);
 
-  void handle_update();
+        Lockers lock_object_recorders();
+    };
 
-  void handle_closed(ObjectRecorder *object_recorder);
-  void handle_overflow(ObjectRecorder *object_recorder);
-
-  Lockers lock_object_recorders();
-};
-
-} // namespace journal
+}                               // namespace journal
 
 #endif // CEPH_JOURNAL_JOURNAL_RECORDER_H

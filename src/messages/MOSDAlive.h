@@ -12,42 +12,45 @@
  * 
  */
 
-
-
 #ifndef CEPH_MOSDALIVE_H
 #define CEPH_MOSDALIVE_H
 
 #include "messages/PaxosServiceMessage.h"
 
-class MOSDAlive final : public PaxosServiceMessage {
-public:
-  epoch_t want = 0;
+class MOSDAlive final:public PaxosServiceMessage {
+  public:
+    epoch_t want = 0;
 
-  MOSDAlive(epoch_t h, epoch_t w) : PaxosServiceMessage{MSG_OSD_ALIVE, h}, want(w) {}
-  MOSDAlive() : MOSDAlive{0, 0} {}
-private:
-  ~MOSDAlive() final {}
+    MOSDAlive(epoch_t h, epoch_t w):PaxosServiceMessage {
+    MSG_OSD_ALIVE, h}, want(w) {
+    }
+  MOSDAlive():MOSDAlive {
+    0, 0} {
+    }
+  private:
+    ~MOSDAlive()final {
+    }
 
-public:
-  void encode_payload(uint64_t features) override {
-    paxos_encode();
-    using ceph::encode;
-    encode(want, payload);
-  }
-  void decode_payload() override {
-    auto p = payload.cbegin();
-    paxos_decode(p);
-    using ceph::decode;
-    decode(want, p);
-  }
+  public:
+    void encode_payload(uint64_t features) override {
+        paxos_encode();
+        using ceph::encode;
+        encode(want, payload);
+    }
+    void decode_payload() override {
+        auto p = payload.cbegin();
+        paxos_decode(p);
+        using ceph::decode;
+        decode(want, p);
+    }
 
-  std::string_view get_type_name() const override { return "osd_alive"; }
-  void print(std::ostream &out) const override {
-    out << "osd_alive(want up_thru " << want << " have " << version << ")";
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
+    std::string_view get_type_name()const override {
+        return "osd_alive";
+    } void print(std::ostream & out) const override {
+        out << "osd_alive(want up_thru " << want << " have " << version << ")";
+  } private:
+     template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

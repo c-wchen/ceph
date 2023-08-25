@@ -27,21 +27,20 @@
 
 namespace ceph {
 
-  class CompressionPlugin :  public Plugin {
-  public:
-    TOPNSPC::CompressorRef compressor;
+    class CompressionPlugin:public Plugin {
+      public:
+        TOPNSPC::CompressorRef compressor;
 
-    explicit CompressionPlugin(CephContext *cct)
-      : Plugin(cct)
-    {}
-    
-    ~CompressionPlugin() override {}
+        explicit CompressionPlugin(CephContext * cct)
+        :Plugin(cct) {
+        } ~CompressionPlugin() override {
+        } virtual int factory(TOPNSPC::CompressorRef * cs,
+                              std::ostream * ss) = 0;
 
-    virtual int factory(TOPNSPC::CompressorRef *cs,
-			std::ostream *ss) = 0;
-
-    virtual const char* name() {return "CompressionPlugin";}
-  };
+        virtual const char *name() {
+            return "CompressionPlugin";
+        }
+    };
 
 }
 

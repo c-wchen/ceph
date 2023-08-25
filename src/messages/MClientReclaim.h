@@ -12,57 +12,60 @@
  * 
  */
 
-
 #ifndef CEPH_MCLIENTRECLAIM_H
 #define CEPH_MCLIENTRECLAIM_H
 
 #include "msg/Message.h"
 
-class MClientReclaim final : public SafeMessage {
-public:
-  static constexpr int HEAD_VERSION = 1;
-  static constexpr int COMPAT_VERSION = 1;
-  static constexpr uint32_t FLAG_FINISH = 1U << 31;
+class MClientReclaim final:public SafeMessage {
+  public:
+    static constexpr int HEAD_VERSION = 1;
+    static constexpr int COMPAT_VERSION = 1;
+    static constexpr uint32_t FLAG_FINISH = 1U << 31;
 
-  uint32_t get_flags() const { return flags; }
-  std::string_view get_uuid() const { return uuid; }
+    uint32_t get_flags() const {
+        return flags;
+    } std::string_view get_uuid() const {
+        return uuid;
+    } std::string_view get_type_name() const override {
+        return "client_reclaim";
+    } void print(std::ostream & o) const override {
+        std::ios_base::fmtflags f(o.flags());
+        o << "client_reclaim(" << get_uuid() << " flags 0x" << std::
+            hex << get_flags() << ")";
+        o.flags(f);
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+         encode(uuid, payload);
+         encode(flags, payload);
+    } void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(uuid, p);
+        decode(flags, p);
+    }
 
-  std::string_view get_type_name() const override { return "client_reclaim"; }
-  void print(std::ostream& o) const override {
-    std::ios_base::fmtflags f(o.flags());
-    o << "client_reclaim(" << get_uuid() << " flags 0x" << std::hex << get_flags() << ")";
-    o.flags(f);
-  }
+  protected:
+  MClientReclaim():
+    SafeMessage {
+    CEPH_MSG_CLIENT_RECLAIM, HEAD_VERSION, COMPAT_VERSION} {
+    }
+  MClientReclaim(std::string_view _uuid, uint32_t _flags):
+    SafeMessage {
+    CEPH_MSG_CLIENT_RECLAIM, HEAD_VERSION, COMPAT_VERSION},
+        uuid(_uuid), flags(_flags) {
+    }
+  private:
+    ~MClientReclaim()final {
+    }
 
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(uuid, payload);
-    encode(flags, payload);
-  }
+    std::string uuid;
+    uint32_t flags = 0;
 
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(uuid, p);
-    decode(flags, p);
-  }
-
-protected:
-  MClientReclaim() :
-    SafeMessage{CEPH_MSG_CLIENT_RECLAIM, HEAD_VERSION, COMPAT_VERSION} {}
-  MClientReclaim(std::string_view _uuid, uint32_t _flags) :
-    SafeMessage{CEPH_MSG_CLIENT_RECLAIM, HEAD_VERSION, COMPAT_VERSION},
-    uuid(_uuid), flags(_flags) {}
-private:
-  ~MClientReclaim() final {}
-
-  std::string uuid;
-  uint32_t flags = 0;
-
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

@@ -14,28 +14,27 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace mirror {
+    namespace mirror {
 
-template <typename ImageCtxT = ImageCtx>
-class ImageRemoveRequest {
-public:
-  static ImageRemoveRequest *create(librados::IoCtx& io_ctx,
-                                    const std::string& global_image_id,
-                                    const std::string& image_id,
-                                    Context* on_finish) {
-    return new ImageRemoveRequest(io_ctx, global_image_id, image_id, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class ImageRemoveRequest {
+          public:
+            static ImageRemoveRequest *create(librados::IoCtx & io_ctx,
+                                              const std::
+                                              string & global_image_id,
+                                              const std::string & image_id,
+                                              Context * on_finish) {
+                return new ImageRemoveRequest(io_ctx, global_image_id, image_id,
+                                              on_finish);
+            } ImageRemoveRequest(librados::IoCtx & io_ctx,
+                                 const std::string & global_image_id,
+                                 const std::string & image_id,
+                                 Context * on_finish);
 
-  ImageRemoveRequest(librados::IoCtx& io_ctx,
-                     const std::string& global_image_id,
-                     const std::string& image_id,
-                     Context* on_finish);
+            void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -52,26 +51,26 @@ private:
    * @endverbatim
    */
 
-  librados::IoCtx& m_io_ctx;
-  std::string m_global_image_id;
-  std::string m_image_id;
-  Context* m_on_finish;
+             librados::IoCtx & m_io_ctx;
+             std::string m_global_image_id;
+             std::string m_image_id;
+            Context *m_on_finish;
 
-  CephContext* m_cct;
+            CephContext *m_cct;
 
-  void remove_mirror_image();
-  void handle_remove_mirror_image(int r);
+            void remove_mirror_image();
+            void handle_remove_mirror_image(int r);
 
-  void notify_mirroring_watcher();
-  void handle_notify_mirroring_watcher(int r);
+            void notify_mirroring_watcher();
+            void handle_notify_mirroring_watcher(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace mirror
-} // namespace librbd
+    }                           // namespace mirror
+}                               // namespace librbd
 
-extern template class librbd::mirror::ImageRemoveRequest<librbd::ImageCtx>;
+extern template class librbd::mirror::ImageRemoveRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIRROR_IMAGE_REMOVE_REQUEST_H

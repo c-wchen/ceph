@@ -138,7 +138,7 @@
     be known to the implementer. For instance, it may be more
     expensive to retrieve two chunks with cost 1 + 9 = 10 than two
     chunks with cost 6 + 6 = 12. 
- */ 
+ */
 
 #include <map>
 #include <set>
@@ -152,25 +152,24 @@ class CrushWrapper;
 
 namespace ceph {
 
-  typedef std::map<std::string,std::string> ErasureCodeProfile;
+    typedef std::map < std::string, std::string > ErasureCodeProfile;
 
-  inline std::ostream& operator<<(std::ostream& out, const ErasureCodeProfile& profile) {
-    out << "{";
-    for (ErasureCodeProfile::const_iterator it = profile.begin();
-	 it != profile.end();
-	 ++it) {
-      if (it != profile.begin()) out << ",";
-      out << it->first << "=" << it->second;
+    inline std::ostream & operator<<(std::ostream & out,
+                                     const ErasureCodeProfile & profile) {
+        out << "{";
+        for (ErasureCodeProfile::const_iterator it = profile.begin();
+             it != profile.end(); ++it) {
+            if (it != profile.begin())
+                out << ",";
+            out << it->first << "=" << it->second;
+        } out << "}";
+        return out;
     }
-    out << "}";
-    return out;
-  }
 
-
-  class ErasureCodeInterface {
-  public:
-    virtual ~ErasureCodeInterface() {}
-
+    class ErasureCodeInterface {
+      public:
+        virtual ~ ErasureCodeInterface() {
+        }
     /**
      * Initialize the instance according to the content of
      * **profile**. The **ss** stream is set with debug messages or
@@ -185,7 +184,8 @@ namespace ceph {
      * @param [out] ss contains informative messages when an error occurs
      * @return 0 on success or a negative errno on error.
      */
-    virtual int init(ErasureCodeProfile &profile, std::ostream *ss) = 0;
+            virtual int init(ErasureCodeProfile & profile,
+                                     std::ostream * ss) = 0;
 
     /**
      * Return the profile that was used to initialize the instance
@@ -193,7 +193,7 @@ namespace ceph {
      *
      * @return the profile in use by the instance
      */
-    virtual const ErasureCodeProfile &get_profile() const = 0;
+        virtual const ErasureCodeProfile & get_profile() const = 0;
 
     /**
      * Create a new rule in **crush** under the name **name**,
@@ -209,9 +209,9 @@ namespace ceph {
      * @param [out] ss contains informative messages when an error occurs
      * @return a rule on success or a negative errno on error.
      */
-    virtual int create_rule(const std::string &name,
-			    CrushWrapper &crush,
-			    std::ostream *ss) const = 0;
+        virtual int create_rule(const std::string & name,
+                                CrushWrapper & crush,
+                                std::ostream * ss) const = 0;
 
     /**
      * Return the number of chunks created by a call to the **encode**
@@ -224,7 +224,7 @@ namespace ceph {
      *
      * @return the number of chunks created by encode()
      */
-    virtual unsigned int get_chunk_count() const = 0;
+        virtual unsigned int get_chunk_count() const = 0;
 
     /**
      * Return the number of data chunks created by a call to the
@@ -234,7 +234,7 @@ namespace ceph {
      *
      * @return the number of data chunks created by encode()
      */
-    virtual unsigned int get_data_chunk_count() const = 0;
+        virtual unsigned int get_data_chunk_count() const = 0;
 
     /**
      * Return the number of coding chunks created by a call to the
@@ -246,7 +246,7 @@ namespace ceph {
      *
      * @return the number of coding chunks created by encode()
      */
-    virtual unsigned int get_coding_chunk_count() const = 0;
+        virtual unsigned int get_coding_chunk_count() const = 0;
 
     /**
      * Return the number of sub chunks chunks created by a call to the
@@ -256,7 +256,7 @@ namespace ceph {
      *
      * @return the number of sub-chunks per chunk created by encode()
      */
-    virtual int get_sub_chunk_count() = 0;
+        virtual int get_sub_chunk_count() = 0;
 
     /**
      * Return the size (in bytes) of a single chunk created by a call
@@ -275,7 +275,7 @@ namespace ceph {
      * @param [in] object_size the number of bytes of the object to **encode()**
      * @return the size (in bytes) of a single chunk created by **encode()**
      */
-    virtual unsigned int get_chunk_size(unsigned int object_size) const = 0;
+        virtual unsigned int get_chunk_size(unsigned int object_size) const = 0;
 
     /**
      * Compute the smallest subset of **available** chunks that needs
@@ -294,10 +294,11 @@ namespace ceph {
      *              subchunk index offsets, count.
      * @return **0** on success or a negative errno on error.
      */
-    virtual int minimum_to_decode(const std::set<int> &want_to_read,
-                                  const std::set<int> &available,
-                                  std::map<int, std::vector<std::pair<int, int>>> 
-                                  *minimum) = 0;
+        virtual int minimum_to_decode(const std::set < int >&want_to_read,
+                                      const std::set < int >&available,
+                                      std::map < int,
+                                      std::vector < std::pair < int,
+                                      int >>>*minimum) = 0;
 
     /**
      * Compute the smallest subset of **available** chunks that needs
@@ -323,9 +324,11 @@ namespace ceph {
      * @param [out] minimum chunk indexes to retrieve 
      * @return **0** on success or a negative errno on error.
      */
-    virtual int minimum_to_decode_with_cost(const std::set<int> &want_to_read,
-                                            const std::map<int, int> &available,
-                                            std::set<int> *minimum) = 0;
+        virtual int minimum_to_decode_with_cost(const std::set <
+                                                int >&want_to_read,
+                                                const std::map < int,
+                                                int >&available,
+                                                std::set < int >*minimum) = 0;
 
     /**
      * Encode the content of **in** and store the result in
@@ -362,13 +365,12 @@ namespace ceph {
      * @param [out] encoded map chunk indexes to chunk data
      * @return **0** on success or a negative errno on error.
      */
-    virtual int encode(const std::set<int> &want_to_encode,
-                       const bufferlist &in,
-                       std::map<int, bufferlist> *encoded) = 0;
+        virtual int encode(const std::set < int >&want_to_encode,
+                           const bufferlist & in,
+                           std::map < int, bufferlist > *encoded) = 0;
 
-
-    virtual int encode_chunks(const std::set<int> &want_to_encode,
-                              std::map<int, bufferlist> *encoded) = 0;
+        virtual int encode_chunks(const std::set < int >&want_to_encode,
+                                  std::map < int, bufferlist > *encoded) = 0;
 
     /**
      * Decode the **chunks** and store at least **want_to_read**
@@ -404,13 +406,14 @@ namespace ceph {
      * @param [in] chunk_size chunk size
      * @return **0** on success or a negative errno on error.
      */
-    virtual int decode(const std::set<int> &want_to_read,
-                       const std::map<int, bufferlist> &chunks,
-                       std::map<int, bufferlist> *decoded, int chunk_size) = 0;
+        virtual int decode(const std::set < int >&want_to_read,
+                           const std::map < int, bufferlist > &chunks,
+                           std::map < int, bufferlist > *decoded,
+                           int chunk_size) = 0;
 
-    virtual int decode_chunks(const std::set<int> &want_to_read,
-                              const std::map<int, bufferlist> &chunks,
-                              std::map<int, bufferlist> *decoded) = 0;
+        virtual int decode_chunks(const std::set < int >&want_to_read,
+                                  const std::map < int, bufferlist > &chunks,
+                                  std::map < int, bufferlist > *decoded) = 0;
 
     /**
      * Return the ordered list of chunks or an empty vector
@@ -445,7 +448,7 @@ namespace ceph {
      *
      * @return vector<int> list of indices of chunks to be remapped
      */
-    virtual const std::vector<int> &get_chunk_mapping() const = 0;
+        virtual const std::vector < int >&get_chunk_mapping() const = 0;
 
     /**
      * Decode the first **get_data_chunk_count()** **chunks** and
@@ -457,11 +460,11 @@ namespace ceph {
      * @param [out] decoded concatenante of the data chunks
      * @return **0** on success or a negative errno on error.
      */
-    virtual int decode_concat(const std::map<int, bufferlist> &chunks,
-			      bufferlist *decoded) = 0;
-  };
+        virtual int decode_concat(const std::map < int, bufferlist > &chunks,
+                                  bufferlist * decoded) = 0;
+    };
 
-  typedef std::shared_ptr<ErasureCodeInterface> ErasureCodeInterfaceRef;
+    typedef std::shared_ptr < ErasureCodeInterface > ErasureCodeInterfaceRef;
 
 }
 

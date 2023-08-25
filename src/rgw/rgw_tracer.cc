@@ -5,9 +5,8 @@
 #include "rgw_tracer.h"
 
 namespace tracing {
-namespace rgw {
+    namespace rgw {
 
-tracing::Tracer tracer;
+        tracing::Tracer tracer;
 
-} // namespace rgw
-} // namespace tracing
+} // namespace rgw }            // namespace tracing

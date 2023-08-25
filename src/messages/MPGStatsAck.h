@@ -17,33 +17,37 @@
 
 #include "osd/osd_types.h"
 
-class MPGStatsAck final : public Message {
-public:
-  std::map<pg_t,std::pair<version_t,epoch_t> > pg_stat;
+class MPGStatsAck final:public Message {
+  public:
+    std::map < pg_t, std::pair < version_t, epoch_t > >pg_stat;
 
-  MPGStatsAck() : Message{MSG_PGSTATSACK} {}
+    MPGStatsAck():Message {
+    MSG_PGSTATSACK}
+    {
+    }
 
-private:
-  ~MPGStatsAck() final {}
+  private:
+    ~MPGStatsAck()final {
+    }
 
-public:
-  std::string_view get_type_name() const override { return "pg_stats_ack"; }
-  void print(std::ostream& out) const override {
-    out << "pg_stats_ack(" << pg_stat.size() << " pgs tid " << get_tid() << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(pg_stat, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(pg_stat, p);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
+  public:
+    std::string_view get_type_name()const override {
+        return "pg_stats_ack";
+    } void print(std::ostream & out) const override {
+        out << "pg_stats_ack(" << pg_stat.
+            size() << " pgs tid " << get_tid() << ")";
+    } void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(pg_stat, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(pg_stat, p);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

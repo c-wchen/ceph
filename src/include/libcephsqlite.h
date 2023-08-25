@@ -25,9 +25,9 @@
 #include <sqlite3.h>
 
 #ifdef _WIN32
-#  define LIBCEPHSQLITE_API __declspec(dllexport)
+#define LIBCEPHSQLITE_API __declspec(dllexport)
 #else
-#  define LIBCEPHSQLITE_API [[gnu::visibility("default")]]
+#define LIBCEPHSQLITE_API [[gnu::visibility("default")]]
 #endif
 
 #ifdef __cplusplus
@@ -58,16 +58,18 @@ extern "C" {
  * sqlite3 can pass its API routines to the libcephsqlite extension.
  */
 
-LIBCEPHSQLITE_API int sqlite3_cephsqlite_init(sqlite3* db, char** err, const sqlite3_api_routines* api);
+    LIBCEPHSQLITE_API int sqlite3_cephsqlite_init(sqlite3 * db, char **err,
+                                                  const sqlite3_api_routines *
+                                                  api);
 
 /* If you prefer to have libcephsqlite use a CephContext managed by your
  * application, use this routine to set that. libcephsqlite can only have one
  * context globally.
  */
 
-LIBCEPHSQLITE_API int cephsqlite_setcct(class CephContext* cct, char** ident);
+    LIBCEPHSQLITE_API int cephsqlite_setcct(class CephContext * cct,
+                                            char **ident);
 #ifdef __cplusplus
 }
 #endif
-
 #endif

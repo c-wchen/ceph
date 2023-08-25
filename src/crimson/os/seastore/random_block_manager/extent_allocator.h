@@ -12,8 +12,8 @@
 
 namespace crimson::os::seastore {
 
-class ExtentAllocator {
-public:
+    class ExtentAllocator {
+      public:
   /**
    * alloc_extent
    *
@@ -24,8 +24,8 @@ public:
    * @param size
    * @return nullopt or the address range (rbm_abs_addr, len)
    */
-  virtual std::optional<interval_set<rbm_abs_addr>> alloc_extent(
-    size_t size) = 0;
+        virtual std::optional < interval_set <
+            rbm_abs_addr >> alloc_extent(size_t size) = 0;
   /**
    * free_extent
    *
@@ -34,7 +34,7 @@ public:
    * @param rbm_abs_addr
    * @param size
    */
-  virtual void free_extent(rbm_abs_addr addr, size_t size) = 0;
+        virtual void free_extent(rbm_abs_addr addr, size_t size) = 0;
   /**
    * mark_extent_used
    *
@@ -43,7 +43,7 @@ public:
    * @param rbm_abs_addr
    * @param size
    */
-  virtual void mark_extent_used(rbm_abs_addr addr, size_t size) = 0;
+        virtual void mark_extent_used(rbm_abs_addr addr, size_t size) = 0;
   /**
    * init 
    *
@@ -53,10 +53,10 @@ public:
    * @param total size
    * @param block size
    */
-  virtual void init(rbm_abs_addr addr, size_t size, size_t b_size) = 0;
-  virtual uint64_t get_available_size() const = 0;
-  virtual uint64_t get_max_alloc_size() const = 0;
-  virtual void close() = 0;
+        virtual void init(rbm_abs_addr addr, size_t size, size_t b_size) = 0;
+        virtual uint64_t get_available_size() const = 0;
+        virtual uint64_t get_max_alloc_size() const = 0;
+        virtual void close() = 0;
   /**
    * complete_allocation
    *
@@ -65,11 +65,11 @@ public:
    * @param start address
    * @param size
    */
-  virtual void complete_allocation(rbm_abs_addr start, size_t size) = 0;
-  virtual rbm_extent_state_t get_extent_state(rbm_abs_addr addr, size_t size) = 0;
-  virtual ~ExtentAllocator() {}
-};
-using ExtentAllocatorRef = std::unique_ptr<ExtentAllocator>;
-
+        virtual void complete_allocation(rbm_abs_addr start, size_t size) = 0;
+        virtual rbm_extent_state_t get_extent_state(rbm_abs_addr addr,
+                                                    size_t size) = 0;
+        virtual ~ ExtentAllocator() {
+    }};
+    using ExtentAllocatorRef = std::unique_ptr < ExtentAllocator >;
 
 }

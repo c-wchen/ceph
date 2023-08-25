@@ -10,31 +10,33 @@
 
 namespace crimson::os::seastore {
 
-struct WritePipeline {
-  struct ReserveProjectedUsage : OrderedExclusivePhaseT<ReserveProjectedUsage> {
-    constexpr static auto type_name = "WritePipeline::reserve_projected_usage";
-  } reserve_projected_usage;
-  struct OolWrites : UnorderedStageT<OolWrites> {
-    constexpr static auto type_name = "UnorderedStage::ool_writes_stage";
-  } ool_writes;
-  struct Prepare : OrderedExclusivePhaseT<Prepare> {
-    constexpr static auto type_name = "WritePipeline::prepare_phase";
-  } prepare;
-  struct DeviceSubmission : OrderedConcurrentPhaseT<DeviceSubmission> {
-    constexpr static auto type_name = "WritePipeline::device_submission_phase";
-  } device_submission;
-  struct Finalize : OrderedExclusivePhaseT<Finalize> {
-    constexpr static auto type_name = "WritePipeline::finalize_phase";
-  } finalize;
+    struct WritePipeline {
+        struct ReserveProjectedUsage:OrderedExclusivePhaseT <
+            ReserveProjectedUsage > {
+            constexpr static auto type_name =
+                "WritePipeline::reserve_projected_usage";
+        } reserve_projected_usage;
+        struct OolWrites:UnorderedStageT < OolWrites > {
+            constexpr static auto type_name =
+                "UnorderedStage::ool_writes_stage";
+        } ool_writes;
+        struct Prepare:OrderedExclusivePhaseT < Prepare > {
+            constexpr static auto type_name = "WritePipeline::prepare_phase";
+        } prepare;
+        struct DeviceSubmission:OrderedConcurrentPhaseT < DeviceSubmission > {
+            constexpr static auto type_name =
+                "WritePipeline::device_submission_phase";
+        } device_submission;
+        struct Finalize:OrderedExclusivePhaseT < Finalize > {
+            constexpr static auto type_name = "WritePipeline::finalize_phase";
+        } finalize;
 
-  using  BlockingEvents = std::tuple<
-    ReserveProjectedUsage::BlockingEvent,
-    OolWrites::BlockingEvent,
-    Prepare::BlockingEvent,
-    DeviceSubmission::BlockingEvent,
-    Finalize::BlockingEvent
-  >;
-};
+        using BlockingEvents = std::tuple <
+            ReserveProjectedUsage::BlockingEvent,
+            OolWrites::BlockingEvent,
+            Prepare::BlockingEvent,
+            DeviceSubmission::BlockingEvent, Finalize::BlockingEvent >;
+    };
 
 /**
  * PlaceholderOperation
@@ -44,138 +46,134 @@ struct WritePipeline {
  * Until then (and for tests likely permanently) we'll use this unregistered
  * placeholder for the pipeline phases necessary for journal correctness.
  */
-class PlaceholderOperation : public crimson::osd::PhasedOperationT<PlaceholderOperation> {
-public:
-  constexpr static auto type = 0U;
-  constexpr static auto type_name =
-    "crimson::os::seastore::PlaceholderOperation";
+    class PlaceholderOperation:public crimson::osd::PhasedOperationT <
+        PlaceholderOperation > {
+      public:
+        constexpr static auto type = 0U;
+        constexpr static auto type_name =
+            "crimson::os::seastore::PlaceholderOperation";
 
-  static PlaceholderOperation::IRef create() {
-    return IRef{new PlaceholderOperation()};
-  }
+        static PlaceholderOperation::IRef create() {
+            return IRef {
+            new PlaceholderOperation()};
+        } PipelineHandle handle;
+        WritePipeline::BlockingEvents tracking_events;
 
-  PipelineHandle handle;
-  WritePipeline::BlockingEvents tracking_events;
+        PipelineHandle & get_handle() {
+            return handle;
+        }
+      private:
+        void dump_detail(ceph::Formatter * f) const final {
+        } void print(std::ostream &) const final {
+    }};
 
-  PipelineHandle& get_handle() {
-    return handle;
-  }
-private:
-  void dump_detail(ceph::Formatter *f) const final {}
-  void print(std::ostream &) const final {}
-};
+    struct OperationProxy {
+        OperationRef op;
+        OperationProxy(OperationRef op):op(std::move(op)) {
+        } virtual seastar::future <> enter(WritePipeline::
+                                           ReserveProjectedUsage &) = 0;
+        virtual seastar::future <> enter(WritePipeline::OolWrites &) = 0;
+        virtual seastar::future <> enter(WritePipeline::Prepare &) = 0;
+        virtual seastar::future <> enter(WritePipeline::DeviceSubmission &) = 0;
+        virtual seastar::future <> enter(WritePipeline::Finalize &) = 0;
 
-struct OperationProxy {
-  OperationRef op;
-  OperationProxy(OperationRef op) : op(std::move(op)) {}
+        virtual void exit() = 0;
+        virtual seastar::future <> complete() = 0;
 
-  virtual seastar::future<> enter(WritePipeline::ReserveProjectedUsage&) = 0;
-  virtual seastar::future<> enter(WritePipeline::OolWrites&) = 0;
-  virtual seastar::future<> enter(WritePipeline::Prepare&) = 0;
-  virtual seastar::future<> enter(WritePipeline::DeviceSubmission&) = 0;
-  virtual seastar::future<> enter(WritePipeline::Finalize&) = 0;
+        virtual ~ OperationProxy() = default;
+    };
 
-  virtual void exit() = 0;
-  virtual seastar::future<> complete() = 0;
+    template < typename OpT > struct OperationProxyT:OperationProxy {
+        OperationProxyT(typename OpT::IRef op):OperationProxy(op) {
+        } OpT *that() {
+            return static_cast < OpT * >(op.get());
+        }
+        const OpT *that() const {
+            return static_cast < const OpT *>(op.get());
+        } seastar::future <> enter(WritePipeline::
+                                   ReserveProjectedUsage & s) final {
+            return that()->enter_stage(s);
+        }
+        seastar::future <> enter(WritePipeline::OolWrites & s) final {
+            return that()->enter_stage(s);
+        }
+        seastar::future <> enter(WritePipeline::Prepare & s) final {
+            return that()->enter_stage(s);
+        }
+        seastar::future <> enter(WritePipeline::DeviceSubmission & s) final {
+            return that()->enter_stage(s);
+        }
+        seastar::future <> enter(WritePipeline::Finalize & s) final {
+            return that()->enter_stage(s);
+        }
 
-  virtual ~OperationProxy() = default;
-};
+        void exit() final {
+            return that()->handle.exit();
+        }
+        seastar::future <> complete()final {
+            return that()->handle.complete();
+        }
+    };
 
-template <typename OpT>
-struct OperationProxyT : OperationProxy {
-  OperationProxyT(typename OpT::IRef op) : OperationProxy(op) {}
+    struct OrderingHandle {
+        // we can easily optimize this dynalloc out as all concretes are
+        // supposed to have exactly the same size.
+        std::unique_ptr < OperationProxy > op;
+        seastar::shared_mutex * collection_ordering_lock = nullptr;
 
-  OpT* that() {
-    return static_cast<OpT*>(op.get());
-  }
-  const OpT* that() const {
-    return static_cast<const OpT*>(op.get());
-  }
+        // in the future we might add further constructors / template to type
+        // erasure while extracting the location of tracking events.
+        OrderingHandle(std::unique_ptr < OperationProxy > op):op(std::move(op)) {
+        } OrderingHandle(OrderingHandle && other)
+        :op(std::move(other.op)),
+            collection_ordering_lock(other.collection_ordering_lock) {
+            other.collection_ordering_lock = nullptr;
+        }
 
-  seastar::future<> enter(WritePipeline::ReserveProjectedUsage& s) final {
-    return that()->enter_stage(s);
-  }
-  seastar::future<> enter(WritePipeline::OolWrites& s) final {
-    return that()->enter_stage(s);
-  }
-  seastar::future<> enter(WritePipeline::Prepare& s) final {
-    return that()->enter_stage(s);
-  }
-  seastar::future<> enter(WritePipeline::DeviceSubmission& s) final {
-    return that()->enter_stage(s);
-  }
-  seastar::future<> enter(WritePipeline::Finalize& s) final {
-    return that()->enter_stage(s);
-  }
+        seastar::future <> take_collection_lock(seastar::shared_mutex & mutex) {
+            ceph_assert(!collection_ordering_lock);
+            collection_ordering_lock = &mutex;
+            return collection_ordering_lock->lock();
+        }
 
-  void exit() final {
-    return that()->handle.exit();
-  }
-  seastar::future<> complete() final {
-    return that()->handle.complete();
-  }
-};
+        void maybe_release_collection_lock() {
+            if (collection_ordering_lock) {
+                collection_ordering_lock->unlock();
+                collection_ordering_lock = nullptr;
+            }
+        }
 
-struct OrderingHandle {
-  // we can easily optimize this dynalloc out as all concretes are
-  // supposed to have exactly the same size.
-  std::unique_ptr<OperationProxy> op;
-  seastar::shared_mutex *collection_ordering_lock = nullptr;
+        template < typename T > seastar::future <> enter(T & t) {
+            return op->enter(t);
+        }
 
-  // in the future we might add further constructors / template to type
-  // erasure while extracting the location of tracking events.
-  OrderingHandle(std::unique_ptr<OperationProxy> op) : op(std::move(op)) {}
-  OrderingHandle(OrderingHandle &&other)
-    : op(std::move(other.op)),
-      collection_ordering_lock(other.collection_ordering_lock) {
-    other.collection_ordering_lock = nullptr;
-  }
+        void exit() {
+            op->exit();
+        }
 
-  seastar::future<> take_collection_lock(seastar::shared_mutex &mutex) {
-    ceph_assert(!collection_ordering_lock);
-    collection_ordering_lock = &mutex;
-    return collection_ordering_lock->lock();
-  }
+        seastar::future <> complete() {
+            return op->complete();
+        }
 
-  void maybe_release_collection_lock() {
-    if (collection_ordering_lock) {
-      collection_ordering_lock->unlock();
-      collection_ordering_lock = nullptr;
+        ~OrderingHandle() {
+            maybe_release_collection_lock();
+        }
+    };
+
+    inline OrderingHandle get_dummy_ordering_handle() {
+        using PlaceholderOpProxy = OperationProxyT < PlaceholderOperation >;
+        return OrderingHandle {
+        std::make_unique < PlaceholderOpProxy >
+                (PlaceholderOperation::create())};
     }
-  }
 
-  template <typename T>
-  seastar::future<> enter(T &t) {
-    return op->enter(t);
-  }
-
-  void exit() {
-    op->exit();
-  }
-
-  seastar::future<> complete() {
-    return op->complete();
-  }
-
-  ~OrderingHandle() {
-    maybe_release_collection_lock();
-  }
-};
-
-inline OrderingHandle get_dummy_ordering_handle() {
-  using PlaceholderOpProxy = OperationProxyT<PlaceholderOperation>;
-  return OrderingHandle{
-    std::make_unique<PlaceholderOpProxy>(PlaceholderOperation::create())};
-}
-
-} // namespace crimson::os::seastore
+}                               // namespace crimson::os::seastore
 
 namespace crimson {
-  template <>
-  struct EventBackendRegistry<os::seastore::PlaceholderOperation> {
-    static std::tuple<> get_backends() {
-      return {};
-    }
-  };
-} // namespace crimson
-
+    template <>
+        struct EventBackendRegistry <os::seastore::PlaceholderOperation > {
+        static std::tuple <> get_backends() {
+            return {
+            };
+    }};
+}                               // namespace crimson

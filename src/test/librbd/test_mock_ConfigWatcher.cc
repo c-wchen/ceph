@@ -11,90 +11,85 @@
 #include <list>
 
 namespace librbd {
-namespace {
+    namespace {
 
-struct MockTestImageCtx : public MockImageCtx {
-  MockTestImageCtx(ImageCtx &image_ctx) : MockImageCtx(image_ctx) {
-  }
-};
+        struct MockTestImageCtx:public MockImageCtx {
+            MockTestImageCtx(ImageCtx & image_ctx):MockImageCtx(image_ctx) {
+        }};
 
-} // anonymous namespace
-} // namespace librbd
+    }                           // anonymous namespace
+}                               // namespace librbd
 
 #include "librbd/ConfigWatcher.cc"
 
 namespace librbd {
 
-using ::testing::Invoke;
+    using::testing::Invoke;
 
-class TestMockConfigWatcher : public TestMockFixture {
-public:
-  typedef ConfigWatcher<MockTestImageCtx> MockConfigWatcher;
+    class TestMockConfigWatcher:public TestMockFixture {
+      public:
+        typedef ConfigWatcher < MockTestImageCtx > MockConfigWatcher;
 
-  librbd::ImageCtx *m_image_ctx;
+         librbd::ImageCtx * m_image_ctx;
 
-  ceph::mutex m_lock = ceph::make_mutex("m_lock");
-  ceph::condition_variable m_cv;
-  bool m_refreshed = false;
+         ceph::mutex m_lock = ceph::make_mutex("m_lock");
+         ceph::condition_variable m_cv;
+        bool m_refreshed = false;
 
-  void SetUp() override {
-    TestMockFixture::SetUp();
+        void SetUp() override {
+            TestMockFixture::SetUp();
 
-    ASSERT_EQ(0, open_image(m_image_name, &m_image_ctx));
-  }
-
-  void expect_update_notification(MockTestImageCtx& mock_image_ctx) {
-    EXPECT_CALL(*mock_image_ctx.state, handle_update_notification())
-      .WillOnce(Invoke([this]() {
-          std::unique_lock locker{m_lock};
-          m_refreshed = true;
-          m_cv.notify_all();
-        }));
-  }
-
-  void wait_for_update_notification() {
-    std::unique_lock locker{m_lock};
-    m_cv.wait(locker, [this] {
-        if (m_refreshed) {
-          m_refreshed = false;
-          return true;
+            ASSERT_EQ(0, open_image(m_image_name, &m_image_ctx));
+        } void expect_update_notification(MockTestImageCtx & mock_image_ctx) {
+            EXPECT_CALL(*mock_image_ctx.state, handle_update_notification())
+                .WillOnce(Invoke([this] () {
+                                 std::unique_lock locker {
+                                 m_lock};
+                                 m_refreshed = true; m_cv.notify_all();}));
         }
-        return false;
-      });
-  }
-};
 
-TEST_F(TestMockConfigWatcher, GlobalConfig) {
-  MockTestImageCtx mock_image_ctx(*m_image_ctx);
+        void wait_for_update_notification() {
+            std::unique_lock locker {
+            m_lock};
+            m_cv.wait(locker,[this] {
+                      if (m_refreshed) {
+                      m_refreshed = false; return true;}
+                      return false;}
+            ) ;
+        }
+    };
 
-  MockConfigWatcher mock_config_watcher(mock_image_ctx);
-  mock_config_watcher.init();
+    TEST_F(TestMockConfigWatcher, GlobalConfig) {
+        MockTestImageCtx mock_image_ctx(*m_image_ctx);
 
-  expect_update_notification(mock_image_ctx);
-  mock_image_ctx.cct->_conf.set_val("rbd_cache", "false");
-  mock_image_ctx.cct->_conf.set_val("rbd_cache", "true");
-  mock_image_ctx.cct->_conf.apply_changes(nullptr);
-  wait_for_update_notification();
+        MockConfigWatcher mock_config_watcher(mock_image_ctx);
+        mock_config_watcher.init();
 
-  mock_config_watcher.shut_down();
-}
+        expect_update_notification(mock_image_ctx);
+        mock_image_ctx.cct->_conf.set_val("rbd_cache", "false");
+        mock_image_ctx.cct->_conf.set_val("rbd_cache", "true");
+        mock_image_ctx.cct->_conf.apply_changes(nullptr);
+        wait_for_update_notification();
 
-TEST_F(TestMockConfigWatcher, IgnoreOverriddenGlobalConfig) {
-  MockTestImageCtx mock_image_ctx(*m_image_ctx);
+        mock_config_watcher.shut_down();
+    }
 
-  MockConfigWatcher mock_config_watcher(mock_image_ctx);
-  mock_config_watcher.init();
+    TEST_F(TestMockConfigWatcher, IgnoreOverriddenGlobalConfig) {
+        MockTestImageCtx mock_image_ctx(*m_image_ctx);
 
-  EXPECT_CALL(*mock_image_ctx.state, handle_update_notification())
-    .Times(0);
-  mock_image_ctx.config_overrides.insert("rbd_cache");
-  mock_image_ctx.cct->_conf.set_val("rbd_cache", "false");
-  mock_image_ctx.cct->_conf.set_val("rbd_cache", "true");
-  mock_image_ctx.cct->_conf.apply_changes(nullptr);
+        MockConfigWatcher mock_config_watcher(mock_image_ctx);
+        mock_config_watcher.init();
 
-  mock_config_watcher.shut_down();
+        EXPECT_CALL(*mock_image_ctx.state, handle_update_notification())
+            .Times(0);
+        mock_image_ctx.config_overrides.insert("rbd_cache");
+        mock_image_ctx.cct->_conf.set_val("rbd_cache", "false");
+        mock_image_ctx.cct->_conf.set_val("rbd_cache", "true");
+        mock_image_ctx.cct->_conf.apply_changes(nullptr);
 
-  ASSERT_FALSE(m_refreshed);
-}
+        mock_config_watcher.shut_down();
 
-} // namespace librbd
+        ASSERT_FALSE(m_refreshed);
+    }
+
+}                               // namespace librbd

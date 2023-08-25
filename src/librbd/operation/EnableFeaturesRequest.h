@@ -10,34 +10,30 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace operation {
+    namespace operation {
 
-template <typename ImageCtxT = ImageCtx>
-class EnableFeaturesRequest : public Request<ImageCtxT> {
-public:
-  static EnableFeaturesRequest *create(ImageCtxT &image_ctx, Context *on_finish,
-                                       uint64_t journal_op_tid,
-                                       uint64_t features) {
-    return new EnableFeaturesRequest(image_ctx, on_finish, journal_op_tid,
-                                     features);
-  }
+      template < typename ImageCtxT = ImageCtx > class EnableFeaturesRequest:public Request < ImageCtxT >
+        {
+          public:
+            static EnableFeaturesRequest *create(ImageCtxT & image_ctx,
+                                                 Context * on_finish,
+                                                 uint64_t journal_op_tid,
+                                                 uint64_t features) {
+                return new EnableFeaturesRequest(image_ctx, on_finish,
+                                                 journal_op_tid, features);
+            } EnableFeaturesRequest(ImageCtxT & image_ctx, Context * on_finish,
+                                    uint64_t journal_op_tid, uint64_t features);
 
-  EnableFeaturesRequest(ImageCtxT &image_ctx, Context *on_finish,
-                        uint64_t journal_op_tid, uint64_t features);
-
-protected:
-  void send_op() override;
-  bool should_complete(int r) override;
-  bool can_affect_io() const override {
-    return true;
-  }
-  journal::Event create_event(uint64_t op_tid) const override {
-    return journal::UpdateFeaturesEvent(op_tid, m_features, true);
-  }
-
-private:
+          protected:
+            void send_op() override;
+            bool should_complete(int r) override;
+            bool can_affect_io() const override {
+                return true;
+            } journal::Event create_event(uint64_t op_tid) const override {
+                return journal::UpdateFeaturesEvent(op_tid, m_features, true);
+          } private:
   /**
    * EnableFeatures goes through the following state machine:
    *
@@ -82,54 +78,55 @@ private:
    *
    */
 
-  uint64_t m_features;
+             uint64_t m_features;
 
-  bool m_enable_mirroring = false;
-  bool m_requests_blocked = false;
-  bool m_writes_blocked = false;
+            bool m_enable_mirroring = false;
+            bool m_requests_blocked = false;
+            bool m_writes_blocked = false;
 
-  uint64_t m_new_features = 0;
-  uint64_t m_enable_flags = 0;
-  uint64_t m_features_mask = 0;
+            uint64_t m_new_features = 0;
+            uint64_t m_enable_flags = 0;
+            uint64_t m_features_mask = 0;
 
-  bufferlist m_out_bl;
+            bufferlist m_out_bl;
 
-  void send_prepare_lock();
-  Context *handle_prepare_lock(int *result);
+            void send_prepare_lock();
+            Context *handle_prepare_lock(int *result);
 
-  void send_block_writes();
-  Context *handle_block_writes(int *result);
+            void send_block_writes();
+            Context *handle_block_writes(int *result);
 
-  void send_get_mirror_mode();
-  Context *handle_get_mirror_mode(int *result);
+            void send_get_mirror_mode();
+            Context *handle_get_mirror_mode(int *result);
 
-  void send_create_journal();
-  Context *handle_create_journal(int *result);
+            void send_create_journal();
+            Context *handle_create_journal(int *result);
 
-  void send_append_op_event();
-  Context *handle_append_op_event(int *result);
+            void send_append_op_event();
+            Context *handle_append_op_event(int *result);
 
-  void send_update_flags();
-  Context *handle_update_flags(int *result);
+            void send_update_flags();
+            Context *handle_update_flags(int *result);
 
-  void send_set_features();
-  Context *handle_set_features(int *result);
+            void send_set_features();
+            Context *handle_set_features(int *result);
 
-  void send_create_object_map();
-  Context *handle_create_object_map(int *result);
+            void send_create_object_map();
+            Context *handle_create_object_map(int *result);
 
-  void send_enable_mirror_image();
-  Context *handle_enable_mirror_image(int *result);
+            void send_enable_mirror_image();
+            Context *handle_enable_mirror_image(int *result);
 
-  void send_notify_update();
-  Context *handle_notify_update(int *result);
+            void send_notify_update();
+            Context *handle_notify_update(int *result);
 
-  Context *handle_finish(int r);
-};
+            Context *handle_finish(int r);
+        };
 
-} // namespace operation
-} // namespace librbd
+    }                           // namespace operation
+}                               // namespace librbd
 
-extern template class librbd::operation::EnableFeaturesRequest<librbd::ImageCtx>;
+extern template class librbd::operation::EnableFeaturesRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OPERATION_ENABLE_FEATURES_REQUEST_H

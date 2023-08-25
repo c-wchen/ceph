@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef CEPH_CLIENT_TRACE_H
 #define CEPH_CLIENT_TRACE_H
 
@@ -33,35 +32,37 @@ using std::ifstream;
  */
 
 class Trace {
-  int _line;
-  const char *filename;
-  ifstream *fs;
-  string line;
+    int _line;
+    const char *filename;
+    ifstream *fs;
+    string line;
 
- public:
-  explicit Trace(const char* f) : _line(0), filename(f), fs(0) {}
-  ~Trace() { 
-    delete fs; 
-  }
+  public:
+    explicit Trace(const char *f):_line(0), filename(f), fs(0) {
+    } ~Trace() {
+        delete fs;
+    }
 
-  Trace(const Trace& other);
-  const Trace& operator=(const Trace& other);
+    Trace(const Trace & other);
+    const Trace & operator=(const Trace & other);
 
-  int get_line() { return _line; }
+    int get_line() {
+        return _line;
+    }
 
-  void start();
+    void start();
 
-  const char *peek_string(string &buf, const char *prefix);
-  const char *get_string(string &buf, const char *prefix);
+    const char *peek_string(string & buf, const char *prefix);
+    const char *get_string(string & buf, const char *prefix);
 
-  int64_t get_int() {
-    string buf;
-    return atoll(get_string(buf, 0));
-  }
-  bool end() {
-    return !fs || fs->eof();
-    //return _cur == _end;
-  }
+    int64_t get_int() {
+        string buf;
+        return atoll(get_string(buf, 0));
+    }
+    bool end() {
+        return !fs || fs->eof();
+        //return _cur == _end;
+    }
 };
 
 #endif

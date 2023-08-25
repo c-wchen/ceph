@@ -20,12 +20,13 @@
  * And tests using gtest will not compile because of this difference.
  * 
  */
-static uint64_t ceph_pthread_self() {
-  auto me = pthread_self();
-  static_assert(std::is_convertible_v<decltype(me), uint64_t> ||
-                std::is_pointer_v<decltype(me)>,
-                "we need to use pthread_self() for the owner parameter");
-  return static_cast<uint64_t>(me);
+static uint64_t ceph_pthread_self()
+{
+    auto me = pthread_self();
+    static_assert(std::is_convertible_v < decltype(me),
+                  uint64_t > ||std::is_pointer_v < decltype(me) >,
+                  "we need to use pthread_self() for the owner parameter");
+    return static_cast < uint64_t > (me);
 }
 
 #endif

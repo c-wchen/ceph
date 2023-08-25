@@ -18,37 +18,40 @@
 #include "include/common_fwd.h"
 
 class MemoryModel {
-public:
-  struct snap {
-    long peak;
-    long size;
-    long hwm;
-    long rss;
-    long data;
-    long lib;
-    
-    long heap;
+  public:
+    struct snap {
+        long peak;
+        long size;
+        long hwm;
+        long rss;
+        long data;
+        long lib;
 
-    snap() : peak(0), size(0), hwm(0), rss(0), data(0), lib(0),
-	     heap(0)
-    {}
+        long heap;
 
-    long get_total() { return size; }
-    long get_rss() { return rss; }
-    long get_heap() { return heap; }
-  } last;
+         snap():peak(0), size(0), hwm(0), rss(0), data(0), lib(0), heap(0) {
+        } long get_total() {
+            return size;
+        } long get_rss() {
+            return rss;
+        }
+        long get_heap() {
+            return heap;
+        }
+    }
+    last;
 
-private:
-  CephContext *cct;
-  void _sample(snap *p);
+  private:
+    CephContext * cct;
+    void _sample(snap * p);
 
-public:
-  explicit MemoryModel(CephContext *cct);
-  void sample(snap *p = 0) {
-    _sample(&last);
-    if (p)
-      *p = last;
-  }
+  public:
+    explicit MemoryModel(CephContext * cct);
+    void sample(snap * p = 0) {
+        _sample(&last);
+        if (p)
+            *p = last;
+    }
 };
 
 #endif

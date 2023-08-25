@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef CEPH_MCLIENTLEASE_H
 #define CEPH_MCLIENTLEASE_H
 
@@ -20,78 +19,83 @@
 
 #include "msg/Message.h"
 
-class MClientLease final : public SafeMessage {
-public:
-  struct ceph_mds_lease h;
-  std::string dname;
-  
-  int get_action() const { return h.action; }
-  ceph_seq_t get_seq() const { return h.seq; }
-  int get_mask() const { return h.mask; }
-  inodeno_t get_ino() const { return inodeno_t(h.ino); }
-  snapid_t get_first() const { return snapid_t(h.first); }
-  snapid_t get_last() const { return snapid_t(h.last); }
+class MClientLease final:public SafeMessage {
+  public:
+    struct ceph_mds_lease h;
+     std::string dname;
 
-protected:
-  MClientLease() : SafeMessage(CEPH_MSG_CLIENT_LEASE) {}
-  MClientLease(const MClientLease& m) :
-    SafeMessage(CEPH_MSG_CLIENT_LEASE),
-    h(m.h),
-    dname(m.dname) {}
-  MClientLease(int ac, ceph_seq_t seq, int m, uint64_t i, uint64_t sf, uint64_t sl) :
-    SafeMessage(CEPH_MSG_CLIENT_LEASE) {
-    h.action = ac;
-    h.seq = seq;
-    h.mask = m;
-    h.ino = i;
-    h.first = sf;
-    h.last = sl;
-    h.duration_ms = 0;
-  }
-  MClientLease(int ac, ceph_seq_t seq, int m, uint64_t i, uint64_t sf, uint64_t sl, std::string_view d) :
-    SafeMessage(CEPH_MSG_CLIENT_LEASE),
-    dname(d) {
-    h.action = ac;
-    h.seq = seq;
-    h.mask = m;
-    h.ino = i;
-    h.first = sf;
-    h.last = sl;
-    h.duration_ms = 0;
-  }
-  ~MClientLease() final {}
+    int get_action() const {
+        return h.action;
+    } ceph_seq_t get_seq() const {
+        return h.seq;
+    } int get_mask() const {
+        return h.mask;
+    } inodeno_t get_ino() const {
+        return inodeno_t(h.ino);
+    } snapid_t get_first() const {
+        return snapid_t(h.first);
+    } snapid_t get_last() const {
+        return snapid_t(h.last);
+  } protected:
+     MClientLease():SafeMessage(CEPH_MSG_CLIENT_LEASE) {
+    } MClientLease(const MClientLease & m):SafeMessage(CEPH_MSG_CLIENT_LEASE),
+        h(m.h), dname(m.dname) {
+    }
+    MClientLease(int ac, ceph_seq_t seq, int m, uint64_t i, uint64_t sf,
+                 uint64_t sl):SafeMessage(CEPH_MSG_CLIENT_LEASE) {
+        h.action = ac;
+        h.seq = seq;
+        h.mask = m;
+        h.ino = i;
+        h.first = sf;
+        h.last = sl;
+        h.duration_ms = 0;
+    }
+    MClientLease(int ac, ceph_seq_t seq, int m, uint64_t i, uint64_t sf,
+                 uint64_t sl,
+                 std::string_view d):SafeMessage(CEPH_MSG_CLIENT_LEASE),
+        dname(d) {
+        h.action = ac;
+        h.seq = seq;
+        h.mask = m;
+        h.ino = i;
+        h.first = sf;
+        h.last = sl;
+        h.duration_ms = 0;
+    }
+    ~MClientLease()final {
+    }
 
-public:
-  std::string_view get_type_name() const override { return "client_lease"; }
-  void print(std::ostream& out) const override {
-    out << "client_lease(a=" << ceph_lease_op_name(get_action())
-	<< " seq " << get_seq()
-	<< " mask " << get_mask();
-    out << " " << get_ino();
-    if (h.last != CEPH_NOSNAP)
-      out << " [" << snapid_t(h.first) << "," << snapid_t(h.last) << "]";
-    if (dname.length())
-      out << "/" << dname;
-    out << ")";
-  }
+  public:
+    std::string_view get_type_name()const override {
+        return "client_lease";
+    } void print(std::ostream & out) const override {
+        out << "client_lease(a=" << ceph_lease_op_name(get_action())
+        << " seq " << get_seq()
+        << " mask " << get_mask();
+        out << " " << get_ino();
+        if (h.last != CEPH_NOSNAP)
+            out << " [" << snapid_t(h.first) << "," << snapid_t(h.last) << "]";
+        if (dname.length())
+            out << "/" << dname;
+        out << ")";
+    } void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(h, p);
+        decode(dname, p);
+    }
+    void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(h, payload);
+        encode(dname, payload);
+    }
 
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(h, p);
-    decode(dname, p);
-  }
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(h, payload);
-    encode(dname, payload);
-  }
-
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

@@ -7,7 +7,8 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "rbd::ggate: "
 
-extern "C" void debugv(int level, const char *fmt, va_list ap) {
+extern "C" void debugv(int level, const char *fmt, va_list ap)
+{
     char *msg;
     int saved_errno = errno;
 
@@ -23,7 +24,8 @@ extern "C" void debugv(int level, const char *fmt, va_list ap) {
     errno = saved_errno;
 }
 
-extern "C" void debug(int level, const char *fmt, ...) {
+extern "C" void debug(int level, const char *fmt, ...)
+{
     va_list ap;
 
     va_start(ap, fmt);
@@ -31,7 +33,8 @@ extern "C" void debug(int level, const char *fmt, ...) {
     va_end(ap);
 }
 
-extern "C" void errx(const char *fmt, ...) {
+extern "C" void errx(const char *fmt, ...)
+{
     va_list ap;
 
     va_start(ap, fmt);
@@ -39,7 +42,8 @@ extern "C" void errx(const char *fmt, ...) {
     va_end(ap);
 }
 
-extern "C" void err(const char *fmt, ...) {
+extern "C" void err(const char *fmt, ...)
+{
     va_list ap;
     char *msg;
     int saved_errno = errno;

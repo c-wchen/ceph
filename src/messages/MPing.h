@@ -12,22 +12,27 @@
  * 
  */
 
-
 #ifndef CEPH_MPING_H
 #define CEPH_MPING_H
 
 #include "msg/Message.h"
 
-class MPing final : public Message {
-public:
-  MPing() : Message{CEPH_MSG_PING} {}
-private:
-  ~MPing() final {}
+class MPing final:public Message {
+  public:
+    MPing():Message {
+    CEPH_MSG_PING} {
+    }
+  private:
+    ~MPing()final {
+    }
 
-public:
-  void decode_payload() override { }
-  void encode_payload(uint64_t features) override { }
-  std::string_view get_type_name() const override { return "ping"; }
-};
+  public:
+    void decode_payload() override {
+    }
+    void encode_payload(uint64_t features) override {
+    }
+    std::string_view get_type_name()const override {
+        return "ping";
+}};
 
 #endif

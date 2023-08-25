@@ -21,17 +21,16 @@
 extern "C" {
 #include "galois.h"
 }
-
 #define dout_context g_ceph_context
-
 extern "C" int jerasure_init(int count, int *words)
 {
-  for(int i = 0; i < count; i++) {
-    int r = galois_init_default_field(words[i]);
-    if (r) {
-      derr << "failed to galois_init_default_field(" << words[i] << ")" << dendl;
-      return -r;
+    for (int i = 0; i < count; i++) {
+        int r = galois_init_default_field(words[i]);
+        if (r) {
+            derr << "failed to galois_init_default_field(" << words[i] << ")" <<
+                dendl;
+            return -r;
+        }
     }
-  }
-  return 0;
+    return 0;
 }

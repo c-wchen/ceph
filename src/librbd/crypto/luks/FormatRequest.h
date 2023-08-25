@@ -12,48 +12,53 @@
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace crypto {
-namespace luks {
+    namespace crypto {
+        namespace luks {
 
-template <typename I>
-class FormatRequest {
-public:
-    static FormatRequest* create(
-            I* image_ctx, encryption_format_t format,
-            encryption_algorithm_t alg, std::string_view passphrase,
-            std::unique_ptr<CryptoInterface>* result_crypto, Context* on_finish,
-            bool insecure_fast_mode) {
-      return new FormatRequest(image_ctx, format, alg, passphrase,
-                               result_crypto, on_finish, insecure_fast_mode);
-    }
+            template < typename I > class FormatRequest {
+              public:
+                static FormatRequest *create(I * image_ctx,
+                                             encryption_format_t format,
+                                             encryption_algorithm_t alg,
+                                             std::string_view passphrase,
+                                             std::unique_ptr < CryptoInterface >
+                                             *result_crypto,
+                                             Context * on_finish,
+                                             bool insecure_fast_mode) {
+                    return new FormatRequest(image_ctx, format, alg, passphrase,
+                                             result_crypto, on_finish,
+                                             insecure_fast_mode);
+                } FormatRequest(I * image_ctx, encryption_format_t format,
+                                encryption_algorithm_t alg,
+                                std::string_view passphrase,
+                                std::unique_ptr < CryptoInterface >
+                                *result_crypto, Context * on_finish,
+                                bool insecure_fast_mode);
+                void send();
+                void finish(int r);
 
-    FormatRequest(I* image_ctx, encryption_format_t format,
-                  encryption_algorithm_t alg, std::string_view passphrase,
-                  std::unique_ptr<CryptoInterface>* result_crypto,
-                  Context* on_finish, bool insecure_fast_mode);
-    void send();
-    void finish(int r);
+              private:
+                 I * m_image_ctx;
 
-private:
-    I* m_image_ctx;
+                encryption_format_t m_format;
+                encryption_algorithm_t m_alg;
+                 std::string_view m_passphrase;
+                 std::unique_ptr < CryptoInterface > *m_result_crypto;
+                Context *m_on_finish;
+                bool m_insecure_fast_mode;
+                Header m_header;
 
-    encryption_format_t m_format;
-    encryption_algorithm_t m_alg;
-    std::string_view m_passphrase;
-    std::unique_ptr<CryptoInterface>* m_result_crypto;
-    Context* m_on_finish;
-    bool m_insecure_fast_mode;
-    Header m_header;
-
-    void handle_write_header(int r);
-};
+                void handle_write_header(int r);
+            };
 
 } // namespace luks
-} // namespace crypto
-} // namespace librbd
-
-extern template class librbd::crypto::luks::FormatRequest<librbd::ImageCtx>;
+            }
+        // namespace crypto
+        }
+    // namespace librbd
+    extern template class librbd::crypto::luks::FormatRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_CRYPTO_LUKS_FORMAT_REQUEST_H

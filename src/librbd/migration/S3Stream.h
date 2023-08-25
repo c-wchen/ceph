@@ -17,62 +17,60 @@ struct Context;
 
 namespace librbd {
 
-struct AsioEngine;
-struct ImageCtx;
+    struct AsioEngine;
+    struct ImageCtx;
 
-namespace migration {
+    namespace migration {
 
-template <typename> class HttpClient;
+        template < typename > class HttpClient;
 
-template <typename ImageCtxT>
-class S3Stream : public StreamInterface {
-public:
-  static S3Stream* create(ImageCtxT* image_ctx,
-                            const json_spirit::mObject& json_object) {
-    return new S3Stream(image_ctx, json_object);
-  }
+        template < typename ImageCtxT > class S3Stream:public StreamInterface {
+          public:
+            static S3Stream *create(ImageCtxT * image_ctx,
+                                    const json_spirit::mObject & json_object) {
+                return new S3Stream(image_ctx, json_object);
+            } S3Stream(ImageCtxT * image_ctx,
+                       const json_spirit::mObject & json_object);
+            ~S3Stream() override;
 
-  S3Stream(ImageCtxT* image_ctx, const json_spirit::mObject& json_object);
-  ~S3Stream() override;
+             S3Stream(const S3Stream &) = delete;
+             S3Stream & operator=(const S3Stream &) = delete;
 
-  S3Stream(const S3Stream&) = delete;
-  S3Stream& operator=(const S3Stream&) = delete;
+            void open(Context * on_finish) override;
+            void close(Context * on_finish) override;
 
-  void open(Context* on_finish) override;
-  void close(Context* on_finish) override;
+            void get_size(uint64_t * size, Context * on_finish) override;
 
-  void get_size(uint64_t* size, Context* on_finish) override;
+            void read(io::Extents && byte_extents, bufferlist * data,
+                      Context * on_finish) override;
 
-  void read(io::Extents&& byte_extents, bufferlist* data,
-            Context* on_finish) override;
+          private:
+             using HttpRequest = boost::beast::http::request <
+                boost::beast::http::empty_body >;
+            using HttpResponse = boost::beast::http::response <
+                boost::beast::http::string_body >;
 
-private:
-  using HttpRequest = boost::beast::http::request<
-    boost::beast::http::empty_body>;
-  using HttpResponse = boost::beast::http::response<
-    boost::beast::http::string_body>;
+            struct HttpProcessor;
 
-  struct HttpProcessor;
+            ImageCtxT *m_image_ctx;
+            CephContext *m_cct;
+             std::shared_ptr < AsioEngine > m_asio_engine;
+             json_spirit::mObject m_json_object;
 
-  ImageCtxT* m_image_ctx;
-  CephContext* m_cct;
-  std::shared_ptr<AsioEngine> m_asio_engine;
-  json_spirit::mObject m_json_object;
+             std::string m_url;
+             std::string m_access_key;
+             std::string m_secret_key;
 
-  std::string m_url;
-  std::string m_access_key;
-  std::string m_secret_key;
+             std::unique_ptr < HttpProcessor > m_http_processor;
+             std::unique_ptr < HttpClient < ImageCtxT >> m_http_client;
 
-  std::unique_ptr<HttpProcessor> m_http_processor;
-  std::unique_ptr<HttpClient<ImageCtxT>> m_http_client;
+            void process_request(HttpRequest & http_request);
 
-  void process_request(HttpRequest& http_request);
+        };
 
-};
+    }                           // namespace migration
+}                               // namespace librbd
 
-} // namespace migration
-} // namespace librbd
-
-extern template class librbd::migration::S3Stream<librbd::ImageCtx>;
+extern template class librbd::migration::S3Stream < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIGRATION_S3_STREAM_H

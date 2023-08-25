@@ -16,86 +16,91 @@ struct Context;
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace io {
+    namespace io {
 
-struct AioCompletion;
+        struct AioCompletion;
 
-template <typename ImageCtxT>
-class RefreshImageDispatch : public ImageDispatchInterface {
-public:
-  RefreshImageDispatch(ImageCtxT* image_ctx);
+         template < typename ImageCtxT >
+            class RefreshImageDispatch:public ImageDispatchInterface {
+          public:
+            RefreshImageDispatch(ImageCtxT * image_ctx);
 
-  ImageDispatchLayer get_dispatch_layer() const override {
-    return IMAGE_DISPATCH_LAYER_REFRESH;
-  }
+            ImageDispatchLayer get_dispatch_layer() const override {
+                return IMAGE_DISPATCH_LAYER_REFRESH;
+            } void shut_down(Context * on_finish) override;
 
-  void shut_down(Context* on_finish) override;
+            bool read(AioCompletion * aio_comp, Extents && image_extents,
+                      ReadResult
+                      && read_result, IOContext io_context, int op_flags,
+                      int read_flags, const ZTracer::Trace & parent_trace,
+                      uint64_t tid,
+                      std::atomic < uint32_t > *image_dispatch_flags,
+                      DispatchResult * dispatch_result, Context ** on_finish,
+                      Context * on_dispatched) override;
+            bool write(AioCompletion * aio_comp, Extents
+                       && image_extents, bufferlist
+                       && bl, int op_flags, const ZTracer::Trace & parent_trace,
+                       uint64_t tid,
+                       std::atomic < uint32_t > *image_dispatch_flags,
+                       DispatchResult * dispatch_result, Context ** on_finish,
+                       Context * on_dispatched) override;
+            bool discard(AioCompletion * aio_comp, Extents
+                         && image_extents, uint32_t discard_granularity_bytes,
+                         const ZTracer::Trace & parent_trace, uint64_t tid,
+                         std::atomic < uint32_t > *image_dispatch_flags,
+                         DispatchResult * dispatch_result, Context ** on_finish,
+                         Context * on_dispatched) override;
+            bool write_same(AioCompletion * aio_comp, Extents
+                            && image_extents, bufferlist
+                            && bl, int op_flags,
+                            const ZTracer::Trace & parent_trace, uint64_t tid,
+                            std::atomic < uint32_t > *image_dispatch_flags,
+                            DispatchResult * dispatch_result,
+                            Context ** on_finish,
+                            Context * on_dispatched) override;
+            bool compare_and_write(AioCompletion * aio_comp, Extents
+                                   && image_extents, bufferlist
+                                   && cmp_bl, bufferlist
+                                   && bl, uint64_t * mismatch_offset,
+                                   int op_flags,
+                                   const ZTracer::Trace & parent_trace,
+                                   uint64_t tid,
+                                   std::atomic < uint32_t >
+                                   *image_dispatch_flags,
+                                   DispatchResult * dispatch_result,
+                                   Context ** on_finish,
+                                   Context * on_dispatched) override;
+            bool flush(AioCompletion * aio_comp, FlushSource flush_source,
+                       const ZTracer::Trace & parent_trace, uint64_t tid,
+                       std::atomic < uint32_t > *image_dispatch_flags,
+                       DispatchResult * dispatch_result, Context ** on_finish,
+                       Context * on_dispatched) override;
 
-  bool read(
-      AioCompletion* aio_comp, Extents &&image_extents,
-      ReadResult &&read_result, IOContext io_context, int op_flags,
-      int read_flags, const ZTracer::Trace &parent_trace, uint64_t tid,
-      std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool write(
-      AioCompletion* aio_comp, Extents &&image_extents, bufferlist &&bl,
-      int op_flags, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool discard(
-      AioCompletion* aio_comp, Extents &&image_extents,
-      uint32_t discard_granularity_bytes, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool write_same(
-      AioCompletion* aio_comp, Extents &&image_extents, bufferlist &&bl,
-      int op_flags, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool compare_and_write(
-      AioCompletion* aio_comp, Extents &&image_extents,
-      bufferlist &&cmp_bl, bufferlist &&bl, uint64_t *mismatch_offset,
-      int op_flags, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool flush(
-      AioCompletion* aio_comp, FlushSource flush_source,
-      const ZTracer::Trace &parent_trace, uint64_t tid,
-      std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
+            bool list_snaps(AioCompletion * aio_comp, Extents
+                            && image_extents, SnapIds
+                            && snap_ids, int list_snaps_flags,
+                            SnapshotDelta * snapshot_delta,
+                            const ZTracer::Trace & parent_trace, uint64_t tid,
+                            std::atomic < uint32_t > *image_dispatch_flags,
+                            DispatchResult * dispatch_result,
+                            Context ** on_finish,
+                            Context * on_dispatched) override {
+                return false;
+            } bool invalidate_cache(Context * on_finish) override {
+                return false;
+          } private:
+             ImageCtxT * m_image_ctx;
 
-  bool list_snaps(
-      AioCompletion* aio_comp, Extents&& image_extents, SnapIds&& snap_ids,
-      int list_snaps_flags, SnapshotDelta* snapshot_delta,
-      const ZTracer::Trace &parent_trace, uint64_t tid,
-      std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override {
-    return false;
-  }
+            bool needs_refresh(DispatchResult * dispatch_result,
+                               Context * on_dispatched);
 
-  bool invalidate_cache(Context* on_finish) override {
-    return false;
-  }
+        };
 
-private:
-  ImageCtxT* m_image_ctx;
+    }                           // namespace io
+}                               // namespace librbd
 
-  bool needs_refresh(DispatchResult* dispatch_result, Context* on_dispatched);
-
-};
-
-} // namespace io
-} // namespace librbd
-
-extern template class librbd::io::RefreshImageDispatch<librbd::ImageCtx>;
+extern template class librbd::io::RefreshImageDispatch < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IO_REFRESH_IMAGE_DISPATCH_H

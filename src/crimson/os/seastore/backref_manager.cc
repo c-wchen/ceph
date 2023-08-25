@@ -7,12 +7,6 @@
 
 namespace crimson::os::seastore {
 
-BackrefManagerRef create_backref_manager(
-  Cache &cache)
-{
-  return BackrefManagerRef(
-    new backref::BtreeBackrefManager(cache));
-}
-
-} // namespace crimson::os::seastore::backref
-
+    BackrefManagerRef create_backref_manager(Cache & cache) {
+        return BackrefManagerRef(new backref::BtreeBackrefManager(cache));
+}}                              // namespace crimson::os::seastore::backref

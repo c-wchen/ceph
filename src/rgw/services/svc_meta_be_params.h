@@ -1,5 +1,4 @@
 
-
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab ft=cpp
 
@@ -15,11 +14,12 @@
  *
  */
 
-
 #pragma once
 
 #include <variant>
 
-struct RGWSI_MetaBackend_CtxParams_SObj {};
+struct RGWSI_MetaBackend_CtxParams_SObj {
+};
 
-using RGWSI_MetaBackend_CtxParams = std::variant<RGWSI_MetaBackend_CtxParams_SObj>;
+using RGWSI_MetaBackend_CtxParams =
+    std::variant < RGWSI_MetaBackend_CtxParams_SObj >;

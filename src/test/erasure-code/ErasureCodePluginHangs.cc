@@ -18,10 +18,13 @@
 #include <unistd.h>
 #include "ceph_ver.h"
 
-extern "C" const char *__erasure_code_version() { return CEPH_GIT_NICE_VER; }
+extern "C" const char *__erasure_code_version()
+{
+    return CEPH_GIT_NICE_VER;
+}
 
 extern "C" int __erasure_code_init(char *plugin_name, char *directory)
 {
-  sleep(10);
-  return 0;
+    sleep(10);
+    return 0;
 }

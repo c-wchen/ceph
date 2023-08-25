@@ -12,24 +12,22 @@ class Context;
 
 namespace librbd {
 
-struct ImageCtx;
-namespace asio { struct ContextWQ; }
+    struct ImageCtx;
+    namespace asio {
+        struct ContextWQ;
+    } namespace image {
 
-namespace image {
+        template < typename ImageCtxT > class ValidatePoolRequest {
+          public:
+            static ValidatePoolRequest *create(librados::IoCtx & io_ctx,
+                                               Context * on_finish) {
+                return new ValidatePoolRequest(io_ctx, on_finish);
+            } ValidatePoolRequest(librados::IoCtx & io_ctx,
+                                  Context * on_finish);
 
-template <typename ImageCtxT>
-class ValidatePoolRequest {
-public:
-  static ValidatePoolRequest* create(librados::IoCtx& io_ctx,
-                                     Context *on_finish) {
-    return new ValidatePoolRequest(io_ctx, on_finish);
-  }
+            void send();
 
-  ValidatePoolRequest(librados::IoCtx& io_ctx, Context *on_finish);
-
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -58,36 +56,36 @@ private:
    * @endverbatim
    */
 
-  librados::IoCtx m_io_ctx;
-  CephContext* m_cct;
-  Context* m_on_finish;
+             librados::IoCtx m_io_ctx;
+            CephContext *m_cct;
+            Context *m_on_finish;
 
-  int m_ret_val = 0;
-  bufferlist m_out_bl;
-  uint64_t m_snap_id = 0;
+            int m_ret_val = 0;
+            bufferlist m_out_bl;
+            uint64_t m_snap_id = 0;
 
-  void read_rbd_info();
-  void handle_read_rbd_info(int r);
+            void read_rbd_info();
+            void handle_read_rbd_info(int r);
 
-  void create_snapshot();
-  void handle_create_snapshot(int r);
+            void create_snapshot();
+            void handle_create_snapshot(int r);
 
-  void write_rbd_info();
-  void handle_write_rbd_info(int r);
+            void write_rbd_info();
+            void handle_write_rbd_info(int r);
 
-  void remove_snapshot();
-  void handle_remove_snapshot(int r);
+            void remove_snapshot();
+            void handle_remove_snapshot(int r);
 
-  void overwrite_rbd_info();
-  void handle_overwrite_rbd_info(int r);
+            void overwrite_rbd_info();
+            void handle_overwrite_rbd_info(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd
 
-extern template class librbd::image::ValidatePoolRequest<librbd::ImageCtx>;
+extern template class librbd::image::ValidatePoolRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IMAGE_VALIDATE_POOL_REQUEST_H

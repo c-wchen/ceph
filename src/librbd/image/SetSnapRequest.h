@@ -11,27 +11,25 @@ class Context;
 
 namespace librbd {
 
-template <typename> class ExclusiveLock;
-class ImageCtx;
-template <typename> class ObjectMap;
+    template < typename > class ExclusiveLock;
+    class ImageCtx;
+     template < typename > class ObjectMap;
 
-namespace image {
+    namespace image {
 
-template <typename> class RefreshParentRequest;
+        template < typename > class RefreshParentRequest;
 
-template <typename ImageCtxT = ImageCtx>
-class SetSnapRequest {
-public:
-  static SetSnapRequest *create(ImageCtxT &image_ctx, uint64_t snap_id,
-                                Context *on_finish) {
-    return new SetSnapRequest(image_ctx, snap_id, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class SetSnapRequest {
+          public:
+            static SetSnapRequest *create(ImageCtxT & image_ctx,
+                                          uint64_t snap_id,
+                                          Context * on_finish) {
+                return new SetSnapRequest(image_ctx, snap_id, on_finish);
+            } ~SetSnapRequest();
 
-  ~SetSnapRequest();
+            void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -75,44 +73,45 @@ private:
    * @endverbatim
    */
 
-  SetSnapRequest(ImageCtxT &image_ctx, uint64_t snap_id, Context *on_finish);
+             SetSnapRequest(ImageCtxT & image_ctx, uint64_t snap_id,
+                            Context * on_finish);
 
-  ImageCtxT &m_image_ctx;
-  uint64_t m_snap_id;
-  Context *m_on_finish;
+             ImageCtxT & m_image_ctx;
+            uint64_t m_snap_id;
+            Context *m_on_finish;
 
-  ExclusiveLock<ImageCtxT> *m_exclusive_lock;
-  ObjectMap<ImageCtxT> *m_object_map;
-  RefreshParentRequest<ImageCtxT> *m_refresh_parent;
+             ExclusiveLock < ImageCtxT > *m_exclusive_lock;
+             ObjectMap < ImageCtxT > *m_object_map;
+             RefreshParentRequest < ImageCtxT > *m_refresh_parent;
 
-  bool m_writes_blocked;
+            bool m_writes_blocked;
 
-  void send_block_writes();
-  Context *handle_block_writes(int *result);
+            void send_block_writes();
+            Context *handle_block_writes(int *result);
 
-  void send_init_exclusive_lock();
-  Context *handle_init_exclusive_lock(int *result);
+            void send_init_exclusive_lock();
+            Context *handle_init_exclusive_lock(int *result);
 
-  Context *send_shut_down_exclusive_lock(int *result);
-  Context *handle_shut_down_exclusive_lock(int *result);
+            Context *send_shut_down_exclusive_lock(int *result);
+            Context *handle_shut_down_exclusive_lock(int *result);
 
-  Context *send_refresh_parent(int *result);
-  Context *handle_refresh_parent(int *result);
+            Context *send_refresh_parent(int *result);
+            Context *handle_refresh_parent(int *result);
 
-  Context *send_open_object_map(int *result);
-  Context *handle_open_object_map(int *result);
+            Context *send_open_object_map(int *result);
+            Context *handle_open_object_map(int *result);
 
-  Context *send_finalize_refresh_parent(int *result);
-  Context *handle_finalize_refresh_parent(int *result);
+            Context *send_finalize_refresh_parent(int *result);
+            Context *handle_finalize_refresh_parent(int *result);
 
-  int apply();
-  void finalize();
-  void send_complete();
-};
+            int apply();
+            void finalize();
+            void send_complete();
+        };
 
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd
 
-extern template class librbd::image::SetSnapRequest<librbd::ImageCtx>;
+extern template class librbd::image::SetSnapRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IMAGE_SNAP_SET_REQUEST_H

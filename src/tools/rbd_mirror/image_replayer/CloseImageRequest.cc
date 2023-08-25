@@ -15,48 +15,44 @@
                            << this << " " << __func__
 
 namespace rbd {
-namespace mirror {
-namespace image_replayer {
+    namespace mirror {
+        namespace image_replayer {
 
-using librbd::util::create_context_callback;
+            using librbd::util::create_context_callback;
 
-template <typename I>
-CloseImageRequest<I>::CloseImageRequest(I **image_ctx, Context *on_finish)
-  : m_image_ctx(image_ctx), m_on_finish(on_finish) {
-}
+             template < typename I >
+                CloseImageRequest < I >::CloseImageRequest(I ** image_ctx,
+                                                           Context * on_finish)
+            :m_image_ctx(image_ctx), m_on_finish(on_finish) {
+            } template < typename I > void CloseImageRequest < I >::send() {
+                close_image();
+            } template < typename I >
+                void CloseImageRequest < I >::close_image() {
+                dout(20) << dendl;
 
-template <typename I>
-void CloseImageRequest<I>::send() {
-  close_image();
-}
+                Context *ctx = create_context_callback <
+                    CloseImageRequest < I >,
+                    &CloseImageRequest < I >::handle_close_image > (this);
+                 (*m_image_ctx)->state->close(ctx);
+            } template < typename I >
+                void CloseImageRequest < I >::handle_close_image(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-template <typename I>
-void CloseImageRequest<I>::close_image() {
-  dout(20) << dendl;
+                if (r < 0) {
+                    derr << ": error encountered while closing image: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                }
 
-  Context *ctx = create_context_callback<
-    CloseImageRequest<I>, &CloseImageRequest<I>::handle_close_image>(this);
-  (*m_image_ctx)->state->close(ctx);
-}
+                *m_image_ctx = nullptr;
 
-template <typename I>
-void CloseImageRequest<I>::handle_close_image(int r) {
-  dout(20) << ": r=" << r << dendl;
+                m_on_finish->complete(0);
+                delete this;
+            }
 
-  if (r < 0) {
-    derr << ": error encountered while closing image: " << cpp_strerror(r)
-         << dendl;
-  }
+        }                       // namespace image_replayer
+    }                           // namespace mirror
+}                               // namespace rbd
 
-  *m_image_ctx = nullptr;
-
-  m_on_finish->complete(0);
-  delete this;
-}
-
-} // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::image_replayer::CloseImageRequest<librbd::ImageCtx>;
-
+template class rbd::mirror::image_replayer::CloseImageRequest <
+    librbd::ImageCtx >;

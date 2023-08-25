@@ -14,7 +14,7 @@
 
 #ifndef CEPH_REFCOUNTEDOBJ_H
 #define CEPH_REFCOUNTEDOBJ_H
- 
+
 #include "common/ceph_mutex.h"
 #include "common/ref.h"
 #include "include/common_fwd.h"
@@ -41,58 +41,61 @@
  *
  */
 namespace TOPNSPC::common {
-class RefCountedObject {
-public:
-  void set_cct(CephContext *c) {
-    cct = c;
-  }
+    class RefCountedObject {
+      public:
+        void set_cct(CephContext * c) {
+            cct = c;
+        } uint64_t get_nref() const {
+            return nref;
+        } const RefCountedObject *get() const {
+            _get();
+            return this;
+        } RefCountedObject *get() {
+            _get();
+            return this;
+        } void put() const;
 
-  uint64_t get_nref() const {
-    return nref;
-  }
+      protected:
+        RefCountedObject() = default;
+        RefCountedObject(const RefCountedObject & o):cct(o.cct) {
+        }
+        RefCountedObject & operator=(const RefCountedObject & o) = delete;
+        RefCountedObject(RefCountedObject &&) = delete;
+        RefCountedObject & operator=(RefCountedObject &&) = delete;
+      RefCountedObject(CephContext * c):cct(c) {
+        }
 
-  const RefCountedObject *get() const {
-    _get();
-    return this;
-  }
-  RefCountedObject *get() {
-    _get();
-    return this;
-  }
-  void put() const;
+        virtual ~ RefCountedObject();
 
-protected:
-  RefCountedObject() = default;
-  RefCountedObject(const RefCountedObject& o) : cct(o.cct) {}
-  RefCountedObject& operator=(const RefCountedObject& o) = delete;
-  RefCountedObject(RefCountedObject&&) = delete;
-  RefCountedObject& operator=(RefCountedObject&&) = delete;
-  RefCountedObject(CephContext* c) : cct(c) {}
-
-  virtual ~RefCountedObject();
-
-private:
-  void _get() const;
+      private:
+        void _get() const;
 
 #if defined(WITH_SEASTAR) && !defined(WITH_ALIEN)
-  // crimson is single threaded at the moment
-  mutable uint64_t nref{1};
+        // crimson is single threaded at the moment
+        mutable uint64_t nref {
+        1};
 #else
-  mutable std::atomic<uint64_t> nref{1};
+        mutable std::atomic < uint64_t > nref {
+        1};
 #endif
-  CephContext *cct{nullptr};
-};
+        CephContext *cct {
+        nullptr};
+    };
 
-class RefCountedObjectSafe : public RefCountedObject {
-public:
-  RefCountedObject *get() = delete;
-  const RefCountedObject *get() const = delete;
-  void put() const = delete;
-protected:
-template<typename... Args>
-  RefCountedObjectSafe(Args&&... args) : RefCountedObject(std::forward<Args>(args)...) {}
-  virtual ~RefCountedObjectSafe() override {}
-};
+    class RefCountedObjectSafe:public RefCountedObject {
+      public:
+        RefCountedObject * get() = delete;
+        const RefCountedObject *get() const = delete;
+        void put() const = delete;
+      protected:
+        template < typename ... Args >
+            RefCountedObjectSafe(Args
+                                 && ... args):RefCountedObject(std::forward <
+                                                               Args >
+                                                               (args) ...) {
+        } virtual ~ RefCountedObjectSafe() override {
+        }
+    };
 
 #if !defined(WITH_SEASTAR)|| defined(WITH_ALIEN)
 
@@ -101,35 +104,34 @@ template<typename... Args>
  *
  *  a refcounted condition, will be removed when all references are dropped
  */
-struct RefCountedCond : public RefCountedObject {
-  RefCountedCond() = default;
-  ~RefCountedCond() = default;
+    struct RefCountedCond:public RefCountedObject {
+        RefCountedCond() = default;
+        ~RefCountedCond() = default;
 
-  int wait() {
-    std::unique_lock l(lock);
-    while (!complete) {
-      cond.wait(l);
-    }
-    return rval;
-  }
+        int wait() {
+            std::unique_lock l(lock);
+            while (!complete) {
+                cond.wait(l);
+            } return rval;
+        }
 
-  void done(int r) {
-    std::lock_guard l(lock);
-    rval = r;
-    complete = true;
-    cond.notify_all();
-  }
+        void done(int r) {
+            std::lock_guard l(lock);
+            rval = r;
+            complete = true;
+            cond.notify_all();
+        }
 
-  void done() {
-    done(0);
-  }
+        void done() {
+            done(0);
+        }
 
-private:
-  bool complete = false;
-  ceph::mutex lock = ceph::make_mutex("RefCountedCond::lock");
-  ceph::condition_variable cond;
-  int rval = 0;
-};
+      private:
+        bool complete = false;
+        ceph::mutex lock = ceph::make_mutex("RefCountedCond::lock");
+        ceph::condition_variable cond;
+        int rval = 0;
+    };
 
 /**
  * RefCountedWaitObject
@@ -142,66 +144,66 @@ private:
  * destruction. 
  *    
  */
-struct RefCountedWaitObject {
-  std::atomic<uint64_t> nref = { 1 };
-  RefCountedCond *c;
+    struct RefCountedWaitObject {
+        std::atomic < uint64_t > nref = {
+        1};
+        RefCountedCond *c;
 
-  RefCountedWaitObject() {
-    c = new RefCountedCond;
-  }
-  virtual ~RefCountedWaitObject() {
-    c->put();
-  }
+        RefCountedWaitObject() {
+            c = new RefCountedCond;
+        }
+        virtual ~ RefCountedWaitObject() {
+            c->put();
+        }
 
-  RefCountedWaitObject *get() {
-    nref++;
-    return this;
-  }
+        RefCountedWaitObject *get() {
+            nref++;
+            return this;
+        }
 
-  bool put() {
-    bool ret = false;
-    RefCountedCond *cond = c;
-    cond->get();
-    if (--nref == 0) {
-      cond->done();
-      delete this;
-      ret = true;
-    }
-    cond->put();
-    return ret;
-  }
+        bool put() {
+            bool ret = false;
+            RefCountedCond *cond = c;
+            cond->get();
+            if (--nref == 0) {
+                cond->done();
+                delete this;
+                ret = true;
+            }
+            cond->put();
+            return ret;
+        }
 
-  void put_wait() {
-    RefCountedCond *cond = c;
+        void put_wait() {
+            RefCountedCond *cond = c;
 
-    cond->get();
-    if (--nref == 0) {
-      cond->done();
-      delete this;
-    } else {
-      cond->wait();
-    }
-    cond->put();
-  }
-};
+            cond->get();
+            if (--nref == 0) {
+                cond->done();
+                delete this;
+            }
+            else {
+                cond->wait();
+            }
+            cond->put();
+        }
+    };
 
 #endif // !defined(WITH_SEASTAR)|| defined(WITH_ALIEN)
 
-static inline void intrusive_ptr_add_ref(const RefCountedObject *p) {
-  p->get();
+    static inline void intrusive_ptr_add_ref(const RefCountedObject * p) {
+        p->get();
+    }
+    static inline void intrusive_ptr_release(const RefCountedObject * p) {
+        p->put();
+    }
+    struct UniquePtrDeleter {
+        void operator() (RefCountedObject * p) const {
+            // Don't expect a call to `get()` in the ctor as we manually set nref to 1
+            p->put();
+    }};
 }
-static inline void intrusive_ptr_release(const RefCountedObject *p) {
-  p->put();
-}
-struct UniquePtrDeleter
-{
-  void operator()(RefCountedObject *p) const
-  {
-    // Don't expect a call to `get()` in the ctor as we manually set nref to 1
-    p->put();
-  }
-};
-}
-using RefCountedPtr = ceph::ref_t<TOPNSPC::common::RefCountedObject>;
+
+using RefCountedPtr = ceph::ref_t < TOPNSPC::common::RefCountedObject >;
 
 #endif

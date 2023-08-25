@@ -15,68 +15,65 @@
 RGWKMIPManager *rgw_kmip_manager;
 
 int
-RGWKMIPTransceiver::wait(optional_yield y)
+ RGWKMIPTransceiver::wait(optional_yield y)
 {
-  if (done)
+    if (done)
+        return ret;
+    std::unique_lock l {
+    lock};
+    if (!done)
+        cond.wait(l);
+    if (ret) {
+        lderr(cct) << "kmip process failed, " << ret << dendl;
+    }
     return ret;
-  std::unique_lock l{lock};
-  if (!done)
-    cond.wait(l);
-  if (ret) {
-    lderr(cct) << "kmip process failed, " << ret << dendl;
-  }
-  return ret;
 }
 
-int
-RGWKMIPTransceiver::send()
+int RGWKMIPTransceiver::send()
 {
-  int r = rgw_kmip_manager->add_request(this);
-  if (r < 0) {
-    lderr(cct) << "kmip send failed, " << r << dendl;
-  }
-  return r;
-}
-
-int
-RGWKMIPTransceiver::process(optional_yield y)
-{
-  int r = send();
-  if (r < 0)
+    int r = rgw_kmip_manager->add_request(this);
+    if (r < 0) {
+        lderr(cct) << "kmip send failed, " << r << dendl;
+    }
     return r;
-  return wait(y);
+}
+
+int RGWKMIPTransceiver::process(optional_yield y)
+{
+    int r = send();
+    if (r < 0)
+        return r;
+    return wait(y);
 }
 
 RGWKMIPTransceiver::~RGWKMIPTransceiver()
 {
-  int i;
-  if (out)
-    free(out);
-  out = nullptr;
-  if (outlist->strings) {
-    for (i = 0; i < outlist->string_count; ++i) {
-      free(outlist->strings[i]);
+    int i;
+    if (out)
+        free(out);
+    out = nullptr;
+    if (outlist->strings) {
+        for (i = 0; i < outlist->string_count; ++i) {
+            free(outlist->strings[i]);
+        }
+        free(outlist->strings);
+        outlist->strings = 0;
     }
-    free(outlist->strings);
-    outlist->strings = 0;
-  }
-  if (outkey->data) {
-    ::ceph::crypto::zeroize_for_security(outkey->data, outkey->keylen);
-    free(outkey->data);
-    outkey->data = 0;
-  }
+    if (outkey->data) {
+        ::ceph::crypto::zeroize_for_security(outkey->data, outkey->keylen);
+        free(outkey->data);
+        outkey->data = 0;
+    }
 }
 
-void
-rgw_kmip_client_init(RGWKMIPManager &m)
+void rgw_kmip_client_init(RGWKMIPManager & m)
 {
-  rgw_kmip_manager = &m;
-  rgw_kmip_manager->start();
+    rgw_kmip_manager = &m;
+    rgw_kmip_manager->start();
 }
 
-void
-rgw_kmip_client_cleanup()
+void rgw_kmip_client_cleanup()
 {
-  rgw_kmip_manager->stop();
-  delete rgw_kmip_manager;
+    rgw_kmip_manager->stop();
+    delete rgw_kmip_manager;
 }

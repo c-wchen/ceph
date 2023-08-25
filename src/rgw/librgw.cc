@@ -35,55 +35,51 @@
 
 namespace rgw {
 
-bool global_stop = false;
-static std::mutex librgw_mtx;
-static RGWLib rgwlib;
+    bool global_stop = false;
+    static std::mutex librgw_mtx;
+    static RGWLib rgwlib;
 
-} // namespace rgw
+} // namespace rgw extern "C" {
 
-extern "C" {
+    int librgw_create(librgw_t * rgw, int argc, char **argv) {
+        using namespace rgw;
 
-int librgw_create(librgw_t* rgw, int argc, char **argv)
-{
-  using namespace rgw;
+        int rc = -EINVAL;
 
-  int rc = -EINVAL;
+         g_rgwlib = &rgwlib;
 
-  g_rgwlib = &rgwlib;
+        if (!g_ceph_context) {
+            std::lock_guard < std::mutex > lg(librgw_mtx);
+            if (!g_ceph_context) {
+                std::vector < std::string > spl_args;
+                // last non-0 argument will be split and consumed
+                if (argc > 1) {
+                    const std::string spl_arg {
+                    argv[(--argc)]};
+                     get_str_vec(spl_arg, " \t", spl_args);
+                } auto args = argv_to_vec(argc, argv);
+                // append split args, if any
+              for (const auto & elt:spl_args) {
+                    args.push_back(elt.c_str());
+                }
+                rc = rgwlib.init(args);
+            }
+        }
 
-  if (! g_ceph_context) {
-    std::lock_guard<std::mutex> lg(librgw_mtx);
-    if (! g_ceph_context) {
-      std::vector<std::string> spl_args;
-      // last non-0 argument will be split and consumed
-      if (argc > 1) {
-	const std::string spl_arg{argv[(--argc)]};
-	get_str_vec(spl_arg, " \t", spl_args);
-      }
-      auto args = argv_to_vec(argc, argv);
-      // append split args, if any
-      for (const auto& elt : spl_args) {
-	args.push_back(elt.c_str());
-      }
-      rc = rgwlib.init(args);
+        *rgw = g_ceph_context->get();
+
+        return rc;
     }
-  }
 
-  *rgw = g_ceph_context->get();
+    void librgw_shutdown(librgw_t rgw) {
+        using namespace rgw;
 
-  return rc;
-}
+        CephContext *cct = static_cast < CephContext * >(rgw);
+        rgwlib.stop();
 
-void librgw_shutdown(librgw_t rgw)
-{
-  using namespace rgw;
+        dout(1) << "final shutdown" << dendl;
 
-  CephContext* cct = static_cast<CephContext*>(rgw);
-  rgwlib.stop();
+        cct->put();
+    }
 
-  dout(1) << "final shutdown" << dendl;
-
-  cct->put();
-}
-
-} /* extern "C" */
+}                               /* extern "C" */

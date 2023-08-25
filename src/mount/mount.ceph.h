@@ -26,19 +26,19 @@ extern "C" {
 
 #define CLUSTER_FSID_LEN        37
 
-void mount_ceph_debug(const char *fmt, ...);
+    void mount_ceph_debug(const char *fmt, ...);
 
-struct ceph_config_info {
-	char		cci_secret[SECRET_BUFSIZE];	// auth secret
-	char		cci_mons[MON_LIST_BUFSIZE];	// monitor addrs
-	char		cci_fsid[CLUSTER_FSID_LEN];	// cluster fsid
-};
+    struct ceph_config_info {
+        char cci_secret[SECRET_BUFSIZE];    // auth secret
+        char cci_mons[MON_LIST_BUFSIZE];    // monitor addrs
+        char cci_fsid[CLUSTER_FSID_LEN];    // cluster fsid
+    };
 
-void mount_ceph_get_config_info(const char *config_file, const char *name,
-				bool v2_addrs, struct ceph_config_info *cci);
+    void mount_ceph_get_config_info(const char *config_file, const char *name,
+                                    bool v2_addrs,
+                                    struct ceph_config_info *cci);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _SRC_MOUNT_MOUNT_CEPH_H */
+#endif                          /* _SRC_MOUNT_MOUNT_CEPH_H */

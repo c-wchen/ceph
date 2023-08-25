@@ -135,12 +135,11 @@
 extern "C" {
 #endif
 
-__s32 wsae_to_errno(__s32 r);
-__u32 errno_to_ntstatus(__s32 r);
-__u32 cephfs_errno_to_ntstatus_map(int cephfs_errno);
+    __s32 wsae_to_errno(__s32 r);
+    __u32 errno_to_ntstatus(__s32 r);
+    __u32 cephfs_errno_to_ntstatus_map(int cephfs_errno);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // WIN32_ERRNO_H
+#endif                          // WIN32_ERRNO_H

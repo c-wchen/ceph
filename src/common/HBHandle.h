@@ -4,8 +4,8 @@
 #pragma once
 
 class HBHandle {
-public:
-  virtual void reset_tp_timeout() = 0;
-  virtual void suspend_tp_timeout() = 0;
-  virtual ~HBHandle() {}
-};
+  public:
+    virtual void reset_tp_timeout() = 0;
+    virtual void suspend_tp_timeout() = 0;
+     virtual ~ HBHandle() {
+}};

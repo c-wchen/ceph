@@ -36,7 +36,7 @@ class MMonCommand;
 inline constexpr auto CEPH_ADMIN_SOCK_VERSION = std::string_view("2");
 
 class AdminSocketHook {
-public:
+  public:
   /**
    * @brief
    * Handler for admin socket commands, synchronous version
@@ -57,13 +57,11 @@ public:
    *
    * @note If @c out is empty, then admin socket will try to flush @c f to out.
    */
-  virtual int call(
-    std::string_view command,
-    const cmdmap_t& cmdmap,
-    const ceph::buffer::list& inbl,
-    ceph::Formatter *f,
-    std::ostream& errss,
-    ceph::buffer::list& out) = 0;
+    virtual int call(std::string_view command,
+                     const cmdmap_t & cmdmap,
+                     const ceph::buffer::list & inbl,
+                     ceph::Formatter * f,
+                     std::ostream & errss, ceph::buffer::list & out) = 0;
 
   /**
    * @brief
@@ -88,31 +86,31 @@ public:
    *
    * @note If @c out is empty, then admin socket will try to flush @c f to out.
    */
-  virtual void call_async(
-    std::string_view command,
-    const cmdmap_t& cmdmap,
-    ceph::Formatter *f,
-    const ceph::buffer::list& inbl,
-    std::function<void(int,const std::string&,ceph::buffer::list&)> on_finish) {
-    // by default, call the synchronous handler and then finish
-    ceph::buffer::list out;
-    std::ostringstream errss;
-    int r = call(command, cmdmap, inbl, f, errss, out);
-    on_finish(r, errss.str(), out);
-  }
-  virtual ~AdminSocketHook() {}
+    virtual void call_async(std::string_view command,
+                            const cmdmap_t & cmdmap,
+                            ceph::Formatter * f,
+                            const ceph::buffer::list & inbl,
+                            std::function < void (int, const std::string &,
+                                                  ceph::buffer::list &) >
+                            on_finish) {
+        // by default, call the synchronous handler and then finish
+        ceph::buffer::list out;
+        std::ostringstream errss;
+        int r = call(command, cmdmap, inbl, f, errss, out);
+        on_finish(r, errss.str(), out);
+    } virtual ~ AdminSocketHook() {
+    }
 };
 
-class AdminSocket
-{
-public:
-  AdminSocket(CephContext *cct);
-  ~AdminSocket();
+class AdminSocket {
+  public:
+    AdminSocket(CephContext * cct);
+    ~AdminSocket();
 
-  AdminSocket(const AdminSocket&) = delete;
-  AdminSocket& operator =(const AdminSocket&) = delete;
-  AdminSocket(AdminSocket&&) = delete;
-  AdminSocket& operator =(AdminSocket&&) = delete;
+    AdminSocket(const AdminSocket &) = delete;
+    AdminSocket & operator =(const AdminSocket &) = delete;
+    AdminSocket(AdminSocket &&) = delete;
+    AdminSocket & operator =(AdminSocket &&) = delete;
 
   /**
    * register an admin socket command
@@ -133,88 +131,85 @@ public:
    *
    * @return 0 for success, -EEXIST if command already registered.
    */
-  int register_command(std::string_view cmddesc,
-		       AdminSocketHook *hook,
-		       std::string_view help);
+    int register_command(std::string_view cmddesc,
+                         AdminSocketHook * hook, std::string_view help);
 
-  /*
-   * unregister all commands belong to hook.
-   */
-  void unregister_commands(const AdminSocketHook *hook);
+    /*
+     * unregister all commands belong to hook.
+     */
+    void unregister_commands(const AdminSocketHook * hook);
 
-  bool init(const std::string& path);
+    bool init(const std::string & path);
 
-  void chown(uid_t uid, gid_t gid);
-  void chmod(mode_t mode);
+    void chown(uid_t uid, gid_t gid);
+    void chmod(mode_t mode);
 
-  /// execute (async)
-  void execute_command(
-    const std::vector<std::string>& cmd,
-    const ceph::buffer::list& inbl,
-    std::function<void(int,const std::string&,ceph::buffer::list&)> on_fin);
+    /// execute (async)
+    void execute_command(const std::vector < std::string > &cmd,
+                         const ceph::buffer::list & inbl,
+                         std::function < void (int, const std::string &,
+                                               ceph::buffer::list &) > on_fin);
 
-  /// execute (blocking)
-  int execute_command(
-    const std::vector<std::string>& cmd,
-    const ceph::buffer::list& inbl,
-    std::ostream& errss,
-    ceph::buffer::list *outbl);
+    /// execute (blocking)
+    int execute_command(const std::vector < std::string > &cmd,
+                        const ceph::buffer::list & inbl,
+                        std::ostream & errss, ceph::buffer::list * outbl);
 
-  void queue_tell_command(ceph::cref_t<MCommand> m);
-  void queue_tell_command(ceph::cref_t<MMonCommand> m); // for compat
+    void queue_tell_command(ceph::cref_t < MCommand > m);
+    void queue_tell_command(ceph::cref_t < MMonCommand > m);    // for compat
 
-private:
+  private:
 
-  void shutdown();
-  void wakeup();
+    void shutdown();
+    void wakeup();
 
-  std::string create_wakeup_pipe(int *pipe_rd, int *pipe_wr);
-  std::string destroy_wakeup_pipe();
-  std::string bind_and_listen(const std::string &sock_path, int *fd);
+    std::string create_wakeup_pipe(int *pipe_rd, int *pipe_wr);
+    std::string destroy_wakeup_pipe();
+    std::string bind_and_listen(const std::string & sock_path, int *fd);
 
-  std::thread th;
-  void entry() noexcept;
-  void do_accept();
-  void do_tell_queue();
+    std::thread th;
+    void entry() noexcept;
+    void do_accept();
+    void do_tell_queue();
 
-  CephContext *m_cct;
-  std::string m_path;
-  int m_sock_fd = -1;
-  int m_wakeup_rd_fd = -1;
-  int m_wakeup_wr_fd = -1;
-  bool m_shutdown = false;
+    CephContext *m_cct;
+    std::string m_path;
+    int m_sock_fd = -1;
+    int m_wakeup_rd_fd = -1;
+    int m_wakeup_wr_fd = -1;
+    bool m_shutdown = false;
 
-  bool in_hook = false;
-  std::condition_variable in_hook_cond;
-  std::mutex lock;  // protects `hooks`
-  std::unique_ptr<AdminSocketHook> version_hook;
-  std::unique_ptr<AdminSocketHook> help_hook;
-  std::unique_ptr<AdminSocketHook> getdescs_hook;
+    bool in_hook = false;
+    std::condition_variable in_hook_cond;
+    std::mutex lock;            // protects `hooks`
+    std::unique_ptr < AdminSocketHook > version_hook;
+    std::unique_ptr < AdminSocketHook > help_hook;
+    std::unique_ptr < AdminSocketHook > getdescs_hook;
 
-  std::mutex tell_lock;
-  std::list<ceph::cref_t<MCommand>> tell_queue;
-  std::list<ceph::cref_t<MMonCommand>> tell_legacy_queue;
+    std::mutex tell_lock;
+    std::list < ceph::cref_t < MCommand >> tell_queue;
+    std::list < ceph::cref_t < MMonCommand >> tell_legacy_queue;
 
-  struct hook_info {
-    AdminSocketHook* hook;
-    std::string desc;
-    std::string help;
+    struct hook_info {
+        AdminSocketHook *hook;
+        std::string desc;
+        std::string help;
 
-    hook_info(AdminSocketHook* hook, std::string_view desc,
-	      std::string_view help)
-      : hook(hook), desc(desc), help(help) {}
-  };
+        hook_info(AdminSocketHook * hook, std::string_view desc,
+                  std::string_view help)
+        :hook(hook), desc(desc), help(help) {
+    }};
 
-  /// find the first hook which matches the given prefix and cmdmap
-  std::pair<int, AdminSocketHook*> find_matched_hook(
-    std::string& prefix,
-    const cmdmap_t& cmdmap);
+    /// find the first hook which matches the given prefix and cmdmap
+    std::pair < int, AdminSocketHook * >find_matched_hook(std::string & prefix,
+                                                          const cmdmap_t &
+                                                          cmdmap);
 
-  std::multimap<std::string, hook_info, std::less<>> hooks;
+    std::multimap < std::string, hook_info, std::less <>> hooks;
 
-  friend class AdminSocketTest;
-  friend class HelpHook;
-  friend class GetdescsHook;
+    friend class AdminSocketTest;
+    friend class HelpHook;
+    friend class GetdescsHook;
 };
 
 #endif

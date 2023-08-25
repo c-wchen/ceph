@@ -27,27 +27,29 @@
 #include "osd/osd_types.h"
 #include "compressor/Compressor.h"
 
-class CompressorExample : public Compressor {
-public:
-  CompressorExample() : Compressor(COMP_ALG_NONE, "example") {}
-  ~CompressorExample() override {}
+class CompressorExample:public Compressor {
+  public:
+    CompressorExample():Compressor(COMP_ALG_NONE, "example") {
+    } ~CompressorExample() override {
+    }
 
-  int compress(const bufferlist &in, bufferlist &out, std::optional<int32_t> &compressor_message) override
-  {
-    out = in;
-    return 0;
-  }
+    int compress(const bufferlist & in, bufferlist & out,
+                 std::optional < int32_t > &compressor_message) override {
+        out = in;
+        return 0;
+    }
 
-  int decompress(const bufferlist &in, bufferlist &out, std::optional<int32_t> compressor_message) override
-  {
-    out = in;
-    return 0;
-  }
-  int decompress(bufferlist::const_iterator &p, size_t compressed_len, bufferlist &out, std::optional<int32_t> compressor_message) override
-  {
-    p.copy(std::min<size_t>(p.get_remaining(), compressed_len), out);
-    return 0;
-  }
+    int decompress(const bufferlist & in, bufferlist & out,
+                   std::optional < int32_t > compressor_message) override {
+        out = in;
+        return 0;
+    }
+    int decompress(bufferlist::const_iterator & p, size_t compressed_len,
+                   bufferlist & out,
+                   std::optional < int32_t > compressor_message) override {
+        p.copy(std::min < size_t > (p.get_remaining(), compressed_len), out);
+        return 0;
+    }
 };
 
 #endif

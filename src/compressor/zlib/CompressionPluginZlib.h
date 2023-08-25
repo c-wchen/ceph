@@ -25,36 +25,32 @@
 
 // -----------------------------------------------------------------------------
 
-class CompressionPluginZlib : public ceph::CompressionPlugin {
-public:
-  bool has_isal = false;
+class CompressionPluginZlib:public ceph::CompressionPlugin {
+  public:
+    bool has_isal = false;
 
-  explicit CompressionPluginZlib(CephContext *cct) : CompressionPlugin(cct)
-  {}
-
-  int factory(CompressorRef *cs,
-                      std::ostream *ss) override
-  {
-    bool isal = false;
+    explicit CompressionPluginZlib(CephContext * cct):CompressionPlugin(cct) {
+    } int factory(CompressorRef * cs, std::ostream * ss) override {
+        bool isal = false;
 #if defined(__i386__) || defined(__x86_64__)
-    // other arches or lack of support result in isal = false
-    if (cct->_conf->compressor_zlib_isal) {
-      ceph_arch_probe();
-      isal = (ceph_arch_intel_pclmul && ceph_arch_intel_sse41);
-    }
+        // other arches or lack of support result in isal = false
+        if (cct->_conf->compressor_zlib_isal) {
+            ceph_arch_probe();
+            isal = (ceph_arch_intel_pclmul && ceph_arch_intel_sse41);
+        }
 #elif defined(__aarch64__)
-    if (cct->_conf->compressor_zlib_isal) {
-      ceph_arch_probe();
-      isal = (ceph_arch_aarch64_pmull && ceph_arch_neon);
-    }
+        if (cct->_conf->compressor_zlib_isal) {
+            ceph_arch_probe();
+            isal = (ceph_arch_aarch64_pmull && ceph_arch_neon);
+        }
 #endif
-    if (compressor == 0 || has_isal != isal) {
-      compressor = std::make_shared<ZlibCompressor>(cct, isal);
-      has_isal = isal;
+        if (compressor == 0 || has_isal != isal) {
+            compressor = std::make_shared < ZlibCompressor > (cct, isal);
+            has_isal = isal;
+        }
+        *cs = compressor;
+        return 0;
     }
-    *cs = compressor;
-    return 0;
-  }
 };
 
 #endif

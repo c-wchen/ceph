@@ -23,333 +23,376 @@
 #include "json_spirit/json_spirit.h"
 
 namespace rbd {
-namespace action {
-namespace trash_purge_schedule {
+    namespace action {
+        namespace trash_purge_schedule {
 
-namespace at = argument_types;
-namespace po = boost::program_options;
+            namespace at = argument_types;
+            namespace po = boost::program_options;
 
-namespace {
+             namespace {
 
-class ScheduleStatus {
-public:
-  ScheduleStatus() {
-  }
+                class ScheduleStatus {
+                  public:
+                    ScheduleStatus() {
+                    } int parse(const std::string & status) {
+                        json_spirit::mValue json_root;
+                        if (!json_spirit::read(status, json_root)) {
+                            std::
+                                cerr <<
+                                "rbd: invalid schedule status JSON received" <<
+                                std::endl;
+                            return -EBADMSG;
+                        } try {
+                            auto & s = json_root.get_obj();
 
-  int parse(const std::string &status) {
-    json_spirit::mValue json_root;
-    if(!json_spirit::read(status, json_root)) {
-      std::cerr << "rbd: invalid schedule status JSON received" << std::endl;
-      return -EBADMSG;
-    }
+                            if (s["scheduled"].type() !=
+                                json_spirit::array_type) {
+                                std::
+                                    cerr <<
+                                    "rbd: unexpected schedule JSON received: "
+                                    << "scheduled is not array" << std::endl;
+                                return -EBADMSG;
+                            } for (auto & item_val:s["scheduled"].get_array()) {
+                                if (item_val.type() != json_spirit::obj_type) {
+                                    std::
+                                        cerr <<
+                                        "rbd: unexpected schedule status JSON received: "
+                                        << "schedule item is not object" <<
+                                        std::endl;
+                                    return -EBADMSG;
+                                } auto & item = item_val.get_obj();
 
-    try {
-      auto &s = json_root.get_obj();
+                                if (item["pool_name"].type() !=
+                                    json_spirit::str_type) {
+                                    std::
+                                        cerr <<
+                                        "rbd: unexpected schedule JSON received: "
+                                        << "pool_name is not string" << std::
+                                        endl;
+                                    return -EBADMSG;
+                                }
+                                auto pool_name = item["pool_name"].get_str();
 
-      if (s["scheduled"].type() != json_spirit::array_type) {
-        std::cerr << "rbd: unexpected schedule JSON received: "
-                  << "scheduled is not array" << std::endl;
-        return -EBADMSG;
-      }
+                                if (item["namespace"].type() !=
+                                    json_spirit::str_type) {
+                                    std::
+                                        cerr <<
+                                        "rbd: unexpected schedule JSON received: "
+                                        << "namespace is not string" << std::
+                                        endl;
+                                    return -EBADMSG;
+                                }
+                                auto namespace_name =
+                                    item["namespace"].get_str();
 
-      for (auto &item_val : s["scheduled"].get_array()) {
-        if (item_val.type() != json_spirit::obj_type) {
-          std::cerr << "rbd: unexpected schedule status JSON received: "
-                    << "schedule item is not object" << std::endl;
-          return -EBADMSG;
-        }
+                                if (item["schedule_time"].type() !=
+                                    json_spirit::str_type) {
+                                    std::
+                                        cerr <<
+                                        "rbd: unexpected schedule JSON received: "
+                                        << "schedule_time is not string" <<
+                                        std::endl;
+                                    return -EBADMSG;
+                                }
+                                auto schedule_time =
+                                    item["schedule_time"].get_str();
 
-        auto &item = item_val.get_obj();
+                                scheduled.insert( {
+                                                 pool_name, namespace_name,
+                                                 schedule_time}
+                                );
+                            }
 
-        if (item["pool_name"].type() != json_spirit::str_type) {
-          std::cerr << "rbd: unexpected schedule JSON received: "
-                    << "pool_name is not string" << std::endl;
-          return -EBADMSG;
-        }
-        auto pool_name = item["pool_name"].get_str();
+                        }
+                        catch(std::runtime_error &) {
+                            std::
+                                cerr << "rbd: invalid schedule JSON received" <<
+                                std::endl;
+                            return -EBADMSG;
+                        }
 
-        if (item["namespace"].type() != json_spirit::str_type) {
-          std::cerr << "rbd: unexpected schedule JSON received: "
-                    << "namespace is not string" << std::endl;
-          return -EBADMSG;
-        }
-        auto namespace_name = item["namespace"].get_str();
+                        return 0;
+                    }
 
-        if (item["schedule_time"].type() != json_spirit::str_type) {
-          std::cerr << "rbd: unexpected schedule JSON received: "
-                    << "schedule_time is not string" << std::endl;
-          return -EBADMSG;
-        }
-        auto schedule_time = item["schedule_time"].get_str();
+                    void dump(Formatter * f) {
+                        f->open_array_section("scheduled");
+                      for (auto & item:scheduled) {
+                            f->open_object_section("item");
+                            f->dump_string("pool", item.pool_name);
+                            f->dump_string("namespace", item.namespace_name);
+                            f->dump_string("schedule_time", item.schedule_time);
+                            f->close_section(); // item
+                        }
+                        f->close_section(); // scheduled
+                    }
 
-        scheduled.insert({pool_name, namespace_name, schedule_time});
-      }
+                    friend std::ostream & operator<<(std::ostream & os,
+                                                     ScheduleStatus & d);
 
-    } catch (std::runtime_error &) {
-      std::cerr << "rbd: invalid schedule JSON received" << std::endl;
-      return -EBADMSG;
-    }
+                  private:
 
-    return 0;
-  }
+                    struct Item {
+                        std::string pool_name;
+                        std::string namespace_name;
+                        std::string schedule_time;
 
-  void dump(Formatter *f) {
-    f->open_array_section("scheduled");
-    for (auto &item : scheduled) {
-      f->open_object_section("item");
-      f->dump_string("pool", item.pool_name);
-      f->dump_string("namespace", item.namespace_name);
-      f->dump_string("schedule_time", item.schedule_time);
-      f->close_section(); // item
-    }
-    f->close_section(); // scheduled
-  }
+                        Item(const std::string & pool_name,
+                             const std::string & namespace_name,
+                             const std::string & schedule_time)
+                        :pool_name(pool_name), namespace_name(namespace_name),
+                            schedule_time(schedule_time) {
+                        } bool operator<(const Item & rhs) const {
+                            if (pool_name != rhs.pool_name) {
+                                return pool_name < rhs.pool_name;
+                            } return namespace_name < rhs.namespace_name;
+                        }
+                    };
 
-  friend std::ostream& operator<<(std::ostream& os, ScheduleStatus &d);
+                    std::set < Item > scheduled;
+                };
 
-private:
+                std::ostream & operator<<(std::ostream & os, ScheduleStatus & s) {
+                    TextTable tbl;
+                    tbl.define_column("POOL", TextTable::LEFT, TextTable::LEFT);
+                    tbl.define_column("NAMESPACE", TextTable::LEFT,
+                                      TextTable::LEFT);
+                    tbl.define_column("SCHEDULE TIME", TextTable::LEFT,
+                                      TextTable::LEFT);
 
-  struct Item {
-    std::string pool_name;
-    std::string namespace_name;
-    std::string schedule_time;
+                  for (auto & item:s.scheduled) {
+                        tbl << item.pool_name << item.namespace_name << item.
+                            schedule_time << TextTable::endrow;
+                    }
 
-    Item(const std::string &pool_name, const std::string &namespace_name,
-         const std::string &schedule_time)
-      : pool_name(pool_name), namespace_name(namespace_name),
-        schedule_time(schedule_time) {
-    }
+                    os << tbl;
+                    return os;
+                }
 
-    bool operator<(const Item &rhs) const {
-      if (pool_name != rhs.pool_name) {
-        return pool_name < rhs.pool_name;
-      }
-      return namespace_name < rhs.namespace_name;
-    }
-  };
+            }                   // anonymous namespace
 
-  std::set<Item> scheduled;
-};
+            void get_arguments_add(po::options_description * positional,
+                                   po::options_description * options) {
+                add_level_spec_options(options, false);
+                add_schedule_options(positional, true);
+            }
 
-std::ostream& operator<<(std::ostream& os, ScheduleStatus &s) {
-  TextTable tbl;
-  tbl.define_column("POOL", TextTable::LEFT, TextTable::LEFT);
-  tbl.define_column("NAMESPACE", TextTable::LEFT, TextTable::LEFT);
-  tbl.define_column("SCHEDULE TIME", TextTable::LEFT, TextTable::LEFT);
+            int execute_add(const po::variables_map & vm,
+                            const std::vector < std::string >
+                            &ceph_global_init_args) {
+                std::map < std::string, std::string > args;
 
-  for (auto &item : s.scheduled) {
-    tbl << item.pool_name << item.namespace_name << item.schedule_time
-        << TextTable::endrow;
-  }
+                int r = get_level_spec_args(vm, &args);
+                if (r < 0) {
+                    return r;
+                }
+                r = get_schedule_args(vm, true, &args);
+                if (r < 0) {
+                    return r;
+                }
 
-  os << tbl;
-  return os;
-}
+                librados::Rados rados;
+                r = utils::init_rados(&rados);
+                if (r < 0) {
+                    return r;
+                }
 
-} // anonymous namespace
+                normalize_level_spec_args(&args);
+                r = utils::mgr_command(rados, "rbd trash purge schedule add",
+                                       args, &std::cout, &std::cerr);
+                if (r < 0) {
+                    return r;
+                }
 
-void get_arguments_add(po::options_description *positional,
-                       po::options_description *options) {
-  add_level_spec_options(options, false);
-  add_schedule_options(positional, true);
-}
+                return 0;
+            }
 
-int execute_add(const po::variables_map &vm,
-                const std::vector<std::string> &ceph_global_init_args) {
-  std::map<std::string, std::string> args;
+            void get_arguments_remove(po::options_description * positional,
+                                      po::options_description * options) {
+                add_level_spec_options(options, false);
+                add_schedule_options(positional, false);
+            }
 
-  int r = get_level_spec_args(vm, &args);
-  if (r < 0) {
-    return r;
-  }
-  r = get_schedule_args(vm, true, &args);
-  if (r < 0) {
-    return r;
-  }
+            int execute_remove(const po::variables_map & vm,
+                               const std::vector < std::string >
+                               &ceph_global_init_args) {
+                std::map < std::string, std::string > args;
 
-  librados::Rados rados;
-  r = utils::init_rados(&rados);
-  if (r < 0) {
-    return r;
-  }
+                int r = get_level_spec_args(vm, &args);
+                if (r < 0) {
+                    return r;
+                }
+                r = get_schedule_args(vm, false, &args);
+                if (r < 0) {
+                    return r;
+                }
 
-  normalize_level_spec_args(&args);
-  r = utils::mgr_command(rados, "rbd trash purge schedule add", args,
-                         &std::cout, &std::cerr);
-  if (r < 0) {
-    return r;
-  }
+                librados::Rados rados;
+                r = utils::init_rados(&rados);
+                if (r < 0) {
+                    return r;
+                }
 
-  return 0;
-}
+                normalize_level_spec_args(&args);
+                r = utils::mgr_command(rados, "rbd trash purge schedule remove",
+                                       args, &std::cout, &std::cerr);
+                if (r < 0) {
+                    return r;
+                }
 
-void get_arguments_remove(po::options_description *positional,
-                          po::options_description *options) {
-  add_level_spec_options(options, false);
-  add_schedule_options(positional, false);
-}
+                return 0;
+            }
 
-int execute_remove(const po::variables_map &vm,
-                   const std::vector<std::string> &ceph_global_init_args) {
-  std::map<std::string, std::string> args;
+            void get_arguments_list(po::options_description * positional,
+                                    po::options_description * options) {
+                add_level_spec_options(options, false);
+                options->add_options()
+                    ("recursive,R", po::bool_switch(), "list all schedules");
+                at::add_format_options(options);
+            }
 
-  int r = get_level_spec_args(vm, &args);
-  if (r < 0) {
-    return r;
-  }
-  r = get_schedule_args(vm, false, &args);
-  if (r < 0) {
-    return r;
-  }
+            int execute_list(const po::variables_map & vm,
+                             const std::vector < std::string >
+                             &ceph_global_init_args) {
+                std::map < std::string, std::string > args;
 
-  librados::Rados rados;
-  r = utils::init_rados(&rados);
-  if (r < 0) {
-    return r;
-  }
+                int r = get_level_spec_args(vm, &args);
+                if (r < 0) {
+                    return r;
+                }
 
-  normalize_level_spec_args(&args);
-  r = utils::mgr_command(rados, "rbd trash purge schedule remove", args,
-                         &std::cout, &std::cerr);
-  if (r < 0) {
-    return r;
-  }
+                at::Format::Formatter formatter;
+                r = utils::get_formatter(vm, &formatter);
+                if (r < 0) {
+                    return r;
+                }
 
-  return 0;
-}
+                librados::Rados rados;
+                r = utils::init_rados(&rados);
+                if (r < 0) {
+                    return r;
+                }
 
-void get_arguments_list(po::options_description *positional,
-                        po::options_description *options) {
-  add_level_spec_options(options, false);
-  options->add_options()
-    ("recursive,R", po::bool_switch(), "list all schedules");
-  at::add_format_options(options);
-}
+                normalize_level_spec_args(&args);
+                std::stringstream out;
+                r = utils::mgr_command(rados, "rbd trash purge schedule list",
+                                       args, &out, &std::cerr);
+                if (r < 0) {
+                    return r;
+                }
 
-int execute_list(const po::variables_map &vm,
-                 const std::vector<std::string> &ceph_global_init_args) {
-  std::map<std::string, std::string> args;
+                ScheduleList schedule_list(false);
+                r = schedule_list.parse(out.str());
+                if (r < 0) {
+                    return r;
+                }
 
-  int r = get_level_spec_args(vm, &args);
-  if (r < 0) {
-    return r;
-  }
+                if (vm["recursive"].as < bool > ()) {
+                    if (formatter.get()) {
+                        schedule_list.dump(formatter.get());
+                        formatter->flush(std::cout);
+                    }
+                    else {
+                        std::cout << schedule_list;
+                    }
+                }
+                else {
+                    auto schedule = schedule_list.find(args["level_spec"]);
+                    if (schedule == nullptr) {
+                        return -ENOENT;
+                    }
 
-  at::Format::Formatter formatter;
-  r = utils::get_formatter(vm, &formatter);
-  if (r < 0) {
-    return r;
-  }
+                    if (formatter.get()) {
+                        schedule->dump(formatter.get());
+                        formatter->flush(std::cout);
+                    }
+                    else {
+                        std::cout << *schedule << std::endl;
+                    }
+                }
 
-  librados::Rados rados;
-  r = utils::init_rados(&rados);
-  if (r < 0) {
-    return r;
-  }
+                return 0;
+            }
 
-  normalize_level_spec_args(&args);
-  std::stringstream out;
-  r = utils::mgr_command(rados, "rbd trash purge schedule list", args, &out,
-                         &std::cerr);
-  if (r < 0) {
-    return r;
-  }
+            void get_arguments_status(po::options_description * positional,
+                                      po::options_description * options) {
+                add_level_spec_options(options, false);
+                at::add_format_options(options);
+            }
 
-  ScheduleList schedule_list(false);
-  r = schedule_list.parse(out.str());
-  if (r < 0) {
-    return r;
-  }
+            int execute_status(const po::variables_map & vm,
+                               const std::vector < std::string >
+                               &ceph_global_init_args) {
+                std::map < std::string, std::string > args;
 
-  if (vm["recursive"].as<bool>()) {
-    if (formatter.get()) {
-      schedule_list.dump(formatter.get());
-      formatter->flush(std::cout);
-    } else {
-      std::cout << schedule_list;
-    }
-  } else {
-    auto schedule = schedule_list.find(args["level_spec"]);
-    if (schedule == nullptr) {
-      return -ENOENT;
-    }
+                int r = get_level_spec_args(vm, &args);
+                if (r < 0) {
+                    return r;
+                }
 
-    if (formatter.get()) {
-      schedule->dump(formatter.get());
-      formatter->flush(std::cout);
-    } else {
-      std::cout << *schedule << std::endl;
-    }
-  }
+                at::Format::Formatter formatter;
+                r = utils::get_formatter(vm, &formatter);
+                if (r < 0) {
+                    return r;
+                }
 
-  return 0;
-}
+                librados::Rados rados;
+                r = utils::init_rados(&rados);
+                if (r < 0) {
+                    return r;
+                }
 
-void get_arguments_status(po::options_description *positional,
-                          po::options_description *options) {
-  add_level_spec_options(options, false);
-  at::add_format_options(options);
-}
+                normalize_level_spec_args(&args);
+                std::stringstream out;
+                r = utils::mgr_command(rados, "rbd trash purge schedule status",
+                                       args, &out, &std::cerr);
+                ScheduleStatus schedule_status;
+                r = schedule_status.parse(out.str());
+                if (r < 0) {
+                    return r;
+                }
 
-int execute_status(const po::variables_map &vm,
-                   const std::vector<std::string> &ceph_global_init_args) {
-  std::map<std::string, std::string> args;
+                if (formatter.get()) {
+                    schedule_status.dump(formatter.get());
+                    formatter->flush(std::cout);
+                }
+                else {
+                    std::cout << schedule_status;
+                }
 
-  int r = get_level_spec_args(vm, &args);
-  if (r < 0) {
-    return r;
-  }
+                return 0;
+            }
 
-  at::Format::Formatter formatter;
-  r = utils::get_formatter(vm, &formatter);
-  if (r < 0) {
-    return r;
-  }
+            Shell::SwitchArguments switched_arguments( {
+                                                      "recursive", "R"}
+            );
 
-  librados::Rados rados;
-  r = utils::init_rados(&rados);
-  if (r < 0) {
-    return r;
-  }
+            Shell::Action add_action( {
+                                     "trash", "purge", "schedule", "add"}
+                                     , {
+                                     }
+                                     , "Add trash purge schedule.", "",
+                                     &get_arguments_add, &execute_add);
+            Shell::Action remove_action( {
+                                        "trash", "purge", "schedule", "remove"}
+                                        , {
+                                        "trash", "purge", "schedule", "rm"}
+                                        , "Remove trash purge schedule.",
+                                        "", &get_arguments_remove,
+                                        &execute_remove);
+            Shell::Action list_action( {
+                                      "trash", "purge", "schedule", "list"}
+                                      , {
+                                      "trash", "purge", "schedule", "ls"}
+                                      , "List trash purge schedule.",
+                                      "", &get_arguments_list, &execute_list);
+            Shell::Action status_action( {
+                                        "trash", "purge", "schedule", "status"}
+                                        , {
+                                        }
+                                        ,
+                                        "Show trash purge schedule status.", "",
+                                        &get_arguments_status, &execute_status);
 
-  normalize_level_spec_args(&args);
-  std::stringstream out;
-  r = utils::mgr_command(rados, "rbd trash purge schedule status", args, &out,
-                         &std::cerr);
-  ScheduleStatus schedule_status;
-  r = schedule_status.parse(out.str());
-  if (r < 0) {
-    return r;
-  }
-
-  if (formatter.get()) {
-    schedule_status.dump(formatter.get());
-    formatter->flush(std::cout);
-  } else {
-    std::cout << schedule_status;
-  }
-
-  return 0;
-}
-
-Shell::SwitchArguments switched_arguments({"recursive", "R"});
-
-Shell::Action add_action(
-  {"trash", "purge", "schedule", "add"}, {}, "Add trash purge schedule.", "",
-  &get_arguments_add, &execute_add);
-Shell::Action remove_action(
-  {"trash", "purge", "schedule", "remove"},
-  {"trash", "purge", "schedule", "rm"}, "Remove trash purge schedule.",
-  "", &get_arguments_remove, &execute_remove);
-Shell::Action list_action(
-  {"trash", "purge", "schedule", "list"},
-  {"trash", "purge", "schedule", "ls"}, "List trash purge schedule.",
-  "", &get_arguments_list, &execute_list);
-Shell::Action status_action(
-  {"trash", "purge", "schedule", "status"}, {},
-  "Show trash purge schedule status.", "", &get_arguments_status,
-  &execute_status);
-
-} // namespace trash_purge_schedule
-} // namespace action
-} // namespace rbd
+        }                       // namespace trash_purge_schedule
+    }                           // namespace action
+}                               // namespace rbd

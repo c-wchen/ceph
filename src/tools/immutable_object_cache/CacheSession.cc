@@ -12,129 +12,137 @@
 #define dout_prefix *_dout << "ceph::cache::CacheSession: " << this << " " \
                            << __func__ << ": "
 
-
 namespace ceph {
-namespace immutable_obj_cache {
+    namespace immutable_obj_cache {
 
-CacheSession::CacheSession(io_service& io_service,
-                           ProcessMsg processmsg,
-                           CephContext* cct)
-    : m_dm_socket(io_service),
-      m_server_process_msg(processmsg), m_cct(cct) {
-  m_bp_header = buffer::create(get_header_size());
-}
+        CacheSession::CacheSession(io_service & io_service,
+                                   ProcessMsg processmsg, CephContext * cct)
+        :m_dm_socket(io_service), m_server_process_msg(processmsg), m_cct(cct) {
+            m_bp_header = buffer::create(get_header_size());
+        } CacheSession::~CacheSession() {
+            close();
+        } stream_protocol::socket & CacheSession::socket() {
+            return m_dm_socket;
+        }
 
-CacheSession::~CacheSession() {
-  close();
-}
+        void CacheSession::set_client_version(const std::string & version) {
+            m_client_version = version;
+        }
 
-stream_protocol::socket& CacheSession::socket() {
-  return m_dm_socket;
-}
+        const std::string & CacheSession::client_version() const {
+            return m_client_version;
+        } void CacheSession::close() {
+            if (m_dm_socket.is_open()) {
+                boost::system::error_code close_ec;
+                m_dm_socket.close(close_ec);
+                if (close_ec) {
+                    ldout(m_cct,
+                          20) << "close: " << close_ec.message() << dendl;
+                }
+            }
+        }
 
-void CacheSession::set_client_version(const std::string &version) {
-  m_client_version = version;
-}
+        void CacheSession::start() {
+            read_request_header();
+        }
 
-const std::string &CacheSession::client_version() const {
-  return m_client_version;
-}
+        void CacheSession::read_request_header() {
+            ldout(m_cct, 20) << dendl;
+            boost::asio::async_read(m_dm_socket,
+                                    boost::asio::buffer(m_bp_header.c_str(),
+                                                        get_header_size()),
+                                    boost::asio::
+                                    transfer_exactly(get_header_size()),
+                                    boost::bind(&CacheSession::
+                                                handle_request_header,
+                                                shared_from_this(),
+                                                boost::asio::placeholders::
+                                                error,
+                                                boost::asio::placeholders::
+                                                bytes_transferred));
+        }
 
-void CacheSession::close() {
-  if (m_dm_socket.is_open()) {
-    boost::system::error_code close_ec;
-    m_dm_socket.close(close_ec);
-    if (close_ec) {
-       ldout(m_cct, 20) << "close: " << close_ec.message() << dendl;
-    }
-  }
-}
+        void CacheSession::handle_request_header(const boost::system::
+                                                 error_code & err,
+                                                 size_t bytes_transferred) {
+            ldout(m_cct, 20) << dendl;
+            if (err || bytes_transferred != get_header_size()) {
+                fault(err);
+                return;
+            }
 
-void CacheSession::start() {
-  read_request_header();
-}
+            read_request_data(get_data_len(m_bp_header.c_str()));
+        }
 
-void CacheSession::read_request_header() {
-  ldout(m_cct, 20) << dendl;
-  boost::asio::async_read(m_dm_socket,
-    boost::asio::buffer(m_bp_header.c_str(), get_header_size()),
-    boost::asio::transfer_exactly(get_header_size()),
-    boost::bind(&CacheSession::handle_request_header,
-     shared_from_this(), boost::asio::placeholders::error,
-     boost::asio::placeholders::bytes_transferred));
-}
+        void CacheSession::read_request_data(uint64_t data_len) {
+            ldout(m_cct, 20) << dendl;
+            bufferptr bp_data(buffer::create(data_len));
+            boost::asio::async_read(m_dm_socket,
+                                    boost::asio::buffer(bp_data.c_str(),
+                                                        bp_data.length()),
+                                    boost::asio::transfer_exactly(data_len),
+                                    boost::bind(&CacheSession::
+                                                handle_request_data,
+                                                shared_from_this(), bp_data,
+                                                data_len,
+                                                boost::asio::placeholders::
+                                                error,
+                                                boost::asio::placeholders::
+                                                bytes_transferred));
+        }
 
-void CacheSession::handle_request_header(const boost::system::error_code& err,
-                                         size_t bytes_transferred) {
-  ldout(m_cct, 20) << dendl;
-  if (err || bytes_transferred != get_header_size()) {
-    fault(err);
-    return;
-  }
+        void CacheSession::handle_request_data(bufferptr bp, uint64_t data_len,
+                                               const boost::system::
+                                               error_code & err,
+                                               size_t bytes_transferred) {
+            ldout(m_cct, 20) << dendl;
+            if (err || bytes_transferred != data_len) {
+                fault(err);
+                return;
+            }
 
-  read_request_data(get_data_len(m_bp_header.c_str()));
-}
+            bufferlist bl_data;
 
-void CacheSession::read_request_data(uint64_t data_len) {
-  ldout(m_cct, 20) << dendl;
-  bufferptr bp_data(buffer::create(data_len));
-  boost::asio::async_read(m_dm_socket,
-    boost::asio::buffer(bp_data.c_str(), bp_data.length()),
-    boost::asio::transfer_exactly(data_len),
-    boost::bind(&CacheSession::handle_request_data,
-      shared_from_this(), bp_data, data_len,
-      boost::asio::placeholders::error,
-      boost::asio::placeholders::bytes_transferred));
-}
+            bl_data.append(m_bp_header);
+            bl_data.append(std::move(bp));
 
-void CacheSession::handle_request_data(bufferptr bp, uint64_t data_len,
-                                      const boost::system::error_code& err,
-                                      size_t bytes_transferred) {
-  ldout(m_cct, 20) << dendl;
-  if (err || bytes_transferred != data_len) {
-    fault(err);
-    return;
-  }
+            ObjectCacheRequest *req = decode_object_cache_request(bl_data);
 
-  bufferlist bl_data;
+            process(req);
+            delete req;
+            read_request_header();
+        }
 
-  bl_data.append(m_bp_header);
-  bl_data.append(std::move(bp));
+        void CacheSession::process(ObjectCacheRequest * req) {
+            ldout(m_cct, 20) << dendl;
+            m_server_process_msg(this, req);
+        }
 
-  ObjectCacheRequest* req = decode_object_cache_request(bl_data);
+        void CacheSession::send(ObjectCacheRequest * reply) {
+            ldout(m_cct, 20) << dendl;
+            bufferlist bl;
+            reply->encode();
+            bl.append(reply->get_payload_bufferlist());
 
-  process(req);
-  delete req;
-  read_request_header();
-}
+            boost::asio::async_write(m_dm_socket,
+                                     boost::asio::buffer(bl.c_str(),
+                                                         bl.length()),
+                                     boost::asio::transfer_exactly(bl.length()),
+                                     [this, bl,
+                                      reply] (const boost::system::
+                                              error_code & err,
+                                              size_t bytes_transferred) {
+                                     delete reply;
+                                     if (err
+                                         || bytes_transferred != bl.length()) {
+                                     fault(err); return;}
+                                     }
+            ) ;
+        }
 
-void CacheSession::process(ObjectCacheRequest* req) {
-  ldout(m_cct, 20) << dendl;
-  m_server_process_msg(this, req);
-}
+        void CacheSession::fault(const boost::system::error_code & ec) {
+            ldout(m_cct, 20) << "session fault : " << ec.message() << dendl;
+        }
 
-void CacheSession::send(ObjectCacheRequest* reply) {
-  ldout(m_cct, 20) << dendl;
-  bufferlist bl;
-  reply->encode();
-  bl.append(reply->get_payload_bufferlist());
-
-  boost::asio::async_write(m_dm_socket,
-        boost::asio::buffer(bl.c_str(), bl.length()),
-        boost::asio::transfer_exactly(bl.length()),
-        [this, bl, reply](const boost::system::error_code& err,
-          size_t bytes_transferred) {
-          delete reply;
-          if (err || bytes_transferred != bl.length()) {
-            fault(err);
-            return;
-          }
-        });
-}
-
-void CacheSession::fault(const boost::system::error_code& ec) {
-  ldout(m_cct, 20) << "session fault : " << ec.message() << dendl;
-}
-
-}  // namespace immutable_obj_cache
-}  // namespace ceph
+    }                           // namespace immutable_obj_cache
+}                               // namespace ceph

@@ -44,95 +44,85 @@
 #define ERROR_LRC_K_MODULO		-(MAX_ERRNO + 20)
 #define ERROR_LRC_M_MODULO		-(MAX_ERRNO + 21)
 
-class ErasureCodeLrc final : public ceph::ErasureCode {
-public:
-  static const std::string DEFAULT_KML;
+class ErasureCodeLrc final:public ceph::ErasureCode {
+  public:
+    static const std::string DEFAULT_KML;
 
-  struct Layer {
-    explicit Layer(const std::string &_chunks_map) : chunks_map(_chunks_map) { }
-    ceph::ErasureCodeInterfaceRef erasure_code;
-    std::vector<int> data;
-    std::vector<int> coding;
-    std::vector<int> chunks;
-    std::set<int> chunks_as_set;
-    std::string chunks_map;
-    ceph::ErasureCodeProfile profile;
-  };
-  std::vector<Layer> layers;
-  std::string directory;
-  unsigned int chunk_count;
-  unsigned int data_chunk_count;
-  std::string rule_root;
-  std::string rule_device_class;
-  struct Step {
-    Step(const std::string &_op, const std::string &_type, int _n) :
-      op(_op),
-      type(_type),
-      n(_n) {}
-    std::string op;
-    std::string type;
-    int n;
-  };
-  std::vector<Step> rule_steps;
+    struct Layer {
+        explicit Layer(const std::string & _chunks_map):chunks_map(_chunks_map) {
+        } ceph::ErasureCodeInterfaceRef erasure_code;
+        std::vector < int >data;
+        std::vector < int >coding;
+        std::vector < int >chunks;
+        std::set < int >chunks_as_set;
+        std::string chunks_map;
+        ceph::ErasureCodeProfile profile;
+    };
+    std::vector < Layer > layers;
+    std::string directory;
+    unsigned int chunk_count;
+    unsigned int data_chunk_count;
+    std::string rule_root;
+    std::string rule_device_class;
+    struct Step {
+        Step(const std::string & _op, const std::string & _type,
+             int _n):op(_op), type(_type), n(_n) {
+        } std::string op;
+        std::string type;
+        int n;
+    };
+    std::vector < Step > rule_steps;
 
-  explicit ErasureCodeLrc(const std::string &dir)
-    : directory(dir),
-      chunk_count(0), data_chunk_count(0), rule_root("default")
-  {
-    rule_steps.push_back(Step("chooseleaf", "host", 0));
-  }
+    explicit ErasureCodeLrc(const std::string & dir)
+    :directory(dir), chunk_count(0), data_chunk_count(0), rule_root("default") {
+        rule_steps.push_back(Step("chooseleaf", "host", 0));
+    }
 
-  ~ErasureCodeLrc() override {}
+    ~ErasureCodeLrc()override {
+    }
 
-  std::set<int> get_erasures(const std::set<int> &need,
-			const std::set<int> &available) const;
+    std::set < int >get_erasures(const std::set < int >&need,
+                                 const std::set < int >&available) const;
 
-  int _minimum_to_decode(const std::set<int> &want_to_read,
-			 const std::set<int> &available,
-			 std::set<int> *minimum) override;
+    int _minimum_to_decode(const std::set < int >&want_to_read,
+                           const std::set < int >&available,
+                           std::set < int >*minimum) override;
 
-  int create_rule(const std::string &name,
-			     CrushWrapper &crush,
-			     std::ostream *ss) const override;
+    int create_rule(const std::string & name,
+                    CrushWrapper & crush, std::ostream * ss) const override;
 
-  unsigned int get_chunk_count() const override {
-    return chunk_count;
-  }
+    unsigned int get_chunk_count() const override {
+        return chunk_count;
+    } unsigned int get_data_chunk_count() const override {
+        return data_chunk_count;
+    } unsigned int get_chunk_size(unsigned int object_size) const override;
 
-  unsigned int get_data_chunk_count() const override {
-    return data_chunk_count;
-  }
+    int encode_chunks(const std::set < int >&want_to_encode,
+                      std::map < int, ceph::buffer::list > *encoded) override;
 
-  unsigned int get_chunk_size(unsigned int object_size) const override;
+    int decode_chunks(const std::set < int >&want_to_read,
+                      const std::map < int, ceph::buffer::list > &chunks,
+                      std::map < int, ceph::buffer::list > *decoded) override;
 
-  int encode_chunks(const std::set<int> &want_to_encode,
-		    std::map<int, ceph::buffer::list> *encoded) override;
+    int init(ceph::ErasureCodeProfile & profile, std::ostream * ss) override;
 
-  int decode_chunks(const std::set<int> &want_to_read,
-		    const std::map<int, ceph::buffer::list> &chunks,
-		    std::map<int, ceph::buffer::list> *decoded) override;
+    virtual int parse(ceph::ErasureCodeProfile & profile, std::ostream * ss);
 
-  int init(ceph::ErasureCodeProfile &profile, std::ostream *ss) override;
+    int parse_kml(ceph::ErasureCodeProfile & profile, std::ostream * ss);
 
-  virtual int parse(ceph::ErasureCodeProfile &profile, std::ostream *ss);
+    int parse_rule(ceph::ErasureCodeProfile & profile, std::ostream * ss);
 
-  int parse_kml(ceph::ErasureCodeProfile &profile, std::ostream *ss);
+    int parse_rule_step(const std::string & description_string,
+                        json_spirit::mArray description, std::ostream * ss);
 
-  int parse_rule(ceph::ErasureCodeProfile &profile, std::ostream *ss);
-
-  int parse_rule_step(const std::string &description_string,
-		      json_spirit::mArray description,
-		      std::ostream *ss);
-
-  int layers_description(const ceph::ErasureCodeProfile &profile,
-			 json_spirit::mArray *description,
-			 std::ostream *ss) const;
-  int layers_parse(const std::string &description_string,
-		   json_spirit::mArray description,
-		   std::ostream *ss);
-  int layers_init(std::ostream *ss);
-  int layers_sanity_checks(const std::string &description_string,
-			   std::ostream *ss) const;
+    int layers_description(const ceph::ErasureCodeProfile & profile,
+                           json_spirit::mArray * description,
+                           std::ostream * ss) const;
+    int layers_parse(const std::string & description_string,
+                     json_spirit::mArray description, std::ostream * ss);
+    int layers_init(std::ostream * ss);
+    int layers_sanity_checks(const std::string & description_string,
+                             std::ostream * ss) const;
 };
 
 #endif

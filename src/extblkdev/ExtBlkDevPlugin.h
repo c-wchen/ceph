@@ -26,13 +26,11 @@
 
 namespace ceph {
 
-  namespace extblkdev {
-    int preload(CephContext *cct);
-    int detect_device(CephContext *cct,
-			  const std::string &logdevname,
-			  ExtBlkDevInterfaceRef& ebd_impl);
-    int release_device(ExtBlkDevInterfaceRef& ebd_impl);
-  }
-}
-
+    namespace extblkdev {
+        int preload(CephContext * cct);
+        int detect_device(CephContext * cct,
+                          const std::string & logdevname,
+                          ExtBlkDevInterfaceRef & ebd_impl);
+        int release_device(ExtBlkDevInterfaceRef & ebd_impl);
+}}
 #endif

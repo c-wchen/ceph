@@ -51,46 +51,38 @@
 extern "C" {
 #endif
 
-struct krbd_ctx;
+    struct krbd_ctx;
 
-int krbd_create_from_context(rados_config_t cct, uint32_t flags,
-                             struct krbd_ctx **pctx);
-void krbd_destroy(struct krbd_ctx *ctx);
+    int krbd_create_from_context(rados_config_t cct, uint32_t flags,
+                                 struct krbd_ctx **pctx);
+    void krbd_destroy(struct krbd_ctx *ctx);
 
-int krbd_map(struct krbd_ctx *ctx,
-             const char *pool_name,
-             const char *nspace_name,
-             const char *image_name,
-             const char *snap_name,
-             const char *options,
-             char **pdevnode);
-int krbd_is_mapped(struct krbd_ctx *ctx,
-                   const char *pool_name,
-                   const char *nspace_name,
-                   const char *image_name,
-                   const char *snap_name,
-                   char **pdevnode);
-
-int krbd_unmap(struct krbd_ctx *ctx, const char *devnode,
-               const char *options);
-int krbd_unmap_by_spec(struct krbd_ctx *ctx,
+    int krbd_map(struct krbd_ctx *ctx,
+                 const char *pool_name,
+                 const char *nspace_name,
+                 const char *image_name,
+                 const char *snap_name, const char *options, char **pdevnode);
+    int krbd_is_mapped(struct krbd_ctx *ctx,
                        const char *pool_name,
                        const char *nspace_name,
                        const char *image_name,
-                       const char *snap_name,
-                       const char *options);
+                       const char *snap_name, char **pdevnode);
+
+    int krbd_unmap(struct krbd_ctx *ctx, const char *devnode,
+                   const char *options);
+    int krbd_unmap_by_spec(struct krbd_ctx *ctx,
+                           const char *pool_name,
+                           const char *nspace_name,
+                           const char *image_name,
+                           const char *snap_name, const char *options);
 
 #ifdef __cplusplus
 }
 #endif
-
 #ifdef __cplusplus
-
 namespace ceph {
-  class Formatter;
-}
-
-int krbd_showmapped(struct krbd_ctx *ctx, ceph::Formatter *f);
+    class Formatter;
+} int krbd_showmapped(struct krbd_ctx *ctx, ceph::Formatter * f);
 
 #endif /* __cplusplus */
 

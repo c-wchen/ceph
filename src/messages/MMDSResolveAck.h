@@ -18,50 +18,52 @@
 #include "include/types.h"
 #include "messages/MMDSOp.h"
 
+class MMDSResolveAck final:public MMDSOp {
+    static constexpr int HEAD_VERSION = 1;
+    static constexpr int COMPAT_VERSION = 1;
+  public:
+     std::map < metareqid_t, ceph::buffer::list > commit;
+     std::vector < metareqid_t > abort;
 
-class MMDSResolveAck final : public MMDSOp {
-  static constexpr int HEAD_VERSION = 1;
-  static constexpr int COMPAT_VERSION = 1;
-public:
-  std::map<metareqid_t, ceph::buffer::list> commit;
-  std::vector<metareqid_t> abort;
+  protected:
+     MMDSResolveAck():MMDSOp {
+    MSG_MDS_RESOLVEACK, HEAD_VERSION, COMPAT_VERSION} {
+    }
+    ~MMDSResolveAck()final {
+    }
 
-protected:
-  MMDSResolveAck() : MMDSOp{MSG_MDS_RESOLVEACK, HEAD_VERSION, COMPAT_VERSION} {}
-  ~MMDSResolveAck() final {}
+  public:
+    std::string_view get_type_name()const override {
+        return "resolve_ack";
+    }
+    /*void print(ostream& out) const {
+       out << "resolve_ack.size()
+       << "+" << ambiguous_imap.size()
+       << " imports +" << peer_requests.size() << " peer requests)";
+       }
+     */ void add_commit(metareqid_t r) {
+        commit[r].clear();
+    }
+    void add_abort(metareqid_t r) {
+        abort.push_back(r);
+    }
 
-public:
-  std::string_view get_type_name() const override { return "resolve_ack"; }
-  /*void print(ostream& out) const {
-    out << "resolve_ack.size()
-	<< "+" << ambiguous_imap.size()
-	<< " imports +" << peer_requests.size() << " peer requests)";
-  }
-  */
-  
-  void add_commit(metareqid_t r) {
-    commit[r].clear();
-  }
-  void add_abort(metareqid_t r) {
-    abort.push_back(r);
-  }
-
-  void encode_payload(uint64_t features) override {
-    using ceph::encode;
-    encode(commit, payload);
-    encode(abort, payload);
-  }
-  void decode_payload() override {
-    using ceph::decode;
-    auto p = payload.cbegin();
-    decode(commit, p);
-    decode(abort, p);
-  }
-private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+    void encode_payload(uint64_t features) override {
+        using ceph::encode;
+        encode(commit, payload);
+        encode(abort, payload);
+    }
+    void decode_payload() override {
+        using ceph::decode;
+        auto p = payload.cbegin();
+        decode(commit, p);
+        decode(abort, p);
+    }
+  private:
+    template < class T, typename ... Args >
+        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+        friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

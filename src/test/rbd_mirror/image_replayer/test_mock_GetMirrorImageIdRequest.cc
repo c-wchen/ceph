@@ -12,96 +12,100 @@
 
 namespace librbd {
 
-namespace {
+    namespace {
 
-struct MockTestImageCtx : public librbd::MockImageCtx {
-  MockTestImageCtx(librbd::ImageCtx &image_ctx)
-    : librbd::MockImageCtx(image_ctx) {
-  }
-};
+        struct MockTestImageCtx:public librbd::MockImageCtx {
+            MockTestImageCtx(librbd::ImageCtx & image_ctx)
+            :librbd::MockImageCtx(image_ctx) {
+        }};
 
-} // anonymous namespace
-} // namespace librbd
+    }                           // anonymous namespace
+}                               // namespace librbd
 
 // template definitions
 #include "tools/rbd_mirror/image_replayer/GetMirrorImageIdRequest.cc"
 
 namespace rbd {
-namespace mirror {
-namespace image_replayer {
+    namespace mirror {
+        namespace image_replayer {
 
-using ::testing::_;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Invoke;
-using ::testing::Return;
-using ::testing::StrEq;
-using ::testing::WithArg;
-using ::testing::WithArgs;
+            using::testing::_;
+            using::testing::DoAll;
+            using::testing::InSequence;
+            using::testing::Invoke;
+            using::testing::Return;
+            using::testing::StrEq;
+            using::testing::WithArg;
+            using::testing::WithArgs;
 
-class TestMockImageReplayerGetMirrorImageIdRequest : public TestMockFixture {
-public:
-  typedef GetMirrorImageIdRequest<librbd::MockTestImageCtx> MockGetMirrorImageIdRequest;
+            class TestMockImageReplayerGetMirrorImageIdRequest:public
+                TestMockFixture {
+              public:
+                typedef GetMirrorImageIdRequest < librbd::MockTestImageCtx >
+                    MockGetMirrorImageIdRequest;
 
-  void expect_mirror_image_get_image_id(librados::IoCtx &io_ctx,
-                                        const std::string &image_id, int r) {
-    bufferlist bl;
-    encode(image_id, bl);
+                void expect_mirror_image_get_image_id(librados::IoCtx & io_ctx,
+                                                      const std::
+                                                      string & image_id,
+                                                      int r) {
+                    bufferlist bl;
+                     encode(image_id, bl);
 
-    EXPECT_CALL(get_mock_io_ctx(io_ctx),
-                exec(RBD_MIRRORING, _, StrEq("rbd"),
-                     StrEq("mirror_image_get_image_id"), _, _, _, _))
-      .WillOnce(DoAll(WithArg<5>(Invoke([bl](bufferlist *out_bl) {
-                                          *out_bl = bl;
-                                        })),
-                      Return(r)));
-  }
+                     EXPECT_CALL(get_mock_io_ctx(io_ctx),
+                                 exec(RBD_MIRRORING, _, StrEq("rbd"),
+                                      StrEq("mirror_image_get_image_id"), _, _,
+                                      _, _))
+                    .
+                        WillOnce(DoAll
+                                 (WithArg < 5 >
+                                  (Invoke([bl] (bufferlist * out_bl) {
+                                          *out_bl = bl;})), Return(r)));
+            }};
 
-};
+             TEST_F(TestMockImageReplayerGetMirrorImageIdRequest, Success) {
+                InSequence seq;
+                 expect_mirror_image_get_image_id(m_local_io_ctx, "image id",
+                                                  0);
 
-TEST_F(TestMockImageReplayerGetMirrorImageIdRequest, Success) {
-  InSequence seq;
-  expect_mirror_image_get_image_id(m_local_io_ctx, "image id", 0);
+                 std::string image_id;
+                C_SaferCond ctx;
+                auto req = MockGetMirrorImageIdRequest::create(m_local_io_ctx,
+                                                               "global image id",
+                                                               &image_id, &ctx);
+                 req->send();
 
-  std::string image_id;
-  C_SaferCond ctx;
-  auto req = MockGetMirrorImageIdRequest::create(m_local_io_ctx,
-                                                 "global image id",
-                                                 &image_id, &ctx);
-  req->send();
+                 ASSERT_EQ(0, ctx.wait());
+                 ASSERT_EQ(std::string("image id"), image_id);
+            } TEST_F(TestMockImageReplayerGetMirrorImageIdRequest,
+                     MirrorImageIdDNE) {
+                InSequence seq;
+                expect_mirror_image_get_image_id(m_local_io_ctx, "", -ENOENT);
 
-  ASSERT_EQ(0, ctx.wait());
-  ASSERT_EQ(std::string("image id"), image_id);
-}
+                std::string image_id;
+                C_SaferCond ctx;
+                auto req = MockGetMirrorImageIdRequest::create(m_local_io_ctx,
+                                                               "global image id",
+                                                               &image_id, &ctx);
+                req->send();
 
-TEST_F(TestMockImageReplayerGetMirrorImageIdRequest, MirrorImageIdDNE) {
-  InSequence seq;
-  expect_mirror_image_get_image_id(m_local_io_ctx, "", -ENOENT);
+                ASSERT_EQ(-ENOENT, ctx.wait());
+            }
 
-  std::string image_id;
-  C_SaferCond ctx;
-  auto req = MockGetMirrorImageIdRequest::create(m_local_io_ctx,
-                                                 "global image id",
-                                                 &image_id, &ctx);
-  req->send();
+            TEST_F(TestMockImageReplayerGetMirrorImageIdRequest,
+                   MirrorImageIdError) {
+                InSequence seq;
+                expect_mirror_image_get_image_id(m_local_io_ctx, "", -EINVAL);
 
-  ASSERT_EQ(-ENOENT, ctx.wait());
-}
+                std::string image_id;
+                C_SaferCond ctx;
+                auto req = MockGetMirrorImageIdRequest::create(m_local_io_ctx,
+                                                               "global image id",
+                                                               &image_id, &ctx);
+                req->send();
 
-TEST_F(TestMockImageReplayerGetMirrorImageIdRequest, MirrorImageIdError) {
-  InSequence seq;
-  expect_mirror_image_get_image_id(m_local_io_ctx, "", -EINVAL);
+                ASSERT_EQ(-EINVAL, ctx.wait());
+            }
 
-  std::string image_id;
-  C_SaferCond ctx;
-  auto req = MockGetMirrorImageIdRequest::create(m_local_io_ctx,
-                                                 "global image id",
-                                                 &image_id, &ctx);
-  req->send();
-
-  ASSERT_EQ(-EINVAL, ctx.wait());
-}
-
-} // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
+        }                       // namespace image_replayer
+    }                           // namespace mirror
+}                               // namespace rbd

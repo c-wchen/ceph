@@ -17,19 +17,19 @@
 
 #include "../LogEvent.h"
 
-class ENoOp : public LogEvent {
-  uint32_t pad_size;
+class ENoOp:public LogEvent {
+    uint32_t pad_size;
 
-public:
-  ENoOp() : LogEvent(EVENT_NOOP), pad_size(0) { }
-  explicit ENoOp(uint32_t size_) : LogEvent(EVENT_NOOP), pad_size(size_){ }
+  public:
+     ENoOp():LogEvent(EVENT_NOOP), pad_size(0) {
+    } explicit ENoOp(uint32_t size_):LogEvent(EVENT_NOOP), pad_size(size_) {
+    }
 
-  void encode(bufferlist& bl, uint64_t features) const override;
-  void decode(bufferlist::const_iterator& bl) override;
-  void dump(Formatter *f) const override {}
-
-  void replay(MDSRank *mds) override;
+    void encode(bufferlist & bl, uint64_t features) const override;
+    void decode(bufferlist::const_iterator & bl) override;
+    void dump(Formatter * f) const override {
+    } void replay(MDSRank * mds) override;
 };
-WRITE_CLASS_ENCODER_FEATURES(ENoOp)
 
+WRITE_CLASS_ENCODER_FEATURES(ENoOp)
 #endif

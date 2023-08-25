@@ -7,41 +7,34 @@
 #include <boost/variant.hpp>
 
 namespace librbd {
-namespace io {
+    namespace io {
 
-void ObjectDispatchSpec::C_Dispatcher::complete(int r) {
-  if (r < 0) {
-    finish(r);
-    return;
-  }
+        void ObjectDispatchSpec::C_Dispatcher::complete(int r) {
+            if (r < 0) {
+                finish(r);
+                return;
+            } switch (object_dispatch_spec->dispatch_result) {
+            case DISPATCH_RESULT_CONTINUE:
+                object_dispatch_spec->send();
+                break;
+                case DISPATCH_RESULT_COMPLETE:finish(r);
+                break;
+                case DISPATCH_RESULT_INVALID:case
+                    DISPATCH_RESULT_RESTART:ceph_abort();
+                break;
+        }} void ObjectDispatchSpec::C_Dispatcher::finish(int r) {
+            on_finish->complete(r);
+            delete object_dispatch_spec;
+        }
 
-  switch (object_dispatch_spec->dispatch_result) {
-  case DISPATCH_RESULT_CONTINUE:
-    object_dispatch_spec->send();
-    break;
-  case DISPATCH_RESULT_COMPLETE:
-    finish(r);
-    break;
-  case DISPATCH_RESULT_INVALID:
-  case DISPATCH_RESULT_RESTART:
-    ceph_abort();
-    break;
-  }
-}
+        void ObjectDispatchSpec::send() {
+            object_dispatcher->send(this);
+        }
 
-void ObjectDispatchSpec::C_Dispatcher::finish(int r) {
-  on_finish->complete(r);
-  delete object_dispatch_spec;
-}
+        void ObjectDispatchSpec::fail(int r) {
+            ceph_assert(r < 0);
+            dispatcher_ctx.complete(r);
+        }
 
-void ObjectDispatchSpec::send() {
-  object_dispatcher->send(this);
-}
-
-void ObjectDispatchSpec::fail(int r) {
-  ceph_assert(r < 0);
-  dispatcher_ctx.complete(r);
-}
-
-} // namespace io
-} // namespace librbd
+    }                           // namespace io
+}                               // namespace librbd

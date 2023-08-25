@@ -12,7 +12,7 @@
 // make ObserverMgr a template parameter of md_config_t's methods just complicates
 // the dependencies between header files, and slows down the compiling.
 class ConfigTracker {
-public:
-  virtual ~ConfigTracker() = default;
-  virtual bool is_tracking(const std::string& name) const = 0;
+  public:
+    virtual ~ ConfigTracker() = default;
+    virtual bool is_tracking(const std::string & name) const = 0;
 };

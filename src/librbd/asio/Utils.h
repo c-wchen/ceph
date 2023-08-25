@@ -9,25 +9,22 @@
 #include <boost/system/error_code.hpp>
 
 namespace librbd {
-namespace asio {
-namespace util {
+    namespace asio {
+        namespace util {
 
-template <typename T>
-auto get_context_adapter(T&& t) {
-  return [t = std::move(t)](boost::system::error_code ec) {
-      t->complete(-ec.value());
-    };
-}
+            template < typename T > auto get_context_adapter(T && t) {
+                return[t = std::move(t)] (boost::system::error_code ec) {
+                    t->complete(-ec.value());
+                };
+            } template < typename T > auto get_callback_adapter(T && t) {
+                return[t = std::move(t)] (boost::system::error_code ec, auto
+                                          && ... args) {
+                    t(-ec.value(), std::forward < decltype(args) > (args) ...);
+                };
+            }
 
-template <typename T>
-auto get_callback_adapter(T&& t) {
-  return [t = std::move(t)](boost::system::error_code ec, auto&& ... args) {
-      t(-ec.value(), std::forward<decltype(args)>(args)...);
-    };
-}
-
-} // namespace util
-} // namespace asio
-} // namespace librbd
+        }                       // namespace util
+    }                           // namespace asio
+}                               // namespace librbd
 
 #endif // CEPH_LIBRBD_ASIO_UTILS_H
