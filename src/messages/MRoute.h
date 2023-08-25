@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MROUTE_H
@@ -18,7 +18,8 @@
 #include "msg/Message.h"
 #include "include/encoding.h"
 
-struct MRoute:public Message {
+struct MRoute : public Message
+{
 
     static const int HEAD_VERSION = 3;
     static const int COMPAT_VERSION = 3;
@@ -28,26 +29,33 @@ struct MRoute:public Message {
     entity_inst_t dest;
     epoch_t send_osdmap_first;
 
-     MRoute():Message(MSG_ROUTE, HEAD_VERSION, COMPAT_VERSION),
-        session_mon_tid(0), msg(NULL), send_osdmap_first(0) {
-    } MRoute(uint64_t t, Message * m)
-    :Message(MSG_ROUTE, HEAD_VERSION, COMPAT_VERSION),
-        session_mon_tid(t), msg(m), send_osdmap_first(0) {
+    MRoute() : Message(MSG_ROUTE, HEAD_VERSION, COMPAT_VERSION),
+               session_mon_tid(0), msg(NULL), send_osdmap_first(0)
+    {
     }
-    MRoute(bufferlist bl, const entity_inst_t & i)
-    :Message(MSG_ROUTE, HEAD_VERSION, COMPAT_VERSION),
-        session_mon_tid(0), dest(i), send_osdmap_first(0) {
+    MRoute(uint64_t t, Message *m)
+        : Message(MSG_ROUTE, HEAD_VERSION, COMPAT_VERSION),
+          session_mon_tid(t), msg(m), send_osdmap_first(0)
+    {
+    }
+    MRoute(bufferlist bl, const entity_inst_t &i)
+        : Message(MSG_ROUTE, HEAD_VERSION, COMPAT_VERSION),
+          session_mon_tid(0), dest(i), send_osdmap_first(0)
+    {
         bufferlist::iterator p = bl.begin();
         msg = decode_message(NULL, 0, p);
     }
-  private:
-    ~MRoute()override {
+
+private:
+    ~MRoute() override
+    {
         if (msg)
             msg->put();
     }
 
-  public:
-    void decode_payload() override {
+public:
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(session_mon_tid, p);
         ::decode(dest, p);
@@ -57,7 +65,8 @@ struct MRoute:public Message {
             msg = decode_message(NULL, 0, p);
         ::decode(send_osdmap_first, p);
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(session_mon_tid, payload);
         ::encode(dest, payload, features);
         bool m = msg ? true : false;
@@ -67,9 +76,12 @@ struct MRoute:public Message {
         ::encode(send_osdmap_first, payload);
     }
 
-    const char *get_type_name() const override {
+    const char *get_type_name() const override
+    {
         return "route";
-    } void print(ostream & o) const override {
+    }
+    void print(ostream &o) const override
+    {
         if (msg)
             o << "route(" << *msg;
         else
@@ -80,6 +92,7 @@ struct MRoute:public Message {
             o << " tid " << session_mon_tid << ")";
         else
             o << " to " << dest << ")";
-}};
+    }
+};
 
 #endif

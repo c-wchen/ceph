@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MEXPORTCAPS_H
@@ -17,34 +17,44 @@
 
 #include "msg/Message.h"
 
-class MExportCaps:public Message {
-  public:
+class MExportCaps : public Message
+{
+public:
     inodeno_t ino;
     bufferlist cap_bl;
-     map < client_t, entity_inst_t > client_map;
+    map<client_t, entity_inst_t> client_map;
 
-     MExportCaps(): Message(MSG_MDS_EXPORTCAPS) {
-  } private:
-    ~MExportCaps() override {
+    MExportCaps() : Message(MSG_MDS_EXPORTCAPS)
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+private:
+    ~MExportCaps() override
+    {
+    }
+
+public:
+    const char *get_type_name() const override
+    {
         return "export_caps";
-    } void print(ostream & o) const override {
+    }
+    void print(ostream &o) const override
+    {
         o << "export_caps(" << ino << ")";
-    } void encode_payload(uint64_t features) override {
+    }
+    void encode_payload(uint64_t features) override
+    {
         ::encode(ino, payload);
         ::encode(cap_bl, payload);
         ::encode(client_map, payload, features);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(ino, p);
         ::decode(cap_bl, p);
         ::decode(client_map, p);
     }
-
 };
 
 #endif

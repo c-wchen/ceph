@@ -21,50 +21,66 @@
  * pass a ScrubMap from a shard back to the primary
  */
 
-struct MOSDRepScrubMap:public MOSDFastDispatchOp {
+struct MOSDRepScrubMap : public MOSDFastDispatchOp
+{
 
     static const int HEAD_VERSION = 2;
     static const int COMPAT_VERSION = 1;
 
-    spg_t pgid;                 // primary spg_t
+    spg_t pgid; // primary spg_t
     epoch_t map_epoch = 0;
-    pg_shard_t from;            // whose scrubmap this is
+    pg_shard_t from; // whose scrubmap this is
     bufferlist scrub_map_bl;
     bool preempted = false;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } spg_t get_spg() const override {
+    }
+    spg_t get_spg() const override
+    {
         return pgid;
-    } MOSDRepScrubMap()
-    :MOSDFastDispatchOp(MSG_OSD_REP_SCRUBMAP, HEAD_VERSION, COMPAT_VERSION) {
-    } MOSDRepScrubMap(spg_t pgid, epoch_t map_epoch, pg_shard_t from)
-    :MOSDFastDispatchOp(MSG_OSD_REP_SCRUBMAP, HEAD_VERSION, COMPAT_VERSION),
-        pgid(pgid), map_epoch(map_epoch), from(from) {
+    }
+    MOSDRepScrubMap()
+        : MOSDFastDispatchOp(MSG_OSD_REP_SCRUBMAP, HEAD_VERSION, COMPAT_VERSION)
+    {
+    }
+    MOSDRepScrubMap(spg_t pgid, epoch_t map_epoch, pg_shard_t from)
+        : MOSDFastDispatchOp(MSG_OSD_REP_SCRUBMAP, HEAD_VERSION, COMPAT_VERSION),
+          pgid(pgid), map_epoch(map_epoch), from(from)
+    {
     }
 
-  private:
-    ~MOSDRepScrubMap() {
+private:
+    ~MOSDRepScrubMap()
+    {
     }
 
-  public:
-    const char *get_type_name() const {
+public:
+    const char *get_type_name() const
+    {
         return "rep_scrubmap";
-    } void print(ostream & out) const {
+    }
+    void print(ostream &out) const
+    {
         out << "rep_scrubmap(" << pgid << " e" << map_epoch
             << " from shard " << from << (preempted ? " PREEMPTED" : "") << ")";
-    } void encode_payload(uint64_t features) {
+    }
+    void encode_payload(uint64_t features)
+    {
         ::encode(pgid, payload);
         ::encode(map_epoch, payload);
         ::encode(from, payload);
         ::encode(preempted, payload);
     }
-    void decode_payload() {
+    void decode_payload()
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(pgid, p);
         ::decode(map_epoch, p);
         ::decode(from, p);
-        if (header.version >= 2) {
+        if (header.version >= 2)
+        {
             ::decode(preempted, p);
         }
     }

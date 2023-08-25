@@ -18,10 +18,12 @@
 #include "messages/MMonQuorumService.h"
 #include "mon/mon_types.h"
 
-struct MMonHealth:public MMonQuorumService {
+struct MMonHealth : public MMonQuorumService
+{
     static const int HEAD_VERSION = 1;
 
-    enum {
+    enum
+    {
         OP_TELL = 1,
     };
 
@@ -31,37 +33,51 @@ struct MMonHealth:public MMonQuorumService {
     // service specific data
     DataStats data_stats;
 
-     MMonHealth():MMonQuorumService(MSG_MON_HEALTH, HEAD_VERSION) {
-  } MMonHealth(uint32_t type, int op = 0):
-    MMonQuorumService(MSG_MON_HEALTH, HEAD_VERSION),
-        service_type(type), service_op(op) {
+    MMonHealth() : MMonQuorumService(MSG_MON_HEALTH, HEAD_VERSION)
+    {
+    }
+    MMonHealth(uint32_t type, int op = 0) : MMonQuorumService(MSG_MON_HEALTH, HEAD_VERSION),
+                                            service_type(type), service_op(op)
+    {
     }
 
-  private:
-    ~MMonHealth()override {
+private:
+    ~MMonHealth() override
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+public:
+    const char *get_type_name() const override
+    {
         return "mon_health";
-    } const char *get_service_op_name() const {
-        switch (service_op) {
+    }
+    const char *get_service_op_name() const
+    {
+        switch (service_op)
+        {
         case OP_TELL:
             return "tell";
-        } return "???";
+        }
+        return "???";
     }
-    void print(ostream & o) const override {
+    void print(ostream &o) const override
+    {
         o << "mon_health( service " << get_service_type()
-        << " op " << get_service_op_name()
-        << " e " << get_epoch() << " r " << get_round()
-        << " )";
-    } int get_service_type() const {
+          << " op " << get_service_op_name()
+          << " e " << get_epoch() << " r " << get_round()
+          << " )";
+    }
+    int get_service_type() const
+    {
         return service_type;
-    } int get_service_op() {
+    }
+    int get_service_op()
+    {
         return service_op;
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         service_decode(p);
         ::decode(service_type, p);
@@ -69,13 +85,13 @@ struct MMonHealth:public MMonQuorumService {
         ::decode(data_stats, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         service_encode();
         ::encode(service_type, payload);
         ::encode(service_op, payload);
         ::encode(data_stats, payload);
     }
-
 };
 
 #endif /* CEPH_MMON_HEALTH_H */

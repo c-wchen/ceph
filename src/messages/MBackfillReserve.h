@@ -17,13 +17,16 @@
 
 #include "msg/Message.h"
 
-class MBackfillReserve:public Message {
+class MBackfillReserve : public Message
+{
     static const int HEAD_VERSION = 3;
     static const int COMPAT_VERSION = 3;
-  public:
-     spg_t pgid;
+
+public:
+    spg_t pgid;
     epoch_t query_epoch;
-    enum {
+    enum
+    {
         REQUEST = 0,
         GRANT = 1,
         REJECT = 2,
@@ -31,35 +34,45 @@ class MBackfillReserve:public Message {
     uint32_t type;
     uint32_t priority;
 
-     MBackfillReserve()
-    :Message(MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION),
-        query_epoch(0), type(-1), priority(-1) {
-    } MBackfillReserve(int type,
-                       spg_t pgid, epoch_t query_epoch, unsigned prio = -1)
-  :    
-    Message(MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION),
-    pgid(pgid), query_epoch(query_epoch), type(type), priority(prio) {
+    MBackfillReserve()
+        : Message(MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION),
+          query_epoch(0), type(-1), priority(-1)
+    {
+    }
+    MBackfillReserve(int type,
+                     spg_t pgid, epoch_t query_epoch, unsigned prio = -1)
+        : Message(MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION),
+          pgid(pgid), query_epoch(query_epoch), type(type), priority(prio)
+    {
     }
 
-    const char *get_type_name() const override {
+    const char *get_type_name() const override
+    {
         return "MBackfillReserve";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "MBackfillReserve ";
-        switch (type) {
+        switch (type)
+        {
         case REQUEST:
             out << "REQUEST ";
             break;
-            case GRANT:out << "GRANT ";
+        case GRANT:
+            out << "GRANT ";
             break;
-            case REJECT:out << "REJECT ";
+        case REJECT:
+            out << "REJECT ";
             break;
-        } out << " pgid: " << pgid << ", query_epoch: " << query_epoch;
+        }
+        out << " pgid: " << pgid << ", query_epoch: " << query_epoch;
         if (type == REQUEST)
             out << ", prio: " << priority;
         return;
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(pgid.pgid, p);
         ::decode(query_epoch, p);
@@ -68,7 +81,8 @@ class MBackfillReserve:public Message {
         ::decode(pgid.shard, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(pgid.pgid, payload);
         ::encode(query_epoch, payload);
         ::encode(type, payload);

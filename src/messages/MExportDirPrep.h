@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MEXPORTDIRPREP_H
@@ -18,60 +18,80 @@
 #include "msg/Message.h"
 #include "include/types.h"
 
-class MExportDirPrep:public Message {
+class MExportDirPrep : public Message
+{
     dirfrag_t dirfrag;
-  public:
-     bufferlist basedir;
-     list < dirfrag_t > bounds;
-     list < bufferlist > traces;
-  private:
-     set < mds_rank_t > bystanders;
+
+public:
+    bufferlist basedir;
+    list<dirfrag_t> bounds;
+    list<bufferlist> traces;
+
+private:
+    set<mds_rank_t> bystanders;
     bool b_did_assim;
 
-  public:
-     dirfrag_t get_dirfrag() {
+public:
+    dirfrag_t get_dirfrag()
+    {
         return dirfrag;
-    } list < dirfrag_t > &get_bounds() {
+    }
+    list<dirfrag_t> &get_bounds()
+    {
         return bounds;
     }
-    set < mds_rank_t > &get_bystanders() {
+    set<mds_rank_t> &get_bystanders()
+    {
         return bystanders;
     }
 
-    bool did_assim() {
+    bool did_assim()
+    {
         return b_did_assim;
     }
-    void mark_assim() {
+    void mark_assim()
+    {
         b_did_assim = true;
     }
 
-    MExportDirPrep() {
+    MExportDirPrep()
+    {
         b_did_assim = false;
     }
-  MExportDirPrep(dirfrag_t df, uint64_t tid):
-    Message(MSG_MDS_EXPORTDIRPREP), dirfrag(df), b_did_assim(false) {
+    MExportDirPrep(dirfrag_t df, uint64_t tid) : Message(MSG_MDS_EXPORTDIRPREP), dirfrag(df), b_did_assim(false)
+    {
         set_tid(tid);
     }
-  private:
-    ~MExportDirPrep()override {
+
+private:
+    ~MExportDirPrep() override
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+public:
+    const char *get_type_name() const override
+    {
         return "ExP";
-    } void print(ostream & o) const override {
+    }
+    void print(ostream &o) const override
+    {
         o << "export_prep(" << dirfrag << ")";
-    } void add_bound(dirfrag_t df) {
+    }
+    void add_bound(dirfrag_t df)
+    {
         bounds.push_back(df);
     }
-    void add_trace(bufferlist & bl) {
+    void add_trace(bufferlist &bl)
+    {
         traces.push_back(bl);
     }
-    void add_bystander(mds_rank_t who) {
+    void add_bystander(mds_rank_t who)
+    {
         bystanders.insert(who);
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(dirfrag, p);
         ::decode(basedir, p);
@@ -80,7 +100,8 @@ class MExportDirPrep:public Message {
         ::decode(bystanders, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(dirfrag, payload);
         ::encode(basedir, payload);
         ::encode(bounds, payload);

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMGRMAP_H
@@ -18,33 +18,44 @@
 #include "msg/Message.h"
 #include "mon/MgrMap.h"
 
-class MMgrMap:public Message {
-  protected:
+class MMgrMap : public Message
+{
+protected:
     MgrMap map;
 
-  public:
-    const MgrMap & get_map() {
+public:
+    const MgrMap &get_map()
+    {
         return map;
-    } MMgrMap():Message(MSG_MGR_MAP) {
     }
-  MMgrMap(const MgrMap & map_):
-    Message(MSG_MGR_MAP), map(map_) {
+    MMgrMap() : Message(MSG_MGR_MAP)
+    {
     }
-
-  private:
-    ~MMgrMap()override {
+    MMgrMap(const MgrMap &map_) : Message(MSG_MGR_MAP), map(map_)
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+private:
+    ~MMgrMap() override
+    {
+    }
+
+public:
+    const char *get_type_name() const override
+    {
         return "mgrmap";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << get_type_name() << "(e " << map.epoch << ")";
-    } void decode_payload() override {
+    }
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(map, p);
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(map, payload, features);
     }
 };

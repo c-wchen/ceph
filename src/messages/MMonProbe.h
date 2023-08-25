@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMONPROBE_H
@@ -19,12 +19,14 @@
 #include "msg/Message.h"
 #include "mon/MonMap.h"
 
-class MMonProbe:public Message {
-  public:
+class MMonProbe : public Message
+{
+public:
     static const int HEAD_VERSION = 6;
     static const int COMPAT_VERSION = 5;
 
-    enum {
+    enum
+    {
         OP_PROBE = 1,
         OP_REPLY = 2,
         OP_SLURP = 3,
@@ -33,21 +35,31 @@ class MMonProbe:public Message {
         OP_MISSING_FEATURES = 6,
     };
 
-    static const char *get_opname(int o) {
-        switch (o) {
+    static const char *get_opname(int o)
+    {
+        switch (o)
+        {
         case OP_PROBE:
             return "probe";
-            case OP_REPLY:return "reply";
-            case OP_SLURP:return "slurp";
-            case OP_SLURP_LATEST:return "slurp_latest";
-            case OP_DATA:return "data";
-            case OP_MISSING_FEATURES:return "missing_features";
-            default:ceph_abort();
+        case OP_REPLY:
+            return "reply";
+        case OP_SLURP:
+            return "slurp";
+        case OP_SLURP_LATEST:
+            return "slurp_latest";
+        case OP_DATA:
+            return "data";
+        case OP_MISSING_FEATURES:
+            return "missing_features";
+        default:
+            ceph_abort();
             return 0;
-    }} uuid_d fsid;
+        }
+    }
+    uuid_d fsid;
     int32_t op = 0;
     string name;
-    set < int32_t > quorum;
+    set<int32_t> quorum;
     bufferlist monmap_bl;
     version_t paxos_first_version = 0;
     version_t paxos_last_version = 0;
@@ -55,44 +67,53 @@ class MMonProbe:public Message {
     uint64_t required_features = 0;
 
     MMonProbe()
-  :    Message(MSG_MON_PROBE, HEAD_VERSION, COMPAT_VERSION) {
+        : Message(MSG_MON_PROBE, HEAD_VERSION, COMPAT_VERSION)
+    {
     }
-    MMonProbe(const uuid_d & f, int o, const string & n, bool hej)
-  :    
-    Message(MSG_MON_PROBE, HEAD_VERSION, COMPAT_VERSION),
-    fsid(f),
-    op(o),
-    name(n),
-    paxos_first_version(0),
-    paxos_last_version(0), has_ever_joined(hej), required_features(0) {
-    }
-  private:
-    ~MMonProbe()override {
+    MMonProbe(const uuid_d &f, int o, const string &n, bool hej)
+        : Message(MSG_MON_PROBE, HEAD_VERSION, COMPAT_VERSION),
+          fsid(f),
+          op(o),
+          name(n),
+          paxos_first_version(0),
+          paxos_last_version(0), has_ever_joined(hej), required_features(0)
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+private:
+    ~MMonProbe() override
+    {
+    }
+
+public:
+    const char *get_type_name() const override
+    {
         return "mon_probe";
-    } void print(ostream & out) const override {
-        out << "mon_probe(" << get_opname(op) << " " << fsid << " name " <<
-            name;
+    }
+    void print(ostream &out) const override
+    {
+        out << "mon_probe(" << get_opname(op) << " " << fsid << " name " << name;
         if (quorum.size())
             out << " quorum " << quorum;
-        if (op == OP_REPLY) {
+        if (op == OP_REPLY)
+        {
             out << " paxos("
                 << " fc " << paxos_first_version
                 << " lc " << paxos_last_version << " )";
-        } if (!has_ever_joined)
-             out << " new";
+        }
+        if (!has_ever_joined)
+            out << " new";
         if (required_features)
             out << " required_features " << required_features;
         out << ")";
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         if (monmap_bl.length() &&
             ((features & CEPH_FEATURE_MONENC) == 0 ||
-             (features & CEPH_FEATURE_MSG_ADDR2) == 0)) {
+             (features & CEPH_FEATURE_MSG_ADDR2) == 0))
+        {
             // reencode old-format monmap
             MonMap t;
             t.decode(monmap_bl);
@@ -110,7 +131,8 @@ class MMonProbe:public Message {
         ::encode(paxos_last_version, payload);
         ::encode(required_features, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(fsid, p);
         ::decode(op, p);

@@ -21,8 +21,9 @@
 #include "common/perf_counters.h"
 #include "osd/OSDHealthMetric.h"
 
-class PerfCounterType {
-  public:
+class PerfCounterType
+{
+public:
     std::string path;
     std::string description;
     std::string nick;
@@ -34,7 +35,8 @@ class PerfCounterType {
     uint8_t priority = PerfCountersBuilder::PRIO_USEFUL;
     enum unit_t unit;
 
-    void encode(bufferlist & bl) const {
+    void encode(bufferlist &bl) const
+    {
         // TODO: decide whether to drop the per-type
         // encoding here, we could rely on the MgrReport
         // verisoning instead.
@@ -43,20 +45,25 @@ class PerfCounterType {
         ::encode(description, bl);
         ::encode(nick, bl);
         static_assert(sizeof(type) == 1, "perfcounter_type_d must be one byte");
-        ::encode((uint8_t) type, bl);
+        ::encode((uint8_t)type, bl);
         ::encode(priority, bl);
-        ::encode((uint8_t) unit, bl);
+        ::encode((uint8_t)unit, bl);
         ENCODE_FINISH(bl);
-    } void decode(bufferlist::iterator & p) {
+    }
+    void decode(bufferlist::iterator &p)
+    {
         DECODE_START(3, p);
         ::decode(path, p);
         ::decode(description, p);
         ::decode(nick, p);
-        ::decode((uint8_t &) type, p);
-        if (struct_v >= 2) {
+        ::decode((uint8_t &)type, p);
+        if (struct_v >= 2)
+        {
             ::decode(priority, p);
-        } if (struct_v >= 3) {
-            ::decode((uint8_t &) unit, p);
+        }
+        if (struct_v >= 3)
+        {
+            ::decode((uint8_t &)unit, p);
         }
         DECODE_FINISH(p);
     }
@@ -64,18 +71,19 @@ class PerfCounterType {
 
 WRITE_CLASS_ENCODER(PerfCounterType)
 
-class MMgrReport:public Message {
+class MMgrReport : public Message
+{
     static const int HEAD_VERSION = 5;
     static const int COMPAT_VERSION = 1;
 
-  public:
-  /**
-   * Client is responsible for remembering whether it has introduced
-   * each perf counter to the server.  When first sending a particular
-   * counter, it must inline the counter's schema here.
-   */
-     std::vector < PerfCounterType > declare_types;
-     std::vector < std::string > undeclare_types;
+public:
+    /**
+     * Client is responsible for remembering whether it has introduced
+     * each perf counter to the server.  When first sending a particular
+     * counter, it must inline the counter's schema here.
+     */
+    std::vector<PerfCounterType> declare_types;
+    std::vector<std::string> undeclare_types;
 
     // For all counters present, sorted by idx, output
     // as many bytes as are needed to represent them
@@ -85,65 +93,77 @@ class MMgrReport:public Message {
     // the next bytes from the bufferlist.
     bufferlist packed;
 
-     std::string daemon_name;
-     std::string service_name;  // optional; otherwise infer from entity type
+    std::string daemon_name;
+    std::string service_name; // optional; otherwise infer from entity type
 
     // for service registration
-     boost::optional < std::map < std::string, std::string >> daemon_status;
+    boost::optional<std::map<std::string, std::string>> daemon_status;
 
-     std::vector < OSDHealthMetric > osd_health_metrics;
+    std::vector<OSDHealthMetric> osd_health_metrics;
 
     void decode_payload() override
-{
-    bufferlist::iterator p = payload.begin();
-    ::decode(daemon_name, p);
-    ::decode(declare_types, p);
-    ::decode(packed, p);
-    if (header.version >= 2)
-        ::decode(undeclare_types, p);
-    if (header.version >= 3) {
-        ::decode(service_name, p);
-        ::decode(daemon_status, p);
-    } if (header.version >= 5) {
-        ::decode(osd_health_metrics, p);
+    {
+        bufferlist::iterator p = payload.begin();
+        ::decode(daemon_name, p);
+        ::decode(declare_types, p);
+        ::decode(packed, p);
+        if (header.version >= 2)
+            ::decode(undeclare_types, p);
+        if (header.version >= 3)
+        {
+            ::decode(service_name, p);
+            ::decode(daemon_status, p);
+        }
+        if (header.version >= 5)
+        {
+            ::decode(osd_health_metrics, p);
+        }
     }
-}
 
-void encode_payload(uint64_t features) override {
-    ::encode(daemon_name, payload);
-    ::encode(declare_types, payload);
-    ::encode(packed, payload);
-    ::encode(undeclare_types, payload);
-    ::encode(service_name, payload);
-    ::encode(daemon_status, payload);
-    ::encode(osd_health_metrics, payload);
-}
+    void encode_payload(uint64_t features) override
+    {
+        ::encode(daemon_name, payload);
+        ::encode(declare_types, payload);
+        ::encode(packed, payload);
+        ::encode(undeclare_types, payload);
+        ::encode(service_name, payload);
+        ::encode(daemon_status, payload);
+        ::encode(osd_health_metrics, payload);
+    }
 
-const char *get_type_name() const override {
-    return "mgrreport";
-} void print(ostream & out) const override {
-    out << get_type_name() << "(";
-    if (service_name.length()) {
-        out << service_name;
+    const char *get_type_name() const override
+    {
+        return "mgrreport";
     }
-    else {
-        out << ceph_entity_type_name(get_source().type());
+    void print(ostream &out) const override
+    {
+        out << get_type_name() << "(";
+        if (service_name.length())
+        {
+            out << service_name;
+        }
+        else
+        {
+            out << ceph_entity_type_name(get_source().type());
+        }
+        out << "." << daemon_name << " +" << declare_types.size()
+            << "-" << undeclare_types.size()
+            << " packed " << packed.length();
+        if (daemon_status)
+        {
+            out << " status=" << daemon_status->size();
+        }
+        if (!osd_health_metrics.empty())
+        {
+            out << " osd_metrics=" << osd_health_metrics.size();
+        }
+        out << ")";
     }
-    out << "." << daemon_name << " +" << declare_types.size()
-        << "-" << undeclare_types.size()
-        << " packed " << packed.length();
-    if (daemon_status) {
-        out << " status=" << daemon_status->size();
-    }
-    if (!osd_health_metrics.empty()) {
-        out << " osd_metrics=" << osd_health_metrics.size();
-    }
-    out << ")";
-}
 
-MMgrReport()
-:  Message(MSG_MGR_REPORT, HEAD_VERSION, COMPAT_VERSION) {
-}
+    MMgrReport()
+        : Message(MSG_MGR_REPORT, HEAD_VERSION, COMPAT_VERSION)
+    {
+    }
 };
 
 #endif

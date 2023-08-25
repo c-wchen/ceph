@@ -19,54 +19,75 @@
 
 #include "include/types.h"
 
-class MMonGetOSDMap:public PaxosServiceMessage {
+class MMonGetOSDMap : public PaxosServiceMessage
+{
     epoch_t full_first, full_last;
     epoch_t inc_first, inc_last;
 
-  public:
-     MMonGetOSDMap()
-    :PaxosServiceMessage(CEPH_MSG_MON_GET_OSDMAP, 0),
-        full_first(0), full_last(0), inc_first(0), inc_last(0) {
-  } private:
-    ~MMonGetOSDMap() override {
+public:
+    MMonGetOSDMap()
+        : PaxosServiceMessage(CEPH_MSG_MON_GET_OSDMAP, 0),
+          full_first(0), full_last(0), inc_first(0), inc_last(0)
+    {
     }
 
-  public:
-    void request_full(epoch_t first, epoch_t last) {
+private:
+    ~MMonGetOSDMap() override
+    {
+    }
+
+public:
+    void request_full(epoch_t first, epoch_t last)
+    {
         assert(last >= first);
         full_first = first;
         full_last = last;
     }
-    void request_inc(epoch_t first, epoch_t last) {
+    void request_inc(epoch_t first, epoch_t last)
+    {
         assert(last >= first);
         inc_first = first;
         inc_last = last;
     }
-    epoch_t get_full_first() const {
+    epoch_t get_full_first() const
+    {
         return full_first;
-    } epoch_t get_full_last() const {
+    }
+    epoch_t get_full_last() const
+    {
         return full_last;
-    } epoch_t get_inc_first() const {
+    }
+    epoch_t get_inc_first() const
+    {
         return inc_first;
-    } epoch_t get_inc_last() const {
+    }
+    epoch_t get_inc_last() const
+    {
         return inc_last;
-    } const char *get_type_name() const override {
+    }
+    const char *get_type_name() const override
+    {
         return "mon_get_osdmap";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "mon_get_osdmap(";
         if (full_first && full_last)
             out << "full " << full_first << "-" << full_last;
         if (inc_first && inc_last)
             out << " inc" << inc_first << "-" << inc_last;
         out << ")";
-    } void encode_payload(uint64_t features) override {
+    }
+    void encode_payload(uint64_t features) override
+    {
         paxos_encode();
         ::encode(full_first, payload);
         ::encode(full_last, payload);
         ::encode(inc_first, payload);
         ::encode(inc_last, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         paxos_decode(p);
         ::decode(full_first, p);

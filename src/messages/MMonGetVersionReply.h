@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -24,24 +24,33 @@
  * MMonGetVersion. The latest version of the requested thing is sent
  * back.
  */
-class MMonGetVersionReply:public Message {
+class MMonGetVersionReply : public Message
+{
 
     static const int HEAD_VERSION = 2;
 
-  public:
-     MMonGetVersionReply():Message(CEPH_MSG_MON_GET_VERSION_REPLY, HEAD_VERSION) {
-    } const char *get_type_name() const override {
+public:
+    MMonGetVersionReply() : Message(CEPH_MSG_MON_GET_VERSION_REPLY, HEAD_VERSION)
+    {
+    }
+    const char *get_type_name() const override
+    {
         return "mon_get_version_reply";
-    } void print(ostream & o) const override {
+    }
+    void print(ostream &o) const override
+    {
         o << "mon_get_version_reply(handle=" << handle << " version=" << version
-            << ")";
-    } void encode_payload(uint64_t features) override {
+          << ")";
+    }
+    void encode_payload(uint64_t features) override
+    {
         ::encode(handle, payload);
         ::encode(version, payload);
         ::encode(oldest_version, payload);
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(handle, p);
         ::decode(version, p);
@@ -53,8 +62,9 @@ class MMonGetVersionReply:public Message {
     version_t version = 0;
     version_t oldest_version = 0;
 
-  private:
-    ~MMonGetVersionReply()override {
+private:
+    ~MMonGetVersionReply() override
+    {
     }
 };
 

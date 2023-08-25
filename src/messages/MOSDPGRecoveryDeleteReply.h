@@ -7,33 +7,46 @@
 #include "MOSDFastDispatchOp.h"
 #include "include/ceph_features.h"
 
-struct MOSDPGRecoveryDeleteReply:public MOSDFastDispatchOp {
+struct MOSDPGRecoveryDeleteReply : public MOSDFastDispatchOp
+{
     static const int HEAD_VERSION = 2;
     static const int COMPAT_VERSION = 1;
 
     pg_shard_t from;
     spg_t pgid;
     epoch_t map_epoch, min_epoch;
-     list < pair < hobject_t, eversion_t > >objects;
+    list<pair<hobject_t, eversion_t>> objects;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } epoch_t get_min_epoch() const override {
+    }
+    epoch_t get_min_epoch() const override
+    {
         return min_epoch;
-    } spg_t get_spg() const override {
+    }
+    spg_t get_spg() const override
+    {
         return pgid;
-    } MOSDPGRecoveryDeleteReply()
-    :MOSDFastDispatchOp(MSG_OSD_PG_RECOVERY_DELETE_REPLY, HEAD_VERSION,
-                        COMPAT_VERSION), map_epoch(0), min_epoch(0) {
-    } void decode_payload() override {
+    }
+    MOSDPGRecoveryDeleteReply()
+        : MOSDFastDispatchOp(MSG_OSD_PG_RECOVERY_DELETE_REPLY, HEAD_VERSION,
+                             COMPAT_VERSION),
+          map_epoch(0), min_epoch(0)
+    {
+    }
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(pgid.pgid, p);
         ::decode(map_epoch, p);
         if (header.version == 1 &&
-            !HAVE_FEATURE(get_connection()->get_features(), SERVER_LUMINOUS)) {
+            !HAVE_FEATURE(get_connection()->get_features(), SERVER_LUMINOUS))
+        {
             min_epoch = map_epoch;
         }
-        else {
+        else
+        {
             ::decode(min_epoch, p);
         }
         ::decode(objects, p);
@@ -41,10 +54,12 @@ struct MOSDPGRecoveryDeleteReply:public MOSDFastDispatchOp {
         ::decode(from, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(pgid.pgid, payload);
         ::encode(map_epoch, payload);
-        if (HAVE_FEATURE(features, SERVER_LUMINOUS)) {
+        if (HAVE_FEATURE(features, SERVER_LUMINOUS))
+        {
             ::encode(min_epoch, payload);
         }
         ::encode(objects, payload);
@@ -52,11 +67,15 @@ struct MOSDPGRecoveryDeleteReply:public MOSDFastDispatchOp {
         ::encode(from, payload);
     }
 
-    void print(ostream & out) const override {
+    void print(ostream &out) const override
+    {
         out << "MOSDPGRecoveryDeleteReply(" << pgid
             << " e" << map_epoch << "," << min_epoch << " " << objects << ")";
-    } const char *get_type_name() const override {
+    }
+    const char *get_type_name() const override
+    {
         return "recovery_delete_reply";
-}};
+    }
+};
 
 #endif

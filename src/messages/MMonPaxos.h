@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMONPAXOS_H
@@ -19,77 +19,95 @@
 #include "mon/mon_types.h"
 #include "include/ceph_features.h"
 
-class MMonPaxos:public Message {
+class MMonPaxos : public Message
+{
 
     static const int HEAD_VERSION = 4;
     static const int COMPAT_VERSION = 3;
 
-  public:
+public:
     // op types
-    const static int OP_COLLECT = 1;    // proposer: propose round
-    const static int OP_LAST = 2;   // voter:    accept proposed round
-    const static int OP_BEGIN = 3;  // proposer: value proposed for this round
-    const static int OP_ACCEPT = 4; // voter:    accept propsed value
-    const static int OP_COMMIT = 5; // proposer: notify learners of agreed value
-    const static int OP_LEASE = 6;  // leader: extend peon lease
-    const static int OP_LEASE_ACK = 7;  // peon: lease ack
-    const static char *get_opname(int op) {
-        switch (op) {
+    const static int OP_COLLECT = 1;   // proposer: propose round
+    const static int OP_LAST = 2;      // voter:    accept proposed round
+    const static int OP_BEGIN = 3;     // proposer: value proposed for this round
+    const static int OP_ACCEPT = 4;    // voter:    accept propsed value
+    const static int OP_COMMIT = 5;    // proposer: notify learners of agreed value
+    const static int OP_LEASE = 6;     // leader: extend peon lease
+    const static int OP_LEASE_ACK = 7; // peon: lease ack
+    const static char *get_opname(int op)
+    {
+        switch (op)
+        {
         case OP_COLLECT:
             return "collect";
-            case OP_LAST:return "last";
-            case OP_BEGIN:return "begin";
-            case OP_ACCEPT:return "accept";
-            case OP_COMMIT:return "commit";
-            case OP_LEASE:return "lease";
-            case OP_LEASE_ACK:return "lease_ack";
-            default:ceph_abort();
+        case OP_LAST:
+            return "last";
+        case OP_BEGIN:
+            return "begin";
+        case OP_ACCEPT:
+            return "accept";
+        case OP_COMMIT:
+            return "commit";
+        case OP_LEASE:
+            return "lease";
+        case OP_LEASE_ACK:
+            return "lease_ack";
+        default:
+            ceph_abort();
             return 0;
-    }} epoch_t epoch = 0;       // monitor epoch
-    __s32 op = 0;               // paxos op
+        }
+    }
+    epoch_t epoch = 0; // monitor epoch
+    __s32 op = 0;      // paxos op
 
-    version_t first_committed = 0;  // i've committed to
-    version_t last_committed = 0;   // i've committed to
-    version_t pn_from = 0;      // i promise to accept after
-    version_t pn = 0;           // with with proposal
-    version_t uncommitted_pn = 0;   // previous pn, if we are a LAST with an uncommitted value
+    version_t first_committed = 0; // i've committed to
+    version_t last_committed = 0;  // i've committed to
+    version_t pn_from = 0;         // i promise to accept after
+    version_t pn = 0;              // with with proposal
+    version_t uncommitted_pn = 0;  // previous pn, if we are a LAST with an uncommitted value
     utime_t lease_timestamp;
     utime_t sent_timestamp;
 
     version_t latest_version = 0;
     bufferlist latest_value;
 
-    map < version_t, bufferlist > values;
+    map<version_t, bufferlist> values;
 
     bufferlist feature_map;
 
-  MMonPaxos():Message(MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION) {
+    MMonPaxos() : Message(MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION)
+    {
     }
-  MMonPaxos(epoch_t e, int o, utime_t now):
-    Message(MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION),
-        epoch(e),
-        op(o),
-        first_committed(0), last_committed(0), pn_from(0), pn(0),
-        uncommitted_pn(0), sent_timestamp(now), latest_version(0) {
-    }
-
-  private:
-    ~MMonPaxos()override {
+    MMonPaxos(epoch_t e, int o, utime_t now) : Message(MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION),
+                                               epoch(e),
+                                               op(o),
+                                               first_committed(0), last_committed(0), pn_from(0), pn(0),
+                                               uncommitted_pn(0), sent_timestamp(now), latest_version(0)
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+private:
+    ~MMonPaxos() override
+    {
+    }
+
+public:
+    const char *get_type_name() const override
+    {
         return "paxos";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "paxos(" << get_opname(op)
-        << " lc " << last_committed
+            << " lc " << last_committed
             << " fc " << first_committed
             << " pn " << pn << " opn " << uncommitted_pn;
         if (latest_version)
-            out << " latest " << latest_version << " (" << latest_value.
-                length() << " bytes)";
+            out << " latest " << latest_version << " (" << latest_value.length() << " bytes)";
         out << ")";
-    } void encode_payload(uint64_t features) override {
+    }
+    void encode_payload(uint64_t features) override
+    {
         header.version = HEAD_VERSION;
         ::encode(epoch, payload);
         ::encode(op, payload);
@@ -105,7 +123,8 @@ class MMonPaxos:public Message {
         ::encode(values, payload);
         ::encode(feature_map, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(epoch, p);
         ::decode(op, p);
@@ -119,7 +138,8 @@ class MMonPaxos:public Message {
         ::decode(latest_version, p);
         ::decode(latest_value, p);
         ::decode(values, p);
-        if (header.version >= 4) {
+        if (header.version >= 4)
+        {
             ::decode(feature_map, p);
         }
     }

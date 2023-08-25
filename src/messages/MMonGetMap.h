@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMONGETMAP_H
@@ -19,19 +19,28 @@
 
 #include "include/types.h"
 
-class MMonGetMap:public Message {
-  public:
-    MMonGetMap():Message(CEPH_MSG_MON_GET_MAP) {
-  } private:
-    ~MMonGetMap() override {
+class MMonGetMap : public Message
+{
+public:
+    MMonGetMap() : Message(CEPH_MSG_MON_GET_MAP)
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
-        return "mon_getmap";
-    } void encode_payload(uint64_t features) override {
+private:
+    ~MMonGetMap() override
+    {
     }
-    void decode_payload() override {
+
+public:
+    const char *get_type_name() const override
+    {
+        return "mon_getmap";
+    }
+    void encode_payload(uint64_t features) override
+    {
+    }
+    void decode_payload() override
+    {
     }
 };
 

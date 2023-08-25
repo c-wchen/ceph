@@ -17,13 +17,16 @@
 
 #include "MOSDFastDispatchOp.h"
 
-class MOSDScrubReserve:public MOSDFastDispatchOp {
+class MOSDScrubReserve : public MOSDFastDispatchOp
+{
     static const int HEAD_VERSION = 1;
     static const int COMPAT_VERSION = 1;
-  public:
-     spg_t pgid;
+
+public:
+    spg_t pgid;
     epoch_t map_epoch;
-    enum {
+    enum
+    {
         REQUEST = 0,
         GRANT = 1,
         RELEASE = 2,
@@ -32,37 +35,53 @@ class MOSDScrubReserve:public MOSDFastDispatchOp {
     int32_t type;
     pg_shard_t from;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } spg_t get_spg() const override {
+    }
+    spg_t get_spg() const override
+    {
         return pgid;
-    } MOSDScrubReserve()
-    :MOSDFastDispatchOp(MSG_OSD_SCRUB_RESERVE, HEAD_VERSION, COMPAT_VERSION),
-        map_epoch(0), type(-1) {
-    } MOSDScrubReserve(spg_t pgid, epoch_t map_epoch, int type, pg_shard_t from)
-    :MOSDFastDispatchOp(MSG_OSD_SCRUB_RESERVE, HEAD_VERSION, COMPAT_VERSION),
-        pgid(pgid), map_epoch(map_epoch), type(type), from(from) {
+    }
+    MOSDScrubReserve()
+        : MOSDFastDispatchOp(MSG_OSD_SCRUB_RESERVE, HEAD_VERSION, COMPAT_VERSION),
+          map_epoch(0), type(-1)
+    {
+    }
+    MOSDScrubReserve(spg_t pgid, epoch_t map_epoch, int type, pg_shard_t from)
+        : MOSDFastDispatchOp(MSG_OSD_SCRUB_RESERVE, HEAD_VERSION, COMPAT_VERSION),
+          pgid(pgid), map_epoch(map_epoch), type(type), from(from)
+    {
     }
 
-    const char *get_type_name() const {
+    const char *get_type_name() const
+    {
         return "MOSDScrubReserve";
-    } void print(ostream & out) const {
+    }
+    void print(ostream &out) const
+    {
         out << "MOSDScrubReserve(" << pgid << " ";
-        switch (type) {
+        switch (type)
+        {
         case REQUEST:
             out << "REQUEST ";
             break;
-            case GRANT:out << "GRANT ";
+        case GRANT:
+            out << "GRANT ";
             break;
-            case REJECT:out << "REJECT ";
+        case REJECT:
+            out << "REJECT ";
             break;
-            case RELEASE:out << "RELEASE ";
+        case RELEASE:
+            out << "RELEASE ";
             break;
-        } out << "e" << map_epoch << ")";
+        }
+        out << "e" << map_epoch << ")";
         return;
     }
 
-    void decode_payload() {
+    void decode_payload()
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(pgid, p);
         ::decode(map_epoch, p);
@@ -70,7 +89,8 @@ class MOSDScrubReserve:public MOSDFastDispatchOp {
         ::decode(from, p);
     }
 
-    void encode_payload(uint64_t features) {
+    void encode_payload(uint64_t features)
+    {
         ::encode(pgid, payload);
         ::encode(map_epoch, payload);
         ::encode(type, payload);

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MOSDSUBOPREPLY_H
@@ -28,11 +28,13 @@
  *
  */
 
-class MOSDSubOpReply:public MOSDFastDispatchOp {
+class MOSDSubOpReply : public MOSDFastDispatchOp
+{
     static const int HEAD_VERSION = 2;
     static const int COMPAT_VERSION = 1;
-  public:
-     epoch_t map_epoch = 0;
+
+public:
+    epoch_t map_epoch = 0;
 
     // subop metadata
     osd_reqid_t reqid;
@@ -40,7 +42,7 @@ class MOSDSubOpReply:public MOSDFastDispatchOp {
     spg_t pgid;
     hobject_t poid;
 
-     vector < OSDOp > ops;
+    vector<OSDOp> ops;
 
     // result
     __u8 ack_type = 0;
@@ -50,13 +52,18 @@ class MOSDSubOpReply:public MOSDFastDispatchOp {
     eversion_t last_complete_ondisk;
     osd_peer_stat_t peer_stat;
 
-     map < string, bufferptr > attrset;
+    map<string, bufferptr> attrset;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } spg_t get_spg() const override {
+    }
+    spg_t get_spg() const override
+    {
         return pgid;
-    } void decode_payload() override {
+    }
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(map_epoch, p);
         ::decode(reqid, p);
@@ -65,10 +72,12 @@ class MOSDSubOpReply:public MOSDFastDispatchOp {
 
         unsigned num_ops;
         ::decode(num_ops, p);
-         ops.resize(num_ops);
-        for (unsigned i = 0; i < num_ops; i++) {
+        ops.resize(num_ops);
+        for (unsigned i = 0; i < num_ops; i++)
+        {
             ::decode(ops[i].op, p);
-        }::decode(ack_type, p);
+        }
+        ::decode(ack_type, p);
         ::decode(result, p);
         ::decode(last_complete_ondisk, p);
         ::decode(peer_stat, p);
@@ -77,27 +86,32 @@ class MOSDSubOpReply:public MOSDFastDispatchOp {
         if (!poid.is_max() && poid.pool == -1)
             poid.pool = pgid.pool();
 
-        if (header.version >= 2) {
+        if (header.version >= 2)
+        {
             ::decode(from, p);
             ::decode(pgid.shard, p);
         }
-        else {
+        else
+        {
             from = pg_shard_t(get_source().num(), shard_id_t::NO_SHARD);
             pgid.shard = shard_id_t::NO_SHARD;
         }
     }
 
-    void finish_decode() {
+    void finish_decode()
+    {
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(map_epoch, payload);
         ::encode(reqid, payload);
         ::encode(pgid.pgid, payload);
         ::encode(poid, payload);
         __u32 num_ops = ops.size();
         ::encode(num_ops, payload);
-        for (unsigned i = 0; i < ops.size(); i++) {
+        for (unsigned i = 0; i < ops.size(); i++)
+        {
             ::encode(ops[i].op, payload);
         }
         ::encode(ack_type, payload);
@@ -109,70 +123,92 @@ class MOSDSubOpReply:public MOSDFastDispatchOp {
         ::encode(pgid.shard, payload);
     }
 
-    epoch_t get_map_epoch() {
+    epoch_t get_map_epoch()
+    {
         return map_epoch;
     }
 
-    spg_t get_pg() const {
+    spg_t get_pg() const
+    {
         return pgid;
-    } const hobject_t & get_poid() const {
+    }
+    const hobject_t &get_poid() const
+    {
         return poid;
-    } int get_ack_type() {
+    }
+    int get_ack_type()
+    {
         return ack_type;
     }
-    bool is_ondisk() {
+    bool is_ondisk()
+    {
         return ack_type & CEPH_OSD_FLAG_ONDISK;
     }
-    bool is_onnvram() {
+    bool is_onnvram()
+    {
         return ack_type & CEPH_OSD_FLAG_ONNVRAM;
     }
 
-    int get_result() {
+    int get_result()
+    {
         return result;
     }
 
-    void set_last_complete_ondisk(eversion_t v) {
+    void set_last_complete_ondisk(eversion_t v)
+    {
         last_complete_ondisk = v;
     }
-    eversion_t get_last_complete_ondisk() {
+    eversion_t get_last_complete_ondisk()
+    {
         return last_complete_ondisk;
     }
 
-    void set_peer_stat(const osd_peer_stat_t & stat) {
+    void set_peer_stat(const osd_peer_stat_t &stat)
+    {
         peer_stat = stat;
     }
-    const osd_peer_stat_t & get_peer_stat() {
+    const osd_peer_stat_t &get_peer_stat()
+    {
         return peer_stat;
     }
 
-    void set_attrset(map < string, bufferptr > &as) {
+    void set_attrset(map<string, bufferptr> &as)
+    {
         attrset = as;
     }
-    map < string, bufferptr > &get_attrset() {
+    map<string, bufferptr> &get_attrset()
+    {
         return attrset;
     }
 
-  public:
-    MOSDSubOpReply(const MOSDSubOp * req, pg_shard_t from, int result_,
+public:
+    MOSDSubOpReply(const MOSDSubOp *req, pg_shard_t from, int result_,
                    epoch_t e, int at)
-  :    MOSDFastDispatchOp(MSG_OSD_SUBOPREPLY, HEAD_VERSION, COMPAT_VERSION),
-        map_epoch(e), reqid(req->reqid), from(from), pgid(req->pgid.pgid,
-                                                          req->from.shard),
-        poid(req->poid), ops(req->ops), ack_type(at), result(result_) {
+        : MOSDFastDispatchOp(MSG_OSD_SUBOPREPLY, HEAD_VERSION, COMPAT_VERSION),
+          map_epoch(e), reqid(req->reqid), from(from), pgid(req->pgid.pgid,
+                                                            req->from.shard),
+          poid(req->poid), ops(req->ops), ack_type(at), result(result_)
+    {
         memset(&peer_stat, 0, sizeof(peer_stat));
         set_tid(req->get_tid());
     }
     MOSDSubOpReply()
-  :    MOSDFastDispatchOp(MSG_OSD_SUBOPREPLY, HEAD_VERSION, COMPAT_VERSION) {
-    }
-  private:
-    ~MOSDSubOpReply()override {
+        : MOSDFastDispatchOp(MSG_OSD_SUBOPREPLY, HEAD_VERSION, COMPAT_VERSION)
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+private:
+    ~MOSDSubOpReply() override
+    {
+    }
+
+public:
+    const char *get_type_name() const override
+    {
         return "osd_subop_reply";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "osd_sub_op_reply(" << reqid
             << " " << pgid << " " << poid << " " << ops;
         if (ack_type & CEPH_OSD_FLAG_ONDISK)
@@ -183,6 +219,7 @@ class MOSDSubOpReply:public MOSDFastDispatchOp {
             out << " ack";
         out << ", result = " << result;
         out << ")";
-}};
+    }
+};
 
 #endif

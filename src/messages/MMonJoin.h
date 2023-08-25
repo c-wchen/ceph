@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMONJOIN_H
@@ -20,33 +20,44 @@
 #include <vector>
 using std::vector;
 
-class MMonJoin:public PaxosServiceMessage {
-  public:
+class MMonJoin : public PaxosServiceMessage
+{
+public:
     uuid_d fsid;
     string name;
     entity_addr_t addr;
 
-    MMonJoin():PaxosServiceMessage(MSG_MON_JOIN, 0) {
-    } MMonJoin(uuid_d & f, string n, const entity_addr_t & a)
-    :PaxosServiceMessage(MSG_MON_JOIN, 0), fsid(f), name(n), addr(a) {
+    MMonJoin() : PaxosServiceMessage(MSG_MON_JOIN, 0)
+    {
+    }
+    MMonJoin(uuid_d &f, string n, const entity_addr_t &a)
+        : PaxosServiceMessage(MSG_MON_JOIN, 0), fsid(f), name(n), addr(a)
+    {
     }
 
-  private:
-    ~MMonJoin()override {
+private:
+    ~MMonJoin() override
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+public:
+    const char *get_type_name() const override
+    {
         return "mon_join";
-    } void print(ostream & o) const override {
+    }
+    void print(ostream &o) const override
+    {
         o << "mon_join(" << name << " " << addr << ")";
-    } void encode_payload(uint64_t features) override {
+    }
+    void encode_payload(uint64_t features) override
+    {
         paxos_encode();
         ::encode(fsid, payload);
         ::encode(name, payload);
         ::encode(addr, payload, features);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         paxos_decode(p);
         ::decode(fsid, p);

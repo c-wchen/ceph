@@ -22,31 +22,41 @@
 /*
  * A message with no (remote) effect.
  */
-class MNop:public Message {
-  public:
+class MNop : public Message
+{
+public:
     static const int HEAD_VERSION = 1;
     static const int COMPAT_VERSION = 1;
 
-    __u32 tag;                  // ignored tag value
+    __u32 tag; // ignored tag value
 
-     MNop()
-    :Message(MSG_NOP, HEAD_VERSION, COMPAT_VERSION) {
-    } ~MNop() {
+    MNop()
+        : Message(MSG_NOP, HEAD_VERSION, COMPAT_VERSION)
+    {
+    }
+    ~MNop()
+    {
     }
 
-    void encode_payload(uint64_t _features) {
+    void encode_payload(uint64_t _features)
+    {
         ::encode(tag, payload);
     }
 
-    void decode_payload() {
+    void decode_payload()
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(tag, p);
     }
 
-    const char *get_type_name() const {
+    const char *get_type_name() const
+    {
         return "MNop";
-    } void print(ostream & out) const {
+    }
+    void print(ostream &out) const
+    {
         out << get_type_name() << " ";
-}};                             /* MNop */
+    }
+}; /* MNop */
 
 #endif /* CEPH_MSG_NOP_H */

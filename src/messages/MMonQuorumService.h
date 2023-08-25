@@ -16,50 +16,65 @@
 
 #include "msg/Message.h"
 
-struct MMonQuorumService:public Message {
+struct MMonQuorumService : public Message
+{
     epoch_t epoch;
     version_t round;
 
-   MMonQuorumService(int type, int head = 1, int compat = 1):
-    Message(type, head, compat), epoch(0), round(0) {
-  } protected:
-    ~MMonQuorumService() override {
+    MMonQuorumService(int type, int head = 1, int compat = 1) : Message(type, head, compat), epoch(0), round(0)
+    {
     }
 
-  public:
+protected:
+    ~MMonQuorumService() override
+    {
+    }
 
-    void set_epoch(epoch_t e) {
+public:
+    void set_epoch(epoch_t e)
+    {
         epoch = e;
     }
 
-    void set_round(version_t r) {
+    void set_round(version_t r)
+    {
         round = r;
     }
 
-    epoch_t get_epoch() const {
+    epoch_t get_epoch() const
+    {
         return epoch;
-    } version_t get_round() const {
+    }
+    version_t get_round() const
+    {
         return round;
-    } void service_encode() {
+    }
+    void service_encode()
+    {
         ::encode(epoch, payload);
         ::encode(round, payload);
     }
 
-    void service_decode(bufferlist::iterator & p) {
+    void service_decode(bufferlist::iterator &p)
+    {
         ::decode(epoch, p);
         ::decode(round, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         assert(0 == "MMonQuorumService message must always be a base class");
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         assert(0 == "MMonQuorumService message must always be a base class");
     }
 
-    const char *get_type_name() const override {
+    const char *get_type_name() const override
+    {
         return "quorum_service";
-}};
+    }
+};
 
 #endif /* CEPH_MMON_QUORUM_SERVICE_H */

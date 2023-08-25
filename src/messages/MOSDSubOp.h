@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MOSDSUBOP_H
@@ -23,13 +23,14 @@
  * OSD sub op - for internal ops on pobjects between primary and replicas(/stripes/whatever)
  */
 
-class MOSDSubOp:public MOSDFastDispatchOp {
+class MOSDSubOp : public MOSDFastDispatchOp
+{
 
     static const int HEAD_VERSION = 12;
     static const int COMPAT_VERSION = 7;
 
-  public:
-     epoch_t map_epoch = 0;
+public:
+    epoch_t map_epoch = 0;
 
     // metadata from original request
     osd_reqid_t reqid;
@@ -43,7 +44,7 @@ class MOSDSubOp:public MOSDFastDispatchOp {
     __u8 acks_wanted = 0;
 
     // op to exec
-     vector < OSDOp > ops;
+    vector<OSDOp> ops;
     utime_t mtime;
 
     bool old_exists = false;
@@ -60,19 +61,19 @@ class MOSDSubOp:public MOSDFastDispatchOp {
     eversion_t version;
 
     // piggybacked osd/og state
-    eversion_t pg_trim_to;      // primary->replica: trim to here
-    eversion_t pg_roll_forward_to;  // primary->replica: trim rollback
+    eversion_t pg_trim_to;         // primary->replica: trim to here
+    eversion_t pg_roll_forward_to; // primary->replica: trim rollback
     // info to here
     osd_peer_stat_t peer_stat;
 
-     map < string, bufferlist > attrset;
+    map<string, bufferlist> attrset;
 
-     interval_set < uint64_t > data_subset;
-     map < hobject_t, interval_set < uint64_t >> clone_subsets;
+    interval_set<uint64_t> data_subset;
+    map<hobject_t, interval_set<uint64_t>> clone_subsets;
 
     bool first = false, complete = false;
 
-     interval_set < uint64_t > data_included;
+    interval_set<uint64_t> data_included;
     ObjectRecoveryInfo recovery_info;
 
     // reflects result of current push
@@ -81,26 +82,33 @@ class MOSDSubOp:public MOSDFastDispatchOp {
     // reflects progress before current push
     ObjectRecoveryProgress current_progress;
 
-     map < string, bufferlist > omap_entries;
+    map<string, bufferlist> omap_entries;
     bufferlist omap_header;
 
     hobject_t new_temp_oid;     ///< new temp object that we must now start tracking
     hobject_t discard_temp_oid; ///< previously used temp object that we can now stop tracking
 
     /// non-empty if this transaction involves a hit_set history update
-     boost::optional < pg_hit_set_history_t > updated_hit_set_history;
+    boost::optional<pg_hit_set_history_t> updated_hit_set_history;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } spg_t get_spg() const override {
+    }
+    spg_t get_spg() const override
+    {
         return pgid;
-    } int get_cost() const override {
+    }
+    int get_cost() const override
+    {
         if (ops.size() == 1 && ops[0].op.op == CEPH_OSD_OP_PULL)
             return ops[0].op.extent.length;
         return data.length();
-    } void decode_payload() override {
-        //since we drop incorrect_pools flag, now we only support
-        //version >=7
+    }
+    void decode_payload() override
+    {
+        // since we drop incorrect_pools flag, now we only support
+        // version >=7
         assert(header.version >= 7);
         bufferlist::iterator p = payload.begin();
         ::decode(map_epoch, p);
@@ -110,14 +118,16 @@ class MOSDSubOp:public MOSDFastDispatchOp {
 
         __u32 num_ops;
         ::decode(num_ops, p);
-         ops.resize(num_ops);
+        ops.resize(num_ops);
         unsigned off = 0;
-        for (unsigned i = 0; i < num_ops; i++) {
+        for (unsigned i = 0; i < num_ops; i++)
+        {
             ::decode(ops[i].op, p);
             ops[i].indata.substr_of(data, off, ops[i].op.payload_len);
             off += ops[i].op.payload_len;
-        }::decode(mtime, p);
-        //we don't need noop anymore
+        }
+        ::decode(mtime, p);
+        // we don't need noop anymore
         bool noop_dont_need;
         ::decode(noop_dont_need, p);
 
@@ -128,7 +138,8 @@ class MOSDSubOp:public MOSDFastDispatchOp {
         ::decode(old_version, p);
         ::decode(snapset, p);
 
-        if (header.version <= 11) {
+        if (header.version <= 11)
+        {
             SnapContext snapc_dont_need;
             ::decode(snapc_dont_need, p);
         }
@@ -152,34 +163,42 @@ class MOSDSubOp:public MOSDFastDispatchOp {
         ::decode(omap_entries, p);
         ::decode(omap_header, p);
 
-        if (header.version >= 8) {
+        if (header.version >= 8)
+        {
             ::decode(new_temp_oid, p);
             ::decode(discard_temp_oid, p);
         }
 
-        if (header.version >= 9) {
+        if (header.version >= 9)
+        {
             ::decode(from, p);
             ::decode(pgid.shard, p);
         }
-        else {
+        else
+        {
             from = pg_shard_t(get_source().num(), shard_id_t::NO_SHARD);
             pgid.shard = shard_id_t::NO_SHARD;
         }
-        if (header.version >= 10) {
+        if (header.version >= 10)
+        {
             ::decode(updated_hit_set_history, p);
         }
-        if (header.version >= 11) {
+        if (header.version >= 11)
+        {
             ::decode(pg_roll_forward_to, p);
         }
-        else {
+        else
+        {
             pg_roll_forward_to = pg_trim_to;
         }
     }
 
-    void finish_decode() {
+    void finish_decode()
+    {
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         header.version = HEAD_VERSION;
         ::encode(map_epoch, payload);
         ::encode(reqid, payload);
@@ -188,13 +207,14 @@ class MOSDSubOp:public MOSDFastDispatchOp {
 
         __u32 num_ops = ops.size();
         ::encode(num_ops, payload);
-        for (unsigned i = 0; i < ops.size(); i++) {
+        for (unsigned i = 0; i < ops.size(); i++)
+        {
             ops[i].op.payload_len = ops[i].indata.length();
             ::encode(ops[i].op, payload);
             data.append(ops[i].indata);
         }
         ::encode(mtime, payload);
-        //encode a false here for backward compatiable
+        // encode a false here for backward compatiable
         ::encode(false, payload);
         ::encode(acks_wanted, payload);
         ::encode(version, payload);
@@ -203,7 +223,8 @@ class MOSDSubOp:public MOSDFastDispatchOp {
         ::encode(old_version, payload);
         ::encode(snapset, payload);
 
-        if ((features & CEPH_FEATURE_OSDSUBOP_NO_SNAPCONTEXT) == 0) {
+        if ((features & CEPH_FEATURE_OSDSUBOP_NO_SNAPCONTEXT) == 0)
+        {
             header.version = 11;
             SnapContext dummy_snapc;
             ::encode(dummy_snapc, payload);
@@ -238,31 +259,38 @@ class MOSDSubOp:public MOSDFastDispatchOp {
     }
 
     MOSDSubOp()
-  :    MOSDFastDispatchOp(MSG_OSD_SUBOP, HEAD_VERSION, COMPAT_VERSION) {
+        : MOSDFastDispatchOp(MSG_OSD_SUBOP, HEAD_VERSION, COMPAT_VERSION)
+    {
     }
     MOSDSubOp(osd_reqid_t r, pg_shard_t from,
-              spg_t p, const hobject_t & po, int aw,
+              spg_t p, const hobject_t &po, int aw,
               epoch_t mape, ceph_tid_t rtid, eversion_t v)
-    :MOSDFastDispatchOp(MSG_OSD_SUBOP, HEAD_VERSION, COMPAT_VERSION),
-        map_epoch(mape),
-        reqid(r),
-        from(from),
-        pgid(p),
-        poid(po),
-        acks_wanted(aw),
-        old_exists(false), old_size(0),
-        version(v), first(false), complete(false) {
+        : MOSDFastDispatchOp(MSG_OSD_SUBOP, HEAD_VERSION, COMPAT_VERSION),
+          map_epoch(mape),
+          reqid(r),
+          from(from),
+          pgid(p),
+          poid(po),
+          acks_wanted(aw),
+          old_exists(false), old_size(0),
+          version(v), first(false), complete(false)
+    {
         memset(&peer_stat, 0, sizeof(peer_stat));
         set_tid(rtid);
     }
-  private:
-    ~MOSDSubOp()override {
+
+private:
+    ~MOSDSubOp() override
+    {
     }
 
-  public:
-    const char *get_type_name() const override {
+public:
+    const char *get_type_name() const override
+    {
         return "osd_sub_op";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "osd_sub_op(" << reqid
             << " " << pgid << " " << poid << " " << ops;
         if (first)
@@ -275,6 +303,7 @@ class MOSDSubOp:public MOSDFastDispatchOp {
         if (updated_hit_set_history)
             out << ", has_updated_hit_set_history";
         out << ")";
-}};
+    }
+};
 
 #endif

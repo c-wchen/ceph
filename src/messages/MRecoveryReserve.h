@@ -17,44 +17,58 @@
 
 #include "msg/Message.h"
 
-class MRecoveryReserve:public Message {
+class MRecoveryReserve : public Message
+{
     static const int HEAD_VERSION = 2;
     static const int COMPAT_VERSION = 2;
-  public:
-     spg_t pgid;
+
+public:
+    spg_t pgid;
     epoch_t query_epoch;
-    enum {
+    enum
+    {
         REQUEST = 0,
         GRANT = 1,
         RELEASE = 2,
     };
     int type;
 
-     MRecoveryReserve()
-    :Message(MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION),
-        query_epoch(0), type(-1) {
-    } MRecoveryReserve(int type, spg_t pgid, epoch_t query_epoch)
-    :Message(MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION),
-        pgid(pgid), query_epoch(query_epoch), type(type) {
+    MRecoveryReserve()
+        : Message(MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION),
+          query_epoch(0), type(-1)
+    {
+    }
+    MRecoveryReserve(int type, spg_t pgid, epoch_t query_epoch)
+        : Message(MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION),
+          pgid(pgid), query_epoch(query_epoch), type(type)
+    {
     }
 
-    const char *get_type_name() const override {
+    const char *get_type_name() const override
+    {
         return "MRecoveryReserve";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "MRecoveryReserve(" << pgid;
-        switch (type) {
+        switch (type)
+        {
         case REQUEST:
             out << " REQUEST";
             break;
-            case GRANT:out << " GRANT";
+        case GRANT:
+            out << " GRANT";
             break;
-            case RELEASE:out << " RELEASE";
+        case RELEASE:
+            out << " RELEASE";
             break;
-        } out << " e" << query_epoch << ")";
+        }
+        out << " e" << query_epoch << ")";
         return;
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(pgid.pgid, p);
         ::decode(query_epoch, p);
@@ -62,7 +76,8 @@ class MRecoveryReserve:public Message {
         ::decode(pgid.shard, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(pgid.pgid, payload);
         ::encode(query_epoch, payload);
         ::encode(type, payload);

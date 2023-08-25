@@ -17,37 +17,51 @@
 
 #include "MOSDFastDispatchOp.h"
 
-class MOSDPGPushReply:public MOSDFastDispatchOp {
+class MOSDPGPushReply : public MOSDFastDispatchOp
+{
     static const int HEAD_VERSION = 3;
     static const int COMPAT_VERSION = 2;
 
-  public:
-     pg_shard_t from;
+public:
+    pg_shard_t from;
     spg_t pgid;
     epoch_t map_epoch, min_epoch;
-     vector < PushReplyOp > replies;
+    vector<PushReplyOp> replies;
     uint64_t cost;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } epoch_t get_min_epoch() const override {
+    }
+    epoch_t get_min_epoch() const override
+    {
         return min_epoch;
-    } spg_t get_spg() const override {
+    }
+    spg_t get_spg() const override
+    {
         return pgid;
-    } MOSDPGPushReply()
-    :MOSDFastDispatchOp(MSG_OSD_PG_PUSH_REPLY, HEAD_VERSION, COMPAT_VERSION),
-        cost(0) {
-    } void compute_cost(CephContext * cct) {
+    }
+    MOSDPGPushReply()
+        : MOSDFastDispatchOp(MSG_OSD_PG_PUSH_REPLY, HEAD_VERSION, COMPAT_VERSION),
+          cost(0)
+    {
+    }
+    void compute_cost(CephContext *cct)
+    {
         cost = 0;
-        for (vector < PushReplyOp >::iterator i = replies.begin();
-             i != replies.end(); ++i) {
+        for (vector<PushReplyOp>::iterator i = replies.begin();
+             i != replies.end(); ++i)
+        {
             cost += i->cost(cct);
         }
     }
 
-    int get_cost() const override {
+    int get_cost() const override
+    {
         return cost;
-    } void decode_payload() override {
+    }
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(pgid.pgid, p);
         ::decode(map_epoch, p);
@@ -55,15 +69,18 @@ class MOSDPGPushReply:public MOSDFastDispatchOp {
         ::decode(cost, p);
         ::decode(pgid.shard, p);
         ::decode(from, p);
-        if (header.version >= 3) {
+        if (header.version >= 3)
+        {
             ::decode(min_epoch, p);
         }
-        else {
+        else
+        {
             min_epoch = map_epoch;
         }
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         ::encode(pgid.pgid, payload);
         ::encode(map_epoch, payload);
         ::encode(replies, payload);
@@ -73,12 +90,16 @@ class MOSDPGPushReply:public MOSDFastDispatchOp {
         ::encode(min_epoch, payload);
     }
 
-    void print(ostream & out) const override {
+    void print(ostream &out) const override
+    {
         out << "MOSDPGPushReply(" << pgid
             << " " << map_epoch << "/" << min_epoch << " " << replies;
         out << ")";
-    } const char *get_type_name() const override {
+    }
+    const char *get_type_name() const override
+    {
         return "MOSDPGPushReply";
-}};
+    }
+};
 
 #endif

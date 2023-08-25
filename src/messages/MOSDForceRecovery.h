@@ -30,35 +30,47 @@ static const int OFR_BACKFILL = 2;
 // cancel priority boost, requeue if necessary
 static const int OFR_CANCEL = 4;
 
-struct MOSDForceRecovery:public Message {
+struct MOSDForceRecovery : public Message
+{
 
     static const int HEAD_VERSION = 1;
     static const int COMPAT_VERSION = 1;
 
     uuid_d fsid;
-     vector < pg_t > forced_pgs;
+    vector<pg_t> forced_pgs;
     uint8_t options;
 
-     MOSDForceRecovery():Message(MSG_OSD_FORCE_RECOVERY, HEAD_VERSION,
-                                 COMPAT_VERSION) {
-    } MOSDForceRecovery(const uuid_d & f,
-                        char opts):Message(MSG_OSD_FORCE_RECOVERY, HEAD_VERSION,
-                                           COMPAT_VERSION), fsid(f),
-        options(opts) {
+    MOSDForceRecovery() : Message(MSG_OSD_FORCE_RECOVERY, HEAD_VERSION,
+                                  COMPAT_VERSION)
+    {
     }
-    MOSDForceRecovery(const uuid_d & f, vector < pg_t > &pgs,
-                      char opts):Message(MSG_OSD_FORCE_RECOVERY, HEAD_VERSION,
-                                         COMPAT_VERSION), fsid(f),
-        forced_pgs(pgs), options(opts) {
+    MOSDForceRecovery(const uuid_d &f,
+                      char opts) : Message(MSG_OSD_FORCE_RECOVERY, HEAD_VERSION,
+                                           COMPAT_VERSION),
+                                   fsid(f),
+                                   options(opts)
+    {
     }
-  private:
-    ~MOSDForceRecovery() {
+    MOSDForceRecovery(const uuid_d &f, vector<pg_t> &pgs,
+                      char opts) : Message(MSG_OSD_FORCE_RECOVERY, HEAD_VERSION,
+                                           COMPAT_VERSION),
+                                   fsid(f),
+                                   forced_pgs(pgs), options(opts)
+    {
     }
 
-  public:
-    const char *get_type_name() const {
+private:
+    ~MOSDForceRecovery()
+    {
+    }
+
+public:
+    const char *get_type_name() const
+    {
         return "force_recovery";
-    } void print(ostream & out) const {
+    }
+    void print(ostream &out) const
+    {
         out << "force_recovery(";
         if (forced_pgs.empty())
             out << "osd";
@@ -71,12 +83,15 @@ struct MOSDForceRecovery:public Message {
         if (options & OFR_CANCEL)
             out << " cancel";
         out << ")";
-    } void encode_payload(uint64_t features) {
+    }
+    void encode_payload(uint64_t features)
+    {
         ::encode(fsid, payload);
         ::encode(forced_pgs, payload);
         ::encode(options, payload);
     }
-    void decode_payload() {
+    void decode_payload()
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(fsid, p);
         ::decode(forced_pgs, p);

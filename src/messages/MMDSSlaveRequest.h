@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMDSSLAVEREQUEST_H
@@ -18,8 +18,9 @@
 #include "msg/Message.h"
 #include "mds/mdstypes.h"
 
-class MMDSSlaveRequest:public Message {
-  public:
+class MMDSSlaveRequest : public Message
+{
+public:
     static const int OP_XLOCK = 1;
     static const int OP_XLOCKACK = -1;
     static const int OP_UNXLOCK = 2;
@@ -49,46 +50,72 @@ class MMDSSlaveRequest:public Message {
     static const int OP_COMMITTED = -18;
 
     static const int OP_ABORT = 20; // used for recovery only
-    //static const int OP_COMMIT = 21;  // used for recovery only
+    // static const int OP_COMMIT = 21;  // used for recovery only
 
-    const static char *get_opname(int o) {
-        switch (o) {
+    const static char *get_opname(int o)
+    {
+        switch (o)
+        {
         case OP_XLOCK:
             return "xlock";
-            case OP_XLOCKACK:return "xlock_ack";
-            case OP_UNXLOCK:return "unxlock";
-            case OP_AUTHPIN:return "authpin";
-            case OP_AUTHPINACK:return "authpin_ack";
+        case OP_XLOCKACK:
+            return "xlock_ack";
+        case OP_UNXLOCK:
+            return "unxlock";
+        case OP_AUTHPIN:
+            return "authpin";
+        case OP_AUTHPINACK:
+            return "authpin_ack";
 
-            case OP_LINKPREP:return "link_prep";
-            case OP_LINKPREPACK:return "link_prep_ack";
-            case OP_UNLINKPREP:return "unlink_prep";
+        case OP_LINKPREP:
+            return "link_prep";
+        case OP_LINKPREPACK:
+            return "link_prep_ack";
+        case OP_UNLINKPREP:
+            return "unlink_prep";
 
-            case OP_RENAMEPREP:return "rename_prep";
-            case OP_RENAMEPREPACK:return "rename_prep_ack";
+        case OP_RENAMEPREP:
+            return "rename_prep";
+        case OP_RENAMEPREPACK:
+            return "rename_prep_ack";
 
-            case OP_FINISH:return "finish"; // commit
-            case OP_COMMITTED:return "committed";
+        case OP_FINISH:
+            return "finish"; // commit
+        case OP_COMMITTED:
+            return "committed";
 
-            case OP_WRLOCK:return "wrlock";
-            case OP_WRLOCKACK:return "wrlock_ack";
-            case OP_UNWRLOCK:return "unwrlock";
+        case OP_WRLOCK:
+            return "wrlock";
+        case OP_WRLOCKACK:
+            return "wrlock_ack";
+        case OP_UNWRLOCK:
+            return "unwrlock";
 
-            case OP_RMDIRPREP:return "rmdir_prep";
-            case OP_RMDIRPREPACK:return "rmdir_prep_ack";
+        case OP_RMDIRPREP:
+            return "rmdir_prep";
+        case OP_RMDIRPREPACK:
+            return "rmdir_prep_ack";
 
-            case OP_DROPLOCKS:return "drop_locks";
+        case OP_DROPLOCKS:
+            return "drop_locks";
 
-            case OP_RENAMENOTIFY:return "rename_notify";
-            case OP_RENAMENOTIFYACK:return "rename_notify_ack";
+        case OP_RENAMENOTIFY:
+            return "rename_notify";
+        case OP_RENAMENOTIFYACK:
+            return "rename_notify_ack";
 
-            case OP_ABORT:return "abort";
-            //case OP_COMMIT: return "commit";
+        case OP_ABORT:
+            return "abort";
+            // case OP_COMMIT: return "commit";
 
-            default:ceph_abort();
+        default:
+            ceph_abort();
             return 0;
-  }} private:
-     metareqid_t reqid;
+        }
+    }
+
+private:
+    metareqid_t reqid;
     __u32 attempt;
     __s16 op;
     __u16 flags;
@@ -101,106 +128,133 @@ class MMDSSlaveRequest:public Message {
     static const unsigned FLAG_INTERRUPTED = 1 << 5;
 
     // for locking
-    __u16 lock_type;            // lock object type
+    __u16 lock_type; // lock object type
     MDSCacheObjectInfo object_info;
 
     // for authpins
-    vector < MDSCacheObjectInfo > authpins;
+    vector<MDSCacheObjectInfo> authpins;
 
-  public:
+public:
     // for rename prep
     filepath srcdnpath;
     filepath destdnpath;
-    set < mds_rank_t > witnesses;
+    set<mds_rank_t> witnesses;
     bufferlist inode_export;
     version_t inode_export_v;
     bufferlist srci_replica;
     mds_rank_t srcdn_auth;
     utime_t op_stamp;
 
-    bufferlist stray;           // stray dir + dentry
+    bufferlist stray; // stray dir + dentry
 
-  public:
-    metareqid_t get_reqid() {
+public:
+    metareqid_t get_reqid()
+    {
         return reqid;
     }
-    __u32 get_attempt() const {
+    __u32 get_attempt() const
+    {
         return attempt;
-    } int get_op() {
+    }
+    int get_op()
+    {
         return op;
     }
-    bool is_reply() {
+    bool is_reply()
+    {
         return op < 0;
     }
 
-    int get_lock_type() {
+    int get_lock_type()
+    {
         return lock_type;
     }
-    MDSCacheObjectInfo & get_object_info() {
+    MDSCacheObjectInfo &get_object_info()
+    {
         return object_info;
     }
-    MDSCacheObjectInfo & get_authpin_freeze() {
+    MDSCacheObjectInfo &get_authpin_freeze()
+    {
         return object_info;
     }
 
-    vector < MDSCacheObjectInfo > &get_authpins() {
+    vector<MDSCacheObjectInfo> &get_authpins()
+    {
         return authpins;
     }
-    void mark_nonblock() {
+    void mark_nonblock()
+    {
         flags |= FLAG_NONBLOCK;
     }
-    bool is_nonblock() {
+    bool is_nonblock()
+    {
         return (flags & FLAG_NONBLOCK);
     }
-    void mark_error_wouldblock() {
+    void mark_error_wouldblock()
+    {
         flags |= FLAG_WOULDBLOCK;
     }
-    bool is_error_wouldblock() {
+    bool is_error_wouldblock()
+    {
         return (flags & FLAG_WOULDBLOCK);
     }
-    void mark_not_journaled() {
+    void mark_not_journaled()
+    {
         flags |= FLAG_NOTJOURNALED;
     }
-    bool is_not_journaled() {
+    bool is_not_journaled()
+    {
         return (flags & FLAG_NOTJOURNALED);
     }
-    void mark_error_rofs() {
+    void mark_error_rofs()
+    {
         flags |= FLAG_EROFS;
     }
-    bool is_error_rofs() {
+    bool is_error_rofs()
+    {
         return (flags & FLAG_EROFS);
     }
-    bool is_abort() {
+    bool is_abort()
+    {
         return (flags & FLAG_ABORT);
     }
-    void mark_abort() {
+    void mark_abort()
+    {
         flags |= FLAG_ABORT;
     }
-    bool is_interrupted() {
+    bool is_interrupted()
+    {
         return (flags & FLAG_INTERRUPTED);
     }
-    void mark_interrupted() {
+    void mark_interrupted()
+    {
         flags |= FLAG_INTERRUPTED;
     }
 
-    void set_lock_type(int t) {
+    void set_lock_type(int t)
+    {
         lock_type = t;
     }
 
     // ----
-  MMDSSlaveRequest():Message(MSG_MDS_SLAVE_REQUEST) {
+    MMDSSlaveRequest() : Message(MSG_MDS_SLAVE_REQUEST)
+    {
     }
     MMDSSlaveRequest(metareqid_t ri, __u32 att,
-                     int o):Message(MSG_MDS_SLAVE_REQUEST), reqid(ri),
-        attempt(att), op(o), flags(0), lock_type(0), inode_export_v(0),
-        srcdn_auth(MDS_RANK_NONE) {
-    }
-  private:
-    ~MMDSSlaveRequest()override {
+                     int o) : Message(MSG_MDS_SLAVE_REQUEST), reqid(ri),
+                              attempt(att), op(o), flags(0), lock_type(0), inode_export_v(0),
+                              srcdn_auth(MDS_RANK_NONE)
+    {
     }
 
-  public:
-    void encode_payload(uint64_t features) override {
+private:
+    ~MMDSSlaveRequest() override
+    {
+    }
+
+public:
+    void encode_payload(uint64_t features) override
+    {
         ::encode(reqid, payload);
         ::encode(attempt, payload);
         ::encode(op, payload);
@@ -218,7 +272,8 @@ class MMDSSlaveRequest:public Message {
         ::encode(srci_replica, payload);
         ::encode(stray, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         bufferlist::iterator p = payload.begin();
         ::decode(reqid, p);
         ::decode(attempt, p);
@@ -238,12 +293,16 @@ class MMDSSlaveRequest:public Message {
         ::decode(stray, p);
     }
 
-    const char *get_type_name() const override {
+    const char *get_type_name() const override
+    {
         return "slave_request";
-    } void print(ostream & out) const override {
+    }
+    void print(ostream &out) const override
+    {
         out << "slave_request(" << reqid
             << "." << attempt << " " << get_opname(op)
-        << ")";
-}};
+            << ")";
+    }
+};
 
 #endif
