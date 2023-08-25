@@ -13,13 +13,13 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace operation {
+    namespace operation {
 
-template <typename ImageCtxT = ImageCtx>
-class SnapshotCreateRequest : public Request<ImageCtxT> {
-public:
+      template < typename ImageCtxT = ImageCtx > class SnapshotCreateRequest:public Request < ImageCtxT >
+        {
+          public:
   /**
    * Snap Create goes through the following state machine:
    *
@@ -59,68 +59,65 @@ public:
    * to abort, the error path is followed to record the result in the journal
    * (if enabled) and bubble the originating error code back to the client.
    */
-  SnapshotCreateRequest(ImageCtxT &image_ctx, Context *on_finish,
-			const cls::rbd::SnapshotNamespace &snap_namespace,
-		        const std::string &snap_name,
-			uint64_t journal_op_tid,
-                        bool skip_object_map);
+            SnapshotCreateRequest(ImageCtxT & image_ctx, Context * on_finish,
+                                  const cls::rbd::
+                                  SnapshotNamespace & snap_namespace,
+                                  const std::string & snap_name,
+                                  uint64_t journal_op_tid,
+                                  bool skip_object_map);
 
-protected:
-  void send_op() override;
-  bool should_complete(int r) override {
-    return true;
-  }
-  bool can_affect_io() const override {
-    return true;
-  }
-  journal::Event create_event(uint64_t op_tid) const override {
-    return journal::SnapCreateEvent(op_tid, m_snap_namespace, m_snap_name);
-  }
+          protected:
+            void send_op() override;
+            bool should_complete(int r) override {
+                return true;
+            } bool can_affect_io() const override {
+                return true;
+            } journal::Event create_event(uint64_t op_tid) const override {
+                return journal::SnapCreateEvent(op_tid, m_snap_namespace,
+                                                m_snap_name);
+          } private:
+             cls::rbd::SnapshotNamespace m_snap_namespace;
+             std::string m_snap_name;
+            bool m_skip_object_map;
 
-private:
-  cls::rbd::SnapshotNamespace m_snap_namespace;
-  std::string m_snap_name;
-  bool m_skip_object_map;
+            int m_ret_val;
 
-  int m_ret_val;
+            uint64_t m_snap_id;
+            uint64_t m_size;
+            ParentInfo m_parent_info;
 
-  uint64_t m_snap_id;
-  uint64_t m_size;
-  ParentInfo m_parent_info;
+            void send_suspend_requests();
+            Context *handle_suspend_requests(int *result);
 
-  void send_suspend_requests();
-  Context *handle_suspend_requests(int *result);
+            void send_suspend_aio();
+            Context *handle_suspend_aio(int *result);
 
-  void send_suspend_aio();
-  Context *handle_suspend_aio(int *result);
+            void send_append_op_event();
+            Context *handle_append_op_event(int *result);
 
-  void send_append_op_event();
-  Context *handle_append_op_event(int *result);
+            void send_allocate_snap_id();
+            Context *handle_allocate_snap_id(int *result);
 
-  void send_allocate_snap_id();
-  Context *handle_allocate_snap_id(int *result);
+            void send_create_snap();
+            Context *handle_create_snap(int *result);
 
-  void send_create_snap();
-  Context *handle_create_snap(int *result);
+            Context *send_create_object_map();
+            Context *handle_create_object_map(int *result);
 
-  Context *send_create_object_map();
-  Context *handle_create_object_map(int *result);
+            void send_release_snap_id();
+            Context *handle_release_snap_id(int *result);
 
-  void send_release_snap_id();
-  Context *handle_release_snap_id(int *result);
+            void update_snap_context();
 
-  void update_snap_context();
+            void save_result(int *result) {
+                if (m_ret_val == 0 && *result < 0) {
+                    m_ret_val = *result;
+        }}};
 
-  void save_result(int *result) {
-    if (m_ret_val == 0 && *result < 0) {
-      m_ret_val = *result;
-    }
-  }
-};
+    }                           // namespace operation
+}                               // namespace librbd
 
-} // namespace operation
-} // namespace librbd
-
-extern template class librbd::operation::SnapshotCreateRequest<librbd::ImageCtx>;
+extern template class librbd::operation::SnapshotCreateRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OPERATION_SNAPSHOT_CREATE_REQUEST_H

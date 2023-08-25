@@ -24,107 +24,104 @@
 
 class CephContext;
 class CryptoKeyContext;
-namespace ceph { class Formatter; }
-
-
+namespace ceph {
+    class Formatter;
+}
 /*
  * some per-key context that is specific to a particular crypto backend
- */
-class CryptoKeyHandler {
-public:
-  bufferptr secret;
+ */ class CryptoKeyHandler {
+  public:
+    bufferptr secret;
 
-  virtual ~CryptoKeyHandler() {}
-
-  virtual int encrypt(const bufferlist& in,
-		       bufferlist& out, std::string *error) const = 0;
-  virtual int decrypt(const bufferlist& in,
-		       bufferlist& out, std::string *error) const = 0;
+    virtual ~ CryptoKeyHandler() {
+    } virtual int encrypt(const bufferlist & in,
+                          bufferlist & out, std::string * error) const = 0;
+    virtual int decrypt(const bufferlist & in,
+                        bufferlist & out, std::string * error) const = 0;
 };
 
 /*
  * match encoding of struct ceph_secret
  */
 class CryptoKey {
-protected:
-  __u16 type;
-  utime_t created;
-  bufferptr secret;   // must set this via set_secret()!
+  protected:
+    __u16 type;
+    utime_t created;
+    bufferptr secret;           // must set this via set_secret()!
 
-  // cache a pointer to the implementation-specific key handler, so we
-  // don't have to create it for every crypto operation.
-  mutable ceph::shared_ptr<CryptoKeyHandler> ckh;
+    // cache a pointer to the implementation-specific key handler, so we
+    // don't have to create it for every crypto operation.
+    mutable ceph::shared_ptr < CryptoKeyHandler > ckh;
 
-  int _set_secret(int type, const bufferptr& s);
+    int _set_secret(int type, const bufferptr & s);
 
-public:
-  CryptoKey() : type(0) { }
-  CryptoKey(int t, utime_t c, bufferptr& s)
-    : created(c) {
-    _set_secret(t, s);
-  }
-  ~CryptoKey() {
-  }
+  public:
+     CryptoKey():type(0) {
+    } CryptoKey(int t, utime_t c, bufferptr & s)
+    :created(c) {
+        _set_secret(t, s);
+    }
+    ~CryptoKey() {
+    }
 
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::iterator& bl);
+    void encode(bufferlist & bl) const;
+    void decode(bufferlist::iterator & bl);
 
-  int get_type() const { return type; }
-  utime_t get_created() const { return created; }
-  void print(std::ostream& out) const;
+    int get_type() const {
+        return type;
+    } utime_t get_created() const {
+        return created;
+    } void print(std::ostream & out) const;
 
-  int set_secret(int type, const bufferptr& s, utime_t created);
-  const bufferptr& get_secret() { return secret; }
-  const bufferptr& get_secret() const { return secret; }
+    int set_secret(int type, const bufferptr & s, utime_t created);
+    const bufferptr & get_secret() {
+        return secret;
+    }
+    const bufferptr & get_secret() const {
+        return secret;
+    } void encode_base64(string & s) const {
+        bufferlist bl;
+         encode(bl);
+        bufferlist e;
+         bl.encode_base64(e);
+         e.append('\0');
+         s = e.c_str();
+    } string encode_base64() const {
+        string s;
+         encode_base64(s);
+         return s;
+    } void decode_base64(const string & s) {
+        bufferlist e;
+        e.append(s);
+        bufferlist bl;
+        bl.decode_base64(e);
+        bufferlist::iterator p = bl.begin();
+        decode(p);
+    }
 
-  void encode_base64(string& s) const {
-    bufferlist bl;
-    encode(bl);
-    bufferlist e;
-    bl.encode_base64(e);
-    e.append('\0');
-    s = e.c_str();
-  }
-  string encode_base64() const {
-    string s;
-    encode_base64(s);
-    return s;
-  }
-  void decode_base64(const string& s) {
-    bufferlist e;
-    e.append(s);
-    bufferlist bl;
-    bl.decode_base64(e);
-    bufferlist::iterator p = bl.begin();
-    decode(p);
-  }
+    void encode_formatted(string label, Formatter * f, bufferlist & bl);
+    void encode_plaintext(bufferlist & bl);
 
-  void encode_formatted(string label, Formatter *f, bufferlist &bl);
-  void encode_plaintext(bufferlist &bl);
-
-  // --
-  int create(CephContext *cct, int type);
-  int encrypt(CephContext *cct, const bufferlist& in, bufferlist& out,
-	       std::string *error) const {
-    assert(ckh); // Bad key?
-    return ckh->encrypt(in, out, error);
-  }
-  int decrypt(CephContext *cct, const bufferlist& in, bufferlist& out,
-	       std::string *error) const {
-    assert(ckh); // Bad key?
-    return ckh->decrypt(in, out, error);
-  }
-
-  void to_str(std::string& s) const;
+    // --
+    int create(CephContext * cct, int type);
+    int encrypt(CephContext * cct, const bufferlist & in, bufferlist & out,
+                std::string * error) const {
+        assert(ckh);            // Bad key?
+        return ckh->encrypt(in, out, error);
+    } int decrypt(CephContext * cct, const bufferlist & in, bufferlist & out,
+                  std::string * error) const {
+        assert(ckh);            // Bad key?
+        return ckh->decrypt(in, out, error);
+    } void to_str(std::string & s) const;
 };
+
 WRITE_CLASS_ENCODER(CryptoKey)
 
-static inline ostream& operator<<(ostream& out, const CryptoKey& k)
+static inline ostream & operator<<(ostream & out, const CryptoKey & k)
 {
-  k.print(out);
-  return out;
+    k.print(out);
+    return out;
 }
-
 
 /*
  * Driver for a particular algorithm
@@ -133,15 +130,15 @@ static inline ostream& operator<<(ostream& out, const CryptoKey& k)
  * common/ceph_crypto.h. common_init_finish does this for you.
  */
 class CryptoHandler {
-public:
-  virtual ~CryptoHandler() {}
-  virtual int get_type() const = 0;
-  virtual int create(bufferptr& secret) = 0;
-  virtual int validate_secret(const bufferptr& secret) = 0;
-  virtual CryptoKeyHandler *get_key_handler(const bufferptr& secret,
-					    string& error) = 0;
+  public:
+    virtual ~ CryptoHandler() {
+    } virtual int get_type() const = 0;
+    virtual int create(bufferptr & secret) = 0;
+    virtual int validate_secret(const bufferptr & secret) = 0;
+    virtual CryptoKeyHandler *get_key_handler(const bufferptr & secret,
+                                              string & error) = 0;
 
-  static CryptoHandler *create(int type);
+    static CryptoHandler *create(int type);
 };
 
 extern int get_random_bytes(char *buf, int len);

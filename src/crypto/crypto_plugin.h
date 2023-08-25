@@ -23,14 +23,12 @@
 #include "crypto/crypto_accel.h"
 // -----------------------------------------------------------------------------
 
-class CryptoPlugin : public Plugin {
+class CryptoPlugin:public Plugin {
 
-public:
-  explicit CryptoPlugin(CephContext* cct) : Plugin(cct)
-  {}
-  ~CryptoPlugin()
-  {}
-  virtual int factory(CryptoAccelRef *cs,
-                      std::ostream *ss) = 0;
+  public:
+    explicit CryptoPlugin(CephContext * cct):Plugin(cct) {
+    } ~CryptoPlugin() {
+    }
+    virtual int factory(CryptoAccelRef * cs, std::ostream * ss) = 0;
 };
 #endif

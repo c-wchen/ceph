@@ -17,29 +17,30 @@ class ContextWQ;
 
 namespace librbd {
 
-class Watcher;
+    class Watcher;
 
-namespace managed_lock {
+    namespace managed_lock {
 
-template <typename ImageCtxT>
-class AcquireRequest {
-private:
-  typedef watcher::Traits<ImageCtxT> TypeTraits;
-  typedef typename TypeTraits::Watcher Watcher;
+        template < typename ImageCtxT > class AcquireRequest {
+          private:
+            typedef watcher::Traits < ImageCtxT > TypeTraits;
+            typedef typename TypeTraits::Watcher Watcher;
 
-public:
-  static AcquireRequest* create(librados::IoCtx& ioctx, Watcher *watcher,
-                                ContextWQ *work_queue, const std::string& oid,
-                                const std::string& cookie,
-                                bool exclusive,
-                                bool blacklist_on_break_lock,
-                                uint32_t blacklist_expire_seconds,
-                                Context *on_finish);
+          public:
+            static AcquireRequest *create(librados::IoCtx & ioctx,
+                                          Watcher * watcher,
+                                          ContextWQ * work_queue,
+                                          const std::string & oid,
+                                          const std::string & cookie,
+                                          bool exclusive,
+                                          bool blacklist_on_break_lock,
+                                          uint32_t blacklist_expire_seconds,
+                                          Context * on_finish);
 
-  ~AcquireRequest();
-  void send();
+            ~AcquireRequest();
+            void send();
 
-private:
+          private:
 
   /**
    * @verbatim
@@ -62,40 +63,39 @@ private:
    * @endverbatim
    */
 
-  AcquireRequest(librados::IoCtx& ioctx, Watcher *watcher,
-                 ContextWQ *work_queue, const std::string& oid,
-                 const std::string& cookie, bool exclusive,
-                 bool blacklist_on_break_lock,
-                 uint32_t blacklist_expire_seconds, Context *on_finish);
+             AcquireRequest(librados::IoCtx & ioctx, Watcher * watcher,
+                            ContextWQ * work_queue, const std::string & oid,
+                            const std::string & cookie, bool exclusive,
+                            bool blacklist_on_break_lock,
+                            uint32_t blacklist_expire_seconds,
+                            Context * on_finish);
 
-  librados::IoCtx& m_ioctx;
-  Watcher *m_watcher;
-  CephContext *m_cct;
-  ContextWQ *m_work_queue;
-  std::string m_oid;
-  std::string m_cookie;
-  bool m_exclusive;
-  bool m_blacklist_on_break_lock;
-  uint32_t m_blacklist_expire_seconds;
-  Context *m_on_finish;
+             librados::IoCtx & m_ioctx;
+            Watcher *m_watcher;
+            CephContext *m_cct;
+            ContextWQ *m_work_queue;
+             std::string m_oid;
+             std::string m_cookie;
+            bool m_exclusive;
+            bool m_blacklist_on_break_lock;
+            uint32_t m_blacklist_expire_seconds;
+            Context *m_on_finish;
 
-  bufferlist m_out_bl;
+            bufferlist m_out_bl;
 
-  Locker m_locker;
+            Locker m_locker;
 
-  void send_get_locker();
-  void handle_get_locker(int r);
+            void send_get_locker();
+            void handle_get_locker(int r);
 
-  void send_lock();
-  void handle_lock(int r);
+            void send_lock();
+            void handle_lock(int r);
 
-  void send_break_lock();
-  void handle_break_lock(int r);
+            void send_break_lock();
+            void handle_break_lock(int r);
 
-  void finish(int r);
-};
+            void finish(int r);
+        };
 
-} // namespace managed_lock
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_MANAGED_LOCK_ACQUIRE_REQUEST_H
+} // namespace managed_lock }   // namespace librbd
+#endif                          // CEPH_LIBRBD_MANAGED_LOCK_ACQUIRE_REQUEST_H

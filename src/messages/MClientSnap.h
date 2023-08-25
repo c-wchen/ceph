@@ -17,49 +17,48 @@
 
 #include "msg/Message.h"
 
-struct MClientSnap : public Message {
-  ceph_mds_snap_head head;
-  bufferlist bl;
-  
-  // (for split only)
-  vector<inodeno_t> split_inos;
-  vector<inodeno_t> split_realms;
+struct MClientSnap:public Message {
+    ceph_mds_snap_head head;
+    bufferlist bl;
 
-  MClientSnap(int o=0) : 
+    // (for split only)
+     vector < inodeno_t > split_inos;
+     vector < inodeno_t > split_realms;
+
+   MClientSnap(int o = 0):
     Message(CEPH_MSG_CLIENT_SNAP) {
-    memset(&head, 0, sizeof(head));
-    head.op = o;
-  }
-private:
-  ~MClientSnap() override {}
+        memset(&head, 0, sizeof(head));
+        head.op = o;
+  } private:
+    ~MClientSnap() override {
+    }
 
-public:  
-  const char *get_type_name() const override { return "client_snap"; }
-  void print(ostream& out) const override {
-    out << "client_snap(" << ceph_snap_op_name(head.op);
-    if (head.split)
-      out << " split=" << inodeno_t(head.split);
-    out << " tracelen=" << bl.length();
-    out << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    head.num_split_inos = split_inos.size();
-    head.num_split_realms = split_realms.size();
-    head.trace_len = bl.length();
-    ::encode(head, payload);
-    ::encode_nohead(split_inos, payload);
-    ::encode_nohead(split_realms, payload);
-    ::encode_nohead(bl, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(head, p);
-    ::decode_nohead(head.num_split_inos, split_inos, p);
-    ::decode_nohead(head.num_split_realms, split_realms, p);
-    ::decode_nohead(head.trace_len, bl, p);
-    assert(p.end());
-  }
+  public:
+    const char *get_type_name() const override {
+        return "client_snap";
+    } void print(ostream & out) const override {
+        out << "client_snap(" << ceph_snap_op_name(head.op);
+        if (head.split)
+            out << " split=" << inodeno_t(head.split);
+        out << " tracelen=" << bl.length();
+        out << ")";
+    } void encode_payload(uint64_t features) override {
+        head.num_split_inos = split_inos.size();
+        head.num_split_realms = split_realms.size();
+        head.trace_len = bl.length();
+        ::encode(head, payload);
+        ::encode_nohead(split_inos, payload);
+        ::encode_nohead(split_realms, payload);
+        ::encode_nohead(bl, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(head, p);
+        ::decode_nohead(head.num_split_inos, split_inos, p);
+        ::decode_nohead(head.num_split_realms, split_realms, p);
+        ::decode_nohead(head.trace_len, bl, p);
+        assert(p.end());
+    }
 
 };
 

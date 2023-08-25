@@ -19,30 +19,24 @@ typedef struct _ts PyThreadState;
 
 #include <pthread.h>
 
-
 /**
  * Wrap PyThreadState to carry a record of which POSIX thread
  * the thread state relates to.  This allows the Gil class to
  * validate that we're being used from the right thread.
  */
-class SafeThreadState
-{
+class SafeThreadState {
   public:
-  SafeThreadState(PyThreadState *ts_);
+    SafeThreadState(PyThreadState * ts_);
 
-  SafeThreadState()
-    : ts(nullptr), thread(0)
-  {
-  }
+    SafeThreadState()
+    :ts(nullptr), thread(0) {
+    } PyThreadState *ts;
+    pthread_t thread;
 
-  PyThreadState *ts;
-  pthread_t thread;
-
-  void set(PyThreadState *ts_)
-  {
-    ts = ts_;
-    thread = pthread_self();
-  }
+    void set(PyThreadState * ts_) {
+        ts = ts_;
+        thread = pthread_self();
+    }
 };
 
 //
@@ -58,15 +52,14 @@ class SafeThreadState
 // See the comment in Gil::Gil for when to set new_thread == true
 //
 class Gil {
-public:
-  Gil(const Gil&) = delete;
-  Gil& operator=(const Gil&) = delete;
+  public:
+    Gil(const Gil &) = delete;
+     Gil & operator=(const Gil &) = delete;
 
-  Gil(SafeThreadState &ts, bool new_thread = false);
-  ~Gil();
+     Gil(SafeThreadState & ts, bool new_thread = false);
+    ~Gil();
 
-private:
-  SafeThreadState &pThreadState;
-  PyThreadState *pNewThreadState = nullptr;
+  private:
+     SafeThreadState & pThreadState;
+    PyThreadState *pNewThreadState = nullptr;
 };
-

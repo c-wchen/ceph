@@ -12,7 +12,6 @@
  *
  */
 
-
 #ifndef CEPH_COND_H
 #define CEPH_COND_H
 
@@ -25,19 +24,18 @@
  * Generic context to signal a cond and store the return value.  We
  * assume the caller is holding the appropriate lock.
  */
-class C_Cond : public Context {
-  Cond *cond;   ///< Cond to signal
-  bool *done;   ///< true if finish() has been called
-  int *rval;    ///< return value
-public:
-  C_Cond(Cond *c, bool *d, int *r) : cond(c), done(d), rval(r) {
-    *done = false;
-  }
-  void finish(int r) override {
-    *done = true;
-    *rval = r;
-    cond->Signal();
-  }
+class C_Cond:public Context {
+    Cond *cond;                 ///< Cond to signal
+    bool *done;                 ///< true if finish() has been called
+    int *rval;                  ///< return value
+  public:
+     C_Cond(Cond * c, bool * d, int *r):cond(c), done(d), rval(r) {
+        *done = false;
+    } void finish(int r) override {
+        *done = true;
+        *rval = r;
+        cond->Signal();
+    }
 };
 
 /**
@@ -47,23 +45,23 @@ public:
  * lock in the finish() callback, so the finish() caller must not
  * already hold it.
  */
-class C_SafeCond : public Context {
-  Mutex *lock;    ///< Mutex to take
-  Cond *cond;     ///< Cond to signal
-  bool *done;     ///< true after finish() has been called
-  int *rval;      ///< return value (optional)
-public:
-  C_SafeCond(Mutex *l, Cond *c, bool *d, int *r=0) : lock(l), cond(c), done(d), rval(r) {
-    *done = false;
-  }
-  void finish(int r) override {
-    lock->Lock();
-    if (rval)
-      *rval = r;
-    *done = true;
-    cond->Signal();
-    lock->Unlock();
-  }
+class C_SafeCond:public Context {
+    Mutex *lock;                ///< Mutex to take
+    Cond *cond;                 ///< Cond to signal
+    bool *done;                 ///< true after finish() has been called
+    int *rval;                  ///< return value (optional)
+  public:
+   C_SafeCond(Mutex * l, Cond * c, bool * d, int *r = 0):lock(l), cond(c), done(d),
+        rval(r) {
+        *done = false;
+    } void finish(int r) override {
+        lock->Lock();
+        if (rval)
+            *rval = r;
+        *done = true;
+        cond->Signal();
+        lock->Unlock();
+    }
 };
 
 /**
@@ -72,30 +70,32 @@ public:
  * The context will not be deleted as part of complete and must live
  * until wait() returns.
  */
-class C_SaferCond : public Context {
-  Mutex lock;    ///< Mutex to take
-  Cond cond;     ///< Cond to signal
-  bool done;     ///< true after finish() has been called
-  int rval;      ///< return value
-public:
-  C_SaferCond() : lock("C_SaferCond"), done(false), rval(0) {}
-  void finish(int r) override { complete(r); }
+class C_SaferCond:public Context {
+    Mutex lock;                 ///< Mutex to take
+    Cond cond;                  ///< Cond to signal
+    bool done;                  ///< true after finish() has been called
+    int rval;                   ///< return value
+  public:
+     C_SaferCond():lock("C_SaferCond"), done(false), rval(0) {
+    } void finish(int r) override {
+        complete(r);
+    }
 
-  /// We overload complete in order to not delete the context
-  void complete(int r) override {
-    Mutex::Locker l(lock);
-    done = true;
-    rval = r;
-    cond.Signal();
-  }
+    /// We overload complete in order to not delete the context
+    void complete(int r) override {
+        Mutex::Locker l(lock);
+        done = true;
+        rval = r;
+        cond.Signal();
+    }
 
-  /// Returns rval once the Context is called
-  int wait() {
-    Mutex::Locker l(lock);
-    while (!done)
-      cond.Wait(lock);
-    return rval;
-  }
+    /// Returns rval once the Context is called
+    int wait() {
+        Mutex::Locker l(lock);
+        while (!done)
+            cond.Wait(lock);
+        return rval;
+    }
 };
 
 #endif

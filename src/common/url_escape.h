@@ -5,5 +5,5 @@
 
 #include <string>
 
-extern std::string url_escape(const std::string& s);
-extern std::string url_unescape(const std::string& s);
+extern std::string url_escape(const std::string & s);
+extern std::string url_unescape(const std::string & s);

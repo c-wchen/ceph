@@ -17,34 +17,34 @@
 
 #include "messages/PaxosServiceMessage.h"
 
-struct MRemoveSnaps : public PaxosServiceMessage {
-  map<int, vector<snapid_t> > snaps;
-  
-  MRemoveSnaps() : 
-    PaxosServiceMessage(MSG_REMOVE_SNAPS, 0) { }
-  MRemoveSnaps(map<int, vector<snapid_t> >& s) : 
-    PaxosServiceMessage(MSG_REMOVE_SNAPS, 0) {
-    snaps.swap(s);
-  }
-private:
-  ~MRemoveSnaps() override {}
+struct MRemoveSnaps:public PaxosServiceMessage {
+    map < int, vector < snapid_t > >snaps;
 
-public:
-  const char *get_type_name() const override { return "remove_snaps"; }
-  void print(ostream& out) const override {
-    out << "remove_snaps(" << snaps << " v" << version << ")";
-  }
+     MRemoveSnaps(): PaxosServiceMessage(MSG_REMOVE_SNAPS, 0) {
+    } MRemoveSnaps(map < int,
+                   vector < snapid_t >
+                   >&s):PaxosServiceMessage(MSG_REMOVE_SNAPS, 0) {
+        snaps.swap(s);
+    }
+  private:
+    ~MRemoveSnaps()override {
+    }
 
-  void encode_payload(uint64_t features) override {
-    paxos_encode();
-    ::encode(snaps, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    paxos_decode(p);
-    ::decode(snaps, p);
-    assert(p.end());
-  }
+  public:
+    const char *get_type_name() const override {
+        return "remove_snaps";
+    } void print(ostream & out) const override {
+        out << "remove_snaps(" << snaps << " v" << version << ")";
+    } void encode_payload(uint64_t features) override {
+        paxos_encode();
+        ::encode(snaps, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        paxos_decode(p);
+        ::decode(snaps, p);
+        assert(p.end());
+    }
 
 };
 

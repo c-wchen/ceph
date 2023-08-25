@@ -23,236 +23,240 @@
                            << this << " " << __func__ << " "
 
 namespace rbd {
-namespace mirror {
-namespace image_replayer {
+    namespace mirror {
+        namespace image_replayer {
 
-using librbd::util::create_context_callback;
+            using librbd::util::create_context_callback;
 
-namespace {
+             namespace {
 
-template <typename I>
-struct MirrorExclusiveLockPolicy : public librbd::exclusive_lock::Policy {
-  I *image_ctx;
+                template < typename I >
+                    struct MirrorExclusiveLockPolicy:public librbd::
+                    exclusive_lock::Policy {
+                    I *image_ctx;
 
-  MirrorExclusiveLockPolicy(I *image_ctx) : image_ctx(image_ctx) {
-  }
+                     MirrorExclusiveLockPolicy(I *
+                                               image_ctx):image_ctx(image_ctx) {
+                    } bool may_auto_request_lock() override {
+                        return false;
+                    } int lock_requested(bool force) override {
+                        int r = -EROFS;
+                        {
+                            RWLock::RLocker owner_locker(image_ctx->owner_lock);
+                            RWLock::RLocker snap_locker(image_ctx->snap_lock);
+                            if (image_ctx->journal == nullptr
+                                || image_ctx->journal->is_tag_owner()) {
+                                r = 0;
+                        }} if (r == 0) {
+                            // if the local image journal has been closed or if it was (force)
+                            // promoted allow the lock to be released to another client
+                            image_ctx->exclusive_lock->release_lock(nullptr);
+                        }
+                        return r;
+                    }
 
-  bool may_auto_request_lock() override {
-    return false;
-  }
+                };
 
-  int lock_requested(bool force) override {
-    int r = -EROFS;
-    {
-      RWLock::RLocker owner_locker(image_ctx->owner_lock);
-      RWLock::RLocker snap_locker(image_ctx->snap_lock);
-      if (image_ctx->journal == nullptr || image_ctx->journal->is_tag_owner()) {
-        r = 0;
-      }
-    }
+                struct MirrorJournalPolicy:public librbd::journal::Policy {
+                    ContextWQ *work_queue;
 
-    if (r == 0) {
-      // if the local image journal has been closed or if it was (force)
-      // promoted allow the lock to be released to another client
-      image_ctx->exclusive_lock->release_lock(nullptr);
-    }
-    return r;
-  }
+                     MirrorJournalPolicy(ContextWQ *
+                                         work_queue):work_queue(work_queue) {
+                    } bool append_disabled() const override {
+                        // avoid recording any events to the local journal
+                        return true;
+                    } bool journal_disabled() const override {
+                        return false;
+                    } void allocate_tag_on_lock(Context * on_finish) override {
+                        // rbd-mirror will manually create tags by copying them from the peer
+                        work_queue->queue(on_finish, 0);
+                    }
+                };
 
-};
+            }                   // anonymous namespace
 
-struct MirrorJournalPolicy : public librbd::journal::Policy {
-  ContextWQ *work_queue;
+            template < typename I >
+                OpenLocalImageRequest <
+                I >::OpenLocalImageRequest(librados::IoCtx & local_io_ctx,
+                                           I ** local_image_ctx,
+                                           const std::string & local_image_id,
+                                           ContextWQ * work_queue,
+                                           Context * on_finish)
+            :m_local_io_ctx(local_io_ctx), m_local_image_ctx(local_image_ctx),
+                m_local_image_id(local_image_id), m_work_queue(work_queue),
+                m_on_finish(on_finish) {
+            }
 
-  MirrorJournalPolicy(ContextWQ *work_queue) : work_queue(work_queue) {
-  }
+            template < typename I > void OpenLocalImageRequest < I >::send() {
+                send_open_image();
+            }
 
-  bool append_disabled() const override {
-    // avoid recording any events to the local journal
-    return true;
-  }
-  bool journal_disabled() const override {
-    return false;
-  }
+            template < typename I >
+                void OpenLocalImageRequest < I >::send_open_image() {
+                dout(20) << dendl;
 
-  void allocate_tag_on_lock(Context *on_finish) override {
-    // rbd-mirror will manually create tags by copying them from the peer
-    work_queue->queue(on_finish, 0);
-  }
-};
+                *m_local_image_ctx = I::create("", m_local_image_id, nullptr,
+                                               m_local_io_ctx, false);
+                {
+                    RWLock::WLocker owner_locker((*m_local_image_ctx)->
+                                                 owner_lock);
+                    RWLock::WLocker snap_locker((*m_local_image_ctx)->
+                                                snap_lock);
+                    (*m_local_image_ctx)->
+                        set_exclusive_lock_policy(new MirrorExclusiveLockPolicy
+                                                  < I > (*m_local_image_ctx));
+                    (*m_local_image_ctx)->
+                        set_journal_policy(new
+                                           MirrorJournalPolicy(m_work_queue));
+                }
 
-} // anonymous namespace
+                Context *ctx = create_context_callback <
+                    OpenLocalImageRequest < I >,
+                    &OpenLocalImageRequest < I >::handle_open_image > (this);
+                (*m_local_image_ctx)->state->open(false, ctx);
+            }
 
-template <typename I>
-OpenLocalImageRequest<I>::OpenLocalImageRequest(librados::IoCtx &local_io_ctx,
-                                                I **local_image_ctx,
-                                                const std::string &local_image_id,
-                                                ContextWQ *work_queue,
-                                                Context *on_finish)
-  : m_local_io_ctx(local_io_ctx), m_local_image_ctx(local_image_ctx),
-    m_local_image_id(local_image_id), m_work_queue(work_queue),
-    m_on_finish(on_finish) {
-}
+            template < typename I >
+                void OpenLocalImageRequest < I >::handle_open_image(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-template <typename I>
-void OpenLocalImageRequest<I>::send() {
-  send_open_image();
-}
+                if (r < 0) {
+                    derr << ": failed to open image '" << m_local_image_id <<
+                        "': " << cpp_strerror(r) << dendl;
+                    (*m_local_image_ctx)->destroy();
+                    *m_local_image_ctx = nullptr;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void OpenLocalImageRequest<I>::send_open_image() {
-  dout(20) << dendl;
+                send_is_primary();
+            }
 
-  *m_local_image_ctx = I::create("", m_local_image_id, nullptr,
-                                 m_local_io_ctx, false);
-  {
-    RWLock::WLocker owner_locker((*m_local_image_ctx)->owner_lock);
-    RWLock::WLocker snap_locker((*m_local_image_ctx)->snap_lock);
-    (*m_local_image_ctx)->set_exclusive_lock_policy(
-      new MirrorExclusiveLockPolicy<I>(*m_local_image_ctx));
-    (*m_local_image_ctx)->set_journal_policy(
-      new MirrorJournalPolicy(m_work_queue));
-  }
+            template < typename I >
+                void OpenLocalImageRequest < I >::send_is_primary() {
+                dout(20) << dendl;
 
-  Context *ctx = create_context_callback<
-    OpenLocalImageRequest<I>, &OpenLocalImageRequest<I>::handle_open_image>(
-      this);
-  (*m_local_image_ctx)->state->open(false, ctx);
-}
+                Context *ctx = create_context_callback <
+                    OpenLocalImageRequest < I >,
+                    &OpenLocalImageRequest < I >::handle_is_primary > (this);
+                IsPrimaryRequest < I > *request =
+                    IsPrimaryRequest < I >::create(*m_local_image_ctx,
+                                                   &m_primary, ctx);
+                request->send();
+            }
 
-template <typename I>
-void OpenLocalImageRequest<I>::handle_open_image(int r) {
-  dout(20) << ": r=" << r << dendl;
+            template < typename I >
+                void OpenLocalImageRequest < I >::handle_is_primary(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  if (r < 0) {
-    derr << ": failed to open image '" << m_local_image_id << "': "
-         << cpp_strerror(r) << dendl;
-    (*m_local_image_ctx)->destroy();
-    *m_local_image_ctx = nullptr;
-    finish(r);
-    return;
-  }
+                if (r == -ENOENT) {
+                    dout(5) << ": local image is not mirrored" << dendl;
+                    send_close_image(r);
+                    return;
+                }
+                else if (r < 0) {
+                    derr << ": error querying local image primary status: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                    send_close_image(r);
+                    return;
+                }
 
-  send_is_primary();
-}
+                // if the local image owns the tag -- don't steal the lock since
+                // we aren't going to mirror peer data into this image anyway
+                if (m_primary) {
+                    dout(10) <<
+                        ": local image is primary -- skipping image replay" <<
+                        dendl;
+                    send_close_image(-EREMOTEIO);
+                    return;
+                }
 
-template <typename I>
-void OpenLocalImageRequest<I>::send_is_primary() {
-  dout(20) << dendl;
+                send_lock_image();
+            }
 
-  Context *ctx = create_context_callback<
-    OpenLocalImageRequest<I>, &OpenLocalImageRequest<I>::handle_is_primary>(
-      this);
-  IsPrimaryRequest<I> *request = IsPrimaryRequest<I>::create(*m_local_image_ctx,
-                                                             &m_primary, ctx);
-  request->send();
-}
+            template < typename I >
+                void OpenLocalImageRequest < I >::send_lock_image() {
+                dout(20) << dendl;
 
-template <typename I>
-void OpenLocalImageRequest<I>::handle_is_primary(int r) {
-  dout(20) << ": r=" << r << dendl;
+                RWLock::RLocker owner_locker((*m_local_image_ctx)->owner_lock);
+                if ((*m_local_image_ctx)->exclusive_lock == nullptr) {
+                    derr << ": image does not support exclusive lock" << dendl;
+                    send_close_image(-EINVAL);
+                    return;
+                }
 
-  if (r == -ENOENT) {
-    dout(5) << ": local image is not mirrored" << dendl;
-    send_close_image(r);
-    return;
-  } else if (r < 0) {
-    derr << ": error querying local image primary status: " << cpp_strerror(r)
-         << dendl;
-    send_close_image(r);
-    return;
-  }
+                // disallow any proxied maintenance operations before grabbing lock
+                (*m_local_image_ctx)->exclusive_lock->block_requests(-EROFS);
 
-  // if the local image owns the tag -- don't steal the lock since
-  // we aren't going to mirror peer data into this image anyway
-  if (m_primary) {
-    dout(10) << ": local image is primary -- skipping image replay" << dendl;
-    send_close_image(-EREMOTEIO);
-    return;
-  }
+                Context *ctx = create_context_callback <
+                    OpenLocalImageRequest < I >,
+                    &OpenLocalImageRequest < I >::handle_lock_image > (this);
 
-  send_lock_image();
-}
+                (*m_local_image_ctx)->exclusive_lock->acquire_lock(ctx);
+            }
 
-template <typename I>
-void OpenLocalImageRequest<I>::send_lock_image() {
-  dout(20) << dendl;
+            template < typename I >
+                void OpenLocalImageRequest < I >::handle_lock_image(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  RWLock::RLocker owner_locker((*m_local_image_ctx)->owner_lock);
-  if ((*m_local_image_ctx)->exclusive_lock == nullptr) {
-    derr << ": image does not support exclusive lock" << dendl;
-    send_close_image(-EINVAL);
-    return;
-  }
+                if (r < 0) {
+                    derr << ": failed to lock image '" << m_local_image_id <<
+                        "': " << cpp_strerror(r) << dendl;
+                    send_close_image(r);
+                    return;
+                }
 
-  // disallow any proxied maintenance operations before grabbing lock
-  (*m_local_image_ctx)->exclusive_lock->block_requests(-EROFS);
+                {
+                    RWLock::RLocker owner_locker((*m_local_image_ctx)->
+                                                 owner_lock);
+                    if ((*m_local_image_ctx)->exclusive_lock == nullptr
+                        || !(*m_local_image_ctx)->exclusive_lock->
+                        is_lock_owner()) {
+                        derr << ": image is not locked" << dendl;
+                        send_close_image(-EBUSY);
+                        return;
+                    }
+                }
 
-  Context *ctx = create_context_callback<
-    OpenLocalImageRequest<I>, &OpenLocalImageRequest<I>::handle_lock_image>(
-      this);
+                finish(0);
+            }
 
-  (*m_local_image_ctx)->exclusive_lock->acquire_lock(ctx);
-}
+            template < typename I >
+                void OpenLocalImageRequest < I >::send_close_image(int r) {
+                dout(20) << dendl;
 
-template <typename I>
-void OpenLocalImageRequest<I>::handle_lock_image(int r) {
-  dout(20) << ": r=" << r << dendl;
+                if (m_ret_val == 0 && r < 0) {
+                    m_ret_val = r;
+                }
 
-  if (r < 0) {
-    derr << ": failed to lock image '" << m_local_image_id << "': "
-       << cpp_strerror(r) << dendl;
-    send_close_image(r);
-    return;
-  }
+                Context *ctx = create_context_callback <
+                    OpenLocalImageRequest < I >,
+                    &OpenLocalImageRequest < I >::handle_close_image > (this);
+                CloseImageRequest < I > *request =
+                    CloseImageRequest < I >::create(m_local_image_ctx, ctx);
+                request->send();
+            }
 
-  {
-    RWLock::RLocker owner_locker((*m_local_image_ctx)->owner_lock);
-    if ((*m_local_image_ctx)->exclusive_lock == nullptr ||
-	!(*m_local_image_ctx)->exclusive_lock->is_lock_owner()) {
-      derr << ": image is not locked" << dendl;
-      send_close_image(-EBUSY);
-      return;
-    }
-  }
+            template < typename I >
+                void OpenLocalImageRequest < I >::handle_close_image(int r) {
+                dout(20) << dendl;
 
-  finish(0);
-}
+                assert(r == 0);
+                finish(m_ret_val);
+            }
 
-template <typename I>
-void OpenLocalImageRequest<I>::send_close_image(int r) {
-  dout(20) << dendl;
+            template < typename I >
+                void OpenLocalImageRequest < I >::finish(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  if (m_ret_val == 0 && r < 0) {
-    m_ret_val = r;
-  }
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  Context *ctx = create_context_callback<
-    OpenLocalImageRequest<I>, &OpenLocalImageRequest<I>::handle_close_image>(
-      this);
-  CloseImageRequest<I> *request = CloseImageRequest<I>::create(
-    m_local_image_ctx, ctx);
-  request->send();
-}
+        }                       // namespace image_replayer
+    }                           // namespace mirror
+}                               // namespace rbd
 
-template <typename I>
-void OpenLocalImageRequest<I>::handle_close_image(int r) {
-  dout(20) << dendl;
-
-  assert(r == 0);
-  finish(m_ret_val);
-}
-
-template <typename I>
-void OpenLocalImageRequest<I>::finish(int r) {
-  dout(20) << ": r=" << r << dendl;
-
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::image_replayer::OpenLocalImageRequest<librbd::ImageCtx>;
+template class rbd::mirror::image_replayer::OpenLocalImageRequest <
+    librbd::ImageCtx >;

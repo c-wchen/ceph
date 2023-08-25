@@ -4,10 +4,9 @@
 #include "include/types.h"
 
 namespace librados {
-  class ObjectWriteOperation;
-  class IoCtx;
+    class ObjectWriteOperation;
+    class IoCtx;
 }
-
 /*
  * refcount objclass
  *
@@ -28,11 +27,13 @@ namespace librados {
  * we don't have a tag for this refcount, we consider this tag as a wildcard. So if the refcount
  * is being decreased by an unknown tag and we still have one wildcard tag, we'll accept it
  * as the relevant tag, and the refcount will be decreased.
- */
-
-void cls_refcount_get(librados::ObjectWriteOperation& op, const string& tag, bool implicit_ref = false);
-void cls_refcount_put(librados::ObjectWriteOperation& op, const string& tag, bool implicit_ref = false);
-void cls_refcount_set(librados::ObjectWriteOperation& op, list<string>& refs);
-int cls_refcount_read(librados::IoCtx& io_ctx, string& oid, list<string> *refs, bool implicit_ref = false);
+ */ void cls_refcount_get(librados::ObjectWriteOperation & op,
+                          const string & tag, bool implicit_ref = false);
+void cls_refcount_put(librados::ObjectWriteOperation & op, const string & tag,
+                      bool implicit_ref = false);
+void cls_refcount_set(librados::ObjectWriteOperation & op,
+                      list < string > &refs);
+int cls_refcount_read(librados::IoCtx & io_ctx, string & oid,
+                      list < string > *refs, bool implicit_ref = false);
 
 #endif

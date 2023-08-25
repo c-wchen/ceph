@@ -9,23 +9,22 @@
 
 namespace librbd {
 
-  struct ImageCtx;
-  class LibrbdAdminSocketCommand;
+    struct ImageCtx;
+    class LibrbdAdminSocketCommand;
 
-  class LibrbdAdminSocketHook : public AdminSocketHook {
-  public:
-    LibrbdAdminSocketHook(ImageCtx *ictx);
-    ~LibrbdAdminSocketHook() override;
+    class LibrbdAdminSocketHook:public AdminSocketHook {
+      public:
+        LibrbdAdminSocketHook(ImageCtx * ictx);
+        ~LibrbdAdminSocketHook() override;
 
-    bool call(std::string command, cmdmap_t& cmdmap, std::string format,
-	      bufferlist& out) override;
+        bool call(std::string command, cmdmap_t & cmdmap, std::string format,
+                  bufferlist & out) override;
 
-  private:
-    typedef std::map<std::string,LibrbdAdminSocketCommand*> Commands;
+      private:
+        typedef std::map < std::string, LibrbdAdminSocketCommand * >Commands;
 
-    AdminSocket *admin_socket;
-    Commands commands;
-  };
+        AdminSocket *admin_socket;
+        Commands commands;
+    };
 }
-
 #endif

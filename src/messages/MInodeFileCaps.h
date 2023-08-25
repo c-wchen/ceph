@@ -12,42 +12,45 @@
  * 
  */
 
-
 #ifndef CEPH_MINODEFILECAPS_H
 #define CEPH_MINODEFILECAPS_H
 
-class MInodeFileCaps : public Message {
-  inodeno_t ino;
-  __u32     caps;
+class MInodeFileCaps:public Message {
+    inodeno_t ino;
+    __u32 caps;
 
- public:
-  inodeno_t get_ino() { return ino; }
-  int       get_caps() { return caps; }
+  public:
+     inodeno_t get_ino() {
+        return ino;
+    } int get_caps() {
+        return caps;
+    }
 
-  MInodeFileCaps() : Message(MSG_MDS_INODEFILECAPS) {}
-  MInodeFileCaps(inodeno_t ino, int caps) :
+  MInodeFileCaps():Message(MSG_MDS_INODEFILECAPS) {
+    }
+  MInodeFileCaps(inodeno_t ino, int caps):
     Message(MSG_MDS_INODEFILECAPS) {
-    this->ino = ino;
-    this->caps = caps;
-  }
-private:
-  ~MInodeFileCaps() override {}
+        this->ino = ino;
+        this->caps = caps;
+    }
+  private:
+    ~MInodeFileCaps()override {
+    }
 
-public:
-  const char *get_type_name() const override { return "inode_file_caps";}
-  void print(ostream& out) const override {
-    out << "inode_file_caps(" << ino << " " << ccap_string(caps) << ")";
-  }
-  
-  void encode_payload(uint64_t features) override {
-    ::encode(ino, payload);
-    ::encode(caps, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(ino, p);
-    ::decode(caps, p);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "inode_file_caps";
+    } void print(ostream & out) const override {
+        out << "inode_file_caps(" << ino << " " << ccap_string(caps) << ")";
+    } void encode_payload(uint64_t features) override {
+        ::encode(ino, payload);
+        ::encode(caps, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(ino, p);
+        ::decode(caps, p);
+    }
 };
 
 #endif

@@ -6,7 +6,7 @@
 /* The set of statically defined (C++-handled) commands.  This
  * does not include the Python-defined commands, which are loaded
  * in PyModules */
-const std::vector<MonCommand> mgr_commands = {
+const std::vector < MonCommand > mgr_commands = {
 #define COMMAND(parsesig, helptext, module, perm, availability) \
   {parsesig, helptext, module, perm, availability, 0},
 #include "MgrCommands.h"

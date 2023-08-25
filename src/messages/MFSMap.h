@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef CEPH_MFSMAP_H
 #define CEPH_MFSMAP_H
 
@@ -20,42 +19,42 @@
 #include "mds/FSMap.h"
 #include "include/ceph_features.h"
 
-class MFSMap : public Message {
- public:
-  epoch_t epoch;
-  bufferlist encoded;
+class MFSMap:public Message {
+  public:
+    epoch_t epoch;
+    bufferlist encoded;
 
-  version_t get_epoch() const { return epoch; }
-  const FSMap & get_fsmap() {return fsmap;}
+    version_t get_epoch() const {
+        return epoch;
+    } const FSMap & get_fsmap() {
+        return fsmap;
+    } MFSMap():Message(CEPH_MSG_FS_MAP), epoch(0) {
+    }
+  MFSMap(const uuid_d & f, const FSMap & fsmap_):
+    Message(CEPH_MSG_FS_MAP), epoch(fsmap_.get_epoch()) {
+        fsmap = fsmap_;
+    }
+  private:
+    FSMap fsmap;
 
-  MFSMap() : 
-    Message(CEPH_MSG_FS_MAP), epoch(0) {}
-  MFSMap(const uuid_d &f, const FSMap &fsmap_) :
-    Message(CEPH_MSG_FS_MAP), epoch(fsmap_.get_epoch())
-  {
-    fsmap = fsmap_;
-  }
-private:
-  FSMap fsmap;
+    ~MFSMap()override {
+    }
 
-  ~MFSMap() override {}
-
-public:
-  const char *get_type_name() const override { return "fsmap"; }
-  void print(ostream& out) const override {
-    out << "fsmap(e " << epoch << ")";
-  }
-
-  // marshalling
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(epoch, p);
-    ::decode(fsmap, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(epoch, payload);
-    ::encode(fsmap, payload, features);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "fsmap";
+    } void print(ostream & out) const override {
+        out << "fsmap(e " << epoch << ")";
+    }
+    // marshalling void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(epoch, p);
+        ::decode(fsmap, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(epoch, payload);
+        ::encode(fsmap, payload, features);
+    }
 };
 
 #endif

@@ -34,7 +34,6 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-
 #include "common/config.h"
 #include "common/debug.h"
 
@@ -48,9 +47,10 @@
 #define dout_subsys ceph_subsys_crypto
 
 #ifndef USE_NSS
-int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl)
+int ceph_decode_cms(CephContext * cct, bufferlist & cms_bl,
+                    bufferlist & decoded_bl)
 {
-  return -ENOTSUP;
+    return -ENOTSUP;
 }
 
 #else
@@ -58,22 +58,21 @@ int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl
 static int cms_verbose = 0;
 
 static SECStatus
-DigestFile(PLArenaPool *poolp, SECItem ***digests, SECItem *input,
-           SECAlgorithmID **algids)
+DigestFile(PLArenaPool * poolp, SECItem *** digests, SECItem * input,
+           SECAlgorithmID ** algids)
 {
     NSSCMSDigestContext *digcx;
     SECStatus rv;
 
     digcx = NSS_CMSDigestContext_StartMultiple(algids);
     if (digcx == NULL)
-	return SECFailure;
+        return SECFailure;
 
     NSS_CMSDigestContext_Update(digcx, input->data, input->len);
 
     rv = NSS_CMSDigestContext_FinishMultiple(digcx, poolp, digests);
     return rv;
 }
-
 
 struct optionsStr {
     SECCertUsage certUsage;
@@ -82,16 +81,17 @@ struct optionsStr {
 
 struct decodeOptionsStr {
     struct optionsStr *options;
-    SECItem            content;
+    SECItem content;
     int headerLevel;
     PRBool suppressContent;
     NSSCMSGetDecryptKeyCallback dkcb;
     PK11SymKey *bulkkey;
-    PRBool      keepCerts;
+    PRBool keepCerts;
 };
 
-static NSSCMSMessage *
-decode(CephContext *cct, SECItem *input, const struct decodeOptionsStr *decodeOptions, bufferlist& out)
+static NSSCMSMessage *decode(CephContext * cct, SECItem * input,
+                             const struct decodeOptionsStr *decodeOptions,
+                             bufferlist & out)
 {
     NSSCMSDecoderContext *dcx;
     SECStatus rv;
@@ -104,199 +104,230 @@ decode(CephContext *cct, SECItem *input, const struct decodeOptionsStr *decodeOp
     memset(&sitem, 0, sizeof(sitem));
 
     PORT_SetError(0);
-    dcx = NSS_CMSDecoder_Start(NULL, 
-                               NULL, NULL,         /* content callback     */
-                               NULL, NULL,         /* password callback    */
-			       decodeOptions->dkcb, /* decrypt key callback */
+    dcx = NSS_CMSDecoder_Start(NULL, NULL, NULL,    /* content callback     */
+                               NULL, NULL,  /* password callback    */
+                               decodeOptions->dkcb, /* decrypt key callback */
                                decodeOptions->bulkkey);
     if (dcx == NULL) {
-	ldout(cct, 0) << "ERROR: failed to set up message decoder" << dendl;
-	return NULL;
+        ldout(cct, 0) << "ERROR: failed to set up message decoder" << dendl;
+        return NULL;
     }
     rv = NSS_CMSDecoder_Update(dcx, (char *)input->data, input->len);
     if (rv != SECSuccess) {
-	ldout(cct, 0) << "ERROR: failed to decode message" << dendl;
-	NSS_CMSDecoder_Cancel(dcx);
-	return NULL;
+        ldout(cct, 0) << "ERROR: failed to decode message" << dendl;
+        NSS_CMSDecoder_Cancel(dcx);
+        return NULL;
     }
     cmsg = NSS_CMSDecoder_Finish(dcx);
     if (cmsg == NULL) {
-	ldout(cct, 0) << "ERROR: failed to decode message" << dendl;
-	return NULL;
+        ldout(cct, 0) << "ERROR: failed to decode message" << dendl;
+        return NULL;
     }
 
     if (decodeOptions->headerLevel >= 0) {
-	ldout(cct, 20) << "SMIME: " << dendl;
+        ldout(cct, 20) << "SMIME: " << dendl;
     }
 
     nlevels = NSS_CMSMessage_ContentLevelCount(cmsg);
     for (i = 0; i < nlevels; i++) {
-	NSSCMSContentInfo *cinfo;
-	SECOidTag typetag;
+        NSSCMSContentInfo *cinfo;
+        SECOidTag typetag;
 
-	cinfo = NSS_CMSMessage_ContentLevel(cmsg, i);
-	typetag = NSS_CMSContentInfo_GetContentTypeTag(cinfo);
+        cinfo = NSS_CMSMessage_ContentLevel(cmsg, i);
+        typetag = NSS_CMSContentInfo_GetContentTypeTag(cinfo);
 
-	ldout(cct, 20) << "level=" << decodeOptions->headerLevel << "." << nlevels - i << dendl;
+        ldout(cct,
+              20) << "level=" << decodeOptions->headerLevel << "." << nlevels -
+            i << dendl;
 
-	switch (typetag) {
-	case SEC_OID_PKCS7_SIGNED_DATA:
-	  {
-	    NSSCMSSignedData *sigd = NULL;
-	    SECItem **digests;
-	    int nsigners;
-	    int j;
+        switch (typetag) {
+        case SEC_OID_PKCS7_SIGNED_DATA:
+            {
+                NSSCMSSignedData *sigd = NULL;
+                SECItem **digests;
+                int nsigners;
+                int j;
 
-	    if (decodeOptions->headerLevel >= 0)
-		ldout(cct, 20) << "type=signedData; " << dendl;
-	    sigd = (NSSCMSSignedData *)NSS_CMSContentInfo_GetContent(cinfo);
-	    if (sigd == NULL) {
-		ldout(cct, 0) << "ERROR: signedData component missing" << dendl;
-		goto loser;
-	    }
+                if (decodeOptions->headerLevel >= 0)
+                    ldout(cct, 20) << "type=signedData; " << dendl;
+                sigd =
+                    (NSSCMSSignedData *) NSS_CMSContentInfo_GetContent(cinfo);
+                if (sigd == NULL) {
+                    ldout(cct,
+                          0) << "ERROR: signedData component missing" << dendl;
+                    goto loser;
+                }
 
-	    /* if we have a content file, but no digests for this signedData */
-	    if (decodeOptions->content.data != NULL && 
-	        !NSS_CMSSignedData_HasDigests(sigd)) {
-		PLArenaPool     *poolp;
-		SECAlgorithmID **digestalgs;
+                /* if we have a content file, but no digests for this signedData */
+                if (decodeOptions->content.data != NULL &&
+                    !NSS_CMSSignedData_HasDigests(sigd)) {
+                    PLArenaPool *poolp;
+                    SECAlgorithmID **digestalgs;
 
-		/* detached content: grab content file */
-		sitem = decodeOptions->content;
+                    /* detached content: grab content file */
+                    sitem = decodeOptions->content;
 
-		if ((poolp = PORT_NewArena(1024)) == NULL) {
-		    ldout(cct, 0) << "ERROR: Out of memory" << dendl;
-		    goto loser;
-		}
-		digestalgs = NSS_CMSSignedData_GetDigestAlgs(sigd);
-		if (DigestFile (poolp, &digests, &sitem, digestalgs) 
-		      != SECSuccess) {
-		    ldout(cct, 0) << "ERROR: problem computing message digest" << dendl;
-		    PORT_FreeArena(poolp, PR_FALSE);
-		    goto loser;
-		}
-		if (NSS_CMSSignedData_SetDigests(sigd, digestalgs, digests) 
-		    != SECSuccess) {
-		    ldout(cct, 0) << "ERROR: problem setting message digests" << dendl;
-		    PORT_FreeArena(poolp, PR_FALSE);
-		    goto loser;
-		}
-		PORT_FreeArena(poolp, PR_FALSE);
-	    }
+                    if ((poolp = PORT_NewArena(1024)) == NULL) {
+                        ldout(cct, 0) << "ERROR: Out of memory" << dendl;
+                        goto loser;
+                    }
+                    digestalgs = NSS_CMSSignedData_GetDigestAlgs(sigd);
+                    if (DigestFile(poolp, &digests, &sitem, digestalgs)
+                        != SECSuccess) {
+                        ldout(cct,
+                              0) << "ERROR: problem computing message digest" <<
+                            dendl;
+                        PORT_FreeArena(poolp, PR_FALSE);
+                        goto loser;
+                    }
+                    if (NSS_CMSSignedData_SetDigests(sigd, digestalgs, digests)
+                        != SECSuccess) {
+                        ldout(cct,
+                              0) << "ERROR: problem setting message digests" <<
+                            dendl;
+                        PORT_FreeArena(poolp, PR_FALSE);
+                        goto loser;
+                    }
+                    PORT_FreeArena(poolp, PR_FALSE);
+                }
 
-	    /* import the certificates */
-	    if (NSS_CMSSignedData_ImportCerts(sigd, 
-	                                   decodeOptions->options->certHandle, 
-	                                   decodeOptions->options->certUsage, 
-	                                   decodeOptions->keepCerts) 
-	          != SECSuccess) {
-		ldout(cct, 0) << "ERROR: cert import failed" << dendl;
-		goto loser;
-	    }
+                /* import the certificates */
+                if (NSS_CMSSignedData_ImportCerts(sigd,
+                                                  decodeOptions->options->
+                                                  certHandle,
+                                                  decodeOptions->options->
+                                                  certUsage,
+                                                  decodeOptions->keepCerts)
+                    != SECSuccess) {
+                    ldout(cct, 0) << "ERROR: cert import failed" << dendl;
+                    goto loser;
+                }
 
-	    /* find out about signers */
-	    nsigners = NSS_CMSSignedData_SignerInfoCount(sigd);
-	    if (decodeOptions->headerLevel >= 0)
-		ldout(cct, 20) << "nsigners=" << nsigners << dendl;
-	    if (nsigners == 0) {
-		/* Might be a cert transport message
-		** or might be an invalid message, such as a QA test message
-		** or a message from an attacker.
-		*/
-		SECStatus rv;
-		rv = NSS_CMSSignedData_VerifyCertsOnly(sigd, 
-		                            decodeOptions->options->certHandle, 
-		                            decodeOptions->options->certUsage);
-		if (rv != SECSuccess) {
-		    ldout(cct, 0) << "ERROR: Verify certs-only failed!" << dendl;
-		    goto loser;
-		}
-		return cmsg;
-	    }
+                /* find out about signers */
+                nsigners = NSS_CMSSignedData_SignerInfoCount(sigd);
+                if (decodeOptions->headerLevel >= 0)
+                    ldout(cct, 20) << "nsigners=" << nsigners << dendl;
+                if (nsigners == 0) {
+                    /* Might be a cert transport message
+                     ** or might be an invalid message, such as a QA test message
+                     ** or a message from an attacker.
+                     */
+                    SECStatus rv;
+                    rv = NSS_CMSSignedData_VerifyCertsOnly(sigd,
+                                                           decodeOptions->
+                                                           options->certHandle,
+                                                           decodeOptions->
+                                                           options->certUsage);
+                    if (rv != SECSuccess) {
+                        ldout(cct,
+                              0) << "ERROR: Verify certs-only failed!" << dendl;
+                        goto loser;
+                    }
+                    return cmsg;
+                }
 
-	    /* still no digests? */
-	    if (!NSS_CMSSignedData_HasDigests(sigd)) {
-		ldout(cct, 0) << "ERROR: no message digests" << dendl;
-		goto loser;
-	    }
+                /* still no digests? */
+                if (!NSS_CMSSignedData_HasDigests(sigd)) {
+                    ldout(cct, 0) << "ERROR: no message digests" << dendl;
+                    goto loser;
+                }
 
-	    for (j = 0; j < nsigners; j++) {
-		const char * svs;
-		NSSCMSSignerInfo *si;
-		NSSCMSVerificationStatus vs;
-		SECStatus bad;
+                for (j = 0; j < nsigners; j++) {
+                    const char *svs;
+                    NSSCMSSignerInfo *si;
+                    NSSCMSVerificationStatus vs;
+                    SECStatus bad;
 
-		si = NSS_CMSSignedData_GetSignerInfo(sigd, j);
-		if (decodeOptions->headerLevel >= 0) {
-		    char *signercn;
-		    static char empty[] = { "" };
+                    si = NSS_CMSSignedData_GetSignerInfo(sigd, j);
+                    if (decodeOptions->headerLevel >= 0) {
+                        char *signercn;
+                        static char empty[] = { "" };
 
-		    signercn = NSS_CMSSignerInfo_GetSignerCommonName(si);
-		    if (signercn == NULL)
-			signercn = empty;
-		    ldout(cct, 20) << "\t\tsigner" << j << ".id=" << signercn << dendl;
-		    if (signercn != empty)
-		        PORT_Free(signercn);
-		}
-		bad = NSS_CMSSignedData_VerifySignerInfo(sigd, j, 
-		                           decodeOptions->options->certHandle, 
-		                           decodeOptions->options->certUsage);
-		vs  = NSS_CMSSignerInfo_GetVerificationStatus(si);
-		svs = NSS_CMSUtil_VerificationStatusToString(vs);
-		if (decodeOptions->headerLevel >= 0) {
-		    ldout(cct, 20) << "signer" << j << "status=" << svs << dendl;
-		    /* goto loser ? */
-		} else if (bad) {
-		    ldout(cct, 0) << "ERROR: signer " << j << " status = " << svs << dendl;
-		    goto loser;
-		}
-	    }
-	  }
-	  break;
-	case SEC_OID_PKCS7_ENVELOPED_DATA:
-	  {
-	    NSSCMSEnvelopedData *envd;
-	    if (decodeOptions->headerLevel >= 0)
-		ldout(cct, 20) << "type=envelopedData; " << dendl;
-	    envd = (NSSCMSEnvelopedData *)NSS_CMSContentInfo_GetContent(cinfo);
-	    if (envd == NULL) {
-		ldout(cct, 0) << "ERROR: envelopedData component missing" << dendl;
-		goto loser;
-	    }
-	  }
-	  break;
-	case SEC_OID_PKCS7_ENCRYPTED_DATA:
-	  {
-	    NSSCMSEncryptedData *encd;
-	    if (decodeOptions->headerLevel >= 0)
-		ldout(cct, 20) << "type=encryptedData; " << dendl;
-	    encd = (NSSCMSEncryptedData *)NSS_CMSContentInfo_GetContent(cinfo);
-	    if (encd == NULL) {
-		ldout(cct, 0) << "ERROR: encryptedData component missing" << dendl;
-		goto loser;
-	    }
-	  }
-	  break;
-	case SEC_OID_PKCS7_DATA:
-	    if (decodeOptions->headerLevel >= 0)
-		ldout(cct, 20) << "type=data; " << dendl;
-	    break;
-	default:
-	    break;
-	}
+                        signercn = NSS_CMSSignerInfo_GetSignerCommonName(si);
+                        if (signercn == NULL)
+                            signercn = empty;
+                        ldout(cct,
+                              20) << "\t\tsigner" << j << ".id=" << signercn <<
+                            dendl;
+                        if (signercn != empty)
+                            PORT_Free(signercn);
+                    }
+                    bad = NSS_CMSSignedData_VerifySignerInfo(sigd, j,
+                                                             decodeOptions->
+                                                             options->
+                                                             certHandle,
+                                                             decodeOptions->
+                                                             options->
+                                                             certUsage);
+                    vs = NSS_CMSSignerInfo_GetVerificationStatus(si);
+                    svs = NSS_CMSUtil_VerificationStatusToString(vs);
+                    if (decodeOptions->headerLevel >= 0) {
+                        ldout(cct,
+                              20) << "signer" << j << "status=" << svs << dendl;
+                        /* goto loser ? */
+                    }
+                    else if (bad) {
+                        ldout(cct,
+                              0) << "ERROR: signer " << j << " status = " << svs
+                            << dendl;
+                        goto loser;
+                    }
+                }
+            }
+            break;
+        case SEC_OID_PKCS7_ENVELOPED_DATA:
+            {
+                NSSCMSEnvelopedData *envd;
+                if (decodeOptions->headerLevel >= 0)
+                    ldout(cct, 20) << "type=envelopedData; " << dendl;
+                envd =
+                    (NSSCMSEnvelopedData *)
+                    NSS_CMSContentInfo_GetContent(cinfo);
+                if (envd == NULL) {
+                    ldout(cct,
+                          0) << "ERROR: envelopedData component missing" <<
+                        dendl;
+                    goto loser;
+                }
+            }
+            break;
+        case SEC_OID_PKCS7_ENCRYPTED_DATA:
+            {
+                NSSCMSEncryptedData *encd;
+                if (decodeOptions->headerLevel >= 0)
+                    ldout(cct, 20) << "type=encryptedData; " << dendl;
+                encd =
+                    (NSSCMSEncryptedData *)
+                    NSS_CMSContentInfo_GetContent(cinfo);
+                if (encd == NULL) {
+                    ldout(cct,
+                          0) << "ERROR: encryptedData component missing" <<
+                        dendl;
+                    goto loser;
+                }
+            }
+            break;
+        case SEC_OID_PKCS7_DATA:
+            if (decodeOptions->headerLevel >= 0)
+                ldout(cct, 20) << "type=data; " << dendl;
+            break;
+        default:
+            break;
+        }
     }
 
     item = (sitem.data ? &sitem : NSS_CMSMessage_GetContent(cmsg));
     out.append((char *)item->data, item->len);
     return cmsg;
 
-loser:
+  loser:
     if (cmsg)
-	NSS_CMSMessage_Destroy(cmsg);
+        NSS_CMSMessage_Destroy(cmsg);
     return NULL;
 }
 
-int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl)
+int ceph_decode_cms(CephContext * cct, bufferlist & cms_bl,
+                    bufferlist & decoded_bl)
 {
     NSSCMSMessage *cmsg = NULL;
     struct decodeOptionsStr decodeOptions = { };
@@ -310,7 +341,7 @@ int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl
     input.len = cms_bl.length();
 
     decodeOptions.content.data = NULL;
-    decodeOptions.content.len  = 0;
+    decodeOptions.content.len = 0;
     decodeOptions.suppressContent = PR_FALSE;
     decodeOptions.headerLevel = -1;
     decodeOptions.keepCerts = PR_FALSE;
@@ -318,11 +349,11 @@ int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl
 
     options.certHandle = CERT_GetDefaultCertDB();
     if (!options.certHandle) {
-	ldout(cct, 0) << "ERROR: No default cert DB" << dendl;
-	return -EIO;
+        ldout(cct, 0) << "ERROR: No default cert DB" << dendl;
+        return -EIO;
     }
     if (cms_verbose) {
-	fprintf(stderr, "Got default certdb\n");
+        fprintf(stderr, "Got default certdb\n");
     }
 
     decodeOptions.options = &options;
@@ -332,11 +363,11 @@ int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl
     cmsg = decode(cct, &input, &decodeOptions, decoded_bl);
     if (!cmsg) {
         ldout(cct, 0) << "ERROR: problem decoding" << dendl;
-	ret = -EINVAL;
+        ret = -EINVAL;
     }
 
     if (cmsg)
-	NSS_CMSMessage_Destroy(cmsg);
+        NSS_CMSMessage_Destroy(cmsg);
 
     SECITEM_FreeItem(&decodeOptions.content, PR_FALSE);
 

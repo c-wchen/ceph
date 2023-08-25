@@ -14,42 +14,37 @@ class Context;
 
 namespace journal {
 
-class FutureImpl;
+    class FutureImpl;
 
-class Future {
-public:
-  typedef boost::intrusive_ptr<FutureImpl> FutureImplPtr;
+    class Future {
+      public:
+        typedef boost::intrusive_ptr < FutureImpl > FutureImplPtr;
 
-  Future() {}
-  Future(const FutureImplPtr &future_impl) : m_future_impl(future_impl) {}
+         Future() {
+        } Future(const FutureImplPtr & future_impl):m_future_impl(future_impl) {
+        } inline bool is_valid() const {
+            return m_future_impl.get() != nullptr;
+        } void flush(Context * on_safe);
+        void wait(Context * on_safe);
 
-  inline bool is_valid() const {
-    return m_future_impl.get() != nullptr;
-  }
+        bool is_complete() const;
+        int get_return_value() const;
 
-  void flush(Context *on_safe);
-  void wait(Context *on_safe);
+      private:
+        friend class Journaler;
+        friend std::ostream & operator<<(std::ostream &, const Future &);
 
-  bool is_complete() const;
-  int get_return_value() const;
+        inline FutureImplPtr get_future_impl() const {
+            return m_future_impl;
+        } FutureImplPtr m_future_impl;
+    };
 
-private:
-  friend class Journaler;
-  friend std::ostream& operator<<(std::ostream&, const Future&);
+    void intrusive_ptr_add_ref(FutureImpl * p);
+    void intrusive_ptr_release(FutureImpl * p);
 
-  inline FutureImplPtr get_future_impl() const {
-    return m_future_impl;
-  }
+    std::ostream & operator<<(std::ostream & os, const Future & future);
 
-  FutureImplPtr m_future_impl;
-};
-
-void intrusive_ptr_add_ref(FutureImpl *p);
-void intrusive_ptr_release(FutureImpl *p);
-
-std::ostream &operator<<(std::ostream &os, const Future &future);
-
-} // namespace journal
+}                               // namespace journal
 
 using journal::intrusive_ptr_add_ref;
 using journal::intrusive_ptr_release;

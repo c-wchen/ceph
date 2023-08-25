@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef MDS_AUTH_CAPS_H
 #define MDS_AUTH_CAPS_H
 
@@ -26,77 +25,73 @@
 
 // unix-style capabilities
 enum {
-  MAY_READ = 1,
-  MAY_WRITE = 2,
-  MAY_EXECUTE = 4,
-  MAY_CHOWN = 16,
-  MAY_CHGRP = 32,
-  MAY_SET_VXATTR = 64,
+    MAY_READ = 1,
+    MAY_WRITE = 2,
+    MAY_EXECUTE = 4,
+    MAY_CHOWN = 16,
+    MAY_CHGRP = 32,
+    MAY_SET_VXATTR = 64,
 };
 
 class CephContext;
 
 // what we can do
 struct MDSCapSpec {
-  bool read, write, any;
+    bool read, write, any;
 
-  // True if the capability permits setting vxattrs (layout, quota, etc)
-  bool set_vxattr;
+    // True if the capability permits setting vxattrs (layout, quota, etc)
+    bool set_vxattr;
 
-  MDSCapSpec() : read(false), write(false), any(false), set_vxattr(false) {}
-  MDSCapSpec(bool r, bool w, bool a, bool lop)
-    : read(r), write(w), any(a), set_vxattr(lop) {}
+     MDSCapSpec():read(false), write(false), any(false), set_vxattr(false) {
+    } MDSCapSpec(bool r, bool w, bool a, bool lop)
+    :read(r), write(w), any(a), set_vxattr(lop) {
+    }
 
-  bool allow_all() const {
-    return any;
-  }
-
-  bool allows(bool r, bool w) const {
-    if (any)
-      return true;
-    if (r && !read)
-      return false;
-    if (w && !write)
-      return false;
-    return true;
-  }
-
-  bool allows_set_vxattr() const {
-    return set_vxattr;
-  }
-};
+    bool allow_all() const {
+        return any;
+    } bool allows(bool r, bool w) const {
+        if (any)
+            return true;
+        if (r && !read)
+            return false;
+        if (w && !write)
+            return false;
+        return true;
+    } bool allows_set_vxattr() const {
+        return set_vxattr;
+}};
 
 // conditions before we are allowed to do it
 struct MDSCapMatch {
-  static const int64_t MDS_AUTH_UID_ANY = -1;
+    static const int64_t MDS_AUTH_UID_ANY = -1;
 
-  int64_t uid;       // Require UID to be equal to this, if !=MDS_AUTH_UID_ANY
-  std::vector<gid_t> gids;  // Use these GIDs
-  std::string path;  // Require path to be child of this (may be "" or "/" for any)
+    int64_t uid;                // Require UID to be equal to this, if !=MDS_AUTH_UID_ANY
+     std::vector < gid_t > gids;    // Use these GIDs
+     std::string path;          // Require path to be child of this (may be "" or "/" for any)
 
-  MDSCapMatch() : uid(MDS_AUTH_UID_ANY) {}
-  MDSCapMatch(int64_t uid_, std::vector<gid_t>& gids_) : uid(uid_), gids(gids_) {}
-  explicit MDSCapMatch(std::string path_)
-    : uid(MDS_AUTH_UID_ANY), path(path_) {
-    normalize_path();
-  }
-  MDSCapMatch(std::string path_, int64_t uid_, std::vector<gid_t>& gids_)
-    : uid(uid_), gids(gids_), path(path_) {
-    normalize_path();
-  }
+     MDSCapMatch():uid(MDS_AUTH_UID_ANY) {
+    } MDSCapMatch(int64_t uid_, std::vector < gid_t > &gids_):uid(uid_),
+        gids(gids_) {
+    }
+    explicit MDSCapMatch(std::string path_)
+    :uid(MDS_AUTH_UID_ANY), path(path_) {
+        normalize_path();
+    }
+    MDSCapMatch(std::string path_, int64_t uid_, std::vector < gid_t > &gids_)
+  :    uid(uid_), gids(gids_), path(path_) {
+        normalize_path();
+    }
 
-  void normalize_path();
-  
-  bool is_match_all() const
-  {
-    return uid == MDS_AUTH_UID_ANY && path == "";
-  }
+    void normalize_path();
 
-  // check whether this grant matches against a given file and caller uid:gid
-  bool match(boost::string_view target_path,
-	     const int caller_uid,
-	     const int caller_gid,
-	     const vector<uint64_t> *caller_gid_list) const;
+    bool is_match_all() const {
+        return uid == MDS_AUTH_UID_ANY && path == "";
+    }
+    // check whether this grant matches against a given file and caller uid:gid
+        bool match(boost::string_view target_path,
+                   const int caller_uid,
+                   const int caller_gid,
+                   const vector < uint64_t > *caller_gid_list)const;
 
   /**
    * Check whether this path *might* be accessible (actual permission
@@ -104,48 +99,50 @@ struct MDSCapMatch {
    *
    * @param target_path filesystem path without leading '/'
    */
-  bool match_path(boost::string_view target_path) const;
+    bool match_path(boost::string_view target_path) const;
 };
 
 struct MDSCapGrant {
-  MDSCapSpec spec;
-  MDSCapMatch match;
+    MDSCapSpec spec;
+    MDSCapMatch match;
 
-  MDSCapGrant(const MDSCapSpec &spec_, const MDSCapMatch &match_)
-    : spec(spec_), match(match_) {}
-  MDSCapGrant() {}
+     MDSCapGrant(const MDSCapSpec & spec_, const MDSCapMatch & match_)
+    :spec(spec_), match(match_) {
+    } MDSCapGrant() {
+    }
 };
 
-class MDSAuthCaps
-{
-  CephContext *cct;
-  std::vector<MDSCapGrant> grants;
+class MDSAuthCaps {
+    CephContext *cct;
+     std::vector < MDSCapGrant > grants;
 
-public:
-  explicit MDSAuthCaps(CephContext *cct_=NULL)
-    : cct(cct_) { }
+  public:
+     explicit MDSAuthCaps(CephContext * cct_ = NULL)
+  :    cct(cct_) {
+    }
+    // this ctor is used by spirit/phoenix; doesn't need cct.
+        explicit MDSAuthCaps(const std::vector < MDSCapGrant > &grants_)
+    :cct(NULL), grants(grants_) {
+    }
 
-  // this ctor is used by spirit/phoenix; doesn't need cct.
-  explicit MDSAuthCaps(const std::vector<MDSCapGrant> &grants_)
-    : cct(NULL), grants(grants_) { }
+    void set_allow_all();
+    bool parse(CephContext * cct, boost::string_view str, std::ostream * err);
 
-  void set_allow_all();
-  bool parse(CephContext *cct, boost::string_view str, std::ostream *err);
+    bool allow_all() const;
+    bool is_capable(boost::string_view inode_path,
+                    uid_t inode_uid, gid_t inode_gid, unsigned inode_mode,
+                    uid_t uid, gid_t gid,
+                    const vector < uint64_t > *caller_gid_list, unsigned mask,
+                    uid_t new_uid, gid_t new_gid) const;
+    bool path_capable(boost::string_view inode_path) const;
 
-  bool allow_all() const;
-  bool is_capable(boost::string_view inode_path,
-		  uid_t inode_uid, gid_t inode_gid, unsigned inode_mode,
-		  uid_t uid, gid_t gid, const vector<uint64_t> *caller_gid_list,
-		  unsigned mask, uid_t new_uid, gid_t new_gid) const;
-  bool path_capable(boost::string_view inode_path) const;
-
-  friend std::ostream &operator<<(std::ostream &out, const MDSAuthCaps &cap);
+    friend std::ostream & operator<<(std::ostream & out,
+                                     const MDSAuthCaps & cap);
 };
 
-
-std::ostream &operator<<(std::ostream &out, const MDSCapMatch &match);
-std::ostream &operator<<(std::ostream &out, const MDSCapSpec &spec);
-std::ostream &operator<<(std::ostream &out, const MDSCapGrant &grant);
-std::ostream &operator<<(std::ostream &out, const MDSAuthCaps &cap);
+std::ostream & operator<<(std::ostream & out, const MDSCapMatch & match);
+std::ostream & operator<<(std::ostream & out, const MDSCapSpec & spec);
+std::ostream & operator<<(std::ostream & out, const MDSCapGrant & grant);
+std::ostream & operator<<(std::ostream & out, const MDSAuthCaps & cap);
 
 #endif // MDS_AUTH_CAPS_H

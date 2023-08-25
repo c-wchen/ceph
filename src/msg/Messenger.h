@@ -12,8 +12,6 @@
  * 
  */
 
-
-
 #ifndef CEPH_MESSENGER_H
 #define CEPH_MESSENGER_H
 
@@ -37,40 +35,38 @@ using namespace std;
 
 class Timer;
 
-
 class Messenger {
-private:
-  list<Dispatcher*> dispatchers;
-  list <Dispatcher*> fast_dispatchers;
-  ZTracer::Endpoint trace_endpoint;
+  private:
+    list < Dispatcher * >dispatchers;
+    list < Dispatcher * >fast_dispatchers;
+    ZTracer::Endpoint trace_endpoint;
 
-  void set_endpoint_addr(const entity_addr_t& a,
-                         const entity_name_t &name);
+    void set_endpoint_addr(const entity_addr_t & a, const entity_name_t & name);
 
-protected:
-  /// the "name" of the local daemon. eg client.99
-  entity_inst_t my_inst;
-  int default_send_priority;
-  /// set to true once the Messenger has started, and set to false on shutdown
-  bool started;
-  uint32_t magic;
-  int socket_priority;
+  protected:
+    /// the "name" of the local daemon. eg client.99
+     entity_inst_t my_inst;
+    int default_send_priority;
+    /// set to true once the Messenger has started, and set to false on shutdown
+    bool started;
+    uint32_t magic;
+    int socket_priority;
 
-public:
+  public:
   /**
    * Various Messenger conditional config/type flags to allow
    * different "transport" Messengers to tune themselves
    */
-  static const int HAS_HEAVY_TRAFFIC    = 0x0001;
-  static const int HAS_MANY_CONNECTIONS = 0x0002;
-  static const int HEARTBEAT            = 0x0004;
+    static const int HAS_HEAVY_TRAFFIC = 0x0001;
+    static const int HAS_MANY_CONNECTIONS = 0x0002;
+    static const int HEARTBEAT = 0x0004;
 
   /**
    *  The CephContext this Messenger uses. Many other components initialize themselves
    *  from this value.
    */
-  CephContext *cct;
-  int crcflags;
+    CephContext *cct;
+    int crcflags;
 
   /**
    * A Policy describes the rules of a Connection. Is there a limit on how
@@ -78,80 +74,79 @@ public:
    * experiences an error, does the Connection disappear? Can this Messenger
    * re-establish the underlying connection?
    */
-  struct Policy {
-    /// If true, the Connection is tossed out on errors.
-    bool lossy;
-    /// If true, the underlying connection can't be re-established from this end.
-    bool server;
-    /// If true, we will standby when idle
-    bool standby;
-    /// If true, we will try to detect session resets
-    bool resetcheck;
+    struct Policy {
+        /// If true, the Connection is tossed out on errors.
+        bool lossy;
+        /// If true, the underlying connection can't be re-established from this end.
+        bool server;
+        /// If true, we will standby when idle
+        bool standby;
+        /// If true, we will try to detect session resets
+        bool resetcheck;
     /**
      *  The throttler is used to limit how much data is held by Messages from
      *  the associated Connection(s). When reading in a new Message, the Messenger
      *  will call throttler->throttle() for the size of the new Message.
      */
-    Throttle *throttler_bytes;
-    Throttle *throttler_messages;
+        Throttle *throttler_bytes;
+        Throttle *throttler_messages;
 
-    /// Specify features supported locally by the endpoint.
-    uint64_t features_supported;
-    /// Specify features any remotes must have to talk to this endpoint.
-    uint64_t features_required;
+        /// Specify features supported locally by the endpoint.
+        uint64_t features_supported;
+        /// Specify features any remotes must have to talk to this endpoint.
+        uint64_t features_required;
 
-    Policy()
-      : lossy(false), server(false), standby(false), resetcheck(true),
-	throttler_bytes(NULL),
-	throttler_messages(NULL),
-	features_supported(CEPH_FEATURES_SUPPORTED_DEFAULT),
-	features_required(0) {}
-  private:
-    Policy(bool l, bool s, bool st, bool r, uint64_t req)
-      : lossy(l), server(s), standby(st), resetcheck(r),
-	throttler_bytes(NULL),
-	throttler_messages(NULL),
-	features_supported(CEPH_FEATURES_SUPPORTED_DEFAULT),
-	features_required(req) {}
-
-  public:
-    static Policy stateful_server(uint64_t req) {
-      return Policy(false, true, true, true, req);
-    }
-    static Policy stateless_server(uint64_t req) {
-      return Policy(true, true, false, false, req);
-    }
-    static Policy lossless_peer(uint64_t req) {
-      return Policy(false, false, true, false, req);
-    }
-    static Policy lossless_peer_reuse(uint64_t req) {
-      return Policy(false, false, true, true, req);
-    }
-    static Policy lossy_client(uint64_t req) {
-      return Policy(true, false, false, false, req);
-    }
-    static Policy lossless_client(uint64_t req) {
-      return Policy(false, false, false, true, req);
-    }
-  };
+         Policy()
+        :lossy(false), server(false), standby(false), resetcheck(true),
+            throttler_bytes(NULL),
+            throttler_messages(NULL),
+            features_supported(CEPH_FEATURES_SUPPORTED_DEFAULT),
+            features_required(0) {
+      } private:
+         Policy(bool l, bool s, bool st, bool r, uint64_t req)
+        :lossy(l), server(s), standby(st), resetcheck(r),
+            throttler_bytes(NULL),
+            throttler_messages(NULL),
+            features_supported(CEPH_FEATURES_SUPPORTED_DEFAULT),
+            features_required(req) {
+      } public:
+        static Policy stateful_server(uint64_t req) {
+            return Policy(false, true, true, true, req);
+        }
+        static Policy stateless_server(uint64_t req) {
+            return Policy(true, true, false, false, req);
+        }
+        static Policy lossless_peer(uint64_t req) {
+            return Policy(false, false, true, false, req);
+        }
+        static Policy lossless_peer_reuse(uint64_t req) {
+            return Policy(false, false, true, true, req);
+        }
+        static Policy lossy_client(uint64_t req) {
+            return Policy(true, false, false, false, req);
+        }
+        static Policy lossless_client(uint64_t req) {
+            return Policy(false, false, false, true, req);
+        }
+    };
 
   /**
    * Messenger constructor. Call this from your implementation.
    * Messenger users should construct full implementations directly,
    * or use the create() function.
    */
-  Messenger(CephContext *cct_, entity_name_t w)
-    : trace_endpoint("0.0.0.0", 0, "Messenger"),
-      my_inst(),
-      default_send_priority(CEPH_MSG_PRIO_DEFAULT), started(false),
-      magic(0),
-      socket_priority(-1),
-      cct(cct_),
-      crcflags(get_default_crc_flags(cct->_conf))
-  {
-    my_inst.name = w;
-  }
-  virtual ~Messenger() {}
+    Messenger(CephContext * cct_, entity_name_t w)
+  :    
+    trace_endpoint("0.0.0.0", 0, "Messenger"),
+    my_inst(),
+    default_send_priority(CEPH_MSG_PRIO_DEFAULT), started(false),
+    magic(0),
+    socket_priority(-1),
+    cct(cct_), crcflags(get_default_crc_flags(cct->_conf)) {
+        my_inst.name = w;
+    }
+    virtual ~ Messenger() {
+    }
 
   /**
    * create a new messenger
@@ -167,12 +162,10 @@ public:
    * @param features bits for the local connection
    * @param cflags general set of flags to configure transport resources
    */
-  static Messenger *create(CephContext *cct,
-                           const string &type,
-                           entity_name_t name,
-			   string lname,
-                           uint64_t nonce,
-			   uint64_t cflags);
+    static Messenger *create(CephContext * cct,
+                             const string & type,
+                             entity_name_t name,
+                             string lname, uint64_t nonce, uint64_t cflags);
 
   /**
    * create a new messenger
@@ -187,7 +180,7 @@ public:
    * @param cct context
    * @param lname logical name of the messenger in this process (e.g., "client")
    */
-  static Messenger *create_client_messenger(CephContext *cct, string lname);
+    static Messenger *create_client_messenger(CephContext * cct, string lname);
 
   /**
    * @defgroup Accessors
@@ -199,14 +192,22 @@ public:
    * @return A const reference to the instance this Messenger
    * currently believes to be its own.
    */
-  const entity_inst_t& get_myinst() { return my_inst; }
+    const entity_inst_t & get_myinst() {
+        return my_inst;
+    }
   /**
    * set messenger's instance
    */
-  void set_myinst(entity_inst_t i) { my_inst = i; }
+    void set_myinst(entity_inst_t i) {
+        my_inst = i;
+    }
 
-  uint32_t get_magic() { return magic; }
-  void set_magic(int _magic) { magic = _magic; }
+    uint32_t get_magic() {
+        return magic;
+    }
+    void set_magic(int _magic) {
+        magic = _magic;
+    }
 
   /**
    * Retrieve the Messenger's address.
@@ -214,30 +215,32 @@ public:
    * @return A const reference to the address this Messenger
    * currently believes to be its own.
    */
-  const entity_addr_t& get_myaddr() { return my_inst.addr; }
-protected:
+    const entity_addr_t & get_myaddr() {
+        return my_inst.addr;
+    }
+  protected:
   /**
    * set messenger's address
    */
-  virtual void set_myaddr(const entity_addr_t& a) {
-    my_inst.addr = a;
-    set_endpoint_addr(a, my_inst.name);
-  }
-public:
+    virtual void set_myaddr(const entity_addr_t & a) {
+        my_inst.addr = a;
+        set_endpoint_addr(a, my_inst.name);
+    }
+  public:
   /**
    * @return the zipkin trace endpoint
    */
-  const ZTracer::Endpoint* get_trace_endpoint() const {
-    return &trace_endpoint;
-  }
-
+    const ZTracer::Endpoint * get_trace_endpoint() const {
+        return &trace_endpoint;
+    }
   /**
    * Retrieve the Messenger's name.
    *
    * @return A const reference to the name this Messenger
    * currently believes to be its own.
-   */
-  const entity_name_t& get_myname() { return my_inst.name; }
+   */ const entity_name_t & get_myname() {
+        return my_inst.name;
+    }
   /**
    * Set the name of the local entity. The name is reported to others and
    * can be changed while the system is running, but doing so at incorrect
@@ -245,7 +248,9 @@ public:
    *
    * @param m The name to set.
    */
-  void set_myname(const entity_name_t& m) { my_inst.name = m; }
+    void set_myname(const entity_name_t & m) {
+        my_inst.name = m;
+    }
   /**
    * Set the unknown address components for this Messenger.
    * This is useful if the Messenger doesn't know its full address just by
@@ -255,7 +260,7 @@ public:
    *
    * @param addr The address to use as a template.
    */
-  virtual void set_addr_unknowns(const entity_addr_t &addr) = 0;
+    virtual void set_addr_unknowns(const entity_addr_t & addr) = 0;
   /**
    * Set the address for this Messenger. This is useful if the Messenger
    * binds to a specific address but advertises a different address on the
@@ -263,25 +268,27 @@ public:
    *
    * @param addr The address to use.
    */
-  virtual void set_addr(const entity_addr_t &addr) = 0;
-  /// Get the default send priority.
-  int get_default_send_priority() { return default_send_priority; }
+    virtual void set_addr(const entity_addr_t & addr) = 0;
+    /// Get the default send priority.
+    int get_default_send_priority() {
+        return default_send_priority;
+    }
   /**
    * Get the number of Messages which the Messenger has received
    * but not yet dispatched.
    */
-  virtual int get_dispatch_queue_len() = 0;
+    virtual int get_dispatch_queue_len() = 0;
 
   /**
    * Get age of oldest undelivered message
    * (0 if the queue is empty)
    */
-  virtual double get_dispatch_queue_max_age(utime_t now) = 0;
+    virtual double get_dispatch_queue_max_age(utime_t now) = 0;
   /**
    * Get the default crc flags for this messenger.
    * but not yet dispatched.
    */
-  static int get_default_crc_flags(md_config_t *);
+    static int get_default_crc_flags(md_config_t *);
 
   /**
    * @} // Accessors
@@ -298,7 +305,7 @@ public:
    *
    * @param p The cluster protocol to use. Defined externally.
    */
-  virtual void set_cluster_protocol(int p) = 0;
+    virtual void set_cluster_protocol(int p) = 0;
   /**
    * Set a policy which is applied to all peers who do not have a type-specific
    * Policy.
@@ -307,7 +314,7 @@ public:
    *
    * @param p The Policy to apply.
    */
-  virtual void set_default_policy(Policy p) = 0;
+    virtual void set_default_policy(Policy p) = 0;
   /**
    * Set a policy which is applied to all peers of the given type.
    * This is an init-time function and cannot be called after calling
@@ -316,7 +323,7 @@ public:
    * @param type The peer type this policy applies to.
    * @param p The policy to apply.
    */
-  virtual void set_policy(int type, Policy p) = 0;
+    virtual void set_policy(int type, Policy p) = 0;
   /**
    * Set the Policy associated with a type of peer.
    *
@@ -328,13 +335,13 @@ public:
    * @param t The peer type to get the default policy for.
    * @return A const Policy reference.
    */
-  virtual Policy get_policy(int t) = 0;
+    virtual Policy get_policy(int t) = 0;
   /**
    * Get the default Policy
    *
    * @return A const Policy reference.
    */
-  virtual Policy get_default_policy() = 0;
+    virtual Policy get_default_policy() = 0;
   /**
    * Set Throttlers applied to all Messages from the given type of peer
    *
@@ -347,7 +354,8 @@ public:
    * @note The Messenger does not take ownership of the Throttle pointers, but
    * you must not destroy them before you destroy the Messenger.
    */
-  virtual void set_policy_throttlers(int type, Throttle *bytes, Throttle *msgs=NULL) = 0;
+    virtual void set_policy_throttlers(int type, Throttle * bytes,
+                                       Throttle * msgs = NULL) = 0;
   /**
    * Set the default send priority
    *
@@ -356,10 +364,10 @@ public:
    *
    * @param p The cluster protocol to use. Defined externally.
    */
-  void set_default_send_priority(int p) {
-    assert(!started);
-    default_send_priority = p;
-  }
+    void set_default_send_priority(int p) {
+        assert(!started);
+        default_send_priority = p;
+    }
   /**
    * Set the priority(SO_PRIORITY) for all packets to be sent on this socket.
    *
@@ -370,17 +378,17 @@ public:
    * @param prio The priority. Setting a priority outside the range 0 to 6
    * requires the CAP_NET_ADMIN capability.
    */
-  void set_socket_priority(int prio) {
-    socket_priority = prio;
-  }
+    void set_socket_priority(int prio) {
+        socket_priority = prio;
+    }
   /**
    * Get the socket priority
    *
    * @return the socket priority
    */
-  int get_socket_priority() {
-    return socket_priority;
-  }
+    int get_socket_priority() {
+        return socket_priority;
+    }
   /**
    * Add a new Dispatcher to the front of the list. If you add
    * a Dispatcher which is already included, it will get a duplicate
@@ -388,14 +396,14 @@ public:
    *
    * @param d The Dispatcher to insert into the list.
    */
-  void add_dispatcher_head(Dispatcher *d) { 
-    bool first = dispatchers.empty();
-    dispatchers.push_front(d);
-    if (d->ms_can_fast_dispatch_any())
-      fast_dispatchers.push_front(d);
-    if (first)
-      ready();
-  }
+    void add_dispatcher_head(Dispatcher * d) {
+        bool first = dispatchers.empty();
+        dispatchers.push_front(d);
+        if (d->ms_can_fast_dispatch_any())
+            fast_dispatchers.push_front(d);
+        if (first)
+            ready();
+    }
   /**
    * Add a new Dispatcher to the end of the list. If you add
    * a Dispatcher which is already included, it will get a duplicate
@@ -403,14 +411,14 @@ public:
    *
    * @param d The Dispatcher to insert into the list.
    */
-  void add_dispatcher_tail(Dispatcher *d) { 
-    bool first = dispatchers.empty();
-    dispatchers.push_back(d);
-    if (d->ms_can_fast_dispatch_any())
-      fast_dispatchers.push_back(d);
-    if (first)
-      ready();
-  }
+    void add_dispatcher_tail(Dispatcher * d) {
+        bool first = dispatchers.empty();
+        dispatchers.push_back(d);
+        if (d->ms_can_fast_dispatch_any())
+            fast_dispatchers.push_back(d);
+        if (first)
+            ready();
+    }
   /**
    * Bind the Messenger to a specific address. If bind_addr
    * is not completely filled in the system will use the
@@ -421,7 +429,7 @@ public:
    * @return 0 on success, or -1 on error, or -errno if
    * we can be more specific about the failure.
    */
-  virtual int bind(const entity_addr_t& bind_addr) = 0;
+    virtual int bind(const entity_addr_t & bind_addr) = 0;
   /**
    * This function performs a full restart of the Messenger component,
    * whatever that means.  Other entities who connect to this
@@ -431,7 +439,9 @@ public:
    *
    * @param avoid_ports Additional port to avoid binding to.
    */
-  virtual int rebind(const set<int>& avoid_ports) { return -EOPNOTSUPP; }
+    virtual int rebind(const set < int >&avoid_ports) {
+        return -EOPNOTSUPP;
+    }
   /**
    * Bind the 'client' Messenger to a specific address.Messenger will bind
    * the address before connect to others when option ms_bind_before_connect
@@ -439,7 +449,7 @@ public:
    * @param bind_addr The address to bind to.
    * @return 0 on success, or -1 on error, or -errno if
    */
-  virtual int client_bind(const entity_addr_t& bind_addr) = 0;
+    virtual int client_bind(const entity_addr_t & bind_addr) = 0;
   /**
    * @} // Configuration
    */
@@ -456,22 +466,28 @@ public:
    *
    * @return 0 on success; -errno on failure.
    */
-  virtual int start() { started = true; return 0; }
+    virtual int start() {
+        started = true;
+        return 0;
+    }
 
-  // shutdown
+    // shutdown
   /**
    * Block until the Messenger has finished shutting down (according
    * to the shutdown() function).
    * It is valid to call this after calling shutdown(), but it must
    * be called before deleting the Messenger.
    */
-  virtual void wait() = 0;
+    virtual void wait() = 0;
   /**
    * Initiate a shutdown of the Messenger.
    *
    * @return 0 on success, -errno otherwise.
    */
-  virtual int shutdown() { started = false; return 0; }
+    virtual int shutdown() {
+        started = false;
+        return 0;
+    }
   /**
    * @} // Startup/Shutdown
    */
@@ -495,7 +511,7 @@ public:
    *
    * @return 0 on success, or -errno on failure.
    */
-  virtual int send_message(Message *m, const entity_inst_t& dest) = 0;
+    virtual int send_message(Message * m, const entity_inst_t & dest) = 0;
 
   /**
    * @} // Messaging
@@ -512,11 +528,11 @@ public:
    *
    * @param dest The entity to get a connection for.
    */
-  virtual ConnectionRef get_connection(const entity_inst_t& dest) = 0;
+    virtual ConnectionRef get_connection(const entity_inst_t & dest) = 0;
   /**
    * Get the Connection object associated with ourselves.
    */
-  virtual ConnectionRef get_loopback_connection() = 0;
+    virtual ConnectionRef get_loopback_connection() = 0;
   /**
    * Mark down a Connection to a remote.
    *
@@ -534,7 +550,7 @@ public:
    *
    * @param a The address to mark down.
    */
-  virtual void mark_down(const entity_addr_t& a) = 0;
+    virtual void mark_down(const entity_addr_t & a) = 0;
   /**
    * Mark all the existing Connections down. This is equivalent
    * to iterating over all Connections and calling mark_down()
@@ -542,11 +558,11 @@ public:
    *
    * This will generate a RESET event for each closed connections.
    */
-  virtual void mark_down_all() = 0;
+    virtual void mark_down_all() = 0;
   /**
    * @} // Connection Management
    */
-protected:
+  protected:
   /**
    * @defgroup Subclass Interfacing
    * @{
@@ -555,11 +571,12 @@ protected:
    * A courtesy function for Messenger implementations which
    * will be called when we receive our first Dispatcher.
    */
-  virtual void ready() { }
+    virtual void ready() {
+    }
   /**
    * @} // Subclass Interfacing
    */
-public:
+  public:
 #ifdef CEPH_USE_SIGPIPE_BLOCKER
   /**
    * We need to disable SIGPIPE on all platforms, and if they
@@ -570,37 +587,39 @@ public:
    * it's needed we construct an RAII object to plug and un-plug the SIGPIPE.
    * See http://www.microhowto.info/howto/ignore_sigpipe_without_affecting_other_threads_in_a_process.html
    */
-  struct sigpipe_stopper {
-    bool blocked;
-    sigset_t existing_mask;
-    sigset_t pipe_mask;
-    sigpipe_stopper() {
-      sigemptyset(&pipe_mask);
-      sigaddset(&pipe_mask, SIGPIPE);
-      sigset_t signals;
-      sigemptyset(&signals);
-      sigpending(&signals);
-      if (sigismember(&signals, SIGPIPE)) {
-	blocked = false;
-      } else {
-	blocked = true;
-	int r = pthread_sigmask(SIG_BLOCK, &pipe_mask, &existing_mask);
-	assert(r == 0);
-      }
-    }
-    ~sigpipe_stopper() {
-      if (blocked) {
-	struct timespec nowait{0};
-	int r = sigtimedwait(&pipe_mask, 0, &nowait);
-	assert(r == EAGAIN || r == 0);
-	r = pthread_sigmask(SIG_SETMASK, &existing_mask, 0);
-	assert(r == 0);
-      }
-    }
-  };
-#  define MSGR_SIGPIPE_STOPPER Messenger::sigpipe_stopper stopper();
+    struct sigpipe_stopper {
+        bool blocked;
+        sigset_t existing_mask;
+        sigset_t pipe_mask;
+         sigpipe_stopper() {
+            sigemptyset(&pipe_mask);
+            sigaddset(&pipe_mask, SIGPIPE);
+            sigset_t signals;
+             sigemptyset(&signals);
+             sigpending(&signals);
+            if (sigismember(&signals, SIGPIPE)) {
+                blocked = false;
+            }
+            else {
+                blocked = true;
+                int r = pthread_sigmask(SIG_BLOCK, &pipe_mask, &existing_mask);
+                assert(r == 0);
+            }
+        }
+        ~sigpipe_stopper() {
+            if (blocked) {
+                struct timespec nowait {
+                0};
+                int r = sigtimedwait(&pipe_mask, 0, &nowait);
+                assert(r == EAGAIN || r == 0);
+                r = pthread_sigmask(SIG_SETMASK, &existing_mask, 0);
+                assert(r == 0);
+            }
+        }
+    };
+#define MSGR_SIGPIPE_STOPPER Messenger::sigpipe_stopper stopper();
 #else
-#  define MSGR_SIGPIPE_STOPPER
+#define MSGR_SIGPIPE_STOPPER
 #endif
   /**
    * @defgroup Dispatcher Interfacing
@@ -613,15 +632,14 @@ public:
    *
    * @param m The Message we are testing.
    */
-  bool ms_can_fast_dispatch(const Message *m) {
-    for (list<Dispatcher*>::iterator p = fast_dispatchers.begin();
-	 p != fast_dispatchers.end();
-	 ++p) {
-      if ((*p)->ms_can_fast_dispatch(m))
-	return true;
+    bool ms_can_fast_dispatch(const Message * m) {
+        for (list < Dispatcher * >::iterator p = fast_dispatchers.begin();
+             p != fast_dispatchers.end(); ++p) {
+            if ((*p)->ms_can_fast_dispatch(m))
+                return true;
+        }
+        return false;
     }
-    return false;
-  }
 
   /**
    * Deliver a single Message via "fast dispatch".
@@ -630,28 +648,26 @@ public:
    * of one reference to it.
    * If none of our Dispatchers can handle it, ceph_abort().
    */
-  void ms_fast_dispatch(Message *m) {
-    m->set_dispatch_stamp(ceph_clock_now());
-    for (list<Dispatcher*>::iterator p = fast_dispatchers.begin();
-	 p != fast_dispatchers.end();
-	 ++p) {
-      if ((*p)->ms_can_fast_dispatch(m)) {
-	(*p)->ms_fast_dispatch(m);
-	return;
-      }
+    void ms_fast_dispatch(Message * m) {
+        m->set_dispatch_stamp(ceph_clock_now());
+        for (list < Dispatcher * >::iterator p = fast_dispatchers.begin();
+             p != fast_dispatchers.end(); ++p) {
+            if ((*p)->ms_can_fast_dispatch(m)) {
+                (*p)->ms_fast_dispatch(m);
+                return;
+            }
+        }
+        ceph_abort();
     }
-    ceph_abort();
-  }
   /**
    *
    */
-  void ms_fast_preprocess(Message *m) {
-    for (list<Dispatcher*>::iterator p = fast_dispatchers.begin();
-	 p != fast_dispatchers.end();
-	 ++p) {
-      (*p)->ms_fast_preprocess(m);
+    void ms_fast_preprocess(Message * m) {
+        for (list < Dispatcher * >::iterator p = fast_dispatchers.begin();
+             p != fast_dispatchers.end(); ++p) {
+            (*p)->ms_fast_preprocess(m);
+        }
     }
-  }
   /**
    *  Deliver a single Message. Send it to each Dispatcher
    *  in sequence until one of them handles it.
@@ -660,19 +676,19 @@ public:
    *  @param m The Message to deliver. We take ownership of
    *  one reference to it.
    */
-  void ms_deliver_dispatch(Message *m) {
-    m->set_dispatch_stamp(ceph_clock_now());
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p) {
-      if ((*p)->ms_dispatch(m))
-	return;
+    void ms_deliver_dispatch(Message * m) {
+        m->set_dispatch_stamp(ceph_clock_now());
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p) {
+            if ((*p)->ms_dispatch(m))
+                return;
+        }
+        lsubdout(cct, ms,
+                 0) << "ms_deliver_dispatch: unhandled message " << m << " " <<
+            *m << " from " << m->get_source_inst() << dendl;
+        assert(!cct->_conf->ms_die_on_unhandled_msg);
+        m->put();
     }
-    lsubdout(cct, ms, 0) << "ms_deliver_dispatch: unhandled message " << m << " " << *m << " from "
-			 << m->get_source_inst() << dendl;
-    assert(!cct->_conf->ms_die_on_unhandled_msg);
-    m->put();
-  }
   /**
    * Notify each Dispatcher of a new Connection. Call
    * this function whenever a new Connection is initiated or
@@ -680,12 +696,11 @@ public:
    *
    * @param con Pointer to the new Connection.
    */
-  void ms_deliver_handle_connect(Connection *con) {
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p)
-      (*p)->ms_handle_connect(con);
-  }
+    void ms_deliver_handle_connect(Connection * con) {
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p)
+            (*p)->ms_handle_connect(con);
+    }
 
   /**
    * Notify each fast Dispatcher of a new Connection. Call
@@ -694,12 +709,11 @@ public:
    *
    * @param con Pointer to the new Connection.
    */
-  void ms_deliver_handle_fast_connect(Connection *con) {
-    for (list<Dispatcher*>::iterator p = fast_dispatchers.begin();
-         p != fast_dispatchers.end();
-         ++p)
-      (*p)->ms_handle_fast_connect(con);
-  }
+    void ms_deliver_handle_fast_connect(Connection * con) {
+        for (list < Dispatcher * >::iterator p = fast_dispatchers.begin();
+             p != fast_dispatchers.end(); ++p)
+            (*p)->ms_handle_fast_connect(con);
+    }
 
   /**
    * Notify each Dispatcher of a new incomming Connection. Call
@@ -707,12 +721,11 @@ public:
    *
    * @param con Pointer to the new Connection.
    */
-  void ms_deliver_handle_accept(Connection *con) {
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p)
-      (*p)->ms_handle_accept(con);
-  }
+    void ms_deliver_handle_accept(Connection * con) {
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p)
+            (*p)->ms_handle_accept(con);
+    }
 
   /**
    * Notify each fast Dispatcher of a new incoming Connection. Call
@@ -720,12 +733,11 @@ public:
    *
    * @param con Pointer to the new Connection.
    */
-  void ms_deliver_handle_fast_accept(Connection *con) {
-    for (list<Dispatcher*>::iterator p = fast_dispatchers.begin();
-         p != fast_dispatchers.end();
-         ++p)
-      (*p)->ms_handle_fast_accept(con);
-  }
+    void ms_deliver_handle_fast_accept(Connection * con) {
+        for (list < Dispatcher * >::iterator p = fast_dispatchers.begin();
+             p != fast_dispatchers.end(); ++p)
+            (*p)->ms_handle_fast_accept(con);
+    }
 
   /**
    * Notify each Dispatcher of a Connection which may have lost
@@ -734,14 +746,13 @@ public:
    *
    * @param con Pointer to the broken Connection.
    */
-  void ms_deliver_handle_reset(Connection *con) {
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p) {
-      if ((*p)->ms_handle_reset(con))
-	return;
+    void ms_deliver_handle_reset(Connection * con) {
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p) {
+            if ((*p)->ms_handle_reset(con))
+                return;
+        }
     }
-  }
   /**
    * Notify each Dispatcher of a Connection which has been "forgotten" about
    * by the remote end, implying that messages have probably been lost.
@@ -749,12 +760,11 @@ public:
    *
    * @param con Pointer to the broken Connection.
    */
-  void ms_deliver_handle_remote_reset(Connection *con) {
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p)
-      (*p)->ms_handle_remote_reset(con);
-  }
+    void ms_deliver_handle_remote_reset(Connection * con) {
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p)
+            (*p)->ms_handle_remote_reset(con);
+    }
 
   /**
    * Notify each Dispatcher of a Connection for which reconnection
@@ -764,14 +774,13 @@ public:
    *
    * @param con Pointer to the broken Connection.
    */
-  void ms_deliver_handle_refused(Connection *con) {
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-         p != dispatchers.end();
-         ++p) {
-      if ((*p)->ms_handle_refused(con))
-        return;
+    void ms_deliver_handle_refused(Connection * con) {
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p) {
+            if ((*p)->ms_handle_refused(con))
+                return;
+        }
     }
-  }
 
   /**
    * Get the AuthAuthorizer for a new outgoing Connection.
@@ -780,16 +789,15 @@ public:
    * @param force_new True if we want to wait for new keys, false otherwise.
    * @return A pointer to the AuthAuthorizer, if we have one; NULL otherwise
    */
-  AuthAuthorizer *ms_deliver_get_authorizer(int peer_type, bool force_new) {
-    AuthAuthorizer *a = 0;
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p) {
-      if ((*p)->ms_get_authorizer(peer_type, &a, force_new))
-	return a;
+    AuthAuthorizer *ms_deliver_get_authorizer(int peer_type, bool force_new) {
+        AuthAuthorizer *a = 0;
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p) {
+            if ((*p)->ms_get_authorizer(peer_type, &a, force_new))
+                return a;
+        }
+        return NULL;
     }
-    return NULL;
-  }
   /**
    * Verify that the authorizer on a new incoming Connection is correct.
    *
@@ -804,25 +812,26 @@ public:
    * @return True if we were able to prove or disprove correctness of
    * authorizer, false otherwise.
    */
-  bool ms_deliver_verify_authorizer(Connection *con, int peer_type,
-				    int protocol, bufferlist& authorizer, bufferlist& authorizer_reply,
-				    bool& isvalid, CryptoKey& session_key,
-				    std::unique_ptr<AuthAuthorizerChallenge> *challenge) {
-    for (list<Dispatcher*>::iterator p = dispatchers.begin();
-	 p != dispatchers.end();
-	 ++p) {
-      if ((*p)->ms_verify_authorizer(con, peer_type, protocol, authorizer, authorizer_reply,
-				     isvalid, session_key, challenge))
-	return true;
+    bool ms_deliver_verify_authorizer(Connection * con, int peer_type,
+                                      int protocol, bufferlist & authorizer,
+                                      bufferlist & authorizer_reply,
+                                      bool & isvalid, CryptoKey & session_key,
+                                      std::unique_ptr <
+                                      AuthAuthorizerChallenge > *challenge) {
+        for (list < Dispatcher * >::iterator p = dispatchers.begin();
+             p != dispatchers.end(); ++p) {
+            if ((*p)->
+                ms_verify_authorizer(con, peer_type, protocol, authorizer,
+                                     authorizer_reply, isvalid, session_key,
+                                     challenge))
+                return true;
+        }
+        return false;
     }
-    return false;
-  }
 
   /**
    * @} // Dispatcher Interfacing
    */
 };
-
-
 
 #endif

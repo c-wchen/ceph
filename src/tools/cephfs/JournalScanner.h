@@ -18,108 +18,98 @@
 #include <osdc/Journaler.h>
 
 namespace librados {
-  class IoCtx;
+    class IoCtx;
 }
-
 #include "JournalFilter.h"
-
 /**
  * A simple sequential reader for metadata journals.  Unlike
  * the MDS Journaler class, this is written to detect, record,
  * and read past corruptions and missing objects.  It is also
  * less efficient but more plainly written.
- */
-class JournalScanner
+ */ class JournalScanner
 {
   private:
-  librados::IoCtx &io;
+    librados::IoCtx & io;
 
-  // Input constraints
-  const int rank;
-  JournalFilter const filter;
+    // Input constraints
+    const int rank;
+    JournalFilter const filter;
 
-  void gap_advance();
+    void gap_advance();
 
   public:
-  JournalScanner(
-      librados::IoCtx &io_,
-      int rank_,
-      JournalFilter const &filter_) :
-    io(io_),
-    rank(rank_),
-    filter(filter_),
-    pointer_present(false),
-    pointer_valid(false),
-    header_present(false),
-    header_valid(false),
-    header(NULL) {};
+     JournalScanner(librados::IoCtx & io_,
+                    int rank_,
+                    JournalFilter const &filter_):io(io_),
+        rank(rank_),
+        filter(filter_),
+        pointer_present(false),
+        pointer_valid(false),
+        header_present(false), header_valid(false), header(NULL) {
+    };
 
-  JournalScanner(
-      librados::IoCtx &io_,
-      int rank_) :
-    io(io_),
-    rank(rank_),
-    pointer_present(false),
-    pointer_valid(false),
-    header_present(false),
-    header_valid(false),
-    header(NULL) {};
+    JournalScanner(librados::IoCtx & io_,
+                   int rank_):io(io_),
+        rank(rank_),
+        pointer_present(false),
+        pointer_valid(false),
+        header_present(false), header_valid(false), header(NULL) {
+    };
 
-  ~JournalScanner();
+    ~JournalScanner();
 
-  int scan(bool const full=true);
-  int scan_pointer();
-  int scan_header();
-  int scan_events();
-  void report(std::ostream &out) const;
+    int scan(bool const full = true);
+    int scan_pointer();
+    int scan_header();
+    int scan_events();
+    void report(std::ostream & out) const;
 
-  std::string obj_name(uint64_t offset) const;
-  std::string obj_name(inodeno_t ino, uint64_t offset) const;
+    std::string obj_name(uint64_t offset) const;
+    std::string obj_name(inodeno_t ino, uint64_t offset) const;
 
-  // The results of the scan
-  inodeno_t ino;  // Corresponds to JournalPointer.front
-  class EventRecord {
-    public:
-    EventRecord() : log_event(NULL), raw_size(0) {}
-    EventRecord(LogEvent *le, uint32_t rs) : log_event(le), raw_size(rs) {}
-    LogEvent *log_event;
-    uint32_t raw_size;  //< Size from start offset including all encoding overhead
-  };
+    // The results of the scan
+    inodeno_t ino;              // Corresponds to JournalPointer.front
+    class EventRecord {
+      public:
+        EventRecord():log_event(NULL), raw_size(0) {
+        } EventRecord(LogEvent * le, uint32_t rs):log_event(le), raw_size(rs) {
+        }
+        LogEvent *log_event;
+        uint32_t raw_size;      //< Size from start offset including all encoding overhead
+    };
 
-  class EventError {
-    public:
-    int r;
-    std::string description;
-    EventError(int r_, const std::string &desc_)
-      : r(r_), description(desc_) {}
-  };
+    class EventError {
+      public:
+        int r;
+         std::string description;
+         EventError(int r_, const std::string & desc_)
+        :r(r_), description(desc_) {
+    }};
 
-  typedef std::map<uint64_t, EventRecord> EventMap;
-  typedef std::map<uint64_t, EventError> ErrorMap;
-  typedef std::pair<uint64_t, uint64_t> Range;
-  bool pointer_present;
-  bool pointer_valid;
-  bool header_present;
-  bool header_valid;
-  Journaler::Header *header;
+    typedef std::map < uint64_t, EventRecord > EventMap;
+    typedef std::map < uint64_t, EventError > ErrorMap;
+    typedef std::pair < uint64_t, uint64_t > Range;
+    bool pointer_present;
+    bool pointer_valid;
+    bool header_present;
+    bool header_valid;
+    Journaler::Header * header;
 
-  bool is_healthy() const;
-  bool is_readable() const;
-  std::vector<std::string> objects_valid;
-  std::vector<uint64_t> objects_missing;
-  std::vector<Range> ranges_invalid;
-  std::vector<uint64_t> events_valid;
-  EventMap events;
+    bool is_healthy() const;
+    bool is_readable() const;
+    std::vector < std::string > objects_valid;
+    std::vector < uint64_t > objects_missing;
+    std::vector < Range > ranges_invalid;
+    std::vector < uint64_t > events_valid;
+    EventMap events;
 
-  // For events present in ::events (i.e. scanned successfully),
-  // any subsequent errors handling them (e.g. replaying)
-  ErrorMap errors;
-
+    // For events present in ::events (i.e. scanned successfully),
+    // any subsequent errors handling them (e.g. replaying)
+    ErrorMap errors;
 
   private:
-  // Forbid copy construction because I have ptr members
-  JournalScanner(const JournalScanner &rhs);
+    // Forbid copy construction because I have ptr members
+    JournalScanner(const JournalScanner & rhs);
 };
 
 #endif // JOURNAL_SCANNER_H
-

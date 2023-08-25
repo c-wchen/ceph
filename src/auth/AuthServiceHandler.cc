@@ -18,14 +18,14 @@
 
 #define dout_subsys ceph_subsys_auth
 
-
-AuthServiceHandler *get_auth_service_handler(int type, CephContext *cct, KeyServer *ks)
+AuthServiceHandler *get_auth_service_handler(int type, CephContext * cct,
+                                             KeyServer * ks)
 {
-  switch (type) {
-  case CEPH_AUTH_CEPHX:
-    return new CephxServiceHandler(cct, ks);
-  case CEPH_AUTH_NONE:
-    return new AuthNoneServiceHandler(cct);
-  }
-  return NULL;
+    switch (type) {
+    case CEPH_AUTH_CEPHX:
+        return new CephxServiceHandler(cct, ks);
+    case CEPH_AUTH_NONE:
+        return new AuthNoneServiceHandler(cct);
+    }
+    return NULL;
 }

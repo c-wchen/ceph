@@ -5,33 +5,29 @@
  * Copyright (C) 2016 Red Hat Inc.
  */
 
-
 #pragma once
-
 
 #include <ostream>
 #include <assert.h>
 
-
 namespace crimson {
-  namespace simple_scheduler {
+    namespace simple_scheduler {
 
-    // since we send no additional data out
-    // NOTE: Change name to RespParams? Is it used elsewhere?
-    struct NullData {
-      friend std::ostream& operator<<(std::ostream& out, const NullData& n) {
-	out << "NullData{ EMPTY }";
-	return out;
-      }
-    }; // struct NullData
+        // since we send no additional data out
+        // NOTE: Change name to RespParams? Is it used elsewhere?
+        struct NullData {
+            friend std::ostream & operator<<(std::ostream & out,
+                                             const NullData & n) {
+                out << "NullData{ EMPTY }";
+                return out;
+        }};                     // struct NullData
 
+        struct ReqParams {
+            friend std::ostream & operator<<(std::ostream & out,
+                                             const ReqParams & rp) {
+                out << "ReqParams{ EMPTY }";
+                return out;
+        }};
 
-    struct ReqParams {
-      friend std::ostream& operator<<(std::ostream& out, const ReqParams& rp) {
-	out << "ReqParams{ EMPTY }";
-	return out;
-      }
-    };
-
-  }
+    }
 }

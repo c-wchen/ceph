@@ -16,20 +16,20 @@
 #define CEPH_OSD_OBJECTVERSIONER_H
 
 class ObjectVersioner {
- public:
-  pobject_t oid;
+  public:
+    pobject_t oid;
 
-  void get_versions(list<version_t>& ls);
-  version_t head();      // newest
-  version_t committed(); // last committed
-  version_t tail();      // oldest
+    void get_versions(list < version_t > &ls);
+    version_t head();           // newest
+    version_t committed();      // last committed
+    version_t tail();           // oldest
 
-  /* 
-   * prepare a new version, starting wit "raw" transaction t.
-   */
-  void prepare(ObjectStore::Transaction& t, version_t v);
-  void rollback_to(version_t v);
-  void commit_to(version_t v);
+    /* 
+     * prepare a new version, starting wit "raw" transaction t.
+     */
+    void prepare(ObjectStore::Transaction & t, version_t v);
+    void rollback_to(version_t v);
+    void commit_to(version_t v);
 };
 
 #endif

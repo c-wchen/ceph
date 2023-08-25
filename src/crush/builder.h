@@ -61,7 +61,8 @@ extern void crush_finalize(struct crush_map *map);
  *
  * @returns a pointer to the newly created rule or NULL
  */
-extern struct crush_rule *crush_make_rule(int len, int ruleset, int type, int minsize, int maxsize);
+extern struct crush_rule *crush_make_rule(int len, int ruleset, int type,
+                                          int minsize, int maxsize);
 /** @ingroup API
  *
  * Set the __pos__ step of the __rule__ to an operand and up to two arguments.
@@ -130,7 +131,8 @@ extern struct crush_rule *crush_make_rule(int len, int ruleset, int type, int mi
  * @param arg1 first argument for __op__
  * @param arg2 second argument for __op__
  */
-extern void crush_rule_set_step(struct crush_rule *rule, int pos, int op, int arg1, int arg2);
+extern void crush_rule_set_step(struct crush_rule *rule, int pos, int op,
+                                int arg1, int arg2);
 /** @ingroup API
  *
  * Add the __rule__ into the crush __map__ and assign it the
@@ -148,7 +150,8 @@ extern void crush_rule_set_step(struct crush_rule *rule, int pos, int op, int ar
  *
  * @returns the rule unique identifier on success, < 0 on error
  */
-extern int crush_add_rule(struct crush_map *map, struct crush_rule *rule, int ruleno);
+extern int crush_add_rule(struct crush_map *map, struct crush_rule *rule,
+                          int ruleno);
 
 /* buckets */
 extern int crush_get_next_bucket_id(struct crush_map *map);
@@ -173,8 +176,8 @@ extern int crush_get_next_bucket_id(struct crush_map *map);
  * @returns 0 on success, < 0 on error
  */
 extern int crush_add_bucket(struct crush_map *map,
-			    int bucketno,
-			    struct crush_bucket *bucket, int *idout);
+                            int bucketno,
+                            struct crush_bucket *bucket, int *idout);
 /** @ingroup API
  *
  * Allocate a crush_bucket with __malloc(3)__ and initialize it. The
@@ -200,8 +203,11 @@ extern int crush_add_bucket(struct crush_map *map,
  *
  * @returns a pointer to the newly created bucket or NULL
  */
-struct crush_bucket *crush_make_bucket(struct crush_map *map, int alg, int hash, int type, int size, int *items, int *weights);
-extern struct crush_choose_arg *crush_make_choose_args(struct crush_map *map, int num_positions);
+struct crush_bucket *crush_make_bucket(struct crush_map *map, int alg, int hash,
+                                       int type, int size, int *items,
+                                       int *weights);
+extern struct crush_choose_arg *crush_make_choose_args(struct crush_map *map,
+                                                       int num_positions);
 extern void crush_destroy_choose_args(struct crush_choose_arg *args);
 /** @ingroup API
  *
@@ -220,7 +226,9 @@ extern void crush_destroy_choose_args(struct crush_choose_arg *args);
  *
  * @returns 0 on success, < 0 on error
  */
-extern int crush_bucket_add_item(struct crush_map *map, struct crush_bucket *bucket, int item, int weight);
+extern int crush_bucket_add_item(struct crush_map *map,
+                                 struct crush_bucket *bucket, int item,
+                                 int weight);
 /** @ingroup API
  *
  * If __bucket->alg__ is ::CRUSH_BUCKET_UNIFORM,
@@ -237,7 +245,9 @@ extern int crush_bucket_add_item(struct crush_map *map, struct crush_bucket *buc
  *
  * @returns the difference between the new weight and the former weight
  */
-extern int crush_bucket_adjust_item_weight(struct crush_map *map, struct crush_bucket *bucket, int item, int weight);
+extern int crush_bucket_adjust_item_weight(struct crush_map *map,
+                                           struct crush_bucket *bucket,
+                                           int item, int weight);
 /** @ingroup API
  *
  * Recursively update the weight of __bucket__ and its children, deep
@@ -251,7 +261,8 @@ extern int crush_bucket_adjust_item_weight(struct crush_map *map, struct crush_b
  * @param bucket the root of the tree to reweight
  * @returns 0 on success, < 0 on error
  */
-extern int crush_reweight_bucket(struct crush_map *map, struct crush_bucket *bucket);
+extern int crush_reweight_bucket(struct crush_map *map,
+                                 struct crush_bucket *bucket);
 /** @ingroup API
  *
  * Remove __bucket__ from __map__ and deallocate it via crush_destroy_bucket().
@@ -262,7 +273,8 @@ extern int crush_reweight_bucket(struct crush_map *map, struct crush_bucket *buc
  * @param bucket the bucket to remove from __map__
  * @returns 0
  */
-extern int crush_remove_bucket(struct crush_map *map, struct crush_bucket *bucket);
+extern int crush_remove_bucket(struct crush_map *map,
+                               struct crush_bucket *bucket);
 /** @ingroup API
  *
  * Remove __item__ from __bucket__ and subtract the item weight from
@@ -277,28 +289,22 @@ extern int crush_remove_bucket(struct crush_map *map, struct crush_bucket *bucke
  * @param item the item to remove from __bucket__
  * @returns 0 on success, < 0 on error
  */
-extern int crush_bucket_remove_item(struct crush_map *map, struct crush_bucket *bucket, int item);
+extern int crush_bucket_remove_item(struct crush_map *map,
+                                    struct crush_bucket *bucket, int item);
 
-struct crush_bucket_uniform *
-crush_make_uniform_bucket(int hash, int type, int size,
-			  int *items,
-			  int item_weight);
-struct crush_bucket_list*
-crush_make_list_bucket(int hash, int type, int size,
-		       int *items,
-		       int *weights);
-struct crush_bucket_tree*
-crush_make_tree_bucket(int hash, int type, int size,
-		       int *items,    /* in leaf order */
-		       int *weights);
-struct crush_bucket_straw *
-crush_make_straw_bucket(struct crush_map *map,
-			int hash, int type, int size,
-			int *items,
-			int *weights);
+struct crush_bucket_uniform *crush_make_uniform_bucket(int hash, int type,
+                                                       int size, int *items,
+                                                       int item_weight);
+struct crush_bucket_list *crush_make_list_bucket(int hash, int type, int size,
+                                                 int *items, int *weights);
+struct crush_bucket_tree *crush_make_tree_bucket(int hash, int type, int size, int *items,  /* in leaf order */
+                                                 int *weights);
+struct crush_bucket_straw *crush_make_straw_bucket(struct crush_map *map,
+                                                   int hash, int type, int size,
+                                                   int *items, int *weights);
 
 extern int crush_addition_is_unsafe(__u32 a, __u32 b);
-extern int crush_multiplication_is_unsafe(__u32  a, __u32 b);
+extern int crush_multiplication_is_unsafe(__u32 a, __u32 b);
 
 /** @ingroup API
  *

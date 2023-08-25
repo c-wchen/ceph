@@ -55,502 +55,459 @@
  * key set.  During rm_keys, we copy keys from the parent and update the
  * complete set to reflect the change @see rm_keys.
  */
-class DBObjectMap : public ObjectMap {
-public:
-  boost::scoped_ptr<KeyValueDB> db;
+class DBObjectMap:public ObjectMap {
+  public:
+    boost::scoped_ptr < KeyValueDB > db;
 
   /**
    * Serializes access to next_seq as well as the in_use set
    */
-  Mutex header_lock;
-  Cond header_cond;
-  Cond map_header_cond;
+    Mutex header_lock;
+    Cond header_cond;
+    Cond map_header_cond;
 
   /**
    * Set of headers currently in use
    */
-  set<uint64_t> in_use;
-  set<ghobject_t> map_header_in_use;
+     set < uint64_t > in_use;
+     set < ghobject_t > map_header_in_use;
 
   /**
    * Takes the map_header_in_use entry in constructor, releases in
    * destructor
    */
-  class MapHeaderLock {
-    DBObjectMap *db;
-    boost::optional<ghobject_t> locked;
+    class MapHeaderLock {
+        DBObjectMap *db;
+         boost::optional < ghobject_t > locked;
 
-    MapHeaderLock(const MapHeaderLock &);
-    MapHeaderLock &operator=(const MapHeaderLock &);
-  public:
-    explicit MapHeaderLock(DBObjectMap *db) : db(db) {}
-    MapHeaderLock(DBObjectMap *db, const ghobject_t &oid) : db(db), locked(oid) {
-      Mutex::Locker l(db->header_lock);
-      while (db->map_header_in_use.count(*locked))
-	db->map_header_cond.Wait(db->header_lock);
-      db->map_header_in_use.insert(*locked);
+         MapHeaderLock(const MapHeaderLock &);
+         MapHeaderLock & operator=(const MapHeaderLock &);
+      public:
+         explicit MapHeaderLock(DBObjectMap * db):db(db) {
+        } MapHeaderLock(DBObjectMap * db, const ghobject_t & oid):db(db),
+            locked(oid) {
+            Mutex::Locker l(db->header_lock);
+            while (db->map_header_in_use.count(*locked))
+                db->map_header_cond.Wait(db->header_lock);
+            db->map_header_in_use.insert(*locked);
+        } const ghobject_t & get_locked() const {
+            assert(locked);
+            return *locked;
+        } void swap(MapHeaderLock & o) {
+            assert(db == o.db);
+
+            // centos6's boost optional doesn't seem to have swap :(
+            boost::optional < ghobject_t > _locked = o.locked;
+            o.locked = locked;
+            locked = _locked;
+        }
+
+        ~MapHeaderLock() {
+            if (locked) {
+                Mutex::Locker l(db->header_lock);
+                assert(db->map_header_in_use.count(*locked));
+                db->map_header_cond.Signal();
+                db->map_header_in_use.erase(*locked);
+            }
+        }
+    };
+
+    DBObjectMap(CephContext * cct, KeyValueDB * db)
+  :    
+    ObjectMap(cct), db(db), header_lock("DBOBjectMap"),
+    cache_lock("DBObjectMap::CacheLock"),
+    caches(cct->_conf->filestore_omap_header_cache_size) {
     }
 
-    const ghobject_t &get_locked() const {
-      assert(locked);
-      return *locked;
+    int set_keys(const ghobject_t & oid,
+                 const map < string, bufferlist > &set,
+                 const SequencerPosition * spos = 0) override;
+
+    int set_header(const ghobject_t & oid,
+                   const bufferlist & bl,
+                   const SequencerPosition * spos = 0) override;
+
+    int get_header(const ghobject_t & oid, bufferlist * bl) override;
+
+    int clear(const ghobject_t & oid,
+              const SequencerPosition * spos = 0) override;
+
+    int clear_keys_header(const ghobject_t & oid,
+                          const SequencerPosition * spos = 0) override;
+
+    int rm_keys(const ghobject_t & oid,
+                const set < string > &to_clear,
+                const SequencerPosition * spos = 0) override;
+
+    int get(const ghobject_t & oid,
+            bufferlist * header, map < string, bufferlist > *out) override;
+
+    int get_keys(const ghobject_t & oid, set < string > *keys) override;
+
+    int get_values(const ghobject_t & oid,
+                   const set < string > &keys,
+                   map < string, bufferlist > *out) override;
+
+    int check_keys(const ghobject_t & oid,
+                   const set < string > &keys, set < string > *out) override;
+
+    int get_xattrs(const ghobject_t & oid,
+                   const set < string > &to_get,
+                   map < string, bufferlist > *out) override;
+
+    int get_all_xattrs(const ghobject_t & oid, set < string > *out) override;
+
+    int set_xattrs(const ghobject_t & oid,
+                   const map < string, bufferlist > &to_set,
+                   const SequencerPosition * spos = 0) override;
+
+    int remove_xattrs(const ghobject_t & oid,
+                      const set < string > &to_remove,
+                      const SequencerPosition * spos = 0) override;
+
+    int clone(const ghobject_t & oid,
+              const ghobject_t & target,
+              const SequencerPosition * spos = 0) override;
+
+    int rename(const ghobject_t & from,
+               const ghobject_t & to, const SequencerPosition * spos = 0);
+
+    int legacy_clone(const ghobject_t & oid,
+                     const ghobject_t & target,
+                     const SequencerPosition * spos = 0);
+
+    /// Read initial state from backing store
+    int get_state();
+    /// Write current state settings to DB
+    void set_state();
+    /// Read initial state and upgrade or initialize state
+    int init(bool upgrade = false);
+
+    /// Upgrade store to current version
+    int upgrade_to_v2();
+
+    /// Consistency check, debug, there must be no parallel writes
+    int check(std::ostream & out, bool repair = false, bool force =
+              false) override;
+
+    /// Ensure that all previous operations are durable
+    int sync(const ghobject_t * oid = 0, const SequencerPosition * spos =
+             0) override;
+
+    void compact() override {
+        assert(db);
+        db->compact();
     }
 
-    void swap(MapHeaderLock &o) {
-      assert(db == o.db);
+    /// Util, get all objects, there must be no other concurrent access
+    int list_objects(vector < ghobject_t > *objs    ///< [out] objects
+        );
 
-      // centos6's boost optional doesn't seem to have swap :(
-      boost::optional<ghobject_t> _locked = o.locked;
-      o.locked = locked;
-      locked = _locked;
+    struct _Header;
+    // Util, get all object headers, there must be no other concurrent access
+    int list_object_headers(vector < _Header > *out ///< [out] headers
+        );
+
+    ObjectMapIterator get_iterator(const ghobject_t & oid) override;
+
+    static const string USER_PREFIX;
+    static const string XATTR_PREFIX;
+    static const string SYS_PREFIX;
+    static const string COMPLETE_PREFIX;
+    static const string HEADER_KEY;
+    static const string USER_HEADER_KEY;
+    static const string GLOBAL_STATE_KEY;
+    static const string HOBJECT_TO_SEQ;
+
+    /// Legacy
+    static const string LEAF_PREFIX;
+    static const string REVERSE_LEAF_PREFIX;
+
+    /// persistent state for store @see generate_header
+    struct State {
+        static const __u8 CUR_VERSION = 3;
+        __u8 v;
+        uint64_t seq;
+        // legacy is false when complete regions never used
+        bool legacy;
+         State():v(0), seq(1), legacy(false) {
+        } explicit State(uint64_t seq):v(0), seq(seq), legacy(false) {
+        }
+
+        void encode(bufferlist & bl) const {
+            ENCODE_START(3, 1, bl);
+            ::encode(v, bl);
+            ::encode(seq, bl);
+            ::encode(legacy, bl);
+            ENCODE_FINISH(bl);
+        } void decode(bufferlist::iterator & bl) {
+            DECODE_START(3, bl);
+            if (struct_v >= 2)
+                ::decode(v, bl);
+            else
+                v = 0;
+            ::decode(seq, bl);
+            if (struct_v >= 3)
+                ::decode(legacy, bl);
+            else
+                legacy = false;
+            DECODE_FINISH(bl);
+        }
+
+        void dump(Formatter * f) const {
+            f->dump_unsigned("v", v);
+            f->dump_unsigned("seq", seq);
+            f->dump_bool("legacy", legacy);
+        } static void generate_test_instances(list < State * >&o) {
+            o.push_back(new State(0));
+            o.push_back(new State(20));
+        }
+    } state;
+
+    struct _Header {
+        uint64_t seq;
+        uint64_t parent;
+        uint64_t num_children;
+
+        ghobject_t oid;
+
+        SequencerPosition spos;
+
+        void encode(bufferlist & bl) const {
+            coll_t unused;
+             ENCODE_START(2, 1, bl);
+            ::encode(seq, bl);
+            ::encode(parent, bl);
+            ::encode(num_children, bl);
+            ::encode(unused, bl);
+            ::encode(oid, bl);
+            ::encode(spos, bl);
+             ENCODE_FINISH(bl);
+        } void decode(bufferlist::iterator & bl) {
+            coll_t unused;
+             DECODE_START(2, bl);
+            ::decode(seq, bl);
+            ::decode(parent, bl);
+            ::decode(num_children, bl);
+            ::decode(unused, bl);
+            ::decode(oid, bl);
+            if (struct_v >= 2)
+                ::decode(spos, bl);
+             DECODE_FINISH(bl);
+        } void dump(Formatter * f) const {
+            f->dump_unsigned("seq", seq);
+            f->dump_unsigned("parent", parent);
+            f->dump_unsigned("num_children", num_children);
+            f->dump_stream("oid") << oid;
+        } static void generate_test_instances(list < _Header * >&o) {
+            o.push_back(new _Header);
+            o.push_back(new _Header);
+            o.back()->parent = 20;
+            o.back()->seq = 30;
+        }
+
+      _Header():seq(0), parent(0), num_children(1) {
+        }
+    };
+
+    /// String munging (public for testing)
+    static string ghobject_key(const ghobject_t & oid);
+    static string ghobject_key_v0(coll_t c, const ghobject_t & oid);
+    static int is_buggy_ghobject_key_v1(CephContext * cct, const string & in);
+  private:
+    /// Implicit lock on Header->seq
+    typedef ceph::shared_ptr < _Header > Header;
+    Mutex cache_lock;
+    SimpleLRU < ghobject_t, _Header > caches;
+
+    string map_header_key(const ghobject_t & oid);
+    string header_key(uint64_t seq);
+    string complete_prefix(Header header);
+    string user_prefix(Header header);
+    string sys_prefix(Header header);
+    string xattr_prefix(Header header);
+    string sys_parent_prefix(_Header header);
+    string sys_parent_prefix(Header header) {
+        return sys_parent_prefix(*header);
     }
 
-    ~MapHeaderLock() {
-      if (locked) {
-	Mutex::Locker l(db->header_lock);
-	assert(db->map_header_in_use.count(*locked));
-	db->map_header_cond.Signal();
-	db->map_header_in_use.erase(*locked);
-      }
-    }
-  };
+    class EmptyIteratorImpl:public ObjectMapIteratorImpl {
+      public:
+        int seek_to_first() override {
+            return 0;
+        } int seek_to_last() {
+            return 0;
+        }
+        int upper_bound(const string & after) override {
+            return 0;
+        }
+        int lower_bound(const string & to) override {
+            return 0;
+        }
+        bool valid() override {
+            return false;
+        }
+        int next(bool validate = true) override {
+            ceph_abort();
+            return 0;
+        }
+        string key() override {
+            ceph_abort();
+            return "";
+        }
+        bufferlist value() override {
+            ceph_abort();
+            return bufferlist();
+        }
+        int status() override {
+            return 0;
+        }
+    };
 
-  DBObjectMap(CephContext* cct, KeyValueDB *db)
-    : ObjectMap(cct), db(db), header_lock("DBOBjectMap"),
-      cache_lock("DBObjectMap::CacheLock"),
-      caches(cct->_conf->filestore_omap_header_cache_size)
-    {}
+    /// Iterator
+    class DBObjectMapIteratorImpl:public ObjectMapIteratorImpl {
+      public:
+        DBObjectMap * map;
 
-  int set_keys(
-    const ghobject_t &oid,
-    const map<string, bufferlist> &set,
-    const SequencerPosition *spos=0
-    ) override;
+        /// NOTE: implicit lock hlock->get_locked() when returned out of the class
+        MapHeaderLock hlock;
+        /// NOTE: implicit lock on header->seq AND for all ancestors
+        Header header;
 
-  int set_header(
-    const ghobject_t &oid,
-    const bufferlist &bl,
-    const SequencerPosition *spos=0
-    ) override;
+        /// parent_iter == NULL iff no parent
+         ceph::shared_ptr < DBObjectMapIteratorImpl > parent_iter;
+         KeyValueDB::Iterator key_iter;
+         KeyValueDB::Iterator complete_iter;
 
-  int get_header(
-    const ghobject_t &oid,
-    bufferlist *bl
-    ) override;
+        /// cur_iter points to currently valid iterator
+         ceph::shared_ptr < ObjectMapIteratorImpl > cur_iter;
+        int r;
 
-  int clear(
-    const ghobject_t &oid,
-    const SequencerPosition *spos=0
-    ) override;
+        /// init() called, key_iter, complete_iter, parent_iter filled in
+        bool ready;
+        /// past end
+        bool invalid;
 
-  int clear_keys_header(
-    const ghobject_t &oid,
-    const SequencerPosition *spos=0
-    ) override;
+         DBObjectMapIteratorImpl(DBObjectMap * map, Header header):
+            map(map), hlock(map), header(header), r(0), ready(false),
+            invalid(true) {
+        } int seek_to_first() override;
+        int seek_to_last();
+        int upper_bound(const string & after) override;
+        int lower_bound(const string & to) override;
+        bool valid() override;
+        int next(bool validate = true) override;
+        string key() override;
+        bufferlist value() override;
+        int status() override;
 
-  int rm_keys(
-    const ghobject_t &oid,
-    const set<string> &to_clear,
-    const SequencerPosition *spos=0
-    ) override;
+        bool on_parent() {
+            return cur_iter == parent_iter;
+        }
 
-  int get(
-    const ghobject_t &oid,
-    bufferlist *header,
-    map<string, bufferlist> *out
-    ) override;
+        /// skips to next valid parent entry
+        int next_parent();
 
-  int get_keys(
-    const ghobject_t &oid,
-    set<string> *keys
-    ) override;
-
-  int get_values(
-    const ghobject_t &oid,
-    const set<string> &keys,
-    map<string, bufferlist> *out
-    ) override;
-
-  int check_keys(
-    const ghobject_t &oid,
-    const set<string> &keys,
-    set<string> *out
-    ) override;
-
-  int get_xattrs(
-    const ghobject_t &oid,
-    const set<string> &to_get,
-    map<string, bufferlist> *out
-    ) override;
-
-  int get_all_xattrs(
-    const ghobject_t &oid,
-    set<string> *out
-    ) override;
-
-  int set_xattrs(
-    const ghobject_t &oid,
-    const map<string, bufferlist> &to_set,
-    const SequencerPosition *spos=0
-    ) override;
-
-  int remove_xattrs(
-    const ghobject_t &oid,
-    const set<string> &to_remove,
-    const SequencerPosition *spos=0
-    ) override;
-
-  int clone(
-    const ghobject_t &oid,
-    const ghobject_t &target,
-    const SequencerPosition *spos=0
-    ) override;
-
-  int rename(
-    const ghobject_t &from,
-    const ghobject_t &to,
-    const SequencerPosition *spos=0
-    );
-
-  int legacy_clone(
-    const ghobject_t &oid,
-    const ghobject_t &target,
-    const SequencerPosition *spos=0
-    );
-
-  /// Read initial state from backing store
-  int get_state();
-  /// Write current state settings to DB
-  void set_state();
-  /// Read initial state and upgrade or initialize state
-  int init(bool upgrade = false);
-
-  /// Upgrade store to current version
-  int upgrade_to_v2();
-
-  /// Consistency check, debug, there must be no parallel writes
-  int check(std::ostream &out, bool repair = false, bool force = false) override;
-
-  /// Ensure that all previous operations are durable
-  int sync(const ghobject_t *oid=0, const SequencerPosition *spos=0) override;
-
-  void compact() override {
-    assert(db);
-    db->compact();
-  }
-
-  /// Util, get all objects, there must be no other concurrent access
-  int list_objects(vector<ghobject_t> *objs ///< [out] objects
-    );
-
-  struct _Header;
-  // Util, get all object headers, there must be no other concurrent access
-  int list_object_headers(vector<_Header> *out ///< [out] headers
-    );
-
-  ObjectMapIterator get_iterator(const ghobject_t &oid) override;
-
-  static const string USER_PREFIX;
-  static const string XATTR_PREFIX;
-  static const string SYS_PREFIX;
-  static const string COMPLETE_PREFIX;
-  static const string HEADER_KEY;
-  static const string USER_HEADER_KEY;
-  static const string GLOBAL_STATE_KEY;
-  static const string HOBJECT_TO_SEQ;
-
-  /// Legacy
-  static const string LEAF_PREFIX;
-  static const string REVERSE_LEAF_PREFIX;
-
-  /// persistent state for store @see generate_header
-  struct State {
-    static const __u8 CUR_VERSION = 3;
-    __u8 v;
-    uint64_t seq;
-    // legacy is false when complete regions never used
-    bool legacy;
-    State() : v(0), seq(1), legacy(false) {}
-    explicit State(uint64_t seq) : v(0), seq(seq), legacy(false) {}
-
-    void encode(bufferlist &bl) const {
-      ENCODE_START(3, 1, bl);
-      ::encode(v, bl);
-      ::encode(seq, bl);
-      ::encode(legacy, bl);
-      ENCODE_FINISH(bl);
-    }
-
-    void decode(bufferlist::iterator &bl) {
-      DECODE_START(3, bl);
-      if (struct_v >= 2)
-	::decode(v, bl);
-      else
-	v = 0;
-      ::decode(seq, bl);
-      if (struct_v >= 3)
-	::decode(legacy, bl);
-      else
-	legacy = false;
-      DECODE_FINISH(bl);
-    }
-
-    void dump(Formatter *f) const {
-      f->dump_unsigned("v", v);
-      f->dump_unsigned("seq", seq);
-      f->dump_bool("legacy", legacy);
-    }
-
-    static void generate_test_instances(list<State*> &o) {
-      o.push_back(new State(0));
-      o.push_back(new State(20));
-    }
-  } state;
-
-  struct _Header {
-    uint64_t seq;
-    uint64_t parent;
-    uint64_t num_children;
-
-    ghobject_t oid;
-
-    SequencerPosition spos;
-
-    void encode(bufferlist &bl) const {
-      coll_t unused;
-      ENCODE_START(2, 1, bl);
-      ::encode(seq, bl);
-      ::encode(parent, bl);
-      ::encode(num_children, bl);
-      ::encode(unused, bl);
-      ::encode(oid, bl);
-      ::encode(spos, bl);
-      ENCODE_FINISH(bl);
-    }
-
-    void decode(bufferlist::iterator &bl) {
-      coll_t unused;
-      DECODE_START(2, bl);
-      ::decode(seq, bl);
-      ::decode(parent, bl);
-      ::decode(num_children, bl);
-      ::decode(unused, bl);
-      ::decode(oid, bl);
-      if (struct_v >= 2)
-	::decode(spos, bl);
-      DECODE_FINISH(bl);
-    }
-
-    void dump(Formatter *f) const {
-      f->dump_unsigned("seq", seq);
-      f->dump_unsigned("parent", parent);
-      f->dump_unsigned("num_children", num_children);
-      f->dump_stream("oid") << oid;
-    }
-
-    static void generate_test_instances(list<_Header*> &o) {
-      o.push_back(new _Header);
-      o.push_back(new _Header);
-      o.back()->parent = 20;
-      o.back()->seq = 30;
-    }
-
-    _Header() : seq(0), parent(0), num_children(1) {}
-  };
-
-  /// String munging (public for testing)
-  static string ghobject_key(const ghobject_t &oid);
-  static string ghobject_key_v0(coll_t c, const ghobject_t &oid);
-  static int is_buggy_ghobject_key_v1(CephContext* cct,
-				      const string &in);
-private:
-  /// Implicit lock on Header->seq
-  typedef ceph::shared_ptr<_Header> Header;
-  Mutex cache_lock;
-  SimpleLRU<ghobject_t, _Header> caches;
-
-  string map_header_key(const ghobject_t &oid);
-  string header_key(uint64_t seq);
-  string complete_prefix(Header header);
-  string user_prefix(Header header);
-  string sys_prefix(Header header);
-  string xattr_prefix(Header header);
-  string sys_parent_prefix(_Header header);
-  string sys_parent_prefix(Header header) {
-    return sys_parent_prefix(*header);
-  }
-
-  class EmptyIteratorImpl : public ObjectMapIteratorImpl {
-  public:
-    int seek_to_first() override { return 0; }
-    int seek_to_last() { return 0; }
-    int upper_bound(const string &after) override { return 0; }
-    int lower_bound(const string &to) override { return 0; }
-    bool valid() override { return false; }
-    int next(bool validate=true) override { ceph_abort(); return 0; }
-    string key() override { ceph_abort(); return ""; }
-    bufferlist value() override { ceph_abort(); return bufferlist(); }
-    int status() override { return 0; }
-  };
-
-
-  /// Iterator
-  class DBObjectMapIteratorImpl : public ObjectMapIteratorImpl {
-  public:
-    DBObjectMap *map;
-
-    /// NOTE: implicit lock hlock->get_locked() when returned out of the class
-    MapHeaderLock hlock;
-    /// NOTE: implicit lock on header->seq AND for all ancestors
-    Header header;
-
-    /// parent_iter == NULL iff no parent
-    ceph::shared_ptr<DBObjectMapIteratorImpl> parent_iter;
-    KeyValueDB::Iterator key_iter;
-    KeyValueDB::Iterator complete_iter;
-
-    /// cur_iter points to currently valid iterator
-    ceph::shared_ptr<ObjectMapIteratorImpl> cur_iter;
-    int r;
-
-    /// init() called, key_iter, complete_iter, parent_iter filled in
-    bool ready;
-    /// past end
-    bool invalid;
-
-    DBObjectMapIteratorImpl(DBObjectMap *map, Header header) :
-      map(map), hlock(map), header(header), r(0), ready(false), invalid(true) {}
-    int seek_to_first() override;
-    int seek_to_last();
-    int upper_bound(const string &after) override;
-    int lower_bound(const string &to) override;
-    bool valid() override;
-    int next(bool validate=true) override;
-    string key() override;
-    bufferlist value() override;
-    int status() override;
-
-    bool on_parent() {
-      return cur_iter == parent_iter;
-    }
-
-    /// skips to next valid parent entry
-    int next_parent();
-    
-    /// first parent() >= to
-    int lower_bound_parent(const string &to);
+        /// first parent() >= to
+        int lower_bound_parent(const string & to);
 
     /**
      * Tests whether to_test is in complete region
      *
      * postcondition: complete_iter will be max s.t. complete_iter->value > to_test
      */
-    int in_complete_region(const string &to_test, ///< [in] key to test
-			   string *begin,         ///< [out] beginning of region
-			   string *end            ///< [out] end of region
-      ); ///< @returns true if to_test is in the complete region, else false
+        int in_complete_region(const string & to_test,  ///< [in] key to test
+                               string * begin,  ///< [out] beginning of region
+                               string * end ///< [out] end of region
+            );                  ///< @returns true if to_test is in the complete region, else false
 
-  private:
-    int init();
-    bool valid_parent();
-    int adjust();
-  };
+      private:
+        int init();
+        bool valid_parent();
+        int adjust();
+    };
 
-  typedef ceph::shared_ptr<DBObjectMapIteratorImpl> DBObjectMapIterator;
-  DBObjectMapIterator _get_iterator(Header header) {
-    return std::make_shared<DBObjectMapIteratorImpl>(this, header);
-  }
+    typedef ceph::shared_ptr < DBObjectMapIteratorImpl > DBObjectMapIterator;
+    DBObjectMapIterator _get_iterator(Header header) {
+        return std::make_shared < DBObjectMapIteratorImpl > (this, header);
+    }
 
-  /// sys
+    /// sys
 
-  /// Removes node corresponding to header
-  void clear_header(Header header, KeyValueDB::Transaction t);
+    /// Removes node corresponding to header
+    void clear_header(Header header, KeyValueDB::Transaction t);
 
-  /// Set node containing input to new contents
-  void set_header(Header input, KeyValueDB::Transaction t);
+    /// Set node containing input to new contents
+    void set_header(Header input, KeyValueDB::Transaction t);
 
-  /// Remove leaf node corresponding to oid in c
-  void remove_map_header(
-    const MapHeaderLock &l,
-    const ghobject_t &oid,
-    Header header,
-    KeyValueDB::Transaction t);
+    /// Remove leaf node corresponding to oid in c
+    void remove_map_header(const MapHeaderLock & l,
+                           const ghobject_t & oid,
+                           Header header, KeyValueDB::Transaction t);
 
-  /// Set leaf node for c and oid to the value of header
-  void set_map_header(
-    const MapHeaderLock &l,
-    const ghobject_t &oid, _Header header,
-    KeyValueDB::Transaction t);
+    /// Set leaf node for c and oid to the value of header
+    void set_map_header(const MapHeaderLock & l,
+                        const ghobject_t & oid, _Header header,
+                        KeyValueDB::Transaction t);
 
-  /// Set leaf node for c and oid to the value of header
-  bool check_spos(const ghobject_t &oid,
-		  Header header,
-		  const SequencerPosition *spos);
+    /// Set leaf node for c and oid to the value of header
+    bool check_spos(const ghobject_t & oid,
+                    Header header, const SequencerPosition * spos);
 
-  /// Lookup or create header for c oid
-  Header lookup_create_map_header(
-    const MapHeaderLock &l,
-    const ghobject_t &oid,
-    KeyValueDB::Transaction t);
+    /// Lookup or create header for c oid
+    Header lookup_create_map_header(const MapHeaderLock & l,
+                                    const ghobject_t & oid,
+                                    KeyValueDB::Transaction t);
 
   /**
    * Generate new header for c oid with new seq number
    *
    * Has the side effect of syncronously saving the new DBObjectMap state
    */
-  Header _generate_new_header(const ghobject_t &oid, Header parent);
-  Header generate_new_header(const ghobject_t &oid, Header parent) {
-    Mutex::Locker l(header_lock);
-    return _generate_new_header(oid, parent);
-  }
+    Header _generate_new_header(const ghobject_t & oid, Header parent);
+    Header generate_new_header(const ghobject_t & oid, Header parent) {
+        Mutex::Locker l(header_lock);
+        return _generate_new_header(oid, parent);
+    }
 
-  /// Lookup leaf header for c oid
-  Header _lookup_map_header(
-    const MapHeaderLock &l,
-    const ghobject_t &oid);
-  Header lookup_map_header(
-    const MapHeaderLock &l2,
-    const ghobject_t &oid) {
-    Mutex::Locker l(header_lock);
-    return _lookup_map_header(l2, oid);
-  }
+    /// Lookup leaf header for c oid
+    Header _lookup_map_header(const MapHeaderLock & l, const ghobject_t & oid);
+    Header lookup_map_header(const MapHeaderLock & l2, const ghobject_t & oid) {
+        Mutex::Locker l(header_lock);
+        return _lookup_map_header(l2, oid);
+    }
 
-  /// Lookup header node for input
-  Header lookup_parent(Header input);
+    /// Lookup header node for input
+    Header lookup_parent(Header input);
 
+    /// Helpers
+    int _get_header(Header header, bufferlist * bl);
 
-  /// Helpers
-  int _get_header(Header header, bufferlist *bl);
+    /// Scan keys in header into out_keys and out_values (if nonnull)
+    int scan(Header header,
+             const set < string > &in_keys,
+             set < string > *out_keys, map < string, bufferlist > *out_values);
 
-  /// Scan keys in header into out_keys and out_values (if nonnull)
-  int scan(Header header,
-	   const set<string> &in_keys,
-	   set<string> *out_keys,
-	   map<string, bufferlist> *out_values);
+    /// Remove header and all related prefixes
+    int _clear(Header header, KeyValueDB::Transaction t);
 
-  /// Remove header and all related prefixes
-  int _clear(Header header,
-	     KeyValueDB::Transaction t);
+    /* Scan complete region bumping *begin to the beginning of any
+     * containing region and adding all complete region keys between
+     * the updated begin and end to the complete_keys_to_remove set */
+    int merge_new_complete(DBObjectMapIterator & iter,
+                           string * begin,
+                           const string & end,
+                           set < string > *complete_keys_to_remove);
 
-  /* Scan complete region bumping *begin to the beginning of any
-   * containing region and adding all complete region keys between
-   * the updated begin and end to the complete_keys_to_remove set */
-  int merge_new_complete(DBObjectMapIterator &iter,
-			 string *begin,
-			 const string &end,
-			 set<string> *complete_keys_to_remove);
+    /// Writes out State (mainly next_seq)
+    int write_state(KeyValueDB::Transaction _t = KeyValueDB::Transaction());
 
-  /// Writes out State (mainly next_seq)
-  int write_state(KeyValueDB::Transaction _t =
-		  KeyValueDB::Transaction());
+    /// Copies header entry from parent @see rm_keys
+    int copy_up_header(Header header, KeyValueDB::Transaction t);
 
-  /// Copies header entry from parent @see rm_keys
-  int copy_up_header(Header header,
-		     KeyValueDB::Transaction t);
-
-  /// Sets header @see set_header
-  void _set_header(Header header, const bufferlist &bl,
-		   KeyValueDB::Transaction t);
+    /// Sets header @see set_header
+    void _set_header(Header header, const bufferlist & bl,
+                     KeyValueDB::Transaction t);
 
   /**
    * Removes header seq lock and possibly object lock
@@ -558,24 +515,24 @@ private:
    * @see lookup_parent
    * @see generate_new_header
    */
-  class RemoveOnDelete {
-  public:
-    DBObjectMap *db;
-    explicit RemoveOnDelete(DBObjectMap *db) :
-      db(db) {}
-    void operator() (_Header *header) {
-      Mutex::Locker l(db->header_lock);
-      assert(db->in_use.count(header->seq));
-      db->in_use.erase(header->seq);
-      db->header_cond.Signal();
-      delete header;
-    }
-  };
-  friend class RemoveOnDelete;
+    class RemoveOnDelete {
+      public:
+        DBObjectMap * db;
+        explicit RemoveOnDelete(DBObjectMap * db):db(db) {
+        } void operator() (_Header * header) {
+            Mutex::Locker l(db->header_lock);
+            assert(db->in_use.count(header->seq));
+            db->in_use.erase(header->seq);
+            db->header_cond.Signal();
+            delete header;
+        }
+    };
+    friend class RemoveOnDelete;
 };
-WRITE_CLASS_ENCODER(DBObjectMap::_Header)
-WRITE_CLASS_ENCODER(DBObjectMap::State)
 
-ostream& operator<<(ostream& out, const DBObjectMap::_Header& h);
+WRITE_CLASS_ENCODER(DBObjectMap::_Header)
+    WRITE_CLASS_ENCODER(DBObjectMap::State)
+
+    ostream & operator<<(ostream & out, const DBObjectMap::_Header & h);
 
 #endif

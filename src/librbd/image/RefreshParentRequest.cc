@@ -17,229 +17,255 @@
 #define dout_prefix *_dout << "librbd::image::RefreshParentRequest: "
 
 namespace librbd {
-namespace image {
+    namespace image {
 
-using util::create_async_context_callback;
-using util::create_context_callback;
+        using util::create_async_context_callback;
+        using util::create_context_callback;
 
-template <typename I>
-RefreshParentRequest<I>::RefreshParentRequest(I &child_image_ctx,
-                                              const ParentInfo &parent_md,
-                                              Context *on_finish)
-  : m_child_image_ctx(child_image_ctx), m_parent_md(parent_md),
-    m_on_finish(on_finish), m_parent_image_ctx(nullptr),
-    m_parent_snap_id(CEPH_NOSNAP), m_error_result(0) {
-}
+         template < typename I >
+            RefreshParentRequest <
+            I >::RefreshParentRequest(I & child_image_ctx,
+                                      const ParentInfo & parent_md,
+                                      Context * on_finish)
+        :m_child_image_ctx(child_image_ctx), m_parent_md(parent_md),
+            m_on_finish(on_finish), m_parent_image_ctx(nullptr),
+            m_parent_snap_id(CEPH_NOSNAP), m_error_result(0) {
+        } template < typename I > bool RefreshParentRequest <
+            I >::is_refresh_required(I & child_image_ctx,
+                                     const ParentInfo & parent_md) {
+            assert(child_image_ctx.snap_lock.is_locked());
+            assert(child_image_ctx.parent_lock.is_locked());
+            return (is_open_required(child_image_ctx, parent_md) ||
+                    is_close_required(child_image_ctx, parent_md));
+        } template < typename I >
+            bool RefreshParentRequest <
+            I >::is_close_required(I & child_image_ctx,
+                                   const ParentInfo & parent_md) {
+            return (child_image_ctx.parent != nullptr
+                    && (parent_md.spec.pool_id == -1
+                        || parent_md.overlap == 0));
+        }
 
-template <typename I>
-bool RefreshParentRequest<I>::is_refresh_required(I &child_image_ctx,
-                                                  const ParentInfo &parent_md) {
-  assert(child_image_ctx.snap_lock.is_locked());
-  assert(child_image_ctx.parent_lock.is_locked());
-  return (is_open_required(child_image_ctx, parent_md) ||
-          is_close_required(child_image_ctx, parent_md));
-}
+        template < typename I >
+            bool RefreshParentRequest <
+            I >::is_open_required(I & child_image_ctx,
+                                  const ParentInfo & parent_md) {
+            return (parent_md.spec.pool_id > -1 && parent_md.overlap > 0
+                    && (child_image_ctx.parent == nullptr
+                        || child_image_ctx.parent->md_ctx.get_id() !=
+                        parent_md.spec.pool_id
+                        || child_image_ctx.parent->id != parent_md.spec.image_id
+                        || child_image_ctx.parent->snap_id !=
+                        parent_md.spec.snap_id));
+        }
 
-template <typename I>
-bool RefreshParentRequest<I>::is_close_required(I &child_image_ctx,
-                                                const ParentInfo &parent_md) {
-  return (child_image_ctx.parent != nullptr &&
-          (parent_md.spec.pool_id == -1 || parent_md.overlap == 0));
-}
+        template < typename I > void RefreshParentRequest < I >::send() {
+            if (is_open_required(m_child_image_ctx, m_parent_md)) {
+                send_open_parent();
+            }
+            else {
+                // parent will be closed (if necessary) during finalize
+                send_complete(0);
+            }
+        }
 
-template <typename I>
-bool RefreshParentRequest<I>::is_open_required(I &child_image_ctx,
-                                               const ParentInfo &parent_md) {
-  return (parent_md.spec.pool_id > -1 && parent_md.overlap > 0 &&
-          (child_image_ctx.parent == nullptr ||
-           child_image_ctx.parent->md_ctx.get_id() != parent_md.spec.pool_id ||
-           child_image_ctx.parent->id != parent_md.spec.image_id ||
-           child_image_ctx.parent->snap_id != parent_md.spec.snap_id));
-}
+        template < typename I > void RefreshParentRequest < I >::apply() {
+            assert(m_child_image_ctx.cache_lock.is_locked());
+            assert(m_child_image_ctx.snap_lock.is_wlocked());
+            assert(m_child_image_ctx.parent_lock.is_wlocked());
+            if (m_child_image_ctx.parent != nullptr) {
+                // closing parent image
+                m_child_image_ctx.clear_nonexistence_cache();
+            }
+            std::swap(m_child_image_ctx.parent, m_parent_image_ctx);
+        }
 
-template <typename I>
-void RefreshParentRequest<I>::send() {
-  if (is_open_required(m_child_image_ctx, m_parent_md)) {
-    send_open_parent();
-  } else {
-    // parent will be closed (if necessary) during finalize
-    send_complete(0);
-  }
-}
+        template < typename I >
+            void RefreshParentRequest < I >::finalize(Context * on_finish) {
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct, 10) << this << " " << __func__ << dendl;
 
-template <typename I>
-void RefreshParentRequest<I>::apply() {
-  assert(m_child_image_ctx.cache_lock.is_locked());
-  assert(m_child_image_ctx.snap_lock.is_wlocked());
-  assert(m_child_image_ctx.parent_lock.is_wlocked());
-  if (m_child_image_ctx.parent != nullptr) {
-    // closing parent image
-    m_child_image_ctx.clear_nonexistence_cache();
-  }
-  std::swap(m_child_image_ctx.parent, m_parent_image_ctx);
-}
+            m_on_finish = on_finish;
+            if (m_parent_image_ctx != nullptr) {
+                send_close_parent();
+            }
+            else {
+                send_complete(0);
+            }
+        }
 
-template <typename I>
-void RefreshParentRequest<I>::finalize(Context *on_finish) {
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << dendl;
+        template < typename I >
+            void RefreshParentRequest < I >::send_open_parent() {
+            assert(m_parent_md.spec.pool_id >= 0);
 
-  m_on_finish = on_finish;
-  if (m_parent_image_ctx != nullptr) {
-    send_close_parent();
-  } else {
-    send_complete(0);
-  }
-}
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct, 10) << this << " " << __func__ << dendl;
 
-template <typename I>
-void RefreshParentRequest<I>::send_open_parent() {
-  assert(m_parent_md.spec.pool_id >= 0);
+            librados::Rados rados(m_child_image_ctx.md_ctx);
 
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << dendl;
+            librados::IoCtx parent_io_ctx;
+            int r =
+                rados.ioctx_create2(m_parent_md.spec.pool_id, parent_io_ctx);
+            assert(r == 0);
 
-  librados::Rados rados(m_child_image_ctx.md_ctx);
+            // since we don't know the image and snapshot name, set their ids and
+            // reset the snap_name and snap_exists fields after we read the header
+            m_parent_image_ctx =
+                new I("", m_parent_md.spec.image_id, NULL, parent_io_ctx, true);
+            m_parent_image_ctx->child = &m_child_image_ctx;
 
-  librados::IoCtx parent_io_ctx;
-  int r = rados.ioctx_create2(m_parent_md.spec.pool_id, parent_io_ctx);
-  assert(r == 0);
+            // set rados flags for reading the parent image
+            if (m_child_image_ctx.balance_parent_reads) {
+                m_parent_image_ctx->
+                    set_read_flag(librados::OPERATION_BALANCE_READS);
+            }
+            else if (m_child_image_ctx.localize_parent_reads) {
+                m_parent_image_ctx->
+                    set_read_flag(librados::OPERATION_LOCALIZE_READS);
+            }
 
-  // since we don't know the image and snapshot name, set their ids and
-  // reset the snap_name and snap_exists fields after we read the header
-  m_parent_image_ctx = new I("", m_parent_md.spec.image_id, NULL, parent_io_ctx,
-                             true);
-  m_parent_image_ctx->child = &m_child_image_ctx;
+            using klass = RefreshParentRequest < I >;
+            Context *ctx =
+                create_async_context_callback(m_child_image_ctx,
+                                              create_context_callback < klass,
+                                              &klass::handle_open_parent,
+                                              false > (this));
+            OpenRequest < I > *req =
+                OpenRequest < I >::create(m_parent_image_ctx, false, ctx);
+            req->send();
+        }
 
-  // set rados flags for reading the parent image
-  if (m_child_image_ctx.balance_parent_reads) {
-    m_parent_image_ctx->set_read_flag(librados::OPERATION_BALANCE_READS);
-  } else if (m_child_image_ctx.localize_parent_reads) {
-    m_parent_image_ctx->set_read_flag(librados::OPERATION_LOCALIZE_READS);
-  }
+        template < typename I >
+            Context * RefreshParentRequest <
+            I >::handle_open_parent(int *result) {
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct,
+                  10) << this << " " << __func__ << " r=" << *result << dendl;
 
-  using klass = RefreshParentRequest<I>;
-  Context *ctx = create_async_context_callback(
-    m_child_image_ctx, create_context_callback<
-      klass, &klass::handle_open_parent, false>(this));
-  OpenRequest<I> *req = OpenRequest<I>::create(m_parent_image_ctx, false, ctx);
-  req->send();
-}
+            save_result(result);
+            if (*result < 0) {
+                lderr(cct) << "failed to open parent image: " <<
+                    cpp_strerror(*result)
+                    << dendl;
 
-template <typename I>
-Context *RefreshParentRequest<I>::handle_open_parent(int *result) {
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << " r=" << *result << dendl;
+                // image already closed by open state machine
+                delete m_parent_image_ctx;
+                m_parent_image_ctx = nullptr;
 
-  save_result(result);
-  if (*result < 0) {
-    lderr(cct) << "failed to open parent image: " << cpp_strerror(*result)
-               << dendl;
+                return m_on_finish;
+            }
 
-    // image already closed by open state machine
-    delete m_parent_image_ctx;
-    m_parent_image_ctx = nullptr;
+            send_set_parent_snap();
+            return nullptr;
+        }
 
-    return m_on_finish;
-  }
+        template < typename I >
+            void RefreshParentRequest < I >::send_set_parent_snap() {
+            assert(m_parent_md.spec.snap_id != CEPH_NOSNAP);
 
-  send_set_parent_snap();
-  return nullptr;
-}
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct, 10) << this << " " << __func__ << dendl;
 
-template <typename I>
-void RefreshParentRequest<I>::send_set_parent_snap() {
-  assert(m_parent_md.spec.snap_id != CEPH_NOSNAP);
+            cls::rbd::SnapshotNamespace snap_namespace;
+            std::string snap_name;
+            {
+                RWLock::RLocker snap_locker(m_parent_image_ctx->snap_lock);
+                const SnapInfo *info =
+                    m_parent_image_ctx->get_snap_info(m_parent_md.spec.snap_id);
+                if (!info) {
+                    lderr(cct) <<
+                        "failed to locate snapshot: Snapshot with this id not found"
+                        << dendl;
+                    send_complete(-ENOENT);
+                    return;
+                }
+                snap_namespace = info->snap_namespace;
+                snap_name = info->name;
+            }
 
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << dendl;
+            using klass = RefreshParentRequest < I >;
+            Context *ctx = create_context_callback <
+                klass, &klass::handle_set_parent_snap, false > (this);
+            SetSnapRequest < I > *req =
+                SetSnapRequest < I >::create(*m_parent_image_ctx,
+                                             snap_namespace, snap_name, ctx);
+            req->send();
+        }
 
-  cls::rbd::SnapshotNamespace snap_namespace;
-  std::string snap_name;
-  {
-    RWLock::RLocker snap_locker(m_parent_image_ctx->snap_lock);
-    const SnapInfo *info = m_parent_image_ctx->get_snap_info(m_parent_md.spec.snap_id);
-    if (!info) {
-      lderr(cct) << "failed to locate snapshot: Snapshot with this id not found" << dendl;
-      send_complete(-ENOENT);
-      return;
-    }
-    snap_namespace = info->snap_namespace;
-    snap_name = info->name;
-  }
+        template < typename I >
+            Context * RefreshParentRequest <
+            I >::handle_set_parent_snap(int *result) {
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct,
+                  10) << this << " " << __func__ << " r=" << *result << dendl;
 
-  using klass = RefreshParentRequest<I>;
-  Context *ctx = create_context_callback<
-    klass, &klass::handle_set_parent_snap, false>(this);
-  SetSnapRequest<I> *req = SetSnapRequest<I>::create(
-    *m_parent_image_ctx, snap_namespace, snap_name, ctx);
-  req->send();
-}
+            save_result(result);
+            if (*result < 0) {
+                lderr(cct) << "failed to set parent snapshot: " <<
+                    cpp_strerror(*result)
+                    << dendl;
+                send_close_parent();
+                return nullptr;
+            }
 
-template <typename I>
-Context *RefreshParentRequest<I>::handle_set_parent_snap(int *result) {
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << " r=" << *result << dendl;
+            return m_on_finish;
+        }
 
-  save_result(result);
-  if (*result < 0) {
-    lderr(cct) << "failed to set parent snapshot: " << cpp_strerror(*result)
-               << dendl;
-    send_close_parent();
-    return nullptr;
-  }
+        template < typename I >
+            void RefreshParentRequest < I >::send_close_parent() {
+            assert(m_parent_image_ctx != nullptr);
 
-  return m_on_finish;
-}
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct, 10) << this << " " << __func__ << dendl;
 
-template <typename I>
-void RefreshParentRequest<I>::send_close_parent() {
-  assert(m_parent_image_ctx != nullptr);
+            using klass = RefreshParentRequest < I >;
+            Context *ctx =
+                create_async_context_callback(m_child_image_ctx,
+                                              create_context_callback < klass,
+                                              &klass::handle_close_parent,
+                                              false > (this));
+            CloseRequest < I > *req =
+                CloseRequest < I >::create(m_parent_image_ctx, ctx);
+            req->send();
+        }
 
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << dendl;
+        template < typename I >
+            Context * RefreshParentRequest <
+            I >::handle_close_parent(int *result) {
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct,
+                  10) << this << " " << __func__ << " r=" << *result << dendl;
 
-  using klass = RefreshParentRequest<I>;
-  Context *ctx = create_async_context_callback(
-    m_child_image_ctx, create_context_callback<
-      klass, &klass::handle_close_parent, false>(this));
-  CloseRequest<I> *req = CloseRequest<I>::create(m_parent_image_ctx, ctx);
-  req->send();
-}
+            delete m_parent_image_ctx;
+            m_parent_image_ctx = nullptr;
 
-template <typename I>
-Context *RefreshParentRequest<I>::handle_close_parent(int *result) {
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << " r=" << *result << dendl;
+            if (*result < 0) {
+                lderr(cct) << "failed to close parent image: " <<
+                    cpp_strerror(*result)
+                    << dendl;
+            }
 
-  delete m_parent_image_ctx;
-  m_parent_image_ctx = nullptr;
+            if (m_error_result < 0) {
+                // propagate errors from opening the image
+                *result = m_error_result;
+            }
+            else {
+                // ignore errors from closing the image
+                *result = 0;
+            }
 
-  if (*result < 0) {
-    lderr(cct) << "failed to close parent image: " << cpp_strerror(*result)
-               << dendl;
-  }
+            return m_on_finish;
+        }
 
-  if (m_error_result < 0) {
-    // propagate errors from opening the image
-    *result = m_error_result;
-  } else {
-    // ignore errors from closing the image
-    *result = 0;
-  }
+        template < typename I >
+            void RefreshParentRequest < I >::send_complete(int r) {
+            CephContext *cct = m_child_image_ctx.cct;
+            ldout(cct, 10) << this << " " << __func__ << dendl;
 
-  return m_on_finish;
-}
+            m_on_finish->complete(r);
+        }
 
-template <typename I>
-void RefreshParentRequest<I>::send_complete(int r) {
-  CephContext *cct = m_child_image_ctx.cct;
-  ldout(cct, 10) << this << " " << __func__ << dendl;
+    }                           // namespace image
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-}
-
-} // namespace image
-} // namespace librbd
-
-template class librbd::image::RefreshParentRequest<librbd::ImageCtx>;
+template class librbd::image::RefreshParentRequest < librbd::ImageCtx >;

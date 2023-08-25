@@ -14,10 +14,12 @@
 
 #include "common/RefCountedObj.h"
 
-void intrusive_ptr_add_ref(const RefCountedObject *p) {
-  p->get();
-}
-void intrusive_ptr_release(const RefCountedObject *p) {
-  p->put();
+void intrusive_ptr_add_ref(const RefCountedObject * p)
+{
+    p->get();
 }
 
+void intrusive_ptr_release(const RefCountedObject * p)
+{
+    p->put();
+}

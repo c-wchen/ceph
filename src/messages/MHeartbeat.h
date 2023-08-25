@@ -12,51 +12,54 @@
  * 
  */
 
-
 #ifndef CEPH_MHEARTBEAT_H
 #define CEPH_MHEARTBEAT_H
 
 #include "include/types.h"
 #include "msg/Message.h"
 
-class MHeartbeat : public Message {
-  mds_load_t load;
-  __s32        beat = 0;
-  map<mds_rank_t, float> import_map;
+class MHeartbeat:public Message {
+    mds_load_t load;
+    __s32 beat = 0;
+     map < mds_rank_t, float >import_map;
 
- public:
-  mds_load_t& get_load() { return load; }
-  int get_beat() { return beat; }
+  public:
+     mds_load_t & get_load() {
+        return load;
+    } int get_beat() {
+        return beat;
+    }
 
-  map<mds_rank_t, float>& get_import_map() {
-    return import_map;
-  }
+    map < mds_rank_t, float >&get_import_map() {
+        return import_map;
+    }
 
-  MHeartbeat()
-    : Message(MSG_MDS_HEARTBEAT), load(utime_t()) { }
-  MHeartbeat(mds_load_t& load, int beat)
-    : Message(MSG_MDS_HEARTBEAT),
-      load(load) {
-    this->beat = beat;
-  }
-private:
-  ~MHeartbeat() override {}
+    MHeartbeat()
+  :    Message(MSG_MDS_HEARTBEAT), load(utime_t()) {
+    }
+    MHeartbeat(mds_load_t & load, int beat)
+  :    Message(MSG_MDS_HEARTBEAT), load(load) {
+        this->beat = beat;
+    }
+  private:
+    ~MHeartbeat()override {
+    }
 
-public:
-  const char *get_type_name() const override { return "HB"; }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(load, payload);
-    ::encode(beat, payload);
-    ::encode(import_map, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    utime_t now(ceph_clock_now());
-    ::decode(load, now, p);
-    ::decode(beat, p);
-    ::decode(import_map, p);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "HB";
+    } void encode_payload(uint64_t features) override {
+        ::encode(load, payload);
+        ::encode(beat, payload);
+        ::encode(import_map, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        utime_t now(ceph_clock_now());
+        ::decode(load, now, p);
+        ::decode(beat, p);
+        ::decode(import_map, p);
+    }
 
 };
 

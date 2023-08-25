@@ -9,40 +9,38 @@
 
 namespace librbd {
 
-template <typename ImageCtxT = ImageCtx>
-class ExclusiveLock : public ManagedLock<ImageCtxT> {
-public:
-  static ExclusiveLock *create(ImageCtxT &image_ctx) {
-    return new ExclusiveLock<ImageCtxT>(image_ctx);
-  }
+  template < typename ImageCtxT = ImageCtx > class ExclusiveLock:public ManagedLock < ImageCtxT >
+    {
+      public:
+        static ExclusiveLock *create(ImageCtxT & image_ctx) {
+            return new ExclusiveLock < ImageCtxT > (image_ctx);
+        } ExclusiveLock(ImageCtxT & image_ctx);
 
-  ExclusiveLock(ImageCtxT &image_ctx);
+        bool accept_requests(int *ret_val = nullptr)const;
+        bool accept_ops() const;
 
-  bool accept_requests(int *ret_val = nullptr) const;
-  bool accept_ops() const;
+        void block_requests(int r);
+        void unblock_requests();
 
-  void block_requests(int r);
-  void unblock_requests();
+        void init(uint64_t features, Context * on_init);
+        void shut_down(Context * on_shutdown);
 
-  void init(uint64_t features, Context *on_init);
-  void shut_down(Context *on_shutdown);
+        void handle_peer_notification(int r);
 
-  void handle_peer_notification(int r);
+        int get_unlocked_op_error() const;
+        Context *start_op(int *ret_val);
 
-  int get_unlocked_op_error() const;
-  Context *start_op(int* ret_val);
+      protected:
+        void shutdown_handler(int r, Context * on_finish) override;
+        void pre_acquire_lock_handler(Context * on_finish) override;
+        void post_acquire_lock_handler(int r, Context * on_finish) override;
+        void pre_release_lock_handler(bool shutting_down,
+                                      Context * on_finish) override;
+        void post_release_lock_handler(bool shutting_down, int r,
+                                       Context * on_finish) override;
+        void post_reacquire_lock_handler(int r, Context * on_finish) override;
 
-protected:
-  void shutdown_handler(int r, Context *on_finish) override;
-  void pre_acquire_lock_handler(Context *on_finish) override;
-  void post_acquire_lock_handler(int r, Context *on_finish) override;
-  void pre_release_lock_handler(bool shutting_down,
-                                Context *on_finish) override;
-  void post_release_lock_handler(bool shutting_down, int r,
-                                 Context *on_finish) override;
-  void post_reacquire_lock_handler(int r, Context *on_finish) override;
-
-private:
+      private:
 
   /**
    * @verbatim
@@ -82,25 +80,25 @@ private:
    * @endverbatim
    */
 
-  struct C_InitComplete;
+        struct C_InitComplete;
 
-  ImageCtxT& m_image_ctx;
-  Context *m_pre_post_callback = nullptr;
+        ImageCtxT & m_image_ctx;
+        Context *m_pre_post_callback = nullptr;
 
-  AsyncOpTracker m_async_op_tracker;
+        AsyncOpTracker m_async_op_tracker;
 
-  uint32_t m_request_blocked_count = 0;
-  int m_request_blocked_ret_val = 0;
+        uint32_t m_request_blocked_count = 0;
+        int m_request_blocked_ret_val = 0;
 
-  int m_acquire_lock_peer_ret_val = 0;
+        int m_acquire_lock_peer_ret_val = 0;
 
-  bool accept_ops(const Mutex &lock) const;
+        bool accept_ops(const Mutex & lock) const;
 
-  void handle_init_complete(uint64_t features);
-  void handle_post_acquiring_lock(int r);
-  void handle_post_acquired_lock(int r);
-};
+        void handle_init_complete(uint64_t features);
+        void handle_post_acquiring_lock(int r);
+        void handle_post_acquired_lock(int r);
+    };
 
-} // namespace librbd
+}                               // namespace librbd
 
 #endif // CEPH_LIBRBD_EXCLUSIVE_LOCK_H

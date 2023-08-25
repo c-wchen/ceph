@@ -17,63 +17,72 @@
 
 #include "msg/Message.h"
 
-class MExportDirNotify : public Message {
-  dirfrag_t base;
-  bool ack;
-  pair<__s32,__s32> old_auth, new_auth;
-  list<dirfrag_t> bounds;  // bounds; these dirs are _not_ included (tho the dirfragdes are)
+class MExportDirNotify:public Message {
+    dirfrag_t base;
+    bool ack;
+     pair < __s32, __s32 > old_auth, new_auth;
+     list < dirfrag_t > bounds; // bounds; these dirs are _not_ included (tho the dirfragdes are)
 
- public:
-  dirfrag_t get_dirfrag() { return base; }
-  pair<__s32,__s32> get_old_auth() { return old_auth; }
-  pair<__s32,__s32> get_new_auth() { return new_auth; }
-  bool wants_ack() { return ack; }
-  list<dirfrag_t>& get_bounds() { return bounds; }
+  public:
+     dirfrag_t get_dirfrag() {
+        return base;
+    } pair < __s32, __s32 > get_old_auth() {
+        return old_auth;
+    }
+    pair < __s32, __s32 > get_new_auth() {
+        return new_auth;
+    }
+    bool wants_ack() {
+        return ack;
+    }
+    list < dirfrag_t > &get_bounds() {
+        return bounds;
+    }
 
-  MExportDirNotify() {}
-  MExportDirNotify(dirfrag_t i, uint64_t tid, bool a, pair<__s32,__s32> oa, pair<__s32,__s32> na) :
+    MExportDirNotify() {
+    }
+  MExportDirNotify(dirfrag_t i, uint64_t tid, bool a, pair < __s32, __s32 > oa, pair < __s32, __s32 > na):
     Message(MSG_MDS_EXPORTDIRNOTIFY),
-    base(i), ack(a), old_auth(oa), new_auth(na) {
-    set_tid(tid);
-  }
-private:
-  ~MExportDirNotify() override {}
+        base(i), ack(a), old_auth(oa), new_auth(na) {
+        set_tid(tid);
+    }
+  private:
+    ~MExportDirNotify()override {
+    }
 
-public:
-  const char *get_type_name() const override { return "ExNot"; }
-  void print(ostream& o) const override {
-    o << "export_notify(" << base;
-    o << " " << old_auth << " -> " << new_auth;
-    if (ack) 
-      o << " ack)";
-    else
-      o << " no ack)";
-  }
-  
-  void copy_bounds(list<dirfrag_t>& ex) {
-    this->bounds = ex;
-  }
-  void copy_bounds(set<dirfrag_t>& ex) {
-    for (set<dirfrag_t>::iterator i = ex.begin();
-	 i != ex.end(); ++i)
-      bounds.push_back(*i);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "ExNot";
+    } void print(ostream & o) const override {
+        o << "export_notify(" << base;
+        o << " " << old_auth << " -> " << new_auth;
+        if (ack)
+            o << " ack)";
+        else
+            o << " no ack)";
+    } void copy_bounds(list < dirfrag_t > &ex) {
+        this->bounds = ex;
+    }
+    void copy_bounds(set < dirfrag_t > &ex) {
+        for (set < dirfrag_t >::iterator i = ex.begin(); i != ex.end(); ++i)
+            bounds.push_back(*i);
+    }
 
-  void encode_payload(uint64_t features) override {
-    ::encode(base, payload);
-    ::encode(ack, payload);
-    ::encode(old_auth, payload);
-    ::encode(new_auth, payload);
-    ::encode(bounds, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(base, p);
-    ::decode(ack, p);
-    ::decode(old_auth, p);
-    ::decode(new_auth, p);
-    ::decode(bounds, p);
-  }
+    void encode_payload(uint64_t features) override {
+        ::encode(base, payload);
+        ::encode(ack, payload);
+        ::encode(old_auth, payload);
+        ::encode(new_auth, payload);
+        ::encode(bounds, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(base, p);
+        ::decode(ack, p);
+        ::decode(old_auth, p);
+        ::decode(new_auth, p);
+        ::decode(bounds, p);
+    }
 };
 
 #endif

@@ -20,38 +20,38 @@
 #include "msg/Message.h"
 #include "MCommand.h"
 
-class MCommandReply : public Message {
- public:
-  errorcode32_t r;
-  string rs;
-  
-  MCommandReply()
-    : Message(MSG_COMMAND_REPLY) {}
-  MCommandReply(MCommand *m, int _r)
-    : Message(MSG_COMMAND_REPLY), r(_r) {
-    header.tid = m->get_tid();
-  }
-  MCommandReply(int _r, boost::string_view s)
-    : Message(MSG_COMMAND_REPLY),
-      r(_r), rs(s) { }
-private:
-  ~MCommandReply() override {}
+class MCommandReply:public Message {
+  public:
+    errorcode32_t r;
+    string rs;
 
-public:
-  const char *get_type_name() const override { return "command_reply"; }
-  void print(ostream& o) const override {
-    o << "command_reply(tid " << get_tid() << ": " << r << " " << rs << ")";
-  }
-  
-  void encode_payload(uint64_t features) override {
-    ::encode(r, payload);
-    ::encode(rs, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(r, p);
-    ::decode(rs, p);
-  }
+     MCommandReply()
+    :Message(MSG_COMMAND_REPLY) {
+    } MCommandReply(MCommand * m, int _r)
+    :Message(MSG_COMMAND_REPLY), r(_r) {
+        header.tid = m->get_tid();
+    }
+    MCommandReply(int _r, boost::string_view s)
+    :Message(MSG_COMMAND_REPLY), r(_r), rs(s) {
+    }
+  private:
+    ~MCommandReply()override {
+    }
+
+  public:
+    const char *get_type_name() const override {
+        return "command_reply";
+    } void print(ostream & o) const override {
+        o << "command_reply(tid " << get_tid() << ": " << r << " " << rs << ")";
+    } void encode_payload(uint64_t features) override {
+        ::encode(r, payload);
+        ::encode(rs, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(r, p);
+        ::decode(rs, p);
+    }
 };
 
 #endif

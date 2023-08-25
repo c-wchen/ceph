@@ -34,32 +34,35 @@
 
 class TextTable {
 
-public:
-  enum Align {LEFT = 1, CENTER, RIGHT};
+  public:
+    enum Align { LEFT = 1, CENTER, RIGHT };
 
-private:
-  struct TextTableColumn {
-    std::string heading;
-    int width;
-    Align hd_align;
-    Align col_align;
+  private:
+    struct TextTableColumn {
+        std::string heading;
+        int width;
+        Align hd_align;
+        Align col_align;
 
-    TextTableColumn() {}
-    TextTableColumn(std::string h, int w, Align ha, Align ca) :
-		    heading(h), width(w), hd_align(ha), col_align(ca) { }
-    ~TextTableColumn() {}
-  };
+         TextTableColumn() {
+        } TextTableColumn(std::string h, int w, Align ha, Align ca):heading(h),
+            width(w), hd_align(ha), col_align(ca) {
+        } ~TextTableColumn() {
+        }
+    };
 
-  std::vector<TextTableColumn> col;	// column definitions
-  unsigned int curcol, currow;		// col, row being inserted into
-  unsigned int indent;			// indent width when rendering
+    std::vector < TextTableColumn > col;    // column definitions
+    unsigned int curcol, currow;    // col, row being inserted into
+    unsigned int indent;        // indent width when rendering
 
-protected:
-  std::vector<std::vector<std::string> > row;	// row data array
+  protected:
+    std::vector < std::vector < std::string > >row; // row data array
 
-public:
-  TextTable(): curcol(0), currow(0), indent(0) {}
-  ~TextTable() {}
+  public:
+  TextTable():curcol(0), currow(0), indent(0) {
+    }
+    ~TextTable() {
+    }
 
   /**
    * Define a column in the table.
@@ -72,15 +75,17 @@ public:
    * TextTable::LEFT, TextTable::CENTER, or TextTable::RIGHT
    *
    */
-  void define_column(const std::string& heading, Align hd_align,
-		     Align col_align);
+    void define_column(const std::string & heading, Align hd_align,
+                       Align col_align);
 
   /**
    * Set indent for table.  Only affects table output.
    *
    * @param i Number of spaces to indent
    */
-  void set_indent(int i) { indent = i; }
+    void set_indent(int i) {
+        indent = i;
+    }
 
   /**
    * Add item to table, perhaps on new row.
@@ -94,72 +99,70 @@ public:
    * @return TextTable& for chaining.
    */
 
-  template<typename T> TextTable& operator<<(const T& item)
-  {
-    if (row.size() < currow + 1)
-      row.resize(currow + 1);
+    template < typename T > TextTable & operator<<(const T & item) {
+        if (row.size() < currow + 1)
+            row.resize(currow + 1);
 
     /**
      * col.size() is a good guess for how big row[currow] needs to be,
      * so just expand it out now
      */
-    if (row[currow].size() < col.size()) {
-      row[currow].resize(col.size());
+        if (row[currow].size() < col.size()) {
+            row[currow].resize(col.size());
+        }
+
+        // inserting more items than defined columns is a coding error
+        assert(curcol + 1 <= col.size());
+
+        // get rendered width of item alone
+        std::ostringstream oss;
+        oss << item;
+        int width = oss.str().length();
+        oss.seekp(0);
+
+        // expand column width if necessary
+        if (width > col[curcol].width) {
+            col[curcol].width = width;
+        }
+
+        // now store the rendered item with its proper width
+        row[currow][curcol] = oss.str();
+
+        curcol++;
+        return *this;
     }
-
-    // inserting more items than defined columns is a coding error
-    assert(curcol + 1 <= col.size());
-
-    // get rendered width of item alone
-    std::ostringstream oss;
-    oss << item;
-    int width = oss.str().length();
-    oss.seekp(0);
-
-    // expand column width if necessary
-    if (width > col[curcol].width) {
-      col[curcol].width = width;
-    }
-
-    // now store the rendered item with its proper width
-    row[currow][curcol] = oss.str();
-
-    curcol++;
-    return *this;
-  }
 
   /**
    * Degenerate type/variable here is just to allow selection of the
    * following operator<< for "<< TextTable::endrow"
    */
 
-  struct endrow_t {};
-  static endrow_t endrow;
+    struct endrow_t {
+    };
+    static endrow_t endrow;
 
   /**
    * Implements TextTable::endrow
    */
 
-  TextTable &operator<<(endrow_t)
-  {
-    curcol = 0;
-    currow++;
-    return *this;
-  }
+    TextTable & operator<<(endrow_t) {
+        curcol = 0;
+        currow++;
+        return *this;
+    }
 
   /**
    * Render table to ostream (i.e. cout << table)
    */
 
-  friend std::ostream &operator<<(std::ostream &out, const TextTable &t);
+    friend std::ostream & operator<<(std::ostream & out, const TextTable & t);
 
   /**
    * clear: Reset everything in a TextTable except column defs
    * resize cols to heading widths, clear indent
    */
 
-  void clear();
+    void clear();
 };
 
 #endif
-

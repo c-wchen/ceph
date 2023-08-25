@@ -19,38 +19,44 @@
 #include "AuthNoneProtocol.h"
 #include "common/ceph_context.h"
 #include "common/config.h"
- 
-class AuthNoneClientHandler : public AuthClientHandler {
-public:
-  AuthNoneClientHandler(CephContext *cct_, RotatingKeyRing *rkeys) 
-    : AuthClientHandler(cct_) {}
 
-  void reset() override { }
-
-  void prepare_build_request() override {}
-  int build_request(bufferlist& bl) const override { return 0; }
-  int handle_response(int ret, bufferlist::iterator& iter) override { return 0; }
-  bool build_rotating_request(bufferlist& bl) const override { return false; }
-
-  int get_protocol() const override { return CEPH_AUTH_NONE; }
-  
-  AuthAuthorizer *build_authorizer(uint32_t service_id) const override {
-    RWLock::RLocker l(lock);
-    AuthNoneAuthorizer *auth = new AuthNoneAuthorizer();
-    if (auth) {
-      auth->build_authorizer(cct->_conf->name, global_id);
+class AuthNoneClientHandler:public AuthClientHandler {
+  public:
+    AuthNoneClientHandler(CephContext * cct_, RotatingKeyRing * rkeys)
+    :AuthClientHandler(cct_) {
+    } void reset() override {
     }
-    return auth;
-  }
 
-  bool need_tickets() override { return false; }
+    void prepare_build_request() override {
+    }
+    int build_request(bufferlist & bl) const override {
+        return 0;
+    } int handle_response(int ret, bufferlist::iterator & iter) override {
+        return 0;
+    }
+    bool build_rotating_request(bufferlist & bl) const override {
+        return false;
+    } int get_protocol() const override {
+        return CEPH_AUTH_NONE;
+    } AuthAuthorizer *build_authorizer(uint32_t service_id) const override {
+        RWLock::RLocker l(lock);
+        AuthNoneAuthorizer *auth = new AuthNoneAuthorizer();
+        if (auth) {
+            auth->build_authorizer(cct->_conf->name, global_id);
+        } return auth;
+    }
 
-  void set_global_id(uint64_t id) override {
-    RWLock::WLocker l(lock);
-    global_id = id;
-  }
-private:
-  void validate_tickets() override {}
+    bool need_tickets() override {
+        return false;
+    }
+
+    void set_global_id(uint64_t id) override {
+        RWLock::WLocker l(lock);
+        global_id = id;
+    }
+  private:
+    void validate_tickets() override {
+    }
 };
 
 #endif

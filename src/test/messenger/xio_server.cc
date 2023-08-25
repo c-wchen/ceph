@@ -33,91 +33,90 @@ using namespace std;
 
 #define dout_subsys ceph_subsys_simple_server
 
-
 int main(int argc, const char **argv)
 {
-	vector<const char*> args;
-	Messenger *messenger;
-	Dispatcher *dispatcher;
-	std::vector<const char*>::iterator arg_iter;
-	std::string val;
-	entity_addr_t bind_addr;
-	int r = 0;
+    vector < const char *>args;
+    Messenger *messenger;
+    Dispatcher *dispatcher;
+    std::vector < const char *>::iterator arg_iter;
+    std::string val;
+    entity_addr_t bind_addr;
+    int r = 0;
 
-	using std::endl;
+    using std::endl;
 
-	std::string addr = "localhost";
-	std::string port = "1234";
-	bool dfast = false;
+    std::string addr = "localhost";
+    std::string port = "1234";
+    bool dfast = false;
 
-	cout << "Xio Server starting..." << endl;
+    cout << "Xio Server starting..." << endl;
 
-	argv_to_vec(argc, argv, args);
-	env_to_vec(args);
+    argv_to_vec(argc, argv, args);
+    env_to_vec(args);
 
-	global_init(NULL, args, CEPH_ENTITY_TYPE_ANY, CODE_ENVIRONMENT_DAEMON,
-		    0);
+    global_init(NULL, args, CEPH_ENTITY_TYPE_ANY, CODE_ENVIRONMENT_DAEMON, 0);
 
-	for (arg_iter = args.begin(); arg_iter != args.end();) {
-	  if (ceph_argparse_witharg(args, arg_iter, &val, "--addr",
-				    (char*) NULL)) {
-	    addr = val;
-	  } else if (ceph_argparse_witharg(args, arg_iter, &val, "--port",
-				    (char*) NULL)) {
-	    port = val;
-	  }  else if (ceph_argparse_flag(args, arg_iter, "--dfast",
-					   (char*) NULL)) {
-	    dfast = true;
-	  } else {
-	    ++arg_iter;
-	  }
-	};
+    for (arg_iter = args.begin(); arg_iter != args.end();) {
+        if (ceph_argparse_witharg(args, arg_iter, &val, "--addr", (char *)NULL)) {
+            addr = val;
+        }
+        else if (ceph_argparse_witharg(args, arg_iter, &val, "--port",
+                                       (char *)NULL)) {
+            port = val;
+        }
+        else if (ceph_argparse_flag(args, arg_iter, "--dfast", (char *)NULL)) {
+            dfast = true;
+        }
+        else {
+            ++arg_iter;
+        }
+    };
 
-	string dest_str = "tcp://";
-	dest_str += addr;
-	dest_str += ":";
-	dest_str += port;
-	entity_addr_from_url(&bind_addr, dest_str.c_str());
+    string dest_str = "tcp://";
+    dest_str += addr;
+    dest_str += ":";
+    dest_str += port;
+    entity_addr_from_url(&bind_addr, dest_str.c_str());
 
-	DispatchStrategy* dstrategy;
-	if (dfast)
-	  dstrategy = new FastStrategy();
-	else
-	  dstrategy = new QueueStrategy(2);
+    DispatchStrategy *dstrategy;
+    if (dfast)
+        dstrategy = new FastStrategy();
+    else
+        dstrategy = new QueueStrategy(2);
 
-	messenger = new XioMessenger(g_ceph_context,
-				     entity_name_t::MON(-1),
-				     "xio_server",
-				     0 /* nonce */,
-				     0 /* cflags */,
-				     dstrategy);
+    messenger = new XioMessenger(g_ceph_context,
+                                 entity_name_t::MON(-1),
+                                 "xio_server", 0 /* nonce */ ,
+                                 0 /* cflags */ ,
+                                 dstrategy);
 
-	static_cast<XioMessenger*>(messenger)->set_magic(
-	  MSG_MAGIC_REDUPE /* resubmit messages on delivery (REQUIRED) */ |
-	  MSG_MAGIC_TRACE_CTR /* timing prints */);
+    static_cast <
+        XioMessenger *
+        >(messenger)->
+        set_magic(MSG_MAGIC_REDUPE
+                  /* resubmit messages on delivery (REQUIRED) */  |
+                  MSG_MAGIC_TRACE_CTR /* timing prints */ );
 
-	messenger->set_default_policy(
-	  Messenger::Policy::stateless_server(0));
+    messenger->set_default_policy(Messenger::Policy::stateless_server(0));
 
-	r = messenger->bind(bind_addr);
-	if (r < 0)
-		goto out;
+    r = messenger->bind(bind_addr);
+    if (r < 0)
+        goto out;
 
-	// Set up crypto, daemonize, etc.
-	//global_init_daemonize(g_ceph_context, 0);
-	common_init_finish(g_ceph_context);
+    // Set up crypto, daemonize, etc.
+    //global_init_daemonize(g_ceph_context, 0);
+    common_init_finish(g_ceph_context);
 
-	dispatcher = new XioDispatcher(messenger);
+    dispatcher = new XioDispatcher(messenger);
 
-	messenger->add_dispatcher_head(dispatcher); // should reach ready()
-	messenger->start();
-	messenger->wait(); // can't be called until ready()
+    messenger->add_dispatcher_head(dispatcher); // should reach ready()
+    messenger->start();
+    messenger->wait();          // can't be called until ready()
 
-	// done
-	delete messenger;
+    // done
+    delete messenger;
 
-out:
-	cout << "Simple Server exit" << endl;
-	return r;
+  out:
+    cout << "Simple Server exit" << endl;
+    return r;
 }
-

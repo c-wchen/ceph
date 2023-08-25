@@ -55,7 +55,7 @@
  * destruction).
  */
 class Initialize {
- public:
+  public:
   /**
    * This form of constructor causes its function argument to be invoked
    * when the object is constructed.  When used with a static Initialize
@@ -69,10 +69,9 @@ class Initialize {
    *      function should normally contain an internal guard so that it
    *      only performs its initialization the first time it is invoked.
    */
-  explicit Initialize(void (*func)()) {
-    (*func)();
-  }
-
+    explicit Initialize(void (*func) ()) {
+        (*func) ();
+    }
   /**
    * This form of constructor causes a new object of a particular class
    * to be constructed with a no-argument constructor and assigned to a
@@ -84,13 +83,12 @@ class Initialize {
    *      Pointer to an object of any type. If the pointer is NULL then
    *      it is replaced with a pointer to a newly allocated object of
    *      the given type.
-   */
-  template<typename T>
-  explicit Initialize(T*& p) {
-    if (p == NULL) {
-      p = new T;
+   */ template < typename T >
+     explicit Initialize(T * &p) {
+        if (p == NULL) {
+            p = new T;
+        }
     }
-  }
 };
 
-#endif  // CEPH_INITIALIZE_H
+#endif // CEPH_INITIALIZE_H

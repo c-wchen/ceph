@@ -21,25 +21,30 @@ using namespace std;
 using namespace rbd_replay;
 
 extern "C"
-void rbd_replay_pending_io_callback(librbd::completion_t cb, void *arg) {
-  PendingIO *io = static_cast<PendingIO*>(arg);
-  io->completed(cb);
+    void rbd_replay_pending_io_callback(librbd::completion_t cb, void *arg)
+{
+    PendingIO *io = static_cast < PendingIO * >(arg);
+    io->completed(cb);
 }
 
-PendingIO::PendingIO(action_id_t id,
-		     ActionCtx &worker)
-  : m_id(id),
-    m_completion(new librbd::RBD::AioCompletion(this, rbd_replay_pending_io_callback)),
-    m_worker(worker) {
-    }
-
-PendingIO::~PendingIO() {
-  m_completion->release();
+PendingIO::PendingIO(action_id_t id, ActionCtx & worker)
+:  
+m_id(id),
+m_completion(new librbd::RBD::
+             AioCompletion(this, rbd_replay_pending_io_callback)),
+m_worker(worker)
+{
 }
 
-void PendingIO::completed(librbd::completion_t cb) {
-  dout(ACTION_LEVEL) << "Completed pending IO #" << m_id << dendl;
-  ssize_t r = m_completion->get_return_value();
-  assertf(r >= 0, "id = %d, r = %d", m_id, r);
-  m_worker.remove_pending(shared_from_this());
+PendingIO::~PendingIO()
+{
+    m_completion->release();
+}
+
+void PendingIO::completed(librbd::completion_t cb)
+{
+    dout(ACTION_LEVEL) << "Completed pending IO #" << m_id << dendl;
+    ssize_t r = m_completion->get_return_value();
+    assertf(r >= 0, "id = %d, r = %d", m_id, r);
+    m_worker.remove_pending(shared_from_this());
 }

@@ -12,24 +12,23 @@
  *
  */
 
-
 #include "common/Clock.h"
 
 utime_t ceph_clock_now()
 {
 #if defined(__linux__)
-  struct timespec tp;
-  clock_gettime(CLOCK_REALTIME, &tp);
-  utime_t n(tp);
+    struct timespec tp;
+    clock_gettime(CLOCK_REALTIME, &tp);
+    utime_t n(tp);
 #else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  utime_t n(&tv);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    utime_t n(&tv);
 #endif
-  return n;
+    return n;
 }
 
 time_t ceph_clock_gettime()
 {
-  return time(NULL);
+    return time(NULL);
 }

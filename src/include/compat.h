@@ -85,8 +85,8 @@
 #endif
 
 #ifndef HOST_NAME_MAX
-#ifdef MAXHOSTNAMELEN 
-#define HOST_NAME_MAX MAXHOSTNAMELEN 
+#ifdef MAXHOSTNAMELEN
+#define HOST_NAME_MAX MAXHOSTNAMELEN
 #else
 #define HOST_NAME_MAX 255
 #endif
@@ -114,10 +114,10 @@
 #endif
 
 #ifdef __cplusplus
-# define VOID_TEMP_FAILURE_RETRY(expression) \
+#define VOID_TEMP_FAILURE_RETRY(expression) \
    static_cast<void>(TEMP_FAILURE_RETRY(expression))
 #else
-# define VOID_TEMP_FAILURE_RETRY(expression) \
+#define VOID_TEMP_FAILURE_RETRY(expression) \
    do { (void)TEMP_FAILURE_RETRY(expression); } while (0)
 #endif
 
@@ -137,30 +137,30 @@
 #endif
 
 #if defined(HAVE_PTHREAD_SETNAME_NP)
-  #if defined(__APPLE__)
-    #define ceph_pthread_setname(thread, name) ({ \
+#if defined(__APPLE__)
+#define ceph_pthread_setname(thread, name) ({ \
       int __result = 0;                         \
       if (thread == pthread_self())             \
         __result = pthread_setname_np(name);    \
       __result; })
-  #else
-    #define ceph_pthread_setname pthread_setname_np
-  #endif
+#else
+#define ceph_pthread_setname pthread_setname_np
+#endif
 #elif defined(HAVE_PTHREAD_SET_NAME_NP)
   /* Fix a small name diff */
-  #define ceph_pthread_setname pthread_set_name_np
+#define ceph_pthread_setname pthread_set_name_np
 #else
   /* compiler warning free success noop */
-  #define ceph_pthread_setname(thread, name) ({ \
+#define ceph_pthread_setname(thread, name) ({ \
     int __i = 0;                              \
     __i; })
 #endif
 
 #if defined(HAVE_PTHREAD_GETNAME_NP)
-  #define ceph_pthread_getname pthread_getname_np
+#define ceph_pthread_getname pthread_getname_np
 #else
   /* compiler warning free success noop */
-  #define ceph_pthread_getname(thread, name, len) ({ \
+#define ceph_pthread_getname(thread, name, len) ({ \
     if (name != NULL)                              \
       *name = '\0';                                \
     0; })

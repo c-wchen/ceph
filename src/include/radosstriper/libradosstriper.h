@@ -22,7 +22,7 @@ extern "C" {
  *
  * A handle for interacting with striped objects in a RADOS cluster.
  */
-typedef void *rados_striper_t;
+    typedef void *rados_striper_t;
 
 /**
  * @defgroup libradosstriper_h_init Setup and Teardown
@@ -41,15 +41,14 @@ typedef void *rados_striper_t;
  * @param striper where to store the rados striper
  * @returns 0 on success, negative error code on failure
  */
-  int rados_striper_create(rados_ioctx_t ioctx,
-                           rados_striper_t *striper);
+    int rados_striper_create(rados_ioctx_t ioctx, rados_striper_t * striper);
 
 /**
  * Destroys a rados striper
  *
  * @param striper the striper to destroy
  */
-void rados_striper_destroy(rados_striper_t striper);
+    void rados_striper_destroy(rados_striper_t striper);
 
 /**
  * Sets the object layout's stripe unit of a rados striper for future objects.
@@ -60,8 +59,8 @@ void rados_striper_destroy(rados_striper_t striper);
  * @param stripe_unit the stripe_unit value of the new object layout
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_set_object_layout_stripe_unit(rados_striper_t striper,
-                                                unsigned int stripe_unit);
+    int rados_striper_set_object_layout_stripe_unit(rados_striper_t striper,
+                                                    unsigned int stripe_unit);
 
 /**
  * Sets the object layout's stripe count of a rados striper for future objects.
@@ -72,8 +71,8 @@ int rados_striper_set_object_layout_stripe_unit(rados_striper_t striper,
  * @param stripe_count the stripe_count value of the new object layout
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_set_object_layout_stripe_count(rados_striper_t striper,
-                                                 unsigned int stripe_count);
+    int rados_striper_set_object_layout_stripe_count(rados_striper_t striper,
+                                                     unsigned int stripe_count);
 
 /**
  * Sets the object layout's object_size of a rados striper for future objects.
@@ -84,8 +83,8 @@ int rados_striper_set_object_layout_stripe_count(rados_striper_t striper,
  * @param object_size the object_size value of the new object layout
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_set_object_layout_object_size(rados_striper_t striper,
-                                                unsigned int object_size);
+    int rados_striper_set_object_layout_object_size(rados_striper_t striper,
+                                                    unsigned int object_size);
 
 /** @} init */
 
@@ -113,11 +112,9 @@ int rados_striper_set_object_layout_object_size(rados_striper_t striper,
  * @returns 0 on success, negative error code on failure
  * failure
  */
-int rados_striper_write(rados_striper_t striper,
-                        const char *soid,
-                        const char *buf,
-                        size_t len,
-                        uint64_t off);
+    int rados_striper_write(rados_striper_t striper,
+                            const char *soid,
+                            const char *buf, size_t len, uint64_t off);
 
 /**
  * Synchronously write an entire striped object
@@ -131,10 +128,8 @@ int rados_striper_write(rados_striper_t striper,
  * @param len length of the data, in bytes
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_write_full(rados_striper_t striper,
-                             const char *soid,
-                             const char *buf,
-                             size_t len);
+    int rados_striper_write_full(rados_striper_t striper,
+                                 const char *soid, const char *buf, size_t len);
 
 /**
  * Append data to an object
@@ -146,10 +141,8 @@ int rados_striper_write_full(rados_striper_t striper,
  * @returns 0 on success, negative error code on failure
  * failure
  */
-int rados_striper_append(rados_striper_t striper,
-                         const char *soid,
-                         const char *buf,
-                         size_t len);
+    int rados_striper_append(rados_striper_t striper,
+                             const char *soid, const char *buf, size_t len);
 
 /**
  * Synchronously read data from a striped object at the specified offset
@@ -162,11 +155,9 @@ int rados_striper_append(rados_striper_t striper,
  * @returns number of bytes read on success, negative error code on
  * failure
  */
-int rados_striper_read(rados_striper_t striper,
-                       const char *soid,
-                       char *buf,
-                       size_t len,
-                       uint64_t off);
+    int rados_striper_read(rados_striper_t striper,
+                           const char *soid,
+                           char *buf, size_t len, uint64_t off);
 
 /**
  * Synchronously removes a striped object
@@ -182,8 +173,7 @@ int rados_striper_read(rados_striper_t striper,
  * @param soid the name of the striped object
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_remove(rados_striper_t striper,
-                         const char* soid);
+    int rados_striper_remove(rados_striper_t striper, const char *soid);
 
 /**
  * Resize an object
@@ -207,7 +197,7 @@ int rados_striper_remove(rados_striper_t striper,
  * @param size the new size of the object in bytes
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_trunc(rados_ioctx_t io, const char *soid, uint64_t size);
+    int rados_striper_trunc(rados_ioctx_t io, const char *soid, uint64_t size);
 
 /** @} Synchronous I/O */
 
@@ -231,11 +221,9 @@ int rados_striper_trunc(rados_ioctx_t io, const char *soid, uint64_t size);
  * @param len size of buf in bytes
  * @returns length of xattr value on success, negative error code on failure
  */
-int rados_striper_getxattr(rados_striper_t striper,
-                           const char *oid,
-                           const char *name,
-                           char *buf,
-                           size_t len);
+    int rados_striper_getxattr(rados_striper_t striper,
+                               const char *oid,
+                               const char *name, char *buf, size_t len);
 
 /**
  * Set an extended attribute on a striped object.
@@ -247,11 +235,9 @@ int rados_striper_getxattr(rados_striper_t striper,
  * @param len the number of bytes in buf
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_setxattr(rados_striper_t striper,
-                           const char *oid,
-                           const char *name,
-                           const char *buf,
-                           size_t len);
+    int rados_striper_setxattr(rados_striper_t striper,
+                               const char *oid,
+                               const char *name, const char *buf, size_t len);
 
 /**
  * Delete an extended attribute from a striped object.
@@ -261,9 +247,8 @@ int rados_striper_setxattr(rados_striper_t striper,
  * @param name which xattr to delete
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_rmxattr(rados_striper_t striper,
-                          const char *oid,
-                          const char *name);
+    int rados_striper_rmxattr(rados_striper_t striper,
+                              const char *oid, const char *name);
 
 /**
  * Start iterating over xattrs on a striped object.
@@ -275,9 +260,8 @@ int rados_striper_rmxattr(rados_striper_t striper,
  * @param iter where to store the iterator
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_getxattrs(rados_striper_t striper,
-                            const char *oid,
-                            rados_xattrs_iter_t *iter);
+    int rados_striper_getxattrs(rados_striper_t striper,
+                                const char *oid, rados_xattrs_iter_t * iter);
 
 /**
  * Get the next xattr on the striped object
@@ -294,10 +278,9 @@ int rados_striper_getxattrs(rados_striper_t striper,
  * @param len the number of bytes in val
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_getxattrs_next(rados_xattrs_iter_t iter,
-                                 const char **name,
-                                 const char **val,
-                                 size_t *len);
+    int rados_striper_getxattrs_next(rados_xattrs_iter_t iter,
+                                     const char **name,
+                                     const char **val, size_t * len);
 
 /**
  * Close the xattr iterator.
@@ -306,7 +289,7 @@ int rados_striper_getxattrs_next(rados_xattrs_iter_t iter,
  *
  * @param iter the iterator to close
  */
-void rados_striper_getxattrs_end(rados_xattrs_iter_t iter);
+    void rados_striper_getxattrs_end(rados_xattrs_iter_t iter);
 
 /** @} Xattrs */
 
@@ -319,10 +302,8 @@ void rados_striper_getxattrs_end(rados_xattrs_iter_t iter);
  * @param pmtime where to store modification time
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_stat(rados_striper_t striper,
-                       const char* soid,
-                       uint64_t *psize,
-                       time_t *pmtime);
+    int rados_striper_stat(rados_striper_t striper,
+                           const char *soid, uint64_t * psize, time_t * pmtime);
 
 /**
  * @defgroup libradosstriper_h_asynch_io Asynchronous I/O
@@ -337,7 +318,7 @@ int rados_striper_stat(rados_striper_t striper,
  * it contains the aggregated return value once the operations complete
  * and can be used to block until all operations are complete and/or safe.
  */
-typedef void *rados_striper_multi_completion_t;
+    typedef void *rados_striper_multi_completion_t;
 
 /**
  * Constructs a multi completion to use with asynchronous operations
@@ -359,10 +340,11 @@ typedef void *rados_striper_multi_completion_t;
  * @param pc where to store the completion
  * @returns 0
  */
-int rados_striper_multi_aio_create_completion(void *cb_arg,
-                                              rados_callback_t cb_complete,
-                                              rados_callback_t cb_safe,
-                                              rados_striper_multi_completion_t *pc);
+    int rados_striper_multi_aio_create_completion(void *cb_arg,
+                                                  rados_callback_t cb_complete,
+                                                  rados_callback_t cb_safe,
+                                                  rados_striper_multi_completion_t
+                                                  * pc);
 
 /**
  * Block until all operation complete
@@ -372,7 +354,8 @@ int rados_striper_multi_aio_create_completion(void *cb_arg,
  * @param c operations to wait for
  * @returns 0
  */
-void rados_striper_multi_aio_wait_for_complete(rados_striper_multi_completion_t c);
+    void rados_striper_multi_aio_wait_for_complete
+        (rados_striper_multi_completion_t c);
 
 /**
  * Block until all operation are safe
@@ -382,7 +365,8 @@ void rados_striper_multi_aio_wait_for_complete(rados_striper_multi_completion_t 
  * @param c operations to wait for
  * @returns 0
  */
-void rados_striper_multi_aio_wait_for_safe(rados_striper_multi_completion_t c);
+    void rados_striper_multi_aio_wait_for_safe(rados_striper_multi_completion_t
+                                               c);
 
 /**
  * Has a multi asynchronous operation completed?
@@ -393,7 +377,7 @@ void rados_striper_multi_aio_wait_for_safe(rados_striper_multi_completion_t c);
  * @param c async operations to inspect
  * @returns whether c is complete
  */
-int rados_striper_multi_aio_is_complete(rados_striper_multi_completion_t c);
+    int rados_striper_multi_aio_is_complete(rados_striper_multi_completion_t c);
 
 /**
  * Is a multi asynchronous operation safe?
@@ -404,7 +388,7 @@ int rados_striper_multi_aio_is_complete(rados_striper_multi_completion_t c);
  * @param c async operations to inspect
  * @returns whether c is safe
  */
-int rados_striper_multi_aio_is_safe(rados_striper_multi_completion_t c);
+    int rados_striper_multi_aio_is_safe(rados_striper_multi_completion_t c);
 
 /**
  * Block until all operations complete and callback completes
@@ -414,7 +398,8 @@ int rados_striper_multi_aio_is_safe(rados_striper_multi_completion_t c);
  * @param c operations to wait for
  * @returns 0
  */
-void rados_striper_multi_aio_wait_for_complete_and_cb(rados_striper_multi_completion_t c);
+    void rados_striper_multi_aio_wait_for_complete_and_cb
+        (rados_striper_multi_completion_t c);
 
 /**
  * Block until all operations are safe and callback has completed
@@ -424,7 +409,8 @@ void rados_striper_multi_aio_wait_for_complete_and_cb(rados_striper_multi_comple
  * @param c operations to wait for
  * @returns 0
  */
-void rados_striper_multi_aio_wait_for_safe_and_cb(rados_striper_multi_completion_t c);
+    void rados_striper_multi_aio_wait_for_safe_and_cb
+        (rados_striper_multi_completion_t c);
 
 /**
  * Has a multi asynchronous operation and callback completed
@@ -432,7 +418,8 @@ void rados_striper_multi_aio_wait_for_safe_and_cb(rados_striper_multi_completion
  * @param c async operations to inspect
  * @returns whether c is complete
  */
-int rados_striper_multi_aio_is_complete_and_cb(rados_striper_multi_completion_t c);
+    int rados_striper_multi_aio_is_complete_and_cb
+        (rados_striper_multi_completion_t c);
 
 /**
  * Is a multi asynchronous operation safe and has the callback completed
@@ -440,7 +427,8 @@ int rados_striper_multi_aio_is_complete_and_cb(rados_striper_multi_completion_t 
  * @param c async operations to inspect
  * @returns whether c is safe
  */
-int rados_striper_multi_aio_is_safe_and_cb(rados_striper_multi_completion_t c);
+    int rados_striper_multi_aio_is_safe_and_cb(rados_striper_multi_completion_t
+                                               c);
 
 /**
  * Get the return value of a multi asychronous operation
@@ -456,7 +444,8 @@ int rados_striper_multi_aio_is_safe_and_cb(rados_striper_multi_completion_t c);
  * @param c async operations to inspect
  * @returns aggregated return value of the operations
  */
-int rados_striper_multi_aio_get_return_value(rados_striper_multi_completion_t c);
+    int rados_striper_multi_aio_get_return_value
+        (rados_striper_multi_completion_t c);
 
 /**
  * Release a multi asynchrnous IO completion
@@ -466,7 +455,7 @@ int rados_striper_multi_aio_get_return_value(rados_striper_multi_completion_t c)
  *
  * @param c multi completion to release
  */
-void rados_striper_multi_aio_release(rados_striper_multi_completion_t c);
+    void rados_striper_multi_aio_release(rados_striper_multi_completion_t c);
 
 /**
  * Asynchronously write data to a striped object at the specified offset
@@ -483,12 +472,10 @@ void rados_striper_multi_aio_release(rados_striper_multi_completion_t c);
  * @returns 0 on success, negative error code on
  * failure
  */
-int rados_striper_aio_write(rados_striper_t striper,
-                            const char *soid,
-                            rados_completion_t completion,
-                            const char *buf,
-                            size_t len,
-                            uint64_t off);
+    int rados_striper_aio_write(rados_striper_t striper,
+                                const char *soid,
+                                rados_completion_t completion,
+                                const char *buf, size_t len, uint64_t off);
 
 /**
  * Asynchronously appends data to a striped object
@@ -504,11 +491,10 @@ int rados_striper_aio_write(rados_striper_t striper,
  * @returns 0 on success, negative error code on
  * failure
  */
-int rados_striper_aio_append(rados_striper_t striper,
-                             const char *soid,
-                             rados_completion_t completion,
-                             const char *buf,
-                             size_t len);
+    int rados_striper_aio_append(rados_striper_t striper,
+                                 const char *soid,
+                                 rados_completion_t completion,
+                                 const char *buf, size_t len);
 
 /**
  * Asynchronously fills and object with the provided data.
@@ -525,11 +511,10 @@ int rados_striper_aio_append(rados_striper_t striper,
  * @returns 0 on success, negative error code on
  * failure
  */
-int rados_striper_aio_write_full(rados_striper_t striper,
-                                 const char *soid,
-                                 rados_completion_t completion,
-                                 const char *buf,
-                                 size_t len);
+    int rados_striper_aio_write_full(rados_striper_t striper,
+                                     const char *soid,
+                                     rados_completion_t completion,
+                                     const char *buf, size_t len);
 
 /**
  * Asynchronously read data from a striped object at the specified offset
@@ -546,12 +531,10 @@ int rados_striper_aio_write_full(rados_striper_t striper,
  * @returns 0 on success, negative error code on
  * failure
  */
-int rados_striper_aio_read(rados_striper_t striper,
-                           const char *soid,
-                           rados_completion_t completion,
-                           char *buf,
-                           const size_t len,
-                           uint64_t off);
+    int rados_striper_aio_read(rados_striper_t striper,
+                               const char *soid,
+                               rados_completion_t completion,
+                               char *buf, const size_t len, uint64_t off);
 
 /**
  * Asynchronously removes a striped object
@@ -569,9 +552,9 @@ int rados_striper_aio_read(rados_striper_t striper,
  * @returns 0 on success, negative error code on failure
  */
 
-int rados_striper_aio_remove(rados_striper_t striper,
-                             const char* soid,
-                             rados_completion_t completion);
+    int rados_striper_aio_remove(rados_striper_t striper,
+                                 const char *soid,
+                                 rados_completion_t completion);
 
 /**
  * Block until all pending writes in a striper are safe
@@ -583,7 +566,7 @@ int rados_striper_aio_remove(rados_striper_t striper,
  * @param striper the striper in which the flush will occur
  * @returns 0 on success, negative error code on failure
 */
-void rados_striper_aio_flush(rados_striper_t striper);
+    void rados_striper_aio_flush(rados_striper_t striper);
 
 /**
  * Asynchronously get object stats (size/mtime)
@@ -595,16 +578,14 @@ void rados_striper_aio_flush(rados_striper_t striper);
  * @param completion what to do when the stats is complete
  * @returns 0 on success, negative error code on failure
  */
-int rados_striper_aio_stat(rados_striper_t striper,
-                           const char* soid,
-                           rados_completion_t completion,
-                           uint64_t *psize,
-                           time_t *pmtime);
+    int rados_striper_aio_stat(rados_striper_t striper,
+                               const char *soid,
+                               rados_completion_t completion,
+                               uint64_t * psize, time_t * pmtime);
 
 /** @} Asynchronous I/O */
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

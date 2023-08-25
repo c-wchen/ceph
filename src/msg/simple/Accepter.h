@@ -24,27 +24,24 @@ struct entity_addr_t;
  * If the SimpleMessenger binds to a specific address, the Accepter runs
  * and listens for incoming connections.
  */
-class Accepter : public Thread {
-  SimpleMessenger *msgr;
-  bool done;
-  int listen_sd;
-  uint64_t nonce;
-  int shutdown_rd_fd;
-  int shutdown_wr_fd;
-  int create_selfpipe(int *pipe_rd, int *pipe_wr);
+class Accepter:public Thread {
+    SimpleMessenger *msgr;
+    bool done;
+    int listen_sd;
+    uint64_t nonce;
+    int shutdown_rd_fd;
+    int shutdown_wr_fd;
+    int create_selfpipe(int *pipe_rd, int *pipe_wr);
 
-public:
-  Accepter(SimpleMessenger *r, uint64_t n) 
-    : msgr(r), done(false), listen_sd(-1), nonce(n),
-      shutdown_rd_fd(-1), shutdown_wr_fd(-1)
-    {}
-    
-  void *entry() override;
-  void stop();
-  int bind(const entity_addr_t &bind_addr, const set<int>& avoid_ports);
-  int rebind(const set<int>& avoid_port);
-  int start();
+  public:
+     Accepter(SimpleMessenger * r, uint64_t n)
+    :msgr(r), done(false), listen_sd(-1), nonce(n),
+        shutdown_rd_fd(-1), shutdown_wr_fd(-1) {
+    } void *entry() override;
+    void stop();
+    int bind(const entity_addr_t & bind_addr, const set < int >&avoid_ports);
+    int rebind(const set < int >&avoid_port);
+    int start();
 };
-
 
 #endif

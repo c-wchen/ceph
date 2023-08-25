@@ -12,7 +12,6 @@
  *
  */
 
-
 #pragma once
 
 #include <ostream>
@@ -25,129 +24,111 @@
 
 #include "common/mClockPriorityQueue.h"
 
-
 namespace ceph {
 
-  using Request = std::pair<spg_t, PGQueueable>;
-  using Client = entity_inst_t;
+    using Request = std::pair < spg_t, PGQueueable >;
+    using Client = entity_inst_t;
 
+    // This class exists to bridge the ceph code, which treats the class
+    // as the client, and the queue, where the class is
+    // osd_op_type_t. So this adpater class will transform calls
+    // appropriately.
+    class mClockOpClassQueue:public OpQueue < Request, Client > {
 
-  // This class exists to bridge the ceph code, which treats the class
-  // as the client, and the queue, where the class is
-  // osd_op_type_t. So this adpater class will transform calls
-  // appropriately.
-  class mClockOpClassQueue : public OpQueue<Request, Client> {
+        enum class osd_op_type_t {
+            client_op, osd_subop, bg_snaptrim, bg_recovery, bg_scrub
+        };
 
-    enum class osd_op_type_t {
-      client_op, osd_subop, bg_snaptrim, bg_recovery, bg_scrub };
+        using queue_t = mClockQueue < Request, osd_op_type_t >;
 
-    using queue_t = mClockQueue<Request, osd_op_type_t>;
+        queue_t queue;
 
-    queue_t queue;
+        struct mclock_op_tags_t {
+            crimson::dmclock::ClientInfo client_op;
+            crimson::dmclock::ClientInfo osd_subop;
+            crimson::dmclock::ClientInfo snaptrim;
+            crimson::dmclock::ClientInfo recov;
+            crimson::dmclock::ClientInfo scrub;
 
-    struct mclock_op_tags_t {
-      crimson::dmclock::ClientInfo client_op;
-      crimson::dmclock::ClientInfo osd_subop;
-      crimson::dmclock::ClientInfo snaptrim;
-      crimson::dmclock::ClientInfo recov;
-      crimson::dmclock::ClientInfo scrub;
+            mclock_op_tags_t(CephContext * cct);
+        };
 
-      mclock_op_tags_t(CephContext *cct);
-    };
+        static std::unique_ptr < mclock_op_tags_t > mclock_op_tags;
 
-    static std::unique_ptr<mclock_op_tags_t> mclock_op_tags;
+      public:
 
-  public:
+         mClockOpClassQueue(CephContext * cct);
 
-    mClockOpClassQueue(CephContext *cct);
+        static crimson::dmclock::ClientInfo
+            op_class_client_info_f(const osd_op_type_t & op_type);
 
-    static crimson::dmclock::ClientInfo
-    op_class_client_info_f(const osd_op_type_t& op_type);
+        inline unsigned length() const override final {
+            return queue.length();
+        }
+        // Ops of this priority should be deleted immediately
+            inline void remove_by_class(Client cl,
+                                        std::list < Request >
+                                        *out) override final {
+            queue.remove_by_filter([&cl, out] (const Request & r)->bool {
+                                   if (cl == r.second.get_owner()) {
+                                   out->push_front(r); return true;}
+                                   else {
+                                   return false;}}
+            ) ;
+        }
 
-    inline unsigned length() const override final {
-      return queue.length();
-    }
+        inline void enqueue_strict(Client cl,
+                                   unsigned priority,
+                                   Request item) override final {
+            queue.enqueue_strict(get_osd_op_type(item), priority, item);
+        }
+        // Enqueue op in the front of the strict queue
+            inline void enqueue_strict_front(Client cl,
+                                             unsigned priority,
+                                             Request item) override final {
+            queue.enqueue_strict_front(get_osd_op_type(item), priority, item);
+        }
+        // Enqueue op in the back of the regular queue
+            inline void enqueue(Client cl,
+                                unsigned priority,
+                                unsigned cost, Request item) override final {
+            queue.enqueue(get_osd_op_type(item), priority, 0u, item);
+        }
+        // Enqueue the op in the front of the regular queue
+            inline void enqueue_front(Client cl,
+                                      unsigned priority,
+                                      unsigned cost,
+                                      Request item) override final {
+            queue.enqueue_front(get_osd_op_type(item), priority, 0u, item);
+        }
+        // Returns if the queue is empty
+            inline bool empty() const override final {
+            return queue.empty();
+        }
+        // Return an op to be dispatch inline Request dequeue() override final {
+            return queue.dequeue();
+        }
+        // Formatted output of the queue
+            void dump(ceph::Formatter * f) const override final;
 
-    // Ops of this priority should be deleted immediately
-    inline void remove_by_class(Client cl,
-				std::list<Request> *out) override final {
-      queue.remove_by_filter(
-	[&cl, out] (const Request& r) -> bool {
-	  if (cl == r.second.get_owner()) {
-	    out->push_front(r);
-	    return true;
-	  } else {
-	    return false;
-	  }
-	});
-    }
+      protected:
 
-    inline void enqueue_strict(Client cl,
-			       unsigned priority,
-			       Request item) override final {
-      queue.enqueue_strict(get_osd_op_type(item), priority, item);
-    }
+        struct pg_queueable_visitor_t:public boost::static_visitor <
+            osd_op_type_t > {
+            osd_op_type_t operator() (const OpRequestRef & o)const {
+                // don't know if it's a client_op or a
+                return osd_op_type_t::client_op;
+            } osd_op_type_t operator() (const PGSnapTrim & o)const {
+                return osd_op_type_t::bg_snaptrim;
+            } osd_op_type_t operator() (const PGScrub & o)const {
+                return osd_op_type_t::bg_scrub;
+            } osd_op_type_t operator() (const PGRecovery & o)const {
+                return osd_op_type_t::bg_recovery;
+        }};                     // class pg_queueable_visitor_t
 
-    // Enqueue op in the front of the strict queue
-    inline void enqueue_strict_front(Client cl,
-				     unsigned priority,
-				     Request item) override final {
-      queue.enqueue_strict_front(get_osd_op_type(item), priority, item);
-    }
+        static pg_queueable_visitor_t pg_queueable_visitor;
 
-    // Enqueue op in the back of the regular queue
-    inline void enqueue(Client cl,
-			unsigned priority,
-			unsigned cost,
-			Request item) override final {
-      queue.enqueue(get_osd_op_type(item), priority, 0u, item);
-    }
+        osd_op_type_t get_osd_op_type(const Request & request);
+    };                          // class mClockOpClassAdapter
 
-    // Enqueue the op in the front of the regular queue
-    inline void enqueue_front(Client cl,
-			      unsigned priority,
-			      unsigned cost,
-			      Request item) override final {
-      queue.enqueue_front(get_osd_op_type(item), priority, 0u, item);
-    }
-
-    // Returns if the queue is empty
-    inline bool empty() const override final {
-      return queue.empty();
-    }
-
-    // Return an op to be dispatch
-    inline Request dequeue() override final {
-      return queue.dequeue();
-    }
-
-    // Formatted output of the queue
-    void dump(ceph::Formatter *f) const override final;
-
-  protected:
-
-    struct pg_queueable_visitor_t : public boost::static_visitor<osd_op_type_t> {
-      osd_op_type_t operator()(const OpRequestRef& o) const {
-	// don't know if it's a client_op or a
-        return osd_op_type_t::client_op;
-      }
-
-      osd_op_type_t operator()(const PGSnapTrim& o) const {
-        return osd_op_type_t::bg_snaptrim;
-      }
-
-      osd_op_type_t operator()(const PGScrub& o) const {
-        return osd_op_type_t::bg_scrub;
-      }
-
-      osd_op_type_t operator()(const PGRecovery& o) const {
-        return osd_op_type_t::bg_recovery;
-      }
-    }; // class pg_queueable_visitor_t
-
-    static pg_queueable_visitor_t pg_queueable_visitor;
-
-    osd_op_type_t get_osd_op_type(const Request& request);
-  }; // class mClockOpClassAdapter
-
-} // namespace ceph
+}                               // namespace ceph

@@ -29,183 +29,175 @@
 
 #define dout_subsys ceph_subsys_context
 
-PluginRegistry::PluginRegistry(CephContext *cct) :
-  cct(cct),
-  lock("PluginRegistry::lock"),
-  loading(false),
-  disable_dlclose(false)
+PluginRegistry::PluginRegistry(CephContext * cct):
+cct(cct), lock("PluginRegistry::lock"), loading(false), disable_dlclose(false)
 {
 }
 
 PluginRegistry::~PluginRegistry()
 {
-  if (disable_dlclose)
-    return;
+    if (disable_dlclose)
+        return;
 
-  for (std::map<std::string,std::map<std::string, Plugin*> >::iterator i =
-	 plugins.begin();
-       i != plugins.end();
-       ++i) {
-    for (std::map<std::string,Plugin*>::iterator j = i->second.begin();
-	 j != i->second.end(); ++j) {
-      void *library = j->second->library;
-      delete j->second;
-      dlclose(library);
+    for (std::map < std::string, std::map < std::string,
+         Plugin * > >::iterator i = plugins.begin(); i != plugins.end(); ++i) {
+        for (std::map < std::string, Plugin * >::iterator j = i->second.begin();
+             j != i->second.end(); ++j) {
+            void *library = j->second->library;
+            delete j->second;
+            dlclose(library);
+        }
     }
-  }
 }
 
-int PluginRegistry::remove(const std::string& type, const std::string& name)
+int PluginRegistry::remove(const std::string & type, const std::string & name)
 {
-  assert(lock.is_locked());
+    assert(lock.is_locked());
 
-  std::map<std::string,std::map<std::string,Plugin*> >::iterator i =
-    plugins.find(type);
-  if (i == plugins.end())
-    return -ENOENT;
-  std::map<std::string,Plugin*>::iterator j = i->second.find(name);
-  if (j == i->second.end())
-    return -ENOENT;
+    std::map < std::string, std::map < std::string, Plugin * > >::iterator i =
+        plugins.find(type);
+    if (i == plugins.end())
+        return -ENOENT;
+    std::map < std::string, Plugin * >::iterator j = i->second.find(name);
+    if (j == i->second.end())
+        return -ENOENT;
 
-  ldout(cct, 1) << __func__ << " " << type << " " << name << dendl;
-  void *library = j->second->library;
-  delete j->second;
-  dlclose(library);
-  i->second.erase(j);
-  if (i->second.empty())
-    plugins.erase(i);
+    ldout(cct, 1) << __func__ << " " << type << " " << name << dendl;
+    void *library = j->second->library;
+    delete j->second;
+    dlclose(library);
+    i->second.erase(j);
+    if (i->second.empty())
+        plugins.erase(i);
 
-  return 0;
+    return 0;
 }
 
-int PluginRegistry::add(const std::string& type,
-			const std::string& name,
-			Plugin* plugin)
+int PluginRegistry::add(const std::string & type,
+                        const std::string & name, Plugin * plugin)
 {
-  assert(lock.is_locked());
-  if (plugins.count(type) &&
-      plugins[type].count(name)) {
-    return -EEXIST;
-  }
-  ldout(cct, 1) << __func__ << " " << type << " " << name
-		<< " " << plugin << dendl;
-  plugins[type][name] = plugin;
-  return 0;
+    assert(lock.is_locked());
+    if (plugins.count(type) && plugins[type].count(name)) {
+        return -EEXIST;
+    }
+    ldout(cct, 1) << __func__ << " " << type << " " << name
+        << " " << plugin << dendl;
+    plugins[type][name] = plugin;
+    return 0;
 }
 
-Plugin *PluginRegistry::get_with_load(const std::string& type,
-          const std::string& name)
+Plugin *PluginRegistry::get_with_load(const std::string & type,
+                                      const std::string & name)
 {
-  Mutex::Locker l(lock);
-  Plugin* ret = get(type, name);
-  if (!ret) {
-    int err = load(type, name);
-    if (err == 0)
-      ret = get(type, name);
-  } 
-  return ret;
+    Mutex::Locker l(lock);
+    Plugin *ret = get(type, name);
+    if (!ret) {
+        int err = load(type, name);
+        if (err == 0)
+            ret = get(type, name);
+    }
+    return ret;
 }
 
-Plugin *PluginRegistry::get(const std::string& type,
-			    const std::string& name)
+Plugin *PluginRegistry::get(const std::string & type, const std::string & name)
 {
-  assert(lock.is_locked());
-  Plugin *ret = 0;
+    assert(lock.is_locked());
+    Plugin *ret = 0;
 
-  std::map<std::string,Plugin*>::iterator j;
-  std::map<std::string,map<std::string,Plugin*> >::iterator i =
-    plugins.find(type);
-  if (i == plugins.end()) 
-    goto out;
-  j = i->second.find(name);
-  if (j == i->second.end()) 
-    goto out;
-  ret = j->second;
+    std::map < std::string, Plugin * >::iterator j;
+    std::map < std::string, map < std::string, Plugin * > >::iterator i =
+        plugins.find(type);
+    if (i == plugins.end())
+        goto out;
+    j = i->second.find(name);
+    if (j == i->second.end())
+        goto out;
+    ret = j->second;
 
- out:
-  ldout(cct, 1) << __func__ << " " << type << " " << name
-		<< " = " << ret << dendl;
-  return ret;
+  out:
+    ldout(cct, 1) << __func__ << " " << type << " " << name
+        << " = " << ret << dendl;
+    return ret;
 }
 
-int PluginRegistry::load(const std::string &type,
-			 const std::string &name)
+int PluginRegistry::load(const std::string & type, const std::string & name)
 {
-  assert(lock.is_locked());
-  ldout(cct, 1) << __func__ << " " << type << " " << name << dendl;
+    assert(lock.is_locked());
+    ldout(cct, 1) << __func__ << " " << type << " " << name << dendl;
 
-  // std::string fname = cct->_conf->plugin_dir + "/" + type + "/" PLUGIN_PREFIX
-  //  + name + PLUGIN_SUFFIX;
-  std::string fname = cct->_conf->get_val<std::string>("plugin_dir") + "/" + type + "/" + PLUGIN_PREFIX
-      + name + PLUGIN_SUFFIX;
-  void *library = dlopen(fname.c_str(), RTLD_NOW);
-  if (!library) {
-    string err1(dlerror());
-    // fall back to plugin_dir
-    std::string fname2 = cct->_conf->get_val<std::string>("plugin_dir") + "/" + PLUGIN_PREFIX +
-      name + PLUGIN_SUFFIX;
-    library = dlopen(fname2.c_str(), RTLD_NOW);
+    // std::string fname = cct->_conf->plugin_dir + "/" + type + "/" PLUGIN_PREFIX
+    //  + name + PLUGIN_SUFFIX;
+    std::string fname =
+        cct->_conf->get_val < std::string >
+        ("plugin_dir") + "/" + type + "/" + PLUGIN_PREFIX + name +
+        PLUGIN_SUFFIX;
+    void *library = dlopen(fname.c_str(), RTLD_NOW);
     if (!library) {
-      lderr(cct) << __func__
-		 << " failed dlopen(): \""	<< err1.c_str() 
-		 << "\" or \"" << dlerror() << "\""
-		 << dendl;
-      return -EIO;
+        string err1(dlerror());
+        // fall back to plugin_dir
+        std::string fname2 =
+            cct->_conf->get_val < std::string >
+            ("plugin_dir") + "/" + PLUGIN_PREFIX + name + PLUGIN_SUFFIX;
+        library = dlopen(fname2.c_str(), RTLD_NOW);
+        if (!library) {
+            lderr(cct) << __func__ << " failed dlopen(): \"" << err1.c_str()
+                << "\" or \"" << dlerror() << "\"" << dendl;
+            return -EIO;
+        }
     }
-  }
 
-  const char * (*code_version)() =
-    (const char *(*)())dlsym(library, PLUGIN_VERSION_FUNCTION);
-  if (code_version == NULL) {
-    lderr(cct) << __func__ << " code_version == NULL" << dlerror() << dendl;
-    return -EXDEV;
-  }
-  if (code_version() != string(CEPH_GIT_NICE_VER)) {
-    lderr(cct) << __func__ << " plugin " << fname << " version "
-	       << code_version() << " != expected "
-	       << CEPH_GIT_NICE_VER << dendl;
-    dlclose(library);
-    return -EXDEV;
-  }
-
-  int (*code_init)(CephContext *,
-		   const std::string& type,
-		   const std::string& name) =
-    (int (*)(CephContext *,
-	     const std::string& type,
-	     const std::string& name))dlsym(library, PLUGIN_INIT_FUNCTION);
-  if (code_init) {
-    int r = code_init(cct, type, name);
-    if (r != 0) {
-      lderr(cct) << __func__ << " " << fname << " "
-		 << PLUGIN_INIT_FUNCTION << "(" << cct
-		 << "," << type << "," << name << "): " << cpp_strerror(r)
-		 << dendl;
-      dlclose(library);
-      return r;
+    const char *(*code_version) () =
+        (const char *(*)())dlsym(library, PLUGIN_VERSION_FUNCTION);
+    if (code_version == NULL) {
+        lderr(cct) << __func__ << " code_version == NULL" << dlerror() << dendl;
+        return -EXDEV;
     }
-  } else {
-    lderr(cct) << __func__ << " " << fname << " dlsym(" << PLUGIN_INIT_FUNCTION
-	       << "): " << dlerror() << dendl;
-    dlclose(library);
-    return -ENOENT;
-  }
+    if (code_version() != string(CEPH_GIT_NICE_VER)) {
+        lderr(cct) << __func__ << " plugin " << fname << " version "
+            << code_version() << " != expected " << CEPH_GIT_NICE_VER << dendl;
+        dlclose(library);
+        return -EXDEV;
+    }
 
-  Plugin *plugin = get(type, name);
-  if (plugin == 0) {
-    lderr(cct) << __func__ << " " << fname << " "
-	       << PLUGIN_INIT_FUNCTION << "()"
-	       << "did not register plugin type " << type << " name " << name
-	       << dendl;
-    dlclose(library);
-    return -EBADF;
-  }
+    int (*code_init) (CephContext *,
+                      const std::string & type,
+                      const std::string & name) =
+        (int (*)(CephContext *,
+                 const std::string & type,
+                 const std::string & name))dlsym(library, PLUGIN_INIT_FUNCTION);
+    if (code_init) {
+        int r = code_init(cct, type, name);
+        if (r != 0) {
+            lderr(cct) << __func__ << " " << fname << " "
+                << PLUGIN_INIT_FUNCTION << "(" << cct
+                << "," << type << "," << name << "): " << cpp_strerror(r)
+                << dendl;
+            dlclose(library);
+            return r;
+        }
+    }
+    else {
+        lderr(cct) << __func__ << " " << fname << " dlsym(" <<
+            PLUGIN_INIT_FUNCTION << "): " << dlerror() << dendl;
+        dlclose(library);
+        return -ENOENT;
+    }
 
-  plugin->library = library;
+    Plugin *plugin = get(type, name);
+    if (plugin == 0) {
+        lderr(cct) << __func__ << " " << fname << " "
+            << PLUGIN_INIT_FUNCTION << "()"
+            << "did not register plugin type " << type << " name " << name
+            << dendl;
+        dlclose(library);
+        return -EBADF;
+    }
 
-  ldout(cct, 1) << __func__ << ": " << type << " " << name
-		<< " loaded and registered" << dendl;
-  return 0;
+    plugin->library = library;
+
+    ldout(cct, 1) << __func__ << ": " << type << " " << name
+        << " loaded and registered" << dendl;
+    return 0;
 }
 
 /*

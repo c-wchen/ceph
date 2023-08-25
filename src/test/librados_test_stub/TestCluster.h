@@ -10,25 +10,21 @@ class CephContext;
 
 namespace librados {
 
-class TestRadosClient;
-class TestWatchNotify;
+    class TestRadosClient;
+    class TestWatchNotify;
 
-class TestCluster {
-public:
-  virtual ~TestCluster() {
-  }
+    class TestCluster {
+      public:
+        virtual ~ TestCluster() {
+        } virtual TestRadosClient *create_rados_client(CephContext * cct) = 0;
 
-  virtual TestRadosClient *create_rados_client(CephContext *cct) = 0;
+        TestWatchNotify *get_watch_notify() {
+            return &m_watch_notify;
+      } protected:
+         TestWatchNotify m_watch_notify;
 
-  TestWatchNotify *get_watch_notify() {
-    return &m_watch_notify;
-  }
+    };
 
-protected:
-  TestWatchNotify m_watch_notify;
-
-};
-
-} // namespace librados
+}                               // namespace librados
 
 #endif // CEPH_TEST_CLUSTER_H

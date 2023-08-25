@@ -18,37 +18,41 @@
 #include "msg/Message.h"
 #include "include/types.h"
 
-class MExportDirPrepAck : public Message {
-  dirfrag_t dirfrag;
-  bool success;
+class MExportDirPrepAck:public Message {
+    dirfrag_t dirfrag;
+    bool success;
 
- public:
-  dirfrag_t get_dirfrag() { return dirfrag; }
-  
-  MExportDirPrepAck() {}
-  MExportDirPrepAck(dirfrag_t df, bool s, uint64_t tid) :
+  public:
+     dirfrag_t get_dirfrag() {
+        return dirfrag;
+    } MExportDirPrepAck() {
+    }
+  MExportDirPrepAck(dirfrag_t df, bool s, uint64_t tid):
     Message(MSG_MDS_EXPORTDIRPREPACK), dirfrag(df), success(s) {
-    set_tid(tid);
-  }
-private:
-  ~MExportDirPrepAck() override {}
+        set_tid(tid);
+    }
+  private:
+    ~MExportDirPrepAck()override {
+    }
 
-public:  
-  bool is_success() { return success; }
-  const char *get_type_name() const override { return "ExPAck"; }
-  void print(ostream& o) const override {
-    o << "export_prep_ack(" << dirfrag << (success ? " success)" : " fail)");
-  }
-
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(dirfrag, p);
-    ::decode(success, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(dirfrag, payload);
-    ::encode(success, payload);
-  }
+  public:
+    bool is_success() {
+        return success;
+    }
+    const char *get_type_name() const override {
+        return "ExPAck";
+    } void print(ostream & o) const override {
+        o << "export_prep_ack(" << dirfrag << (success ? " success)" :
+                                               " fail)");
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(dirfrag, p);
+        ::decode(success, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(dirfrag, payload);
+        ::encode(success, payload);
+    }
 };
 
 #endif

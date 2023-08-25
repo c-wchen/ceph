@@ -29,32 +29,36 @@
  * need access the objects belonging to the MDS without actually
  * acting as an MDS daemon themselves.
  */
-class MDSUtility : public Dispatcher {
-protected:
-  Objecter *objecter;
-  FSMap *fsmap;
-  Messenger *messenger;
-  MonClient *monc;
+class MDSUtility:public Dispatcher {
+  protected:
+    Objecter * objecter;
+    FSMap *fsmap;
+    Messenger *messenger;
+    MonClient *monc;
 
-  Mutex lock;
-  Finisher finisher;
+    Mutex lock;
+    Finisher finisher;
 
-  Context *waiting_for_mds_map;
+    Context *waiting_for_mds_map;
 
-  bool inited;
-public:
-  MDSUtility();
-  ~MDSUtility() override;
+    bool inited;
+  public:
+     MDSUtility();
+    ~MDSUtility() override;
 
-  void handle_fs_map(MFSMap* m);
-  bool ms_dispatch(Message *m) override;
-  bool ms_handle_reset(Connection *con) override { return false; }
-  void ms_handle_remote_reset(Connection *con) override {}
-  bool ms_handle_refused(Connection *con) override { return false; }
-  bool ms_get_authorizer(int dest_type, AuthAuthorizer **authorizer,
-                         bool force_new) override;
-  int init();
-  void shutdown();
+    void handle_fs_map(MFSMap * m);
+    bool ms_dispatch(Message * m) override;
+    bool ms_handle_reset(Connection * con) override {
+        return false;
+    } void ms_handle_remote_reset(Connection * con) override {
+    }
+    bool ms_handle_refused(Connection * con) override {
+        return false;
+    }
+    bool ms_get_authorizer(int dest_type, AuthAuthorizer ** authorizer,
+                           bool force_new)override;
+    int init();
+    void shutdown();
 };
 
 #endif /* MDS_UTILITY_H_ */

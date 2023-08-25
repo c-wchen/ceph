@@ -19,78 +19,79 @@
 
 PipeConnection::~PipeConnection()
 {
-  if (pipe) {
-    pipe->put();
-    pipe = NULL;
-  }
+    if (pipe) {
+        pipe->put();
+        pipe = NULL;
+    }
 }
 
-Pipe* PipeConnection::get_pipe()
+Pipe *PipeConnection::get_pipe()
 {
-  Mutex::Locker l(lock);
-  if (pipe)
-    return pipe->get();
-  return NULL;
-}
-
-bool PipeConnection::try_get_pipe(Pipe **p)
-{
-  Mutex::Locker l(lock);
-  if (failed) {
-    *p = NULL;
-  } else {
+    Mutex::Locker l(lock);
     if (pipe)
-      *p = pipe->get();
-    else
-      *p = NULL;
-  }
-  return !failed;
+        return pipe->get();
+    return NULL;
 }
 
-bool PipeConnection::clear_pipe(Pipe *old_p)
+bool PipeConnection::try_get_pipe(Pipe ** p)
 {
-  Mutex::Locker l(lock);
-  if (old_p == pipe) {
-    pipe->put();
-    pipe = NULL;
-    failed = true;
-    return true;
-  }
-  return false;
+    Mutex::Locker l(lock);
+    if (failed) {
+        *p = NULL;
+    }
+    else {
+        if (pipe)
+            *p = pipe->get();
+        else
+            *p = NULL;
+    }
+    return !failed;
 }
 
-void PipeConnection::reset_pipe(Pipe *p)
+bool PipeConnection::clear_pipe(Pipe * old_p)
 {
-  Mutex::Locker l(lock);
-  if (pipe)
-    pipe->put();
-  pipe = p->get();
+    Mutex::Locker l(lock);
+    if (old_p == pipe) {
+        pipe->put();
+        pipe = NULL;
+        failed = true;
+        return true;
+    }
+    return false;
+}
+
+void PipeConnection::reset_pipe(Pipe * p)
+{
+    Mutex::Locker l(lock);
+    if (pipe)
+        pipe->put();
+    pipe = p->get();
 }
 
 bool PipeConnection::is_connected()
 {
-  return static_cast<SimpleMessenger*>(msgr)->is_connected(this);
+    return static_cast < SimpleMessenger * >(msgr)->is_connected(this);
 }
 
-int PipeConnection::send_message(Message *m)
+int PipeConnection::send_message(Message * m)
 {
-  assert(msgr);
-  return static_cast<SimpleMessenger*>(msgr)->send_message(m, this);
+    assert(msgr);
+    return static_cast < SimpleMessenger * >(msgr)->send_message(m, this);
 }
 
 void PipeConnection::send_keepalive()
 {
-  static_cast<SimpleMessenger*>(msgr)->send_keepalive(this);
+    static_cast < SimpleMessenger * >(msgr)->send_keepalive(this);
 }
 
 void PipeConnection::mark_down()
 {
-  if (msgr)
-    static_cast<SimpleMessenger*>(msgr)->mark_down(this);
+    if (msgr)
+        static_cast < SimpleMessenger * >(msgr)->mark_down(this);
 }
 
 void PipeConnection::mark_disposable()
 {
-  if (msgr)
-    static_cast<SimpleMessenger*>(msgr)->mark_disposable(this);
+    if (msgr)
+        static_cast < SimpleMessenger * >(msgr)->mark_disposable(this);
 }

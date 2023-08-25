@@ -19,19 +19,23 @@
 
 class Messenger;
 
-class DispatchStrategy
-{
-protected:
-  Messenger *msgr;
-public:
-  DispatchStrategy() {}
-  Messenger *get_messenger() { return msgr; }
-  void set_messenger(Messenger *_msgr) { msgr = _msgr; }
-  virtual void ds_dispatch(Message *m) = 0;
-  virtual void shutdown() = 0;
-  virtual void start() = 0;
-  virtual void wait() = 0;
-  virtual ~DispatchStrategy() {}
+class DispatchStrategy {
+  protected:
+    Messenger * msgr;
+  public:
+    DispatchStrategy() {
+    } Messenger *get_messenger() {
+        return msgr;
+    }
+    void set_messenger(Messenger * _msgr) {
+        msgr = _msgr;
+    }
+    virtual void ds_dispatch(Message * m) = 0;
+    virtual void shutdown() = 0;
+    virtual void start() = 0;
+    virtual void wait() = 0;
+    virtual ~ DispatchStrategy() {
+    }
 };
 
 #endif /* DISPATCH_STRATEGY_H */

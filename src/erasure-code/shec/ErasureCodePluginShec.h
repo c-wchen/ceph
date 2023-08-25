@@ -21,14 +21,13 @@
 #include "ErasureCodeShecTableCache.h"
 #include "erasure-code/ErasureCodePlugin.h"
 
-class ErasureCodePluginShec : public ErasureCodePlugin {
-public:
-  ErasureCodeShecTableCache tcache;
+class ErasureCodePluginShec:public ErasureCodePlugin {
+  public:
+    ErasureCodeShecTableCache tcache;
 
-  int factory(const std::string &directory,
-		      ErasureCodeProfile &profile,
-		      ErasureCodeInterfaceRef *erasure_code,
-		      ostream *ss) override;
+    int factory(const std::string & directory,
+                ErasureCodeProfile & profile,
+                ErasureCodeInterfaceRef * erasure_code, ostream * ss) override;
 };
 
 #endif

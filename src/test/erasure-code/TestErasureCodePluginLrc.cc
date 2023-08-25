@@ -24,19 +24,20 @@
 #include "common/config.h"
 #include "gtest/gtest.h"
 
-
 TEST(ErasureCodePlugin, factory)
 {
-  ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
-  ErasureCodeProfile profile;
-  profile["mapping"] = "DD_";
-  profile["layers"] = "[ [ \"DDc\", \"\" ] ]";
-  ErasureCodeInterfaceRef erasure_code;
-  EXPECT_FALSE(erasure_code);
-  EXPECT_EQ(0, instance.factory("lrc",
-				g_conf->get_val<std::string>("erasure_code_dir"),
-				profile, &erasure_code, &cerr));
-  EXPECT_TRUE(erasure_code.get());
+    ErasureCodePluginRegistry & instance =
+        ErasureCodePluginRegistry::instance();
+    ErasureCodeProfile profile;
+    profile["mapping"] = "DD_";
+    profile["layers"] = "[ [ \"DDc\", \"\" ] ]";
+    ErasureCodeInterfaceRef erasure_code;
+    EXPECT_FALSE(erasure_code);
+    EXPECT_EQ(0, instance.factory("lrc",
+                                  g_conf->get_val < std::string >
+                                  ("erasure_code_dir"), profile, &erasure_code,
+                                  &cerr));
+    EXPECT_TRUE(erasure_code.get());
 }
 
 /*

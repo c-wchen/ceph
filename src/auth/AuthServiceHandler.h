@@ -15,32 +15,38 @@
 #ifndef CEPH_AUTHSERVICEHANDLER_H
 #define CEPH_AUTHSERVICEHANDLER_H
 
-#include <stddef.h>              // for NULL
-#include <stdint.h>              // for uint64_t
-#include "common/entity_name.h"  // for EntityName
-#include "include/buffer_fwd.h"  // for bufferlist
+#include <stddef.h>             // for NULL
+#include <stdint.h>             // for uint64_t
+#include "common/entity_name.h" // for EntityName
+#include "include/buffer_fwd.h" // for bufferlist
 
 class CephContext;
 class KeyServer;
 struct AuthCapsInfo;
 
 struct AuthServiceHandler {
-protected:
-  CephContext *cct;
-public:
-  EntityName entity_name;
-  uint64_t global_id;
+  protected:
+    CephContext * cct;
+  public:
+    EntityName entity_name;
+    uint64_t global_id;
 
-  explicit AuthServiceHandler(CephContext *cct_) : cct(cct_), global_id(0) {}
+    explicit AuthServiceHandler(CephContext * cct_):cct(cct_), global_id(0) {
+    } virtual ~ AuthServiceHandler() {
+    }
 
-  virtual ~AuthServiceHandler() { }
+    virtual int start_session(EntityName & name, bufferlist::iterator & indata,
+                              bufferlist & result, AuthCapsInfo & caps) = 0;
+    virtual int handle_request(bufferlist::iterator & indata,
+                               bufferlist & result, uint64_t & global_id,
+                               AuthCapsInfo & caps, uint64_t * auid = NULL) = 0;
 
-  virtual int start_session(EntityName& name, bufferlist::iterator& indata, bufferlist& result, AuthCapsInfo& caps) = 0;
-  virtual int handle_request(bufferlist::iterator& indata, bufferlist& result, uint64_t& global_id, AuthCapsInfo& caps, uint64_t *auid = NULL) = 0;
-
-  EntityName& get_entity_name() { return entity_name; }
+    EntityName & get_entity_name() {
+        return entity_name;
+    }
 };
 
-extern AuthServiceHandler *get_auth_service_handler(int type, CephContext *cct, KeyServer *ks);
+extern AuthServiceHandler *get_auth_service_handler(int type, CephContext * cct,
+                                                    KeyServer * ks);
 
 #endif

@@ -5,10 +5,10 @@
 extern "C" {
 #endif
 
-extern uint32_t ceph_crc32c_sctp(uint32_t crc, unsigned char const *data, unsigned length);
+    extern uint32_t ceph_crc32c_sctp(uint32_t crc, unsigned char const *data,
+                                     unsigned length);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

@@ -19,47 +19,46 @@
 
 class CephContext;
 
-class OutputDataSocket : public Thread
-{
-public:
-  OutputDataSocket(CephContext *cct, uint64_t _backlog);
-  ~OutputDataSocket() override;
+class OutputDataSocket:public Thread {
+  public:
+    OutputDataSocket(CephContext * cct, uint64_t _backlog);
+    ~OutputDataSocket() override;
 
-  bool init(const std::string &path);
-  
-  void append_output(bufferlist& bl);
+    bool init(const std::string & path);
 
-protected:
-  virtual void init_connection(bufferlist& bl) {}
-  void shutdown();
+    void append_output(bufferlist & bl);
 
-  std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
-  std::string bind_and_listen(const std::string &sock_path, int *fd);
+  protected:
+     virtual void init_connection(bufferlist & bl) {
+    } void shutdown();
 
-  void *entry() override;
-  bool do_accept();
+    std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
+    std::string bind_and_listen(const std::string & sock_path, int *fd);
 
-  void handle_connection(int fd);
-  void close_connection(int fd);
+    void *entry() override;
+    bool do_accept();
 
-  int dump_data(int fd);
+    void handle_connection(int fd);
+    void close_connection(int fd);
 
-  CephContext *m_cct;
-  uint64_t data_max_backlog;
-  std::string m_path;
-  int m_sock_fd;
-  int m_shutdown_rd_fd;
-  int m_shutdown_wr_fd;
-  bool going_down;
+    int dump_data(int fd);
 
-  uint64_t data_size;
+    CephContext *m_cct;
+    uint64_t data_max_backlog;
+    std::string m_path;
+    int m_sock_fd;
+    int m_shutdown_rd_fd;
+    int m_shutdown_wr_fd;
+    bool going_down;
 
-  std::list<bufferlist> data;
+    uint64_t data_size;
 
-  Mutex m_lock;
-  Cond cond;
+    std::list < bufferlist > data;
 
-  bufferlist delim;
+    Mutex m_lock;
+    Cond cond;
+
+    bufferlist delim;
 };
 
 #endif

@@ -11,21 +11,21 @@
  * Foundation.  See file COPYING.
  *
  */
- 
+
 #include "common/Continuation.h"
 #include "mds/Mutation.h"
 #include "mds/Server.h"
- 
-class MDSContinuation : public Continuation {
-protected:
-  Server *server;
-  MDSInternalContextBase *get_internal_callback(int stage) {
-    return new MDSInternalContextWrapper(server->mds, get_callback(stage));
-  }
-  MDSIOContextBase *get_io_callback(int stage) {
-    return new MDSIOContextWrapper(server->mds, get_callback(stage));
-  }
-public:
-  MDSContinuation(Server *s) :
-    Continuation(NULL), server(s) {}
+
+class MDSContinuation:public Continuation {
+  protected:
+    Server * server;
+    MDSInternalContextBase *get_internal_callback(int stage) {
+        return new MDSInternalContextWrapper(server->mds, get_callback(stage));
+    } MDSIOContextBase *get_io_callback(int stage) {
+        return new MDSIOContextWrapper(server->mds, get_callback(stage));
+    }
+  public:
+  MDSContinuation(Server * s):
+    Continuation(NULL), server(s) {
+    }
 };

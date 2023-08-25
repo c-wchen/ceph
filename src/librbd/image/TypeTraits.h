@@ -7,14 +7,11 @@
 class ContextWQ;
 
 namespace librbd {
-namespace image {
+    namespace image {
 
-template <typename ImageCtxT>
-struct TypeTraits {
-  typedef ::ContextWQ ContextWQ;
-};
+        template < typename ImageCtxT > struct TypeTraits {
+            typedef::ContextWQ ContextWQ;
+        };
 
-} // namespace image
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_IMAGE_TYPE_TRAITS_H
+} // namespace image }          // namespace librbd
+#endif                          // CEPH_LIBRBD_IMAGE_TYPE_TRAITS_H

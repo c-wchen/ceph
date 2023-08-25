@@ -19,37 +19,35 @@
 
 class Pipe;
 
-class PipeConnection : public Connection {
-  Pipe* pipe;
+class PipeConnection:public Connection {
+    Pipe *pipe;
 
-  friend class boost::intrusive_ptr<PipeConnection>;
-  friend class Pipe;
+    friend class boost::intrusive_ptr < PipeConnection >;
+    friend class Pipe;
 
-public:
+  public:
 
-  PipeConnection(CephContext *cct, Messenger *m)
-    : Connection(cct, m),
-      pipe(NULL) { }
+     PipeConnection(CephContext * cct, Messenger * m)
+    :Connection(cct, m), pipe(NULL) {
+    } ~PipeConnection() override;
 
-  ~PipeConnection() override;
+    Pipe *get_pipe();
 
-  Pipe* get_pipe();
+    bool try_get_pipe(Pipe ** p);
 
-  bool try_get_pipe(Pipe** p);
+    bool clear_pipe(Pipe * old_p);
 
-  bool clear_pipe(Pipe* old_p);
+    void reset_pipe(Pipe * p);
 
-  void reset_pipe(Pipe* p);
+    bool is_connected() override;
 
-  bool is_connected() override;
+    int send_message(Message * m) override;
+    void send_keepalive() override;
+    void mark_down() override;
+    void mark_disposable() override;
 
-  int send_message(Message *m) override;
-  void send_keepalive() override;
-  void mark_down() override;
-  void mark_disposable() override;
+};                              /* PipeConnection */
 
-}; /* PipeConnection */
-
-typedef boost::intrusive_ptr<PipeConnection> PipeConnectionRef;
+typedef boost::intrusive_ptr < PipeConnection > PipeConnectionRef;
 
 #endif

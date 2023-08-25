@@ -20,18 +20,23 @@
 
 class KeyServer;
 
-class CephxServiceHandler  : public AuthServiceHandler {
-  KeyServer *key_server;
-  uint64_t server_challenge;
+class CephxServiceHandler:public AuthServiceHandler {
+    KeyServer *key_server;
+    uint64_t server_challenge;
 
-public:
-  CephxServiceHandler(CephContext *cct_, KeyServer *ks) 
-    : AuthServiceHandler(cct_), key_server(ks), server_challenge(0) {}
-  ~CephxServiceHandler() override {}
-  
-  int start_session(EntityName& name, bufferlist::iterator& indata, bufferlist& result_bl, AuthCapsInfo& caps) override;
-  int handle_request(bufferlist::iterator& indata, bufferlist& result_bl, uint64_t& global_id, AuthCapsInfo& caps, uint64_t *auid = NULL) override;
-  void build_cephx_response_header(int request_type, int status, bufferlist& bl);
+  public:
+     CephxServiceHandler(CephContext * cct_, KeyServer * ks)
+    :AuthServiceHandler(cct_), key_server(ks), server_challenge(0) {
+    } ~CephxServiceHandler() override {
+    }
+
+    int start_session(EntityName & name, bufferlist::iterator & indata,
+                      bufferlist & result_bl, AuthCapsInfo & caps) override;
+    int handle_request(bufferlist::iterator & indata, bufferlist & result_bl,
+                       uint64_t & global_id, AuthCapsInfo & caps,
+                       uint64_t * auid = NULL) override;
+    void build_cephx_response_header(int request_type, int status,
+                                     bufferlist & bl);
 };
 
 #endif

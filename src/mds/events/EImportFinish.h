@@ -21,33 +21,31 @@
 #include "../MDSRank.h"
 #include "../LogEvent.h"
 
-class EImportFinish : public LogEvent {
- protected:
-  dirfrag_t base; // imported dir
-  bool success;
+class EImportFinish:public LogEvent {
+  protected:
+    dirfrag_t base;             // imported dir
+    bool success;
 
- public:
-  EImportFinish(CDir *dir, bool s) : LogEvent(EVENT_IMPORTFINISH), 
-				     base(dir->dirfrag()),
-				     success(s) { }
-  EImportFinish() : LogEvent(EVENT_IMPORTFINISH), base(), success(false) { }
-  
-  void print(ostream& out) const override {
-    out << "EImportFinish " << base;
-    if (success)
-      out << " success";
-    else
-      out << " failed";
-  }
+  public:
+     EImportFinish(CDir * dir, bool s):LogEvent(EVENT_IMPORTFINISH),
+        base(dir->dirfrag()), success(s) {
+    } EImportFinish():LogEvent(EVENT_IMPORTFINISH), base(), success(false) {
+    }
 
-  void encode(bufferlist& bl, uint64_t features) const override;
-  void decode(bufferlist::iterator &bl) override;
-  void dump(Formatter *f) const override;
-  static void generate_test_instances(list<EImportFinish*>& ls);
-  
-  void replay(MDSRank *mds) override;
+    void print(ostream & out) const override {
+        out << "EImportFinish " << base;
+        if (success)
+            out << " success";
+        else
+            out << " failed";
+    } void encode(bufferlist & bl, uint64_t features) const override;
+    void decode(bufferlist::iterator & bl) override;
+    void dump(Formatter * f) const override;
+    static void generate_test_instances(list < EImportFinish * >&ls);
+
+    void replay(MDSRank * mds) override;
 
 };
-WRITE_CLASS_ENCODER_FEATURES(EImportFinish)
 
+WRITE_CLASS_ENCODER_FEATURES(EImportFinish)
 #endif

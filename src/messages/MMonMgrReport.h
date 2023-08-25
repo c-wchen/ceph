@@ -20,40 +20,39 @@
 #include "include/health.h"
 #include "mon/health_check.h"
 
-class MMonMgrReport : public PaxosServiceMessage {
+class MMonMgrReport:public PaxosServiceMessage {
 
-  static const int HEAD_VERSION = 1;
-  static const int COMPAT_VERSION = 1;
+    static const int HEAD_VERSION = 1;
+    static const int COMPAT_VERSION = 1;
 
-public:
-  // PGMapDigest is in data payload
-  health_check_map_t health_checks;
-  bufferlist service_map_bl;  // encoded ServiceMap
+  public:
+    // PGMapDigest is in data payload
+     health_check_map_t health_checks;
+    bufferlist service_map_bl;  // encoded ServiceMap
 
-  MMonMgrReport()
-    : PaxosServiceMessage(MSG_MON_MGR_REPORT, 0, HEAD_VERSION, COMPAT_VERSION)
-  {}
-private:
-  ~MMonMgrReport() override {}
+     MMonMgrReport()
+    :PaxosServiceMessage(MSG_MON_MGR_REPORT, 0, HEAD_VERSION, COMPAT_VERSION) {
+  } private:
+    ~MMonMgrReport() override {
+    }
 
-public:
-  const char *get_type_name() const override { return "monmgrreport"; }
-
-  void print(ostream& out) const override {
-    out << get_type_name() << "(" << health_checks.checks.size() << " checks)";
-  }
-
-  void encode_payload(uint64_t features) override {
-    paxos_encode();
-    ::encode(health_checks, payload);
-    ::encode(service_map_bl, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    paxos_decode(p);
-    ::decode(health_checks, p);
-    ::decode(service_map_bl, p);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "monmgrreport";
+    } void print(ostream & out) const override {
+        out << get_type_name() << "(" << health_checks.checks.
+            size() << " checks)";
+    } void encode_payload(uint64_t features) override {
+        paxos_encode();
+        ::encode(health_checks, payload);
+        ::encode(service_map_bl, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        paxos_decode(p);
+        ::decode(health_checks, p);
+        ::decode(service_map_bl, p);
+    }
 };
 
 #endif

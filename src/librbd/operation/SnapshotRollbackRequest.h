@@ -14,13 +14,13 @@ class Context;
 
 namespace librbd {
 
-class ProgressContext;
+    class ProgressContext;
 
-namespace operation {
+    namespace operation {
 
-template <typename ImageCtxT = ImageCtx>
-class SnapshotRollbackRequest : public Request<ImageCtxT> {
-public:
+      template < typename ImageCtxT = ImageCtx > class SnapshotRollbackRequest:public Request < ImageCtxT >
+        {
+          public:
   /**
    * Snap Rollback goes through the following state machine:
    *
@@ -56,59 +56,58 @@ public:
    * The _INVALIDATE_CACHE state is skipped if the cache isn't enabled.
    */
 
-  SnapshotRollbackRequest(ImageCtxT &image_ctx, Context *on_finish,
-			  const cls::rbd::SnapshotNamespace &snap_namespace,
-                          const std::string &snap_name,
-			  uint64_t snap_id,
-                          uint64_t snap_size, ProgressContext &prog_ctx);
-  ~SnapshotRollbackRequest() override;
+            SnapshotRollbackRequest(ImageCtxT & image_ctx, Context * on_finish,
+                                    const cls::rbd::
+                                    SnapshotNamespace & snap_namespace,
+                                    const std::string & snap_name,
+                                    uint64_t snap_id, uint64_t snap_size,
+                                    ProgressContext & prog_ctx);
+            ~SnapshotRollbackRequest() override;
 
-protected:
-  void send_op() override;
-  bool should_complete(int r) override {
-    return true;
-  }
+          protected:
+            void send_op() override;
+            bool should_complete(int r) override {
+                return true;
+            } journal::Event create_event(uint64_t op_tid) const override {
+                return journal::SnapRollbackEvent(op_tid, m_snap_namespace,
+                                                  m_snap_name);
+          } private:
+             cls::rbd::SnapshotNamespace m_snap_namespace;
+             std::string m_snap_name;
+            uint64_t m_snap_id;
+            uint64_t m_snap_size;
+             ProgressContext & m_prog_ctx;
 
-  journal::Event create_event(uint64_t op_tid) const override {
-    return journal::SnapRollbackEvent(op_tid, m_snap_namespace, m_snap_name);
-  }
+            NoOpProgressContext m_no_op_prog_ctx;
 
-private:
-  cls::rbd::SnapshotNamespace m_snap_namespace;
-  std::string m_snap_name;
-  uint64_t m_snap_id;
-  uint64_t m_snap_size;
-  ProgressContext &m_prog_ctx;
+            bool m_blocking_writes = false;
+             decltype(ImageCtxT::object_map) m_object_map;
 
-  NoOpProgressContext m_no_op_prog_ctx;
+            void send_block_writes();
+            Context *handle_block_writes(int *result);
 
-  bool m_blocking_writes = false;
-  decltype(ImageCtxT::object_map) m_object_map;
+            void send_resize_image();
+            Context *handle_resize_image(int *result);
 
-  void send_block_writes();
-  Context *handle_block_writes(int *result);
+            void send_rollback_object_map();
+            Context *handle_rollback_object_map(int *result);
 
-  void send_resize_image();
-  Context *handle_resize_image(int *result);
+            void send_rollback_objects();
+            Context *handle_rollback_objects(int *result);
 
-  void send_rollback_object_map();
-  Context *handle_rollback_object_map(int *result);
+            Context *send_refresh_object_map();
+            Context *handle_refresh_object_map(int *result);
 
-  void send_rollback_objects();
-  Context *handle_rollback_objects(int *result);
+            Context *send_invalidate_cache();
+            Context *handle_invalidate_cache(int *result);
 
-  Context *send_refresh_object_map();
-  Context *handle_refresh_object_map(int *result);
+            void apply();
+        };
 
-  Context *send_invalidate_cache();
-  Context *handle_invalidate_cache(int *result);
+    }                           // namespace operation
+}                               // namespace librbd
 
-  void apply();
-};
-
-} // namespace operation
-} // namespace librbd
-
-extern template class librbd::operation::SnapshotRollbackRequest<librbd::ImageCtx>;
+extern template class librbd::operation::SnapshotRollbackRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OPERATION_SNAPSHOT_ROLLBACK_REQUEST_H

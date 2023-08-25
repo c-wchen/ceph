@@ -45,11 +45,10 @@
  * @param [in] fallback_to_plain attempt parsing as plain-text if json fails
  * @return **0** on success or a -EINVAL on error.
  */
-extern int get_json_str_map(
-    const std::string &str,
-    std::ostream &ss,
-    std::map<std::string,std::string> *str_map,
-    bool fallback_to_plain = true);
+extern int get_json_str_map(const std::string & str,
+                            std::ostream & ss,
+                            std::map < std::string, std::string > *str_map,
+                            bool fallback_to_plain = true);
 
 /**
  * Parse **str** and set **str_map** with the key/value pairs read from
@@ -89,10 +88,9 @@ extern int get_json_str_map(
  * @param [out] str_map key/value pairs parsed from str
  * @return **0**
  */
-extern int get_str_map(
-    const std::string &str,
-    std::map<std::string,std::string> *str_map,
-    const char *delims = CONST_DELIMS);
+extern int get_str_map(const std::string & str,
+                       std::map < std::string, std::string > *str_map,
+                       const char *delims = CONST_DELIMS);
 
 /**
  * Returns the value of **key** in **str_map** if available.
@@ -106,10 +104,10 @@ extern int get_str_map(
  * @param[in] key The key to search for in the map
  * @param[in] def_val The value to return in case **key** is not present
  */
-extern std::string get_str_map_value(
-    const std::map<std::string,std::string> &str_map,
-    const std::string &key,
-    const std::string *def_val = NULL);
+extern std::string get_str_map_value(const std::map < std::string,
+                                     std::string > &str_map,
+                                     const std::string & key,
+                                     const std::string * def_val = NULL);
 
 /**
  * Returns the value of **key** in **str_map** if available.
@@ -127,11 +125,10 @@ extern std::string get_str_map_value(
  * @param[in] def_key Key to fallback to if **key** is not present
  *                    in **str_map**
  */
-extern std::string get_str_map_key(
-    const std::map<std::string,std::string> &str_map,
-    const std::string &key,
-    const std::string *fallback_key = NULL);
-
+extern std::string get_str_map_key(const std::map < std::string,
+                                   std::string > &str_map,
+                                   const std::string & key,
+                                   const std::string * fallback_key = NULL);
 
 // This function's only purpose is to check whether a given map has only
 // ONE key with an empty value (which would mean that 'get_str_map()' read
@@ -139,10 +136,9 @@ extern std::string get_str_map_key(
 // event, to assign said 'VALUE' to a given 'def_key', such that we end up
 // with a map of the form "m = { 'def_key' : 'VALUE' }" instead of the
 // original "m = { 'VALUE' : '' }".
-int get_conf_str_map_helper(
-    const std::string &str,
-    std::ostringstream &oss,
-    std::map<std::string,std::string> *m,
-    const std::string &def_key);
+int get_conf_str_map_helper(const std::string & str,
+                            std::ostringstream & oss,
+                            std::map < std::string, std::string > *m,
+                            const std::string & def_key);
 
 #endif

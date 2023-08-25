@@ -29,39 +29,47 @@
 #include <string>
 #include <memory>
 
-std::string exec(const char* cmd) {
-    std::array<char, 128> buffer;
+std::string exec(const char *cmd)
+{
+    std::array < char, 128 > buffer;
     std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe) throw std::runtime_error("popen() failed!");
+    std::shared_ptr < FILE > pipe(popen(cmd, "r"), pclose);
+    if (!pipe)
+        throw std::runtime_error("popen() failed!");
     while (!feof(pipe.get())) {
         if (fgets(buffer.data(), 128, pipe.get()) != NULL)
             result += buffer.data();
     }
     // remove \n
-    return result.substr(0, result.size()-1);;
+    return result.substr(0, result.size() - 1);;
 }
 
-TEST(Hostname, full) {
-  std::string hn = ceph_get_hostname();
-  if (const char *nn = getenv("NODE_NAME")) {
-    // we are in a container
-    std::cout << "we are in a container on " << nn << ", reporting " << hn
-	      << std::endl;
-    ASSERT_EQ(hn, nn);
-  } else {
-    ASSERT_EQ(hn, exec("hostname")) ;
-  }
+TEST(Hostname, full)
+{
+    std::string hn = ceph_get_hostname();
+    if (const char *nn = getenv("NODE_NAME")) {
+        // we are in a container
+        std::cout << "we are in a container on " << nn << ", reporting " << hn
+            << std::endl;
+        ASSERT_EQ(hn, nn);
+    }
+    else {
+        ASSERT_EQ(hn, exec("hostname"));
+    }
 }
 
-TEST(Hostname, short) {
-  std::string shn = ceph_get_short_hostname();
-  if (const char *nn = getenv("NODE_NAME")) {
-    // we are in a container
-    std::cout << "we are in a container on " << nn << ", reporting short " << shn
-	 << ", skipping test because env var may or may not be short form"
-	      << std::endl;
-  } else {
-    ASSERT_EQ(shn, exec("hostname -s")) ;
-  }
+TEST(Hostname, short)
+{
+    std::string shn = ceph_get_short_hostname();
+    if (const char *nn = getenv("NODE_NAME")) {
+        // we are in a container
+        std::
+            cout << "we are in a container on " << nn << ", reporting short " <<
+            shn <<
+            ", skipping test because env var may or may not be short form" <<
+            std::endl;
+    }
+    else {
+        ASSERT_EQ(shn, exec("hostname -s"));
+    }
 }

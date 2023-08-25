@@ -11,41 +11,36 @@
 #include "kv/KeyValueDB.h"
 
 class FreelistManager {
-public:
-  CephContext* cct;
-  FreelistManager(CephContext* cct) : cct(cct) {}
-  virtual ~FreelistManager() {}
+  public:
+    CephContext * cct;
+    FreelistManager(CephContext * cct):cct(cct) {
+    } virtual ~ FreelistManager() {
+    }
 
-  static FreelistManager *create(
-    CephContext* cct,
-    string type,
-    KeyValueDB *db,
-    string prefix);
+    static FreelistManager *create(CephContext * cct,
+                                   string type, KeyValueDB * db, string prefix);
 
-  static void setup_merge_operators(KeyValueDB *db);
+    static void setup_merge_operators(KeyValueDB * db);
 
-  virtual int create(uint64_t size, uint64_t granularity,
-		     KeyValueDB::Transaction txn) = 0;
+    virtual int create(uint64_t size, uint64_t granularity,
+                       KeyValueDB::Transaction txn) = 0;
 
-  virtual int init(uint64_t dev_size) = 0;
-  virtual void shutdown() = 0;
+    virtual int init(uint64_t dev_size) = 0;
+    virtual void shutdown() = 0;
 
-  virtual void dump() = 0;
+    virtual void dump() = 0;
 
-  virtual void enumerate_reset() = 0;
-  virtual bool enumerate_next(uint64_t *offset, uint64_t *length) = 0;
+    virtual void enumerate_reset() = 0;
+    virtual bool enumerate_next(uint64_t * offset, uint64_t * length) = 0;
 
-  virtual void allocate(
-    uint64_t offset, uint64_t length,
-    KeyValueDB::Transaction txn) = 0;
-  virtual void release(
-    uint64_t offset, uint64_t length,
-    KeyValueDB::Transaction txn) = 0;
+    virtual void allocate(uint64_t offset, uint64_t length,
+                          KeyValueDB::Transaction txn) = 0;
+    virtual void release(uint64_t offset, uint64_t length,
+                         KeyValueDB::Transaction txn) = 0;
 
-  virtual uint64_t get_alloc_units() const = 0;
-  virtual uint64_t get_alloc_size() const = 0;
+    virtual uint64_t get_alloc_units() const = 0;
+    virtual uint64_t get_alloc_size() const = 0;
 
 };
-
 
 #endif

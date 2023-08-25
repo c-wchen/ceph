@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef CEPH_DISPATCHER_H
 #define CEPH_DISPATCHER_H
 
@@ -30,12 +29,11 @@ class CephContext;
 class AuthAuthorizerChallenge;
 
 class Dispatcher {
-public:
-  explicit Dispatcher(CephContext *cct_)
-    : cct(cct_)
-  {
-  }
-  virtual ~Dispatcher() { }
+  public:
+    explicit Dispatcher(CephContext * cct_)
+    :cct(cct_) {
+    } virtual ~ Dispatcher() {
+    }
 
   /**
    * The Messenger calls this function to query if you are capable
@@ -61,21 +59,25 @@ public:
    * @param m The message we want to fast dispatch.
    * @returns True if the message can be fast dispatched; false otherwise.
    */
-  virtual bool ms_can_fast_dispatch(const Message *m) const { return false;}
+    virtual bool ms_can_fast_dispatch(const Message * m) const {
+        return false;
+    }
   /**
    * This function determines if a dispatcher is included in the
    * list of fast-dispatch capable Dispatchers.
    * @returns True if the Dispatcher can handle any messages via
    * fast dispatch; false otherwise.
-   */
-  virtual bool ms_can_fast_dispatch_any() const { return false; }
+   */ virtual bool ms_can_fast_dispatch_any() const {
+        return false;
+    }
   /**
    * Perform a "fast dispatch" on a given message. See
    * ms_can_fast_dispatch() for the requirements.
    *
    * @param m The Message to fast dispatch.
-   */
-  virtual void ms_fast_dispatch(Message *m) { ceph_abort(); }
+   */ virtual void ms_fast_dispatch(Message * m) {
+        ceph_abort();
+    }
   /**
    * Let the Dispatcher preview a Message before it is dispatched. This
    * function is called on *every* Message, prior to the fast/regular dispatch
@@ -91,14 +93,15 @@ public:
    *
    * @param m A message which has been received
    */
-  virtual void ms_fast_preprocess(Message *m) {}
+    virtual void ms_fast_preprocess(Message * m) {
+    }
   /**
    * The Messenger calls this function to deliver a single message.
    *
    * @param m The message being delivered. You (the Dispatcher)
    * are given a single reference count on it.
    */
-  virtual bool ms_dispatch(Message *m) = 0;
+    virtual bool ms_dispatch(Message * m) = 0;
 
   /**
    * This function will be called whenever a Connection is newly-created
@@ -107,7 +110,8 @@ public:
    * @param con The new Connection which has been established. You are not
    * granted a reference to it -- take one if you need one!
    */
-  virtual void ms_handle_connect(Connection *con) {}
+    virtual void ms_handle_connect(Connection * con) {
+    }
 
   /**
    * This function will be called synchronously whenever a Connection is
@@ -118,14 +122,16 @@ public:
    * @param con The new Connection which has been established. You are not
    * granted a reference to it -- take one if you need one!
    */
-  virtual void ms_handle_fast_connect(Connection *con) {}
+    virtual void ms_handle_fast_connect(Connection * con) {
+    }
 
   /**
    * Callback indicating we have accepted an incoming connection.
    *
    * @param con The (new or existing) Connection associated with the session
    */
-  virtual void ms_handle_accept(Connection *con) {}
+    virtual void ms_handle_accept(Connection * con) {
+    }
 
   /**
    * Callback indicating we have accepted an incoming connection, if you
@@ -134,18 +140,19 @@ public:
    *
    * @param con The (new or existing) Connection associated with the session
    */
-  virtual void ms_handle_fast_accept(Connection *con) {}
+    virtual void ms_handle_fast_accept(Connection * con) {
+    }
 
-  /*
-   * this indicates that the ordered+reliable delivery semantics have 
-   * been violated.  Messages may have been lost due to a fault
-   * in the network connection.
-   * Only called on lossy Connections.
-   *
-   * @param con The Connection which broke. You are not granted
-   * a reference to it.
-   */
-  virtual bool ms_handle_reset(Connection *con) = 0;
+    /*
+     * this indicates that the ordered+reliable delivery semantics have 
+     * been violated.  Messages may have been lost due to a fault
+     * in the network connection.
+     * Only called on lossy Connections.
+     *
+     * @param con The Connection which broke. You are not granted
+     * a reference to it.
+     */
+    virtual bool ms_handle_reset(Connection * con) = 0;
 
   /**
    * This indicates that the ordered+reliable delivery semantics
@@ -156,8 +163,8 @@ public:
    * @param con The Connection which broke. You are not granted
    * a reference to it.
    */
-  virtual void ms_handle_remote_reset(Connection *con) = 0;
-  
+    virtual void ms_handle_remote_reset(Connection * con) = 0;
+
   /**
    * This indicates that the connection is both broken and further
    * connection attempts are failing because other side refuses
@@ -166,7 +173,7 @@ public:
    * @param con The Connection which broke. You are not granted
    * a reference to it.
    */
-  virtual bool ms_handle_refused(Connection *con) = 0;
+    virtual bool ms_handle_refused(Connection * con) = 0;
 
   /**
    * @defgroup Authentication
@@ -185,7 +192,10 @@ public:
    *
    * @return True if this function call properly filled in *a, false otherwise.
    */
-  virtual bool ms_get_authorizer(int dest_type, AuthAuthorizer **a, bool force_new) { return false; }
+    virtual bool ms_get_authorizer(int dest_type, AuthAuthorizer ** a,
+                                   bool force_new) {
+        return false;
+    }
   /**
    * Verify the authorizer for a new incoming Connection.
    *
@@ -200,24 +210,25 @@ public:
    * @return True if we were able to prove or disprove correctness of
    * authorizer, false otherwise.
    */
-  virtual bool ms_verify_authorizer(Connection *con,
-				    int peer_type,
-				    int protocol,
-				    ceph::bufferlist& authorizer,
-				    ceph::bufferlist& authorizer_reply,
-				    bool& isvalid,
-				    CryptoKey& session_key,
-				    std::unique_ptr<AuthAuthorizerChallenge> *challenge) {
-    return false;
-  }
+    virtual bool ms_verify_authorizer(Connection * con,
+                                      int peer_type,
+                                      int protocol,
+                                      ceph::bufferlist & authorizer,
+                                      ceph::bufferlist & authorizer_reply,
+                                      bool & isvalid,
+                                      CryptoKey & session_key,
+                                      std::unique_ptr <
+                                      AuthAuthorizerChallenge > *challenge) {
+        return false;
+    }
   /**
    * @} //Authentication
    */
-protected:
-  CephContext *cct;
-private:
-  explicit Dispatcher(const Dispatcher &rhs);
-  Dispatcher& operator=(const Dispatcher &rhs);
+  protected:
+    CephContext * cct;
+  private:
+    explicit Dispatcher(const Dispatcher & rhs);
+    Dispatcher & operator=(const Dispatcher & rhs);
 };
 
 #endif

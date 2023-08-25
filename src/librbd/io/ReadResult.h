@@ -16,118 +16,107 @@ struct CephContext;
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace io {
+    namespace io {
 
-struct AioCompletion;
-template <typename> struct ObjectReadRequest;
+        struct AioCompletion;
+         template < typename > struct ObjectReadRequest;
 
-class ReadResult {
-private:
-  struct C_ReadRequest : public Context {
-    AioCompletion *aio_completion;
-    bufferlist bl;
+        class ReadResult {
+          private:
+            struct C_ReadRequest:public Context {
+                AioCompletion *aio_completion;
+                bufferlist bl;
 
-    C_ReadRequest(AioCompletion *aio_completion);
+                 C_ReadRequest(AioCompletion * aio_completion);
 
-    void finish(int r) override;
-  };
+                void finish(int r) override;
+            };
 
-public:
+          public:
 
-  struct C_ImageReadRequest : public C_ReadRequest {
-    Extents image_extents;
+            struct C_ImageReadRequest:public C_ReadRequest {
+                Extents image_extents;
 
-    C_ImageReadRequest(AioCompletion *aio_completion,
-                       const Extents image_extents)
-      : C_ReadRequest(aio_completion), image_extents(image_extents) {
-    }
+                 C_ImageReadRequest(AioCompletion * aio_completion,
+                                    const Extents image_extents)
+                :C_ReadRequest(aio_completion), image_extents(image_extents) {
+                } void finish(int r) override;
+            };
 
-    void finish(int r) override;
-  };
+            struct C_SparseReadRequestBase:public C_ReadRequest {
+                bool ignore_enoent;
 
-  struct C_SparseReadRequestBase : public C_ReadRequest {
-    bool ignore_enoent;
+                 C_SparseReadRequestBase(AioCompletion * aio_completion,
+                                         bool ignore_enoent)
+                :C_ReadRequest(aio_completion), ignore_enoent(ignore_enoent) {
+                } using C_ReadRequest::finish;
+                void finish(ExtentMap & extent_map,
+                            const Extents & buffer_extents, uint64_t offset,
+                            size_t length, bufferlist & bl, int r);
+            };
 
-    C_SparseReadRequestBase(AioCompletion *aio_completion, bool ignore_enoent)
-      : C_ReadRequest(aio_completion), ignore_enoent(ignore_enoent) {
-    }
+             template < typename ImageCtxT = ImageCtx >
+                struct C_SparseReadRequest:public C_SparseReadRequestBase {
+                ObjectReadRequest < ImageCtxT > *request;
+                Extents buffer_extents;
 
-    using C_ReadRequest::finish;
-    void finish(ExtentMap &extent_map, const Extents &buffer_extents,
-                uint64_t offset, size_t length, bufferlist &bl, int r);
-  };
+                 C_SparseReadRequest(AioCompletion * aio_completion, Extents
+                                     && buffer_extents, bool ignore_enoent)
+                :C_SparseReadRequestBase(aio_completion, ignore_enoent),
+                    buffer_extents(std::move(buffer_extents)) {
+                } void finish(int r) override {
+                    C_SparseReadRequestBase::finish(request->get_extent_map(),
+                                                    buffer_extents,
+                                                    request->get_offset(),
+                                                    request->get_length(),
+                                                    request->data(), r);
+            }};
 
-  template <typename ImageCtxT = ImageCtx>
-  struct C_SparseReadRequest : public C_SparseReadRequestBase {
-    ObjectReadRequest<ImageCtxT> *request;
-    Extents buffer_extents;
+            ReadResult();
+            ReadResult(char *buf, size_t buf_len);
+            ReadResult(const struct iovec *iov, int iov_count);
+            ReadResult(ceph::bufferlist * bl);
 
-    C_SparseReadRequest(AioCompletion *aio_completion, Extents&& buffer_extents,
-                        bool ignore_enoent)
-      : C_SparseReadRequestBase(aio_completion, ignore_enoent),
-        buffer_extents(std::move(buffer_extents)) {
-    }
+            void set_clip_length(size_t length);
+            void assemble_result(CephContext * cct);
 
-    void finish(int r) override {
-      C_SparseReadRequestBase::finish(request->get_extent_map(), buffer_extents,
-                                      request->get_offset(),
-                                      request->get_length(), request->data(),
-                                      r);
-    }
-  };
+          private:
+            struct Empty {
+            };
 
-  ReadResult();
-  ReadResult(char *buf, size_t buf_len);
-  ReadResult(const struct iovec *iov, int iov_count);
-  ReadResult(ceph::bufferlist *bl);
+            struct Linear {
+                char *buf;
+                size_t buf_len;
 
-  void set_clip_length(size_t length);
-  void assemble_result(CephContext *cct);
+                 Linear(char *buf, size_t buf_len):buf(buf), buf_len(buf_len) {
+            }};
 
-private:
-  struct Empty {
-  };
+            struct Vector {
+                const struct iovec *iov;
+                int iov_count;
 
-  struct Linear {
-    char *buf;
-    size_t buf_len;
+                 Vector(const struct iovec *iov, int iov_count)
+                :iov(iov), iov_count(iov_count) {
+            }};
 
-    Linear(char *buf, size_t buf_len) : buf(buf), buf_len(buf_len) {
-    }
-  };
+            struct Bufferlist {
+                ceph::bufferlist * bl;
 
-  struct Vector {
-    const struct iovec *iov;
-    int iov_count;
+                Bufferlist(ceph::bufferlist * bl):bl(bl) {
+            }};
 
-    Vector(const struct iovec *iov, int iov_count)
-      : iov(iov), iov_count(iov_count) {
-    }
-  };
+            typedef boost::variant < Empty, Linear, Vector, Bufferlist > Buffer;
+            struct SetClipLengthVisitor;
+            struct AssembleResultVisitor;
 
-  struct Bufferlist {
-    ceph::bufferlist *bl;
+            Buffer m_buffer;
+            Striper::StripedReadResult m_destriper;
 
-    Bufferlist(ceph::bufferlist *bl) : bl(bl) {
-    }
-  };
+        };
 
-  typedef boost::variant<Empty,
-                         Linear,
-                         Vector,
-                         Bufferlist> Buffer;
-  struct SetClipLengthVisitor;
-  struct AssembleResultVisitor;
-
-  Buffer m_buffer;
-  Striper::StripedReadResult m_destriper;
-
-};
-
-} // namespace io
-} // namespace librbd
+    }                           // namespace io
+}                               // namespace librbd
 
 #endif // CEPH_LIBRBD_IO_READ_RESULT_H
-

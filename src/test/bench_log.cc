@@ -11,64 +11,62 @@
 
 #define dout_context g_ceph_context
 
-struct T : public Thread {
-  int num;
-  set<int> myset;
-  map<int,string> mymap;
-  explicit T(int n) : num(n) {
-    myset.insert(123);
-    myset.insert(456);
-    mymap[1] = "foo";
-    mymap[10] = "bar";
-  }
-
-  void *entry() override {
-    while (num-- > 0)
-      generic_dout(0) << "this is a typical log line.  set "
-		      << myset << " and map " << mymap << dendl;
-    return 0;
-  }
+struct T:public Thread {
+    int num;
+     set < int >myset;
+     map < int, string > mymap;
+    explicit T(int n):num(n) {
+        myset.insert(123);
+        myset.insert(456);
+        mymap[1] = "foo";
+        mymap[10] = "bar";
+    } void *entry() override {
+        while (num-- > 0)
+            generic_dout(0) << "this is a typical log line.  set "
+                << myset << " and map " << mymap << dendl;
+        return 0;
+    }
 };
 
 int main(int argc, const char **argv)
 {
-  int threads = atoi(argv[1]);
-  int num = atoi(argv[2]);
+    int threads = atoi(argv[1]);
+    int num = atoi(argv[2]);
 
-  cout << threads << " threads, " << num << " lines per thread" << std::endl;
+    cout << threads << " threads, " << num << " lines per thread" << std::endl;
 
-  vector<const char*> args;
-  argv_to_vec(argc, argv, args);
-  env_to_vec(args);
+    vector < const char *>args;
+    argv_to_vec(argc, argv, args);
+    env_to_vec(args);
 
-  auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_OSD,
-			 CODE_ENVIRONMENT_UTILITY, 0);
+    auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_OSD,
+                           CODE_ENVIRONMENT_UTILITY, 0);
 
-  utime_t start = ceph_clock_now();
+    utime_t start = ceph_clock_now();
 
-  list<T*> ls;
-  for (int i=0; i<threads; i++) {
-    T *t = new T(num);
-    t->create("t");
-    ls.push_back(t);
-  }
+    list < T * >ls;
+    for (int i = 0; i < threads; i++) {
+        T *t = new T(num);
+        t->create("t");
+        ls.push_back(t);
+    }
 
-  for (int i=0; i<threads; i++) {
-    T *t = ls.front();
-    ls.pop_front();
-    t->join();
-    delete t;
-  }
+    for (int i = 0; i < threads; i++) {
+        T *t = ls.front();
+        ls.pop_front();
+        t->join();
+        delete t;
+    }
 
-  utime_t t = ceph_clock_now();
-  t -= start;
-  cout << " flushing.. " << t << " so far ..." << std::endl;
+    utime_t t = ceph_clock_now();
+    t -= start;
+    cout << " flushing.. " << t << " so far ..." << std::endl;
 
-  g_ceph_context->_log->flush();
+    g_ceph_context->_log->flush();
 
-  utime_t end = ceph_clock_now();
-  utime_t dur = end - start;
+    utime_t end = ceph_clock_now();
+    utime_t dur = end - start;
 
-  cout << dur << std::endl;
-  return 0;
+    cout << dur << std::endl;
+    return 0;
 }

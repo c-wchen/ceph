@@ -20,37 +20,43 @@
 
 class CephContext;
 
-class AuthUnknownClientHandler : public AuthClientHandler {
-public:
-  AuthUnknownClientHandler(CephContext *cct_, RotatingKeyRing *rkeys) 
-    : AuthClientHandler(cct_) {}
-
-  void reset() { }
-
-  void prepare_build_request() {}
-  int build_request(bufferlist& bl) const { return 0; }
-  int handle_response(int ret, bufferlist::iterator& iter) { return 0; }
-  bool build_rotating_request(bufferlist& bl) const { return false; }
-
-  int get_protocol() const { return CEPH_AUTH_UNKNOWN; }
-  
-  AuthAuthorizer *build_authorizer(uint32_t service_id) const {
-    RWLock::RLocker l(lock);
-    AuthUnknownAuthorizer *auth = new AuthUnknownAuthorizer();
-    if (auth) {
-      auth->build_authorizer(cct->_conf->name, global_id);
+class AuthUnknownClientHandler:public AuthClientHandler {
+  public:
+    AuthUnknownClientHandler(CephContext * cct_, RotatingKeyRing * rkeys)
+    :AuthClientHandler(cct_) {
+    } void reset() {
     }
-    return auth;
-  }
 
-  bool need_tickets() { return false; }
+    void prepare_build_request() {
+    }
+    int build_request(bufferlist & bl) const {
+        return 0;
+    } int handle_response(int ret, bufferlist::iterator & iter) {
+        return 0;
+    }
+    bool build_rotating_request(bufferlist & bl) const {
+        return false;
+    } int get_protocol() const {
+        return CEPH_AUTH_UNKNOWN;
+    } AuthAuthorizer *build_authorizer(uint32_t service_id) const {
+        RWLock::RLocker l(lock);
+        AuthUnknownAuthorizer *auth = new AuthUnknownAuthorizer();
+        if (auth) {
+            auth->build_authorizer(cct->_conf->name, global_id);
+        } return auth;
+    }
 
-  void set_global_id(uint64_t id) {
-    RWLock::WLocker l(lock);
-    global_id = id;
-  }
-private:
-  void validate_tickets() { }
+    bool need_tickets() {
+        return false;
+    }
+
+    void set_global_id(uint64_t id) {
+        RWLock::WLocker l(lock);
+        global_id = id;
+    }
+  private:
+    void validate_tickets() {
+    }
 };
 
 #endif

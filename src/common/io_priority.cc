@@ -17,7 +17,7 @@
 #include <errno.h>
 #endif
 #ifdef __linux__
-#include <sys/syscall.h>   /* For SYS_xxx definitions */
+#include <sys/syscall.h>        /* For SYS_xxx definitions */
 #endif
 #include <algorithm>
 
@@ -26,31 +26,31 @@
 pid_t ceph_gettid(void)
 {
 #ifdef __linux__
-  return syscall(SYS_gettid);
+    return syscall(SYS_gettid);
 #else
-  return -ENOSYS;
+    return -ENOSYS;
 #endif
 }
 
 int ceph_ioprio_set(int whence, int who, int ioprio)
 {
 #ifdef __linux__
-  return syscall(SYS_ioprio_set, whence, who, ioprio);
+    return syscall(SYS_ioprio_set, whence, who, ioprio);
 #else
-  return -ENOSYS;
+    return -ENOSYS;
 #endif
 }
 
-int ceph_ioprio_string_to_class(const std::string& s)
+int ceph_ioprio_string_to_class(const std::string & s)
 {
-  std::string l = s;
-  std::transform(l.begin(), l.end(), l.begin(), ::tolower);
+    std::string l = s;
+    std::transform(l.begin(), l.end(), l.begin(),::tolower);
 
-  if (l == "idle")
-    return IOPRIO_CLASS_IDLE;
-  if (l == "be" || l == "besteffort" || l == "best effort")
-    return IOPRIO_CLASS_BE;
-  if (l == "rt" || l == "realtime" || l == "real time")
-    return IOPRIO_CLASS_RT;
-  return -EINVAL;
+    if (l == "idle")
+        return IOPRIO_CLASS_IDLE;
+    if (l == "be" || l == "besteffort" || l == "best effort")
+        return IOPRIO_CLASS_BE;
+    if (l == "rt" || l == "realtime" || l == "real time")
+        return IOPRIO_CLASS_RT;
+    return -EINVAL;
 }

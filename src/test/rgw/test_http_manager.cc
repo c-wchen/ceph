@@ -20,41 +20,42 @@
 
 TEST(HTTPManager, SignalThread)
 {
-  auto cct = g_ceph_context;
-  RGWHTTPManager http(cct);
+    auto cct = g_ceph_context;
+    RGWHTTPManager http(cct);
 
-  ASSERT_EQ(0, http.set_threaded());
+    ASSERT_EQ(0, http.set_threaded());
 
-  // default pipe buffer size according to man pipe
-  constexpr size_t max_pipe_buffer_size = 65536;
-  // each signal writes 4 bytes to the pipe
-  constexpr size_t max_pipe_signals = max_pipe_buffer_size / sizeof(uint32_t);
-  // add_request and unregister_request
-  constexpr size_t pipe_signals_per_request = 2;
-  // number of http requests to fill the pipe buffer
-  constexpr size_t max_requests = max_pipe_signals / pipe_signals_per_request;
+    // default pipe buffer size according to man pipe
+    constexpr size_t max_pipe_buffer_size = 65536;
+    // each signal writes 4 bytes to the pipe
+    constexpr size_t max_pipe_signals = max_pipe_buffer_size / sizeof(uint32_t);
+    // add_request and unregister_request
+    constexpr size_t pipe_signals_per_request = 2;
+    // number of http requests to fill the pipe buffer
+    constexpr size_t max_requests = max_pipe_signals / pipe_signals_per_request;
 
-  // send one extra request to test that we don't deadlock
-  constexpr size_t num_requests = max_requests + 1;
+    // send one extra request to test that we don't deadlock
+    constexpr size_t num_requests = max_requests + 1;
 
-  for (size_t i = 0; i < num_requests; i++) {
-    RGWHTTPClient client{cct};
-    http.add_request(&client, "PUT", "http://127.0.0.1:80");
-  }
+    for (size_t i = 0; i < num_requests; i++) {
+        RGWHTTPClient client {
+        cct};
+        http.add_request(&client, "PUT", "http://127.0.0.1:80");
+    }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-  vector<const char*> args;
-  argv_to_vec(argc, (const char **)argv, args);
+    vector < const char *>args;
+    argv_to_vec(argc, (const char **)argv, args);
 
-  auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
-			 CODE_ENVIRONMENT_UTILITY, 0);
-  common_init_finish(g_ceph_context);
+    auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
+                           CODE_ENVIRONMENT_UTILITY, 0);
+    common_init_finish(g_ceph_context);
 
-  curl_global_init(CURL_GLOBAL_ALL);
-  ::testing::InitGoogleTest(&argc, argv);
-  int r = RUN_ALL_TESTS();
-  curl_global_cleanup();
-  return r;
+    curl_global_init(CURL_GLOBAL_ALL);
+    ::testing::InitGoogleTest(&argc, argv);
+    int r = RUN_ALL_TESTS();
+    curl_global_cleanup();
+    return r;
 }

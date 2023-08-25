@@ -9,87 +9,78 @@
 #include "include/encoding.h"
 #include <boost/variant.hpp>
 
-namespace ceph { class Formatter; }
+namespace ceph {
+    class Formatter;
+} namespace rbd {
+    namespace mirror {
+        namespace leader_watcher {
 
-namespace rbd {
-namespace mirror {
-namespace leader_watcher {
+            enum NotifyOp {
+                NOTIFY_OP_HEARTBEAT = 0,
+                NOTIFY_OP_LOCK_ACQUIRED = 1,
+                NOTIFY_OP_LOCK_RELEASED = 2,
+            };
 
-enum NotifyOp {
-  NOTIFY_OP_HEARTBEAT        = 0,
-  NOTIFY_OP_LOCK_ACQUIRED    = 1,
-  NOTIFY_OP_LOCK_RELEASED    = 2,
-};
+            struct HeartbeatPayload {
+                static const NotifyOp NOTIFY_OP = NOTIFY_OP_HEARTBEAT;
 
-struct HeartbeatPayload {
-  static const NotifyOp NOTIFY_OP = NOTIFY_OP_HEARTBEAT;
+                 HeartbeatPayload() {
+                } void encode(bufferlist & bl) const;
+                void decode(__u8 version, bufferlist::iterator & iter);
+                void dump(Formatter * f) const;
+            };
 
-  HeartbeatPayload() {
-  }
+            struct LockAcquiredPayload {
+                static const NotifyOp NOTIFY_OP = NOTIFY_OP_LOCK_ACQUIRED;
 
-  void encode(bufferlist &bl) const;
-  void decode(__u8 version, bufferlist::iterator &iter);
-  void dump(Formatter *f) const;
-};
+                 LockAcquiredPayload() {
+                } void encode(bufferlist & bl) const;
+                void decode(__u8 version, bufferlist::iterator & iter);
+                void dump(Formatter * f) const;
+            };
 
-struct LockAcquiredPayload {
-  static const NotifyOp NOTIFY_OP = NOTIFY_OP_LOCK_ACQUIRED;
+            struct LockReleasedPayload {
+                static const NotifyOp NOTIFY_OP = NOTIFY_OP_LOCK_RELEASED;
 
-  LockAcquiredPayload() {
-  }
+                 LockReleasedPayload() {
+                } void encode(bufferlist & bl) const;
+                void decode(__u8 version, bufferlist::iterator & iter);
+                void dump(Formatter * f) const;
+            };
 
-  void encode(bufferlist &bl) const;
-  void decode(__u8 version, bufferlist::iterator &iter);
-  void dump(Formatter *f) const;
-};
+            struct UnknownPayload {
+                static const NotifyOp NOTIFY_OP = static_cast < NotifyOp > (-1);
 
-struct LockReleasedPayload {
-  static const NotifyOp NOTIFY_OP = NOTIFY_OP_LOCK_RELEASED;
+                 UnknownPayload() {
+                } void encode(bufferlist & bl) const;
+                void decode(__u8 version, bufferlist::iterator & iter);
+                void dump(Formatter * f) const;
+            };
 
-  LockReleasedPayload() {
-  }
+            typedef boost::variant < HeartbeatPayload,
+                LockAcquiredPayload,
+                LockReleasedPayload, UnknownPayload > Payload;
 
-  void encode(bufferlist &bl) const;
-  void decode(__u8 version, bufferlist::iterator &iter);
-  void dump(Formatter *f) const;
-};
+            struct NotifyMessage {
+              NotifyMessage(const Payload & payload = UnknownPayload()):payload(payload)
+                {
+                } Payload payload;
 
-struct UnknownPayload {
-  static const NotifyOp NOTIFY_OP = static_cast<NotifyOp>(-1);
+                void encode(bufferlist & bl) const;
+                void decode(bufferlist::iterator & it);
+                void dump(Formatter * f) const;
 
-  UnknownPayload() {
-  }
+                static void generate_test_instances(std::list <
+                                                    NotifyMessage * >&o);
+            };
 
-  void encode(bufferlist &bl) const;
-  void decode(__u8 version, bufferlist::iterator &iter);
-  void dump(Formatter *f) const;
-};
+            WRITE_CLASS_ENCODER(NotifyMessage);
 
-typedef boost::variant<HeartbeatPayload,
-                       LockAcquiredPayload,
-                       LockReleasedPayload,
-                       UnknownPayload> Payload;
+            std::ostream & operator<<(std::ostream & out, const NotifyOp & op);
 
-struct NotifyMessage {
-  NotifyMessage(const Payload &payload = UnknownPayload()) : payload(payload) {
-  }
-
-  Payload payload;
-
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::iterator& it);
-  void dump(Formatter *f) const;
-
-  static void generate_test_instances(std::list<NotifyMessage *> &o);
-};
-
-WRITE_CLASS_ENCODER(NotifyMessage);
-
-std::ostream &operator<<(std::ostream &out, const NotifyOp &op);
-
-} // namespace leader_watcher
-} // namespace mirror
-} // namespace librbd
+        }                       // namespace leader_watcher
+    }                           // namespace mirror
+}                               // namespace librbd
 
 using rbd::mirror::leader_watcher::encode;
 using rbd::mirror::leader_watcher::decode;

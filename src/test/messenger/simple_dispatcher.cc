@@ -18,68 +18,65 @@
 #include "messages/MPing.h"
 #include "messages/MDataPing.h"
 
-SimpleDispatcher::SimpleDispatcher(Messenger *msgr) :
-  Dispatcher(msgr->cct),
-  active(false),
-  messenger(msgr),
-  dcount(0)
+SimpleDispatcher::SimpleDispatcher(Messenger * msgr):
+Dispatcher(msgr->cct), active(false), messenger(msgr), dcount(0)
 {
-  // nothing
+    // nothing
 }
 
-SimpleDispatcher::~SimpleDispatcher() {
-  // nothing
+SimpleDispatcher::~SimpleDispatcher()
+{
+    // nothing
 }
 
-bool SimpleDispatcher::ms_dispatch(Message *m)
+bool SimpleDispatcher::ms_dispatch(Message * m)
 {
-  uint64_t dc = 0;
+    uint64_t dc = 0;
 
-  dc = dcount++;
+    dc = dcount++;
 
-  ConnectionRef con = m->get_connection();
-  Messenger* msgr = con->get_messenger();
-
-  switch (m->get_type()) {
-  case CEPH_MSG_PING:
-    break;
-  case MSG_DATA_PING:
-  {
-    MDataPing* mdp __attribute__((unused)) = static_cast<MDataPing*>(m);
-    //cout << "MDataPing " << mdp->tag << " " << mdp->counter << std::endl;
-    //mdp->get_data().hexdump(cout);
     ConnectionRef con = m->get_connection();
-    con->send_message(m);
-  }
-    break;
-  default:
-    abort();
-  }
+    Messenger *msgr = con->get_messenger();
 
-  if (unlikely(msgr->get_magic() & MSG_MAGIC_TRACE_CTR)) {
-    if (unlikely(dc % 65536) == 0) {
-      struct timespec ts;
-      clock_gettime(CLOCK_REALTIME_COARSE, &ts);
-      std::cout << "ping " << dc << " nanos: " <<
-	ts.tv_nsec + (ts.tv_sec * 1000000000)  << std::endl;
+    switch (m->get_type()) {
+    case CEPH_MSG_PING:
+        break;
+    case MSG_DATA_PING:
+        {
+            MDataPing *mdp __attribute__ ((unused)) =
+                static_cast < MDataPing * >(m);
+            //cout << "MDataPing " << mdp->tag << " " << mdp->counter << std::endl;
+            //mdp->get_data().hexdump(cout);
+            ConnectionRef con = m->get_connection();
+            con->send_message(m);
+        }
+        break;
+    default:
+        abort();
     }
-  } /* trace ctr */
 
+    if (unlikely(msgr->get_magic() & MSG_MAGIC_TRACE_CTR)) {
+        if (unlikely(dc % 65536) == 0) {
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME_COARSE, &ts);
+            std::cout << "ping " << dc << " nanos: " <<
+                ts.tv_nsec + (ts.tv_sec * 1000000000) << std::endl;
+        }
+    }                           /* trace ctr */
 
-  con->send_message(m);
+    con->send_message(m);
 
-  //m->put();
+    //m->put();
 
-  return true;
+    return true;
 }
 
-bool SimpleDispatcher::ms_handle_reset(Connection *con)
+bool SimpleDispatcher::ms_handle_reset(Connection * con)
 {
-  return true;
+    return true;
 }
 
-void SimpleDispatcher::ms_handle_remote_reset(Connection *con)
+void SimpleDispatcher::ms_handle_remote_reset(Connection * con)
 {
-  // nothing
+    // nothing
 }
-

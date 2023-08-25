@@ -4,50 +4,53 @@
 #include "msg/Message.h"
 #include "mon/Session.h"
 
-class PaxosServiceMessage : public Message {
- public:
-  version_t version;
-  __s16 deprecated_session_mon;
-  uint64_t deprecated_session_mon_tid;
+class PaxosServiceMessage:public Message {
+  public:
+    version_t version;
+    __s16 deprecated_session_mon;
+    uint64_t deprecated_session_mon_tid;
 
-  // track which epoch the leader received a forwarded request in, so we can
-  // discard forwarded requests appropriately on election boundaries.
-  epoch_t rx_election_epoch;
-  
-  PaxosServiceMessage()
-    : Message(MSG_PAXOS),
-      version(0), deprecated_session_mon(-1), deprecated_session_mon_tid(0),
-      rx_election_epoch(0) { }
-  PaxosServiceMessage(int type, version_t v, int enc_version=1, int compat_enc_version=0)
-    : Message(type, enc_version, compat_enc_version),
-      version(v), deprecated_session_mon(-1), deprecated_session_mon_tid(0),
-      rx_election_epoch(0)  { }
- protected:
-  ~PaxosServiceMessage() override {}
+    // track which epoch the leader received a forwarded request in, so we can
+    // discard forwarded requests appropriately on election boundaries.
+    epoch_t rx_election_epoch;
 
- public:
-  void paxos_encode() {
-    ::encode(version, payload);
-    ::encode(deprecated_session_mon, payload);
-    ::encode(deprecated_session_mon_tid, payload);
-  }
+     PaxosServiceMessage()
+    :Message(MSG_PAXOS),
+        version(0), deprecated_session_mon(-1), deprecated_session_mon_tid(0),
+        rx_election_epoch(0) {
+    } PaxosServiceMessage(int type, version_t v, int enc_version =
+                          1, int compat_enc_version = 0)
+  :    Message(type, enc_version, compat_enc_version), version(v),
+        deprecated_session_mon(-1), deprecated_session_mon_tid(0),
+        rx_election_epoch(0) {
+    }
+  protected:
+    ~PaxosServiceMessage()override {
+    }
 
-  void paxos_decode( bufferlist::iterator& p ) {
-    ::decode(version, p);
-    ::decode(deprecated_session_mon, p);
-    ::decode(deprecated_session_mon_tid, p);
-  }
+  public:
+    void paxos_encode() {
+        ::encode(version, payload);
+        ::encode(deprecated_session_mon, payload);
+        ::encode(deprecated_session_mon_tid, payload);
+    }
 
-  void encode_payload(uint64_t features) override {
-    ceph_abort();
-    paxos_encode();
-  }
+    void paxos_decode(bufferlist::iterator & p) {
+        ::decode(version, p);
+        ::decode(deprecated_session_mon, p);
+        ::decode(deprecated_session_mon_tid, p);
+    }
 
-  void decode_payload() override {
-    ceph_abort();
-    bufferlist::iterator p = payload.begin();
-    paxos_decode(p);
-  }
+    void encode_payload(uint64_t features) override {
+        ceph_abort();
+        paxos_encode();
+    }
+
+    void decode_payload() override {
+        ceph_abort();
+        bufferlist::iterator p = payload.begin();
+        paxos_decode(p);
+    }
 
   /** 
    * These messages are only used by the monitors and clients,
@@ -57,14 +60,15 @@ class PaxosServiceMessage : public Message {
    * very long-lived -- it will still only last as long as the Session would
    * normally.
    */
-  MonSession *get_session() {
-    MonSession *session = (MonSession *)get_connection()->get_priv();
-    if (session)
-      session->put();
-    return session;
-  }
-  
-  const char *get_type_name() const override { return "PaxosServiceMessage"; }
-};
+    MonSession *get_session() {
+        MonSession *session = (MonSession *) get_connection()->get_priv();
+        if (session)
+            session->put();
+        return session;
+    }
+
+    const char *get_type_name() const override {
+        return "PaxosServiceMessage";
+}};
 
 #endif

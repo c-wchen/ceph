@@ -24,51 +24,47 @@
 #include "aio.h"
 #include "BlockDevice.h"
 
-class PMEMDevice : public BlockDevice {
-  int fd;
-  char *addr; //the address of mmap
-  uint64_t size;
-  uint64_t block_size;
-  std::string path;
+class PMEMDevice:public BlockDevice {
+    int fd;
+    char *addr;                 //the address of mmap
+    uint64_t size;
+    uint64_t block_size;
+     std::string path;
 
-  Mutex debug_lock;
-  interval_set<uint64_t> debug_inflight;
+    Mutex debug_lock;
+     interval_set < uint64_t > debug_inflight;
 
-  std::atomic_int injecting_crash;
-  int _lock();
+     std::atomic_int injecting_crash;
+    int _lock();
 
-public:
-  PMEMDevice(CephContext *cct, aio_callback_t cb, void *cbpriv);
+  public:
+     PMEMDevice(CephContext * cct, aio_callback_t cb, void *cbpriv);
 
+    void aio_submit(IOContext * ioc) override;
 
-  void aio_submit(IOContext *ioc) override;
+    uint64_t get_size() const override {
+        return size;
+    } uint64_t get_block_size() const override {
+        return block_size;
+    } int collect_metadata(std::string prefix, map < std::string,
+                           std::string > *pm) const override;
 
-  uint64_t get_size() const override {
-    return size;
-  }
-  uint64_t get_block_size() const override {
-    return block_size;
-  }
+    int read(uint64_t off, uint64_t len, bufferlist * pbl,
+             IOContext * ioc, bool buffered) override;
+    int aio_read(uint64_t off, uint64_t len, bufferlist * pbl,
+                 IOContext * ioc) override;
 
-  int collect_metadata(std::string prefix, map<std::string,std::string> *pm) const override;
+    int read_random(uint64_t off, uint64_t len, char *buf,
+                    bool buffered) override;
+    int write(uint64_t off, bufferlist & bl, bool buffered) override;
+    int aio_write(uint64_t off, bufferlist & bl,
+                  IOContext * ioc, bool buffered) override;
+    int flush() override;
 
-  int read(uint64_t off, uint64_t len, bufferlist *pbl,
-	   IOContext *ioc,
-	   bool buffered) override;
-  int aio_read(uint64_t off, uint64_t len, bufferlist *pbl,
-	       IOContext *ioc) override;
-
-  int read_random(uint64_t off, uint64_t len, char *buf, bool buffered) override;
-  int write(uint64_t off, bufferlist& bl, bool buffered) override;
-  int aio_write(uint64_t off, bufferlist& bl,
-		IOContext *ioc,
-		bool buffered) override;
-  int flush() override;
-
-  // for managing buffered readers/writers
-  int invalidate_cache(uint64_t off, uint64_t len) override;
-  int open(const std::string &path) override;
-  void close() override;
+    // for managing buffered readers/writers
+    int invalidate_cache(uint64_t off, uint64_t len) override;
+    int open(const std::string & path) override;
+    void close() override;
 };
 
 #endif

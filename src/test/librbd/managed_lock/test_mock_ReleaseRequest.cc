@@ -11,81 +11,80 @@
 #include <list>
 
 namespace librbd {
-namespace watcher {
-template <>
-struct Traits<MockImageCtx> {
-  typedef librbd::MockImageWatcher Watcher;
-};
-}
-}
-
+    namespace watcher {
+        template <> struct Traits <MockImageCtx > {
+            typedef librbd::MockImageWatcher Watcher;
+        };
+}}
 // template definitions
 #include "librbd/managed_lock/ReleaseRequest.cc"
-template class librbd::managed_lock::ReleaseRequest<librbd::MockImageCtx>;
+template class librbd::managed_lock::ReleaseRequest < librbd::MockImageCtx >;
 
 namespace librbd {
-namespace managed_lock {
+    namespace managed_lock {
 
-using ::testing::_;
-using ::testing::InSequence;
-using ::testing::Invoke;
-using ::testing::Return;
-using ::testing::StrEq;
+        using::testing::_;
+        using::testing::InSequence;
+        using::testing::Invoke;
+        using::testing::Return;
+        using::testing::StrEq;
 
-static const std::string TEST_COOKIE("auto 123");
+        static const std::string TEST_COOKIE("auto 123");
 
-class TestMockManagedLockReleaseRequest : public TestMockFixture {
-public:
-  typedef ReleaseRequest<MockImageCtx> MockReleaseRequest;
+        class TestMockManagedLockReleaseRequest:public TestMockFixture {
+          public:
+            typedef ReleaseRequest < MockImageCtx > MockReleaseRequest;
 
-  void expect_unlock(MockImageCtx &mock_image_ctx, int r) {
-    EXPECT_CALL(get_mock_io_ctx(mock_image_ctx.md_ctx),
-                exec(mock_image_ctx.header_oid, _, StrEq("lock"),
-                     StrEq("unlock"), _, _, _))
-                        .WillOnce(Return(r));
-  }
+            void expect_unlock(MockImageCtx & mock_image_ctx, int r) {
+                EXPECT_CALL(get_mock_io_ctx(mock_image_ctx.md_ctx),
+                            exec(mock_image_ctx.header_oid, _, StrEq("lock"),
+                                 StrEq("unlock"), _, _, _))
+                    .WillOnce(Return(r));
+        }};
 
-};
+        TEST_F(TestMockManagedLockReleaseRequest, Success) {
 
-TEST_F(TestMockManagedLockReleaseRequest, Success) {
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            MockImageCtx mock_image_ctx(*ictx);
+            expect_op_work_queue(mock_image_ctx);
 
-  MockImageCtx mock_image_ctx(*ictx);
-  expect_op_work_queue(mock_image_ctx);
+            InSequence seq;
 
-  InSequence seq;
+            expect_unlock(mock_image_ctx, 0);
 
-  expect_unlock(mock_image_ctx, 0);
+            C_SaferCond ctx;
+            MockReleaseRequest *req =
+                MockReleaseRequest::create(mock_image_ctx.md_ctx,
+                                           mock_image_ctx.image_watcher,
+                                           ictx->op_work_queue,
+                                           mock_image_ctx.header_oid,
+                                           TEST_COOKIE, &ctx);
+            req->send();
+            ASSERT_EQ(0, ctx.wait());
+        } TEST_F(TestMockManagedLockReleaseRequest, UnlockError) {
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  C_SaferCond ctx;
-  MockReleaseRequest *req = MockReleaseRequest::create(
-      mock_image_ctx.md_ctx, mock_image_ctx.image_watcher, ictx->op_work_queue,
-      mock_image_ctx.header_oid, TEST_COOKIE, &ctx);
-  req->send();
-  ASSERT_EQ(0, ctx.wait());
-}
+            MockImageCtx mock_image_ctx(*ictx);
+            expect_op_work_queue(mock_image_ctx);
 
-TEST_F(TestMockManagedLockReleaseRequest, UnlockError) {
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            InSequence seq;
 
-  MockImageCtx mock_image_ctx(*ictx);
-  expect_op_work_queue(mock_image_ctx);
+            expect_unlock(mock_image_ctx, -EINVAL);
 
-  InSequence seq;
+            C_SaferCond ctx;
+            MockReleaseRequest *req =
+                MockReleaseRequest::create(mock_image_ctx.md_ctx,
+                                           mock_image_ctx.image_watcher,
+                                           ictx->op_work_queue,
+                                           mock_image_ctx.header_oid,
+                                           TEST_COOKIE, &ctx);
+            req->send();
+            ASSERT_EQ(0, ctx.wait());
 
-  expect_unlock(mock_image_ctx, -EINVAL);
+        }
 
-  C_SaferCond ctx;
-  MockReleaseRequest *req = MockReleaseRequest::create(
-      mock_image_ctx.md_ctx, mock_image_ctx.image_watcher, ictx->op_work_queue,
-      mock_image_ctx.header_oid, TEST_COOKIE, &ctx);
-  req->send();
-  ASSERT_EQ(0, ctx.wait());
-
-}
-
-} // namespace managed_lock
-} // namespace librbd
+    }                           // namespace managed_lock
+}                               // namespace librbd

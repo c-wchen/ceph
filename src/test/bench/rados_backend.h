@@ -7,25 +7,19 @@
 #include "include/Context.h"
 #include "include/rados/librados.hpp"
 
-class RadosBackend : public Backend {
-  librados::IoCtx *ioctx;
-public:
-  explicit RadosBackend(
-    librados::IoCtx *ioctx)
-    : ioctx(ioctx) {}
-  void write(
-    const string &oid,
-    uint64_t offset,
-    const bufferlist &bl,
-    Context *on_applied,
-    Context *on_commit) override;
+class RadosBackend:public Backend {
+    librados::IoCtx * ioctx;
+  public:
+    explicit RadosBackend(librados::IoCtx * ioctx)
+    :ioctx(ioctx) {
+    } void write(const string & oid,
+                 uint64_t offset,
+                 const bufferlist & bl,
+                 Context * on_applied, Context * on_commit) override;
 
-  void read(
-    const string &oid,
-    uint64_t offset,
-    uint64_t length,
-    bufferlist *bl,
-    Context *on_complete) override;
+    void read(const string & oid,
+              uint64_t offset,
+              uint64_t length, bufferlist * bl, Context * on_complete) override;
 };
 
 #endif

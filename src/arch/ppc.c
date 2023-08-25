@@ -29,12 +29,12 @@ int ceph_arch_ppc_crc32 = 0;
 
 int ceph_arch_ppc_probe(void)
 {
-  ceph_arch_ppc_crc32 = 0;
+    ceph_arch_ppc_crc32 = 0;
 
 #if __linux__ && __powerpc64__
-  if (getauxval(AT_HWCAP2) & PPC_FEATURE2_VEC_CRYPTO) ceph_arch_ppc_crc32 = 1;
+    if (getauxval(AT_HWCAP2) & PPC_FEATURE2_VEC_CRYPTO)
+        ceph_arch_ppc_crc32 = 1;
 #endif /* __linux__ && __powerpc64__ */
 
-  return 0;
+    return 0;
 }
-

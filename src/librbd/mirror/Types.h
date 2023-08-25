@@ -5,16 +5,13 @@
 #define CEPH_LIBRBD_MIRROR_TYPES_H
 
 namespace librbd {
-namespace mirror {
+    namespace mirror {
 
-enum PromotionState {
-  PROMOTION_STATE_PRIMARY,
-  PROMOTION_STATE_NON_PRIMARY,
-  PROMOTION_STATE_ORPHAN
-};
+        enum PromotionState {
+            PROMOTION_STATE_PRIMARY,
+            PROMOTION_STATE_NON_PRIMARY,
+            PROMOTION_STATE_ORPHAN
+        };
 
-} // namespace mirror
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_MIRROR_TYPES_H
-
+} // namespace mirror }         // namespace librbd
+#endif                          // CEPH_LIBRBD_MIRROR_TYPES_H

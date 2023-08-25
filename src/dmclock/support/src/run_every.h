@@ -4,7 +4,6 @@
  * Copyright (C) 2017 Red Hat Inc.
  */
 
-
 #pragma once
 
 #include <chrono>
@@ -14,57 +13,54 @@
 #include <functional>
 
 namespace crimson {
-  using std::chrono::duration_cast;
-  using std::chrono::milliseconds;
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
 
-  // runs a given simple function object waiting wait_period
-  // milliseconds between; the destructor stops the other thread
-  // immediately
-  class RunEvery {
-    using Lock      = std::unique_lock<std::mutex>;
-    using Guard     = std::lock_guard<std::mutex>;
-    using TimePoint = std::chrono::steady_clock::time_point;
+    // runs a given simple function object waiting wait_period
+    // milliseconds between; the destructor stops the other thread
+    // immediately
+    class RunEvery {
+        using Lock = std::unique_lock < std::mutex >;
+        using Guard = std::lock_guard < std::mutex >;
+        using TimePoint = std::chrono::steady_clock::time_point;
 
-    bool                      finishing = false;
-    std::chrono::milliseconds wait_period;
-    std::function<void()>     body;
-    std::mutex                mtx;
-    std::condition_variable   cv;
+        bool finishing = false;
+         std::chrono::milliseconds wait_period;
+         std::function < void () > body;
+         std::mutex mtx;
+         std::condition_variable cv;
 
-    // put threads last so all other variables are initialized first
+        // put threads last so all other variables are initialized first
 
-    std::thread               thd;
+         std::thread thd;
 
-  public:
+      public:
 
 #ifdef ADD_MOVE_SEMANTICS
-    RunEvery();
+         RunEvery();
 #endif
 
-    template<typename D>
-    RunEvery(D                     _wait_period,
-	     std::function<void()> _body) :
-      wait_period(duration_cast<milliseconds>(_wait_period)),
-      body(_body)
-    {
-      thd = std::thread(&RunEvery::run, this);
-    }
-
-    RunEvery(const RunEvery& other) = delete;
-    RunEvery& operator=(const RunEvery& other) = delete;
-    RunEvery(RunEvery&& other) = delete;
+         template < typename D >
+            RunEvery(D _wait_period,
+                     std::function < void () >
+                     _body):wait_period(duration_cast < milliseconds >
+                                        (_wait_period)), body(_body) {
+            thd = std::thread(&RunEvery::run, this);
+        } RunEvery(const RunEvery & other) = delete;
+         RunEvery & operator=(const RunEvery & other) = delete;
+         RunEvery(RunEvery && other) = delete;
 #ifdef ADD_MOVE_SEMANTICS
-    RunEvery& operator=(RunEvery&& other);
+         RunEvery & operator=(RunEvery && other);
 #else
-    RunEvery& operator=(RunEvery&& other) = delete;
+         RunEvery & operator=(RunEvery && other) = delete;
 #endif
 
-    ~RunEvery();
+        ~RunEvery();
 
-    void join();
+        void join();
 
-  protected:
+      protected:
 
-    void run();
-  };
+        void run();
+    };
 }

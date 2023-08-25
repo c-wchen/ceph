@@ -21,25 +21,27 @@
 
 using namespace ceph;
 
-TEST(HeartbeatMap, Healthy) {
-  HeartbeatMap hm(g_ceph_context);
-  heartbeat_handle_d *h = hm.add_worker("one", pthread_self());
+TEST(HeartbeatMap, Healthy)
+{
+    HeartbeatMap hm(g_ceph_context);
+    heartbeat_handle_d *h = hm.add_worker("one", pthread_self());
 
-  hm.reset_timeout(h, 9, 18);
-  bool healthy = hm.is_healthy();
-  ASSERT_EQ(healthy, true);
+    hm.reset_timeout(h, 9, 18);
+    bool healthy = hm.is_healthy();
+    ASSERT_EQ(healthy, true);
 
-  hm.remove_worker(h);
+    hm.remove_worker(h);
 }
 
-TEST(HeartbeatMap, Unhealth) {
-  HeartbeatMap hm(g_ceph_context);
-  heartbeat_handle_d *h = hm.add_worker("one", pthread_self());
+TEST(HeartbeatMap, Unhealth)
+{
+    HeartbeatMap hm(g_ceph_context);
+    heartbeat_handle_d *h = hm.add_worker("one", pthread_self());
 
-  hm.reset_timeout(h, 1, 3);
-  sleep(2);
-  bool healthy = hm.is_healthy();
-  ASSERT_EQ(healthy, false);
+    hm.reset_timeout(h, 1, 3);
+    sleep(2);
+    bool healthy = hm.is_healthy();
+    ASSERT_EQ(healthy, false);
 
-  hm.remove_worker(h);
+    hm.remove_worker(h);
 }

@@ -12,50 +12,53 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-int main(int argc, char **argv) {
-  RGWACLXMLParser parser;
+int main(int argc, char **argv)
+{
+    RGWACLXMLParser parser;
 
-  if (!parser.init())
-    exit(1);
+    if (!parser.init())
+        exit(1);
 
-  char buf[1024];
+    char buf[1024];
 
-  for (;;) {
-    int done;
-    int len;
+    for (;;) {
+        int done;
+        int len;
 
-    len = fread(buf, 1, sizeof(buf), stdin);
-    if (ferror(stdin)) {
-      fprintf(stderr, "Read error\n");
-      exit(-1);
+        len = fread(buf, 1, sizeof(buf), stdin);
+        if (ferror(stdin)) {
+            fprintf(stderr, "Read error\n");
+            exit(-1);
+        }
+        done = feof(stdin);
+
+        parser.parse(buf, len, done);
+
+        if (done)
+            break;
     }
-    done = feof(stdin);
 
-    parser.parse(buf, len, done);
+    RGWAccessControlPolicy *policy =
+        (RGWAccessControlPolicy *) parser.find_first("AccessControlPolicy");
 
-    if (done)
-      break;
-  }
+    if (policy) {
+        string id =
+            "79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be";
+        dout(10) << hex << policy->get_perm(g_ceph_context, id,
+                                            RGW_PERM_ALL) << dec << dendl;
+        policy->to_xml(cout);
+    }
 
-  RGWAccessControlPolicy *policy = (RGWAccessControlPolicy *)parser.find_first("AccessControlPolicy");
+    cout << parser.get_xml() << endl;
 
-  if (policy) {
-    string id="79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be";
-    dout(10) << hex << policy->get_perm(g_ceph_context, id, RGW_PERM_ALL) << dec << dendl;
-    policy->to_xml(cout);
-  }
+    bufferlist bl;
+    policy->encode(bl);
 
-  cout << parser.get_xml() << endl;
+    RGWAccessControlPolicy newpol;
+    bufferlist::iterator iter = bl.begin();
+    newpol.decode(iter);
 
-  bufferlist bl;
-  policy->encode(bl);
+    newpol.to_xml(cout);
 
-  RGWAccessControlPolicy newpol;
-  bufferlist::iterator iter = bl.begin();
-  newpol.decode(iter);
-
-  newpol.to_xml(cout);
-
-  exit(0);
+    exit(0);
 }
-

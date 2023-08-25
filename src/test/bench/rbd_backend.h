@@ -7,24 +7,20 @@
 #include "include/Context.h"
 #include "include/rbd/librbd.hpp"
 
-class RBDBackend : public Backend {
-  map<string, ceph::shared_ptr<librbd::Image> > *m_images;
-public:
-  explicit RBDBackend(map<string, ceph::shared_ptr<librbd::Image> > *images)
-    : m_images(images) {}
-  void write(
-    const string &oid,
-    uint64_t offset,
-    const bufferlist &bl,
-    Context *on_applied,
-    Context *on_commit) override;
+class RBDBackend:public Backend {
+    map < string, ceph::shared_ptr < librbd::Image > >*m_images;
+  public:
+    explicit RBDBackend(map < string,
+                        ceph::shared_ptr < librbd::Image > >*images)
+    :m_images(images) {
+    } void write(const string & oid,
+                 uint64_t offset,
+                 const bufferlist & bl,
+                 Context * on_applied, Context * on_commit) override;
 
-  void read(
-    const string &oid,
-    uint64_t offset,
-    uint64_t length,
-    bufferlist *bl,
-    Context *on_complete) override;
+    void read(const string & oid,
+              uint64_t offset,
+              uint64_t length, bufferlist * bl, Context * on_complete) override;
 };
 
 #endif

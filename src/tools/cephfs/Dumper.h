@@ -14,7 +14,6 @@
 #ifndef JOURNAL_DUMPER_H_
 #define JOURNAL_DUMPER_H_
 
-
 #include "MDSUtility.h"
 
 class Journaler;
@@ -27,19 +26,17 @@ class Journaler;
  * of the file to dump to.
  */
 
-class Dumper : public MDSUtility {
-private:
-  mds_role_t role;
-  inodeno_t ino;
+class Dumper:public MDSUtility {
+  private:
+    mds_role_t role;
+    inodeno_t ino;
 
-public:
-  Dumper() : ino(-1)
-  {}
-
-  int init(mds_role_t role_);
-  int recover_journal(Journaler *journaler);
-  int dump(const char *dumpfile);
-  int undump(const char *dumpfile, bool force);
+  public:
+     Dumper():ino(-1) {
+    } int init(mds_role_t role_);
+    int recover_journal(Journaler * journaler);
+    int dump(const char *dumpfile);
+    int undump(const char *dumpfile, bool force);
 };
 
 #endif /* JOURNAL_DUMPER_H_ */

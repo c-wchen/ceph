@@ -98,5 +98,4 @@
     ctf_integer(uint64_t, field, (val) == NULL ? 0 : (uint64_t)(*val)) \
     ctf_integer(uint8_t, field##_isnull, (val) == NULL)
 
-
 #endif /* TRACING_COMMON_H */

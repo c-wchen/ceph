@@ -16,32 +16,27 @@
 #include <boost/function_types/result_type.hpp>
 #include <boost/function_types/parameter_types.hpp>
 
-template <typename F>
-struct signature_of_member
-{
-    typedef typename boost::function_types::result_type<F>::type result_type;
-    typedef typename boost::function_types::parameter_types<F>::type parameter_types;
-    typedef typename boost::mpl::pop_front<parameter_types>::type base;
-    typedef typename boost::mpl::push_front<base, result_type>::type L;
-    typedef typename boost::function_types::function_type<L>::type type;
+template < typename F > struct signature_of_member {
+    typedef typename boost::function_types::result_type < F >::type result_type;
+    typedef typename boost::function_types::parameter_types <
+        F >::type parameter_types;
+    typedef typename boost::mpl::pop_front < parameter_types >::type base;
+    typedef typename boost::mpl::push_front < base, result_type >::type L;
+    typedef typename boost::function_types::function_type < L >::type type;
 };
 
-template <typename F, bool is_class>
-struct signature_of_impl
-{
-    typedef typename boost::function_types::function_type<F>::type type;
+template < typename F, bool is_class > struct signature_of_impl {
+    typedef typename boost::function_types::function_type < F >::type type;
 };
 
-template <typename F>
-struct signature_of_impl<F, true>
-{
-    typedef typename signature_of_member<decltype(&F::operator())>::type type;
+template < typename F > struct signature_of_impl <F, true > {
+    typedef typename signature_of_member <
+        decltype(&F::operator()) >::type type;
 };
 
-template <typename F>
-struct signature_of
-{
-    typedef typename signature_of_impl<F, boost::is_class<F>::value>::type type;
+template < typename F > struct signature_of {
+    typedef typename signature_of_impl < F,
+        boost::is_class < F >::value >::type type;
 };
 
 #endif

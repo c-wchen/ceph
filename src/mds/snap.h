@@ -24,24 +24,23 @@
  * generic snap descriptor.
  */
 struct SnapInfo {
-  snapid_t snapid;
-  inodeno_t ino;
-  utime_t stamp;
-  string name;
+    snapid_t snapid;
+    inodeno_t ino;
+    utime_t stamp;
+    string name;
 
-  string long_name; ///< cached _$ino_$name
-  
-  void encode(bufferlist &bl) const;
-  void decode(bufferlist::iterator &bl);
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<SnapInfo*>& ls);
+    string long_name;           ///< cached _$ino_$name
 
-  boost::string_view get_long_name();
+    void encode(bufferlist & bl) const;
+    void decode(bufferlist::iterator & bl);
+    void dump(Formatter * f) const;
+    static void generate_test_instances(list < SnapInfo * >&ls);
+
+     boost::string_view get_long_name();
 };
 WRITE_CLASS_ENCODER(SnapInfo)
 
-ostream& operator<<(ostream& out, const SnapInfo &sn);
-
+    ostream & operator<<(ostream & out, const SnapInfo & sn);
 
 /*
  * SnapRealm - a subtree that shares the same set of snapshots.
@@ -50,45 +49,40 @@ struct SnapRealm;
 class CInode;
 class MDCache;
 
-
-
 #include "Capability.h"
 
 struct snaplink_t {
-  inodeno_t ino;
-  snapid_t first;
+    inodeno_t ino;
+    snapid_t first;
 
-  void encode(bufferlist &bl) const;
-  void decode(bufferlist::iterator &bl);
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<snaplink_t*>& ls);
+    void encode(bufferlist & bl) const;
+    void decode(bufferlist::iterator & bl);
+    void dump(Formatter * f) const;
+    static void generate_test_instances(list < snaplink_t * >&ls);
 };
 WRITE_CLASS_ENCODER(snaplink_t)
 
-ostream& operator<<(ostream& out, const snaplink_t &l);
-
+    ostream & operator<<(ostream & out, const snaplink_t & l);
 
 // carry data about a specific version of a SnapRealm
 struct sr_t {
-  snapid_t seq;                     // basically, a version/seq # for changes to _this_ realm.
-  snapid_t created;                 // when this realm was created.
-  snapid_t last_created;            // last snap created in _this_ realm.
-  snapid_t last_destroyed;          // seq for last removal
-  snapid_t current_parent_since;
-  map<snapid_t, SnapInfo> snaps;
-  map<snapid_t, snaplink_t> past_parents;  // key is "last" (or NOSNAP)
+    snapid_t seq;               // basically, a version/seq # for changes to _this_ realm.
+    snapid_t created;           // when this realm was created.
+    snapid_t last_created;      // last snap created in _this_ realm.
+    snapid_t last_destroyed;    // seq for last removal
+    snapid_t current_parent_since;
+    map < snapid_t, SnapInfo > snaps;
+    map < snapid_t, snaplink_t > past_parents;  // key is "last" (or NOSNAP)
 
-  sr_t()
-    : seq(0), created(0),
-      last_created(0), last_destroyed(0),
-      current_parent_since(1)
-  {}
-
-  void encode(bufferlist &bl) const;
-  void decode(bufferlist::iterator &bl);
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<sr_t*>& ls);
+    sr_t()
+    :seq(0), created(0),
+        last_created(0), last_destroyed(0), current_parent_since(1)
+{
+} void encode(bufferlist & bl) const;
+void decode(bufferlist::iterator & bl);
+void dump(Formatter * f) const;
+static void generate_test_instances(list < sr_t * >&ls);
 };
-WRITE_CLASS_ENCODER(sr_t)
 
+WRITE_CLASS_ENCODER(sr_t)
 #endif

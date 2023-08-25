@@ -23,34 +23,33 @@ class PerfCounters;
 class CInode;
 class CDentry;
 
-class StrayManager
-{
+class StrayManager {
   protected:
-  // Has passed through eval_stray and still has refs
-  elist<CDentry*> delayed_eval_stray;
+    // Has passed through eval_stray and still has refs
+    elist < CDentry * >delayed_eval_stray;
 
-  // strays that have been trimmed from cache
-  std::set<std::string> trimmed_strays;
+    // strays that have been trimmed from cache
+    std::set < std::string > trimmed_strays;
 
-  // Global references for doing I/O
-  MDSRank *mds;
-  PerfCounters *logger;
+    // Global references for doing I/O
+    MDSRank *mds;
+    PerfCounters *logger;
 
-  bool started;
+    bool started;
 
-  // Stray dentries for this rank (including those not in cache)
-  uint64_t num_strays;
+    // Stray dentries for this rank (including those not in cache)
+    uint64_t num_strays;
 
-  // Stray dentries
-  uint64_t num_strays_delayed;
+    // Stray dentries
+    uint64_t num_strays_delayed;
 
-  // Entries that have entered enqueue() but not been persistently
-  // recorded by PurgeQueue yet
-  uint64_t num_strays_enqueuing;
+    // Entries that have entered enqueue() but not been persistently
+    // recorded by PurgeQueue yet
+    uint64_t num_strays_enqueuing;
 
-  PurgeQueue &purge_queue;
+     PurgeQueue & purge_queue;
 
-  void truncate(CDentry *dn);
+    void truncate(CDentry * dn);
 
   /**
    * Purge a dentry from a stray directory.  This function
@@ -58,40 +57,38 @@ class StrayManager
    * throttling is also satisfied.  There is no going back
    * at this stage!
    */
-  void purge(CDentry *dn);
+    void purge(CDentry * dn);
 
   /**
    * Completion handler for a Filer::purge on a stray inode.
    */
-  void _purge_stray_purged(CDentry *dn, bool only_head);
+    void _purge_stray_purged(CDentry * dn, bool only_head);
 
-  void _purge_stray_logged(CDentry *dn, version_t pdv, LogSegment *ls);
+    void _purge_stray_logged(CDentry * dn, version_t pdv, LogSegment * ls);
 
   /**
    * Callback: we have logged the update to an inode's metadata
    * reflecting it's newly-zeroed length.
    */
-  void _truncate_stray_logged(CDentry *dn, LogSegment *ls);
+    void _truncate_stray_logged(CDentry * dn, LogSegment * ls);
 
-  friend class StrayManagerIOContext;
-  friend class StrayManagerLogContext;
-  friend class StrayManagerContext;
+    friend class StrayManagerIOContext;
+    friend class StrayManagerLogContext;
+    friend class StrayManagerContext;
 
-  friend class C_StraysFetched;
-  friend class C_OpenSnapParents;
-  friend class C_PurgeStrayLogged;
-  friend class C_TruncateStrayLogged;
-  friend class C_IO_PurgeStrayPurged;
+    friend class C_StraysFetched;
+    friend class C_OpenSnapParents;
+    friend class C_PurgeStrayLogged;
+    friend class C_TruncateStrayLogged;
+    friend class C_IO_PurgeStrayPurged;
 
+    // Call this on a dentry that has been identified as
+    // elegible for purging.  It will be passed on to PurgeQueue.
+    void enqueue(CDentry * dn, bool trunc);
 
-  // Call this on a dentry that has been identified as
-  // elegible for purging.  It will be passed on to PurgeQueue.
-  void enqueue(CDentry *dn, bool trunc);
-
-  // Final part of enqueue() which we may have to retry
-  // after opening snap parents.
-  void _enqueue(CDentry *dn, bool trunc);
-
+    // Final part of enqueue() which we may have to retry
+    // after opening snap parents.
+    void _enqueue(CDentry * dn, bool trunc);
 
   /**
    * When hard links exist to an inode whose primary dentry
@@ -102,7 +99,7 @@ class StrayManager
    * dentry) by issuing a rename from the stray to the other
    * dentry.
    */
-  void reintegrate_stray(CDentry *dn, CDentry *rlink);
+    void reintegrate_stray(CDentry * dn, CDentry * rlink);
 
   /**
    * Evaluate a stray dentry for purging or reintegration.
@@ -117,21 +114,23 @@ class StrayManager
    * @returns true if the dentry will be purged (caller should never
    *          take more refs after this happens), else false.
    */
-  bool _eval_stray(CDentry *dn, bool delay=false);
+    bool _eval_stray(CDentry * dn, bool delay = false);
 
-  void _eval_stray_remote(CDentry *stray_dn, CDentry *remote_dn);
+    void _eval_stray_remote(CDentry * stray_dn, CDentry * remote_dn);
 
-  // My public interface is for consumption by MDCache
+    // My public interface is for consumption by MDCache
   public:
-  explicit StrayManager(MDSRank *mds, PurgeQueue &purge_queue_);
-  void set_logger(PerfCounters *l) {logger = l;}
-  void activate();
+     explicit StrayManager(MDSRank * mds, PurgeQueue & purge_queue_);
+    void set_logger(PerfCounters * l) {
+        logger = l;
+    } void activate();
 
-  bool eval_stray(CDentry *dn, bool delay=false);
+    bool eval_stray(CDentry * dn, bool delay = false);
 
-  void set_num_strays(uint64_t num);
-  uint64_t get_num_strays() const { return num_strays; }
-
+    void set_num_strays(uint64_t num);
+    uint64_t get_num_strays() const {
+        return num_strays;
+    }
   /**
    * Where eval_stray was previously invoked with delay=true, call
    * eval_stray again for any dentries that were put on the
@@ -142,8 +141,7 @@ class StrayManager
    * this function later during trim in order to do the final
    * evaluation (and resulting actions) while not in the middle of another
    * metadata operation.
-   */
-  void advance_delayed();
+   */ void advance_delayed();
 
   /**
    * Remote dentry potentially points to a stray. When it is touched,
@@ -158,7 +156,7 @@ class StrayManager
    *                  as a hint for which remote to reintegrate into
    *                  if there are multiple remotes.
    */
-  void eval_remote(CDentry *remote_dn);
+    void eval_remote(CDentry * remote_dn);
 
   /**
    * Given a dentry within one of my stray directories,
@@ -176,7 +174,7 @@ class StrayManager
    * on completion of mv (i.e. inode put), resulting in a subsequent
    * reintegration.
    */
-  void migrate_stray(CDentry *dn, mds_rank_t dest);
+    void migrate_stray(CDentry * dn, mds_rank_t dest);
 
   /**
    * Update stats to reflect a newly created stray dentry.  Needed
@@ -185,7 +183,7 @@ class StrayManager
    * loading a stray from a dirfrag and migrating a stray from
    * another MDS, in addition to creations per-se.
    */
-  void notify_stray_created();
+    void notify_stray_created();
 
   /**
    * Update stats to reflect a removed stray dentry.  Needed because
@@ -193,7 +191,7 @@ class StrayManager
    * MDCache.  Also includes migration (rename) of strays from
    * this MDS to another MDS.
    */
-  void notify_stray_removed();
+    void notify_stray_removed();
 };
 
-#endif  // STRAY_MANAGER_H
+#endif // STRAY_MANAGER_H

@@ -5,13 +5,11 @@
  * Copyright (C) 2016 Red Hat Inc.
  */
 
-
 #pragma once
-
 
 #include <signal.h>
 
-
-inline void debugger() {
+inline void debugger()
+{
     raise(SIGCONT);
 }

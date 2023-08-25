@@ -24,62 +24,62 @@
  * For example, mds.0 is the name of the first metadata server.
  * client
  */
-struct EntityName
-{
-  EntityName();
+struct EntityName {
+    EntityName();
 
-  void encode(bufferlist& bl) const {
-    ::encode(type, bl);
-    ::encode(id, bl);
-  }
-  void decode(bufferlist::iterator& bl) {
-    uint32_t type_;
-    std::string id_;
-    ::decode(type_, bl);
-    ::decode(id_, bl);
-    set(type_, id_);
-  }
+    void encode(bufferlist & bl) const {
+        ::encode(type, bl);
+        ::encode(id, bl);
+    } void decode(bufferlist::iterator & bl) {
+        uint32_t type_;
+         std::string id_;
+        ::decode(type_, bl);
+        ::decode(id_, bl);
+         set(type_, id_);
+    } const std::string & to_str() const;
+    const char *to_cstr() const;
+    bool from_str(const std::string & s);
+    void set(uint32_t type_, const std::string & id_);
+    int set(const std::string & type_, const std::string & id_);
+    void set_type(uint32_t type_);
+    int set_type(const char *type);
+    void set_id(const std::string & id_);
+    void set_name(entity_name_t n);
 
-  const std::string& to_str() const;
-  const char *to_cstr() const;
-  bool from_str(const std::string& s);
-  void set(uint32_t type_, const std::string &id_);
-  int set(const std::string &type_, const std::string &id_);
-  void set_type(uint32_t type_);
-  int set_type(const char *type);
-  void set_id(const std::string &id_);
-  void set_name(entity_name_t n);
+    const char *get_type_str() const;
 
-  const char* get_type_str() const;
+    uint32_t get_type() const {
+        return type;
+    } bool is_osd() const {
+        return get_type() == CEPH_ENTITY_TYPE_OSD;
+    } bool is_mgr() const {
+        return get_type() == CEPH_ENTITY_TYPE_MGR;
+    } bool is_mds() const {
+        return get_type() == CEPH_ENTITY_TYPE_MDS;
+    } bool is_client() const {
+        return get_type() == CEPH_ENTITY_TYPE_CLIENT;
+    } bool is_mon() const {
+        return get_type() == CEPH_ENTITY_TYPE_MON;
+    } const char *get_type_name() const;
+    const std::string & get_id() const;
+    bool has_default_id() const;
 
-  uint32_t get_type() const { return type; }
-  bool is_osd() const { return get_type() == CEPH_ENTITY_TYPE_OSD; }
-  bool is_mgr() const { return get_type() == CEPH_ENTITY_TYPE_MGR; }
-  bool is_mds() const { return get_type() == CEPH_ENTITY_TYPE_MDS; }
-  bool is_client() const { return get_type() == CEPH_ENTITY_TYPE_CLIENT; }
-  bool is_mon() const { return get_type() == CEPH_ENTITY_TYPE_MON; }
+    static std::string get_valid_types_as_str();
 
-  const char * get_type_name() const;
-  const std::string &get_id() const;
-  bool has_default_id() const;
+    friend bool operator<(const EntityName & a, const EntityName & b);
+    friend std::ostream & operator<<(std::ostream & out, const EntityName & n);
+    friend bool operator==(const EntityName & a, const EntityName & b);
+    friend bool operator!=(const EntityName & a, const EntityName & b);
 
-  static std::string get_valid_types_as_str();
-
-  friend bool operator<(const EntityName& a, const EntityName& b);
-  friend std::ostream& operator<<(std::ostream& out, const EntityName& n);
-  friend bool operator==(const EntityName& a, const EntityName& b);
-  friend bool operator!=(const EntityName& a, const EntityName& b);
-
-private:
-  uint32_t type;
-  std::string id;
-  std::string type_id;
+  private:
+    uint32_t type;
+    std::string id;
+    std::string type_id;
 };
 
-uint32_t str_to_ceph_entity_type(const char * str);
+uint32_t str_to_ceph_entity_type(const char *str);
 
 WRITE_CLASS_ENCODER(EntityName)
 
-WRITE_EQ_OPERATORS_2(EntityName, type, id)
-
+    WRITE_EQ_OPERATORS_2(EntityName, type, id)
 #endif

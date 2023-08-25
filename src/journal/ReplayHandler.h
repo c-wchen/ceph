@@ -6,16 +6,15 @@
 
 namespace journal {
 
-struct ReplayHandler  {
-  virtual ~ReplayHandler() {}
+    struct ReplayHandler {
+        virtual ~ ReplayHandler() {
+        } virtual void get() = 0;
+        virtual void put() = 0;
 
-  virtual void get() = 0;
-  virtual void put() = 0;
+        virtual void handle_entries_available() = 0;
+        virtual void handle_complete(int r) = 0;
+    };
 
-  virtual void handle_entries_available() = 0;
-  virtual void handle_complete(int r) = 0;
-};
-
-} // namespace journal
+}                               // namespace journal
 
 #endif // CEPH_JOURNAL_REPLAY_HANDLER_H

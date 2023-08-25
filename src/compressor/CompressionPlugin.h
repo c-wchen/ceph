@@ -26,21 +26,18 @@
 
 namespace ceph {
 
-  class CompressionPlugin :  public Plugin {
-  public:
-    CompressorRef compressor;
+    class CompressionPlugin:public Plugin {
+      public:
+        CompressorRef compressor;
 
-    explicit CompressionPlugin(CephContext *cct) : Plugin(cct),
-                                          compressor(0) 
-    {}
-    
-    ~CompressionPlugin() override {}
+        explicit CompressionPlugin(CephContext * cct):Plugin(cct), compressor(0) {
+        } ~CompressionPlugin() override {
+        } virtual int factory(CompressorRef * cs, std::ostream * ss) = 0;
 
-    virtual int factory(CompressorRef *cs,
-			                  std::ostream *ss) = 0;
-
-    virtual const char* name() {return "CompressionPlugin";}
-  };
+        virtual const char *name() {
+            return "CompressionPlugin";
+        }
+    };
 
 }
 

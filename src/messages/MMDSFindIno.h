@@ -18,27 +18,28 @@
 #include "msg/Message.h"
 #include "include/filepath.h"
 
-struct MMDSFindIno : public Message {
-  ceph_tid_t tid;
-  inodeno_t ino;
+struct MMDSFindIno:public Message {
+    ceph_tid_t tid;
+    inodeno_t ino;
 
-  MMDSFindIno() : Message(MSG_MDS_FINDINO) {}
-  MMDSFindIno(ceph_tid_t t, inodeno_t i) : Message(MSG_MDS_FINDINO), tid(t), ino(i) {}
+     MMDSFindIno():Message(MSG_MDS_FINDINO) {
+    } MMDSFindIno(ceph_tid_t t, inodeno_t i):Message(MSG_MDS_FINDINO), tid(t),
+        ino(i) {
+    }
 
-  const char *get_type_name() const override { return "findino"; }
-  void print(ostream &out) const override {
-    out << "findino(" << tid << " " << ino << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(tid, payload);
-    ::encode(ino, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(tid, p);
-    ::decode(ino, p);
-  }
+    const char *get_type_name() const override {
+        return "findino";
+    } void print(ostream & out) const override {
+        out << "findino(" << tid << " " << ino << ")";
+    } void encode_payload(uint64_t features) override {
+        ::encode(tid, payload);
+        ::encode(ino, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(tid, p);
+        ::decode(ino, p);
+    }
 };
 
 #endif

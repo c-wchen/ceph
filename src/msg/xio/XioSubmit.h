@@ -24,35 +24,27 @@ extern "C" {
 #include "XioConnection.h"
 #include "msg/msg_types.h"
 #include "XioPool.h"
-
 namespace bi = boost::intrusive;
 
 class XioConnection;
 
-struct XioSubmit
-{
-public:
-  enum submit_type
-  {
-    OUTGOING_MSG,
-    INCOMING_MSG_RELEASE
-  };
-  enum submit_type type;
-  bi::list_member_hook<> submit_list;
-  XioConnection *xcon;
-  ZTracer::Trace trace;
+struct XioSubmit {
+  public:
+    enum submit_type {
+        OUTGOING_MSG,
+        INCOMING_MSG_RELEASE
+    };
+    enum submit_type type;
+    bi::list_member_hook <> submit_list;
+    XioConnection *xcon;
+    ZTracer::Trace trace;
 
-  XioSubmit(enum submit_type _type, XioConnection *_xcon) :
-    type(_type), xcon(_xcon)
-    {}
-
-  typedef bi::list< XioSubmit,
-		    bi::member_hook< XioSubmit,
-				     bi::list_member_hook<>,
-				     &XioSubmit::submit_list >
-		    > Queue;
-  virtual ~XioSubmit(){
-  }
+    XioSubmit(enum submit_type _type, XioConnection * _xcon):type(_type),
+        xcon(_xcon) {
+    } typedef bi::list < XioSubmit, bi::member_hook < XioSubmit,
+        bi::list_member_hook <>, &XioSubmit::submit_list > >Queue;
+    virtual ~ XioSubmit() {
+    }
 };
 
 #endif /* XIO_SUBMIT_H */

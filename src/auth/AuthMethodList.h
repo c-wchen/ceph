@@ -24,19 +24,16 @@
 class CephContext;
 
 class AuthMethodList {
-  std::list<__u32> auth_supported;
-public:
-  AuthMethodList(CephContext *cct, std::string str);
+    std::list < __u32 > auth_supported;
+  public:
+    AuthMethodList(CephContext * cct, std::string str);
 
-  bool is_supported_auth(int auth_type);
-  int pick(const std::set<__u32>& supported);
+    bool is_supported_auth(int auth_type);
+    int pick(const std::set < __u32 > &supported);
 
-  const std::list<__u32>& get_supported_set() const {
-    return auth_supported;
-  }
-
-  void remove_supported_auth(int auth_type);
+    const std::list < __u32 > &get_supported_set() const {
+        return auth_supported;
+    } void remove_supported_auth(int auth_type);
 };
-
 
 #endif

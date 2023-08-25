@@ -43,209 +43,207 @@
 // and lw_enable_shared_from_this<>().
 //
 
-template< class T >
-using remove_const_t = typename remove_const<T>::type;
+template < class T > using remove_const_t = typename remove_const < T >::type;
 
-template <typename T>
-class lw_shared_ptr;
+template < typename T > class lw_shared_ptr;
 
-template <typename T, typename... A>
-lw_shared_ptr<T> make_lw_shared(A&&... a);
+template < typename T, typename ... A >
+    lw_shared_ptr < T > make_lw_shared(A && ... a);
 
-template <typename T>
-lw_shared_ptr<T> make_lw_shared(T&& a);
+template < typename T > lw_shared_ptr < T > make_lw_shared(T && a);
 
-template <typename T>
-lw_shared_ptr<T> make_lw_shared(T& a);
+template < typename T > lw_shared_ptr < T > make_lw_shared(T & a);
 
 // CRTP from this to enable shared_from_this:
-template <typename T>
-class enable_lw_shared_from_this {
-  long _count = 0;
-  using ctor = T;
-  T* to_value() { return static_cast<T*>(this); }
-  T* to_internal_object() { return static_cast<T*>(this); }
- protected:
-  enable_lw_shared_from_this() noexcept {}
-  enable_lw_shared_from_this(enable_lw_shared_from_this&&) noexcept {}
-  enable_lw_shared_from_this(const enable_lw_shared_from_this&) noexcept {}
-  enable_lw_shared_from_this& operator=(const enable_lw_shared_from_this&) noexcept { return *this; }
-  enable_lw_shared_from_this& operator=(enable_lw_shared_from_this&&) noexcept { return *this; }
- public:
-  lw_shared_ptr<T> shared_from_this();
-  lw_shared_ptr<const T> shared_from_this() const;
-  template <typename X>
-  friend class lw_shared_ptr;
+template < typename T > class enable_lw_shared_from_this {
+    long _count = 0;
+    using ctor = T;
+    T *to_value() {
+        return static_cast < T * >(this);
+    }
+    T *to_internal_object() {
+        return static_cast < T * >(this);
+    }
+  protected:
+    enable_lw_shared_from_this()noexcept {
+    }
+    enable_lw_shared_from_this(enable_lw_shared_from_this &&) noexcept {
+    }
+    enable_lw_shared_from_this(const enable_lw_shared_from_this &)noexcept {
+    }
+    enable_lw_shared_from_this & operator=(const enable_lw_shared_from_this &)
+        noexcept {
+        return *this;
+    }
+    enable_lw_shared_from_this & operator=(enable_lw_shared_from_this
+                                           &&) noexcept {
+        return *this;
+    }
+  public:
+    lw_shared_ptr < T > shared_from_this();
+    lw_shared_ptr < const T > shared_from_this() const;
+    template < typename X > friend class lw_shared_ptr;
 };
 
-template <typename T>
-struct shared_ptr_no_esft {
-  T _value;
-  using ctor = shared_ptr_no_esft;
+template < typename T > struct shared_ptr_no_esft {
+    T _value;
+    using ctor = shared_ptr_no_esft;
 
-  T* to_value() { return &_value; }
-  shared_ptr_no_esft* to_internal_object() { return this; }
-  shared_ptr_no_esft() = default;
-  shared_ptr_no_esft(const T& x) : _value(x) {}
-  shared_ptr_no_esft(T&& x) : _value(std::move(x)) {}
-  template <typename... A>
-  shared_ptr_no_esft(A&&... a) : _value(std::forward<A>(a)...) {}
-  template <typename X>
-  friend class lw_shared_ptr;
+    T *to_value() {
+        return &_value;
+    } shared_ptr_no_esft *to_internal_object() {
+        return this;
+    }
+    shared_ptr_no_esft() = default;
+    shared_ptr_no_esft(const T & x):_value(x) {
+    }
+  shared_ptr_no_esft(T && x):_value(std::move(x)) {
+    }
+  template < typename ... A > shared_ptr_no_esft(A && ... a):_value(std::forward < A >
+           (a) ...)
+    {
+    }
+    template < typename X > friend class lw_shared_ptr;
 };
 
-template <typename T>
-using shared_ptr_impl = typename std::conditional<
-        std::is_base_of<enable_lw_shared_from_this<remove_const_t<T>>, T>::value,
-        enable_lw_shared_from_this<remove_const_t<T>>,
-        shared_ptr_no_esft<remove_const_t<T>> >::type;
+template < typename T >
+    using shared_ptr_impl = typename std::conditional <
+    std::is_base_of < enable_lw_shared_from_this < remove_const_t < T >>,
+    T >::value, enable_lw_shared_from_this < remove_const_t < T >>,
+    shared_ptr_no_esft < remove_const_t < T >> >::type;
 
-template <typename T>
-class lw_shared_ptr {
-  mutable shared_ptr_impl<T>* _p = nullptr;
- private:
-  lw_shared_ptr(shared_ptr_impl<T>* p) noexcept : _p(p) {
-    if (_p) {
-      ++_p->_count;
+template < typename T > class lw_shared_ptr {
+    mutable shared_ptr_impl < T > *_p = nullptr;
+  private:
+  lw_shared_ptr(shared_ptr_impl < T > *p) noexcept:_p(p) {
+        if (_p) {
+            ++_p->_count;
+        }
     }
-  }
-  template <typename... A>
-  static lw_shared_ptr make(A&&... a) {
-      return lw_shared_ptr(new typename shared_ptr_impl<T>::ctor(std::forward<A>(a)...));
-  }
- public:
-  using element_type = T;
-
-  lw_shared_ptr() noexcept = default;
-  lw_shared_ptr(std::nullptr_t) noexcept : lw_shared_ptr() {}
-  lw_shared_ptr(const lw_shared_ptr& x) noexcept : _p(x._p) {
-    if (_p) {
-      ++_p->_count;
+    template < typename ... A > static lw_shared_ptr make(A && ... a) {
+        return lw_shared_ptr(new typename shared_ptr_impl <
+                             T >::ctor(std::forward < A > (a) ...));
     }
-  }
-  lw_shared_ptr(lw_shared_ptr&& x) noexcept  : _p(x._p) {
-      x._p = nullptr;
-  }
-  [[gnu::always_inline]]
-  ~lw_shared_ptr() {
-    if (_p && !--_p->_count) {
-      delete _p->to_internal_object();
+  public:
+    using element_type = T;
+
+    lw_shared_ptr()noexcept = default;
+  lw_shared_ptr(std::nullptr_t) noexcept:lw_shared_ptr() {
     }
-  }
-  lw_shared_ptr& operator=(const lw_shared_ptr& x) noexcept {
-      if (_p != x._p) {
-          this->~lw_shared_ptr();
-          new (this) lw_shared_ptr(x);
-      }
-      return *this;
-  }
-  lw_shared_ptr& operator=(lw_shared_ptr&& x) noexcept {
-      if (_p != x._p) {
-          this->~lw_shared_ptr();
-          new (this) lw_shared_ptr(std::move(x));
-      }
-      return *this;
-  }
-  lw_shared_ptr& operator=(std::nullptr_t) noexcept {
-      return *this = lw_shared_ptr();
-  }
-  lw_shared_ptr& operator=(T&& x) noexcept {
-      this->~lw_shared_ptr();
-      new (this) lw_shared_ptr(make_lw_shared<T>(std::move(x)));
-      return *this;
-  }
-
-  T& operator*() const noexcept { return *_p->to_value(); }
-  T* operator->() const noexcept { return _p->to_value(); }
-  T* get() const noexcept { return _p->to_value(); }
-
-  long int use_count() const noexcept {
-    if (_p) {
-      return _p->_count;
-    } else {
-      return 0;
+    lw_shared_ptr(const lw_shared_ptr & x) noexcept:_p(x._p) {
+        if (_p) {
+            ++_p->_count;
+        }
     }
-  }
+  lw_shared_ptr(lw_shared_ptr && x) noexcept:_p(x._p) {
+        x._p = nullptr;
+    }
+    [[gnu::always_inline]]
+        ~ lw_shared_ptr() {
+        if (_p && !--_p->_count) {
+            delete _p->to_internal_object();
+        }
+    }
+    lw_shared_ptr & operator=(const lw_shared_ptr & x) noexcept {
+        if (_p != x._p) {
+            this->~lw_shared_ptr();
+            new(this) lw_shared_ptr(x);
+        }
+        return *this;
+    }
+    lw_shared_ptr & operator=(lw_shared_ptr && x) noexcept {
+        if (_p != x._p) {
+            this->~lw_shared_ptr();
+            new(this) lw_shared_ptr(std::move(x));
+        }
+        return *this;
+    }
+    lw_shared_ptr & operator=(std::nullptr_t) noexcept {
+        return *this = lw_shared_ptr();
+    }
+    lw_shared_ptr & operator=(T && x) noexcept {
+        this->~lw_shared_ptr();
+        new(this) lw_shared_ptr(make_lw_shared < T > (std::move(x)));
+        return *this;
+    }
 
-  operator lw_shared_ptr<const T>() const noexcept {
-      return lw_shared_ptr<const T>(_p);
-  }
+    T & operator*()const noexcept {
+        return *_p->to_value();
+    } T *operator->() const noexcept {
+        return _p->to_value();
+    } T *get() const noexcept {
+        return _p->to_value();
+    } long int use_count() const noexcept {
+        if (_p) {
+            return _p->_count;
+        }
+        else {
+            return 0;
+        }
+    }
 
-  explicit operator bool() const noexcept {
-      return _p;
-  }
+    operator  lw_shared_ptr < const T > () const noexcept {
+        return lw_shared_ptr < const T > (_p);
+    } explicit operator  bool() const noexcept {
+        return _p;
+    } bool owned() const noexcept {
+        return _p->_count == 1;
+    } bool operator==(const lw_shared_ptr < const T > &x)const {
+        return _p == x._p;
+    } bool operator!=(const lw_shared_ptr < const T > &x)const {
+        return !operator==(x);
+    } bool operator==(const lw_shared_ptr < remove_const_t < T >> &x)const {
+        return _p == x._p;
+    } bool operator!=(const lw_shared_ptr < remove_const_t < T >> &x)const {
+        return !operator==(x);
+    } template < typename U > friend class lw_shared_ptr;
 
-  bool owned() const noexcept {
-    return _p->_count == 1;
-  }
+    template < typename X, typename ... A >
+        friend lw_shared_ptr < X > make_lw_shared(A && ...);
 
-  bool operator==(const lw_shared_ptr<const T>& x) const {
-      return _p == x._p;
-  }
+    template < typename U > friend lw_shared_ptr < U > make_lw_shared(U &&);
 
-  bool operator!=(const lw_shared_ptr<const T>& x) const {
-      return !operator==(x);
-  }
+    template < typename U > friend lw_shared_ptr < U > make_lw_shared(U &);
 
-  bool operator==(const lw_shared_ptr<remove_const_t<T>>& x) const {
-      return _p == x._p;
-  }
-
-  bool operator!=(const lw_shared_ptr<remove_const_t<T>>& x) const {
-      return !operator==(x);
-  }
-
-  template <typename U>
-  friend class lw_shared_ptr;
-
-  template <typename X, typename... A>
-  friend lw_shared_ptr<X> make_lw_shared(A&&...);
-
-  template <typename U>
-  friend lw_shared_ptr<U> make_lw_shared(U&&);
-
-  template <typename U>
-  friend lw_shared_ptr<U> make_lw_shared(U&);
-
-  template <typename U>
-  friend class enable_lw_shared_from_this;
+    template < typename U > friend class enable_lw_shared_from_this;
 };
 
-template <typename T, typename... A>
-inline
-lw_shared_ptr<T> make_lw_shared(A&&... a) {
-    return lw_shared_ptr<T>::make(std::forward<A>(a)...);
+template < typename T, typename ... A >
+    inline lw_shared_ptr < T > make_lw_shared(A && ... a)
+{
+    return lw_shared_ptr < T >::make(std::forward < A > (a) ...);
 }
 
-template <typename T>
-inline
-lw_shared_ptr<T> make_lw_shared(T&& a) {
-    return lw_shared_ptr<T>::make(std::move(a));
+template < typename T > inline lw_shared_ptr < T > make_lw_shared(T && a)
+{
+    return lw_shared_ptr < T >::make(std::move(a));
 }
 
-template <typename T>
-inline
-lw_shared_ptr<T> make_lw_shared(T& a) {
-    return lw_shared_ptr<T>::make(a);
+template < typename T > inline lw_shared_ptr < T > make_lw_shared(T & a)
+{
+    return lw_shared_ptr < T >::make(a);
 }
 
-template <typename T>
-inline
-lw_shared_ptr<T>
-enable_lw_shared_from_this<T>::shared_from_this() {
-    return lw_shared_ptr<T>(this);
+template < typename T >
+    inline
+    lw_shared_ptr < T > enable_lw_shared_from_this < T >::shared_from_this()
+{
+    return lw_shared_ptr < T > (this);
 }
 
-template <typename T>
-inline
-lw_shared_ptr<const T>
-enable_lw_shared_from_this<T>::shared_from_this() const {
-    return lw_shared_ptr<const T>(const_cast<enable_lw_shared_from_this*>(this));
+template < typename T >
+    inline
+    lw_shared_ptr < const T >
+    enable_lw_shared_from_this < T >::shared_from_this() const const
+{
+    return lw_shared_ptr < const T > (const_cast <
+                                      enable_lw_shared_from_this * >(this));
 }
 
-template <typename T>
-static inline
-std::ostream& operator<<(std::ostream& out, const lw_shared_ptr<T>& p) {
+template < typename T >
+    static inline
+    std::ostream & operator<<(std::ostream & out, const lw_shared_ptr < T > &p)
+{
     if (!p) {
         return out << "null";
     }
@@ -254,13 +252,10 @@ std::ostream& operator<<(std::ostream& out, const lw_shared_ptr<T>& p) {
 
 namespace std {
 
-  template <typename T>
-  struct hash<lw_shared_ptr<T>> : private hash<T*> {
-    size_t operator()(const lw_shared_ptr<T>& p) const {
-        return hash<T*>::operator()(p.get());
-    }
-  };
+    template < typename T > struct hash <lw_shared_ptr < T >>:private hash < T * > {
+        size_t operator() (const lw_shared_ptr < T > &p)const {
+            return hash < T * >::operator() (p.get());
+    }};
 
 }
-
-#endif /* CEPH_LW_SHARED_PTR_H_ */
+#endif                          /* CEPH_LW_SHARED_PTR_H_ */

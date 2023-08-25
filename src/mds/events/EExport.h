@@ -23,36 +23,38 @@
 #include "EMetaBlob.h"
 #include "../LogEvent.h"
 
-class EExport : public LogEvent {
-public:
-  EMetaBlob metablob; // exported dir
-protected:
-  dirfrag_t      base;
-  set<dirfrag_t> bounds;
-  mds_rank_t target;
-  
-public:
-  EExport() :
-    LogEvent(EVENT_EXPORT), target(MDS_RANK_NONE) { }
-  EExport(MDLog *mdlog, CDir *dir, mds_rank_t t) :
-    LogEvent(EVENT_EXPORT), metablob(mdlog),
-    base(dir->dirfrag()), target(t) { }
-  
-  set<dirfrag_t> &get_bounds() { return bounds; }
-  
-  void print(ostream& out) const override {
-    out << "EExport " << base << " to mds." << target << " " << metablob;
-  }
+class EExport:public LogEvent {
+  public:
+    EMetaBlob metablob;         // exported dir
+  protected:
+    dirfrag_t base;
+    set < dirfrag_t > bounds;
+    mds_rank_t target;
 
-  EMetaBlob *get_metablob() override { return &metablob; }
+  public:
+     EExport(): LogEvent(EVENT_EXPORT), target(MDS_RANK_NONE) {
+    } EExport(MDLog * mdlog, CDir * dir, mds_rank_t t):
+        LogEvent(EVENT_EXPORT), metablob(mdlog),
+        base(dir->dirfrag()), target(t) {
+    }
 
-  void encode(bufferlist& bl, uint64_t features) const override;
-  void decode(bufferlist::iterator &bl) override;
-  void dump(Formatter *f) const override;
-  static void generate_test_instances(list<EExport*>& ls);
-  void replay(MDSRank *mds) override;
+    set < dirfrag_t > &get_bounds() {
+        return bounds;
+    }
+
+    void print(ostream & out) const override {
+        out << "EExport " << base << " to mds." << target << " " << metablob;
+    } EMetaBlob *get_metablob() override {
+        return &metablob;
+    }
+
+    void encode(bufferlist & bl, uint64_t features) const override;
+    void decode(bufferlist::iterator & bl) override;
+    void dump(Formatter * f) const override;
+    static void generate_test_instances(list < EExport * >&ls);
+    void replay(MDSRank * mds) override;
 
 };
-WRITE_CLASS_ENCODER_FEATURES(EExport)
 
+WRITE_CLASS_ENCODER_FEATURES(EExport)
 #endif

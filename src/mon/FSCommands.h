@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef FS_COMMANDS_H_
 #define FS_COMMANDS_H_
 
@@ -24,10 +23,9 @@
 #include <string>
 #include <sstream>
 
-class FileSystemCommandHandler
-{
-protected:
-  std::string prefix;
+class FileSystemCommandHandler {
+  protected:
+    std::string prefix;
 
   /**
    * Parse true|yes|1 style boolean string from `bool_str`
@@ -36,10 +34,8 @@ protected:
    *
    * @return 0 on success, else -EINVAL
    */
-  int parse_bool(
-      const std::string &bool_str,
-      bool *result,
-      std::ostream &ss);
+    int parse_bool(const std::string & bool_str,
+                   bool * result, std::ostream & ss);
 
   /**
    * Return 0 if the pool is suitable for use with CephFS, or
@@ -48,40 +44,36 @@ protected:
    *
    * @param metadata whether the pool will be for metadata (stricter checks)
    */
-  int _check_pool(
-      OSDMap &osd_map,
-      const int64_t pool_id,
-      bool metadata,
-      bool force,
-      std::stringstream *ss) const;
+    int _check_pool(OSDMap & osd_map,
+                    const int64_t pool_id,
+                    bool metadata, bool force, std::stringstream * ss) const;
 
-  virtual std::string const &get_prefix() {return prefix;}
+    virtual std::string const &get_prefix() {
+        return prefix;
+  } public:
+     FileSystemCommandHandler(const std::string & prefix_)
+    :prefix(prefix_) {
+    }
 
-public:
-  FileSystemCommandHandler(const std::string &prefix_)
-    : prefix(prefix_)
-  {}
+    virtual ~ FileSystemCommandHandler() {
+    }
 
-  virtual ~FileSystemCommandHandler()
-  {}
+    bool can_handle(std::string const &prefix_) {
+        return get_prefix() == prefix_;
+    }
 
-  bool can_handle(std::string const &prefix_)
-  {
-    return get_prefix() == prefix_;
-  }
+    static std::list < std::shared_ptr < FileSystemCommandHandler >
+        >load(Paxos * paxos);
 
-  static std::list<std::shared_ptr<FileSystemCommandHandler> > load(Paxos *paxos);
+    virtual bool batched_propose() {
+        return false;
+    }
 
-  virtual bool batched_propose() {
-    return false;
-  }
-
-  virtual int handle(
-    Monitor *mon,
-    FSMap &fsmap,
-    MonOpRequestRef op,
-    map<string, cmd_vartype> &cmdmap,
-    std::stringstream &ss) = 0;
+    virtual int handle(Monitor * mon,
+                       FSMap & fsmap,
+                       MonOpRequestRef op,
+                       map < string, cmd_vartype > &cmdmap,
+                       std::stringstream & ss) = 0;
 };
 
 #endif

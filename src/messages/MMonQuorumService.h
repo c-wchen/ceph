@@ -16,57 +16,50 @@
 
 #include "msg/Message.h"
 
-struct MMonQuorumService : public Message
-{
-  epoch_t epoch;
-  version_t round;
+struct MMonQuorumService:public Message {
+    epoch_t epoch;
+    version_t round;
 
-  MMonQuorumService(int type, int head=1, int compat=1) :
-    Message(type, head, compat),
-    epoch(0),
-    round(0)
-  { }
+   MMonQuorumService(int type, int head = 1, int compat = 1):
+    Message(type, head, compat), epoch(0), round(0) {
+  } protected:
+    ~MMonQuorumService() override {
+    }
 
-protected:
-  ~MMonQuorumService() override { }
+  public:
 
-public:
+    void set_epoch(epoch_t e) {
+        epoch = e;
+    }
 
-  void set_epoch(epoch_t e) {
-    epoch = e;
-  }
+    void set_round(version_t r) {
+        round = r;
+    }
 
-  void set_round(version_t r) {
-    round = r;
-  }
+    epoch_t get_epoch() const {
+        return epoch;
+    } version_t get_round() const {
+        return round;
+    } void service_encode() {
+        ::encode(epoch, payload);
+        ::encode(round, payload);
+    }
 
-  epoch_t get_epoch() const {
-    return epoch;
-  }
+    void service_decode(bufferlist::iterator & p) {
+        ::decode(epoch, p);
+        ::decode(round, p);
+    }
 
-  version_t get_round() const {
-    return round;
-  }
+    void encode_payload(uint64_t features) override {
+        assert(0 == "MMonQuorumService message must always be a base class");
+    }
 
-  void service_encode() {
-    ::encode(epoch, payload);
-    ::encode(round, payload);
-  }
+    void decode_payload() override {
+        assert(0 == "MMonQuorumService message must always be a base class");
+    }
 
-  void service_decode(bufferlist::iterator &p) {
-    ::decode(epoch, p);
-    ::decode(round, p);
-  }
-
-  void encode_payload(uint64_t features) override {
-    assert(0 == "MMonQuorumService message must always be a base class");
-  }
-
-  void decode_payload() override {
-    assert(0 == "MMonQuorumService message must always be a base class");
-  }
-
-  const char *get_type_name() const override { return "quorum_service"; }
-};
+    const char *get_type_name() const override {
+        return "quorum_service";
+}};
 
 #endif /* CEPH_MMON_QUORUM_SERVICE_H */

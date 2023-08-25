@@ -20,137 +20,135 @@
 
 namespace librbd {
 
-namespace {
+    namespace {
 
-struct MockOperationImageCtx : public MockImageCtx {
-  MockOperationImageCtx(librbd::ImageCtx& image_ctx) : MockImageCtx(image_ctx) {
-  }
-};
+        struct MockOperationImageCtx:public MockImageCtx {
+            MockOperationImageCtx(librbd::
+                                  ImageCtx & image_ctx):MockImageCtx(image_ctx)
+            {
+        }};
 
-} // anonymous namespace
+    }                           // anonymous namespace
 
-namespace image {
+    namespace image {
 
-template<>
-class SetFlagsRequest<MockOperationImageCtx> {
-public:
-  static SetFlagsRequest *s_instance;
-  Context *on_finish = nullptr;
+        template <> class SetFlagsRequest < MockOperationImageCtx > {
+          public:
+            static SetFlagsRequest *s_instance;
+            Context *on_finish = nullptr;
 
-  static SetFlagsRequest *create(MockOperationImageCtx *image_ctx, uint64_t flags,
-				 uint64_t mask, Context *on_finish) {
-    assert(s_instance != nullptr);
-    s_instance->on_finish = on_finish;
-    return s_instance;
-  }
+            static SetFlagsRequest *create(MockOperationImageCtx * image_ctx,
+                                           uint64_t flags, uint64_t mask,
+                                           Context * on_finish) {
+                assert(s_instance != nullptr);
+                s_instance->on_finish = on_finish;
+                return s_instance;
+            } SetFlagsRequest() {
+                s_instance = this;
+            }
 
-  SetFlagsRequest() {
-    s_instance = this;
-  }
+            MOCK_METHOD0(send, void ());
+        };
 
-  MOCK_METHOD0(send, void());
-};
+        SetFlagsRequest < MockOperationImageCtx > *SetFlagsRequest <
+            MockOperationImageCtx >::s_instance;
 
-SetFlagsRequest<MockOperationImageCtx> *SetFlagsRequest<MockOperationImageCtx>::s_instance;
+    }                           // namespace image
 
-} // namespace image
+    namespace journal {
 
-namespace journal {
+        template <> class RemoveRequest < MockOperationImageCtx > {
+          public:
+            static RemoveRequest *s_instance;
+            Context *on_finish = nullptr;
 
-template<>
-class RemoveRequest<MockOperationImageCtx> {
-public:
-  static RemoveRequest *s_instance;
-  Context *on_finish = nullptr;
+            static RemoveRequest *create(IoCtx & ioctx,
+                                         const std::string & imageid,
+                                         const std::string & client_id,
+                                         MockContextWQ * op_work_queue,
+                                         Context * on_finish) {
+                assert(s_instance != nullptr);
+                s_instance->on_finish = on_finish;
+                return s_instance;
+            } RemoveRequest() {
+                s_instance = this;
+            }
 
-  static RemoveRequest *create(IoCtx &ioctx, const std::string &imageid,
-                               const std::string &client_id,
-                               MockContextWQ *op_work_queue,
-                               Context *on_finish) {
-    assert(s_instance != nullptr);
-    s_instance->on_finish = on_finish;
-    return s_instance;
-  }
+            MOCK_METHOD0(send, void ());
+        };
 
-  RemoveRequest() {
-    s_instance = this;
-  }
+        RemoveRequest < MockOperationImageCtx > *RemoveRequest <
+            MockOperationImageCtx >::s_instance;
 
-  MOCK_METHOD0(send, void());
-};
+      template <> class StandardPolicy < MockOperationImageCtx >:public MockJournalPolicy
+        {
+          public:
+            StandardPolicy(MockOperationImageCtx * image_ctx) {
+            }
+        };
 
-RemoveRequest<MockOperationImageCtx> *RemoveRequest<MockOperationImageCtx>::s_instance;
+    }                           // namespace journal
 
-template<>
-class StandardPolicy<MockOperationImageCtx> : public MockJournalPolicy {
-public:
-  StandardPolicy(MockOperationImageCtx* image_ctx) {
-  }
-};
+    namespace mirror {
 
-} // namespace journal
+        template <> class DisableRequest < MockOperationImageCtx > {
+          public:
+            static DisableRequest *s_instance;
+            Context *on_finish = nullptr;
 
-namespace mirror {
+            static DisableRequest *create(MockOperationImageCtx * image_ctx,
+                                          bool force, bool remove,
+                                          Context * on_finish) {
+                assert(s_instance != nullptr);
+                s_instance->on_finish = on_finish;
+                return s_instance;
+            } DisableRequest() {
+                s_instance = this;
+            }
 
-template<>
-class DisableRequest<MockOperationImageCtx> {
-public:
-  static DisableRequest *s_instance;
-  Context *on_finish = nullptr;
+            MOCK_METHOD0(send, void ());
+        };
 
-  static DisableRequest *create(MockOperationImageCtx *image_ctx, bool force,
-                                bool remove, Context *on_finish) {
-    assert(s_instance != nullptr);
-    s_instance->on_finish = on_finish;
-    return s_instance;
-  }
+        DisableRequest < MockOperationImageCtx > *DisableRequest <
+            MockOperationImageCtx >::s_instance;
 
-  DisableRequest() {
-    s_instance = this;
-  }
+    }                           // namespace mirror
 
-  MOCK_METHOD0(send, void());
-};
+    namespace object_map {
 
-DisableRequest<MockOperationImageCtx> *DisableRequest<MockOperationImageCtx>::s_instance;
+        template <> class RemoveRequest < MockOperationImageCtx > {
+          public:
+            static RemoveRequest *s_instance;
+            Context *on_finish = nullptr;
 
-} // namespace mirror
+            static RemoveRequest *create(MockOperationImageCtx * image_ctx,
+                                         Context * on_finish) {
+                assert(s_instance != nullptr);
+                s_instance->on_finish = on_finish;
+                return s_instance;
+            } RemoveRequest() {
+                s_instance = this;
+            }
 
-namespace object_map {
+            MOCK_METHOD0(send, void ());
+        };
 
-template<>
-class RemoveRequest<MockOperationImageCtx> {
-public:
-  static RemoveRequest *s_instance;
-  Context *on_finish = nullptr;
+        RemoveRequest < MockOperationImageCtx > *RemoveRequest <
+            MockOperationImageCtx >::s_instance;
 
-  static RemoveRequest *create(MockOperationImageCtx *image_ctx, Context *on_finish) {
-    assert(s_instance != nullptr);
-    s_instance->on_finish = on_finish;
-    return s_instance;
-  }
+    }                           // namespace object_map
 
-  RemoveRequest() {
-    s_instance = this;
-  }
+    template <>
+        struct AsyncRequest <MockOperationImageCtx >:public AsyncRequest <
+        MockImageCtx > {
+        MockOperationImageCtx & m_image_ctx;
 
-  MOCK_METHOD0(send, void());
-};
+        AsyncRequest(MockOperationImageCtx & image_ctx, Context * on_finish)
+        :AsyncRequest < MockImageCtx > (image_ctx, on_finish),
+            m_image_ctx(image_ctx) {
+    }};
 
-RemoveRequest<MockOperationImageCtx> *RemoveRequest<MockOperationImageCtx>::s_instance;
-
-} // namespace object_map
-
-template <>
-struct AsyncRequest<MockOperationImageCtx> : public AsyncRequest<MockImageCtx> {
-  MockOperationImageCtx &m_image_ctx;
-
-  AsyncRequest(MockOperationImageCtx &image_ctx, Context *on_finish)
-    : AsyncRequest<MockImageCtx>(image_ctx, on_finish), m_image_ctx(image_ctx) {
-  }
-};
-
-} // namespace librbd
+}                               // namespace librbd
 
 // template definitions
 #include "librbd/AsyncRequest.cc"
@@ -159,368 +157,406 @@ struct AsyncRequest<MockOperationImageCtx> : public AsyncRequest<MockImageCtx> {
 #include "librbd/operation/DisableFeaturesRequest.cc"
 
 namespace librbd {
-namespace operation {
+    namespace operation {
 
-using ::testing::Invoke;
-using ::testing::Return;
-using ::testing::WithArg;
-using ::testing::_;
+        using::testing::Invoke;
+        using::testing::Return;
+        using::testing::WithArg;
+        using::testing::_;
 
-class TestMockOperationDisableFeaturesRequest : public TestMockFixture {
-public:
-  typedef librbd::image::SetFlagsRequest<MockOperationImageCtx> MockSetFlagsRequest;
-  typedef librbd::journal::RemoveRequest<MockOperationImageCtx> MockRemoveJournalRequest;
-  typedef librbd::mirror::DisableRequest<MockOperationImageCtx> MockDisableMirrorRequest;
-  typedef librbd::object_map::RemoveRequest<MockOperationImageCtx> MockRemoveObjectMapRequest;
-  typedef DisableFeaturesRequest<MockOperationImageCtx> MockDisableFeaturesRequest;
+        class TestMockOperationDisableFeaturesRequest:public TestMockFixture {
+          public:
+            typedef librbd::image::SetFlagsRequest < MockOperationImageCtx >
+                MockSetFlagsRequest;
+            typedef librbd::journal::RemoveRequest < MockOperationImageCtx >
+                MockRemoveJournalRequest;
+            typedef librbd::mirror::DisableRequest < MockOperationImageCtx >
+                MockDisableMirrorRequest;
+            typedef librbd::object_map::RemoveRequest < MockOperationImageCtx >
+                MockRemoveObjectMapRequest;
+            typedef DisableFeaturesRequest < MockOperationImageCtx >
+                MockDisableFeaturesRequest;
 
-  class PoolMirrorModeEnabler {
-  public:
-    PoolMirrorModeEnabler(librados::IoCtx &ioctx) : m_ioctx(ioctx) {
-      EXPECT_EQ(0, librbd::cls_client::mirror_uuid_set(&m_ioctx, "test-uuid"));
-      EXPECT_EQ(0, librbd::cls_client::mirror_mode_set(
-		  &m_ioctx, cls::rbd::MIRROR_MODE_POOL));
-    }
+            class PoolMirrorModeEnabler {
+              public:
+                PoolMirrorModeEnabler(librados::IoCtx & ioctx):m_ioctx(ioctx) {
+                    EXPECT_EQ(0,
+                              librbd::cls_client::mirror_uuid_set(&m_ioctx,
+                                                                  "test-uuid"));
+                    EXPECT_EQ(0,
+                              librbd::cls_client::mirror_mode_set(&m_ioctx,
+                                                                  cls::rbd::
+                                                                  MIRROR_MODE_POOL));
+                } ~PoolMirrorModeEnabler() {
+                    EXPECT_EQ(0,
+                              librbd::cls_client::mirror_mode_set(&m_ioctx,
+                                                                  cls::rbd::
+                                                                  MIRROR_MODE_DISABLED));
+              } private:
+                 librados::IoCtx & m_ioctx;
+            };
 
-    ~PoolMirrorModeEnabler() {
-      EXPECT_EQ(0, librbd::cls_client::mirror_mode_set(
-		&m_ioctx, cls::rbd::MIRROR_MODE_DISABLED));
-    }
-  private:
-    librados::IoCtx &m_ioctx;
-  };
+            void expect_prepare_lock(MockOperationImageCtx & mock_image_ctx) {
+                EXPECT_CALL(*mock_image_ctx.state, prepare_lock(_))
+                    .WillOnce(Invoke([](Context * on_ready) {
+                                     on_ready->complete(0);}));
+                expect_op_work_queue(mock_image_ctx);
+            }
 
-  void expect_prepare_lock(MockOperationImageCtx &mock_image_ctx) {
-    EXPECT_CALL(*mock_image_ctx.state, prepare_lock(_))
-      .WillOnce(Invoke([](Context *on_ready) {
-	    on_ready->complete(0);
-	  }));
-    expect_op_work_queue(mock_image_ctx);
-  }
+            void expect_handle_prepare_lock_complete(MockOperationImageCtx &
+                                                     mock_image_ctx) {
+                EXPECT_CALL(*mock_image_ctx.state,
+                            handle_prepare_lock_complete());
+            }
 
-  void expect_handle_prepare_lock_complete(MockOperationImageCtx &mock_image_ctx) {
-    EXPECT_CALL(*mock_image_ctx.state, handle_prepare_lock_complete());
-  }
+            void expect_block_writes(MockOperationImageCtx & mock_image_ctx) {
+                EXPECT_CALL(*mock_image_ctx.io_work_queue, block_writes(_))
+                    .
+                    WillOnce(CompleteContext
+                             (0, mock_image_ctx.image_ctx->op_work_queue));
+            }
 
-  void expect_block_writes(MockOperationImageCtx &mock_image_ctx) {
-    EXPECT_CALL(*mock_image_ctx.io_work_queue, block_writes(_))
-      .WillOnce(CompleteContext(0, mock_image_ctx.image_ctx->op_work_queue));
-  }
+            void expect_unblock_writes(MockOperationImageCtx & mock_image_ctx) {
+                EXPECT_CALL(*mock_image_ctx.io_work_queue,
+                            unblock_writes()).Times(1);
+            }
 
-  void expect_unblock_writes(MockOperationImageCtx &mock_image_ctx) {
-    EXPECT_CALL(*mock_image_ctx.io_work_queue, unblock_writes()).Times(1);
-  }
+            void expect_verify_lock_ownership(MockOperationImageCtx &
+                                              mock_image_ctx) {
+                if (mock_image_ctx.exclusive_lock != nullptr) {
+                    EXPECT_CALL(*mock_image_ctx.exclusive_lock, is_lock_owner())
+                        .WillRepeatedly(Return(true));
+                }
+            }
 
-  void expect_verify_lock_ownership(MockOperationImageCtx &mock_image_ctx) {
-    if (mock_image_ctx.exclusive_lock != nullptr) {
-      EXPECT_CALL(*mock_image_ctx.exclusive_lock, is_lock_owner())
-	.WillRepeatedly(Return(true));
-    }
-  }
+            void expect_block_requests(MockOperationImageCtx & mock_image_ctx) {
+                if (mock_image_ctx.exclusive_lock != nullptr) {
+                    EXPECT_CALL(*mock_image_ctx.exclusive_lock,
+                                block_requests(0)).Times(1);
+                }
+            }
 
-  void expect_block_requests(MockOperationImageCtx &mock_image_ctx) {
-    if (mock_image_ctx.exclusive_lock != nullptr) {
-      EXPECT_CALL(*mock_image_ctx.exclusive_lock, block_requests(0)).Times(1);
-    }
-  }
+            void expect_unblock_requests(MockOperationImageCtx & mock_image_ctx) {
+                if (mock_image_ctx.exclusive_lock != nullptr) {
+                    EXPECT_CALL(*mock_image_ctx.exclusive_lock,
+                                unblock_requests()).Times(1);
+                }
+            }
 
-  void expect_unblock_requests(MockOperationImageCtx &mock_image_ctx) {
-    if (mock_image_ctx.exclusive_lock != nullptr) {
-      EXPECT_CALL(*mock_image_ctx.exclusive_lock, unblock_requests()).Times(1);
-    }
-  }
+            void expect_set_flags_request_send(MockOperationImageCtx &
+                                               mock_image_ctx,
+                                               MockSetFlagsRequest &
+                                               mock_set_flags_request, int r) {
+                EXPECT_CALL(mock_set_flags_request, send())
+                    .WillOnce(FinishRequest(&mock_set_flags_request, r,
+                                            &mock_image_ctx));
+            }
 
-  void expect_set_flags_request_send(
-    MockOperationImageCtx &mock_image_ctx,
-    MockSetFlagsRequest &mock_set_flags_request, int r) {
-    EXPECT_CALL(mock_set_flags_request, send())
-      .WillOnce(FinishRequest(&mock_set_flags_request, r,
-                              &mock_image_ctx));
-  }
+            void expect_disable_mirror_request_send(MockOperationImageCtx &
+                                                    mock_image_ctx,
+                                                    MockDisableMirrorRequest &
+                                                    mock_disable_mirror_request,
+                                                    int r) {
+                EXPECT_CALL(mock_disable_mirror_request, send())
+                    .WillOnce(FinishRequest(&mock_disable_mirror_request, r,
+                                            &mock_image_ctx));
+            }
 
-  void expect_disable_mirror_request_send(
-    MockOperationImageCtx &mock_image_ctx,
-    MockDisableMirrorRequest &mock_disable_mirror_request, int r) {
-    EXPECT_CALL(mock_disable_mirror_request, send())
-      .WillOnce(FinishRequest(&mock_disable_mirror_request, r,
-                              &mock_image_ctx));
-  }
+            void expect_close_journal(MockOperationImageCtx & mock_image_ctx,
+                                      int r) {
+                EXPECT_CALL(*mock_image_ctx.journal, close(_))
+                    .WillOnce(Invoke([&mock_image_ctx, r] (Context * on_finish) {
+                                     mock_image_ctx.journal = nullptr;
+                                     mock_image_ctx.image_ctx->op_work_queue->
+                                     queue(on_finish, r);}));
+            }
 
-  void expect_close_journal(MockOperationImageCtx &mock_image_ctx, int r) {
-    EXPECT_CALL(*mock_image_ctx.journal, close(_))
-      .WillOnce(Invoke([&mock_image_ctx, r](Context *on_finish) {
-	    mock_image_ctx.journal = nullptr;
-	    mock_image_ctx.image_ctx->op_work_queue->queue(on_finish, r);
-	  }));
-  }
+            void expect_remove_journal_request_send(MockOperationImageCtx &
+                                                    mock_image_ctx,
+                                                    MockRemoveJournalRequest &
+                                                    mock_remove_journal_request,
+                                                    int r) {
+                EXPECT_CALL(mock_remove_journal_request, send())
+                    .WillOnce(FinishRequest(&mock_remove_journal_request, r,
+                                            &mock_image_ctx));
+            }
 
-  void expect_remove_journal_request_send(
-    MockOperationImageCtx &mock_image_ctx,
-    MockRemoveJournalRequest &mock_remove_journal_request, int r) {
-    EXPECT_CALL(mock_remove_journal_request, send())
-      .WillOnce(FinishRequest(&mock_remove_journal_request, r,
-                              &mock_image_ctx));
-  }
+            void expect_remove_object_map_request_send(MockOperationImageCtx &
+                                                       mock_image_ctx,
+                                                       MockRemoveObjectMapRequest
+                                                       &
+                                                       mock_remove_object_map_request,
+                                                       int r) {
+                EXPECT_CALL(mock_remove_object_map_request, send())
+                    .WillOnce(FinishRequest(&mock_remove_object_map_request, r,
+                                            &mock_image_ctx));
+            }
 
-  void expect_remove_object_map_request_send(
-    MockOperationImageCtx &mock_image_ctx,
-    MockRemoveObjectMapRequest &mock_remove_object_map_request, int r) {
-    EXPECT_CALL(mock_remove_object_map_request, send())
-      .WillOnce(FinishRequest(&mock_remove_object_map_request, r,
-                              &mock_image_ctx));
-  }
+            void expect_notify_update(MockOperationImageCtx & mock_image_ctx) {
+                EXPECT_CALL(mock_image_ctx, notify_update(_))
+                    .
+                    WillOnce(CompleteContext
+                             (0, mock_image_ctx.image_ctx->op_work_queue));
+            }
 
-  void expect_notify_update(MockOperationImageCtx &mock_image_ctx) {
-    EXPECT_CALL(mock_image_ctx, notify_update(_))
-      .WillOnce(CompleteContext(0, mock_image_ctx.image_ctx->op_work_queue));
-  }
+        };
 
-};
+        TEST_F(TestMockOperationDisableFeaturesRequest, All) {
+            REQUIRE_FORMAT_V2();
 
-TEST_F(TestMockOperationDisableFeaturesRequest, All) {
-  REQUIRE_FORMAT_V2();
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            uint64_t features;
+            ASSERT_EQ(0, librbd::get_features(ictx, &features));
 
-  uint64_t features;
-  ASSERT_EQ(0, librbd::get_features(ictx, &features));
+            uint64_t features_to_disable = RBD_FEATURES_MUTABLE & features;
 
-  uint64_t features_to_disable = RBD_FEATURES_MUTABLE & features;
+            REQUIRE(features_to_disable);
 
-  REQUIRE(features_to_disable);
+            MockOperationImageCtx mock_image_ctx(*ictx);
+            MockExclusiveLock mock_exclusive_lock;
+            MockJournal mock_journal_stack;
+            MockJournal *mock_journal = &mock_journal_stack;
+            if (features_to_disable & RBD_FEATURE_JOURNALING) {
+                mock_journal = new MockJournal();
+            }
+            MockObjectMap mock_object_map;
+            initialize_features(ictx, mock_image_ctx, mock_exclusive_lock,
+                                *mock_journal, mock_object_map);
 
-  MockOperationImageCtx mock_image_ctx(*ictx);
-  MockExclusiveLock mock_exclusive_lock;
-  MockJournal mock_journal_stack;
-  MockJournal *mock_journal = &mock_journal_stack;
-  if (features_to_disable & RBD_FEATURE_JOURNALING) {
-    mock_journal = new MockJournal();
-  }
-  MockObjectMap mock_object_map;
-  initialize_features(ictx, mock_image_ctx, mock_exclusive_lock, *mock_journal,
-		      mock_object_map);
+            expect_verify_lock_ownership(mock_image_ctx);
 
-  expect_verify_lock_ownership(mock_image_ctx);
+            MockSetFlagsRequest mock_set_flags_request;
+            MockRemoveJournalRequest mock_remove_journal_request;
+            MockDisableMirrorRequest mock_disable_mirror_request;
+            MockRemoveObjectMapRequest mock_remove_object_map_request;
 
-  MockSetFlagsRequest mock_set_flags_request;
-  MockRemoveJournalRequest mock_remove_journal_request;
-  MockDisableMirrorRequest mock_disable_mirror_request;
-  MockRemoveObjectMapRequest mock_remove_object_map_request;
+            ::testing::InSequence seq;
+            expect_prepare_lock(mock_image_ctx);
+            expect_block_writes(mock_image_ctx);
+            if (mock_image_ctx.journal != nullptr) {
+                expect_is_journal_replaying(*mock_image_ctx.journal);
+            }
+            expect_block_requests(mock_image_ctx);
+            if (features_to_disable & RBD_FEATURE_JOURNALING) {
+                expect_disable_mirror_request_send(mock_image_ctx,
+                                                   mock_disable_mirror_request,
+                                                   0);
+                expect_close_journal(mock_image_ctx, 0);
+                expect_remove_journal_request_send(mock_image_ctx,
+                                                   mock_remove_journal_request,
+                                                   0);
+            }
+            if (features_to_disable & RBD_FEATURE_OBJECT_MAP) {
+                expect_remove_object_map_request_send(mock_image_ctx,
+                                                      mock_remove_object_map_request,
+                                                      0);
+            }
+            if (features_to_disable &
+                (RBD_FEATURE_OBJECT_MAP | RBD_FEATURE_FAST_DIFF)) {
+                expect_set_flags_request_send(mock_image_ctx,
+                                              mock_set_flags_request, 0);
+            }
+            expect_notify_update(mock_image_ctx);
+            expect_unblock_requests(mock_image_ctx);
+            expect_unblock_writes(mock_image_ctx);
+            expect_handle_prepare_lock_complete(mock_image_ctx);
 
-  ::testing::InSequence seq;
-  expect_prepare_lock(mock_image_ctx);
-  expect_block_writes(mock_image_ctx);
-  if (mock_image_ctx.journal != nullptr) {
-    expect_is_journal_replaying(*mock_image_ctx.journal);
-  }
-  expect_block_requests(mock_image_ctx);
-  if (features_to_disable & RBD_FEATURE_JOURNALING) {
-    expect_disable_mirror_request_send(mock_image_ctx,
-                                       mock_disable_mirror_request, 0);
-    expect_close_journal(mock_image_ctx, 0);
-    expect_remove_journal_request_send(mock_image_ctx,
-                                       mock_remove_journal_request, 0);
-  }
-  if (features_to_disable & RBD_FEATURE_OBJECT_MAP) {
-    expect_remove_object_map_request_send(mock_image_ctx,
-					  mock_remove_object_map_request, 0);
-  }
-  if (features_to_disable & (RBD_FEATURE_OBJECT_MAP | RBD_FEATURE_FAST_DIFF)) {
-    expect_set_flags_request_send(mock_image_ctx,
-				  mock_set_flags_request, 0);
-  }
-  expect_notify_update(mock_image_ctx);
-  expect_unblock_requests(mock_image_ctx);
-  expect_unblock_writes(mock_image_ctx);
-  expect_handle_prepare_lock_complete(mock_image_ctx);
+            C_SaferCond cond_ctx;
+            MockDisableFeaturesRequest *req =
+                new MockDisableFeaturesRequest(mock_image_ctx, &cond_ctx, 0,
+                                               features_to_disable, false);
+            {
+                RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
+                req->send();
+            }
+            ASSERT_EQ(0, cond_ctx.wait());
+        }
 
-  C_SaferCond cond_ctx;
-  MockDisableFeaturesRequest *req = new MockDisableFeaturesRequest(
-    mock_image_ctx, &cond_ctx, 0, features_to_disable, false);
-  {
-    RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
-    req->send();
-  }
-  ASSERT_EQ(0, cond_ctx.wait());
-}
+        TEST_F(TestMockOperationDisableFeaturesRequest, ObjectMap) {
+            REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
-TEST_F(TestMockOperationDisableFeaturesRequest, ObjectMap) {
-  REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            MockOperationImageCtx mock_image_ctx(*ictx);
+            MockExclusiveLock mock_exclusive_lock;
+            MockJournal mock_journal;
+            MockObjectMap mock_object_map;
+            initialize_features(ictx, mock_image_ctx, mock_exclusive_lock,
+                                mock_journal, mock_object_map);
 
-  MockOperationImageCtx mock_image_ctx(*ictx);
-  MockExclusiveLock mock_exclusive_lock;
-  MockJournal mock_journal;
-  MockObjectMap mock_object_map;
-  initialize_features(ictx, mock_image_ctx, mock_exclusive_lock, mock_journal,
-		      mock_object_map);
+            expect_verify_lock_ownership(mock_image_ctx);
 
-  expect_verify_lock_ownership(mock_image_ctx);
+            MockSetFlagsRequest mock_set_flags_request;
+            MockRemoveObjectMapRequest mock_remove_object_map_request;
 
-  MockSetFlagsRequest mock_set_flags_request;
-  MockRemoveObjectMapRequest mock_remove_object_map_request;
+            ::testing::InSequence seq;
+            expect_prepare_lock(mock_image_ctx);
+            expect_block_writes(mock_image_ctx);
+            if (mock_image_ctx.journal != nullptr) {
+                expect_is_journal_replaying(*mock_image_ctx.journal);
+            }
+            expect_block_requests(mock_image_ctx);
+            expect_append_op_event(mock_image_ctx, true, 0);
+            expect_remove_object_map_request_send(mock_image_ctx,
+                                                  mock_remove_object_map_request,
+                                                  0);
+            expect_set_flags_request_send(mock_image_ctx,
+                                          mock_set_flags_request, 0);
+            expect_notify_update(mock_image_ctx);
+            expect_unblock_requests(mock_image_ctx);
+            expect_unblock_writes(mock_image_ctx);
+            expect_handle_prepare_lock_complete(mock_image_ctx);
+            expect_commit_op_event(mock_image_ctx, 0);
 
-  ::testing::InSequence seq;
-  expect_prepare_lock(mock_image_ctx);
-  expect_block_writes(mock_image_ctx);
-  if (mock_image_ctx.journal != nullptr) {
-    expect_is_journal_replaying(*mock_image_ctx.journal);
-  }
-  expect_block_requests(mock_image_ctx);
-  expect_append_op_event(mock_image_ctx, true, 0);
-  expect_remove_object_map_request_send(mock_image_ctx,
-                                        mock_remove_object_map_request, 0);
-  expect_set_flags_request_send(mock_image_ctx,
-                                mock_set_flags_request, 0);
-  expect_notify_update(mock_image_ctx);
-  expect_unblock_requests(mock_image_ctx);
-  expect_unblock_writes(mock_image_ctx);
-  expect_handle_prepare_lock_complete(mock_image_ctx);
-  expect_commit_op_event(mock_image_ctx, 0);
+            C_SaferCond cond_ctx;
+            MockDisableFeaturesRequest *req =
+                new MockDisableFeaturesRequest(mock_image_ctx, &cond_ctx, 0,
+                                               RBD_FEATURE_OBJECT_MAP |
+                                               RBD_FEATURE_FAST_DIFF, false);
+            {
+                RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
+                req->send();
+            }
+            ASSERT_EQ(0, cond_ctx.wait());
+        }
 
-  C_SaferCond cond_ctx;
-  MockDisableFeaturesRequest *req = new MockDisableFeaturesRequest(
-    mock_image_ctx, &cond_ctx, 0,
-    RBD_FEATURE_OBJECT_MAP | RBD_FEATURE_FAST_DIFF, false);
-  {
-    RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
-    req->send();
-  }
-  ASSERT_EQ(0, cond_ctx.wait());
-}
+        TEST_F(TestMockOperationDisableFeaturesRequest, ObjectMapError) {
+            REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
-TEST_F(TestMockOperationDisableFeaturesRequest, ObjectMapError) {
-  REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            MockOperationImageCtx mock_image_ctx(*ictx);
+            MockExclusiveLock mock_exclusive_lock;
+            MockJournal mock_journal;
+            MockObjectMap mock_object_map;
+            initialize_features(ictx, mock_image_ctx, mock_exclusive_lock,
+                                mock_journal, mock_object_map);
 
-  MockOperationImageCtx mock_image_ctx(*ictx);
-  MockExclusiveLock mock_exclusive_lock;
-  MockJournal mock_journal;
-  MockObjectMap mock_object_map;
-  initialize_features(ictx, mock_image_ctx, mock_exclusive_lock, mock_journal,
-		      mock_object_map);
+            expect_verify_lock_ownership(mock_image_ctx);
 
-  expect_verify_lock_ownership(mock_image_ctx);
+            MockSetFlagsRequest mock_set_flags_request;
+            MockRemoveObjectMapRequest mock_remove_object_map_request;
 
-  MockSetFlagsRequest mock_set_flags_request;
-  MockRemoveObjectMapRequest mock_remove_object_map_request;
+            ::testing::InSequence seq;
+            expect_prepare_lock(mock_image_ctx);
+            expect_block_writes(mock_image_ctx);
+            if (mock_image_ctx.journal != nullptr) {
+                expect_is_journal_replaying(*mock_image_ctx.journal);
+            }
+            expect_block_requests(mock_image_ctx);
+            expect_append_op_event(mock_image_ctx, true, 0);
+            expect_remove_object_map_request_send(mock_image_ctx,
+                                                  mock_remove_object_map_request,
+                                                  -EINVAL);
+            expect_unblock_requests(mock_image_ctx);
+            expect_unblock_writes(mock_image_ctx);
+            expect_handle_prepare_lock_complete(mock_image_ctx);
+            expect_commit_op_event(mock_image_ctx, -EINVAL);
 
-  ::testing::InSequence seq;
-  expect_prepare_lock(mock_image_ctx);
-  expect_block_writes(mock_image_ctx);
-  if (mock_image_ctx.journal != nullptr) {
-    expect_is_journal_replaying(*mock_image_ctx.journal);
-  }
-  expect_block_requests(mock_image_ctx);
-  expect_append_op_event(mock_image_ctx, true, 0);
-  expect_remove_object_map_request_send(mock_image_ctx,
-                                        mock_remove_object_map_request, -EINVAL);
-  expect_unblock_requests(mock_image_ctx);
-  expect_unblock_writes(mock_image_ctx);
-  expect_handle_prepare_lock_complete(mock_image_ctx);
-  expect_commit_op_event(mock_image_ctx, -EINVAL);
+            C_SaferCond cond_ctx;
+            MockDisableFeaturesRequest *req =
+                new MockDisableFeaturesRequest(mock_image_ctx, &cond_ctx, 0,
+                                               RBD_FEATURE_OBJECT_MAP |
+                                               RBD_FEATURE_FAST_DIFF, false);
+            {
+                RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
+                req->send();
+            }
+            ASSERT_EQ(-EINVAL, cond_ctx.wait());
+        }
 
-  C_SaferCond cond_ctx;
-  MockDisableFeaturesRequest *req = new MockDisableFeaturesRequest(
-    mock_image_ctx, &cond_ctx, 0,
-    RBD_FEATURE_OBJECT_MAP | RBD_FEATURE_FAST_DIFF, false);
-  {
-    RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
-    req->send();
-  }
-  ASSERT_EQ(-EINVAL, cond_ctx.wait());
-}
+        TEST_F(TestMockOperationDisableFeaturesRequest, Mirroring) {
+            REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-TEST_F(TestMockOperationDisableFeaturesRequest, Mirroring) {
-  REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            MockOperationImageCtx mock_image_ctx(*ictx);
+            MockExclusiveLock mock_exclusive_lock;
+            MockJournal *mock_journal = new MockJournal();
+            MockObjectMap mock_object_map;
+            initialize_features(ictx, mock_image_ctx, mock_exclusive_lock,
+                                *mock_journal, mock_object_map);
 
-  MockOperationImageCtx mock_image_ctx(*ictx);
-  MockExclusiveLock mock_exclusive_lock;
-  MockJournal *mock_journal = new MockJournal();
-  MockObjectMap mock_object_map;
-  initialize_features(ictx, mock_image_ctx, mock_exclusive_lock, *mock_journal,
-		      mock_object_map);
+            expect_verify_lock_ownership(mock_image_ctx);
 
-  expect_verify_lock_ownership(mock_image_ctx);
+            MockRemoveJournalRequest mock_remove_journal_request;
+            MockDisableMirrorRequest mock_disable_mirror_request;
 
-  MockRemoveJournalRequest mock_remove_journal_request;
-  MockDisableMirrorRequest mock_disable_mirror_request;
+            ::testing::InSequence seq;
+            expect_prepare_lock(mock_image_ctx);
+            expect_block_writes(mock_image_ctx);
+            expect_is_journal_replaying(*mock_image_ctx.journal);
+            expect_block_requests(mock_image_ctx);
+            expect_disable_mirror_request_send(mock_image_ctx,
+                                               mock_disable_mirror_request, 0);
+            expect_close_journal(mock_image_ctx, 0);
+            expect_remove_journal_request_send(mock_image_ctx,
+                                               mock_remove_journal_request, 0);
+            expect_notify_update(mock_image_ctx);
+            expect_unblock_requests(mock_image_ctx);
+            expect_unblock_writes(mock_image_ctx);
+            expect_handle_prepare_lock_complete(mock_image_ctx);
 
-  ::testing::InSequence seq;
-  expect_prepare_lock(mock_image_ctx);
-  expect_block_writes(mock_image_ctx);
-  expect_is_journal_replaying(*mock_image_ctx.journal);
-  expect_block_requests(mock_image_ctx);
-  expect_disable_mirror_request_send(mock_image_ctx,
-                                     mock_disable_mirror_request, 0);
-  expect_close_journal(mock_image_ctx, 0);
-  expect_remove_journal_request_send(mock_image_ctx,
-                                     mock_remove_journal_request, 0);
-  expect_notify_update(mock_image_ctx);
-  expect_unblock_requests(mock_image_ctx);
-  expect_unblock_writes(mock_image_ctx);
-  expect_handle_prepare_lock_complete(mock_image_ctx);
+            C_SaferCond cond_ctx;
+            MockDisableFeaturesRequest *req =
+                new MockDisableFeaturesRequest(mock_image_ctx, &cond_ctx, 0,
+                                               RBD_FEATURE_JOURNALING, false);
+            {
+                RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
+                req->send();
+            }
+            ASSERT_EQ(0, cond_ctx.wait());
+        }
 
-  C_SaferCond cond_ctx;
-  MockDisableFeaturesRequest *req = new MockDisableFeaturesRequest(
-    mock_image_ctx, &cond_ctx, 0, RBD_FEATURE_JOURNALING, false);
-  {
-    RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
-    req->send();
-  }
-  ASSERT_EQ(0, cond_ctx.wait());
-}
+        TEST_F(TestMockOperationDisableFeaturesRequest, MirroringError) {
+            REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-TEST_F(TestMockOperationDisableFeaturesRequest, MirroringError) {
-  REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            MockOperationImageCtx mock_image_ctx(*ictx);
+            MockExclusiveLock mock_exclusive_lock;
+            MockJournal *mock_journal = new MockJournal();
+            MockObjectMap mock_object_map;
+            initialize_features(ictx, mock_image_ctx, mock_exclusive_lock,
+                                *mock_journal, mock_object_map);
 
-  MockOperationImageCtx mock_image_ctx(*ictx);
-  MockExclusiveLock mock_exclusive_lock;
-  MockJournal *mock_journal = new MockJournal();
-  MockObjectMap mock_object_map;
-  initialize_features(ictx, mock_image_ctx, mock_exclusive_lock, *mock_journal,
-		      mock_object_map);
+            expect_verify_lock_ownership(mock_image_ctx);
 
-  expect_verify_lock_ownership(mock_image_ctx);
+            MockRemoveJournalRequest mock_remove_journal_request;
+            MockDisableMirrorRequest mock_disable_mirror_request;
 
-  MockRemoveJournalRequest mock_remove_journal_request;
-  MockDisableMirrorRequest mock_disable_mirror_request;
+            ::testing::InSequence seq;
+            expect_prepare_lock(mock_image_ctx);
+            expect_block_writes(mock_image_ctx);
+            expect_is_journal_replaying(*mock_image_ctx.journal);
+            expect_block_requests(mock_image_ctx);
+            expect_disable_mirror_request_send(mock_image_ctx,
+                                               mock_disable_mirror_request,
+                                               -EINVAL);
+            expect_close_journal(mock_image_ctx, 0);
+            expect_remove_journal_request_send(mock_image_ctx,
+                                               mock_remove_journal_request, 0);
+            expect_notify_update(mock_image_ctx);
+            expect_unblock_requests(mock_image_ctx);
+            expect_unblock_writes(mock_image_ctx);
+            expect_handle_prepare_lock_complete(mock_image_ctx);
 
-  ::testing::InSequence seq;
-  expect_prepare_lock(mock_image_ctx);
-  expect_block_writes(mock_image_ctx);
-  expect_is_journal_replaying(*mock_image_ctx.journal);
-  expect_block_requests(mock_image_ctx);
-  expect_disable_mirror_request_send(mock_image_ctx,
-                                     mock_disable_mirror_request, -EINVAL);
-  expect_close_journal(mock_image_ctx, 0);
-  expect_remove_journal_request_send(mock_image_ctx,
-                                     mock_remove_journal_request, 0);
-  expect_notify_update(mock_image_ctx);
-  expect_unblock_requests(mock_image_ctx);
-  expect_unblock_writes(mock_image_ctx);
-  expect_handle_prepare_lock_complete(mock_image_ctx);
+            C_SaferCond cond_ctx;
+            MockDisableFeaturesRequest *req =
+                new MockDisableFeaturesRequest(mock_image_ctx, &cond_ctx, 0,
+                                               RBD_FEATURE_JOURNALING, false);
+            {
+                RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
+                req->send();
+            }
+            ASSERT_EQ(0, cond_ctx.wait());
+        }
 
-  C_SaferCond cond_ctx;
-  MockDisableFeaturesRequest *req = new MockDisableFeaturesRequest(
-    mock_image_ctx, &cond_ctx, 0, RBD_FEATURE_JOURNALING, false);
-  {
-    RWLock::RLocker owner_locker(mock_image_ctx.owner_lock);
-    req->send();
-  }
-  ASSERT_EQ(0, cond_ctx.wait());
-}
-
-} // namespace operation
-} // namespace librbd
+    }                           // namespace operation
+}                               // namespace librbd

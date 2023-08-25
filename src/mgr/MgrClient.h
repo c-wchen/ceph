@@ -29,101 +29,100 @@ class Messenger;
 class MCommandReply;
 class MPGStats;
 
-class MgrSessionState
-{
+class MgrSessionState {
   public:
-  // Which performance counters have we already transmitted schema for?
-  std::set<std::string> declared;
+    // Which performance counters have we already transmitted schema for?
+    std::set < std::string > declared;
 
-  // Our connection to the mgr
-  ConnectionRef con;
+    // Our connection to the mgr
+    ConnectionRef con;
 };
 
-class MgrCommand : public CommandOp
-{
+class MgrCommand:public CommandOp {
   public:
 
-  MgrCommand(ceph_tid_t t) : CommandOp(t) {}
-  MgrCommand() : CommandOp() {}
+    MgrCommand(ceph_tid_t t):CommandOp(t) {
+    } MgrCommand():CommandOp() {
+    }
 };
 
-class MgrClient : public Dispatcher
-{
-protected:
-  CephContext *cct;
-  MgrMap map;
-  Messenger *msgr;
+class MgrClient:public Dispatcher {
+  protected:
+    CephContext * cct;
+    MgrMap map;
+    Messenger *msgr;
 
-  unique_ptr<MgrSessionState> session;
+     unique_ptr < MgrSessionState > session;
 
-  Mutex lock = {"MgrClient::lock"};
+    Mutex lock = { "MgrClient::lock" };
 
-  uint32_t stats_period = 0;
-  uint32_t stats_threshold = 0;
-  SafeTimer timer;
+    uint32_t stats_period = 0;
+    uint32_t stats_threshold = 0;
+    SafeTimer timer;
 
-  CommandTable<MgrCommand> command_table;
+    CommandTable < MgrCommand > command_table;
 
-  utime_t last_connect_attempt;
+    utime_t last_connect_attempt;
 
-  Context *report_callback = nullptr;
-  Context *connect_retry_callback = nullptr;
+    Context *report_callback = nullptr;
+    Context *connect_retry_callback = nullptr;
 
-  // If provided, use this to compose an MPGStats to send with
-  // our reports (hook for use by OSD)
-  std::function<MPGStats*()> pgstats_cb;
+    // If provided, use this to compose an MPGStats to send with
+    // our reports (hook for use by OSD)
+    std::function < MPGStats * () > pgstats_cb;
 
-  // for service registration and beacon
-  bool service_daemon = false;
-  bool daemon_dirty_status = false;
-  std::string service_name, daemon_name;
-  std::map<std::string,std::string> daemon_metadata;
-  std::map<std::string,std::string> daemon_status;
-  std::vector<OSDHealthMetric> osd_health_metrics;
+    // for service registration and beacon
+    bool service_daemon = false;
+    bool daemon_dirty_status = false;
+    std::string service_name, daemon_name;
+    std::map < std::string, std::string > daemon_metadata;
+    std::map < std::string, std::string > daemon_status;
+    std::vector < OSDHealthMetric > osd_health_metrics;
 
-  void reconnect();
-  void _send_open();
+    void reconnect();
+    void _send_open();
 
-public:
-  MgrClient(CephContext *cct_, Messenger *msgr_);
+  public:
+    MgrClient(CephContext * cct_, Messenger * msgr_);
 
-  void set_messenger(Messenger *msgr_) { msgr = msgr_; }
+    void set_messenger(Messenger * msgr_) {
+        msgr = msgr_;
+    }
 
-  void init();
-  void shutdown();
+    void init();
+    void shutdown();
 
-  bool ms_dispatch(Message *m) override;
-  bool ms_handle_reset(Connection *con) override;
-  void ms_handle_remote_reset(Connection *con) override {}
-  bool ms_handle_refused(Connection *con) override;
+    bool ms_dispatch(Message * m) override;
+    bool ms_handle_reset(Connection * con) override;
+    void ms_handle_remote_reset(Connection * con) override {
+    }
+    bool ms_handle_refused(Connection * con) override;
 
-  bool handle_mgr_map(MMgrMap *m);
-  bool handle_mgr_configure(MMgrConfigure *m);
-  bool handle_command_reply(MCommandReply *m);
+    bool handle_mgr_map(MMgrMap * m);
+    bool handle_mgr_configure(MMgrConfigure * m);
+    bool handle_command_reply(MCommandReply * m);
 
-  void send_pgstats();
-  void set_pgstats_cb(std::function<MPGStats*()> cb_)
-  {
-    Mutex::Locker l(lock);
-    pgstats_cb = cb_;
-  }
+    void send_pgstats();
+    void set_pgstats_cb(std::function < MPGStats * () > cb_) {
+        Mutex::Locker l(lock);
+        pgstats_cb = cb_;
+    }
 
-  int start_command(const vector<string>& cmd, const bufferlist& inbl,
-		    bufferlist *outbl, string *outs,
-		    Context *onfinish);
+    int start_command(const vector < string > &cmd, const bufferlist & inbl,
+                      bufferlist * outbl, string * outs, Context * onfinish);
 
-  int service_daemon_register(
-    const std::string& service,
-    const std::string& name,
-    const std::map<std::string,std::string>& metadata);
-  int service_daemon_update_status(
-    const std::map<std::string,std::string>& status);
-  void update_osd_health(std::vector<OSDHealthMetric>&& metrics);
+    int service_daemon_register(const std::string & service,
+                                const std::string & name,
+                                const std::map < std::string,
+                                std::string > &metadata);
+    int service_daemon_update_status(const std::map < std::string,
+                                     std::string > &status);
+    void update_osd_health(std::vector < OSDHealthMetric > &&metrics);
 
-private:
-  void _send_stats();
-  void _send_pgstats();
-  void _send_report();
+  private:
+    void _send_stats();
+    void _send_pgstats();
+    void _send_report();
 };
 
 #endif

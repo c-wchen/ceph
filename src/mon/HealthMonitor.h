@@ -17,50 +17,47 @@
 #include "mon/PaxosService.h"
 
 //forward declaration
-namespace ceph { class Formatter; }
-class HealthService;
+namespace ceph {
+    class Formatter;
+} class HealthService;
 
-class HealthMonitor : public PaxosService
-{
-  map<int,HealthService*> services;
-  version_t version = 0;
-  map<int,health_check_map_t> quorum_checks;  // for each quorum member
-  health_check_map_t leader_checks;           // leader only
+class HealthMonitor:public PaxosService {
+    map < int, HealthService * >services;
+    version_t version = 0;
+     map < int, health_check_map_t > quorum_checks; // for each quorum member
+    health_check_map_t leader_checks;   // leader only
 
-public:
-  HealthMonitor(Monitor *m, Paxos *p, const string& service_name);
-  ~HealthMonitor() override {
-    assert(services.empty());
-  }
-
+  public:
+     HealthMonitor(Monitor * m, Paxos * p, const string & service_name);
+    ~HealthMonitor() override {
+        assert(services.empty());
+    }
   /**
    * @defgroup HealthMonitor_Inherited_h Inherited abstract methods
    * @{
-   */
-  void init() override;
+   */ void init() override;
 
-  void get_health(
-    list<pair<health_status_t,string> >& summary,
-    list<pair<health_status_t,string> > *detail,
-    CephContext *cct) const override {}
+    void get_health(list < pair < health_status_t, string > >&summary,
+                    list < pair < health_status_t, string > >*detail,
+                    CephContext * cct) const override {
+    } bool preprocess_query(MonOpRequestRef op) override;
+    bool prepare_update(MonOpRequestRef op) override;
 
-  bool preprocess_query(MonOpRequestRef op) override;
-  bool prepare_update(MonOpRequestRef op) override;
+    bool prepare_health_checks(MonOpRequestRef op);
 
-  bool prepare_health_checks(MonOpRequestRef op);
+    bool check_leader_health();
+    bool check_member_health();
 
-  bool check_leader_health();
-  bool check_member_health();
+    void create_initial() override;
+    void update_from_paxos(bool * need_bootstrap) override;
+    void create_pending() override;
+    void encode_pending(MonitorDBStore::TransactionRef t) override;
+    version_t get_trim_to() override;
 
-  void create_initial() override;
-  void update_from_paxos(bool *need_bootstrap) override;
-  void create_pending() override;
-  void encode_pending(MonitorDBStore::TransactionRef t) override;
-  version_t get_trim_to() override;
+    void encode_full(MonitorDBStore::TransactionRef t) override {
+    }
 
-  void encode_full(MonitorDBStore::TransactionRef t) override { }
-
-  void tick() override;
+    void tick() override;
 
   /**
    * @} // HealthMonitor_Inherited_h

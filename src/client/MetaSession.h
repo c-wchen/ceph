@@ -17,52 +17,50 @@ struct MetaRequest;
 class MClientCapRelease;
 
 struct MetaSession {
-  mds_rank_t mds_num;
-  ConnectionRef con;
-  version_t seq;
-  uint64_t cap_gen;
-  utime_t cap_ttl, last_cap_renew_request;
-  uint64_t cap_renew_seq;
-  int num_caps;
-  entity_inst_t inst;
+    mds_rank_t mds_num;
+    ConnectionRef con;
+    version_t seq;
+    uint64_t cap_gen;
+    utime_t cap_ttl, last_cap_renew_request;
+    uint64_t cap_renew_seq;
+    int num_caps;
+    entity_inst_t inst;
 
-  enum {
-    STATE_NEW,
-    STATE_OPENING,
-    STATE_OPEN,
-    STATE_CLOSING,
-    STATE_CLOSED,
-    STATE_STALE,
-  } state;
+    enum {
+        STATE_NEW,
+        STATE_OPENING,
+        STATE_OPEN,
+        STATE_CLOSING,
+        STATE_CLOSED,
+        STATE_STALE,
+    } state;
 
-  int mds_state;
-  bool readonly;
+    int mds_state;
+    bool readonly;
 
-  list<Context*> waiting_for_open;
+     list < Context * >waiting_for_open;
 
-  xlist<Cap*> caps;
-  xlist<Inode*> flushing_caps;
-  xlist<MetaRequest*> requests;
-  xlist<MetaRequest*> unsafe_requests;
-  std::set<ceph_tid_t> flushing_caps_tids;
-  std::set<Inode*> early_flushing_caps;
+     xlist < Cap * >caps;
+     xlist < Inode * >flushing_caps;
+     xlist < MetaRequest * >requests;
+     xlist < MetaRequest * >unsafe_requests;
+     std::set < ceph_tid_t > flushing_caps_tids;
+     std::set < Inode * >early_flushing_caps;
 
-  MClientCapRelease *release;
-  
-  MetaSession()
-    : mds_num(-1), con(NULL),
-      seq(0), cap_gen(0), cap_renew_seq(0), num_caps(0),
-      state(STATE_NEW), mds_state(0), readonly(false),
-      release(NULL)
-  {}
-  ~MetaSession();
+    MClientCapRelease *release;
 
-  const char *get_state_name() const;
+     MetaSession()
+    :mds_num(-1), con(NULL),
+        seq(0), cap_gen(0), cap_renew_seq(0), num_caps(0),
+        state(STATE_NEW), mds_state(0), readonly(false), release(NULL) {
+    } ~MetaSession();
 
-  void dump(Formatter *f) const;
+    const char *get_state_name() const;
 
-  void enqueue_cap_release(inodeno_t ino, uint64_t cap_id, ceph_seq_t iseq,
-      ceph_seq_t mseq, epoch_t osd_barrier);
+    void dump(Formatter * f) const;
+
+    void enqueue_cap_release(inodeno_t ino, uint64_t cap_id, ceph_seq_t iseq,
+                             ceph_seq_t mseq, epoch_t osd_barrier);
 };
 
 #endif

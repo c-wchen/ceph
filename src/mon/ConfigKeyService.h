@@ -20,68 +20,64 @@
 class Paxos;
 class Monitor;
 namespace ceph {
-class Formatter;
-}
+    class Formatter;
+} class ConfigKeyService:public QuorumService {
+    Paxos *paxos;
 
-class ConfigKeyService : public QuorumService
-{
-  Paxos *paxos;
+    int store_get(const string & key, bufferlist & bl);
+    void store_put(const string & key, bufferlist & bl, Context * cb = NULL);
+    void store_delete(MonitorDBStore::TransactionRef t, const string & key);
+    void store_delete(const string & key, Context * cb = NULL);
+    void store_delete_prefix(MonitorDBStore::TransactionRef t,
+                             const string & prefix);
+    void store_list(stringstream & ss);
+    void store_dump(stringstream & ss);
+    bool store_exists(const string & key);
+    bool store_has_prefix(const string & prefix);
 
-  int store_get(const string &key, bufferlist &bl);
-  void store_put(const string &key, bufferlist &bl, Context *cb = NULL);
-  void store_delete(MonitorDBStore::TransactionRef t, const string &key);
-  void store_delete(const string &key, Context *cb = NULL);
-  void store_delete_prefix(
-      MonitorDBStore::TransactionRef t,
-      const string &prefix);
-  void store_list(stringstream &ss);
-  void store_dump(stringstream &ss);
-  bool store_exists(const string &key);
-  bool store_has_prefix(const string &prefix);
+    static const string STORE_PREFIX;
 
-  static const string STORE_PREFIX;
-
-protected:
-  void service_shutdown() override { }
-
-public:
-  ConfigKeyService(Monitor *m, Paxos *p) :
-    QuorumService(m),
-    paxos(p)
-  { }
-  ~ConfigKeyService() override { }
-
+  protected:
+    void service_shutdown() override {
+  } public:
+     ConfigKeyService(Monitor * m, Paxos * p): QuorumService(m), paxos(p) {
+    }
+    ~ConfigKeyService()override {
+    }
 
   /**
    * @defgroup ConfigKeyService_Inherited_h Inherited abstract methods
    * @{
    */
-  void init() override { }
-  void get_health(list<pair<health_status_t,string> >& summary,
-                  list<pair<health_status_t,string> > *detail) override { }
-  bool service_dispatch(MonOpRequestRef op) override;
+    void init() override {
+    }
+    void get_health(list < pair < health_status_t, string > >&summary,
+                    list < pair < health_status_t, string > >*detail) override {
+    }
+    bool service_dispatch(MonOpRequestRef op) override;
 
-  void start_epoch() override { }
-  void finish_epoch() override { }
-  void cleanup() override { }
-  void service_tick() override { }
+    void start_epoch() override {
+    }
+    void finish_epoch() override {
+    }
+    void cleanup() override {
+    }
+    void service_tick() override {
+    }
 
-  int validate_osd_destroy(const int32_t id, const uuid_d& uuid);
-  void do_osd_destroy(int32_t id, uuid_d& uuid);
-  int validate_osd_new(
-      const uuid_d& uuid,
-      const string& dmcrypt_key,
-      stringstream& ss);
-  void do_osd_new(const uuid_d& uuid, const string& dmcrypt_key);
+    int validate_osd_destroy(const int32_t id, const uuid_d & uuid);
+    void do_osd_destroy(int32_t id, uuid_d & uuid);
+    int validate_osd_new(const uuid_d & uuid,
+                         const string & dmcrypt_key, stringstream & ss);
+    void do_osd_new(const uuid_d & uuid, const string & dmcrypt_key);
 
-  int get_type() override {
-    return QuorumService::SERVICE_CONFIG_KEY;
-  }
+    int get_type() override {
+        return QuorumService::SERVICE_CONFIG_KEY;
+    }
 
-  string get_name() const override {
-    return "config_key";
-  }
-  virtual void get_store_prefixes(set<string>& s);
+    string get_name() const override {
+        return "config_key";
+    } virtual void get_store_prefixes(set < string > &s);
   /**
    * @} // ConfigKeyService_Inherited_h
    */

@@ -8,22 +8,18 @@
 
 namespace librados {
 
-class IoCtx;
-class MockTestMemIoCtxImpl;
-class TestCluster;
+    class IoCtx;
+    class MockTestMemIoCtxImpl;
+    class TestCluster;
 
-MockTestMemIoCtxImpl &get_mock_io_ctx(IoCtx &ioctx);
+     MockTestMemIoCtxImpl & get_mock_io_ctx(IoCtx & ioctx);
 
-} // namespace librados
+} // namespace librados namespace librados_test_stub {
 
-namespace librados_test_stub {
+    typedef boost::shared_ptr < librados::TestCluster > TestClusterRef;
 
-typedef boost::shared_ptr<librados::TestCluster> TestClusterRef;
+    void set_cluster(TestClusterRef cluster);
+    TestClusterRef get_cluster();
 
-void set_cluster(TestClusterRef cluster);
-TestClusterRef get_cluster();
-
-} // namespace librados_test_stub
-
-
-#endif // LIBRADOS_TEST_STUB_H
+}                               // namespace librados_test_stub
+#endif                          // LIBRADOS_TEST_STUB_H

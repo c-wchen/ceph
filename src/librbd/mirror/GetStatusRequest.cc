@@ -17,96 +17,99 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
+    namespace mirror {
 
-using librbd::util::create_context_callback;
-using librbd::util::create_rados_callback;
+        using librbd::util::create_context_callback;
+        using librbd::util::create_rados_callback;
 
-template <typename I>
-void GetStatusRequest<I>::send() {
-  *m_mirror_image_status = cls::rbd::MirrorImageStatus(
-    cls::rbd::MIRROR_IMAGE_STATUS_STATE_UNKNOWN, "status not found");
+         template < typename I > void GetStatusRequest < I >::send() {
+            *m_mirror_image_status =
+                cls::rbd::MirrorImageStatus(cls::rbd::
+                                            MIRROR_IMAGE_STATUS_STATE_UNKNOWN,
+                                            "status not found");
 
-  get_info();
-}
+            get_info();
+        } template < typename I > void GetStatusRequest < I >::get_info() {
+            CephContext *cct = m_image_ctx.cct;
+             ldout(cct, 20) << dendl;
 
-template <typename I>
-void GetStatusRequest<I>::get_info() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            auto ctx = create_context_callback <
+                GetStatusRequest < I >,
+                &GetStatusRequest < I >::handle_get_info > (this);
+            auto req = GetInfoRequest < I >::create(m_image_ctx, m_mirror_image,
+                                                    m_promotion_state, ctx);
+             req->send();
+        } template < typename I >
+            void GetStatusRequest < I >::handle_get_info(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    GetStatusRequest<I>, &GetStatusRequest<I>::handle_get_info>(this);
-  auto req = GetInfoRequest<I>::create(m_image_ctx, m_mirror_image,
-                                       m_promotion_state, ctx);
-  req->send();
-}
+            if (r < 0) {
+                lderr(cct) << "failed to retrieve mirroring state: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
+            else if (m_mirror_image->state !=
+                     cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
+                finish(0);
+                return;
+            }
 
-template <typename I>
-void GetStatusRequest<I>::handle_get_info(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            get_status();
+        }
 
-  if (r < 0) {
-    lderr(cct) << "failed to retrieve mirroring state: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  } else if (m_mirror_image->state != cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
-    finish(0);
-    return;
-  }
+        template < typename I > void GetStatusRequest < I >::get_status() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  get_status();
-}
+            librados::ObjectReadOperation op;
+            cls_client::mirror_image_status_get_start(&op,
+                                                      m_mirror_image->
+                                                      global_image_id);
 
-template <typename I>
-void GetStatusRequest<I>::get_status() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            librados::AioCompletion * comp = create_rados_callback <
+                GetStatusRequest < I >,
+                &GetStatusRequest < I >::handle_get_status > (this);
+            int r =
+                m_image_ctx.md_ctx.aio_operate(RBD_MIRRORING, comp, &op,
+                                               &m_out_bl);
+            assert(r == 0);
+            comp->release();
+        }
 
-  librados::ObjectReadOperation op;
-  cls_client::mirror_image_status_get_start(
-    &op, m_mirror_image->global_image_id);
+        template < typename I >
+            void GetStatusRequest < I >::handle_get_status(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  librados::AioCompletion *comp = create_rados_callback<
-    GetStatusRequest<I>, &GetStatusRequest<I>::handle_get_status>(this);
-  int r = m_image_ctx.md_ctx.aio_operate(RBD_MIRRORING, comp, &op, &m_out_bl);
-  assert(r == 0);
-  comp->release();
-}
+            if (r == 0) {
+                bufferlist::iterator iter = m_out_bl.begin();
+                r = cls_client::mirror_image_status_get_finish(&iter,
+                                                               m_mirror_image_status);
+            }
 
-template <typename I>
-void GetStatusRequest<I>::handle_get_status(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            if (r < 0 && r != -ENOENT) {
+                lderr(cct) << "failed to retrieve mirror image status: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
 
-  if (r == 0) {
-    bufferlist::iterator iter = m_out_bl.begin();
-    r = cls_client::mirror_image_status_get_finish(&iter,
-                                                   m_mirror_image_status);
-  }
+            finish(0);
+        }
 
-  if (r < 0 && r != -ENOENT) {
-    lderr(cct) << "failed to retrieve mirror image status: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void GetStatusRequest < I >::finish(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  finish(0);
-}
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-template <typename I>
-void GetStatusRequest<I>::finish(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+    }                           // namespace mirror
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::GetStatusRequest<librbd::ImageCtx>;
+template class librbd::mirror::GetStatusRequest < librbd::ImageCtx >;

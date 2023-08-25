@@ -15,134 +15,131 @@
 #include "common/debug.h"
 
 namespace ceph {
-  static CephContext *g_assert_context = NULL;
+    static CephContext *g_assert_context = NULL;
 
-  /* If you register an assert context, assert() will try to lock the dout
-   * stream of that context before starting an assert. This is nice because the
-   * output looks better. Your assert will not be interleaved with other dout
-   * statements.
-   *
-   * However, this is strictly optional and library code currently does not
-   * register an assert context. The extra complexity of supporting this
-   * wouldn't really be worth it.
-   */
-  void register_assert_context(CephContext *cct)
-  {
-    assert(!g_assert_context);
-    g_assert_context = cct;
-  }
+    /* If you register an assert context, assert() will try to lock the dout
+     * stream of that context before starting an assert. This is nice because the
+     * output looks better. Your assert will not be interleaved with other dout
+     * statements.
+     *
+     * However, this is strictly optional and library code currently does not
+     * register an assert context. The extra complexity of supporting this
+     * wouldn't really be worth it.
+     */
+    void register_assert_context(CephContext * cct) {
+        assert(!g_assert_context);
+        g_assert_context = cct;
+    } void __ceph_assert_fail(const char *assertion, const char *file, int line,
+                              const char *func) {
+        ostringstream tss;
+        tss << ceph_clock_now();
 
-  void __ceph_assert_fail(const char *assertion, const char *file, int line,
-			  const char *func)
-  {
-    ostringstream tss;
-    tss << ceph_clock_now();
+        char buf[8096];
+        snprintf(buf, sizeof(buf),
+                 "%s: In function '%s' thread %llx time %s\n"
+                 "%s: %d: FAILED assert(%s)\n",
+                 file, func, (unsigned long long)pthread_self(),
+                 tss.str().c_str(), file, line, assertion);
+        dout_emergency(buf);
 
-    char buf[8096];
-    snprintf(buf, sizeof(buf),
-	     "%s: In function '%s' thread %llx time %s\n"
-	     "%s: %d: FAILED assert(%s)\n",
-	     file, func, (unsigned long long)pthread_self(), tss.str().c_str(),
-	     file, line, assertion);
-    dout_emergency(buf);
+        // TODO: get rid of this memory allocation.
+        ostringstream oss;
+        oss << BackTrace(1);
+        dout_emergency(oss.str());
 
-    // TODO: get rid of this memory allocation.
-    ostringstream oss;
-    oss << BackTrace(1);
-    dout_emergency(oss.str());
+        dout_emergency
+            (" NOTE: a copy of the executable, or `objdump -rdS <executable>` "
+             "is needed to interpret this.\n");
 
-    dout_emergency(" NOTE: a copy of the executable, or `objdump -rdS <executable>` "
-		   "is needed to interpret this.\n");
+        if (g_assert_context) {
+            lderr(g_assert_context) << buf << std::endl;
+            *_dout << oss.str();
+            *_dout <<
+                " NOTE: a copy of the executable, or `objdump -rdS <executable>` "
+                << "is needed to interpret this.\n" << dendl;
 
-    if (g_assert_context) {
-      lderr(g_assert_context) << buf << std::endl;
-      *_dout << oss.str();
-      *_dout << " NOTE: a copy of the executable, or `objdump -rdS <executable>` "
-	     << "is needed to interpret this.\n" << dendl;
+            g_assert_context->_log->dump_recent();
+        }
 
-      g_assert_context->_log->dump_recent();
+        abort();
     }
 
-    abort();
-  }
+    void __ceph_assertf_fail(const char *assertion, const char *file, int line,
+                             const char *func, const char *msg, ...) {
+        ostringstream tss;
+        tss << ceph_clock_now();
 
-  void __ceph_assertf_fail(const char *assertion, const char *file, int line,
-			   const char *func, const char* msg, ...)
-  {
-    ostringstream tss;
-    tss << ceph_clock_now();
+        class BufAppender {
+          public:
+            BufAppender(char *buf, int size):bufptr(buf), remaining(size) {
+            } void printf(const char *format, ...) {
+                va_list args;
+                va_start(args, format);
+                this->vprintf(format, args);
+                va_end(args);
+            }
 
-    class BufAppender {
-    public:
-      BufAppender(char* buf, int size) : bufptr(buf), remaining(size) {
-      }
+            void vprintf(const char *format, va_list args) {
+                int n = vsnprintf(bufptr, remaining, format, args);
+                if (n >= 0) {
+                    if (n < remaining) {
+                        remaining -= n;
+                        bufptr += n;
+                    }
+                    else {
+                        remaining = 0;
+                    }
+                }
+            }
 
-      void printf(const char * format, ...) {
-	va_list args;
-	va_start(args, format);
-	this->vprintf(format, args);
-	va_end(args);
-      }
+          private:
+            char *bufptr;
+            int remaining;
+        };
 
-      void vprintf(const char * format, va_list args) {
-	int n = vsnprintf(bufptr, remaining, format, args);
-	if (n >= 0) {
-	  if (n < remaining) {
-	    remaining -= n;
-	    bufptr += n;
-	  } else {
-	    remaining = 0;
-	  }
-	}
-      }
+        char buf[8096];
+        BufAppender ba(buf, sizeof(buf));
+        BackTrace *bt = new BackTrace(1);
+        ba.printf("%s: In function '%s' thread %llx time %s\n"
+                  "%s: %d: FAILED assert(%s)\n",
+                  file, func, (unsigned long long)pthread_self(),
+                  tss.str().c_str(), file, line, assertion);
+        ba.printf("Assertion details: ");
+        va_list args;
+        va_start(args, msg);
+        ba.vprintf(msg, args);
+        va_end(args);
+        ba.printf("\n");
+        dout_emergency(buf);
 
-    private:
-      char* bufptr;
-      int remaining;
-    };
+        // TODO: get rid of this memory allocation.
+        ostringstream oss;
+        oss << *bt;
+        dout_emergency(oss.str());
 
-    char buf[8096];
-    BufAppender ba(buf, sizeof(buf));
-    BackTrace *bt = new BackTrace(1);
-    ba.printf("%s: In function '%s' thread %llx time %s\n"
-	     "%s: %d: FAILED assert(%s)\n",
-	     file, func, (unsigned long long)pthread_self(), tss.str().c_str(),
-	     file, line, assertion);
-    ba.printf("Assertion details: ");
-    va_list args;
-    va_start(args, msg);
-    ba.vprintf(msg, args);
-    va_end(args);
-    ba.printf("\n");
-    dout_emergency(buf);
+        dout_emergency
+            (" NOTE: a copy of the executable, or `objdump -rdS <executable>` "
+             "is needed to interpret this.\n");
 
-    // TODO: get rid of this memory allocation.
-    ostringstream oss;
-    oss << *bt;
-    dout_emergency(oss.str());
+        if (g_assert_context) {
+            lderr(g_assert_context) << buf << std::endl;
+            *_dout << oss.str();
+            *_dout <<
+                " NOTE: a copy of the executable, or `objdump -rdS <executable>` "
+                << "is needed to interpret this.\n" << dendl;
 
-    dout_emergency(" NOTE: a copy of the executable, or `objdump -rdS <executable>` "
-		   "is needed to interpret this.\n");
+            g_assert_context->_log->dump_recent();
+        }
 
-    if (g_assert_context) {
-      lderr(g_assert_context) << buf << std::endl;
-      *_dout << oss.str();
-      *_dout << " NOTE: a copy of the executable, or `objdump -rdS <executable>` "
-	     << "is needed to interpret this.\n" << dendl;
-
-      g_assert_context->_log->dump_recent();
+        abort();
     }
 
-    abort();
-  }
-
-  void __ceph_assert_warn(const char *assertion, const char *file,
-			  int line, const char *func)
-  {
-    char buf[8096];
-    snprintf(buf, sizeof(buf),
-	     "WARNING: assert(%s) at: %s: %d: %s()\n",
-	     assertion, file, line, func);
-    dout_emergency(buf);
-  }
+    void __ceph_assert_warn(const char *assertion, const char *file,
+                            int line, const char *func) {
+        char buf[8096];
+        snprintf(buf, sizeof(buf),
+                 "WARNING: assert(%s) at: %s: %d: %s()\n",
+                 assertion, file, line, func);
+        dout_emergency(buf);
+    }
 }

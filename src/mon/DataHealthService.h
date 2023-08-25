@@ -23,59 +23,54 @@
 #include "global/signal_handler.h"
 
 struct MMonHealth;
-namespace ceph { class Formatter; }
+namespace ceph {
+    class Formatter;
+} class DataHealthService:public HealthService {
+    map < entity_inst_t, DataStats > stats;
+    int last_warned_percent;
 
+    void handle_tell(MonOpRequestRef op);
+    int update_store_stats(DataStats & ours);
+    int update_stats();
+    void share_stats();
 
-class DataHealthService :
-  public HealthService
-{
-  map<entity_inst_t,DataStats> stats;
-  int last_warned_percent;
+    void force_shutdown() {
+        generic_dout(0) << "** Shutdown via Data Health Service **" << dendl;
+        queue_async_signal(SIGINT);
+  } protected:
+    void service_tick() override;
+    bool service_dispatch_op(MonOpRequestRef op) override;
+    void service_shutdown() override {
+    }
 
-  void handle_tell(MonOpRequestRef op);
-  int update_store_stats(DataStats &ours);
-  int update_stats();
-  void share_stats();
+    void start_epoch() override;
+    void finish_epoch() override {
+    }
+    void cleanup() override {
+    }
 
-  void force_shutdown() {
-    generic_dout(0) << "** Shutdown via Data Health Service **" << dendl;
-    queue_async_signal(SIGINT);
-  }
+  public:
+  DataHealthService(Monitor * m):
+    HealthService(m), last_warned_percent(0) {
+        set_update_period(g_conf->mon_health_data_update_interval);
+    }
+    ~DataHealthService()override {
+    }
 
-protected:
-  void service_tick() override;
-  bool service_dispatch_op(MonOpRequestRef op) override;
-  void service_shutdown() override { }
+    void init() override {
+        generic_dout(20) << "data_health " << __func__ << dendl;
+        start_tick();
+    }
 
-  void start_epoch() override;
-  void finish_epoch() override { }
-  void cleanup() override { }
+    void get_health(list < pair < health_status_t, string > >&summary,
+                    list < pair < health_status_t, string > >*detail) override;
 
-public:
-  DataHealthService(Monitor *m) :
-    HealthService(m),
-    last_warned_percent(0)
-  {
-    set_update_period(g_conf->mon_health_data_update_interval);
-  }
-  ~DataHealthService() override { }
+    int get_type() override {
+        return HealthService::SERVICE_HEALTH_DATA;
+    }
 
-  void init() override {
-    generic_dout(20) << "data_health " << __func__ << dendl;
-    start_tick();
-  }
-
-  void get_health(
-    list<pair<health_status_t,string> >& summary,
-    list<pair<health_status_t,string> > *detail) override;
-
-  int get_type() override {
-    return HealthService::SERVICE_HEALTH_DATA;
-  }
-
-  string get_name() const override {
-    return "data_health";
-  }
-};
+    string get_name() const override {
+        return "data_health";
+}};
 
 #endif /* CEPH_MON_DATA_HEALTH_SERVICE_H */

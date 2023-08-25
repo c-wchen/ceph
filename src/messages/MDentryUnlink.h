@@ -12,48 +12,50 @@
  * 
  */
 
-
 #ifndef CEPH_MDENTRYUNLINK_H
 #define CEPH_MDENTRYUNLINK_H
 
 #include <boost/utility/string_view.hpp>
 
-class MDentryUnlink : public Message {
-  dirfrag_t dirfrag;
-  string dn;
+class MDentryUnlink:public Message {
+    dirfrag_t dirfrag;
+    string dn;
 
- public:
-  dirfrag_t get_dirfrag() { return dirfrag; }
-  string& get_dn() { return dn; }
+  public:
+     dirfrag_t get_dirfrag() {
+        return dirfrag;
+    } string & get_dn() {
+        return dn;
+    }
 
-  bufferlist straybl;
+    bufferlist straybl;
 
-  MDentryUnlink() :
-    Message(MSG_MDS_DENTRYUNLINK) { }
-  MDentryUnlink(dirfrag_t df, boost::string_view n) :
-    Message(MSG_MDS_DENTRYUNLINK),
-    dirfrag(df),
-    dn(n) {}
-private:
-  ~MDentryUnlink() override {}
+  MDentryUnlink():
+    Message(MSG_MDS_DENTRYUNLINK) {
+    }
+  MDentryUnlink(dirfrag_t df, boost::string_view n):
+    Message(MSG_MDS_DENTRYUNLINK), dirfrag(df), dn(n) {
+    }
+  private:
+    ~MDentryUnlink()override {
+    }
 
-public:
-  const char *get_type_name() const override { return "dentry_unlink";}
-  void print(ostream& o) const override {
-    o << "dentry_unlink(" << dirfrag << " " << dn << ")";
-  }
-  
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(dirfrag, p);
-    ::decode(dn, p);
-    ::decode(straybl, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(dirfrag, payload);
-    ::encode(dn, payload);
-    ::encode(straybl, payload);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "dentry_unlink";
+    } void print(ostream & o) const override {
+        o << "dentry_unlink(" << dirfrag << " " << dn << ")";
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(dirfrag, p);
+        ::decode(dn, p);
+        ::decode(straybl, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(dirfrag, payload);
+        ::encode(dn, payload);
+        ::encode(straybl, payload);
+    }
 };
 
 #endif

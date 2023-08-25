@@ -108,38 +108,38 @@
 #define RBD_TRASH "rbd_trash"
 
 struct rbd_info {
-	__le64 max_id;
+    __le64 max_id;
 } __attribute__ ((packed));
 
 struct rbd_obj_snap_ondisk {
-	__le64 id;
-	__le64 image_size;
-} __attribute__((packed));
+    __le64 id;
+    __le64 image_size;
+} __attribute__ ((packed));
 
 struct rbd_obj_header_ondisk {
-	char text[40];
-	char block_name[RBD_MAX_BLOCK_NAME_SIZE];
-	char signature[4];
-	char version[8];
-	struct {
-		__u8 order;
-		__u8 crypt_type;
-		__u8 comp_type;
-		__u8 unused;
-	} __attribute__((packed)) options;
-	__le64 image_size;
-	__le64 snap_seq;
-	__le32 snap_count;
-	__le32 reserved;
-	__le64 snap_names_len;
-	struct rbd_obj_snap_ondisk snaps[0];
-} __attribute__((packed));
+    char text[40];
+    char block_name[RBD_MAX_BLOCK_NAME_SIZE];
+    char signature[4];
+    char version[8];
+    struct {
+        __u8 order;
+        __u8 crypt_type;
+        __u8 comp_type;
+        __u8 unused;
+    } __attribute__ ((packed)) options;
+    __le64 image_size;
+    __le64 snap_seq;
+    __le32 snap_count;
+    __le32 reserved;
+    __le64 snap_names_len;
+    struct rbd_obj_snap_ondisk snaps[0];
+} __attribute__ ((packed));
 
 enum {
-  RBD_PROTECTION_STATUS_UNPROTECTED  = 0,
-  RBD_PROTECTION_STATUS_UNPROTECTING = 1,
-  RBD_PROTECTION_STATUS_PROTECTED    = 2,
-  RBD_PROTECTION_STATUS_LAST         = 3
+    RBD_PROTECTION_STATUS_UNPROTECTED = 0,
+    RBD_PROTECTION_STATUS_UNPROTECTING = 1,
+    RBD_PROTECTION_STATUS_PROTECTED = 2,
+    RBD_PROTECTION_STATUS_LAST = 3
 };
 
 #endif

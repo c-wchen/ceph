@@ -27,126 +27,126 @@
  */
 
 class DecayRate {
-  double k;             // k = ln(.5)/half_life
+    double k;                   // k = ln(.5)/half_life
 
-  friend class DecayCounter;
+    friend class DecayCounter;
 
-public:
-  DecayRate() : k(0) {}
-  DecayRate(const DecayRate &dr) : k(dr.k) {}
+  public:
+     DecayRate():k(0) {
+    } DecayRate(const DecayRate & dr):k(dr.k) {
+    }
 
-  // cppcheck-suppress noExplicitConstructor
-  DecayRate(double hl) { set_halflife(hl); }
-  void set_halflife(double hl) {
-    k = ::log(.5) / hl;
-  }    
+    // cppcheck-suppress noExplicitConstructor
+    DecayRate(double hl) {
+        set_halflife(hl);
+    }
+    void set_halflife(double hl) {
+        k =::log(.5) / hl;
+    }
 };
 
 class DecayCounter {
-public:
-  double val;           // value
-  double delta;         // delta since last decay
-  double vel;           // recent velocity
-  utime_t last_decay;   // time of last decay
-  DecayRate rate;
+  public:
+    double val;                 // value
+    double delta;               // delta since last decay
+    double vel;                 // recent velocity
+    utime_t last_decay;         // time of last decay
+    DecayRate rate;
 
-  void encode(bufferlist& bl) const;
-  void decode(const utime_t &t, bufferlist::iterator& p);
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<DecayCounter*>& ls);
+    void encode(bufferlist & bl) const;
+    void decode(const utime_t & t, bufferlist::iterator & p);
+    void dump(Formatter * f) const;
+    static void generate_test_instances(list < DecayCounter * >&ls);
 
-  explicit DecayCounter(const utime_t &now)
-    : val(0), delta(0), vel(0), last_decay(now)
-  {
-  }
+    explicit DecayCounter(const utime_t & now)
+    :val(0), delta(0), vel(0), last_decay(now) {
+    } explicit DecayCounter(const utime_t & now, const DecayRate & rate)
+    :val(0), delta(0), vel(0), last_decay(now), rate(rate) {
+    }
 
-  explicit DecayCounter(const utime_t &now, const DecayRate &rate)
-    : val(0), delta(0), vel(0), last_decay(now), rate(rate)
-  {
-  }
+    // these two functions are for the use of our dencoder testing infrastructure
+  DecayCounter():val(0), delta(0), vel(0), last_decay() {
+    }
 
-  // these two functions are for the use of our dencoder testing infrastructure
-  DecayCounter() : val(0), delta(0), vel(0), last_decay() {}
-
-  void decode(bufferlist::iterator& p) {
-    utime_t fake_time;
-    decode(fake_time, p);
-  }
+    void decode(bufferlist::iterator & p) {
+        utime_t fake_time;
+        decode(fake_time, p);
+    }
 
   /**
    * reading
    */
 
-  double get(utime_t now, const DecayRate& rate) {
-    decay(now, rate);
-    return val+delta;
-  }
-  double get(utime_t now) {
-    decay(now, rate);
-    return val+delta;
-  }
+    double get(utime_t now, const DecayRate & rate) {
+        decay(now, rate);
+        return val + delta;
+    }
+    double get(utime_t now) {
+        decay(now, rate);
+        return val + delta;
+    }
 
-  double get_last() const {
-    return val;
-  }
-  
-  double get_last_vel() const {
-    return vel;
-  }
-
-  utime_t get_last_decay() const {
-    return last_decay; 
-  }
-
+    double get_last() const {
+        return val;
+    } double get_last_vel() const {
+        return vel;
+    } utime_t get_last_decay() const {
+        return last_decay;
+    }
   /**
    * adjusting
-   */
+   */ double hit(utime_t now, const DecayRate & rate, double v = 1.0) {
+        decay(now, rate);
+        delta += v;
+        return val + delta;
+    }
+    double hit(utime_t now, double v = 1.0) {
+        decay(now, rate);
+        delta += v;
+        return val + delta;
+    }
 
-  double hit(utime_t now, const DecayRate& rate, double v = 1.0) {
-    decay(now, rate);
-    delta += v;
-    return val+delta;
-  }
-  double hit(utime_t now, double v = 1.0) {
-    decay(now, rate);
-    delta += v;
-    return val+delta;
-  }
-
-  void adjust(double a) {
-    val += a;
-  }
-  void adjust(utime_t now, const DecayRate& rate, double a) {
-    decay(now, rate);
-    val += a;
-  }
-  void scale(double f) {
-    val *= f;
-    delta *= f;    
-    vel *= f;
-  }
+    void adjust(double a) {
+        val += a;
+    }
+    void adjust(utime_t now, const DecayRate & rate, double a) {
+        decay(now, rate);
+        val += a;
+    }
+    void scale(double f) {
+        val *= f;
+        delta *= f;
+        vel *= f;
+    }
 
   /**
    * decay etc.
    */
 
-  void reset(utime_t now) {
-    last_decay = now;
-    val = delta = 0;
-  }
+    void reset(utime_t now) {
+        last_decay = now;
+        val = delta = 0;
+    }
 
-  void decay(utime_t now, const DecayRate &rate);
+    void decay(utime_t now, const DecayRate & rate);
 };
 
-inline void encode(const DecayCounter &c, bufferlist &bl) { c.encode(bl); }
-inline void decode(DecayCounter &c, const utime_t &t, bufferlist::iterator &p) {
-  c.decode(t, p);
-}
-// for dencoder
-inline void decode(DecayCounter &c, bufferlist::iterator &p) {
-  utime_t t;
-  c.decode(t, p);
+inline void encode(const DecayCounter & c, bufferlist & bl)
+{
+    c.encode(bl);
 }
 
+inline void decode(DecayCounter & c, const utime_t & t,
+                   bufferlist::iterator & p)
+{
+    c.decode(t, p);
+}
+
+// for dencoder
+inline void decode(DecayCounter & c, bufferlist::iterator & p)
+{
+    utime_t t;
+    c.decode(t, p);
+}
 
 #endif

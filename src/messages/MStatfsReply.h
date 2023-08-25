@@ -12,33 +12,32 @@
  * 
  */
 
-
 #ifndef CEPH_MSTATFSREPLY_H
 #define CEPH_MSTATFSREPLY_H
 
-class MStatfsReply : public Message {
-public:
-  struct ceph_mon_statfs_reply h;
+class MStatfsReply:public Message {
+  public:
+    struct ceph_mon_statfs_reply h;
 
-  MStatfsReply() : Message(CEPH_MSG_STATFS_REPLY) {}
-  MStatfsReply(uuid_d &f, ceph_tid_t t, epoch_t epoch) : Message(CEPH_MSG_STATFS_REPLY) {
-    memcpy(&h.fsid, f.bytes(), sizeof(h.fsid));
-    header.tid = t;
-    h.version = epoch;
-  }
+     MStatfsReply():Message(CEPH_MSG_STATFS_REPLY) {
+    } MStatfsReply(uuid_d & f, ceph_tid_t t,
+                   epoch_t epoch):Message(CEPH_MSG_STATFS_REPLY) {
+        memcpy(&h.fsid, f.bytes(), sizeof(h.fsid));
+        header.tid = t;
+        h.version = epoch;
+    }
 
-  const char *get_type_name() const override { return "statfs_reply"; }
-  void print(ostream& out) const override {
-    out << "statfs_reply(" << header.tid << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(h, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(h, p);
-  }
+    const char *get_type_name() const override {
+        return "statfs_reply";
+    } void print(ostream & out) const override {
+        out << "statfs_reply(" << header.tid << ")";
+    } void encode_payload(uint64_t features) override {
+        ::encode(h, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(h, p);
+    }
 };
 
 #endif

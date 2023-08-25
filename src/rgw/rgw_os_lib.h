@@ -8,5 +8,4 @@
 #include "rgw_common.h"
 #include "rgw_lib.h"
 
-
 #endif /* RGW_OS_LIB_H */

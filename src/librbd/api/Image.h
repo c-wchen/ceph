@@ -9,32 +9,32 @@
 #include <set>
 #include <string>
 
-namespace librados { struct IoCtx; }
+namespace librados {
+    struct IoCtx;
+} namespace librbd {
 
-namespace librbd {
+    struct ImageCtx;
 
-struct ImageCtx;
+    namespace api {
 
-namespace api {
+        template < typename ImageCtxT = librbd::ImageCtx > struct Image {
+            typedef std::pair < int64_t, std::string > PoolSpec;
+            typedef std::set < std::string > ImageIds;
+            typedef std::map < PoolSpec, ImageIds > PoolImageIds;
+            typedef std::map < std::string, std::string > ImageNameToIds;
 
-template <typename ImageCtxT = librbd::ImageCtx>
-struct Image {
-  typedef std::pair<int64_t, std::string> PoolSpec;
-  typedef std::set<std::string> ImageIds;
-  typedef std::map<PoolSpec, ImageIds> PoolImageIds;
-  typedef std::map<std::string, std::string> ImageNameToIds;
+            static int list_images(librados::IoCtx & io_ctx,
+                                   ImageNameToIds * images);
 
-  static int list_images(librados::IoCtx& io_ctx,
-                         ImageNameToIds *images);
+            static int list_children(ImageCtxT * ictx,
+                                     const ParentSpec & parent_spec,
+                                     PoolImageIds * pool_image_ids);
 
-  static int list_children(ImageCtxT *ictx, const ParentSpec &parent_spec,
-                           PoolImageIds *pool_image_ids);
-
-};
+        };
 
 } // namespace api
-} // namespace librbd
-
-extern template class librbd::api::Image<librbd::ImageCtx>;
+        }
+    // namespace librbd
+    extern template class librbd::api::Image < librbd::ImageCtx >;
 
 #endif // LIBRBD_API_IMAGE_H

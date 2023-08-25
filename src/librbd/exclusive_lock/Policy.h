@@ -5,17 +5,13 @@
 #define CEPH_LIBRBD_EXCLUSIVE_LOCK_POLICY_H
 
 namespace librbd {
-namespace exclusive_lock {
+    namespace exclusive_lock {
 
-struct Policy {
-  virtual ~Policy() {
-  }
+        struct Policy {
+            virtual ~ Policy() {
+            } virtual bool may_auto_request_lock() = 0;
+            virtual int lock_requested(bool force) = 0;
+        };
 
-  virtual bool may_auto_request_lock() = 0;
-  virtual int lock_requested(bool force) = 0;
-};
-
-} // namespace exclusive_lock
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_EXCLUSIVE_LOCK_POLICY_H
+} // namespace exclusive_lock } // namespace librbd
+#endif                          // CEPH_LIBRBD_EXCLUSIVE_LOCK_POLICY_H

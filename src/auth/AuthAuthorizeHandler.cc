@@ -19,31 +19,31 @@
 
 AuthAuthorizeHandler *AuthAuthorizeHandlerRegistry::get_handler(int protocol)
 {
-  if (!supported.is_supported_auth(protocol)) {
-    return NULL;
-  }
-  
-  Mutex::Locker l(m_lock);
-  map<int,AuthAuthorizeHandler*>::iterator iter = m_authorizers.find(protocol);
-  if (iter != m_authorizers.end())
-    return iter->second;
+    if (!supported.is_supported_auth(protocol)) {
+        return NULL;
+    }
 
-  switch (protocol) {
-  case CEPH_AUTH_NONE:
-    m_authorizers[protocol] = new AuthNoneAuthorizeHandler();
-    return m_authorizers[protocol];
-    
-  case CEPH_AUTH_CEPHX:
-    m_authorizers[protocol] = new CephxAuthorizeHandler();
-    return m_authorizers[protocol];
-  }
-  return NULL;
+    Mutex::Locker l(m_lock);
+    map < int, AuthAuthorizeHandler * >::iterator iter =
+        m_authorizers.find(protocol);
+    if (iter != m_authorizers.end())
+        return iter->second;
+
+    switch (protocol) {
+    case CEPH_AUTH_NONE:
+        m_authorizers[protocol] = new AuthNoneAuthorizeHandler();
+        return m_authorizers[protocol];
+
+    case CEPH_AUTH_CEPHX:
+        m_authorizers[protocol] = new CephxAuthorizeHandler();
+        return m_authorizers[protocol];
+    }
+    return NULL;
 }
 
 AuthAuthorizeHandlerRegistry::~AuthAuthorizeHandlerRegistry()
 {
-  for (map<int,AuthAuthorizeHandler*>::iterator iter = m_authorizers.begin();
-       iter != m_authorizers.end();
-       ++iter)
-    delete iter->second;
+    for (map < int, AuthAuthorizeHandler * >::iterator iter =
+         m_authorizers.begin(); iter != m_authorizers.end(); ++iter)
+        delete iter->second;
 }

@@ -12,183 +12,190 @@
 
 namespace librbd {
 
-namespace {
+    namespace {
 
-struct MockTestImageCtx : public MockImageCtx {
-  MockTestImageCtx(librbd::ImageCtx& image_ctx) : MockImageCtx(image_ctx) {
-  }
-};
+        struct MockTestImageCtx:public MockImageCtx {
+            MockTestImageCtx(librbd::
+                             ImageCtx & image_ctx):MockImageCtx(image_ctx) {
+        }};
 
-} // anonymous namespace
+    }                           // anonymous namespace
 
-namespace journal {
+    namespace journal {
 
-template <>
-struct TypeTraits<MockTestImageCtx> {
-  typedef ::journal::MockJournaler Journaler;
-};
+        template <> struct TypeTraits <MockTestImageCtx > {
+            typedef::journal::MockJournaler Journaler;
+        };
 
-} // namespace journal
-} // namespace librbd
-
+} // namespace journal }        // namespace librbd
 // template definitions
 #include "librbd/journal/OpenRequest.cc"
-template class librbd::journal::OpenRequest<librbd::MockTestImageCtx>;
+template class librbd::journal::OpenRequest < librbd::MockTestImageCtx >;
 
 namespace librbd {
-namespace journal {
+    namespace journal {
 
-using ::testing::_;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::SetArgPointee;
-using ::testing::WithArg;
+        using::testing::_;
+        using::testing::DoAll;
+        using::testing::InSequence;
+        using::testing::Return;
+        using::testing::SetArgPointee;
+        using::testing::WithArg;
 
-class TestMockJournalOpenRequest : public TestMockFixture {
-public:
-  typedef OpenRequest<MockTestImageCtx> MockOpenRequest;
+        class TestMockJournalOpenRequest:public TestMockFixture {
+          public:
+            typedef OpenRequest < MockTestImageCtx > MockOpenRequest;
 
-  TestMockJournalOpenRequest() : m_lock("m_lock") {
-  }
+            TestMockJournalOpenRequest():m_lock("m_lock") {
+            } void expect_init_journaler(::journal::
+                                         MockJournaler & mock_journaler,
+                                         int r) {
+                EXPECT_CALL(mock_journaler, init(_))
+                    .
+                    WillOnce(CompleteContext
+                             (r, static_cast < ContextWQ * >(NULL)));
+            } void expect_get_journaler_cached_client(::journal::
+                                                      MockJournaler &
+                                                      mock_journaler, int r) {
+                journal::ImageClientMeta image_client_meta;
+                image_client_meta.tag_class = 345;
 
-  void expect_init_journaler(::journal::MockJournaler &mock_journaler, int r) {
-    EXPECT_CALL(mock_journaler, init(_))
-                  .WillOnce(CompleteContext(r, static_cast<ContextWQ*>(NULL)));
-  }
+                journal::ClientData client_data;
+                client_data.client_meta = image_client_meta;
 
-  void expect_get_journaler_cached_client(::journal::MockJournaler &mock_journaler,
-                                          int r) {
-    journal::ImageClientMeta image_client_meta;
-    image_client_meta.tag_class = 345;
+                cls::journal::Client client;
+                ::encode(client_data, client.data);
 
-    journal::ClientData client_data;
-    client_data.client_meta = image_client_meta;
+                EXPECT_CALL(mock_journaler, get_cached_client("", _))
+                .WillOnce(DoAll(SetArgPointee < 1 > (client), Return(r)));
+            } void expect_get_journaler_tags(MockImageCtx & mock_image_ctx,::
+                                             journal::
+                                             MockJournaler & mock_journaler,
+                                             int r) {
+                journal::TagData tag_data;
+                tag_data.mirror_uuid = "remote mirror";
 
-    cls::journal::Client client;
-    ::encode(client_data, client.data);
+                bufferlist tag_data_bl;
+                ::encode(tag_data, tag_data_bl);
 
-    EXPECT_CALL(mock_journaler, get_cached_client("", _))
-                  .WillOnce(DoAll(SetArgPointee<1>(client),
-                                  Return(r)));
-  }
+                ::journal::Journaler::Tags tags = { {
+                        0, 345, {
+                }}, {
+                1, 345, tag_data_bl}};
+                EXPECT_CALL(mock_journaler, get_tags(345, _, _))
+                    .WillOnce(DoAll(SetArgPointee < 1 > (tags),
+                                    WithArg < 2 >
+                                    (CompleteContext
+                                     (r,
+                                      mock_image_ctx.image_ctx->
+                                      op_work_queue))));
+            }
 
-  void expect_get_journaler_tags(MockImageCtx &mock_image_ctx,
-                                 ::journal::MockJournaler &mock_journaler,
-                                 int r) {
-    journal::TagData tag_data;
-    tag_data.mirror_uuid = "remote mirror";
+            Mutex m_lock;
+            ImageClientMeta m_client_meta;
+            uint64_t m_tag_tid = 0;
+            TagData m_tag_data;
+        };
 
-    bufferlist tag_data_bl;
-    ::encode(tag_data, tag_data_bl);
+        TEST_F(TestMockJournalOpenRequest, Success) {
+            REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-    ::journal::Journaler::Tags tags = {{0, 345, {}}, {1, 345, tag_data_bl}};
-    EXPECT_CALL(mock_journaler, get_tags(345, _, _))
-                  .WillOnce(DoAll(SetArgPointee<1>(tags),
-                                  WithArg<2>(CompleteContext(r, mock_image_ctx.image_ctx->op_work_queue))));
-  }
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  Mutex m_lock;
-  ImageClientMeta m_client_meta;
-  uint64_t m_tag_tid = 0;
-  TagData m_tag_data;
-};
+            MockTestImageCtx mock_image_ctx(*ictx);
+            ::journal::MockJournaler mock_journaler;
 
-TEST_F(TestMockJournalOpenRequest, Success) {
-  REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
+            expect_op_work_queue(mock_image_ctx);
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            InSequence seq;
+            expect_init_journaler(mock_journaler, 0);
+            expect_get_journaler_cached_client(mock_journaler, 0);
+            expect_get_journaler_tags(mock_image_ctx, mock_journaler, 0);
 
-  MockTestImageCtx mock_image_ctx(*ictx);
-  ::journal::MockJournaler mock_journaler;
+            C_SaferCond ctx;
+            auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
+                                               &m_lock, &m_client_meta,
+                                               &m_tag_tid,
+                                               &m_tag_data, &ctx);
+            req->send();
+            ASSERT_EQ(0, ctx.wait());
+            ASSERT_EQ(345U, m_client_meta.tag_class);
+            ASSERT_EQ(1U, m_tag_tid);
+            ASSERT_EQ("remote mirror", m_tag_data.mirror_uuid);
+        }
 
-  expect_op_work_queue(mock_image_ctx);
+        TEST_F(TestMockJournalOpenRequest, InitError) {
+            REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-  InSequence seq;
-  expect_init_journaler(mock_journaler, 0);
-  expect_get_journaler_cached_client(mock_journaler, 0);
-  expect_get_journaler_tags(mock_image_ctx, mock_journaler, 0);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  C_SaferCond ctx;
-  auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
-                                     &m_lock, &m_client_meta, &m_tag_tid,
-                                     &m_tag_data, &ctx);
-  req->send();
-  ASSERT_EQ(0, ctx.wait());
-  ASSERT_EQ(345U, m_client_meta.tag_class);
-  ASSERT_EQ(1U, m_tag_tid);
-  ASSERT_EQ("remote mirror", m_tag_data.mirror_uuid);
-}
+            MockTestImageCtx mock_image_ctx(*ictx);
+            ::journal::MockJournaler mock_journaler;
 
-TEST_F(TestMockJournalOpenRequest, InitError) {
-  REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
+            expect_op_work_queue(mock_image_ctx);
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            InSequence seq;
+            expect_init_journaler(mock_journaler, -ENOENT);
 
-  MockTestImageCtx mock_image_ctx(*ictx);
-  ::journal::MockJournaler mock_journaler;
+            C_SaferCond ctx;
+            auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
+                                               &m_lock, &m_client_meta,
+                                               &m_tag_tid,
+                                               &m_tag_data, &ctx);
+            req->send();
+            ASSERT_EQ(-ENOENT, ctx.wait());
+        }
 
-  expect_op_work_queue(mock_image_ctx);
+        TEST_F(TestMockJournalOpenRequest, GetCachedClientError) {
+            REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-  InSequence seq;
-  expect_init_journaler(mock_journaler, -ENOENT);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  C_SaferCond ctx;
-  auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
-                                     &m_lock, &m_client_meta, &m_tag_tid,
-                                     &m_tag_data, &ctx);
-  req->send();
-  ASSERT_EQ(-ENOENT, ctx.wait());
-}
+            MockTestImageCtx mock_image_ctx(*ictx);
+            ::journal::MockJournaler mock_journaler;
 
-TEST_F(TestMockJournalOpenRequest, GetCachedClientError) {
-  REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
+            expect_op_work_queue(mock_image_ctx);
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            InSequence seq;
+            expect_init_journaler(mock_journaler, 0);
+            expect_get_journaler_cached_client(mock_journaler, -EINVAL);
 
-  MockTestImageCtx mock_image_ctx(*ictx);
-  ::journal::MockJournaler mock_journaler;
+            C_SaferCond ctx;
+            auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
+                                               &m_lock, &m_client_meta,
+                                               &m_tag_tid,
+                                               &m_tag_data, &ctx);
+            req->send();
+            ASSERT_EQ(-EINVAL, ctx.wait());
+        }
 
-  expect_op_work_queue(mock_image_ctx);
+        TEST_F(TestMockJournalOpenRequest, GetTagsError) {
+            REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-  InSequence seq;
-  expect_init_journaler(mock_journaler, 0);
-  expect_get_journaler_cached_client(mock_journaler, -EINVAL);
+            librbd::ImageCtx * ictx;
+            ASSERT_EQ(0, open_image(m_image_name, &ictx));
 
-  C_SaferCond ctx;
-  auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
-                                     &m_lock, &m_client_meta, &m_tag_tid,
-                                     &m_tag_data, &ctx);
-  req->send();
-  ASSERT_EQ(-EINVAL, ctx.wait());
-}
+            MockTestImageCtx mock_image_ctx(*ictx);
+            ::journal::MockJournaler mock_journaler;
 
-TEST_F(TestMockJournalOpenRequest, GetTagsError) {
-  REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
+            expect_op_work_queue(mock_image_ctx);
 
-  librbd::ImageCtx *ictx;
-  ASSERT_EQ(0, open_image(m_image_name, &ictx));
+            InSequence seq;
+            expect_init_journaler(mock_journaler, 0);
+            expect_get_journaler_cached_client(mock_journaler, 0);
+            expect_get_journaler_tags(mock_image_ctx, mock_journaler, -EBADMSG);
 
-  MockTestImageCtx mock_image_ctx(*ictx);
-  ::journal::MockJournaler mock_journaler;
+            C_SaferCond ctx;
+            auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
+                                               &m_lock, &m_client_meta,
+                                               &m_tag_tid,
+                                               &m_tag_data, &ctx);
+            req->send();
+            ASSERT_EQ(-EBADMSG, ctx.wait());
+        }
 
-  expect_op_work_queue(mock_image_ctx);
-
-  InSequence seq;
-  expect_init_journaler(mock_journaler, 0);
-  expect_get_journaler_cached_client(mock_journaler, 0);
-  expect_get_journaler_tags(mock_image_ctx, mock_journaler, -EBADMSG);
-
-  C_SaferCond ctx;
-  auto req = MockOpenRequest::create(&mock_image_ctx, &mock_journaler,
-                                     &m_lock, &m_client_meta, &m_tag_tid,
-                                     &m_tag_data, &ctx);
-  req->send();
-  ASSERT_EQ(-EBADMSG, ctx.wait());
-}
-
-} // namespace journal
-} // namespace librbd
+    }                           // namespace journal
+}                               // namespace librbd

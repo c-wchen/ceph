@@ -21,74 +21,72 @@
 class MDSRank;
 class MonClient;
 
-class SnapServer : public MDSTableServer {
-protected:
-  MonClient *mon_client;
-  snapid_t last_snap;
-  map<snapid_t, SnapInfo> snaps;
-  map<int, set<snapid_t> > need_to_purge;
-  
-  map<version_t, SnapInfo> pending_update;
-  map<version_t, pair<snapid_t,snapid_t> > pending_destroy; // (removed_snap, seq)
-  set<version_t>           pending_noop;
+class SnapServer:public MDSTableServer {
+  protected:
+    MonClient * mon_client;
+    snapid_t last_snap;
+     map < snapid_t, SnapInfo > snaps;
+     map < int, set < snapid_t > >need_to_purge;
 
-  version_t last_checked_osdmap;
+     map < version_t, SnapInfo > pending_update;
+     map < version_t, pair < snapid_t, snapid_t > >pending_destroy; // (removed_snap, seq)
+     set < version_t > pending_noop;
 
-public:
-  SnapServer(MDSRank *m, MonClient *monc)
-    : MDSTableServer(m, TABLE_SNAP), mon_client(monc), last_checked_osdmap(0)
-  {}
-    
-  void reset_state() override;
-  void encode_server_state(bufferlist& bl) const override {
-    ENCODE_START(3, 3, bl);
-    ::encode(last_snap, bl);
-    ::encode(snaps, bl);
-    ::encode(need_to_purge, bl);
-    ::encode(pending_update, bl);
-    ::encode(pending_destroy, bl);
-    ::encode(pending_noop, bl);
-    ENCODE_FINISH(bl);
-  }
-  void decode_server_state(bufferlist::iterator& bl) override {
-    DECODE_START_LEGACY_COMPAT_LEN(3, 3, 3, bl);
-    ::decode(last_snap, bl);
-    ::decode(snaps, bl);
-    ::decode(need_to_purge, bl);
-    ::decode(pending_update, bl);
-    if (struct_v >= 2)
-      ::decode(pending_destroy, bl);
-    else {
-      map<version_t, snapid_t> t;
-      ::decode(t, bl);
-      for (map<version_t, snapid_t>::iterator p = t.begin(); p != t.end(); ++p)
-	pending_destroy[p->first].first = p->second; 
-    } 
-    ::decode(pending_noop, bl);
-    DECODE_FINISH(bl);
-  }
+    version_t last_checked_osdmap;
 
-  // To permit enc/decoding in isolation in dencoder
-  SnapServer() : MDSTableServer(NULL, TABLE_SNAP), last_checked_osdmap(0) {}
-  void encode(bufferlist& bl) const {
-    encode_server_state(bl);
-  }
-  void decode(bufferlist::iterator& bl) {
-    decode_server_state(bl);
-  }
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<SnapServer*>& ls);
+  public:
+     SnapServer(MDSRank * m, MonClient * monc)
+    :MDSTableServer(m, TABLE_SNAP), mon_client(monc), last_checked_osdmap(0) {
+    } void reset_state() override;
+    void encode_server_state(bufferlist & bl) const override {
+        ENCODE_START(3, 3, bl);
+        ::encode(last_snap, bl);
+        ::encode(snaps, bl);
+        ::encode(need_to_purge, bl);
+        ::encode(pending_update, bl);
+        ::encode(pending_destroy, bl);
+        ::encode(pending_noop, bl);
+        ENCODE_FINISH(bl);
+    } void decode_server_state(bufferlist::iterator & bl) override {
+        DECODE_START_LEGACY_COMPAT_LEN(3, 3, 3, bl);
+        ::decode(last_snap, bl);
+        ::decode(snaps, bl);
+        ::decode(need_to_purge, bl);
+        ::decode(pending_update, bl);
+        if (struct_v >= 2)
+            ::decode(pending_destroy, bl);
+        else {
+            map < version_t, snapid_t > t;
+            ::decode(t, bl);
+            for (map < version_t, snapid_t >::iterator p = t.begin();
+                 p != t.end(); ++p)
+                pending_destroy[p->first].first = p->second;
+        }
+        ::decode(pending_noop, bl);
+        DECODE_FINISH(bl);
+    }
 
-  // server bits
-  void _prepare(bufferlist &bl, uint64_t reqid, mds_rank_t bymds) override;
-  bool _is_prepared(version_t tid) const;
-  bool _commit(version_t tid, MMDSTableRequest *req=NULL) override;
-  void _rollback(version_t tid) override;
-  void _server_update(bufferlist& bl) override;
-  void handle_query(MMDSTableRequest *m) override;
+    // To permit enc/decoding in isolation in dencoder
+  SnapServer():MDSTableServer(NULL, TABLE_SNAP), last_checked_osdmap(0) {
+    }
+    void encode(bufferlist & bl) const {
+        encode_server_state(bl);
+    } void decode(bufferlist::iterator & bl) {
+        decode_server_state(bl);
+    }
+    void dump(Formatter * f) const;
+    static void generate_test_instances(list < SnapServer * >&ls);
 
-  void check_osd_map(bool force);
+    // server bits
+    void _prepare(bufferlist & bl, uint64_t reqid, mds_rank_t bymds) override;
+    bool _is_prepared(version_t tid) const;
+    bool _commit(version_t tid, MMDSTableRequest * req = NULL) override;
+    void _rollback(version_t tid) override;
+    void _server_update(bufferlist & bl) override;
+    void handle_query(MMDSTableRequest * m) override;
+
+    void check_osd_map(bool force);
 };
-WRITE_CLASS_ENCODER(SnapServer)
 
+WRITE_CLASS_ENCODER(SnapServer)
 #endif

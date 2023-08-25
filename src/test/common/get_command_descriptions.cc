@@ -25,30 +25,30 @@
 #include "common/ceph_argparse.h"
 #include "global/global_init.h"
 
-static void usage(ostream &out)
+static void usage(ostream & out)
 {
-  out << "usage: get_command_descriptions [options ...]" << std::endl;
-  out << "print on stdout the result of JSON formatted options\n";
-  out << "found in mon/MonCommands.h as produced by the\n";
-  out << "Monitor.cc::get_command_descriptions function.\n";
-  out << "Designed as a helper for ceph_argparse.py unit tests.\n";
-  out << "\n";
-  out << "  --all               all of mon/MonCommands.h \n";
-  out << "  --pull585           reproduce the bug fixed by #585\n";
-  out << "\n";
-  out << "Examples:\n";
-  out << "  get_command_descriptions --all\n";
-  out << "  get_command_descriptions --pull585\n";
+    out << "usage: get_command_descriptions [options ...]" << std::endl;
+    out << "print on stdout the result of JSON formatted options\n";
+    out << "found in mon/MonCommands.h as produced by the\n";
+    out << "Monitor.cc::get_command_descriptions function.\n";
+    out << "Designed as a helper for ceph_argparse.py unit tests.\n";
+    out << "\n";
+    out << "  --all               all of mon/MonCommands.h \n";
+    out << "  --pull585           reproduce the bug fixed by #585\n";
+    out << "\n";
+    out << "Examples:\n";
+    out << "  get_command_descriptions --all\n";
+    out << "  get_command_descriptions --pull585\n";
 }
 
-static void json_print(const std::vector<MonCommand> &mon_commands)
+static void json_print(const std::vector < MonCommand > &mon_commands)
 {
-  bufferlist rdata;
-  Formatter *f = Formatter::create("json");
-  Monitor::format_command_descriptions(mon_commands, f, &rdata);
-  delete f;
-  string data(rdata.c_str(), rdata.length());
-  cout << data << std::endl;
+    bufferlist rdata;
+    Formatter *f = Formatter::create("json");
+    Monitor::format_command_descriptions(mon_commands, f, &rdata);
+    delete f;
+    string data(rdata.c_str(), rdata.length());
+    cout << data << std::endl;
 }
 
 static void all()
@@ -56,7 +56,7 @@ static void all()
 #undef FLAG
 #undef COMMAND
 #undef COMMAND_WITH_FLAG
-  std::vector<MonCommand> mon_commands = {
+    std::vector < MonCommand > mon_commands = {
 #define FLAG(f) (MonCommand::FLAG_##f)
 #define COMMAND(parsesig, helptext, modulename, req_perms, avail)	\
     {parsesig, helptext, modulename, req_perms, avail, 0},
@@ -71,52 +71,55 @@ static void all()
 #define COMMAND_WITH_FLAG(parsesig, helptext, modulename, req_perms, avail, flags) \
   {parsesig, helptext, modulename, req_perms, avail, flags | FLAG(MGR)},
 #include <mgr/MgrCommands.h>
- #undef COMMAND
+#undef COMMAND
 #undef COMMAND_WITH_FLAG
- };
+    };
 
-  json_print(mon_commands);
+    json_print(mon_commands);
 }
 
 // syntax error https://github.com/ceph/ceph/pull/585
 static void pull585()
 {
-  std::vector<MonCommand> mon_commands = {
-    { "osd pool create "		       
-      "name=pool,type=CephPoolname " 
-      "name=pg_num,type=CephInt,range=0 " 
-      "name=pgp_num,type=CephInt,range=0,req=false" // !!! missing trailing space
-      "name=properties,type=CephString,n=N,req=false,goodchars=[A-Za-z0-9-_.=]", 
-      "create pool", "osd", "rw", "cli,rest" }
-  };
+    std::vector < MonCommand > mon_commands = {
+        {
+            "osd pool create " "name=pool,type=CephPoolname " "name=pg_num,type=CephInt,range=0 " "name=pgp_num,type=CephInt,range=0,req=false" // !!! missing trailing space
+        "name=properties,type=CephString,n=N,req=false,goodchars=[A-Za-z0-9-_.=]",
+                "create pool", "osd", "rw", "cli,rest"}
+    };
 
-  json_print(mon_commands);
+    json_print(mon_commands);
 }
 
-int main(int argc, char **argv) {
-  vector<const char*> args;
-  argv_to_vec(argc, (const char **)argv, args);
+int main(int argc, char **argv)
+{
+    vector < const char *>args;
+    argv_to_vec(argc, (const char **)argv, args);
 
-  auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
-			 CODE_ENVIRONMENT_UTILITY, 0);
-  common_init_finish(g_ceph_context);
+    auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
+                           CODE_ENVIRONMENT_UTILITY, 0);
+    common_init_finish(g_ceph_context);
 
-  if (args.empty()) {
-    usage(cerr);
-    exit(1);
-  }
-  for (std::vector<const char*>::iterator i = args.begin(); i != args.end(); ++i) {
-    string err;
-
-    if (*i == string("help") || *i == string("-h") || *i == string("--help")) {
-      usage(cout);
-      exit(0);
-    } else if (*i == string("--all")) {
-      all();
-    } else if (*i == string("--pull585")) {
-      pull585();
+    if (args.empty()) {
+        usage(cerr);
+        exit(1);
     }
-  }  
+    for (std::vector < const char *>::iterator i = args.begin();
+         i != args.end(); ++i) {
+        string err;
+
+        if (*i == string("help") || *i == string("-h")
+            || *i == string("--help")) {
+            usage(cout);
+            exit(0);
+        }
+        else if (*i == string("--all")) {
+            all();
+        }
+        else if (*i == string("--pull585")) {
+            pull585();
+        }
+    }
 }
 
 /*
@@ -126,4 +129,3 @@ int main(int argc, char **argv) {
  *   ./get_command_descriptions --all --pull585"
  * End:
  */
-

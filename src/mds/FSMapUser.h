@@ -21,45 +21,47 @@
 #include "mds/mdstypes.h"
 
 class FSMapUser {
-public:
-  struct fs_info_t {
-    fs_cluster_id_t cid;
-    std::string name;
-    fs_info_t() : cid(FS_CLUSTER_ID_NONE) {}
-    void encode(bufferlist& bl, uint64_t features) const;
-    void decode(bufferlist::iterator &bl);
-  };
+  public:
+    struct fs_info_t {
+        fs_cluster_id_t cid;
+         std::string name;
+         fs_info_t():cid(FS_CLUSTER_ID_NONE) {
+        } void encode(bufferlist & bl, uint64_t features) const;
+        void decode(bufferlist::iterator & bl);
+    };
 
-  epoch_t epoch;
-  fs_cluster_id_t legacy_client_fscid;
-  std::map<fs_cluster_id_t, fs_info_t> filesystems;
+    epoch_t epoch;
+    fs_cluster_id_t legacy_client_fscid;
+    std::map < fs_cluster_id_t, fs_info_t > filesystems;
 
-  FSMapUser()
-    : epoch(0), legacy_client_fscid(FS_CLUSTER_ID_NONE) { }
-
-  epoch_t get_epoch() const { return epoch; }
-
-  fs_cluster_id_t get_fs_cid(boost::string_view name) const {
-    for (auto &p : filesystems) {
-      if (p.second.name == name)
-	return p.first;
+    FSMapUser()
+  :    epoch(0), legacy_client_fscid(FS_CLUSTER_ID_NONE) {
     }
-    return FS_CLUSTER_ID_NONE;
-  }
 
-  void encode(bufferlist& bl, uint64_t features) const;
-  void decode(bufferlist::iterator& bl);
+    epoch_t get_epoch() const {
+        return epoch;
+    } fs_cluster_id_t get_fs_cid(boost::string_view name) const {
+        for (auto & p:filesystems) {
+            if (p.second.name == name)
+                return p.first;
+        } return FS_CLUSTER_ID_NONE;
+    }
 
-  void print(ostream& out) const;
-  void print_summary(Formatter *f, ostream *out);
+    void encode(bufferlist & bl, uint64_t features) const;
+    void decode(bufferlist::iterator & bl);
 
-  static void generate_test_instances(list<FSMapUser*>& ls);
+    void print(ostream & out) const;
+    void print_summary(Formatter * f, ostream * out);
+
+    static void generate_test_instances(list < FSMapUser * >&ls);
 };
-WRITE_CLASS_ENCODER_FEATURES(FSMapUser::fs_info_t)
-WRITE_CLASS_ENCODER_FEATURES(FSMapUser)
 
-inline ostream& operator<<(ostream& out, FSMapUser& m) {
-  m.print_summary(NULL, &out);
-  return out;
+WRITE_CLASS_ENCODER_FEATURES(FSMapUser::fs_info_t)
+    WRITE_CLASS_ENCODER_FEATURES(FSMapUser)
+
+inline ostream & operator<<(ostream & out, FSMapUser & m)
+{
+    m.print_summary(NULL, &out);
+    return out;
 }
 #endif

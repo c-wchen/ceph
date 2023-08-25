@@ -9,16 +9,16 @@
 
 #include "kernel/ioctl.h"
 
+main()
+{
+    struct ceph_file_layout l;
+    int fd = open("foo.txt", O_RDONLY);
+    int r = ioctl(fd, CEPH_IOC_GET_LAYOUT, &l, sizeof(l));
+    printf("get = %d\n", r);
 
-main() {
-	struct ceph_file_layout l;
-	int fd = open("foo.txt", O_RDONLY);
-	int r = ioctl(fd, CEPH_IOC_GET_LAYOUT, &l, sizeof(l));
-	printf("get = %d\n", r);
+    l.fl_stripe_unit = 65536;
+    l.fl_object_size = 65536;
 
-	l.fl_stripe_unit = 65536;
-	l.fl_object_size = 65536;
-	
-	r = ioctl(fd, CEPH_IOC_SET_LAYOUT, &l, sizeof(l));
-	printf("set = %d\n", r);
+    r = ioctl(fd, CEPH_IOC_SET_LAYOUT, &l, sizeof(l));
+    printf("set = %d\n", r);
 }

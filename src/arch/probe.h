@@ -5,12 +5,11 @@
 extern "C" {
 #endif
 
-extern int ceph_arch_probed;  /* non-zero if we've probed features */
+    extern int ceph_arch_probed;    /* non-zero if we've probed features */
 
-extern int ceph_arch_probe(void);
+    extern int ceph_arch_probe(void);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

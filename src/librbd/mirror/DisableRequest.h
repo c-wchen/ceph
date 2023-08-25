@@ -15,24 +15,21 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace mirror {
+    namespace mirror {
 
-template <typename ImageCtxT = ImageCtx>
-class DisableRequest {
-public:
-  static DisableRequest *create(ImageCtxT *image_ctx, bool force,
-                                bool remove, Context *on_finish) {
-    return new DisableRequest(image_ctx, force, remove, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class DisableRequest {
+          public:
+            static DisableRequest *create(ImageCtxT * image_ctx, bool force,
+                                          bool remove, Context * on_finish) {
+                return new DisableRequest(image_ctx, force, remove, on_finish);
+            } DisableRequest(ImageCtxT * image_ctx, bool force, bool remove,
+                             Context * on_finish);
 
-  DisableRequest(ImageCtxT *image_ctx, bool force, bool remove,
-                 Context *on_finish);
+            void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -80,62 +77,68 @@ private:
    * @endverbatim
    */
 
-  ImageCtxT *m_image_ctx;
-  bool m_force;
-  bool m_remove;
-  Context *m_on_finish;
+             ImageCtxT * m_image_ctx;
+            bool m_force;
+            bool m_remove;
+            Context *m_on_finish;
 
-  bool m_is_primary = false;
-  bufferlist m_out_bl;
-  cls::rbd::MirrorImage m_mirror_image;
-  std::set<cls::journal::Client> m_clients;
-  std::map<std::string, int> m_ret;
-  std::map<std::string, int> m_current_ops;
-  int m_error_result = 0;
-  mutable Mutex m_lock;
+            bool m_is_primary = false;
+            bufferlist m_out_bl;
+             cls::rbd::MirrorImage m_mirror_image;
+             std::set < cls::journal::Client > m_clients;
+             std::map < std::string, int >m_ret;
+             std::map < std::string, int >m_current_ops;
+            int m_error_result = 0;
+            mutable Mutex m_lock;
 
-  void send_get_mirror_image();
-  Context *handle_get_mirror_image(int *result);
+            void send_get_mirror_image();
+            Context *handle_get_mirror_image(int *result);
 
-  void send_get_tag_owner();
-  Context *handle_get_tag_owner(int *result);
+            void send_get_tag_owner();
+            Context *handle_get_tag_owner(int *result);
 
-  void send_set_mirror_image();
-  Context *handle_set_mirror_image(int *result);
+            void send_set_mirror_image();
+            Context *handle_set_mirror_image(int *result);
 
-  void send_notify_mirroring_watcher();
-  Context *handle_notify_mirroring_watcher(int *result);
+            void send_notify_mirroring_watcher();
+            Context *handle_notify_mirroring_watcher(int *result);
 
-  void send_promote_image();
-  Context *handle_promote_image(int *result);
+            void send_promote_image();
+            Context *handle_promote_image(int *result);
 
-  void send_get_clients();
-  Context *handle_get_clients(int *result);
+            void send_get_clients();
+            Context *handle_get_clients(int *result);
 
-  void send_remove_snap(const std::string &client_id,
-                        const cls::rbd::SnapshotNamespace &snap_namespace,
-			const std::string &snap_name);
-  Context *handle_remove_snap(int *result, const std::string &client_id);
+            void send_remove_snap(const std::string & client_id,
+                                  const cls::rbd::
+                                  SnapshotNamespace & snap_namespace,
+                                  const std::string & snap_name);
+            Context *handle_remove_snap(int *result,
+                                        const std::string & client_id);
 
-  void send_unregister_client(const std::string &client_id);
-  Context *handle_unregister_client(int *result, const std::string &client_id);
+            void send_unregister_client(const std::string & client_id);
+            Context *handle_unregister_client(int *result,
+                                              const std::string & client_id);
 
-  void send_remove_mirror_image();
-  Context *handle_remove_mirror_image(int *result);
+            void send_remove_mirror_image();
+            Context *handle_remove_mirror_image(int *result);
 
-  void send_notify_mirroring_watcher_removed();
-  Context *handle_notify_mirroring_watcher_removed(int *result);
+            void send_notify_mirroring_watcher_removed();
+            Context *handle_notify_mirroring_watcher_removed(int *result);
 
-  Context *create_context_callback(
-    Context*(DisableRequest<ImageCtxT>::*handle)(
-      int*, const std::string &client_id),
-    const std::string &client_id);
+            Context *create_context_callback(Context *
+                                             (DisableRequest <
+                                              ImageCtxT >::*handle) (int *,
+                                                                     const std::
+                                                                     string &
+                                                                     client_id),
+                                             const std::string & client_id);
 
-};
+        };
 
-} // namespace mirror
-} // namespace librbd
+    }                           // namespace mirror
+}                               // namespace librbd
 
-extern template class librbd::mirror::DisableRequest<librbd::ImageCtx>;
+extern template class librbd::mirror::DisableRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIRROR_DISABLE_REQUEST_H

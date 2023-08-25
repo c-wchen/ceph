@@ -11,52 +11,50 @@
 #define dout_prefix *_dout << "librbd::MetadataSetRequest: "
 
 namespace librbd {
-namespace operation {
+    namespace operation {
 
-template <typename I>
-MetadataSetRequest<I>::MetadataSetRequest(I &image_ctx,
-                                          Context *on_finish,
-                                          const std::string &key,
-                                          const std::string &value)
-  : Request<I>(image_ctx, on_finish), m_key(key), m_value(value) {
-}
+        template < typename I >
+            MetadataSetRequest < I >::MetadataSetRequest(I & image_ctx,
+                                                         Context * on_finish,
+                                                         const std::
+                                                         string & key,
+                                                         const std::
+                                                         string & value)
+        :Request < I > (image_ctx, on_finish), m_key(key), m_value(value) {
+        } template < typename I > void MetadataSetRequest < I >::send_op() {
+            send_metadata_set();
+        } template < typename I >
+            bool MetadataSetRequest < I >::should_complete(int r) {
+            I & image_ctx = this->m_image_ctx;
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 20) << this << " " << __func__ << "r=" << r << dendl;
 
-template <typename I>
-void MetadataSetRequest<I>::send_op() {
-  send_metadata_set();
-}
+            if (r < 0) {
+                lderr(cct) << "encountered error: " << cpp_strerror(r) << dendl;
+            }
+            return true;
+        }
 
-template <typename I>
-bool MetadataSetRequest<I>::should_complete(int r) {
-  I &image_ctx = this->m_image_ctx;
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 20) << this << " " << __func__ << "r=" << r << dendl;
+        template < typename I >
+            void MetadataSetRequest < I >::send_metadata_set() {
+            I & image_ctx = this->m_image_ctx;
+            assert(image_ctx.owner_lock.is_locked());
 
-  if (r < 0) {
-    lderr(cct) << "encountered error: " << cpp_strerror(r) << dendl;
-  }
-  return true;
-}
+            CephContext *cct = image_ctx.cct;
+            ldout(cct, 20) << this << " " << __func__ << dendl;
 
-template <typename I>
-void MetadataSetRequest<I>::send_metadata_set() {
-  I &image_ctx = this->m_image_ctx;
-  assert(image_ctx.owner_lock.is_locked());
+            m_data[m_key].append(m_value);
+            librados::ObjectWriteOperation op;
+            cls_client::metadata_set(&op, m_data);
 
-  CephContext *cct = image_ctx.cct;
-  ldout(cct, 20) << this << " " << __func__ << dendl;
+            librados::AioCompletion * comp = this->create_callback_completion();
+            int r =
+                image_ctx.md_ctx.aio_operate(image_ctx.header_oid, comp, &op);
+            assert(r == 0);
+            comp->release();
+        }
 
-  m_data[m_key].append(m_value);
-  librados::ObjectWriteOperation op;
-  cls_client::metadata_set(&op, m_data);
+    }                           // namespace operation
+}                               // namespace librbd
 
-  librados::AioCompletion *comp = this->create_callback_completion();
-  int r = image_ctx.md_ctx.aio_operate(image_ctx.header_oid, comp, &op);
-  assert(r == 0);
-  comp->release();
-}
-
-} // namespace operation
-} // namespace librbd
-
-template class librbd::operation::MetadataSetRequest<librbd::ImageCtx>;
+template class librbd::operation::MetadataSetRequest < librbd::ImageCtx >;

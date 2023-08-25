@@ -17,23 +17,22 @@
 
 #include <utility>
 
-template <typename F>
-struct scope_guard {
-  F f;
-  scope_guard() = delete;
-  scope_guard(const scope_guard &) = delete;
-  scope_guard(scope_guard &&) = default;
-  scope_guard & operator=(const scope_guard &) = delete;
-  scope_guard & operator=(scope_guard &&) = default;
-  scope_guard(F &&f) : f(std::move(f)) {}
-  ~scope_guard() {
-    f();
-  }
+template < typename F > struct scope_guard {
+    F f;
+     scope_guard() = delete;
+     scope_guard(const scope_guard &) = delete;
+     scope_guard(scope_guard &&) = default;
+     scope_guard & operator=(const scope_guard &) = delete;
+     scope_guard & operator=(scope_guard &&) = default;
+     scope_guard(F && f):f(std::move(f)) {
+    } ~scope_guard() {
+        f();
+    }
 };
 
-template <typename F>
-scope_guard<F> make_scope_guard(F &&f) {
-  return scope_guard<F>(std::forward<F>(f));
+template < typename F > scope_guard < F > make_scope_guard(F && f)
+{
+    return scope_guard < F > (std::forward < F > (f));
 }
 
 #endif

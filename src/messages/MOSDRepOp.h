@@ -12,7 +12,6 @@
  *
  */
 
-
 #ifndef CEPH_MOSDREPOP_H
 #define CEPH_MOSDREPOP_H
 
@@ -22,156 +21,149 @@
  * OSD sub op - for internal ops on pobjects between primary and replicas(/stripes/whatever)
  */
 
-class MOSDRepOp : public MOSDFastDispatchOp {
+class MOSDRepOp:public MOSDFastDispatchOp {
 
-  static const int HEAD_VERSION = 2;
-  static const int COMPAT_VERSION = 1;
+    static const int HEAD_VERSION = 2;
+    static const int COMPAT_VERSION = 1;
 
-public:
-  epoch_t map_epoch, min_epoch;
+  public:
+     epoch_t map_epoch, min_epoch;
 
-  // metadata from original request
-  osd_reqid_t reqid;
+    // metadata from original request
+    osd_reqid_t reqid;
 
-  spg_t pgid;
+    spg_t pgid;
 
-  bufferlist::iterator p;
-  // Decoding flags. Decoding is only needed for messages catched by pipe reader.
-  bool final_decode_needed;
+     bufferlist::iterator p;
+    // Decoding flags. Decoding is only needed for messages catched by pipe reader.
+    bool final_decode_needed;
 
-  // subop
-  pg_shard_t from;
-  hobject_t poid;
+    // subop
+    pg_shard_t from;
+    hobject_t poid;
 
-  __u8 acks_wanted;
+    __u8 acks_wanted;
 
-  // transaction to exec
-  bufferlist logbl;
-  pg_stat_t pg_stats;
+    // transaction to exec
+    bufferlist logbl;
+    pg_stat_t pg_stats;
 
-  // subop metadata
-  eversion_t version;
+    // subop metadata
+    eversion_t version;
 
-  // piggybacked osd/og state
-  eversion_t pg_trim_to;   // primary->replica: trim to here
-  eversion_t pg_roll_forward_to;   // primary->replica: trim rollback
-                                    // info to here
+    // piggybacked osd/og state
+    eversion_t pg_trim_to;      // primary->replica: trim to here
+    eversion_t pg_roll_forward_to;  // primary->replica: trim rollback
+    // info to here
 
-  hobject_t new_temp_oid;      ///< new temp object that we must now start tracking
-  hobject_t discard_temp_oid;  ///< previously used temp object that we can now stop tracking
+    hobject_t new_temp_oid;     ///< new temp object that we must now start tracking
+    hobject_t discard_temp_oid; ///< previously used temp object that we can now stop tracking
 
-  /// non-empty if this transaction involves a hit_set history update
-  boost::optional<pg_hit_set_history_t> updated_hit_set_history;
+    /// non-empty if this transaction involves a hit_set history update
+     boost::optional < pg_hit_set_history_t > updated_hit_set_history;
 
-  epoch_t get_map_epoch() const override {
-    return map_epoch;
-  }
-  epoch_t get_min_epoch() const override {
-    return min_epoch;
-  }
-  spg_t get_spg() const override {
-    return pgid;
-  }
-
-  int get_cost() const override {
-    return data.length();
-  }
-
-  void decode_payload() override {
-    p = payload.begin();
-    // splitted to partial and final
-    ::decode(map_epoch, p);
-    if (header.version >= 2) {
-      ::decode(min_epoch, p);
-      decode_trace(p);
-    } else {
-      min_epoch = map_epoch;
+    epoch_t get_map_epoch() const override {
+        return map_epoch;
+    } epoch_t get_min_epoch() const override {
+        return min_epoch;
+    } spg_t get_spg() const override {
+        return pgid;
+    } int get_cost() const override {
+        return data.length();
+    } void decode_payload() override {
+        p = payload.begin();
+        // splitted to partial and final
+        ::decode(map_epoch, p);
+        if (header.version >= 2) {
+            ::decode(min_epoch, p);
+            decode_trace(p);
+        }
+        else {
+            min_epoch = map_epoch;
+        }
+        ::decode(reqid, p);
+        ::decode(pgid, p);
     }
-    ::decode(reqid, p);
-    ::decode(pgid, p);
-  }
 
-  void finish_decode() {
-    if (!final_decode_needed)
-      return; // Message is already final decoded
-    ::decode(poid, p);
+    void finish_decode() {
+        if (!final_decode_needed)
+            return;             // Message is already final decoded
+        ::decode(poid, p);
 
-    ::decode(acks_wanted, p);
-    ::decode(version, p);
-    ::decode(logbl, p);
-    ::decode(pg_stats, p);
-    ::decode(pg_trim_to, p);
+        ::decode(acks_wanted, p);
+        ::decode(version, p);
+        ::decode(logbl, p);
+        ::decode(pg_stats, p);
+        ::decode(pg_trim_to, p);
 
+        ::decode(new_temp_oid, p);
+        ::decode(discard_temp_oid, p);
 
-    ::decode(new_temp_oid, p);
-    ::decode(discard_temp_oid, p);
-
-    ::decode(from, p);
-    ::decode(updated_hit_set_history, p);
-    ::decode(pg_roll_forward_to, p);
-    final_decode_needed = false;
-  }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(map_epoch, payload);
-    if (HAVE_FEATURE(features, SERVER_LUMINOUS)) {
-      header.version = HEAD_VERSION;
-      ::encode(min_epoch, payload);
-      encode_trace(payload, features);
-    } else {
-      header.version = 1;
+        ::decode(from, p);
+        ::decode(updated_hit_set_history, p);
+        ::decode(pg_roll_forward_to, p);
+        final_decode_needed = false;
     }
-    ::encode(reqid, payload);
-    ::encode(pgid, payload);
-    ::encode(poid, payload);
 
-    ::encode(acks_wanted, payload);
-    ::encode(version, payload);
-    ::encode(logbl, payload);
-    ::encode(pg_stats, payload);
-    ::encode(pg_trim_to, payload);
-    ::encode(new_temp_oid, payload);
-    ::encode(discard_temp_oid, payload);
-    ::encode(from, payload);
-    ::encode(updated_hit_set_history, payload);
-    ::encode(pg_roll_forward_to, payload);
-  }
+    void encode_payload(uint64_t features) override {
+        ::encode(map_epoch, payload);
+        if (HAVE_FEATURE(features, SERVER_LUMINOUS)) {
+            header.version = HEAD_VERSION;
+            ::encode(min_epoch, payload);
+            encode_trace(payload, features);
+        }
+        else {
+            header.version = 1;
+        }
+        ::encode(reqid, payload);
+        ::encode(pgid, payload);
+        ::encode(poid, payload);
 
-  MOSDRepOp()
-    : MOSDFastDispatchOp(MSG_OSD_REPOP, HEAD_VERSION, COMPAT_VERSION),
-      map_epoch(0),
-      final_decode_needed(true), acks_wanted (0) {}
-  MOSDRepOp(osd_reqid_t r, pg_shard_t from,
-	    spg_t p, const hobject_t& po, int aw,
-	    epoch_t mape, epoch_t min_epoch, ceph_tid_t rtid, eversion_t v)
-    : MOSDFastDispatchOp(MSG_OSD_REPOP, HEAD_VERSION, COMPAT_VERSION),
-      map_epoch(mape),
-      min_epoch(min_epoch),
-      reqid(r),
-      pgid(p),
-      final_decode_needed(false),
-      from(from),
-      poid(po),
-      acks_wanted(aw),
-      version(v) {
-    set_tid(rtid);
-  }
-private:
-  ~MOSDRepOp() override {}
-
-public:
-  const char *get_type_name() const override { return "osd_repop"; }
-  void print(ostream& out) const override {
-    out << "osd_repop(" << reqid
-	<< " " << pgid << " e" << map_epoch << "/" << min_epoch;
-    if (!final_decode_needed) {
-      out << " " << poid << " v " << version;
-      if (updated_hit_set_history)
-        out << ", has_updated_hit_set_history";
+        ::encode(acks_wanted, payload);
+        ::encode(version, payload);
+        ::encode(logbl, payload);
+        ::encode(pg_stats, payload);
+        ::encode(pg_trim_to, payload);
+        ::encode(new_temp_oid, payload);
+        ::encode(discard_temp_oid, payload);
+        ::encode(from, payload);
+        ::encode(updated_hit_set_history, payload);
+        ::encode(pg_roll_forward_to, payload);
     }
-    out << ")";
-  }
+
+    MOSDRepOp()
+  :    
+    MOSDFastDispatchOp(MSG_OSD_REPOP, HEAD_VERSION, COMPAT_VERSION),
+    map_epoch(0), final_decode_needed(true), acks_wanted(0) {
+    }
+    MOSDRepOp(osd_reqid_t r, pg_shard_t from,
+              spg_t p, const hobject_t & po, int aw,
+              epoch_t mape, epoch_t min_epoch, ceph_tid_t rtid, eversion_t v)
+    :MOSDFastDispatchOp(MSG_OSD_REPOP, HEAD_VERSION, COMPAT_VERSION),
+        map_epoch(mape),
+        min_epoch(min_epoch),
+        reqid(r),
+        pgid(p),
+        final_decode_needed(false),
+        from(from), poid(po), acks_wanted(aw), version(v) {
+        set_tid(rtid);
+    }
+  private:
+    ~MOSDRepOp()override {
+    }
+
+  public:
+    const char *get_type_name() const override {
+        return "osd_repop";
+    } void print(ostream & out) const override {
+        out << "osd_repop(" << reqid
+            << " " << pgid << " e" << map_epoch << "/" << min_epoch;
+        if (!final_decode_needed) {
+            out << " " << poid << " v " << version;
+            if (updated_hit_set_history)
+                out << ", has_updated_hit_set_history";
+        } out << ")";
+    }
 };
-
 
 #endif

@@ -14,106 +14,111 @@
                            << this << " " << __func__ << ": "
 
 namespace rbd {
-namespace mirror {
-namespace image_sync {
+    namespace mirror {
+        namespace image_sync {
 
-namespace {
+            namespace {
 
-const uint64_t MAX_METADATA_ITEMS = 128;
+                const uint64_t MAX_METADATA_ITEMS = 128;
 
-} // anonymous namespace
+            } // anonymous namespace using librbd::util::create_rados_callback;
 
-using librbd::util::create_rados_callback;
+             template < typename I > void MetadataCopyRequest < I >::send() {
+                list_remote_metadata();
+            } template < typename I >
+                void MetadataCopyRequest < I >::list_remote_metadata() {
+                dout(20) << "start_key=" << m_last_metadata_key << dendl;
 
-template <typename I>
-void MetadataCopyRequest<I>::send() {
-  list_remote_metadata();
-}
+                librados::ObjectReadOperation op;
+                librbd::cls_client::metadata_list_start(&op,
+                                                        m_last_metadata_key,
+                                                        MAX_METADATA_ITEMS);
 
-template <typename I>
-void MetadataCopyRequest<I>::list_remote_metadata() {
-  dout(20) << "start_key=" << m_last_metadata_key << dendl;
+                librados::AioCompletion * aio_comp = create_rados_callback <
+                    MetadataCopyRequest < I >,
+                    &MetadataCopyRequest < I >::handle_list_remote_data >
+                    (this);
+                m_out_bl.clear();
+                m_remote_image_ctx->md_ctx.aio_operate(m_remote_image_ctx->
+                                                       header_oid, aio_comp,
+                                                       &op, &m_out_bl);
+                aio_comp->release();
+            } template < typename I >
+                void MetadataCopyRequest < I >::handle_list_remote_data(int r) {
+                dout(20) << "r=" << r << dendl;
 
-  librados::ObjectReadOperation op;
-  librbd::cls_client::metadata_list_start(&op, m_last_metadata_key, MAX_METADATA_ITEMS);
+                Metadata metadata;
+                if (r == 0) {
+                    bufferlist::iterator it = m_out_bl.begin();
+                    r = librbd::cls_client::metadata_list_finish(&it,
+                                                                 &metadata);
+                }
 
-  librados::AioCompletion *aio_comp = create_rados_callback<
-    MetadataCopyRequest<I>,
-    &MetadataCopyRequest<I>::handle_list_remote_data>(this);
-  m_out_bl.clear();
-  m_remote_image_ctx->md_ctx.aio_operate(m_remote_image_ctx->header_oid,
-                                         aio_comp, &op, &m_out_bl);
-  aio_comp->release();
-}
+                if (r < 0) {
+                    derr << "failed to retrieve metadata: " << cpp_strerror(r)
+                        << dendl;
+                    finish(r);
+                    return;
+                }
 
-template <typename I>
-void MetadataCopyRequest<I>::handle_list_remote_data(int r) {
-  dout(20) << "r=" << r << dendl;
+                if (metadata.empty()) {
+                    finish(0);
+                    return;
+                }
 
-  Metadata metadata;
-  if (r == 0) {
-    bufferlist::iterator it = m_out_bl.begin();
-    r = librbd::cls_client::metadata_list_finish(&it, &metadata);
-  }
+                m_last_metadata_key = metadata.rbegin()->first;
+                m_more_metadata = (metadata.size() >= MAX_METADATA_ITEMS);
+                set_local_metadata(metadata);
+            }
 
-  if (r < 0) {
-    derr << "failed to retrieve metadata: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void MetadataCopyRequest <
+                I >::set_local_metadata(const Metadata & metadata) {
+                dout(20) << "count=" << metadata.size() << dendl;
 
-  if (metadata.empty()) {
-    finish(0);
-    return;
-  }
+                librados::ObjectWriteOperation op;
+                librbd::cls_client::metadata_set(&op, metadata);
 
-  m_last_metadata_key = metadata.rbegin()->first;
-  m_more_metadata = (metadata.size() >= MAX_METADATA_ITEMS);
-  set_local_metadata(metadata);
-}
+                librados::AioCompletion * aio_comp = create_rados_callback <
+                    MetadataCopyRequest < I >,
+                    &MetadataCopyRequest < I >::handle_set_local_metadata >
+                    (this);
+                m_local_image_ctx->md_ctx.aio_operate(m_local_image_ctx->
+                                                      header_oid, aio_comp,
+                                                      &op);
+                aio_comp->release();
+            }
 
-template <typename I>
-void MetadataCopyRequest<I>::set_local_metadata(const Metadata& metadata) {
-  dout(20) << "count=" << metadata.size() << dendl;
+            template < typename I >
+                void MetadataCopyRequest <
+                I >::handle_set_local_metadata(int r) {
+                dout(20) << "r=" << r << dendl;
 
-  librados::ObjectWriteOperation op;
-  librbd::cls_client::metadata_set(&op, metadata);
+                if (r < 0) {
+                    derr << "failed to set metadata: " << cpp_strerror(r) <<
+                        dendl;
+                    finish(r);
+                    return;
+                }
 
-  librados::AioCompletion *aio_comp = create_rados_callback<
-    MetadataCopyRequest<I>,
-    &MetadataCopyRequest<I>::handle_set_local_metadata>(this);
-  m_local_image_ctx->md_ctx.aio_operate(m_local_image_ctx->header_oid, aio_comp,
-                                        &op);
-  aio_comp->release();
-}
+                if (m_more_metadata) {
+                    list_remote_metadata();
+                    return;
+                }
 
-template <typename I>
-void MetadataCopyRequest<I>::handle_set_local_metadata(int r) {
-  dout(20) << "r=" << r << dendl;
+                finish(0);
+            }
 
-  if (r < 0) {
-    derr << "failed to set metadata: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+            template < typename I >
+                void MetadataCopyRequest < I >::finish(int r) {
+                dout(20) << "r=" << r << dendl;
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  if (m_more_metadata) {
-    list_remote_metadata();
-    return;
-  }
+        }                       // namespace image_sync
+    }                           // namespace mirror
+}                               // namespace rbd
 
-  finish(0);
-}
-
-template <typename I>
-void MetadataCopyRequest<I>::finish(int r) {
-  dout(20) << "r=" << r << dendl;
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace image_sync
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::image_sync::MetadataCopyRequest<librbd::ImageCtx>;
+template class rbd::mirror::image_sync::MetadataCopyRequest <
+    librbd::ImageCtx >;

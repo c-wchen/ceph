@@ -12,7 +12,6 @@
  *
  */
 
-
 /**
  * @file   ErasureCodePluginIsa.cc
  *
@@ -30,36 +29,39 @@
 #include "ErasureCodeIsa.h"
 // -----------------------------------------------------------------------------
 
-int ErasureCodePluginIsa::factory(const std::string &directory,
-		      ErasureCodeProfile &profile,
-                      ErasureCodeInterfaceRef *erasure_code,
-                      std::ostream *ss)
+int ErasureCodePluginIsa::factory(const std::string & directory,
+                                  ErasureCodeProfile & profile,
+                                  ErasureCodeInterfaceRef * erasure_code,
+                                  std::ostream * ss)
 {
     ErasureCodeIsa *interface;
     std::string t;
     if (profile.find("technique") == profile.end())
-      profile["technique"] = "reed_sol_van";
+        profile["technique"] = "reed_sol_van";
     t = profile.find("technique")->second;
     if ((t == "reed_sol_van")) {
-      interface = new ErasureCodeIsaDefault(tcache,
-                                            ErasureCodeIsaDefault::kVandermonde);
-    } else {
-      if ((t == "cauchy")) {
         interface = new ErasureCodeIsaDefault(tcache,
-                                              ErasureCodeIsaDefault::kCauchy);
-      } else {
-        *ss << "technique=" << t << " is not a valid coding technique. "
-          << " Choose one of the following: "
-          << "reed_sol_van,"
-          << "cauchy" << std::endl;
-        return -ENOENT;
-      }
+                                              ErasureCodeIsaDefault::
+                                              kVandermonde);
+    }
+    else {
+        if ((t == "cauchy")) {
+            interface = new ErasureCodeIsaDefault(tcache,
+                                                  ErasureCodeIsaDefault::
+                                                  kCauchy);
+        }
+        else {
+            *ss << "technique=" << t << " is not a valid coding technique. "
+                << " Choose one of the following: "
+                << "reed_sol_van," << "cauchy" << std::endl;
+            return -ENOENT;
+        }
     }
 
     int r = interface->init(profile, ss);
     if (r) {
-      delete interface;
-      return r;
+        delete interface;
+        return r;
     }
     *erasure_code = ErasureCodeInterfaceRef(interface);
     return 0;
@@ -69,14 +71,15 @@ int ErasureCodePluginIsa::factory(const std::string &directory,
 
 const char *__erasure_code_version()
 {
-  return CEPH_GIT_NICE_VER;
+    return CEPH_GIT_NICE_VER;
 }
 
 // -----------------------------------------------------------------------------
 
 int __erasure_code_init(char *plugin_name, char *directory)
 {
-  ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
+    ErasureCodePluginRegistry & instance =
+        ErasureCodePluginRegistry::instance();
 
-  return instance.add(plugin_name, new ErasureCodePluginIsa());
+    return instance.add(plugin_name, new ErasureCodePluginIsa());
 }

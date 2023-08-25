@@ -50,16 +50,16 @@
  * \tparam ElementType
  *      The type of the object to be stored within the Tub.
  */
-template<typename ElementType>
-class Tub {
- public:
-  /// The type of the object to be stored within the Tub.
-  typedef ElementType element_type;
+template < typename ElementType > class Tub {
+  public:
+    /// The type of the object to be stored within the Tub.
+    typedef ElementType element_type;
 
   /**
 	 * Default constructor: the object starts off uninitialized.
 	 */
-  Tub(): occupied(false) {}
+  Tub():occupied(false) {
+    }
 
   /**
 	 * Construct an occupied Tub, whose contained object is initialized
@@ -69,10 +69,10 @@ class Tub {
 	 * \param other
 	 *      Source of the copy.
 	 */
-  Tub(const ElementType& other) // NOLINT
-          : occupied(false) {
-    construct(other);
-  }
+    Tub(const ElementType & other)  // NOLINT
+    :occupied(false) {
+        construct(other);
+    }
 
   /**
 	 * Construct an occupied Tub, whose contained object is initialized
@@ -82,10 +82,10 @@ class Tub {
 	 * \param other
 	 *      Source of the move.
 	 */
-  Tub(ElementType&& other) // NOLINT
-          : occupied(false) {
-    construct(std::move(other));
-  }
+    Tub(ElementType && other)   // NOLINT
+  :    occupied(false) {
+        construct(std::move(other));
+    }
 
   /**
 	 * Copy constructor.
@@ -96,12 +96,12 @@ class Tub {
 	 * \param other
 	 *      Source of the copy.
 	 */
-  Tub(const Tub<ElementType>& other) // NOLINT
-          : occupied(false) {
-    if (other.occupied) {
-      construct(*other.object); // use ElementType's copy constructor
+    Tub(const Tub < ElementType > &other)   // NOLINT
+    :occupied(false) {
+        if (other.occupied) {
+            construct(*other.object);   // use ElementType's copy constructor
+        }
     }
-  }
 
   /**
 	 * Move constructor.
@@ -112,18 +112,18 @@ class Tub {
 	 * \param other
 	 *      Source of the move.
 	 */
-  Tub(Tub<ElementType>&& other) // NOLINT
-          : occupied(false) {
-    if (other.occupied)
-      construct(std::move(*other.object)); // use ElementType's copy constructor
-  }
+    Tub(Tub < ElementType > &&other)    // NOLINT
+  :    occupied(false) {
+        if (other.occupied)
+            construct(std::move(*other.object));    // use ElementType's copy constructor
+    }
 
   /**
 	 * Destructor: destroy the object if it was initialized.
 	 */
-  ~Tub() {
-    destroy();
-  }
+    ~Tub() {
+        destroy();
+    }
 
   /**
 	 * Assignment: destroy current object if initialized, replace with
@@ -131,27 +131,29 @@ class Tub {
 	 * \pre
 	 *      ElementType is Assignable.
 	 */
-  Tub<ElementType>& operator=(const Tub<ElementType>& other) {
-    if (this != &other) {
-      if (other.occupied) {
-        if (occupied) {
+    Tub < ElementType > &operator=(const Tub < ElementType > &other) {
+        if (this != &other) {
+            if (other.occupied) {
+                if (occupied) {
 #if __GNUC__ && __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
-          #pragma GCC diagnostic push
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-          *object = *other.object; // use ElementType's assignment
+                    *object = *other.object;    // use ElementType's assignment
 #if __GNUC__ && __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
 #pragma GCC diagnostic pop
 #endif
-        } else {
-          construct(*other.object);
+                }
+                else {
+                    construct(*other.object);
+                }
+            }
+            else {
+                destroy();
+            }
         }
-      } else {
-        destroy();
-      }
+        return *this;
     }
-    return *this;
-  }
 
   /**
 	 * Assignment: destroy current object if initialized, replace with
@@ -159,20 +161,21 @@ class Tub {
 	 * \pre
 	 *      ElementType is Assignable.
 	 */
-  Tub<ElementType>& operator=(Tub<ElementType> &&other) {
-    if (this != &other) {
-      if (other.occupied) {
-        if (occupied)
-          *object = std::move(*other.object);
-        else
-          construct(std::move(*other.object));
-        other.destroy();
-      } else {
-        destroy();
-      }
+    Tub < ElementType > &operator=(Tub < ElementType > &&other) {
+        if (this != &other) {
+            if (other.occupied) {
+                if (occupied)
+                    *object = std::move(*other.object);
+                else
+                    construct(std::move(*other.object));
+                other.destroy();
+            }
+            else {
+                destroy();
+            }
+        }
+        return *this;
     }
-    return *this;
-  }
 
   /**
 	 * Assignment: destroy current object if initialized, replace with
@@ -180,14 +183,15 @@ class Tub {
 	 * \pre
 	 *      ElementType is Assignable.
 	 */
-  Tub<ElementType>& operator=(ElementType &&elt) {
-    if (occupied) {
-      *object = std::move(elt);
-    } else {
-      construct(std::forward<ElementType>(elt));
+    Tub < ElementType > &operator=(ElementType && elt) {
+        if (occupied) {
+            *object = std::move(elt);
+        }
+        else {
+            construct(std::forward < ElementType > (elt));
+        }
+        return *this;
     }
-    return *this;
-  }
 
   /**
 	 * Initialize the object.
@@ -199,13 +203,12 @@ class Tub {
 	 * \post
 	 *      The object is initialized.
 	 */
-  template<typename... Args>
-  ElementType* construct(Args&&... args) {
-    destroy();
-    new(object) ElementType(std::forward<Args>(args)...);
-    occupied = true;
-    return object;
-  }
+    template < typename ... Args > ElementType * construct(Args && ... args) {
+        destroy();
+        new(object) ElementType(std::forward < Args > (args) ...);
+        occupied = true;
+        return object;
+    }
 
   /**
 	 * Destroy the object, leaving the Tub in the same state
@@ -214,74 +217,66 @@ class Tub {
 	 * \post
 	 *      The object is uninitialized.
 	 */
-  void destroy() {
-    if (occupied) {
-      object->~ElementType();
-      occupied = false;
+    void destroy() {
+        if (occupied) {
+            object->~ElementType();
+            occupied = false;
+        }
     }
-  }
 
-  /// See #get().
-  const ElementType& operator*() const {
-    return *get();
-  }
+    /// See #get().
+    const ElementType & operator*() const {
+        return *get();
+    }
+    /// See #get(). ElementType & operator*() {
+        return *get();
+    }
 
-  /// See #get().
-  ElementType& operator*() {
-    return *get();
-  }
-
-  /// See #get().
-  const ElementType* operator->() const {
-    return get();
-  }
-
-  /// See #get().
-  ElementType* operator->() {
-    return get();
-  }
+    /// See #get().
+    const ElementType *operator->() const {
+        return get();
+    }
+    /// See #get(). ElementType *operator->() {
+        return get();
+    }
 
   /**
 	 * Return a pointer to the object.
 	 * \pre
 	 *      The object is initialized.
 	 */
-  ElementType* get() {
-    if (!occupied)
-      return NULL;
-    return object;
-  }
+    ElementType *get() {
+        if (!occupied)
+            return NULL;
+        return object;
+    }
 
-  /// See #get().
-  const ElementType* get() const {
-    if (!occupied)
-      return NULL;
-    return object;
-  }
-
+    /// See #get().
+    const ElementType *get() const {
+        if (!occupied)
+            return NULL;
+        return object;
+    }
   /**
 	 * Return whether the object is initialized.
-	 */
-  operator bool() const {
-    return occupied;
-  }
-
- private:
+	 */ operator  bool() const {
+        return occupied;
+  } private:
   /**
 	 * A pointer to where the object is, if it is initialized.
 	 * This must directly precede #raw in the struct.
 	 */
-  ElementType object[0];
+     ElementType object[0];
 
   /**
 	 * A storage area to back the object while it is initialized.
 	 */
-  char raw[sizeof(ElementType)];
+    char raw[sizeof(ElementType)];
 
   /**
 	 * Whether the object is initialized.
 	 */
-  bool occupied;
+    bool occupied;
 };
 
-#endif  // CEPH_COMMON_TUB_H
+#endif // CEPH_COMMON_TUB_H

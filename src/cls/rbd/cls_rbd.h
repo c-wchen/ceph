@@ -11,74 +11,71 @@
 
 /// information about our parent image, if any
 struct cls_rbd_parent {
-  int64_t pool;        ///< parent pool id
-  string id;           ///< parent image id
-  snapid_t snapid;     ///< parent snapid we refer to
-  uint64_t overlap;    ///< portion of this image mapped onto parent (bytes)
+    int64_t pool;               ///< parent pool id
+    string id;                  ///< parent image id
+    snapid_t snapid;            ///< parent snapid we refer to
+    uint64_t overlap;           ///< portion of this image mapped onto parent (bytes)
 
-  /// true if our parent pointer information is defined
-  bool exists() const {
-    return snapid != CEPH_NOSNAP && pool >= 0 && id.length() > 0 && overlap > 0;
-  }
-
-  cls_rbd_parent() : pool(-1), snapid(CEPH_NOSNAP), overlap(0) {}
-
-  void encode(bufferlist& bl) const {
-    ENCODE_START(1, 1, bl);
-    ::encode(pool, bl);
-    ::encode(id, bl);
-    ::encode(snapid, bl);
-    ::encode(overlap, bl);
-    ENCODE_FINISH(bl);
-  }
-  void decode(bufferlist::iterator& bl) {
-    DECODE_START(1, bl);
-    ::decode(pool, bl);
-    ::decode(id, bl);
-    ::decode(snapid, bl);
-    ::decode(overlap, bl);
-    DECODE_FINISH(bl);
-  }
-  void dump(Formatter *f) const {
-    f->dump_int("pool", pool);
-    f->dump_string("id", id);
-    f->dump_unsigned("snapid", snapid);
-    f->dump_unsigned("overlap", overlap);
-  }
-  static void generate_test_instances(list<cls_rbd_parent*>& o) {
-    o.push_back(new cls_rbd_parent);
-    cls_rbd_parent *t = new cls_rbd_parent;
-    t->pool = 1;
-    t->id = "foo";
-    t->snapid = 3;
-    t->overlap = 500;
-    o.push_back(t);
-  }
+    /// true if our parent pointer information is defined
+    bool exists() const {
+        return snapid != CEPH_NOSNAP && pool >= 0 && id.length() > 0
+            && overlap > 0;
+    } cls_rbd_parent():pool(-1), snapid(CEPH_NOSNAP), overlap(0) {
+    } void encode(bufferlist & bl) const {
+        ENCODE_START(1, 1, bl);
+        ::encode(pool, bl);
+        ::encode(id, bl);
+        ::encode(snapid, bl);
+        ::encode(overlap, bl);
+        ENCODE_FINISH(bl);
+    } void decode(bufferlist::iterator & bl) {
+        DECODE_START(1, bl);
+        ::decode(pool, bl);
+        ::decode(id, bl);
+        ::decode(snapid, bl);
+        ::decode(overlap, bl);
+        DECODE_FINISH(bl);
+    }
+    void dump(Formatter * f) const {
+        f->dump_int("pool", pool);
+        f->dump_string("id", id);
+        f->dump_unsigned("snapid", snapid);
+        f->dump_unsigned("overlap", overlap);
+    } static void generate_test_instances(list < cls_rbd_parent * >&o) {
+        o.push_back(new cls_rbd_parent);
+        cls_rbd_parent *t = new cls_rbd_parent;
+        t->pool = 1;
+        t->id = "foo";
+        t->snapid = 3;
+        t->overlap = 500;
+        o.push_back(t);
+    }
 };
+
 WRITE_CLASS_ENCODER(cls_rbd_parent)
 
 struct cls_rbd_snap {
-  snapid_t id;
-  string name;
-  uint64_t image_size;
-  uint64_t features;
-  uint8_t protection_status;
-  cls_rbd_parent parent;
-  uint64_t flags;
-  utime_t timestamp;
-  cls::rbd::SnapshotNamespaceOnDisk snapshot_namespace = {
-    cls::rbd::UserSnapshotNamespace{}};
+    snapid_t id;
+    string name;
+    uint64_t image_size;
+    uint64_t features;
+    uint8_t protection_status;
+    cls_rbd_parent parent;
+    uint64_t flags;
+    utime_t timestamp;
+     cls::rbd::SnapshotNamespaceOnDisk snapshot_namespace =
+{
+    cls::rbd::UserSnapshotNamespace {
+}};
 
   /// true if we have a parent
-  bool has_parent() const {
+bool has_parent() const {
     return parent.exists();
-  }
-
-  cls_rbd_snap() : id(CEPH_NOSNAP), image_size(0), features(0),
-		   protection_status(RBD_PROTECTION_STATUS_UNPROTECTED),
-                   flags(0), timestamp(utime_t())
-    {}
-  void encode(bufferlist& bl) const {
+} cls_rbd_snap():id(CEPH_NOSNAP), image_size(0), features(0),
+    protection_status(RBD_PROTECTION_STATUS_UNPROTECTED),
+    flags(0), timestamp(utime_t()) {
+}
+void encode(bufferlist & bl) const {
     ENCODE_START(6, 1, bl);
     ::encode(id, bl);
     ::encode(name, bl);
@@ -90,55 +87,53 @@ struct cls_rbd_snap {
     ::encode(snapshot_namespace, bl);
     ::encode(timestamp, bl);
     ENCODE_FINISH(bl);
-  }
-  void decode(bufferlist::iterator& p) {
+} void decode(bufferlist::iterator & p) {
     DECODE_START(6, p);
     ::decode(id, p);
     ::decode(name, p);
     ::decode(image_size, p);
     ::decode(features, p);
     if (struct_v >= 2) {
-      ::decode(parent, p);
+        ::decode(parent, p);
     }
     if (struct_v >= 3) {
-      ::decode(protection_status, p);
+        ::decode(protection_status, p);
     }
     if (struct_v >= 4) {
-      ::decode(flags, p);
+        ::decode(flags, p);
     }
     if (struct_v >= 5) {
-      ::decode(snapshot_namespace, p);
+        ::decode(snapshot_namespace, p);
     }
     if (struct_v >= 6) {
-      ::decode(timestamp, p);
+        ::decode(timestamp, p);
     }
     DECODE_FINISH(p);
-  }
-  void dump(Formatter *f) const {
+}
+void dump(Formatter * f) const {
     f->dump_unsigned("id", id);
     f->dump_string("name", name);
     f->dump_unsigned("image_size", image_size);
     f->dump_unsigned("features", features);
     if (has_parent()) {
-      f->open_object_section("parent");
-      parent.dump(f);
-      f->close_section();
-    }
-    switch (protection_status) {
+        f->open_object_section("parent");
+        parent.dump(f);
+        f->close_section();
+    } switch (protection_status) {
     case RBD_PROTECTION_STATUS_UNPROTECTED:
-      f->dump_string("protection_status", "unprotected");
-      break;
+        f->dump_string("protection_status", "unprotected");
+        break;
     case RBD_PROTECTION_STATUS_UNPROTECTING:
-      f->dump_string("protection_status", "unprotecting");
-      break;
+        f->dump_string("protection_status", "unprotecting");
+        break;
     case RBD_PROTECTION_STATUS_PROTECTED:
-      f->dump_string("protection_status", "protected");
-      break;
+        f->dump_string("protection_status", "protected");
+        break;
     default:
-      ceph_abort();
+        ceph_abort();
     }
-  }
-  static void generate_test_instances(list<cls_rbd_snap*>& o) {
+}
+static void generate_test_instances(list < cls_rbd_snap * >&o) {
     o.push_back(new cls_rbd_snap);
     cls_rbd_snap *t = new cls_rbd_snap;
     t->id = 1;
@@ -160,8 +155,8 @@ struct cls_rbd_snap {
     t->flags = 14;
     t->timestamp = utime_t();
     o.push_back(t);
-  }
+}
 };
-WRITE_CLASS_ENCODER(cls_rbd_snap)
 
+WRITE_CLASS_ENCODER(cls_rbd_snap)
 #endif

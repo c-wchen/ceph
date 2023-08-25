@@ -8,35 +8,32 @@
 using std::string;
 using std::stringstream;
 
-void decode_json_obj(rgw_user& val, JSONObj *obj)
+void decode_json_obj(rgw_user & val, JSONObj * obj)
 {
-  string s = obj->get_data();
-  val.from_str(s);
+    string s = obj->get_data();
+    val.from_str(s);
 }
 
-void encode_json(const char *name, const rgw_user& val, Formatter *f)
+void encode_json(const char *name, const rgw_user & val, Formatter * f)
 {
-  string s = val.to_str();
-  f->dump_string(name, s);
+    string s = val.to_str();
+    f->dump_string(name, s);
 }
 
 namespace rgw {
-namespace auth {
-ostream& operator <<(ostream& m, const Principal& p) {
-  if (p.is_wildcard()) {
-    return m << "*";
-  }
-
-  m << "arn:aws:iam:" << p.get_tenant() << ":";
-  if (p.is_tenant()) {
-    return m << "root";
-  }
-  return m << (p.is_user() ? "user/" : "role/") << p.get_id();
-}
-string to_string(const Principal& p) {
-  stringstream s;
-  s << p;
-  return s.str();
-}
-}
+    namespace auth {
+        ostream & operator <<(ostream & m, const Principal & p) {
+            if (p.is_wildcard()) {
+                return m << "*";
+            } m << "arn:aws:iam:" << p.get_tenant() << ":";
+            if (p.is_tenant()) {
+                return m << "root";
+            } return m << (p.is_user()? "user/" : "role/") << p.get_id();
+        }
+        string to_string(const Principal & p) {
+            stringstream s;
+            s << p;
+            return s.str();
+        }
+    }
 }

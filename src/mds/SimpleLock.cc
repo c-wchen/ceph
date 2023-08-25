@@ -12,31 +12,31 @@
  * 
  */
 
-
 #include "SimpleLock.h"
 #include "Mutation.h"
 
-void SimpleLock::dump(Formatter *f) const {
-  assert(f != NULL);
-  if (is_sync_and_unlocked()) {
-    return;
-  }
-
-  f->open_array_section("gather_set");
-  if (have_more()) {
-    for(const auto &i : more()->gather_set) {
-      f->dump_int("rank", i);
+void SimpleLock::dump(Formatter * f) const const
+{
+    assert(f != NULL);
+    if (is_sync_and_unlocked()) {
+        return;
     }
-  }
-  f->close_section();
 
-  f->dump_bool("is_leased", is_leased());
-  f->dump_int("num_rdlocks", get_num_rdlocks());
-  f->dump_int("num_wrlocks", get_num_wrlocks());
-  f->dump_int("num_xlocks", get_num_xlocks());
-  f->open_object_section("xlock_by");
-  if (get_xlock_by()) {
-    get_xlock_by()->dump(f);
-  }
-  f->close_section();
+    f->open_array_section("gather_set");
+    if (have_more()) {
+      for (const auto & i:more()->gather_set) {
+            f->dump_int("rank", i);
+        }
+    }
+    f->close_section();
+
+    f->dump_bool("is_leased", is_leased());
+    f->dump_int("num_rdlocks", get_num_rdlocks());
+    f->dump_int("num_wrlocks", get_num_wrlocks());
+    f->dump_int("num_xlocks", get_num_xlocks());
+    f->open_object_section("xlock_by");
+    if (get_xlock_by()) {
+        get_xlock_by()->dump(f);
+    }
+    f->close_section();
 }

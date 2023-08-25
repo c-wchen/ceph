@@ -44,26 +44,24 @@
  */
 
 class Continuation {
-  std::set<int> stages_in_flight;
-  std::set<int> stages_processing;
-  int rval;
-  Context *on_finish;
-  bool reported_done;
+    std::set < int >stages_in_flight;
+     std::set < int >stages_processing;
+    int rval;
+    Context *on_finish;
+    bool reported_done;
 
-  class Callback : public Context {
-    Continuation *continuation;
-    int stage_to_activate;
-  public:
-    Callback(Continuation *c, int stage) :
-      continuation(c),
-      stage_to_activate(stage) {}
-    void finish(int r) override {
-      continuation->continue_function(r, stage_to_activate);
-    }
-  };
+    class Callback:public Context {
+        Continuation *continuation;
+        int stage_to_activate;
+      public:
+         Callback(Continuation * c, int stage):continuation(c),
+            stage_to_activate(stage) {
+        } void finish(int r) override {
+            continuation->continue_function(r, stage_to_activate);
+    }};
 
-protected:
-  typedef bool (Continuation::*stagePtr)(int r);
+  protected:
+    typedef bool(Continuation::*stagePtr) (int r);
   /**
    * Continue immediately to the given stage. It will be executed
    * immediately, in the given thread.
@@ -71,30 +69,34 @@ protected:
    * @param stage The stage to execute
    * @param r The return code that will be provided to the next stage
    */
-  bool immediate(int stage, int r) {
-    assert(!stages_in_flight.count(stage));
-    assert(!stages_processing.count(stage));
-    stages_in_flight.insert(stage);
-    stages_processing.insert(stage);
-    return _continue_function(r, stage);
-  }
+    bool immediate(int stage, int r) {
+        assert(!stages_in_flight.count(stage));
+        assert(!stages_processing.count(stage));
+        stages_in_flight.insert(stage);
+        stages_processing.insert(stage);
+        return _continue_function(r, stage);
+    }
 
   /**
    * Obtain a Context * that when complete()ed calls back into the given stage.
    * @pre You are in a callback function.
    * @param stage The stage this Context should activate
    */
-  Context *get_callback(int stage) {
-    stages_in_flight.insert(stage);
-    return new Callback(this, stage);
-  }
+    Context *get_callback(int stage) {
+        stages_in_flight.insert(stage);
+        return new Callback(this, stage);
+    }
 
   /**
    * Set the return code that is passed to the finally-activated Context.
    * @param new_rval The return code to use.
    */
-  void set_rval(int new_rval) { rval = new_rval; }
-  int get_rval() { return rval; }
+    void set_rval(int new_rval) {
+        rval = new_rval;
+    }
+    int get_rval() {
+        return rval;
+    }
 
   /**
    * Register member functions as associated with a given stage. Start
@@ -103,57 +105,54 @@ protected:
    * @param stage The stage to associate this function with
    * @param func The function to use
    */
-  void set_callback(int stage, stagePtr func) {
-    assert(callbacks.find(stage) == callbacks.end());
-    callbacks[stage] = func;
-  }
-  
+    void set_callback(int stage, stagePtr func) {
+        assert(callbacks.find(stage) == callbacks.end());
+        callbacks[stage] = func;
+    }
+
   /**
    * Called when the Continuation is done, as determined by a stage returning
    * true and us having finished all the currently-processing ones.
    */
-   virtual void _done() {
-     on_finish->complete(rval);
-     on_finish = NULL;
-     return;
-   }
-
-private:
-  std::map<int, Continuation::stagePtr> callbacks;
-
-  bool _continue_function(int r, int n) {
-    set<int>::iterator stage_iter = stages_in_flight.find(n);
-    assert(stage_iter != stages_in_flight.end());
-    assert(callbacks.count(n));
-    stagePtr p = callbacks[n];
-
-    pair<set<int>::iterator,bool> insert_r = stages_processing.insert(n);
-
-    bool done = (this->*p)(r);
-    if (done)
-      reported_done = true;
-
-    stages_processing.erase(insert_r.first);
-    stages_in_flight.erase(stage_iter);
-    return done;
-  }
-
-  void continue_function(int r, int stage) {
-    bool done = _continue_function(r, stage);
-
-    assert (!done ||
-            stages_in_flight.size() == stages_processing.size());
-
-    if (done ||
-        (reported_done && stages_processing.empty())) {
-      _done();
-      delete this;
+    virtual void _done() {
+        on_finish->complete(rval);
+        on_finish = NULL;
+        return;
     }
-  }
 
+  private:
+    std::map < int, Continuation::stagePtr > callbacks;
 
+    bool _continue_function(int r, int n) {
+        set < int >::iterator stage_iter = stages_in_flight.find(n);
+        assert(stage_iter != stages_in_flight.end());
+        assert(callbacks.count(n));
+        stagePtr p = callbacks[n];
 
-public:
+        pair < set < int >::iterator, bool > insert_r =
+            stages_processing.insert(n);
+
+        bool done = (this->*p) (r);
+        if (done)
+            reported_done = true;
+
+        stages_processing.erase(insert_r.first);
+        stages_in_flight.erase(stage_iter);
+        return done;
+    }
+
+    void continue_function(int r, int stage) {
+        bool done = _continue_function(r, stage);
+
+        assert(!done || stages_in_flight.size() == stages_processing.size());
+
+        if (done || (reported_done && stages_processing.empty())) {
+            _done();
+            delete this;
+        }
+    }
+
+  public:
   /**
    * Construct a new Continuation object. Call this from your child class,
    * obviously.
@@ -161,14 +160,20 @@ public:
    * @Param c The Context which should be complete()ed when this Continuation
    * is done.
    */
-  Continuation(Context *c) :
-    rval(0), on_finish(c), reported_done(false) {}
+  Continuation(Context * c):
+    rval(0), on_finish(c), reported_done(false) {
+    }
   /**
    * Clean up.
    */
-  virtual ~Continuation() { assert(on_finish == NULL); }
+    virtual ~ Continuation() {
+        assert(on_finish == NULL);
+    }
   /**
    * Begin running the Continuation.
    */
-  void begin() { stages_in_flight.insert(0); continue_function(0, 0); }
+    void begin() {
+        stages_in_flight.insert(0);
+        continue_function(0, 0);
+    }
 };

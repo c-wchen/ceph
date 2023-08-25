@@ -21,23 +21,19 @@
 #include "ZstdCompressor.h"
 // -----------------------------------------------------------------------------
 
-class CompressionPluginZstd : public CompressionPlugin {
+class CompressionPluginZstd:public CompressionPlugin {
 
-public:
+  public:
 
-  explicit CompressionPluginZstd(CephContext* cct) : CompressionPlugin(cct)
-  {}
-
-  int factory(CompressorRef *cs,
-                      std::ostream *ss) override
-  {
-    if (compressor == 0) {
-      ZstdCompressor *interface = new ZstdCompressor();
-      compressor = CompressorRef(interface);
+    explicit CompressionPluginZstd(CephContext * cct):CompressionPlugin(cct) {
+    } int factory(CompressorRef * cs, std::ostream * ss) override {
+        if (compressor == 0) {
+            ZstdCompressor *interface = new ZstdCompressor();
+            compressor = CompressorRef(interface);
+        }
+        *cs = compressor;
+        return 0;
     }
-    *cs = compressor;
-    return 0;
-  }
 };
 
 #endif

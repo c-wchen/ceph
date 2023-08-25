@@ -5,6 +5,6 @@
 
 namespace librbd {
 
-MockImageCtx* MockImageCtx::s_instance = nullptr;
+    MockImageCtx *MockImageCtx::s_instance = nullptr;
 
-} // namespace librbd
+}                               // namespace librbd

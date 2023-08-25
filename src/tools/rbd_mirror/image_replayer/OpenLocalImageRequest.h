@@ -10,33 +10,36 @@
 
 class Context;
 class ContextWQ;
-namespace librbd { class ImageCtx; }
+namespace librbd {
+    class ImageCtx;
+} namespace rbd {
+    namespace mirror {
+        namespace image_replayer {
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
+            template < typename ImageCtxT = librbd::ImageCtx >
+                class OpenLocalImageRequest {
+              public:
+                static OpenLocalImageRequest *create(librados::
+                                                     IoCtx & local_io_ctx,
+                                                     ImageCtxT **
+                                                     local_image_ctx,
+                                                     const std::
+                                                     string & local_image_id,
+                                                     ContextWQ * work_queue,
+                                                     Context * on_finish) {
+                    return new OpenLocalImageRequest(local_io_ctx,
+                                                     local_image_ctx,
+                                                     local_image_id, work_queue,
+                                                     on_finish);
+                } OpenLocalImageRequest(librados::IoCtx & local_io_ctx,
+                                        ImageCtxT ** local_image_ctx,
+                                        const std::string & local_image_id,
+                                        ContextWQ * m_work_queue,
+                                        Context * on_finish);
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class OpenLocalImageRequest {
-public:
-  static OpenLocalImageRequest* create(librados::IoCtx &local_io_ctx,
-                                       ImageCtxT **local_image_ctx,
-                                       const std::string &local_image_id,
-                                       ContextWQ *work_queue,
-                                       Context *on_finish) {
-    return new OpenLocalImageRequest(local_io_ctx, local_image_ctx,
-                                     local_image_id, work_queue, on_finish);
-  }
+                void send();
 
-  OpenLocalImageRequest(librados::IoCtx &local_io_ctx,
-                        ImageCtxT **local_image_ctx,
-                        const std::string &local_image_id,
-                        ContextWQ *m_work_queue,
-                        Context *on_finish);
-
-  void send();
-
-private:
+              private:
   /**
    * @verbatim
    *
@@ -56,35 +59,37 @@ private:
    *
    * @endverbatim
    */
-  librados::IoCtx &m_local_io_ctx;
-  ImageCtxT **m_local_image_ctx;
-  std::string m_local_image_id;
-  ContextWQ *m_work_queue;
-  Context *m_on_finish;
+                 librados::IoCtx & m_local_io_ctx;
+                ImageCtxT **m_local_image_ctx;
+                 std::string m_local_image_id;
+                ContextWQ *m_work_queue;
+                Context *m_on_finish;
 
-  bool m_primary = false;
-  int m_ret_val = 0;
+                bool m_primary = false;
+                int m_ret_val = 0;
 
-  void send_open_image();
-  void handle_open_image(int r);
+                void send_open_image();
+                void handle_open_image(int r);
 
-  void send_is_primary();
-  void handle_is_primary(int r);
+                void send_is_primary();
+                void handle_is_primary(int r);
 
-  void send_lock_image();
-  void handle_lock_image(int r);
+                void send_lock_image();
+                void handle_lock_image(int r);
 
-  void send_close_image(int r);
-  void handle_close_image(int r);
+                void send_close_image(int r);
+                void handle_close_image(int r);
 
-  void finish(int r);
+                void finish(int r);
 
-};
+            };
 
 } // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-extern template class rbd::mirror::image_replayer::OpenLocalImageRequest<librbd::ImageCtx>;
+            }
+        // namespace mirror
+        }
+    // namespace rbd
+    extern template class rbd::mirror::image_replayer::OpenLocalImageRequest <
+    librbd::ImageCtx >;
 
 #endif // RBD_MIRROR_IMAGE_REPLAYER_OPEN_LOCAL_IMAGE_REQUEST_H

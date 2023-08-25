@@ -9,24 +9,24 @@
 #include <string>
 
 class Context;
-namespace librbd { class ImageCtx; }
+namespace librbd {
+    class ImageCtx;
+} namespace rbd {
+    namespace mirror {
+        namespace image_replayer {
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
+            template < typename ImageCtxT = librbd::ImageCtx >
+                class CloseImageRequest {
+              public:
+                static CloseImageRequest *create(ImageCtxT ** image_ctx,
+                                                 Context * on_finish) {
+                    return new CloseImageRequest(image_ctx, on_finish);
+                } CloseImageRequest(ImageCtxT ** image_ctx,
+                                    Context * on_finish);
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class CloseImageRequest {
-public:
-  static CloseImageRequest* create(ImageCtxT **image_ctx, Context *on_finish) {
-    return new CloseImageRequest(image_ctx, on_finish);
-  }
+                void send();
 
-  CloseImageRequest(ImageCtxT **image_ctx, Context *on_finish);
-
-  void send();
-
-private:
+              private:
   /**
    * @verbatim
    *
@@ -40,17 +40,19 @@ private:
    *
    * @endverbatim
    */
-  ImageCtxT **m_image_ctx;
-  Context *m_on_finish;
+                 ImageCtxT ** m_image_ctx;
+                Context *m_on_finish;
 
-  void close_image();
-  void handle_close_image(int r);
-};
+                void close_image();
+                void handle_close_image(int r);
+            };
 
 } // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-extern template class rbd::mirror::image_replayer::CloseImageRequest<librbd::ImageCtx>;
+            }
+        // namespace mirror
+        }
+    // namespace rbd
+    extern template class rbd::mirror::image_replayer::CloseImageRequest <
+    librbd::ImageCtx >;
 
 #endif // RBD_MIRROR_IMAGE_REPLAYER_CLOSE_IMAGE_REQUEST_H

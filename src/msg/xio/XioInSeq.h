@@ -21,64 +21,75 @@
 extern "C" {
 #include "libxio.h"
 }
-
 /* For inbound messages (Accelio-owned) ONLY, use the message's
- * user_context as an SLIST */
-class XioInSeq {
-private:
-  int cnt;
-  int sz;
-  struct xio_msg* head;
-  struct xio_msg* tail;
+ * user_context as an SLIST */ class XioInSeq {
+  private:
+    int cnt;
+    int sz;
+    struct xio_msg *head;
+    struct xio_msg *tail;
 
-public:
-  XioInSeq() : cnt(0), sz(0), head(NULL), tail(NULL) {}
-  XioInSeq(const XioInSeq& seq) {
-    cnt = seq.cnt;
-    sz = seq.sz;
-    head = seq.head;
-    tail = seq.tail;
-  }
-
-  int count() { return cnt; }
-
-  int size() { return sz; }
-
-  bool p() { return !!head; }
-
-  void set_count(int _cnt) { cnt = _cnt; }
-
-  void append(struct xio_msg* msg) {
-    msg->user_context = NULL;
-    if (!head) {
-      head = tail = msg;
-    } else {
-      tail->user_context = msg;
-      tail = msg;
+  public:
+     XioInSeq():cnt(0), sz(0), head(NULL), tail(NULL) {
+    } XioInSeq(const XioInSeq & seq) {
+        cnt = seq.cnt;
+        sz = seq.sz;
+        head = seq.head;
+        tail = seq.tail;
     }
-    ++sz;
-    --cnt;
-  }
 
-  struct xio_msg* begin() { return head; }
+    int count() {
+        return cnt;
+    }
 
-  struct xio_msg* end() { return NULL; }
+    int size() {
+        return sz;
+    }
 
-  void next(struct xio_msg** msg) {
-    *msg = static_cast<struct xio_msg *>((*msg)->user_context);
-  }
+    bool p() {
+        return ! !head;
+    }
 
-  struct xio_msg* dequeue() {
-    struct xio_msg* msgs = head;
-    clear();
-    return msgs;
-  }
+    void set_count(int _cnt) {
+        cnt = _cnt;
+    }
 
-  void clear() {
-    head = tail = NULL;
-    cnt = 0;
-    sz = 0;
-  }
+    void append(struct xio_msg *msg) {
+        msg->user_context = NULL;
+        if (!head) {
+            head = tail = msg;
+        }
+        else {
+            tail->user_context = msg;
+            tail = msg;
+        }
+        ++sz;
+        --cnt;
+    }
+
+    struct xio_msg *begin() {
+        return head;
+    }
+
+    struct xio_msg *end() {
+        return NULL;
+    }
+
+    void next(struct xio_msg **msg) {
+        *msg = static_cast < struct xio_msg *>((*msg)->user_context);
+    }
+
+    struct xio_msg *dequeue() {
+        struct xio_msg *msgs = head;
+        clear();
+        return msgs;
+    }
+
+    void clear() {
+        head = tail = NULL;
+        cnt = 0;
+        sz = 0;
+    }
 };
 
 #endif /* XIO_IN_SEQ_H */

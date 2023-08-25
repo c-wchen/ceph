@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef CEPH_MON_ELECTOR_H
 #define CEPH_MON_ELECTOR_H
 
@@ -36,7 +35,7 @@ class Elector {
    * @defgroup Elector_h_class Elector
    * @{
    */
- private:
+  private:
    /**
    * @defgroup Elector_h_internal_types Internal Types
    * @{
@@ -47,11 +46,11 @@ class Elector {
    * mon-specific features. Instead of keeping maps to hold them both, or
    * a pair, which would be weird, a struct to keep them seems appropriate.
    */
-  struct elector_info_t {
-    uint64_t cluster_features;
-    mon_feature_t mon_features;
-    map<string,string> metadata;
-  };
+    struct elector_info_t {
+        uint64_t cluster_features;
+        mon_feature_t mon_features;
+         map < string, string > metadata;
+    };
 
   /**
    * @}
@@ -60,13 +59,13 @@ class Elector {
   /**
    * The Monitor instance associated with this class.
    */
-  Monitor *mon;
+    Monitor *mon;
 
   /**
    * Event callback responsible for dealing with an expired election once a
    * timer runs out and fires up.
    */
-  Context *expire_event = nullptr;
+    Context *expire_event = nullptr;
 
   /**
    * Resets the expire_event timer, by cancelling any existing one and
@@ -80,13 +79,13 @@ class Elector {
    *
    * @param plus The amount of time to be added to the default firing value.
    */
-  void reset_timer(double plus=0.0);
+    void reset_timer(double plus = 0.0);
   /**
    * Cancel the expire_event timer, if it is defined.
    *
    * @post expire_event is not set
    */
-  void cancel_timer();
+    void cancel_timer();
 
   /**
    * Latest epoch we've seen.
@@ -94,7 +93,7 @@ class Elector {
    * @remarks if its value is odd, we're electing; if it's even, then we're
    *	      stable.
    */
-  epoch_t epoch;
+    epoch_t epoch;
 
   /**
    * Indicates if we are participating in the quorum.
@@ -105,9 +104,9 @@ class Elector {
    *	      have to call Elector::start_participating for us to resume
    *	      participating in the quorum.
    */
-  bool participating;
+    bool participating;
 
-  // electing me
+    // electing me
   /**
    * @defgroup Elector_h_electing_me_vars We are being elected
    * @{
@@ -120,18 +119,18 @@ class Elector {
    * to be elected if we think we might have a chance (i.e., the other guy's
    * rank is lower than ours).
    */
-  bool     electing_me;
+    bool electing_me;
   /**
    * Holds the time at which we started the election.
    */
-  utime_t  start_stamp;
+    utime_t start_stamp;
   /**
    * Set containing all those that acked our proposal to become the Leader.
    *
    * If we are acked by everyone in the MonMap, we will declare
    * victory.  Also note each peer's feature set.
    */
-  map<int, elector_info_t> acked_me;
+     map < int, elector_info_t > acked_me;
   /**
    * @}
    */
@@ -142,15 +141,15 @@ class Elector {
   /**
    * Indicates who we have acked
    */
-  int	    leader_acked;
+    int leader_acked;
   /**
    * Indicates when we have acked it
    */
-  utime_t   ack_stamp;
+    utime_t ack_stamp;
   /**
    * @}
    */
- 
+
   /**
    * Update our epoch.
    *
@@ -163,7 +162,7 @@ class Elector {
    *
    * @param e Epoch to which we will update our epoch
    */
-  void bump_epoch(epoch_t e);
+    void bump_epoch(epoch_t e);
 
   /**
    * Start new elections by proposing ourselves as the new Leader.
@@ -178,7 +177,7 @@ class Elector {
    * @post  we sent propose messages to all the monitors in the MonMap
    * @post  we reset the expire_event timer
    */
-  void start();
+    void start();
   /**
    * Defer the current election to some other monitor.
    *
@@ -195,7 +194,7 @@ class Elector {
    *
    * @param who Some other monitor's numeric identifier. 
    */
-  void defer(int who);
+    void defer(int who);
   /**
    * The election has taken too long and has expired.
    *
@@ -208,7 +207,7 @@ class Elector {
    * as far as we know, we may even be dead); so, just propose ourselves as the
    * Leader.
    */
-  void expire();
+    void expire();
   /**
    * Declare Victory.
    * 
@@ -230,7 +229,7 @@ class Elector {
    * @post  We have a quorum, composed of the monitors that acked us
    * @post  We sent a message of type OP_VICTORY to each quorum member.
    */
-  void victory();
+    void victory();
 
   /**
    * Handle a message from some other node proposing itself to become it
@@ -258,7 +257,7 @@ class Elector {
    *
    * @param m A message sent by another participant in the quorum.
    */
-  void handle_propose(MonOpRequestRef op);
+    void handle_propose(MonOpRequestRef op);
   /**
    * Handle a message from some other participant Acking us as the Leader.
    *
@@ -281,7 +280,7 @@ class Elector {
    *
    * @param m A message with an operation type of OP_ACK
    */
-  void handle_ack(MonOpRequestRef op);
+    void handle_ack(MonOpRequestRef op);
   /**
    * Handle a message from some other participant declaring Victory.
    *
@@ -302,7 +301,7 @@ class Elector {
    *
    * @param m A message with an operation type of OP_VICTORY
    */
-  void handle_victory(MonOpRequestRef op);
+    void handle_victory(MonOpRequestRef op);
   /**
    * Send a nak to a peer who's out of date, containing information about why.
    *
@@ -314,7 +313,7 @@ class Elector {
    * @param m A message from a monitor not supporting required features. We
    * take ownership of the reference.
    */
-  void nak_old_peer(MonOpRequestRef op);
+    void nak_old_peer(MonOpRequestRef op);
   /**
    * Handle a message from some other participant declaring
    * we cannot join the quorum.
@@ -327,20 +326,17 @@ class Elector {
    *
    * @param m A message with an operation type of OP_NAK
    */
-  void handle_nak(MonOpRequestRef op);
-  
- public:
+    void handle_nak(MonOpRequestRef op);
+
+  public:
   /**
    * Create an Elector class
    *
    * @param m A Monitor instance
    */
-  explicit Elector(Monitor *m) : mon(m),
-			epoch(0),
-			participating(true),
-			electing_me(false),
-			leader_acked(-1) { }
-
+     explicit Elector(Monitor * m):mon(m),
+        epoch(0), participating(true), electing_me(false), leader_acked(-1) {
+    }
   /**
    * Initiate the Elector class.
    *
@@ -348,8 +344,7 @@ class Elector {
    * storage, or consider it to be 1 if none is read.
    *
    * @post @p epoch is set to 1 or higher.
-   */
-  void init();
+   */ void init();
   /**
    * Inform this class it is supposed to shutdown.
    *
@@ -357,23 +352,25 @@ class Elector {
    *
    * @post @p expire_event is cancelled 
    */
-  void shutdown();
+    void shutdown();
 
   /**
    * Obtain our epoch
    *
    * @returns Our current epoch number
    */
-  epoch_t get_epoch() { return epoch; }
+    epoch_t get_epoch() {
+        return epoch;
+    }
 
   /**
    * advance_epoch
    *
    * increase election epoch by 1
    */
-  void advance_epoch() {
-    bump_epoch(epoch + 1);
-  }
+    void advance_epoch() {
+        bump_epoch(epoch + 1);
+    }
 
   /**
    * Handle received messages.
@@ -385,23 +382,25 @@ class Elector {
    *
    * @param m A received message
    */
-  void dispatch(MonOpRequestRef op);
+    void dispatch(MonOpRequestRef op);
 
   /**
    * Call an election.
    *
    * This function simply calls Elector::start.
    */
-  void call_election() {
-    start();
-  }
+    void call_election() {
+        start();
+    }
 
   /**
    * Stop participating in subsequent Elections.
    *
    * @post @p participating is false
    */
-  void stop_participating() { participating = false; }
+    void stop_participating() {
+        participating = false;
+    }
   /**
    * Start participating in Elections.
    *
@@ -414,7 +413,7 @@ class Elector {
    *
    * @post  @p participating is true
    */
-  void start_participating();
+    void start_participating();
 
   /**
    * @}

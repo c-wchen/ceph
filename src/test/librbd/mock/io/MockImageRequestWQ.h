@@ -10,16 +10,14 @@
 class Context;
 
 namespace librbd {
-namespace io {
+    namespace io {
 
-struct MockImageRequestWQ {
-  MOCK_METHOD1(block_writes, void(Context *));
-  MOCK_METHOD0(unblock_writes, void());
+        struct MockImageRequestWQ {
+            MOCK_METHOD1(block_writes, void (Context *));
+             MOCK_METHOD0(unblock_writes, void ());
 
-  MOCK_METHOD2(set_require_lock, void(Direction, bool));
-};
+             MOCK_METHOD2(set_require_lock, void (Direction, bool));
+        };
 
-} // namespace io
-} // namespace librbd
-
-#endif // CEPH_TEST_LIBRBD_MOCK_IO_IMAGE_REQUEST_WQ_H
+} // namespace io }             // namespace librbd
+#endif                          // CEPH_TEST_LIBRBD_MOCK_IO_IMAGE_REQUEST_WQ_H

@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if defined(__linux__) 
+#if defined(__linux__)
 #include <sys/vfs.h>
 #endif
 
@@ -40,147 +40,150 @@
 // In which case it is allocated manually, and still that is not a real guarantee
 // that a full buffer is allocated on disk, since it could be compressed.
 // To prevent this the written buffer needs to be loaded with random data.
-int manual_fallocate(int fd, off_t offset, off_t len) {
-  int r = lseek(fd, offset, SEEK_SET);
-  if (r == -1)
-    return errno;
-  char data[1024*128];
-  // TODO: compressing filesystems would require random data
-  memset(data, 0x42, sizeof(data));
-  for (off_t off = 0; off < len; off += sizeof(data)) {
-    if (off + sizeof(data) > len)
-      r = safe_write(fd, data, len - off);
-    else
-      r = safe_write(fd, data, sizeof(data));
-    if (r == -1) {
-      return errno;
+int manual_fallocate(int fd, off_t offset, off_t len)
+{
+    int r = lseek(fd, offset, SEEK_SET);
+    if (r == -1)
+        return errno;
+    char data[1024 * 128];
+    // TODO: compressing filesystems would require random data
+    memset(data, 0x42, sizeof(data));
+    for (off_t off = 0; off < len; off += sizeof(data)) {
+        if (off + sizeof(data) > len)
+            r = safe_write(fd, data, len - off);
+        else
+            r = safe_write(fd, data, sizeof(data));
+        if (r == -1) {
+            return errno;
+        }
     }
-  }
-  return 0;
+    return 0;
 }
 
-int on_zfs(int basedir_fd) {
-  struct statfs basefs;
-  (void)fstatfs(basedir_fd, &basefs);
-  return (basefs.f_type == FS_ZFS_TYPE);
+int on_zfs(int basedir_fd)
+{
+    struct statfs basefs;
+    (void)fstatfs(basedir_fd, &basefs);
+    return (basefs.f_type == FS_ZFS_TYPE);
 }
 
-int ceph_posix_fallocate(int fd, off_t offset, off_t len) {
-  // Return 0 if oke, otherwise errno > 0
+int ceph_posix_fallocate(int fd, off_t offset, off_t len)
+{
+    // Return 0 if oke, otherwise errno > 0
 
 #ifdef HAVE_POSIX_FALLOCATE
-  if (on_zfs(fd)) {
-    return manual_fallocate(fd, offset, len);
-  } else {
-    return posix_fallocate(fd, offset, len);
-  }
+    if (on_zfs(fd)) {
+        return manual_fallocate(fd, offset, len);
+    }
+    else {
+        return posix_fallocate(fd, offset, len);
+    }
 #elif defined(__APPLE__)
-  fstore_t store;
-  store.fst_flags = F_ALLOCATECONTIG;
-  store.fst_posmode = F_PEOFPOSMODE;
-  store.fst_offset = offset;
-  store.fst_length = len;
+    fstore_t store;
+    store.fst_flags = F_ALLOCATECONTIG;
+    store.fst_posmode = F_PEOFPOSMODE;
+    store.fst_offset = offset;
+    store.fst_length = len;
 
-  int ret = fcntl(fd, F_PREALLOCATE, &store);
-  if (ret == -1) {
-    ret = errno;
-  }
-  return ret;
+    int ret = fcntl(fd, F_PREALLOCATE, &store);
+    if (ret == -1) {
+        ret = errno;
+    }
+    return ret;
 #else
-  return manual_fallocate(fd, offset, len);
+    return manual_fallocate(fd, offset, len);
 #endif
-} 
+}
 
 int pipe_cloexec(int pipefd[2])
 {
 #if defined(HAVE_PIPE2)
-  return pipe2(pipefd, O_CLOEXEC);
+    return pipe2(pipefd, O_CLOEXEC);
 #else
-  if (pipe(pipefd) == -1)
-    return -1;
+    if (pipe(pipefd) == -1)
+        return -1;
 
-  /*
-   * The old-fashioned, race-condition prone way that we have to fall
-   * back on if pipe2 does not exist.
-   */
-  if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) < 0) {
-    goto fail;
-  }
+    /*
+     * The old-fashioned, race-condition prone way that we have to fall
+     * back on if pipe2 does not exist.
+     */
+    if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) < 0) {
+        goto fail;
+    }
 
-  if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) < 0) {
-    goto fail;
-  }
+    if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) < 0) {
+        goto fail;
+    }
 
-  return 0;
-fail:
-  int save_errno = errno;
-  VOID_TEMP_FAILURE_RETRY(close(pipefd[0]));
-  VOID_TEMP_FAILURE_RETRY(close(pipefd[1]));
-  return (errno = save_errno, -1);
+    return 0;
+  fail:
+    int save_errno = errno;
+    VOID_TEMP_FAILURE_RETRY(close(pipefd[0]));
+    VOID_TEMP_FAILURE_RETRY(close(pipefd[1]));
+    return (errno = save_errno, -1);
 #endif
 }
-
 
 int socket_cloexec(int domain, int type, int protocol)
 {
 #ifdef SOCK_CLOEXEC
-  return socket(domain, type|SOCK_CLOEXEC, protocol);
+    return socket(domain, type | SOCK_CLOEXEC, protocol);
 #else
-  int fd = socket(domain, type, protocol);
-  if (fd == -1)
-    return -1;
+    int fd = socket(domain, type, protocol);
+    if (fd == -1)
+        return -1;
 
-  if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
-    goto fail;
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+        goto fail;
 
-  return fd;
-fail:
-  int save_errno = errno;
-  VOID_TEMP_FAILURE_RETRY(close(fd));
-  return (errno = save_errno, -1);
+    return fd;
+  fail:
+    int save_errno = errno;
+    VOID_TEMP_FAILURE_RETRY(close(fd));
+    return (errno = save_errno, -1);
 #endif
 }
 
 int socketpair_cloexec(int domain, int type, int protocol, int sv[2])
 {
 #ifdef SOCK_CLOEXEC
-  return socketpair(domain, type|SOCK_CLOEXEC, protocol, sv);
+    return socketpair(domain, type | SOCK_CLOEXEC, protocol, sv);
 #else
-  int rc = socketpair(domain, type, protocol, sv);
-  if (rc == -1)
-    return -1;
+    int rc = socketpair(domain, type, protocol, sv);
+    if (rc == -1)
+        return -1;
 
-  if (fcntl(sv[0], F_SETFD, FD_CLOEXEC) < 0)
-    goto fail;
+    if (fcntl(sv[0], F_SETFD, FD_CLOEXEC) < 0)
+        goto fail;
 
-  if (fcntl(sv[1], F_SETFD, FD_CLOEXEC) < 0)
-    goto fail;
+    if (fcntl(sv[1], F_SETFD, FD_CLOEXEC) < 0)
+        goto fail;
 
-  return 0;
-fail:
-  int save_errno = errno;
-  VOID_TEMP_FAILURE_RETRY(close(sv[0]));
-  VOID_TEMP_FAILURE_RETRY(close(sv[1]));
-  return (errno = save_errno, -1);
+    return 0;
+  fail:
+    int save_errno = errno;
+    VOID_TEMP_FAILURE_RETRY(close(sv[0]));
+    VOID_TEMP_FAILURE_RETRY(close(sv[1]));
+    return (errno = save_errno, -1);
 #endif
 }
 
-int accept_cloexec(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
+int accept_cloexec(int sockfd, struct sockaddr *addr, socklen_t * addrlen)
 {
 #ifdef HAVE_ACCEPT4
-  return accept4(sockfd, addr, addrlen, SOCK_CLOEXEC);
+    return accept4(sockfd, addr, addrlen, SOCK_CLOEXEC);
 #else
-  int fd = accept(sockfd, addr, addrlen);
-  if (fd == -1)
-    return -1;
+    int fd = accept(sockfd, addr, addrlen);
+    if (fd == -1)
+        return -1;
 
-  if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
-    goto fail;
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+        goto fail;
 
-  return fd;
-fail:
-  int save_errno = errno;
-  VOID_TEMP_FAILURE_RETRY(close(fd));
-  return (errno = save_errno, -1);
+    return fd;
+  fail:
+    int save_errno = errno;
+    VOID_TEMP_FAILURE_RETRY(close(fd));
+    return (errno = save_errno, -1);
 #endif
 }

@@ -18,27 +18,29 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-
-RGWResolver::~RGWResolver() {
+RGWResolver::~RGWResolver()
+{
 }
 
-RGWResolver::RGWResolver() {
-  resolver = DNSResolver::get_instance();
+RGWResolver::RGWResolver()
+{
+    resolver = DNSResolver::get_instance();
 }
 
-int RGWResolver::resolve_cname(const string& hostname, string& cname, bool *found) {
-  return resolver->resolve_cname(g_ceph_context, hostname, &cname, found);
+int RGWResolver::resolve_cname(const string & hostname, string & cname,
+                               bool * found)
+{
+    return resolver->resolve_cname(g_ceph_context, hostname, &cname, found);
 }
 
 RGWResolver *rgw_resolver;
 
-
 void rgw_init_resolver()
 {
-  rgw_resolver = new RGWResolver();
+    rgw_resolver = new RGWResolver();
 }
 
 void rgw_shutdown_resolver()
 {
-  delete rgw_resolver;
+    delete rgw_resolver;
 }

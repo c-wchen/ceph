@@ -20,12 +20,11 @@
 
 #include "erasure-code/ErasureCodePlugin.h"
 
-class ErasureCodePluginLrc : public ErasureCodePlugin {
-public:
-  int factory(const std::string &directory,
-		      ErasureCodeProfile &profile,
-		      ErasureCodeInterfaceRef *erasure_code,
-		      ostream *ss) override;
+class ErasureCodePluginLrc:public ErasureCodePlugin {
+  public:
+    int factory(const std::string & directory,
+                ErasureCodeProfile & profile,
+                ErasureCodeInterfaceRef * erasure_code, ostream * ss) override;
 };
 
 #endif

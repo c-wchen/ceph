@@ -17,7 +17,7 @@
 #include <string.h>
 #if defined(__FreeBSD__)
 #include <sys/wait.h>
-#endif 
+#endif
 
 /*
  * TODO: Switch to libkmod when we abandon older platforms.  The APIs
@@ -34,50 +34,49 @@
  */
 static int run_command(const char *command)
 {
-	int status;
+    int status;
 
-	status = system(command);
-	if (status >= 0 && WIFEXITED(status))
-		return WEXITSTATUS(status);
+    status = system(command);
+    if (status >= 0 && WIFEXITED(status))
+        return WEXITSTATUS(status);
 
-	if (status < 0) {
-		char error_buf[80];
+    if (status < 0) {
+        char error_buf[80];
 #ifdef STRERROR_R_CHAR_P
-		char* dummy = strerror_r(errno, error_buf, sizeof(error_buf));
-		(void)dummy;
+        char *dummy = strerror_r(errno, error_buf, sizeof(error_buf));
+        (void)dummy;
 #else
-		strerror_r(errno, error_buf, sizeof(error_buf));
+        strerror_r(errno, error_buf, sizeof(error_buf));
 #endif
-		fprintf(stderr, "couldn't run '%s': %s\n", command,
-			error_buf);
-	} else if (WIFSIGNALED(status)) {
-		fprintf(stderr, "'%s' killed by signal %d\n", command,
-			WTERMSIG(status));
-	} else {
-		fprintf(stderr, "weird status from '%s': %d\n", command,
-			status);
-	}
+        fprintf(stderr, "couldn't run '%s': %s\n", command, error_buf);
+    }
+    else if (WIFSIGNALED(status)) {
+        fprintf(stderr, "'%s' killed by signal %d\n", command,
+                WTERMSIG(status));
+    }
+    else {
+        fprintf(stderr, "weird status from '%s': %d\n", command, status);
+    }
 
-	return -1;
+    return -1;
 }
 
 int module_has_param(const char *module, const char *param)
 {
-	char command[128];
+    char command[128];
 
-	snprintf(command, sizeof(command),
-		 "/sbin/modinfo -F parm %s | /bin/grep -q ^%s:",
-		 module, param);
+    snprintf(command, sizeof(command),
+             "/sbin/modinfo -F parm %s | /bin/grep -q ^%s:", module, param);
 
-	return run_command(command) == 0;
+    return run_command(command) == 0;
 }
 
 int module_load(const char *module, const char *options)
 {
-	char command[128];
+    char command[128];
 
-	snprintf(command, sizeof(command), "/sbin/modprobe %s %s",
-		 module, (options ? options : ""));
+    snprintf(command, sizeof(command), "/sbin/modprobe %s %s",
+             module, (options ? options : ""));
 
-	return run_command(command);
+    return run_command(command);
 }

@@ -22,47 +22,43 @@
 #include "common/hobject.h"
 
 namespace ceph {
-  class Formatter;
+    class Formatter;
 }
-/// collection metadata
-struct kstore_cnode_t {
-  uint32_t bits;   ///< how many bits of coll pgid are significant
+/// collection metadata struct kstore_cnode_t {
+    uint32_t bits;              ///< how many bits of coll pgid are significant
 
-  explicit kstore_cnode_t(int b=0) : bits(b) {}
-
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::iterator& p);
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<kstore_cnode_t*>& o);
+  explicit kstore_cnode_t(int b = 0):bits(b) {
+    } void encode(bufferlist & bl) const;
+    void decode(bufferlist::iterator & p);
+    void dump(Formatter * f) const;
+    static void generate_test_instances(list < kstore_cnode_t * >&o);
 };
-WRITE_CLASS_ENCODER(kstore_cnode_t)
 
+WRITE_CLASS_ENCODER(kstore_cnode_t)
 /// onode: per-object metadata
 struct kstore_onode_t {
-  uint64_t nid;                        ///< numeric id (locally unique)
-  uint64_t size;                       ///< object size
-  map<string, bufferptr> attrs;        ///< attrs
-  uint64_t omap_head;                  ///< id for omap root node
-  uint32_t stripe_size;                ///< stripe size
+    uint64_t nid;               ///< numeric id (locally unique)
+    uint64_t size;              ///< object size
+     map < string, bufferptr > attrs;   ///< attrs
+    uint64_t omap_head;         ///< id for omap root node
+    uint32_t stripe_size;       ///< stripe size
 
-  uint32_t expected_object_size;
-  uint32_t expected_write_size;
-  uint32_t alloc_hint_flags;
+    uint32_t expected_object_size;
+    uint32_t expected_write_size;
+    uint32_t alloc_hint_flags;
 
-  kstore_onode_t()
-    : nid(0),
-      size(0),
-      omap_head(0),
-      stripe_size(0),
-      expected_object_size(0),
-      expected_write_size(0),
-      alloc_hint_flags(0) {}
-
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::iterator& p);
-  void dump(Formatter *f) const;
-  static void generate_test_instances(list<kstore_onode_t*>& o);
+     kstore_onode_t()
+    :nid(0),
+        size(0),
+        omap_head(0),
+        stripe_size(0),
+        expected_object_size(0), expected_write_size(0), alloc_hint_flags(0)
+{
+} void encode(bufferlist & bl) const;
+void decode(bufferlist::iterator & p);
+void dump(Formatter * f) const;
+static void generate_test_instances(list < kstore_onode_t * >&o);
 };
-WRITE_CLASS_ENCODER(kstore_onode_t)
 
+WRITE_CLASS_ENCODER(kstore_onode_t)
 #endif

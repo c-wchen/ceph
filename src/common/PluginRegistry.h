@@ -23,45 +23,42 @@
 class CephContext;
 
 extern "C" {
-  const char *__ceph_plugin_version();
-  int __ceph_plugin_init(CephContext *cct,
-			 const std::string& type,
-			 const std::string& name);
-}
+    const char *__ceph_plugin_version();
+    int __ceph_plugin_init(CephContext * cct,
+                           const std::string & type, const std::string & name);
+} namespace ceph {
 
-namespace ceph {
+    class Plugin {
+      public:
+        void *library;
+        CephContext *cct;
 
-  class Plugin {
-  public:
-    void *library;
-    CephContext *cct;
+        explicit Plugin(CephContext * cct):library(NULL), cct(cct) {
+        } virtual ~ Plugin() {
+    }};
 
-    explicit Plugin(CephContext *cct) : library(NULL), cct(cct) {}
-    virtual ~Plugin() {}
-  };
+    class PluginRegistry {
+      public:
+        CephContext * cct;
+        Mutex lock;
+        bool loading;
+        bool disable_dlclose;
+         std::map < std::string, std::map < std::string, Plugin * >>plugins;
 
-  class PluginRegistry {
-  public:
-    CephContext *cct;
-    Mutex lock;
-    bool loading;
-    bool disable_dlclose;
-    std::map<std::string,std::map<std::string,Plugin*> > plugins;
+        explicit PluginRegistry(CephContext * cct);
+        ~PluginRegistry();
 
-    explicit PluginRegistry(CephContext *cct);
-    ~PluginRegistry();
+        int add(const std::string & type, const std::string & name,
+                Plugin * factory);
+        int remove(const std::string & type, const std::string & name);
+        Plugin *get(const std::string & type, const std::string & name);
+        Plugin *get_with_load(const std::string & type,
+                              const std::string & name);
 
-    int add(const std::string& type, const std::string& name,
-	    Plugin *factory);
-    int remove(const std::string& type, const std::string& name);
-    Plugin *get(const std::string& type, const std::string& name);
-    Plugin *get_with_load(const std::string& type, const std::string& name);
-
-    int load(const std::string& type,
-	     const std::string& name);
-    int preload();
-    int preload(const std::string& type);
-  };
+        int load(const std::string & type, const std::string & name);
+        int preload();
+        int preload(const std::string & type);
+    };
 }
 
 #endif

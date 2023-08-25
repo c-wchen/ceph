@@ -27,70 +27,65 @@ class PerfCounters;
  * back, so @p get_current() drops below the limit after fulfills the requests.
  */
 class Throttle {
-  CephContext *cct;
-  const std::string name;
-  PerfCounters *logger;
-  std::atomic<int64_t> count = { 0 }, max = { 0 };
-  Mutex lock;
-  list<Cond*> cond;
-  const bool use_perf;
-  bool shutting_down = false;
-  Cond shutdown_clear;
+    CephContext *cct;
+    const std::string name;
+    PerfCounters *logger;
+     std::atomic < int64_t > count = {
+    0}, max = {
+    0};
+    Mutex lock;
+    list < Cond * >cond;
+    const bool use_perf;
+    bool shutting_down = false;
+    Cond shutdown_clear;
 
-public:
-  Throttle(CephContext *cct, const std::string& n, int64_t m = 0, bool _use_perf = true);
-  ~Throttle();
+  public:
+    Throttle(CephContext * cct, const std::string & n, int64_t m =
+             0, bool _use_perf = true);
+    ~Throttle();
 
-private:
-  void _reset_max(int64_t m);
-  bool _should_wait(int64_t c) const {
-    int64_t m = max;
-    int64_t cur = count;
-    return
-      m &&
-      ((c <= m && cur + c > m) || // normally stay under max
-       (c >= m && cur > m));     // except for large c
-  }
+  private:
+    void _reset_max(int64_t m);
+    bool _should_wait(int64_t c) const {
+        int64_t m = max;
+        int64_t cur = count;
+         return m && ((c <= m && cur + c > m) ||    // normally stay under max
+                       (c >= m && cur > m));    // except for large c
+    } bool _wait(int64_t c);
 
-  bool _wait(int64_t c);
-
-public:
+  public:
   /**
    * gets the number of currently taken slots
    * @returns the number of taken slots
    */
-  int64_t get_current() const {
-    return count;
-  }
-
+    int64_t get_current()const {
+        return count;
+    }
   /**
    * get the max number of slots
    * @returns the max number of slots
-   */
-  int64_t get_max() const { return max; }
-
+   */ int64_t get_max() const {
+        return max;
+    }
   /**
    * return true if past midpoint
-   */
-  bool past_midpoint() const {
-    return count >= max / 2;
-  }
-
+   */ bool past_midpoint() const {
+        return count >= max / 2;
+    }
   /**
    * set the new max number, and wait until the number of taken slots drains
    * and drops below this limit.
    *
    * @param m the new max number
    * @returns true if this method is blocked, false it it returns immediately
-   */
-  bool wait(int64_t m = 0);
+   */ bool wait(int64_t m = 0);
 
   /**
    * take the specified number of slots from the stock regardless the throttling
    * @param c number of slots to take
    * @returns the total number of taken slots
    */
-  int64_t take(int64_t c = 1);
+    int64_t take(int64_t c = 1);
 
   /**
    * get the specified amount of slots from the stock, but will wait if the
@@ -100,33 +95,32 @@ public:
    * @returns true if this request is blocked due to the throttling, false 
    * otherwise
    */
-  bool get(int64_t c = 1, int64_t m = 0);
+    bool get(int64_t c = 1, int64_t m = 0);
 
   /**
    * the unblocked version of @p get()
    * @returns true if it successfully got the requested amount,
    * or false if it would block.
    */
-  bool get_or_fail(int64_t c = 1);
+    bool get_or_fail(int64_t c = 1);
 
   /**
    * put slots back to the stock
    * @param c number of slots to return
    * @returns number of requests being hold after this
    */
-  int64_t put(int64_t c = 1);
+    int64_t put(int64_t c = 1);
    /**
    * reset the zero to the stock
    */
-  void reset();
+    void reset();
 
-  bool should_wait(int64_t c) const {
-    return _should_wait(c);
-  }
-  void reset_max(int64_t m) {
-    Mutex::Locker l(lock);
-    _reset_max(m);
-  }
+    bool should_wait(int64_t c) const {
+        return _should_wait(c);
+    } void reset_max(int64_t m) {
+        Mutex::Locker l(lock);
+        _reset_max(m);
+    }
 };
 
 /**
@@ -156,54 +150,52 @@ public:
  * delay = e + (r - h)((m - e)/(1 - h))
  */
 class BackoffThrottle {
-  CephContext *cct;
-  const std::string name;
-  PerfCounters *logger;
+    CephContext *cct;
+    const std::string name;
+    PerfCounters *logger;
 
-  std::mutex lock;
-  using locker = std::unique_lock<std::mutex>;
+     std::mutex lock;
+    using locker = std::unique_lock < std::mutex >;
 
-  unsigned next_cond = 0;
+    unsigned next_cond = 0;
 
-  /// allocated once to avoid constantly allocating new ones
-  vector<std::condition_variable> conds;
+    /// allocated once to avoid constantly allocating new ones
+     vector < std::condition_variable > conds;
 
-  const bool use_perf;
+    const bool use_perf;
 
-  /// pointers into conds
-  list<std::condition_variable*> waiters;
+    /// pointers into conds
+     list < std::condition_variable * >waiters;
 
-  std::list<std::condition_variable*>::iterator _push_waiter() {
-    unsigned next = next_cond++;
-    if (next_cond == conds.size())
-      next_cond = 0;
-    return waiters.insert(waiters.end(), &(conds[next]));
-  }
+     std::list < std::condition_variable * >::iterator _push_waiter() {
+        unsigned next = next_cond++;
+        if (next_cond == conds.size())
+            next_cond = 0;
+         return waiters.insert(waiters.end(), &(conds[next]));
+    } void _kick_waiters() {
+        if (!waiters.empty())
+            waiters.front()->notify_all();
+    }
 
-  void _kick_waiters() {
-    if (!waiters.empty())
-      waiters.front()->notify_all();
-  }
+    /// see above, values are in [0, 1].
+    double low_threshhold = 0;
+    double high_threshhold = 1;
 
-  /// see above, values are in [0, 1].
-  double low_threshhold = 0;
-  double high_threshhold = 1;
+    /// see above, values are in seconds
+    double high_delay_per_count = 0;
+    double max_delay_per_count = 0;
 
-  /// see above, values are in seconds
-  double high_delay_per_count = 0;
-  double max_delay_per_count = 0;
+    /// Filled in in set_params
+    double s0 = 0;              ///< e / (h - l), l != h, 0 otherwise
+    double s1 = 0;              ///< (m - e)/(1 - h), 1 != h, 0 otherwise
 
-  /// Filled in in set_params
-  double s0 = 0; ///< e / (h - l), l != h, 0 otherwise
-  double s1 = 0; ///< (m - e)/(1 - h), 1 != h, 0 otherwise
+    /// max
+    uint64_t max = 0;
+    uint64_t current = 0;
 
-  /// max
-  uint64_t max = 0;
-  uint64_t current = 0;
+    std::chrono::duration < double >_get_delay(uint64_t c) const;
 
-  std::chrono::duration<double> _get_delay(uint64_t c) const;
-
-public:
+  public:
   /**
    * set_params
    *
@@ -211,30 +203,26 @@ public:
    * and populates errstream (if non-null) with a user compreshensible
    * explanation.
    */
-  bool set_params(
-    double low_threshhold,
-    double high_threshhold,
-    double expected_throughput,
-    double high_multiple,
-    double max_multiple,
-    uint64_t throttle_max,
-    ostream *errstream);
+    bool set_params(double low_threshhold,
+                    double high_threshhold,
+                    double expected_throughput,
+                    double high_multiple,
+                    double max_multiple,
+                    uint64_t throttle_max, ostream * errstream);
 
-  std::chrono::duration<double> get(uint64_t c = 1);
-  std::chrono::duration<double> wait() {
-    return get(0);
-  }
-  uint64_t put(uint64_t c = 1);
-  uint64_t take(uint64_t c = 1);
-  uint64_t get_current();
-  uint64_t get_max();
+    std::chrono::duration < double >get(uint64_t c = 1);
+    std::chrono::duration < double >wait() {
+        return get(0);
+    }
+    uint64_t put(uint64_t c = 1);
+    uint64_t take(uint64_t c = 1);
+    uint64_t get_current();
+    uint64_t get_max();
 
-  BackoffThrottle(CephContext *cct, const std::string& n,
-    unsigned expected_concurrency, ///< [in] determines size of conds
-    bool _use_perf = true);
-  ~BackoffThrottle();
+    BackoffThrottle(CephContext * cct, const std::string & n, unsigned expected_concurrency,    ///< [in] determines size of conds
+                    bool _use_perf = true);
+    ~BackoffThrottle();
 };
-
 
 /**
  * @class SimpleThrottle
@@ -248,38 +236,35 @@ public:
  * of operations for errors, since the return value is not reset.
  */
 class SimpleThrottle {
-public:
-  SimpleThrottle(uint64_t max, bool ignore_enoent);
-  ~SimpleThrottle();
-  void start_op();
-  void end_op(int r);
-  bool pending_error() const;
-  int wait_for_ret();
-private:
-  mutable Mutex m_lock;
-  Cond m_cond;
-  uint64_t m_max;
-  uint64_t m_current;
-  int m_ret;
-  bool m_ignore_enoent;
-  uint32_t waiters = 0;
+  public:
+    SimpleThrottle(uint64_t max, bool ignore_enoent);
+    ~SimpleThrottle();
+    void start_op();
+    void end_op(int r);
+    bool pending_error() const;
+    int wait_for_ret();
+  private:
+     mutable Mutex m_lock;
+    Cond m_cond;
+    uint64_t m_max;
+    uint64_t m_current;
+    int m_ret;
+    bool m_ignore_enoent;
+    uint32_t waiters = 0;
 };
-
 
 class OrderedThrottle;
 
-class C_OrderedThrottle : public Context {
-public:
-  C_OrderedThrottle(OrderedThrottle *ordered_throttle, uint64_t tid)
-    : m_ordered_throttle(ordered_throttle), m_tid(tid) {
-  }
+class C_OrderedThrottle:public Context {
+  public:
+    C_OrderedThrottle(OrderedThrottle * ordered_throttle, uint64_t tid)
+    :m_ordered_throttle(ordered_throttle), m_tid(tid) {
+  } protected:
+    void finish(int r) override;
 
-protected:
-  void finish(int r) override;
-
-private:
-  OrderedThrottle *m_ordered_throttle;
-  uint64_t m_tid;
+  private:
+    OrderedThrottle * m_ordered_throttle;
+    uint64_t m_tid;
 };
 
 /**
@@ -290,48 +275,47 @@ private:
  * will completed in-order during invokation of start_op() and wait_for_ret()
  */
 class OrderedThrottle {
-public:
-  OrderedThrottle(uint64_t max, bool ignore_enoent);
-  ~OrderedThrottle();
+  public:
+    OrderedThrottle(uint64_t max, bool ignore_enoent);
+    ~OrderedThrottle();
 
-  C_OrderedThrottle *start_op(Context *on_finish);
-  void end_op(int r);
+    C_OrderedThrottle *start_op(Context * on_finish);
+    void end_op(int r);
 
-  bool pending_error() const;
-  int wait_for_ret();
+    bool pending_error() const;
+    int wait_for_ret();
 
-protected:
-  friend class C_OrderedThrottle;
+  protected:
+     friend class C_OrderedThrottle;
 
-  void finish_op(uint64_t tid, int r);
+    void finish_op(uint64_t tid, int r);
 
-private:
-  struct Result {
-    bool finished;
-    int ret_val;
-    Context *on_finish;
+  private:
+    struct Result {
+        bool finished;
+        int ret_val;
+        Context *on_finish;
 
-    Result(Context *_on_finish = NULL)
-      : finished(false), ret_val(0), on_finish(_on_finish) {
-    }
-  };
+         Result(Context * _on_finish = NULL)
+      :    finished(false), ret_val(0), on_finish(_on_finish) {
+    }};
 
-  typedef std::map<uint64_t, Result> TidResult;
+    typedef std::map < uint64_t, Result > TidResult;
 
-  mutable Mutex m_lock;
-  Cond m_cond;
-  uint64_t m_max;
-  uint64_t m_current;
-  int m_ret_val;
-  bool m_ignore_enoent;
+    mutable Mutex m_lock;
+    Cond m_cond;
+    uint64_t m_max;
+    uint64_t m_current;
+    int m_ret_val;
+    bool m_ignore_enoent;
 
-  uint64_t m_next_tid;
-  uint64_t m_complete_tid;
+    uint64_t m_next_tid;
+    uint64_t m_complete_tid;
 
-  TidResult m_tid_result;
+    TidResult m_tid_result;
 
-  void complete_pending_ops();
-  uint32_t waiters = 0;
+    void complete_pending_ops();
+    uint32_t waiters = 0;
 };
 
 #endif

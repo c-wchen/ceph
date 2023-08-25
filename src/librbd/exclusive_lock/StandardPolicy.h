@@ -8,27 +8,23 @@
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace exclusive_lock {
+    namespace exclusive_lock {
 
-class StandardPolicy : public Policy {
-public:
-  StandardPolicy(ImageCtx *image_ctx) : m_image_ctx(image_ctx) {
-  }
+        class StandardPolicy:public Policy {
+          public:
+            StandardPolicy(ImageCtx * image_ctx):m_image_ctx(image_ctx) {
+            } bool may_auto_request_lock() override {
+                return false;
+            } int lock_requested(bool force) override;
 
-  bool may_auto_request_lock() override {
-    return false;
-  }
+          private:
+             ImageCtx * m_image_ctx;
 
-  int lock_requested(bool force) override;
+        };
 
-private:
-  ImageCtx *m_image_ctx;
-
-};
-
-} // namespace exclusive_lock
-} // namespace librbd
+    }                           // namespace exclusive_lock
+}                               // namespace librbd
 
 #endif // CEPH_LIBRBD_EXCLUSIVE_LOCK_STANDARD_POLICY_H

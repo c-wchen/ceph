@@ -17,113 +17,114 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace object_map {
+    namespace object_map {
 
-namespace {
+        namespace {
 
 // keep aligned to bit_vector 4K block sizes
-const uint64_t MAX_OBJECTS_PER_UPDATE = 256 * (1 << 10);
+            const uint64_t MAX_OBJECTS_PER_UPDATE = 256 * (1 << 10);
 
-}
+        } template < typename I > void UpdateRequest < I >::send() {
+            update_object_map();
+        } template < typename I > void UpdateRequest < I >::update_object_map() {
+            assert(m_image_ctx.snap_lock.is_locked());
+            assert(m_image_ctx.object_map_lock.is_locked());
+            CephContext *cct = m_image_ctx.cct;
 
-template <typename I>
-void UpdateRequest<I>::send() {
-  update_object_map();
-}
+            // break very large requests into manageable batches
+            m_update_end_object_no =
+                MIN(m_end_object_no,
+                    m_update_start_object_no + MAX_OBJECTS_PER_UPDATE);
 
-template <typename I>
-void UpdateRequest<I>::update_object_map() {
-  assert(m_image_ctx.snap_lock.is_locked());
-  assert(m_image_ctx.object_map_lock.is_locked());
-  CephContext *cct = m_image_ctx.cct;
+            std::string oid(ObjectMap <>::
+                            object_map_name(m_image_ctx.id, m_snap_id));
+            ldout(cct,
+                  20) << "ictx=" << &m_image_ctx << ", oid=" << oid << ", " <<
+                "[" << m_update_start_object_no << "," << m_update_end_object_no
+                << ") = " << (m_current_state ?
+                              stringify(static_cast < uint32_t >
+                                        (*m_current_state)) : "")
+                << "->" << static_cast < uint32_t > (m_new_state)
+                << dendl;
 
-  // break very large requests into manageable batches
-  m_update_end_object_no = MIN(
-    m_end_object_no, m_update_start_object_no + MAX_OBJECTS_PER_UPDATE);
+            librados::ObjectWriteOperation op;
+            if (m_snap_id == CEPH_NOSNAP) {
+                rados::cls::lock::assert_locked(&op, RBD_LOCK_NAME,
+                                                LOCK_EXCLUSIVE, "", "");
+            }
+            cls_client::object_map_update(&op, m_update_start_object_no,
+                                          m_update_end_object_no, m_new_state,
+                                          m_current_state);
 
-  std::string oid(ObjectMap<>::object_map_name(m_image_ctx.id, m_snap_id));
-  ldout(cct, 20) << "ictx=" << &m_image_ctx << ", oid=" << oid << ", "
-                 << "[" << m_update_start_object_no << ","
-                        << m_update_end_object_no << ") = "
-		 << (m_current_state ?
-		       stringify(static_cast<uint32_t>(*m_current_state)) : "")
-		 << "->" << static_cast<uint32_t>(m_new_state)
-		 << dendl;
+            auto rados_completion = librbd::util::create_rados_callback <
+                UpdateRequest < I >,
+                &UpdateRequest < I >::handle_update_object_map > (this);
+            std::vector < librados::snap_t > snaps;
+            int r =
+                m_image_ctx.md_ctx.aio_operate(oid, rados_completion, &op, 0,
+                                               snaps,
+                                               (m_trace.valid()? m_trace.
+                                                get_info() : nullptr));
+            assert(r == 0);
+            rados_completion->release();
+        }
 
-  librados::ObjectWriteOperation op;
-  if (m_snap_id == CEPH_NOSNAP) {
-    rados::cls::lock::assert_locked(&op, RBD_LOCK_NAME, LOCK_EXCLUSIVE, "", "");
-  }
-  cls_client::object_map_update(&op, m_update_start_object_no,
-                                m_update_end_object_no, m_new_state,
-                                m_current_state);
+        template < typename I >
+            void UpdateRequest < I >::handle_update_object_map(int r) {
+            ldout(m_image_ctx.cct, 20) << "r=" << r << dendl;
 
-  auto rados_completion = librbd::util::create_rados_callback<
-    UpdateRequest<I>, &UpdateRequest<I>::handle_update_object_map>(this);
-  std::vector<librados::snap_t> snaps;
-  int r = m_image_ctx.md_ctx.aio_operate(
-    oid, rados_completion, &op, 0, snaps,
-    (m_trace.valid() ? m_trace.get_info() : nullptr));
-  assert(r == 0);
-  rados_completion->release();
-}
+            if (r == -ENOENT && m_ignore_enoent) {
+                r = 0;
+            }
+            if (r < 0 && m_ret_val == 0) {
+                m_ret_val = r;
+            }
 
-template <typename I>
-void UpdateRequest<I>::handle_update_object_map(int r) {
-  ldout(m_image_ctx.cct, 20) << "r=" << r << dendl;
+            {
+                RWLock::RLocker snap_locker(m_image_ctx.snap_lock);
+                RWLock::WLocker object_map_locker(m_image_ctx.object_map_lock);
+                update_in_memory_object_map();
 
-  if (r == -ENOENT && m_ignore_enoent) {
-    r = 0;
-  }
-  if (r < 0 && m_ret_val == 0) {
-    m_ret_val = r;
-  }
+                if (m_update_end_object_no < m_end_object_no) {
+                    m_update_start_object_no = m_update_end_object_no;
+                    update_object_map();
+                    return;
+                }
+            }
 
-  {
-    RWLock::RLocker snap_locker(m_image_ctx.snap_lock);
-    RWLock::WLocker object_map_locker(m_image_ctx.object_map_lock);
-    update_in_memory_object_map();
+            // no more batch updates to send
+            complete(m_ret_val);
+        }
 
-    if (m_update_end_object_no < m_end_object_no) {
-      m_update_start_object_no = m_update_end_object_no;
-      update_object_map();
-      return;
-    }
-  }
+        template < typename I >
+            void UpdateRequest < I >::update_in_memory_object_map() {
+            assert(m_image_ctx.snap_lock.is_locked());
+            assert(m_image_ctx.object_map_lock.is_locked());
 
-  // no more batch updates to send
-  complete(m_ret_val);
-}
+            // rebuilding the object map might update on-disk only
+            if (m_snap_id == m_image_ctx.snap_id) {
+                ldout(m_image_ctx.cct, 20) << dendl;
 
-template <typename I>
-void UpdateRequest<I>::update_in_memory_object_map() {
-  assert(m_image_ctx.snap_lock.is_locked());
-  assert(m_image_ctx.object_map_lock.is_locked());
-
-  // rebuilding the object map might update on-disk only
-  if (m_snap_id == m_image_ctx.snap_id) {
-    ldout(m_image_ctx.cct, 20) << dendl;
-
-    auto it = m_object_map.begin() +
+                auto it = m_object_map.begin() +
                     MIN(m_update_start_object_no, m_object_map.size());
-    auto end_it = m_object_map.begin() +
+                auto end_it = m_object_map.begin() +
                     MIN(m_update_end_object_no, m_object_map.size());
-    for (; it != end_it; ++it) {
-      auto state_ref = *it;
-      uint8_t state = state_ref;
-      if (!m_current_state || state == *m_current_state ||
-          (*m_current_state == OBJECT_EXISTS && state == OBJECT_EXISTS_CLEAN)) {
-        state_ref = m_new_state;
-      }
-    }
-  }
-}
+                for (; it != end_it; ++it) {
+                    auto state_ref = *it;
+                    uint8_t state = state_ref;
+                    if (!m_current_state || state == *m_current_state ||
+                        (*m_current_state == OBJECT_EXISTS
+                         && state == OBJECT_EXISTS_CLEAN)) {
+                        state_ref = m_new_state;
+                    }
+                }
+            }
+        }
 
-template <typename I>
-void UpdateRequest<I>::finish_request() {
-}
+        template < typename I > void UpdateRequest < I >::finish_request() {
+        }
 
-} // namespace object_map
-} // namespace librbd
+    }                           // namespace object_map
+}                               // namespace librbd
 
-template class librbd::object_map::UpdateRequest<librbd::ImageCtx>;
+template class librbd::object_map::UpdateRequest < librbd::ImageCtx >;

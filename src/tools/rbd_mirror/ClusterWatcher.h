@@ -16,47 +16,47 @@
 #include "tools/rbd_mirror/service_daemon/Types.h"
 #include <unordered_map>
 
-namespace librbd { struct ImageCtx; }
+namespace librbd {
+    struct ImageCtx;
+} namespace rbd {
+    namespace mirror {
 
-namespace rbd {
-namespace mirror {
-
-template <typename> class ServiceDaemon;
+        template < typename > class ServiceDaemon;
 
 /**
  * Tracks mirroring configuration for pools in a single
  * cluster.
  */
-class ClusterWatcher {
-public:
-  typedef std::set<peer_t> Peers;
-  typedef std::map<int64_t, Peers>  PoolPeers;
-  typedef std::set<std::string> PoolNames;
+        class ClusterWatcher {
+          public:
+            typedef std::set < peer_t > Peers;
+            typedef std::map < int64_t, Peers > PoolPeers;
+            typedef std::set < std::string > PoolNames;
 
-  ClusterWatcher(RadosRef cluster, Mutex &lock,
-                 ServiceDaemon<librbd::ImageCtx>* service_daemon);
-  ~ClusterWatcher() = default;
-  ClusterWatcher(const ClusterWatcher&) = delete;
-  ClusterWatcher& operator=(const ClusterWatcher&) = delete;
+             ClusterWatcher(RadosRef cluster, Mutex & lock,
+                            ServiceDaemon < librbd::ImageCtx > *service_daemon);
+            ~ClusterWatcher() = default;
+             ClusterWatcher(const ClusterWatcher &) = delete;
+             ClusterWatcher & operator=(const ClusterWatcher &) = delete;
 
-  // Caller controls frequency of calls
-  void refresh_pools();
-  const PoolPeers& get_pool_peers() const;
+            // Caller controls frequency of calls
+            void refresh_pools();
+            const PoolPeers & get_pool_peers() const;
 
-private:
-  typedef std::unordered_map<int64_t, service_daemon::CalloutId> ServicePools;
+          private:
+            typedef std::unordered_map < int64_t,
+                service_daemon::CalloutId > ServicePools;
 
-  RadosRef m_cluster;
-  Mutex &m_lock;
-  ServiceDaemon<librbd::ImageCtx>* m_service_daemon;
+            RadosRef m_cluster;
+             Mutex & m_lock;
+             ServiceDaemon < librbd::ImageCtx > *m_service_daemon;
 
-  ServicePools m_service_pools;
-  PoolPeers m_pool_peers;
+            ServicePools m_service_pools;
+            PoolPeers m_pool_peers;
 
-  void read_pool_peers(PoolPeers *pool_peers, PoolNames *pool_names);
-};
+            void read_pool_peers(PoolPeers * pool_peers,
+                                 PoolNames * pool_names);
+        };
 
-} // namespace mirror
-} // namespace rbd
-
-#endif // CEPH_RBD_MIRROR_CLUSTER_WATCHER_H
+} // namespace mirror }         // namespace rbd
+#endif                          // CEPH_RBD_MIRROR_CLUSTER_WATCHER_H

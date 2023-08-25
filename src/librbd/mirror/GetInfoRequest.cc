@@ -16,129 +16,131 @@
                            << " " << __func__ << ": "
 
 namespace librbd {
-namespace mirror {
+    namespace mirror {
 
-using librbd::util::create_context_callback;
-using librbd::util::create_rados_callback;
+        using librbd::util::create_context_callback;
+        using librbd::util::create_rados_callback;
 
-template <typename I>
-void GetInfoRequest<I>::send() {
-  refresh_image();
-}
+         template < typename I > void GetInfoRequest < I >::send() {
+            refresh_image();
+        } template < typename I > void GetInfoRequest < I >::refresh_image() {
+            if (!m_image_ctx.state->is_refresh_required()) {
+                get_mirror_image();
+                return;
+            } CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-template <typename I>
-void GetInfoRequest<I>::refresh_image() {
-  if (!m_image_ctx.state->is_refresh_required()) {
-    get_mirror_image();
-    return;
-  }
+            auto ctx = create_context_callback <
+                GetInfoRequest < I >,
+                &GetInfoRequest < I >::handle_refresh_image > (this);
+            m_image_ctx.state->refresh(ctx);
+        }
 
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+        template < typename I >
+            void GetInfoRequest < I >::handle_refresh_image(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    GetInfoRequest<I>, &GetInfoRequest<I>::handle_refresh_image>(this);
-  m_image_ctx.state->refresh(ctx);
-}
+            if (r < 0) {
+                lderr(cct) << "failed to refresh image: " << cpp_strerror(r) <<
+                    dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void GetInfoRequest<I>::handle_refresh_image(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            get_mirror_image();
+        }
 
-  if (r < 0) {
-    lderr(cct) << "failed to refresh image: " << cpp_strerror(r) << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void GetInfoRequest < I >::get_mirror_image() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  get_mirror_image();
-}
+            librados::ObjectReadOperation op;
+            cls_client::mirror_image_get_start(&op, m_image_ctx.id);
 
-template <typename I>
-void GetInfoRequest<I>::get_mirror_image() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+            librados::AioCompletion * comp = create_rados_callback <
+                GetInfoRequest < I >,
+                &GetInfoRequest < I >::handle_get_mirror_image > (this);
+            int r =
+                m_image_ctx.md_ctx.aio_operate(RBD_MIRRORING, comp, &op,
+                                               &m_out_bl);
+            assert(r == 0);
+            comp->release();
+        }
 
-  librados::ObjectReadOperation op;
-  cls_client::mirror_image_get_start(&op, m_image_ctx.id);
+        template < typename I >
+            void GetInfoRequest < I >::handle_get_mirror_image(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  librados::AioCompletion *comp = create_rados_callback<
-    GetInfoRequest<I>, &GetInfoRequest<I>::handle_get_mirror_image>(this);
-  int r = m_image_ctx.md_ctx.aio_operate(RBD_MIRRORING, comp, &op, &m_out_bl);
-  assert(r == 0);
-  comp->release();
-}
+            m_mirror_image->state = cls::rbd::MIRROR_IMAGE_STATE_DISABLED;
+            *m_promotion_state = PROMOTION_STATE_NON_PRIMARY;
+            if (r == 0) {
+                bufferlist::iterator iter = m_out_bl.begin();
+                r = cls_client::mirror_image_get_finish(&iter, m_mirror_image);
+            }
 
-template <typename I>
-void GetInfoRequest<I>::handle_get_mirror_image(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            if (r == -ENOENT ||
+                m_mirror_image->state != cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
+                ldout(cct, 20) << "mirroring is disabled" << dendl;
+                finish(0);
+                return;
+            }
+            else if (r < 0) {
+                lderr(cct) << "failed to retrieve mirroring state: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
 
-  m_mirror_image->state = cls::rbd::MIRROR_IMAGE_STATE_DISABLED;
-  *m_promotion_state = PROMOTION_STATE_NON_PRIMARY;
-  if (r == 0) {
-    bufferlist::iterator iter = m_out_bl.begin();
-    r = cls_client::mirror_image_get_finish(&iter, m_mirror_image);
-  }
+            get_tag_owner();
+        }
 
-  if (r == -ENOENT ||
-      m_mirror_image->state != cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
-    ldout(cct, 20) << "mirroring is disabled" << dendl;
-    finish(0);
-    return;
-  } else if (r < 0) {
-    lderr(cct) << "failed to retrieve mirroring state: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+        template < typename I > void GetInfoRequest < I >::get_tag_owner() {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << dendl;
 
-  get_tag_owner();
-}
+            auto ctx = create_context_callback <
+                GetInfoRequest < I >,
+                &GetInfoRequest < I >::handle_get_tag_owner > (this);
+            Journal < I >::get_tag_owner(m_image_ctx.md_ctx, m_image_ctx.id,
+                                         &m_mirror_uuid,
+                                         m_image_ctx.op_work_queue, ctx);
+        }
 
-template <typename I>
-void GetInfoRequest<I>::get_tag_owner() {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << dendl;
+        template < typename I >
+            void GetInfoRequest < I >::handle_get_tag_owner(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  auto ctx = create_context_callback<
-    GetInfoRequest<I>, &GetInfoRequest<I>::handle_get_tag_owner>(this);
-  Journal<I>::get_tag_owner(m_image_ctx.md_ctx, m_image_ctx.id,
-                            &m_mirror_uuid, m_image_ctx.op_work_queue, ctx);
-}
+            if (r < 0) {
+                lderr(cct) << "failed to determine tag ownership: " <<
+                    cpp_strerror(r)
+                    << dendl;
+                finish(r);
+                return;
+            }
 
-template <typename I>
-void GetInfoRequest<I>::handle_get_tag_owner(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+            if (m_mirror_uuid == Journal <>::LOCAL_MIRROR_UUID) {
+                *m_promotion_state = PROMOTION_STATE_PRIMARY;
+            }
+            else if (m_mirror_uuid == Journal <>::ORPHAN_MIRROR_UUID) {
+                *m_promotion_state = PROMOTION_STATE_ORPHAN;
+            }
 
-  if (r < 0) {
-    lderr(cct) << "failed to determine tag ownership: " << cpp_strerror(r)
-               << dendl;
-    finish(r);
-    return;
-  }
+            finish(0);
+        }
 
-  if (m_mirror_uuid == Journal<>::LOCAL_MIRROR_UUID) {
-    *m_promotion_state = PROMOTION_STATE_PRIMARY;
-  } else if (m_mirror_uuid == Journal<>::ORPHAN_MIRROR_UUID) {
-    *m_promotion_state = PROMOTION_STATE_ORPHAN;
-  }
+        template < typename I > void GetInfoRequest < I >::finish(int r) {
+            CephContext *cct = m_image_ctx.cct;
+            ldout(cct, 20) << "r=" << r << dendl;
 
-  finish(0);
-}
+            m_on_finish->complete(r);
+            delete this;
+        }
 
-template <typename I>
-void GetInfoRequest<I>::finish(int r) {
-  CephContext *cct = m_image_ctx.cct;
-  ldout(cct, 20) << "r=" << r << dendl;
+    }                           // namespace mirror
+}                               // namespace librbd
 
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace mirror
-} // namespace librbd
-
-template class librbd::mirror::GetInfoRequest<librbd::ImageCtx>;
+template class librbd::mirror::GetInfoRequest < librbd::ImageCtx >;

@@ -17,6 +17,6 @@
 
 class CephContext;
 
-void dump_open_fds(CephContext *cct);
+void dump_open_fds(CephContext * cct);
 
 #endif

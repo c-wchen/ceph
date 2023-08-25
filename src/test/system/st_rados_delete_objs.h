@@ -26,23 +26,22 @@ class CrossProcessSem;
  * deletes num_objs objects from the pool,
  * and posts to deleted_sem.
  */
-class StRadosDeleteObjs : public SysTestRunnable
-{
-public:
-  StRadosDeleteObjs(int argc, const char **argv,
-		    CrossProcessSem *setup_sem,
-		    CrossProcessSem *deleted_sem,
-		    int num_objs,
-		    const std::string &pool_name,
-		    const std::string &suffix);
-  ~StRadosDeleteObjs() override;
-  int run() override;
-private:
-  CrossProcessSem *m_setup_sem;
-  CrossProcessSem *m_deleted_sem;
-  int m_num_objs;
-  std::string m_pool_name;
-  std::string m_suffix;
+class StRadosDeleteObjs:public SysTestRunnable {
+  public:
+    StRadosDeleteObjs(int argc, const char **argv,
+                      CrossProcessSem * setup_sem,
+                      CrossProcessSem * deleted_sem,
+                      int num_objs,
+                      const std::string & pool_name,
+                      const std::string & suffix);
+    ~StRadosDeleteObjs() override;
+    int run() override;
+  private:
+     CrossProcessSem * m_setup_sem;
+    CrossProcessSem *m_deleted_sem;
+    int m_num_objs;
+     std::string m_pool_name;
+     std::string m_suffix;
 };
 
 #endif

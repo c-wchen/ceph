@@ -6,27 +6,25 @@
 #include "osd/osd_types.h"
 #include "messages/PaxosServiceMessage.h"
 
-class MOSDPGCreated : public PaxosServiceMessage {
-public:
-  pg_t pgid;
-  MOSDPGCreated()
-    : PaxosServiceMessage(MSG_OSD_PG_CREATED, 0)
-  {}
-  MOSDPGCreated(pg_t pgid)
-    : PaxosServiceMessage(MSG_OSD_PG_CREATED, 0),
-      pgid(pgid)
-  {}
-  const char *get_type_name() const override { return "pg_created"; }
-  void print(ostream& out) const override {
-    out << "osd_pg_created(" << pgid << ")";
-  }
-  void encode_payload(uint64_t features) override {
-    paxos_encode();
-    ::encode(pgid, payload);
-  }
-  void decode_payload() override {
-    auto p = payload.begin();
-    paxos_decode(p);
-    ::decode(pgid, p);
-  }
+class MOSDPGCreated:public PaxosServiceMessage {
+  public:
+    pg_t pgid;
+    MOSDPGCreated()
+    :PaxosServiceMessage(MSG_OSD_PG_CREATED, 0) {
+    } MOSDPGCreated(pg_t pgid)
+    :PaxosServiceMessage(MSG_OSD_PG_CREATED, 0), pgid(pgid) {
+    }
+    const char *get_type_name() const override {
+        return "pg_created";
+    } void print(ostream & out) const override {
+        out << "osd_pg_created(" << pgid << ")";
+    } void encode_payload(uint64_t features) override {
+        paxos_encode();
+        ::encode(pgid, payload);
+    }
+    void decode_payload() override {
+        auto p = payload.begin();
+        paxos_decode(p);
+        ::decode(pgid, p);
+    }
 };

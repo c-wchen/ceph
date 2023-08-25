@@ -12,39 +12,46 @@
 
 class Context;
 class ContextWQ;
-namespace librbd { class ImageCtx; }
+namespace librbd {
+    class ImageCtx;
+} namespace rbd {
+    namespace mirror {
+        namespace image_replayer {
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
+            template < typename ImageCtxT = librbd::ImageCtx >
+                class CreateImageRequest {
+              public:
+                static CreateImageRequest *create(librados::
+                                                  IoCtx & local_io_ctx,
+                                                  ContextWQ * work_queue,
+                                                  const std::
+                                                  string & global_image_id,
+                                                  const std::
+                                                  string & remote_mirror_uuid,
+                                                  const std::
+                                                  string & local_image_name,
+                                                  const std::
+                                                  string & local_image_id,
+                                                  ImageCtxT * remote_image_ctx,
+                                                  Context * on_finish) {
+                    return new CreateImageRequest(local_io_ctx, work_queue,
+                                                  global_image_id,
+                                                  remote_mirror_uuid,
+                                                  local_image_name,
+                                                  local_image_id,
+                                                  remote_image_ctx, on_finish);
+                } CreateImageRequest(librados::IoCtx & local_io_ctx,
+                                     ContextWQ * work_queue,
+                                     const std::string & global_image_id,
+                                     const std::string & remote_mirror_uuid,
+                                     const std::string & local_image_name,
+                                     const std::string & local_image_id,
+                                     ImageCtxT * remote_image_ctx,
+                                     Context * on_finish);
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class CreateImageRequest {
-public:
-  static CreateImageRequest *create(librados::IoCtx &local_io_ctx,
-                                    ContextWQ *work_queue,
-                                    const std::string &global_image_id,
-                                    const std::string &remote_mirror_uuid,
-                                    const std::string &local_image_name,
-				    const std::string &local_image_id,
-                                    ImageCtxT *remote_image_ctx,
-                                    Context *on_finish) {
-    return new CreateImageRequest(local_io_ctx, work_queue, global_image_id,
-                                  remote_mirror_uuid, local_image_name,
-                                  local_image_id, remote_image_ctx, on_finish);
-  }
+                void send();
 
-  CreateImageRequest(librados::IoCtx &local_io_ctx, ContextWQ *work_queue,
-                     const std::string &global_image_id,
-                     const std::string &remote_mirror_uuid,
-                     const std::string &local_image_name,
-		     const std::string &local_image_id,
-                     ImageCtxT *remote_image_ctx,
-                     Context *on_finish);
-
-  void send();
-
-private:
+              private:
   /**
    * @verbatim
    *
@@ -81,67 +88,69 @@ private:
    * @endverbatim
    */
 
-  librados::IoCtx &m_local_io_ctx;
-  ContextWQ *m_work_queue;
-  std::string m_global_image_id;
-  std::string m_remote_mirror_uuid;
-  std::string m_local_image_name;
-  std::string m_local_image_id;
-  ImageCtxT *m_remote_image_ctx;
-  Context *m_on_finish;
+                 librados::IoCtx & m_local_io_ctx;
+                ContextWQ *m_work_queue;
+                 std::string m_global_image_id;
+                 std::string m_remote_mirror_uuid;
+                 std::string m_local_image_name;
+                 std::string m_local_image_id;
+                ImageCtxT *m_remote_image_ctx;
+                Context *m_on_finish;
 
-  librados::IoCtx m_remote_parent_io_ctx;
-  ImageCtxT *m_remote_parent_image_ctx = nullptr;
-  librbd::ParentSpec m_remote_parent_spec;
+                 librados::IoCtx m_remote_parent_io_ctx;
+                ImageCtxT *m_remote_parent_image_ctx = nullptr;
+                 librbd::ParentSpec m_remote_parent_spec;
 
-  librados::IoCtx m_local_parent_io_ctx;
-  ImageCtxT *m_local_parent_image_ctx = nullptr;
-  librbd::ParentSpec m_local_parent_spec;
+                 librados::IoCtx m_local_parent_io_ctx;
+                ImageCtxT *m_local_parent_image_ctx = nullptr;
+                 librbd::ParentSpec m_local_parent_spec;
 
-  bufferlist m_out_bl;
-  std::string m_parent_global_image_id;
-  std::string m_parent_pool_name;
-  std::string m_parent_snap_name;
-  int m_ret_val = 0;
+                bufferlist m_out_bl;
+                 std::string m_parent_global_image_id;
+                 std::string m_parent_pool_name;
+                 std::string m_parent_snap_name;
+                int m_ret_val = 0;
 
-  void create_image();
-  void handle_create_image(int r);
+                void create_image();
+                void handle_create_image(int r);
 
-  void get_parent_global_image_id();
-  void handle_get_parent_global_image_id(int r);
+                void get_parent_global_image_id();
+                void handle_get_parent_global_image_id(int r);
 
-  void get_local_parent_image_id();
-  void handle_get_local_parent_image_id(int r);
+                void get_local_parent_image_id();
+                void handle_get_local_parent_image_id(int r);
 
-  void open_remote_parent_image();
-  void handle_open_remote_parent_image(int r);
+                void open_remote_parent_image();
+                void handle_open_remote_parent_image(int r);
 
-  void open_local_parent_image();
-  void handle_open_local_parent_image(int r);
+                void open_local_parent_image();
+                void handle_open_local_parent_image(int r);
 
-  void set_local_parent_snap();
-  void handle_set_local_parent_snap(int r);
+                void set_local_parent_snap();
+                void handle_set_local_parent_snap(int r);
 
-  void clone_image();
-  void handle_clone_image(int r);
+                void clone_image();
+                void handle_clone_image(int r);
 
-  void close_local_parent_image();
-  void handle_close_local_parent_image(int r);
+                void close_local_parent_image();
+                void handle_close_local_parent_image(int r);
 
-  void close_remote_parent_image();
-  void handle_close_remote_parent_image(int r);
+                void close_remote_parent_image();
+                void handle_close_remote_parent_image(int r);
 
-  void error(int r);
-  void finish(int r);
+                void error(int r);
+                void finish(int r);
 
-  int validate_parent();
+                int validate_parent();
 
-};
+            };
 
 } // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-extern template class rbd::mirror::image_replayer::CreateImageRequest<librbd::ImageCtx>;
+            }
+        // namespace mirror
+        }
+    // namespace rbd
+    extern template class rbd::mirror::image_replayer::CreateImageRequest <
+    librbd::ImageCtx >;
 
 #endif // RBD_MIRROR_IMAGE_REPLAYER_CREATE_IMAGE_REQUEST_H

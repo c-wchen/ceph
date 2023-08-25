@@ -13,7 +13,6 @@
  * 
  */
 
-
 #ifndef CEPH_COMMON_PERF_COUNTERS_H
 #define CEPH_COMMON_PERF_COUNTERS_H
 
@@ -31,20 +30,18 @@
 class CephContext;
 class PerfCountersBuilder;
 
-enum perfcounter_type_d : uint8_t
-{
-  PERFCOUNTER_NONE = 0,
-  PERFCOUNTER_TIME = 0x1,       // float (measuring seconds)
-  PERFCOUNTER_U64 = 0x2,        // integer (note: either TIME or U64 *must* be set)
-  PERFCOUNTER_LONGRUNAVG = 0x4, // paired counter + sum (time)
-  PERFCOUNTER_COUNTER = 0x8,    // counter (vs guage)
-  PERFCOUNTER_HISTOGRAM = 0x10, // histogram (vector) of values
+enum perfcounter_type_d:uint8_t {
+    PERFCOUNTER_NONE = 0,
+    PERFCOUNTER_TIME = 0x1,     // float (measuring seconds)
+    PERFCOUNTER_U64 = 0x2,      // integer (note: either TIME or U64 *must* be set)
+    PERFCOUNTER_LONGRUNAVG = 0x4,   // paired counter + sum (time)
+    PERFCOUNTER_COUNTER = 0x8,  // counter (vs guage)
+    PERFCOUNTER_HISTOGRAM = 0x10,   // histogram (vector) of values
 };
 
-enum unit_t : uint8_t
-{
-  BYTES,
-  NONE
+enum unit_t:uint8_t {
+    BYTES,
+    NONE
 };
 
 /* Class for constructing a PerfCounters object.
@@ -55,70 +52,65 @@ enum unit_t : uint8_t
  * In the future, we will probably get rid of the first/last arguments, since
  * PerfCountersBuilder can deduce them itself.
  */
-class PerfCountersBuilder
-{
-public:
-  PerfCountersBuilder(CephContext *cct, const std::string &name,
-		    int first, int last);
-  ~PerfCountersBuilder();
+class PerfCountersBuilder {
+  public:
+    PerfCountersBuilder(CephContext * cct, const std::string & name,
+                        int first, int last);
+    ~PerfCountersBuilder();
 
-  // prio values: higher is better, and higher values get included in
-  // 'ceph daemonperf' (and similar) results.
-  // Use of priorities enables us to add large numbers of counters
-  // internally without necessarily overwhelming consumers.
-  enum {
-    PRIO_CRITICAL = 10,
-    // 'interesting' is the default threshold for `daemonperf` output
-    PRIO_INTERESTING = 8,
-    // `useful` is the default threshold for transmission to ceph-mgr
-    // and inclusion in prometheus/influxdb plugin output
-    PRIO_USEFUL = 5,
-    PRIO_UNINTERESTING = 2,
-    PRIO_DEBUGONLY = 0,
-  };
-  void add_u64(int key, const char *name,
-	       const char *description=NULL, const char *nick = NULL,
-	       int prio=0, int unit=NONE);
-  void add_u64_counter(int key, const char *name,
-		       const char *description=NULL,
-		       const char *nick = NULL,
-		       int prio=0, int unit=NONE);
-  void add_u64_avg(int key, const char *name,
-		   const char *description=NULL,
-		   const char *nick = NULL,
-		   int prio=0, int unit=NONE);
-  void add_time(int key, const char *name,
-		const char *description=NULL,
-		const char *nick = NULL,
-		int prio=0);
-  void add_time_avg(int key, const char *name,
-		    const char *description=NULL,
-		    const char *nick = NULL,
-		    int prio=0);
-  void add_u64_counter_histogram(
-    int key, const char* name,
-    PerfHistogramCommon::axis_config_d x_axis_config,
-    PerfHistogramCommon::axis_config_d y_axis_config,
-    const char *description=NULL,
-    const char* nick = NULL,
-    int prio=0, int unit=NONE);
+    // prio values: higher is better, and higher values get included in
+    // 'ceph daemonperf' (and similar) results.
+    // Use of priorities enables us to add large numbers of counters
+    // internally without necessarily overwhelming consumers.
+    enum {
+        PRIO_CRITICAL = 10,
+        // 'interesting' is the default threshold for `daemonperf` output
+        PRIO_INTERESTING = 8,
+        // `useful` is the default threshold for transmission to ceph-mgr
+        // and inclusion in prometheus/influxdb plugin output
+        PRIO_USEFUL = 5,
+        PRIO_UNINTERESTING = 2,
+        PRIO_DEBUGONLY = 0,
+    };
+    void add_u64(int key, const char *name,
+                 const char *description = NULL, const char *nick = NULL,
+                 int prio = 0, int unit = NONE);
+    void add_u64_counter(int key, const char *name,
+                         const char *description = NULL,
+                         const char *nick = NULL,
+                         int prio = 0, int unit = NONE);
+    void add_u64_avg(int key, const char *name,
+                     const char *description = NULL,
+                     const char *nick = NULL, int prio = 0, int unit = NONE);
+    void add_time(int key, const char *name,
+                  const char *description = NULL,
+                  const char *nick = NULL, int prio = 0);
+    void add_time_avg(int key, const char *name,
+                      const char *description = NULL,
+                      const char *nick = NULL, int prio = 0);
+    void add_u64_counter_histogram(int key, const char *name,
+                                   PerfHistogramCommon::
+                                   axis_config_d x_axis_config,
+                                   PerfHistogramCommon::
+                                   axis_config_d y_axis_config,
+                                   const char *description =
+                                   NULL, const char *nick = NULL, int prio =
+                                   0, int unit = NONE);
 
-  void set_prio_default(int prio_)
-  {
-    prio_default = prio_;
-  }
+    void set_prio_default(int prio_) {
+        prio_default = prio_;
+    } PerfCounters *create_perf_counters();
+  private:
+    PerfCountersBuilder(const PerfCountersBuilder & rhs);
+    PerfCountersBuilder & operator=(const PerfCountersBuilder & rhs);
+    void add_impl(int idx, const char *name,
+                  const char *description, const char *nick, int prio, int ty,
+                  int unit = NONE, unique_ptr < PerfHistogram <>> histogram =
+                  nullptr);
 
-  PerfCounters* create_perf_counters();
-private:
-  PerfCountersBuilder(const PerfCountersBuilder &rhs);
-  PerfCountersBuilder& operator=(const PerfCountersBuilder &rhs);
-  void add_impl(int idx, const char *name,
-                const char *description, const char *nick, int prio, int ty, int unit=NONE,
-                unique_ptr<PerfHistogram<>> histogram = nullptr);
+    PerfCounters *m_perf_counters;
 
-  PerfCounters *m_perf_counters;
-
-  int prio_default = 0;
+    int prio_default = 0;
 };
 
 /*
@@ -146,219 +138,199 @@ private:
  * the "avgcount" member when read off. avgcount is incremented when you call
  * tinc. Calling tset on an average is an error and will assert out.
  */
-class PerfCounters
-{
-public:
+class PerfCounters {
+  public:
   /** Represents a PerfCounters data element. */
-  struct perf_counter_data_any_d {
-    perf_counter_data_any_d()
-      : name(NULL),
-        description(NULL),
-        nick(NULL),
-	 type(PERFCOUNTER_NONE),
-	 unit(NONE)
-    {}
-    perf_counter_data_any_d(const perf_counter_data_any_d& other)
-      : name(other.name),
-        description(other.description),
-        nick(other.nick),
-	 type(other.type),
-	 unit(other.unit),
-	 u64(other.u64.load()) {
-      pair<uint64_t,uint64_t> a = other.read_avg();
-      u64 = a.first;
-      avgcount = a.second;
-      avgcount2 = a.second;
-      if (other.histogram) {
-        histogram.reset(new PerfHistogram<>(*other.histogram));
-      }
+    struct perf_counter_data_any_d {
+        perf_counter_data_any_d()
+        :name(NULL),
+            description(NULL), nick(NULL), type(PERFCOUNTER_NONE), unit(NONE) {
+        } perf_counter_data_any_d(const perf_counter_data_any_d & other)
+        :name(other.name),
+            description(other.description),
+            nick(other.nick),
+            type(other.type), unit(other.unit), u64(other.u64.load()) {
+            pair < uint64_t, uint64_t > a = other.read_avg();
+            u64 = a.first;
+            avgcount = a.second;
+            avgcount2 = a.second;
+            if (other.histogram) {
+                histogram.reset(new PerfHistogram <> (*other.histogram));
+        }} const char *name;
+        const char *description;
+        const char *nick;
+        uint8_t prio = 0;
+        enum perfcounter_type_d type;
+        enum unit_t unit;
+        std::atomic < uint64_t > u64 = {
+        0};
+        std::atomic < uint64_t > avgcount = {
+        0};
+        std::atomic < uint64_t > avgcount2 = {
+        0};
+        std::unique_ptr < PerfHistogram <>> histogram;
+
+        void reset() {
+            if (type != PERFCOUNTER_U64) {
+                u64 = 0;
+                avgcount = 0;
+                avgcount2 = 0;
+            }
+            if (histogram) {
+                histogram->reset();
+            }
+        }
+
+        // read <sum, count> safely by making sure the post- and pre-count
+        // are identical; in other words the whole loop needs to be run
+        // without any intervening calls to inc, set, or tinc.
+        pair < uint64_t, uint64_t > read_avg()const {
+            uint64_t sum, count;
+            do {
+                count = avgcount;
+                sum = u64;
+            } while (avgcount2 != count);
+            return make_pair(sum, count);
+        }
+    };
+
+    template < typename T > struct avg_tracker {
+        pair < uint64_t, T > last;
+        pair < uint64_t, T > cur;
+        avg_tracker():last(0, 0), cur(0, 0) {
+        } T current_avg() const {
+            if (cur.first == last.first)
+                return 0;
+            return (cur.second - last.second) / (cur.first - last.first);
+        } void consume_next(const pair < uint64_t, T > &next) {
+            last = cur;
+            cur = next;
+        }
+    };
+
+    ~PerfCounters();
+
+    void inc(int idx, uint64_t v = 1);
+    void dec(int idx, uint64_t v = 1);
+    void set(int idx, uint64_t v);
+    uint64_t get(int idx) const;
+
+    void tset(int idx, utime_t v);
+    void tinc(int idx, utime_t v, uint32_t avgcount = 1);
+    void tinc(int idx, ceph::timespan v, uint32_t avgcount = 1);
+    utime_t tget(int idx) const;
+
+    void hinc(int idx, int64_t x, int64_t y);
+
+    void reset();
+    void dump_formatted(ceph::Formatter * f, bool schema,
+                        const std::string & counter = "") {
+        dump_formatted_generic(f, schema, false, counter);
+    }
+    void dump_formatted_histograms(ceph::Formatter * f, bool schema,
+                                   const std::string & counter = "") {
+        dump_formatted_generic(f, schema, true, counter);
+    }
+    pair < uint64_t, uint64_t > get_tavg_ms(int idx) const;
+
+    const std::string & get_name() const;
+    void set_name(std::string s) {
+        m_name = s;
     }
 
-    const char *name;
-    const char *description;
-    const char *nick;
-    uint8_t prio = 0;
-    enum perfcounter_type_d type;
-    enum unit_t unit;
-    std::atomic<uint64_t> u64 = { 0 };
-    std::atomic<uint64_t> avgcount = { 0 };
-    std::atomic<uint64_t> avgcount2 = { 0 };
-    std::unique_ptr<PerfHistogram<>> histogram;
-
-    void reset()
-    {
-      if (type != PERFCOUNTER_U64) {
-	    u64 = 0;
-	    avgcount = 0;
-	    avgcount2 = 0;
-      }
-      if (histogram) {
-        histogram->reset();
-      }
+    /// adjust priority values by some value
+    void set_prio_adjust(int p) {
+        prio_adjust = p;
     }
 
-    // read <sum, count> safely by making sure the post- and pre-count
-    // are identical; in other words the whole loop needs to be run
-    // without any intervening calls to inc, set, or tinc.
-    pair<uint64_t,uint64_t> read_avg() const {
-      uint64_t sum, count;
-      do {
-	count = avgcount;
-	sum = u64;
-      } while (avgcount2 != count);
-      return make_pair(sum, count);
-    }
-  };
+    int get_adjusted_priority(int p) const {
+        return std::max(std::min(p + prio_adjust,
+                                 (int)PerfCountersBuilder::PRIO_CRITICAL), 0);
+  } private:
+     PerfCounters(CephContext * cct, const std::string & name,
+                  int lower_bound, int upper_bound);
+    PerfCounters(const PerfCounters & rhs);
+    PerfCounters & operator=(const PerfCounters & rhs);
+    void dump_formatted_generic(ceph::Formatter * f, bool schema,
+                                bool histograms, const std::string & counter =
+                                "");
 
-  template <typename T>
-  struct avg_tracker {
-    pair<uint64_t, T> last;
-    pair<uint64_t, T> cur;
-    avg_tracker() : last(0, 0), cur(0, 0) {}
-    T current_avg() const {
-      if (cur.first == last.first)
-        return 0;
-      return (cur.second - last.second) / (cur.first - last.first);
-    }
-    void consume_next(const pair<uint64_t, T> &next) {
-      last = cur;
-      cur = next;
-    }
-  };
+    typedef std::vector < perf_counter_data_any_d > perf_counter_data_vec_t;
 
-  ~PerfCounters();
+    CephContext *m_cct;
+    int m_lower_bound;
+    int m_upper_bound;
+    std::string m_name;
+    const std::string m_lock_name;
 
-  void inc(int idx, uint64_t v = 1);
-  void dec(int idx, uint64_t v = 1);
-  void set(int idx, uint64_t v);
-  uint64_t get(int idx) const;
-
-  void tset(int idx, utime_t v);
-  void tinc(int idx, utime_t v, uint32_t avgcount = 1);
-  void tinc(int idx, ceph::timespan v, uint32_t avgcount = 1);
-  utime_t tget(int idx) const;
-
-  void hinc(int idx, int64_t x, int64_t y);
-
-  void reset();
-  void dump_formatted(ceph::Formatter *f, bool schema,
-                      const std::string &counter = "") {
-    dump_formatted_generic(f, schema, false, counter);
-  }
-  void dump_formatted_histograms(ceph::Formatter *f, bool schema,
-                                 const std::string &counter = "") {
-    dump_formatted_generic(f, schema, true, counter);
-  }
-  pair<uint64_t, uint64_t> get_tavg_ms(int idx) const;
-
-  const std::string& get_name() const;
-  void set_name(std::string s) {
-    m_name = s;
-  }
-
-  /// adjust priority values by some value
-  void set_prio_adjust(int p) {
-    prio_adjust = p;
-  }
-
-  int get_adjusted_priority(int p) const {
-    return std::max(std::min(p + prio_adjust,
-                             (int)PerfCountersBuilder::PRIO_CRITICAL),
-                    0);
-  }
-
-private:
-  PerfCounters(CephContext *cct, const std::string &name,
-	     int lower_bound, int upper_bound);
-  PerfCounters(const PerfCounters &rhs);
-  PerfCounters& operator=(const PerfCounters &rhs);
-  void dump_formatted_generic(ceph::Formatter *f, bool schema, bool histograms,
-                              const std::string &counter = "");
-
-  typedef std::vector<perf_counter_data_any_d> perf_counter_data_vec_t;
-
-  CephContext *m_cct;
-  int m_lower_bound;
-  int m_upper_bound;
-  std::string m_name;
-  const std::string m_lock_name;
-
-  int prio_adjust = 0;
+    int prio_adjust = 0;
 
   /** Protects m_data */
-  mutable Mutex m_lock;
+    mutable Mutex m_lock;
 
-  perf_counter_data_vec_t m_data;
+    perf_counter_data_vec_t m_data;
 
-  friend class PerfCountersBuilder;
-  friend class PerfCountersCollection;
+    friend class PerfCountersBuilder;
+    friend class PerfCountersCollection;
 };
 
 class SortPerfCountersByName {
-public:
-  bool operator()(const PerfCounters* lhs, const PerfCounters* rhs) const {
-    return (lhs->get_name() < rhs->get_name());
-  }
-};
+  public:
+    bool operator() (const PerfCounters * lhs, const PerfCounters * rhs)const {
+        return (lhs->get_name() < rhs->get_name());
+}};
 
-typedef std::set <PerfCounters*, SortPerfCountersByName> perf_counters_set_t;
+typedef std::set < PerfCounters *, SortPerfCountersByName > perf_counters_set_t;
 
 /*
  * PerfCountersCollection manages PerfCounters objects for a Ceph process.
  */
-class PerfCountersCollection
-{
-public:
-  PerfCountersCollection(CephContext *cct);
-  ~PerfCountersCollection();
-  void add(class PerfCounters *l);
-  void remove(class PerfCounters *l);
-  void clear();
-  bool reset(const std::string &name);
+class PerfCountersCollection {
+  public:
+    PerfCountersCollection(CephContext * cct);
+    ~PerfCountersCollection();
+    void add(class PerfCounters * l);
+    void remove(class PerfCounters * l);
+    void clear();
+    bool reset(const std::string & name);
 
-  void dump_formatted(ceph::Formatter *f, bool schema,
-                      const std::string &logger = "",
-                      const std::string &counter = "") {
-    dump_formatted_generic(f, schema, false, logger, counter);
-  }
+    void dump_formatted(ceph::Formatter * f, bool schema,
+                        const std::string & logger = "",
+                        const std::string & counter = "") {
+        dump_formatted_generic(f, schema, false, logger, counter);
+    } void dump_formatted_histograms(ceph::Formatter * f, bool schema,
+                                     const std::string & logger = "",
+                                     const std::string & counter = "") {
+        dump_formatted_generic(f, schema, true, logger, counter);
+    }
 
-  void dump_formatted_histograms(ceph::Formatter *f, bool schema,
-                                 const std::string &logger = "",
-                                 const std::string &counter = "") {
-    dump_formatted_generic(f, schema, true, logger, counter);
-  }
+    // A reference to a perf_counter_data_any_d, with an accompanying
+    // pointer to the enclosing PerfCounters, in order that the consumer
+    // can see the prio_adjust
+    class PerfCounterRef {
+      public:
+        PerfCounters::perf_counter_data_any_d * data;
+        PerfCounters *perf_counters;
+    };
+    typedef std::map < std::string, PerfCounterRef > CounterMap;
 
-  // A reference to a perf_counter_data_any_d, with an accompanying
-  // pointer to the enclosing PerfCounters, in order that the consumer
-  // can see the prio_adjust
-  class PerfCounterRef
-  {
-    public:
-    PerfCounters::perf_counter_data_any_d *data;
-    PerfCounters *perf_counters;
-  };
-  typedef std::map<std::string,
-          PerfCounterRef> CounterMap;
+    void with_counters(std::function < void (const CounterMap &) >) const;
 
-  void with_counters(std::function<void(const CounterMap &)>) const;
+  private:
+    void dump_formatted_generic(ceph::Formatter * f, bool schema,
+                                bool histograms, const std::string & logger =
+                                "", const std::string & counter = "");
 
-private:
-  void dump_formatted_generic(ceph::Formatter *f, bool schema, bool histograms,
-                              const std::string &logger = "",
-                              const std::string &counter = "");
-
-  CephContext *m_cct;
+    CephContext *m_cct;
 
   /** Protects m_loggers */
-  mutable Mutex m_lock;
+    mutable Mutex m_lock;
 
-  perf_counters_set_t m_loggers;
+    perf_counters_set_t m_loggers;
 
-  CounterMap by_path; 
+    CounterMap by_path;
 
-  friend class PerfCountersCollectionTest;
+    friend class PerfCountersCollectionTest;
 };
-
-
 
 #endif

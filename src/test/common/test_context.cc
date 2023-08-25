@@ -28,79 +28,84 @@
 
 TEST(CephContext, do_command)
 {
-  CephContext *cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
+    CephContext *cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
 
-  cct->_conf->cluster = "ceph";
+    cct->_conf->cluster = "ceph";
 
-  string key("key");
-  string value("value");
-  cct->_conf->set_val(key.c_str(), value.c_str(), false);
-  cmdmap_t cmdmap;
-  cmdmap["var"] = key;
+    string key("key");
+    string value("value");
+    cct->_conf->set_val(key.c_str(), value.c_str(), false);
+    cmdmap_t cmdmap;
+    cmdmap["var"] = key;
 
-  {
-    bufferlist out;
-    cct->do_command("config get", cmdmap, "xml", &out);
-    string s(out.c_str(), out.length());
-    EXPECT_EQ("<config_get><key>" + value + "</key></config_get>", s);
-  }
+    {
+        bufferlist out;
+        cct->do_command("config get", cmdmap, "xml", &out);
+        string s(out.c_str(), out.length());
+        EXPECT_EQ("<config_get><key>" + value + "</key></config_get>", s);
+    }
 
-  {
-    bufferlist out;
-    cct->do_command("config get", cmdmap, "UNSUPPORTED", &out);
-    string s(out.c_str(), out.length());
-    EXPECT_EQ("{\n    \"key\": \"value\"\n}\n", s);
-  }
+    {
+        bufferlist out;
+        cct->do_command("config get", cmdmap, "UNSUPPORTED", &out);
+        string s(out.c_str(), out.length());
+        EXPECT_EQ("{\n    \"key\": \"value\"\n}\n", s);
+    }
 
-  {
-    bufferlist out;
-    cct->do_command("config diff get", cmdmap, "xml", &out);
-    string s(out.c_str(), out.length());
-    EXPECT_EQ("<config_diff_get><diff><current><key>" + value + 
-      "</key></current><defaults><key></key></defaults></diff></config_diff_get>", s);
-  }
-  cct->put();
+    {
+        bufferlist out;
+        cct->do_command("config diff get", cmdmap, "xml", &out);
+        string s(out.c_str(), out.length());
+        EXPECT_EQ("<config_diff_get><diff><current><key>" + value +
+                  "</key></current><defaults><key></key></defaults></diff></config_diff_get>",
+                  s);
+    }
+    cct->put();
 }
 
 TEST(CephContext, experimental_features)
 {
-  CephContext *cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
+    CephContext *cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
 
-  cct->_conf->cluster = "ceph";
+    cct->_conf->cluster = "ceph";
 
-  ASSERT_FALSE(cct->check_experimental_feature_enabled("foo"));
-  ASSERT_FALSE(cct->check_experimental_feature_enabled("bar"));
-  ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
+    ASSERT_FALSE(cct->check_experimental_feature_enabled("foo"));
+    ASSERT_FALSE(cct->check_experimental_feature_enabled("bar"));
+    ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
 
-  cct->_conf->set_val("enable_experimental_unrecoverable_data_corrupting_features",
-		      "foo,bar");
-  cct->_conf->apply_changes(&cout);
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
-  ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
+    cct->_conf->
+        set_val("enable_experimental_unrecoverable_data_corrupting_features",
+                "foo,bar");
+    cct->_conf->apply_changes(&cout);
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
+    ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
 
-  cct->_conf->set_val("enable_experimental_unrecoverable_data_corrupting_features",
-		      "foo bar");
-  cct->_conf->apply_changes(&cout);
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
-  ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
+    cct->_conf->
+        set_val("enable_experimental_unrecoverable_data_corrupting_features",
+                "foo bar");
+    cct->_conf->apply_changes(&cout);
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
+    ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
 
-  cct->_conf->set_val("enable_experimental_unrecoverable_data_corrupting_features",
-		      "baz foo");
-  cct->_conf->apply_changes(&cout);
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
-  ASSERT_FALSE(cct->check_experimental_feature_enabled("bar"));
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("baz"));
+    cct->_conf->
+        set_val("enable_experimental_unrecoverable_data_corrupting_features",
+                "baz foo");
+    cct->_conf->apply_changes(&cout);
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
+    ASSERT_FALSE(cct->check_experimental_feature_enabled("bar"));
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("baz"));
 
-  cct->_conf->set_val("enable_experimental_unrecoverable_data_corrupting_features",
-		      "*");
-  cct->_conf->apply_changes(&cout);
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
-  ASSERT_TRUE(cct->check_experimental_feature_enabled("baz"));
+    cct->_conf->
+        set_val("enable_experimental_unrecoverable_data_corrupting_features",
+                "*");
+    cct->_conf->apply_changes(&cout);
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
+    ASSERT_TRUE(cct->check_experimental_feature_enabled("baz"));
 
-  cct->_log->flush();
+    cct->_log->flush();
 }
 
 /*

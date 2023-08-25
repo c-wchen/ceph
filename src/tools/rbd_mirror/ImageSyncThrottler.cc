@@ -25,191 +25,199 @@
                            << " " << __func__ << ": "
 
 namespace rbd {
-namespace mirror {
+    namespace mirror {
 
-template <typename I>
-ImageSyncThrottler<I>::ImageSyncThrottler()
-  : m_lock(librbd::util::unique_lock_name("rbd::mirror::ImageSyncThrottler",
-                                          this)),
-    m_max_concurrent_syncs(g_ceph_context->_conf->get_val<uint64_t>(
-      "rbd_mirror_concurrent_image_syncs")) {
-  dout(20) << "max_concurrent_syncs=" << m_max_concurrent_syncs << dendl;
-  g_ceph_context->_conf->add_observer(this);
-}
+        template < typename I > ImageSyncThrottler < I >::ImageSyncThrottler()
+        :m_lock(librbd::util::
+                unique_lock_name("rbd::mirror::ImageSyncThrottler", this)),
+            m_max_concurrent_syncs(g_ceph_context->_conf->get_val < uint64_t >
+                                   ("rbd_mirror_concurrent_image_syncs")) {
+            dout(20) << "max_concurrent_syncs=" << m_max_concurrent_syncs <<
+                dendl;
+            g_ceph_context->_conf->add_observer(this);
+        } template < typename I >
+            ImageSyncThrottler < I >::~ImageSyncThrottler() {
+            g_ceph_context->_conf->remove_observer(this);
 
-template <typename I>
-ImageSyncThrottler<I>::~ImageSyncThrottler() {
-  g_ceph_context->_conf->remove_observer(this);
+            Mutex::Locker locker(m_lock);
+            assert(m_inflight_ops.empty());
+            assert(m_queue.empty());
+        } template < typename I >
+            void ImageSyncThrottler < I >::start_op(const std::string & id,
+                                                    Context * on_start) {
+            dout(20) << "id=" << id << dendl;
 
-  Mutex::Locker locker(m_lock);
-  assert(m_inflight_ops.empty());
-  assert(m_queue.empty());
-}
+            {
+                Mutex::Locker locker(m_lock);
 
-template <typename I>
-void ImageSyncThrottler<I>::start_op(const std::string &id, Context *on_start) {
-  dout(20) << "id=" << id << dendl;
+                if (m_inflight_ops.count(id) > 0) {
+                    dout(20) << "duplicate for already started op " << id <<
+                        dendl;
+                }
+                else if (m_max_concurrent_syncs == 0 ||
+                         m_inflight_ops.size() < m_max_concurrent_syncs) {
+                    assert(m_queue.empty());
+                    m_inflight_ops.insert(id);
+                    dout(20) << "ready to start sync for " << id << " ["
+                        << m_inflight_ops.
+                        size() << "/" << m_max_concurrent_syncs << "]" << dendl;
+                }
+                else {
+                    m_queue.push_back(std::make_pair(id, on_start));
+                    on_start = nullptr;
+                    dout(20) << "image sync for " << id << " has been queued" <<
+                        dendl;
+                }
+            }
 
-  {
-    Mutex::Locker locker(m_lock);
+            if (on_start != nullptr) {
+                on_start->complete(0);
+            }
+        }
 
-    if (m_inflight_ops.count(id) > 0) {
-      dout(20) << "duplicate for already started op " << id << dendl;
-    } else if (m_max_concurrent_syncs == 0 ||
-               m_inflight_ops.size() < m_max_concurrent_syncs) {
-      assert(m_queue.empty());
-      m_inflight_ops.insert(id);
-      dout(20) << "ready to start sync for " << id << " ["
-               << m_inflight_ops.size() << "/" << m_max_concurrent_syncs << "]"
-               << dendl;
-    } else {
-      m_queue.push_back(std::make_pair(id, on_start));
-      on_start = nullptr;
-      dout(20) << "image sync for " << id << " has been queued" << dendl;
-    }
-  }
+        template < typename I >
+            bool ImageSyncThrottler < I >::cancel_op(const std::string & id) {
+            dout(20) << "id=" << id << dendl;
 
-  if (on_start != nullptr) {
-    on_start->complete(0);
-  }
-}
+            Context *on_start = nullptr;
+            {
+                Mutex::Locker locker(m_lock);
+                for (auto it = m_queue.begin(); it != m_queue.end(); ++it) {
+                    if (it->first == id) {
+                        on_start = it->second;
+                        dout(20) << "canceled queued sync for " << id << dendl;
+                        m_queue.erase(it);
+                        break;
+                    }
+                }
+            }
 
-template <typename I>
-bool ImageSyncThrottler<I>::cancel_op(const std::string &id) {
-  dout(20) << "id=" << id << dendl;
+            if (on_start == nullptr) {
+                return false;
+            }
 
-  Context *on_start = nullptr;
-  {
-    Mutex::Locker locker(m_lock);
-    for (auto it = m_queue.begin(); it != m_queue.end(); ++it) {
-      if (it->first == id) {
-        on_start = it->second;
-        dout(20) << "canceled queued sync for " << id << dendl;
-        m_queue.erase(it);
-        break;
-      }
-    }
-  }
+            on_start->complete(-ECANCELED);
+            return true;
+        }
 
-  if (on_start == nullptr) {
-    return false;
-  }
+        template < typename I >
+            void ImageSyncThrottler < I >::finish_op(const std::string & id) {
+            dout(20) << "id=" << id << dendl;
 
-  on_start->complete(-ECANCELED);
-  return true;
-}
+            if (cancel_op(id)) {
+                return;
+            }
 
-template <typename I>
-void ImageSyncThrottler<I>::finish_op(const std::string &id) {
-  dout(20) << "id=" << id << dendl;
+            Context *on_start = nullptr;
+            {
+                Mutex::Locker locker(m_lock);
 
-  if (cancel_op(id)) {
-    return;
-  }
+                m_inflight_ops.erase(id);
 
-  Context *on_start = nullptr;
-  {
-    Mutex::Locker locker(m_lock);
+                if (m_inflight_ops.size() < m_max_concurrent_syncs
+                    && !m_queue.empty()) {
+                    auto pair = m_queue.front();
+                    m_inflight_ops.insert(pair.first);
+                    dout(20) << "ready to start sync for " << pair.first << " ["
+                        << m_inflight_ops.
+                        size() << "/" << m_max_concurrent_syncs << "]" << dendl;
+                    on_start = pair.second;
+                    m_queue.pop_front();
+                }
+            }
 
-    m_inflight_ops.erase(id);
+            if (on_start != nullptr) {
+                on_start->complete(0);
+            }
+        }
 
-    if (m_inflight_ops.size() < m_max_concurrent_syncs && !m_queue.empty()) {
-      auto pair = m_queue.front();
-      m_inflight_ops.insert(pair.first);
-      dout(20) << "ready to start sync for " << pair.first << " ["
-               << m_inflight_ops.size() << "/" << m_max_concurrent_syncs << "]"
-               << dendl;
-      on_start= pair.second;
-      m_queue.pop_front();
-    }
-  }
+        template < typename I > void ImageSyncThrottler < I >::drain(int r) {
+            dout(20) << dendl;
 
-  if (on_start != nullptr) {
-    on_start->complete(0);
-  }
-}
+            std::list < std::pair < std::string, Context * >>queue;
+            {
+                Mutex::Locker locker(m_lock);
+                std::swap(m_queue, queue);
+                m_inflight_ops.clear();
+            }
 
-template <typename I>
-void ImageSyncThrottler<I>::drain(int r) {
-  dout(20) << dendl;
+          for (auto & pair:queue) {
+                pair.second->complete(r);
+            }
+        }
 
-  std::list<std::pair<std::string, Context *>> queue;
-  {
-    Mutex::Locker locker(m_lock);
-    std::swap(m_queue, queue);
-    m_inflight_ops.clear();
-  }
+        template < typename I >
+            void ImageSyncThrottler <
+            I >::set_max_concurrent_syncs(uint32_t max) {
+            dout(20) << "max=" << max << dendl;
 
-  for (auto &pair : queue) {
-    pair.second->complete(r);
-  }
-}
+            std::list < Context * >ops;
+            {
+                Mutex::Locker locker(m_lock);
+                m_max_concurrent_syncs = max;
 
-template <typename I>
-void ImageSyncThrottler<I>::set_max_concurrent_syncs(uint32_t max) {
-  dout(20) << "max=" << max << dendl;
+                // Start waiting ops in the case of available free slots
+                while ((m_max_concurrent_syncs == 0 ||
+                        m_inflight_ops.size() < m_max_concurrent_syncs) &&
+                       !m_queue.empty()) {
+                    auto pair = m_queue.front();
+                    m_inflight_ops.insert(pair.first);
+                    dout(20) << "ready to start sync for " << pair.first << " ["
+                        << m_inflight_ops.
+                        size() << "/" << m_max_concurrent_syncs << "]" << dendl;
+                    ops.push_back(pair.second);
+                    m_queue.pop_front();
+                }
+            }
 
-  std::list<Context *> ops;
-  {
-    Mutex::Locker locker(m_lock);
-    m_max_concurrent_syncs = max;
+          for (const auto & ctx:ops) {
+                ctx->complete(0);
+            }
+        }
 
-    // Start waiting ops in the case of available free slots
-    while ((m_max_concurrent_syncs == 0 ||
-            m_inflight_ops.size() < m_max_concurrent_syncs) &&
-           !m_queue.empty()) {
-      auto pair = m_queue.front();
-      m_inflight_ops.insert(pair.first);
-      dout(20) << "ready to start sync for " << pair.first << " ["
-               << m_inflight_ops.size() << "/" << m_max_concurrent_syncs << "]"
-               << dendl;
-      ops.push_back(pair.second);
-      m_queue.pop_front();
-    }
-  }
+        template < typename I >
+            void ImageSyncThrottler < I >::print_status(Formatter * f,
+                                                        std::stringstream *
+                                                        ss) {
+            dout(20) << dendl;
 
-  for (const auto& ctx : ops) {
-    ctx->complete(0);
-  }
-}
+            Mutex::Locker locker(m_lock);
 
-template <typename I>
-void ImageSyncThrottler<I>::print_status(Formatter *f, std::stringstream *ss) {
-  dout(20) << dendl;
+            if (f) {
+                f->dump_int("max_parallel_syncs", m_max_concurrent_syncs);
+                f->dump_int("running_syncs", m_inflight_ops.size());
+                f->dump_int("waiting_syncs", m_queue.size());
+                f->flush(*ss);
+            }
+            else {
+                *ss << "[ ";
+                *ss << "max_parallel_syncs=" << m_max_concurrent_syncs << ", ";
+                *ss << "running_syncs=" << m_inflight_ops.size() << ", ";
+                *ss << "waiting_syncs=" << m_queue.size() << " ]";
+            }
+        }
 
-  Mutex::Locker locker(m_lock);
+        template < typename I >
+            const char **ImageSyncThrottler <
+            I >::get_tracked_conf_keys() const {
+            static const char *KEYS[] = {
+                "rbd_mirror_concurrent_image_syncs",
+                NULL
+            };
+            return KEYS;
+        }
 
-  if (f) {
-    f->dump_int("max_parallel_syncs", m_max_concurrent_syncs);
-    f->dump_int("running_syncs", m_inflight_ops.size());
-    f->dump_int("waiting_syncs", m_queue.size());
-    f->flush(*ss);
-  } else {
-    *ss << "[ ";
-    *ss << "max_parallel_syncs=" << m_max_concurrent_syncs << ", ";
-    *ss << "running_syncs=" << m_inflight_ops.size() << ", ";
-    *ss << "waiting_syncs=" << m_queue.size() << " ]";
-  }
-}
+        template < typename I >
+            void ImageSyncThrottler <
+            I >::handle_conf_change(const struct md_config_t *conf,
+                                    const set < string > &changed) {
+            if (changed.count("rbd_mirror_concurrent_image_syncs")) {
+                set_max_concurrent_syncs(conf->get_val < uint64_t >
+                                         ("rbd_mirror_concurrent_image_syncs"));
+            }
+        }
 
-template <typename I>
-const char** ImageSyncThrottler<I>::get_tracked_conf_keys() const {
-  static const char* KEYS[] = {
-    "rbd_mirror_concurrent_image_syncs",
-    NULL
-  };
-  return KEYS;
-}
+    }                           // namespace mirror
+}                               // namespace rbd
 
-template <typename I>
-void ImageSyncThrottler<I>::handle_conf_change(const struct md_config_t *conf,
-                                      const set<string> &changed) {
-  if (changed.count("rbd_mirror_concurrent_image_syncs")) {
-    set_max_concurrent_syncs(conf->get_val<uint64_t>("rbd_mirror_concurrent_image_syncs"));
-  }
-}
-
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::ImageSyncThrottler<librbd::ImageCtx>;
+template class rbd::mirror::ImageSyncThrottler < librbd::ImageCtx >;

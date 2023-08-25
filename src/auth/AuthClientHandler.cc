@@ -12,23 +12,21 @@
  * 
  */
 
-
 #include <errno.h>
 
 #include "AuthClientHandler.h"
 #include "cephx/CephxClientHandler.h"
 #include "none/AuthNoneClientHandler.h"
 
-AuthClientHandler *get_auth_client_handler(CephContext *cct, int proto,
-					   RotatingKeyRing *rkeys)
+AuthClientHandler *get_auth_client_handler(CephContext * cct, int proto,
+                                           RotatingKeyRing * rkeys)
 {
-  switch (proto) {
-  case CEPH_AUTH_CEPHX:
-    return new CephxClientHandler(cct, rkeys);
-  case CEPH_AUTH_NONE:
-    return new AuthNoneClientHandler(cct, rkeys);
-  default:
-    return NULL;
-  }
+    switch (proto) {
+    case CEPH_AUTH_CEPHX:
+        return new CephxClientHandler(cct, rkeys);
+    case CEPH_AUTH_NONE:
+        return new AuthNoneClientHandler(cct, rkeys);
+    default:
+        return NULL;
+    }
 }
-

@@ -10,13 +10,13 @@ class Fh;
 
 /* Commands for manipulating delegation state */
 #ifndef CEPH_DELEGATION_NONE
-# define CEPH_DELEGATION_NONE	0
-# define CEPH_DELEGATION_RD	1
-# define CEPH_DELEGATION_WR	2
+#define CEPH_DELEGATION_NONE	0
+#define CEPH_DELEGATION_RD	1
+#define CEPH_DELEGATION_WR	2
 #endif
 
 /* Callback for delegation recalls */
-typedef void (*ceph_deleg_cb_t)(Fh *fh, void *priv);
+typedef void (*ceph_deleg_cb_t) (Fh * fh, void *priv);
 
 /* Converts CEPH_DELEGATION_* to cap mask */
 int ceph_deleg_caps_for_type(unsigned type);
@@ -26,36 +26,41 @@ int ceph_deleg_caps_for_type(unsigned type);
  * wants to be able to rely on them until recalled.
  */
 class Delegation {
-public:
-  Delegation(Fh *_fh, unsigned _type, ceph_deleg_cb_t _cb, void *_priv);
-  ~Delegation();
-  Fh *get_fh() { return fh; }
-  unsigned get_type() { return type; }
-  bool is_recalled() { return !recall_time.is_zero(); }
+  public:
+    Delegation(Fh * _fh, unsigned _type, ceph_deleg_cb_t _cb, void *_priv);
+    ~Delegation();
+    Fh *get_fh() {
+        return fh;
+    } unsigned get_type() {
+        return type;
+    }
+    bool is_recalled() {
+        return !recall_time.is_zero();
+    }
 
-  void reinit(unsigned _type, ceph_deleg_cb_t _recall_cb, void *_priv);
-  void recall(bool skip_read);
-private:
-  // Filehandle against which it was acquired
-  Fh				*fh;
+    void reinit(unsigned _type, ceph_deleg_cb_t _recall_cb, void *_priv);
+    void recall(bool skip_read);
+  private:
+    // Filehandle against which it was acquired
+    Fh * fh;
 
-  // opaque token that will be passed to the callback
-  void				*priv;
+    // opaque token that will be passed to the callback
+    void *priv;
 
-  // CEPH_DELEGATION_* type
-  unsigned			type;
+    // CEPH_DELEGATION_* type
+    unsigned type;
 
-  // callback into application to recall delegation
-  ceph_deleg_cb_t		recall_cb;
+    // callback into application to recall delegation
+    ceph_deleg_cb_t recall_cb;
 
-  // time of first recall
-  utime_t			recall_time;
+    // time of first recall
+    utime_t recall_time;
 
-  // timer for unreturned delegations
-  Context			*timeout_event;
+    // timer for unreturned delegations
+    Context *timeout_event;
 
-  void arm_timeout();
-  void disarm_timeout();
+    void arm_timeout();
+    void disarm_timeout();
 };
 
 #endif /* _CEPH_CLIENT_DELEGATION_H */

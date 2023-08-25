@@ -18,7 +18,6 @@
 #ifndef CEPH_DPDK_RTE_H_
 #define CEPH_DPDK_RTE_H_
 
-
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -43,32 +42,34 @@
 namespace dpdk {
 
 // DPDK Environment Abstraction Layer
-class eal {
- public:
-  using cpuset = std::bitset<RTE_MAX_LCORE>;
+    class eal {
+      public:
+        using cpuset = std::bitset < RTE_MAX_LCORE >;
 
-  static std::mutex lock;
-  static std::condition_variable cond;
-  static std::list<std::function<void()>> funcs;
-  static int init(CephContext *c);
-  static void execute_on_master(std::function<void()> &&f) {
-    bool done = false;
-    std::unique_lock<std::mutex> l(lock);
-    funcs.emplace_back([&]() { f(); done = true; });
-    cond.notify_all();
-    while (!done)
-      cond.wait(l);
-  }
+        static std::mutex lock;
+        static std::condition_variable cond;
+        static std::list < std::function < void () >> funcs;
+        static int init(CephContext * c);
+        static void execute_on_master(std::function < void () > &&f) {
+            bool done = false;
+             std::unique_lock < std::mutex > l(lock);
+             funcs.emplace_back([&]() {
+                                f();
+                                done = true;
+                                });
+             cond.notify_all();
+            while (!done)
+                 cond.wait(l);
+        }
   /**
    * Returns the amount of memory needed for DPDK
    * @param num_cpus Number of CPUs the application is going to use
    *
    * @return
-   */
-  static size_t mem_size(int num_cpus);
-  static bool initialized;
-  static std::thread t;
-};
+   */ static size_t mem_size(int num_cpus);
+        static bool initialized;
+        static std::thread t;
+    };
 
-} // namespace dpdk
+}                               // namespace dpdk
 #endif // CEPH_DPDK_RTE_H_

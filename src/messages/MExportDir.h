@@ -12,51 +12,49 @@
  * 
  */
 
-
 #ifndef CEPH_MEXPORTDIR_H
 #define CEPH_MEXPORTDIR_H
 
 #include "msg/Message.h"
 
+class MExportDir:public Message {
+  public:
+    dirfrag_t dirfrag;
+    bufferlist export_data;
+     vector < dirfrag_t > bounds;
+    bufferlist client_map;
 
-class MExportDir : public Message {
- public:  
-  dirfrag_t dirfrag;
-  bufferlist export_data;
-  vector<dirfrag_t> bounds;
-  bufferlist client_map;
+     MExportDir():Message(MSG_MDS_EXPORTDIR) {
+    } MExportDir(dirfrag_t df, uint64_t tid):
+        Message(MSG_MDS_EXPORTDIR), dirfrag(df) {
+        set_tid(tid);
+    }
+  private:
+    ~MExportDir()override {
+    }
 
-  MExportDir() : Message(MSG_MDS_EXPORTDIR) {}
-  MExportDir(dirfrag_t df, uint64_t tid) :
-    Message(MSG_MDS_EXPORTDIR), dirfrag(df) {
-    set_tid(tid);
-  }
-private:
-  ~MExportDir() override {}
+  public:
+    const char *get_type_name() const override {
+        return "Ex";
+    } void print(ostream & o) const override {
+        o << "export(" << dirfrag << ")";
+    } void add_export(dirfrag_t df) {
+        bounds.push_back(df);
+    }
 
-public:
-  const char *get_type_name() const override { return "Ex"; }
-  void print(ostream& o) const override {
-    o << "export(" << dirfrag << ")";
-  }
-
-  void add_export(dirfrag_t df) { 
-    bounds.push_back(df); 
-  }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(dirfrag, payload);
-    ::encode(bounds, payload);
-    ::encode(export_data, payload);
-    ::encode(client_map, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(dirfrag, p);
-    ::decode(bounds, p);
-    ::decode(export_data, p);
-    ::decode(client_map, p);
-  }
+    void encode_payload(uint64_t features) override {
+        ::encode(dirfrag, payload);
+        ::encode(bounds, payload);
+        ::encode(export_data, payload);
+        ::encode(client_map, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(dirfrag, p);
+        ::decode(bounds, p);
+        ::decode(export_data, p);
+        ::decode(client_map, p);
+    }
 
 };
 

@@ -9,27 +9,26 @@
 #include "msg/msg_types.h"
 #include "mon/MonCap.h"
 
-
 /**
  * Session state associated with the Connection.
  */
-struct MgrSession : public RefCountedObject {
-  uint64_t global_id = 0;
-  EntityName entity_name;
-  entity_inst_t inst;
+struct MgrSession:public RefCountedObject {
+    uint64_t global_id = 0;
+    EntityName entity_name;
+    entity_inst_t inst;
 
-  int osd_id = -1;  ///< osd id (if an osd)
+    int osd_id = -1;            ///< osd id (if an osd)
 
-  // mon caps are suitably generic for mgr
-  MonCap caps;
+    // mon caps are suitably generic for mgr
+    MonCap caps;
 
-  std::set<std::string> declared_types;
+     std::set < std::string > declared_types;
 
-  MgrSession(CephContext *cct) : RefCountedObject(cct, 0) {}
-  ~MgrSession() override {}
+     MgrSession(CephContext * cct):RefCountedObject(cct, 0) {
+    } ~MgrSession() override {
+    }
 };
 
-typedef boost::intrusive_ptr<MgrSession> MgrSessionRef;
-
+typedef boost::intrusive_ptr < MgrSession > MgrSessionRef;
 
 #endif

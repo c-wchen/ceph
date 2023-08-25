@@ -32,14 +32,14 @@
  * 2) Once the journal is flushed, flush(max_op_id_flushed)
  */
 class JournalThrottle {
-  BackoffThrottle throttle;
+    BackoffThrottle throttle;
 
-  std::mutex lock;
-  /// deque<id, count>
-  std::deque<std::pair<uint64_t, uint64_t> > journaled_ops;
-  using locker = std::unique_lock<std::mutex>;
+     std::mutex lock;
+    /// deque<id, count>
+     std::deque < std::pair < uint64_t, uint64_t > >journaled_ops;
+    using locker = std::unique_lock < std::mutex >;
 
-public:
+  public:
   /**
    * set_params
    *
@@ -47,14 +47,12 @@ public:
    * and populates errstream (if non-null) with a user compreshensible
    * explanation.
    */
-  bool set_params(
-    double low_threshhold,
-    double high_threshhold,
-    double expected_throughput,
-    double high_multiple,
-    double max_multiple,
-    uint64_t throttle_max,
-    std::ostream *errstream);
+     bool set_params(double low_threshhold,
+                     double high_threshhold,
+                     double expected_throughput,
+                     double high_multiple,
+                     double max_multiple,
+                     uint64_t throttle_max, std::ostream * errstream);
 
   /**
    * gets specified throttle for id mono_id, waiting as necessary
@@ -62,14 +60,14 @@ public:
    * @param c [in] amount to take
    * @return duration waited
    */
-  std::chrono::duration<double> get(uint64_t c);
+     std::chrono::duration < double >get(uint64_t c);
 
   /**
    * take
    *
    * Takes specified throttle without waiting
    */
-  uint64_t take(uint64_t c);
+    uint64_t take(uint64_t c);
 
   /**
    * register_throttle_seq
@@ -79,8 +77,7 @@ public:
    *
    * @param seq [in] seq
    */
-  void register_throttle_seq(uint64_t seq, uint64_t c);
-
+    void register_throttle_seq(uint64_t seq, uint64_t c);
 
   /**
    * Releases throttle held by ids <= mono_id
@@ -88,14 +85,13 @@ public:
    * @param mono_id [in] id up to which to flush
    * @returns pair<ops_flushed, bytes_flushed>
    */
-  std::pair<uint64_t, uint64_t> flush(uint64_t mono_id);
+     std::pair < uint64_t, uint64_t > flush(uint64_t mono_id);
 
-  uint64_t get_current();
-  uint64_t get_max();
+    uint64_t get_current();
+    uint64_t get_max();
 
-  JournalThrottle(
-    unsigned expected_concurrency ///< [in] determines size of conds
-    ) : throttle(g_ceph_context, "filestore_journal", expected_concurrency) {}
-};
+     JournalThrottle(unsigned expected_concurrency  ///< [in] determines size of conds
+    ):throttle(g_ceph_context, "filestore_journal", expected_concurrency) {
+}};
 
 #endif

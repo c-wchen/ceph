@@ -11,12 +11,12 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace object_map {
+    namespace object_map {
 
-class SnapshotRollbackRequest : public Request {
-public:
+        class SnapshotRollbackRequest:public Request {
+          public:
   /**
    * Snapshot rollback goes through the following state machine:
    *
@@ -37,38 +37,34 @@ public:
    * will result in the HEAD object map being flagged as invalid via the base
    * class.
    */
-  enum State {
-    STATE_READ_MAP,
-    STATE_INVALIDATE_MAP,
-    STATE_WRITE_MAP
-  };
+            enum State {
+                STATE_READ_MAP,
+                STATE_INVALIDATE_MAP,
+                STATE_WRITE_MAP
+            };
 
-  SnapshotRollbackRequest(ImageCtx &image_ctx, uint64_t snap_id,
-                          Context *on_finish)
-    : Request(image_ctx, CEPH_NOSNAP, on_finish),
-      m_snap_id(snap_id), m_ret_val(0) {
-    assert(snap_id != CEPH_NOSNAP);
-  }
+             SnapshotRollbackRequest(ImageCtx & image_ctx, uint64_t snap_id,
+                                     Context * on_finish)
+            :Request(image_ctx, CEPH_NOSNAP, on_finish),
+                m_snap_id(snap_id), m_ret_val(0) {
+                assert(snap_id != CEPH_NOSNAP);
+            } void send() override;
 
-  void send() override;
+          protected:
+             bool should_complete(int r) override;
 
-protected:
-  bool should_complete(int r) override;
+          private:
+             State m_state;
+            uint64_t m_snap_id;
+            int m_ret_val;
 
-private:
-  State m_state;
-  uint64_t m_snap_id;
-  int m_ret_val;
+            bufferlist m_read_bl;
 
-  bufferlist m_read_bl;
+            void send_read_map();
+            void send_invalidate_map();
+            void send_write_map();
 
-  void send_read_map();
-  void send_invalidate_map();
-  void send_write_map();
+        };
 
-};
-
-} // namespace object_map
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_OBJECT_MAP_SNAPSHOT_ROLLBACK_REQUEST_H
+} // namespace object_map }     // namespace librbd
+#endif                          // CEPH_LIBRBD_OBJECT_MAP_SNAPSHOT_ROLLBACK_REQUEST_H

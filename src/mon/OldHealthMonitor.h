@@ -17,50 +17,49 @@
 #include "mon/QuorumService.h"
 
 //forward declaration
-namespace ceph { class Formatter; }
-class HealthService;
+namespace ceph {
+    class Formatter;
+} class HealthService;
 
-class OldHealthMonitor : public QuorumService
-{
-  map<int,HealthService*> services;
+class OldHealthMonitor:public QuorumService {
+    map < int, HealthService * >services;
 
-protected:
-  void service_shutdown() override;
+  protected:
+    void service_shutdown() override;
 
-public:
-  OldHealthMonitor(Monitor *m) : QuorumService(m) { }
-  ~OldHealthMonitor() override {
-    assert(services.empty());
-  }
-
+  public:
+     OldHealthMonitor(Monitor * m):QuorumService(m) {
+    } ~OldHealthMonitor() override {
+        assert(services.empty());
+    }
 
   /**
    * @defgroup OldHealthMonitor_Inherited_h Inherited abstract methods
    * @{
    */
-  void init() override;
-  void get_health(list<pair<health_status_t,string> >& summary,
-		  list<pair<health_status_t,string> > *detail) override;
-  bool service_dispatch(MonOpRequestRef op) override;
+    void init() override;
+    void get_health(list < pair < health_status_t, string > >&summary,
+                    list < pair < health_status_t, string > >*detail) override;
+    bool service_dispatch(MonOpRequestRef op) override;
 
-  void start_epoch() override;
+    void start_epoch() override;
 
-  void finish_epoch() override;
+    void finish_epoch() override;
 
-  void cleanup() override { }
-  void service_tick() override { }
+    void cleanup() override {
+    }
+    void service_tick() override {
+    }
 
-  int get_type() override {
-    return QuorumService::SERVICE_HEALTH;
-  }
+    int get_type() override {
+        return QuorumService::SERVICE_HEALTH;
+    }
 
-  string get_name() const override {
-    return "health";
-  }
-
+    string get_name() const override {
+        return "health";
+    }
   /**
    * @} // OldHealthMonitor_Inherited_h
-   */
-};
+   */ };
 
 #endif

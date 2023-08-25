@@ -18,26 +18,25 @@
 #include "../LogEvent.h"
 #include "EMetaBlob.h"
 
-class ECommitted : public LogEvent {
-public:
-  metareqid_t reqid;
+class ECommitted:public LogEvent {
+  public:
+    metareqid_t reqid;
 
-  ECommitted() : LogEvent(EVENT_COMMITTED) { }
-  explicit ECommitted(metareqid_t r) :
-    LogEvent(EVENT_COMMITTED), reqid(r) { }
+    ECommitted():LogEvent(EVENT_COMMITTED) {
+    } explicit ECommitted(metareqid_t r):LogEvent(EVENT_COMMITTED), reqid(r) {
+    }
 
-  void print(ostream& out) const override {
-    out << "ECommitted " << reqid;
-  }
+    void print(ostream & out) const override {
+        out << "ECommitted " << reqid;
+    } void encode(bufferlist & bl, uint64_t features) const override;
+    void decode(bufferlist::iterator & bl) override;
+    void dump(Formatter * f) const override;
+    static void generate_test_instances(list < ECommitted * >&ls);
 
-  void encode(bufferlist &bl, uint64_t features) const override;
-  void decode(bufferlist::iterator &bl) override;
-  void dump(Formatter *f) const override;
-  static void generate_test_instances(list<ECommitted*>& ls);
-
-  void update_segment() override {}
-  void replay(MDSRank *mds) override;
+    void update_segment() override {
+    }
+    void replay(MDSRank * mds) override;
 };
-WRITE_CLASS_ENCODER_FEATURES(ECommitted)
 
+WRITE_CLASS_ENCODER_FEATURES(ECommitted)
 #endif

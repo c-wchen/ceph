@@ -22,18 +22,17 @@
 #include "PaxosService.h"
 #include "MonCommand.h"
 
-class MgrMonitor: public PaxosService
-{
-  MgrMap map;
-  MgrMap pending_map;
-  bool ever_had_active_mgr = false;
+class MgrMonitor:public PaxosService {
+    MgrMap map;
+    MgrMap pending_map;
+    bool ever_had_active_mgr = false;
 
-  std::map<std::string, bufferlist> pending_metadata;
-  std::set<std::string>             pending_metadata_rm;
+     std::map < std::string, bufferlist > pending_metadata;
+     std::set < std::string > pending_metadata_rm;
 
-  utime_t first_seen_inactive;
+    utime_t first_seen_inactive;
 
-  std::map<uint64_t, ceph::coarse_mono_clock::time_point> last_beacon;
+     std::map < uint64_t, ceph::coarse_mono_clock::time_point > last_beacon;
 
   /**
    * If a standby is available, make it active, given that
@@ -41,8 +40,8 @@ class MgrMonitor: public PaxosService
    *
    * @return true if a standby was promoted
    */
-  bool promote_standby();
-  void drop_active();
+    bool promote_standby();
+    void drop_active();
 
   /**
    * Remove this gid from the list of standbys.  By default,
@@ -52,79 +51,80 @@ class MgrMonitor: public PaxosService
    * the daemon's metadata, for example if you're dropping
    * it as a standby before reinstating it as the active daemon.
    */
-  void drop_standby(uint64_t gid, bool drop_meta=true);
+    void drop_standby(uint64_t gid, bool drop_meta = true);
 
-  Context *digest_event = nullptr;
-  void cancel_timer();
+    Context *digest_event = nullptr;
+    void cancel_timer();
 
-  bool check_caps(MonOpRequestRef op, const uuid_d& fsid);
+    bool check_caps(MonOpRequestRef op, const uuid_d & fsid);
 
-  health_status_t should_warn_about_mgr_down();
+    health_status_t should_warn_about_mgr_down();
 
-  // Command descriptions we've learned from the active mgr
-  std::vector<MonCommand> command_descs;
-  std::vector<MonCommand> pending_command_descs;
+    // Command descriptions we've learned from the active mgr
+     std::vector < MonCommand > command_descs;
+     std::vector < MonCommand > pending_command_descs;
 
-public:
-  MgrMonitor(Monitor *mn, Paxos *p, const string& service_name)
-    : PaxosService(mn, p, service_name)
-  {}
-  ~MgrMonitor() override {}
+  public:
+     MgrMonitor(Monitor * mn, Paxos * p, const string & service_name)
+    :PaxosService(mn, p, service_name) {
+    } ~MgrMonitor() override {
+    }
 
-  void init() override;
-  void on_shutdown() override;
+    void init() override;
+    void on_shutdown() override;
 
-  const MgrMap &get_map() const { return map; }
+    const MgrMap & get_map() const {
+        return map;
+    } bool in_use() const {
+        return map.epoch > 0;
+    } version_t get_trim_to() override;
 
-  bool in_use() const { return map.epoch > 0; }
+    void create_initial() override;
+    void get_store_prefixes(std::set < string > &s) override;
+    void update_from_paxos(bool * need_bootstrap) override;
+    void create_pending() override;
+    void encode_pending(MonitorDBStore::TransactionRef t) override;
 
-  version_t get_trim_to() override;
+    bool preprocess_query(MonOpRequestRef op) override;
+    bool prepare_update(MonOpRequestRef op) override;
 
-  void create_initial() override;
-  void get_store_prefixes(std::set<string>& s) override;
-  void update_from_paxos(bool *need_bootstrap) override;
-  void create_pending() override;
-  void encode_pending(MonitorDBStore::TransactionRef t) override;
+    bool preprocess_command(MonOpRequestRef op);
+    bool prepare_command(MonOpRequestRef op);
 
-  bool preprocess_query(MonOpRequestRef op) override;
-  bool prepare_update(MonOpRequestRef op) override;
+    void encode_full(MonitorDBStore::TransactionRef t) override {
+    }
 
-  bool preprocess_command(MonOpRequestRef op);
-  bool prepare_command(MonOpRequestRef op);
+    bool preprocess_beacon(MonOpRequestRef op);
+    bool prepare_beacon(MonOpRequestRef op);
 
-  void encode_full(MonitorDBStore::TransactionRef t) override { }
+    void check_sub(Subscription * sub);
+    void check_subs();
+    void send_digests();
 
-  bool preprocess_beacon(MonOpRequestRef op);
-  bool prepare_beacon(MonOpRequestRef op);
+    void on_active() override;
+    void on_restart() override;
 
-  void check_sub(Subscription *sub);
-  void check_subs();
-  void send_digests();
+    void get_health(list < pair < health_status_t, string > >&summary,
+                    list < pair < health_status_t, string > >*detail,
+                    CephContext * cct) const override;
+    void tick() override;
 
-  void on_active() override;
-  void on_restart() override;
+    void print_summary(Formatter * f, std::ostream * ss) const;
 
-  void get_health(list<pair<health_status_t,string> >& summary,
-		  list<pair<health_status_t,string> > *detail,
-		  CephContext *cct) const override;
-  void tick() override;
+    const std::vector < MonCommand > &get_command_descs() const;
 
-  void print_summary(Formatter *f, std::ostream *ss) const;
+    int load_metadata(const string & name, std::map < string, string > &m,
+                      ostream * err);
+    int dump_metadata(const string & name, Formatter * f, ostream * err);
+    void count_metadata(const string & field, Formatter * f);
+    void count_metadata(const string & field, std::map < string, int >*out);
 
-  const std::vector<MonCommand> &get_command_descs() const;
+    friend class C_Updated;
 
-  int load_metadata(const string& name, std::map<string, string>& m,
-		    ostream *err);
-  int dump_metadata(const string& name, Formatter *f, ostream *err);
-  void count_metadata(const string& field, Formatter *f);
-  void count_metadata(const string& field, std::map<string,int> *out);
-
-  friend class C_Updated;
-
-  // When did the mon last call into our tick() method?  Used for detecting
-  // when the mon was not updating us for some period (e.g. during slow
-  // election) to reset last_beacon timeouts
-  ceph::coarse_mono_clock::time_point last_tick;
+    // When did the mon last call into our tick() method?  Used for detecting
+    // when the mon was not updating us for some period (e.g. during slow
+    // election) to reset last_beacon timeouts
+    ceph::coarse_mono_clock::time_point last_tick;
 };
 
 #endif

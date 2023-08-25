@@ -12,21 +12,19 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace image {
+    namespace image {
 
-template <typename ImageCtxT = ImageCtx>
-class OpenRequest {
-public:
-  static OpenRequest *create(ImageCtxT *image_ctx, bool skip_open_parent,
-                             Context *on_finish) {
-    return new OpenRequest(image_ctx, skip_open_parent, on_finish);
-  }
+        template < typename ImageCtxT = ImageCtx > class OpenRequest {
+          public:
+            static OpenRequest *create(ImageCtxT * image_ctx,
+                                       bool skip_open_parent,
+                                       Context * on_finish) {
+                return new OpenRequest(image_ctx, skip_open_parent, on_finish);
+            } void send();
 
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -75,65 +73,66 @@ private:
    * @endverbatim
    */
 
-  OpenRequest(ImageCtxT *image_ctx, bool skip_open_parent, Context *on_finish);
+             OpenRequest(ImageCtxT * image_ctx, bool skip_open_parent,
+                         Context * on_finish);
 
-  ImageCtxT *m_image_ctx;
-  bool m_skip_open_parent_image;
-  Context *m_on_finish;
+            ImageCtxT *m_image_ctx;
+            bool m_skip_open_parent_image;
+            Context *m_on_finish;
 
-  bufferlist m_out_bl;
-  int m_error_result;
+            bufferlist m_out_bl;
+            int m_error_result;
 
-  std::string m_last_metadata_key;
-  std::map<std::string, bufferlist> m_metadata;
+             std::string m_last_metadata_key;
+             std::map < std::string, bufferlist > m_metadata;
 
-  void send_v1_detect_header();
-  Context *handle_v1_detect_header(int *result);
+            void send_v1_detect_header();
+            Context *handle_v1_detect_header(int *result);
 
-  void send_v2_detect_header();
-  Context *handle_v2_detect_header(int *result);
+            void send_v2_detect_header();
+            Context *handle_v2_detect_header(int *result);
 
-  void send_v2_get_id();
-  Context *handle_v2_get_id(int *result);
+            void send_v2_get_id();
+            Context *handle_v2_get_id(int *result);
 
-  void send_v2_get_name();
-  Context *handle_v2_get_name(int *result);
+            void send_v2_get_name();
+            Context *handle_v2_get_name(int *result);
 
-  void send_v2_get_name_from_trash();
-  Context *handle_v2_get_name_from_trash(int *result);
+            void send_v2_get_name_from_trash();
+            Context *handle_v2_get_name_from_trash(int *result);
 
-  void send_v2_get_immutable_metadata();
-  Context *handle_v2_get_immutable_metadata(int *result);
+            void send_v2_get_immutable_metadata();
+            Context *handle_v2_get_immutable_metadata(int *result);
 
-  void send_v2_get_stripe_unit_count();
-  Context *handle_v2_get_stripe_unit_count(int *result);
+            void send_v2_get_stripe_unit_count();
+            Context *handle_v2_get_stripe_unit_count(int *result);
 
-  void send_v2_get_create_timestamp();
-  Context *handle_v2_get_create_timestamp(int *result);
+            void send_v2_get_create_timestamp();
+            Context *handle_v2_get_create_timestamp(int *result);
 
-  void send_v2_get_data_pool();
-  Context *handle_v2_get_data_pool(int *result);
+            void send_v2_get_data_pool();
+            Context *handle_v2_get_data_pool(int *result);
 
-  void send_v2_apply_metadata();
-  Context *handle_v2_apply_metadata(int *result);
+            void send_v2_apply_metadata();
+            Context *handle_v2_apply_metadata(int *result);
 
-  void send_register_watch();
-  Context *handle_register_watch(int *result);
+            void send_register_watch();
+            Context *handle_register_watch(int *result);
 
-  void send_refresh();
-  Context *handle_refresh(int *result);
+            void send_refresh();
+            Context *handle_refresh(int *result);
 
-  Context *send_set_snap(int *result);
-  Context *handle_set_snap(int *result);
+            Context *send_set_snap(int *result);
+            Context *handle_set_snap(int *result);
 
-  void send_close_image(int error_result);
-  Context *handle_close_image(int *result);
+            void send_close_image(int error_result);
+            Context *handle_close_image(int *result);
 
-};
+        };
 
-} // namespace image
-} // namespace librbd
+    }                           // namespace image
+}                               // namespace librbd
 
-extern template class librbd::image::OpenRequest<librbd::ImageCtx>;
+extern template class librbd::image::OpenRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IMAGE_OPEN_REQUEST_H

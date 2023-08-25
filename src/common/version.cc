@@ -25,30 +25,30 @@
 
 const char *ceph_version_to_str(void)
 {
-  return CEPH_GIT_NICE_VER;
+    return CEPH_GIT_NICE_VER;
 }
 
 const char *git_version_to_str(void)
 {
-  return STRINGIFY(CEPH_GIT_VER);
+    return STRINGIFY(CEPH_GIT_VER);
 }
 
 std::string const pretty_version_to_str(void)
 {
-  std::ostringstream oss;
-  oss << "ceph version " << CEPH_GIT_NICE_VER
-      << " (" << STRINGIFY(CEPH_GIT_VER) << ") "
-      << ceph_release_name(CEPH_RELEASE)
-      << " (" << CEPH_RELEASE_TYPE << ")";
-  return oss.str();
+    std::ostringstream oss;
+    oss << "ceph version " << CEPH_GIT_NICE_VER
+        << " (" << STRINGIFY(CEPH_GIT_VER) << ") "
+        << ceph_release_name(CEPH_RELEASE)
+        << " (" << CEPH_RELEASE_TYPE << ")";
+    return oss.str();
 }
 
 unsigned ceph_release(void)
 {
-  return CEPH_RELEASE;
+    return CEPH_RELEASE;
 }
 
 const char *ceph_release_type(void)
 {
-  return CEPH_RELEASE_TYPE;
+    return CEPH_RELEASE_TYPE;
 }

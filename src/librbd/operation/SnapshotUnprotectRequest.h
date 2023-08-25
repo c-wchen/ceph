@@ -11,13 +11,13 @@ class Context;
 
 namespace librbd {
 
-class ImageCtx;
+    class ImageCtx;
 
-namespace operation {
+    namespace operation {
 
-template <typename ImageCtxT = ImageCtx>
-class SnapshotUnprotectRequest : public Request<ImageCtxT> {
-public:
+      template < typename ImageCtxT = ImageCtx > class SnapshotUnprotectRequest:public Request < ImageCtxT >
+        {
+          public:
   /**
    * Snap Unprotect goes through the following state machine:
    *
@@ -42,53 +42,52 @@ public:
    * If the unprotect operation needs to abort, the error path is followed
    * to rollback the unprotect in-progress status on the image.
    */
-  enum State {
-    STATE_UNPROTECT_SNAP_START,
-    STATE_SCAN_POOL_CHILDREN,
-    STATE_UNPROTECT_SNAP_FINISH,
-    STATE_UNPROTECT_SNAP_ROLLBACK
-  };
+            enum State {
+                STATE_UNPROTECT_SNAP_START,
+                STATE_SCAN_POOL_CHILDREN,
+                STATE_UNPROTECT_SNAP_FINISH,
+                STATE_UNPROTECT_SNAP_ROLLBACK
+            };
 
-  SnapshotUnprotectRequest(ImageCtxT &image_ctx, Context *on_finish,
-		           const cls::rbd::SnapshotNamespace &snap_namespace,
-			   const std::string &snap_name);
+             SnapshotUnprotectRequest(ImageCtxT & image_ctx,
+                                      Context * on_finish,
+                                      const cls::rbd::
+                                      SnapshotNamespace & snap_namespace,
+                                      const std::string & snap_name);
 
-protected:
-  void send_op() override;
-  bool should_complete(int r) override;
+          protected:
+            void send_op() override;
+            bool should_complete(int r) override;
 
-  int filter_return_code(int r) const override {
-    if (m_ret_val < 0) {
-      return m_ret_val;
-    }
-    return 0;
-  }
+            int filter_return_code(int r) const override {
+                if (m_ret_val < 0) {
+                    return m_ret_val;
+                } return 0;
+            } journal::Event create_event(uint64_t op_tid) const override {
+                return journal::SnapUnprotectEvent(op_tid, m_snap_namespace,
+                                                   m_snap_name);
+          } private:
+             cls::rbd::SnapshotNamespace m_snap_namespace;
+             std::string m_snap_name;
+            State m_state;
 
-  journal::Event create_event(uint64_t op_tid) const override {
-    return journal::SnapUnprotectEvent(op_tid, m_snap_namespace, m_snap_name);
-  }
+            int m_ret_val;
+            uint64_t m_snap_id;
 
-private:
-  cls::rbd::SnapshotNamespace m_snap_namespace;
-  std::string m_snap_name;
-  State m_state;
+            bool should_complete_error();
 
-  int m_ret_val;
-  uint64_t m_snap_id;
+            void send_unprotect_snap_start();
+            void send_scan_pool_children();
+            void send_unprotect_snap_finish();
+            void send_unprotect_snap_rollback();
 
-  bool should_complete_error();
+            int verify_and_send_unprotect_snap_start();
+        };
 
-  void send_unprotect_snap_start();
-  void send_scan_pool_children();
-  void send_unprotect_snap_finish();
-  void send_unprotect_snap_rollback();
+    }                           // namespace operation
+}                               // namespace librbd
 
-  int verify_and_send_unprotect_snap_start();
-};
-
-} // namespace operation
-} // namespace librbd
-
-extern template class librbd::operation::SnapshotUnprotectRequest<librbd::ImageCtx>;
+extern template class librbd::operation::SnapshotUnprotectRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OPERATION_SNAPSHOT_UNPROTECT_REQUEST_H

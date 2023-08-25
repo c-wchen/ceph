@@ -12,109 +12,109 @@
  * 
  */
 
-
 #ifndef CEPH_MOSDPGLOG_H
 #define CEPH_MOSDPGLOG_H
 
 #include "msg/Message.h"
 
-class MOSDPGLog : public Message {
+class MOSDPGLog:public Message {
 
-  static const int HEAD_VERSION = 5;
-  static const int COMPAT_VERSION = 2;
+    static const int HEAD_VERSION = 5;
+    static const int COMPAT_VERSION = 2;
 
-  epoch_t epoch = 0;
-  /// query_epoch is the epoch of the query being responded to, or
-  /// the current epoch if this is not being sent in response to a
-  /// query. This allows the recipient to disregard responses to old
-  /// queries.
-  epoch_t query_epoch = 0;
+    epoch_t epoch = 0;
+    /// query_epoch is the epoch of the query being responded to, or
+    /// the current epoch if this is not being sent in response to a
+    /// query. This allows the recipient to disregard responses to old
+    /// queries.
+    epoch_t query_epoch = 0;
 
-public:
-  shard_id_t to;
-  shard_id_t from;
-  pg_info_t info;
-  pg_log_t log;
-  pg_missing_t missing;
-  PastIntervals past_intervals;
+  public:
+     shard_id_t to;
+    shard_id_t from;
+    pg_info_t info;
+    pg_log_t log;
+    pg_missing_t missing;
+    PastIntervals past_intervals;
 
-  epoch_t get_epoch() const { return epoch; }
-  spg_t get_pgid() const { return spg_t(info.pgid.pgid, to); }
-  epoch_t get_query_epoch() const { return query_epoch; }
-
-  MOSDPGLog() : Message(MSG_OSD_PG_LOG, HEAD_VERSION, COMPAT_VERSION) { 
-    set_priority(CEPH_MSG_PRIO_HIGH); 
-  }
-  MOSDPGLog(shard_id_t to, shard_id_t from, version_t mv, pg_info_t& i)
-    : Message(MSG_OSD_PG_LOG, HEAD_VERSION, COMPAT_VERSION),
-      epoch(mv), query_epoch(mv),
-      to(to), from(from),
-      info(i)  {
-    set_priority(CEPH_MSG_PRIO_HIGH); 
-  }
-  MOSDPGLog(shard_id_t to, shard_id_t from,
-	    version_t mv, pg_info_t& i, epoch_t query_epoch)
-    : Message(MSG_OSD_PG_LOG, HEAD_VERSION, COMPAT_VERSION),
-      epoch(mv), query_epoch(query_epoch),
-      to(to), from(from),
-      info(i)  {
-    set_priority(CEPH_MSG_PRIO_HIGH);
-  }
-
-private:
-  ~MOSDPGLog() override {}
-
-public:
-  const char *get_type_name() const override { return "PGlog"; }
-  void print(ostream& out) const override {
-    // NOTE: log is not const, but operator<< doesn't touch fields
-    // swapped out by OSD code.
-    out << "pg_log(" << info.pgid << " epoch " << epoch
-	<< " log " << log
-	<< " pi " << past_intervals
-	<< " query_epoch " << query_epoch << ")";
-  }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(epoch, payload);
-    ::encode(info, payload);
-    ::encode(log, payload);
-    ::encode(missing, payload);
-    ::encode(query_epoch, payload);
-    if (HAVE_FEATURE(features, SERVER_LUMINOUS)) {
-      header.version = HEAD_VERSION;
-      ::encode(past_intervals, payload);
-    } else {
-      header.version = 4;
-      past_intervals.encode_classic(payload);
+    epoch_t get_epoch() const {
+        return epoch;
+    } spg_t get_pgid() const {
+        return spg_t(info.pgid.pgid, to);
+    } epoch_t get_query_epoch() const {
+        return query_epoch;
+    } MOSDPGLog():Message(MSG_OSD_PG_LOG, HEAD_VERSION, COMPAT_VERSION) {
+        set_priority(CEPH_MSG_PRIO_HIGH);
+    } MOSDPGLog(shard_id_t to, shard_id_t from, version_t mv, pg_info_t & i)
+    :Message(MSG_OSD_PG_LOG, HEAD_VERSION, COMPAT_VERSION),
+        epoch(mv), query_epoch(mv), to(to), from(from), info(i) {
+        set_priority(CEPH_MSG_PRIO_HIGH);
     }
-    ::encode(to, payload);
-    ::encode(from, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(epoch, p);
-    ::decode(info, p);
-    log.decode(p, info.pgid.pool());
-    missing.decode(p, info.pgid.pool());
-    if (header.version >= 2) {
-      ::decode(query_epoch, p);
+    MOSDPGLog(shard_id_t to, shard_id_t from,
+              version_t mv, pg_info_t & i, epoch_t query_epoch)
+  :    
+    Message(MSG_OSD_PG_LOG, HEAD_VERSION, COMPAT_VERSION),
+    epoch(mv), query_epoch(query_epoch), to(to), from(from), info(i) {
+        set_priority(CEPH_MSG_PRIO_HIGH);
     }
-    if (header.version >= 3) {
-      if (header.version >= 5) {
-	::decode(past_intervals, p);
-      } else {
-	past_intervals.decode_classic(p);
-      }
+
+  private:
+    ~MOSDPGLog()override {
     }
-    if (header.version >= 4) {
-      ::decode(to, p);
-      ::decode(from, p);
-    } else {
-      to = shard_id_t::NO_SHARD;
-      from = shard_id_t::NO_SHARD;
+
+  public:
+    const char *get_type_name() const override {
+        return "PGlog";
+    } void print(ostream & out) const override {
+        // NOTE: log is not const, but operator<< doesn't touch fields
+        // swapped out by OSD code.
+        out << "pg_log(" << info.pgid << " epoch " << epoch
+            << " log " << log
+            << " pi " << past_intervals
+            << " query_epoch " << query_epoch << ")";
+    } void encode_payload(uint64_t features) override {
+        ::encode(epoch, payload);
+        ::encode(info, payload);
+        ::encode(log, payload);
+        ::encode(missing, payload);
+        ::encode(query_epoch, payload);
+        if (HAVE_FEATURE(features, SERVER_LUMINOUS)) {
+            header.version = HEAD_VERSION;
+            ::encode(past_intervals, payload);
+        }
+        else {
+            header.version = 4;
+            past_intervals.encode_classic(payload);
+        }
+        ::encode(to, payload);
+        ::encode(from, payload);
     }
-  }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(epoch, p);
+        ::decode(info, p);
+        log.decode(p, info.pgid.pool());
+        missing.decode(p, info.pgid.pool());
+        if (header.version >= 2) {
+            ::decode(query_epoch, p);
+        }
+        if (header.version >= 3) {
+            if (header.version >= 5) {
+                ::decode(past_intervals, p);
+            }
+            else {
+                past_intervals.decode_classic(p);
+            }
+        }
+        if (header.version >= 4) {
+            ::decode(to, p);
+            ::decode(from, p);
+        }
+        else {
+            to = shard_id_t::NO_SHARD;
+            from = shard_id_t::NO_SHARD;
+        }
+    }
 };
 
 #endif

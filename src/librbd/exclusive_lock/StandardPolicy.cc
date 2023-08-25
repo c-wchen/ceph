@@ -10,18 +10,15 @@
 #define dout_prefix *_dout << "librbd::ExclusiveLock::StandardPolicy "
 
 namespace librbd {
-namespace exclusive_lock {
+    namespace exclusive_lock {
 
-int StandardPolicy::lock_requested(bool force) {
-  assert(m_image_ctx->owner_lock.is_locked());
-  assert(m_image_ctx->exclusive_lock != nullptr);
+        int StandardPolicy::lock_requested(bool force) {
+            assert(m_image_ctx->owner_lock.is_locked());
+            assert(m_image_ctx->exclusive_lock != nullptr);
 
-  ldout(m_image_ctx->cct, 20) << this << " " << __func__ << ": force=" << force
-			      << dendl;
+            ldout(m_image_ctx->cct,
+                  20) << this << " " << __func__ << ": force=" << force <<
+                dendl;
 
-  return -EROFS;
-}
-
-} // namespace exclusive_lock
-} // namespace librbd
-
+            return -EROFS;
+}} // namespace exclusive_lock }    // namespace librbd

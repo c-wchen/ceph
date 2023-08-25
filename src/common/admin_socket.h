@@ -23,17 +23,16 @@ class CephContext;
 #define CEPH_ADMIN_SOCK_VERSION "2"
 
 class AdminSocketHook {
-public:
-  virtual bool call(std::string command, cmdmap_t &cmdmap, std::string format,
-		    bufferlist& out) = 0;
-  virtual ~AdminSocketHook() {}
-};
+  public:
+    virtual bool call(std::string command, cmdmap_t & cmdmap,
+                      std::string format, bufferlist & out) = 0;
+    virtual ~ AdminSocketHook() {
+}};
 
-class AdminSocket : public Thread
-{
-public:
-  AdminSocket(CephContext *cct);
-  ~AdminSocket() override;
+class AdminSocket:public Thread {
+  public:
+    AdminSocket(CephContext * cct);
+    ~AdminSocket() override;
 
   /**
    * register an admin socket command
@@ -54,7 +53,8 @@ public:
    *
    * @return 0 for success, -EEXIST if command already registered.
    */
-  int register_command(std::string command, std::string cmddesc, AdminSocketHook *hook, std::string help);
+    int register_command(std::string command, std::string cmddesc,
+                         AdminSocketHook * hook, std::string help);
 
   /**
    * unregister an admin socket command.
@@ -66,44 +66,44 @@ public:
    * @param command command string
    * @return 0 on succest, -ENOENT if command dne.
    */
-  int unregister_command(std::string command);
+    int unregister_command(std::string command);
 
-  bool init(const std::string &path);
+    bool init(const std::string & path);
 
-  void chown(uid_t uid, gid_t gid);
-  void chmod(mode_t mode);
+    void chown(uid_t uid, gid_t gid);
+    void chmod(mode_t mode);
 
-private:
-  AdminSocket(const AdminSocket& rhs);
-  AdminSocket& operator=(const AdminSocket &rhs);
+  private:
+     AdminSocket(const AdminSocket & rhs);
+     AdminSocket & operator=(const AdminSocket & rhs);
 
-  void shutdown();
+    void shutdown();
 
-  std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
-  std::string destroy_shutdown_pipe();
-  std::string bind_and_listen(const std::string &sock_path, int *fd);
+     std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
+     std::string destroy_shutdown_pipe();
+     std::string bind_and_listen(const std::string & sock_path, int *fd);
 
-  void *entry() override;
-  bool do_accept();
+    void *entry() override;
+    bool do_accept();
 
-  CephContext *m_cct;
-  std::string m_path;
-  int m_sock_fd;
-  int m_shutdown_rd_fd;
-  int m_shutdown_wr_fd;
+    CephContext *m_cct;
+     std::string m_path;
+    int m_sock_fd;
+    int m_shutdown_rd_fd;
+    int m_shutdown_wr_fd;
 
-  bool in_hook;
-  Cond in_hook_cond;
-  Mutex m_lock;    // protects m_hooks, m_descs, m_help
-  AdminSocketHook *m_version_hook, *m_help_hook, *m_getdescs_hook;
+    bool in_hook;
+    Cond in_hook_cond;
+    Mutex m_lock;               // protects m_hooks, m_descs, m_help
+    AdminSocketHook *m_version_hook, *m_help_hook, *m_getdescs_hook;
 
-  std::map<std::string,AdminSocketHook*> m_hooks;
-  std::map<std::string,std::string> m_descs;
-  std::map<std::string,std::string> m_help;
+     std::map < std::string, AdminSocketHook * >m_hooks;
+     std::map < std::string, std::string > m_descs;
+     std::map < std::string, std::string > m_help;
 
-  friend class AdminSocketTest;
-  friend class HelpHook;
-  friend class GetdescsHook;
+    friend class AdminSocketTest;
+    friend class HelpHook;
+    friend class GetdescsHook;
 };
 
 #endif

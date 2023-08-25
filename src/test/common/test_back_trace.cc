@@ -17,9 +17,9 @@
 // otherwise it's function name will be removed in the backtrace.
 std::string foo()
 {
-  std::ostringstream oss;
-  oss << ceph::BackTrace(1);
-  return oss.str();
+    std::ostringstream oss;
+    oss << ceph::BackTrace(1);
+    return oss.str();
 }
 
 // a typical backtrace looks like:
@@ -27,20 +27,20 @@ std::string foo()
 // ceph version Development (no_version)
 // 1: (foo[abi:cxx11]()+0x4a) [0x5562231cf22a]
 // 2: (BackTrace_Basic_Test::TestBody()+0x28) [0x5562231cf2fc]
-TEST(BackTrace, Basic) {
-  std::string bt = foo();
-  std::vector<std::string> lines;
-  boost::split(lines, bt, boost::is_any_of("\n"));
-  const unsigned lineno = 1;
-  ASSERT_GT(lines.size(), lineno);
-  ASSERT_EQ(lines[0].find(pretty_version_to_str()), 1U);
-  boost::regex e{"^ 1: "
+TEST(BackTrace, Basic)
+{
+    std::string bt = foo();
+    std::vector < std::string > lines;
+    boost::split(lines, bt, boost::is_any_of("\n"));
+    const unsigned lineno = 1;
+    ASSERT_GT(lines.size(), lineno);
+    ASSERT_EQ(lines[0].find(pretty_version_to_str()), 1U);
+    boost::regex e {
+        "^ 1: "
 #ifdef __FreeBSD__
-		 "<foo.*>\\s"
-		 "at\\s.*$"};
+    "<foo.*>\\s" "at\\s.*$"};
 #else
-		 "\\(foo.*\\)\\s"
-		 "\\[0x[[:xdigit:]]+\\]$"};
+    "\\(foo.*\\)\\s" "\\[0x[[:xdigit:]]+\\]$"};
 #endif
-  EXPECT_TRUE(boost::regex_match(lines[lineno], e));
+    EXPECT_TRUE(boost::regex_match(lines[lineno], e));
 }

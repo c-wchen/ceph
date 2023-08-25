@@ -6,7 +6,6 @@
 #include <unordered_set>
 
 namespace ceph {
-  using std::unordered_set;
+    using std::unordered_set;
 }
-
 #endif

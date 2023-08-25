@@ -36,67 +36,55 @@ struct MDSlaveUpdate;
 typedef uint64_t log_segment_seq_t;
 
 class LogSegment {
- public:
-  const log_segment_seq_t seq;
-  uint64_t offset, end;
-  int num_events;
+  public:
+    const log_segment_seq_t seq;
+    uint64_t offset, end;
+    int num_events;
 
-  // dirty items
-  elist<CDir*>    dirty_dirfrags, new_dirfrags;
-  elist<CInode*>  dirty_inodes;
-  elist<CDentry*> dirty_dentries;
+    // dirty items
+    elist < CDir * >dirty_dirfrags, new_dirfrags;
+    elist < CInode * >dirty_inodes;
+    elist < CDentry * >dirty_dentries;
 
-  elist<CInode*>  open_files;
-  elist<CInode*>  dirty_parent_inodes;
-  elist<CInode*>  dirty_dirfrag_dir;
-  elist<CInode*>  dirty_dirfrag_nest;
-  elist<CInode*>  dirty_dirfrag_dirfragtree;
+    elist < CInode * >open_files;
+    elist < CInode * >dirty_parent_inodes;
+    elist < CInode * >dirty_dirfrag_dir;
+    elist < CInode * >dirty_dirfrag_nest;
+    elist < CInode * >dirty_dirfrag_dirfragtree;
 
-  elist<MDSlaveUpdate*> slave_updates;
-  
-  set<CInode*> truncating_inodes;
+    elist < MDSlaveUpdate * >slave_updates;
 
-  map<int, ceph::unordered_set<version_t> > pending_commit_tids;  // mdstable
-  set<metareqid_t> uncommitted_masters;
-  set<dirfrag_t> uncommitted_fragments;
+    set < CInode * >truncating_inodes;
 
-  // client request ids
-  map<int, ceph_tid_t> last_client_tids;
+    map < int, ceph::unordered_set < version_t > >pending_commit_tids;  // mdstable
+    set < metareqid_t > uncommitted_masters;
+    set < dirfrag_t > uncommitted_fragments;
 
-  // potentially dirty sessions
-  std::set<entity_name_t> touched_sessions;
+    // client request ids
+    map < int, ceph_tid_t > last_client_tids;
 
-  // table version
-  version_t inotablev;
-  version_t sessionmapv;
-  map<int,version_t> tablev;
+    // potentially dirty sessions
+    std::set < entity_name_t > touched_sessions;
 
-  // try to expire
-  void try_to_expire(MDSRank *mds, MDSGatherBuilder &gather_bld, int op_prio);
+    // table version
+    version_t inotablev;
+    version_t sessionmapv;
+    map < int, version_t > tablev;
 
-  std::list<MDSInternalContextBase*> expiry_waiters;
+    // try to expire
+    void try_to_expire(MDSRank * mds, MDSGatherBuilder & gather_bld,
+                       int op_prio);
 
-  void wait_for_expiry(MDSInternalContextBase *c)
-  {
-    assert(c != NULL);
-    expiry_waiters.push_back(c);
-  }
+    std::list < MDSInternalContextBase * >expiry_waiters;
 
-  // cons
-  LogSegment(uint64_t _seq, loff_t off=-1) :
-    seq(_seq), offset(off), end(off), num_events(0),
-    dirty_dirfrags(member_offset(CDir, item_dirty)),
-    new_dirfrags(member_offset(CDir, item_new)),
-    dirty_inodes(member_offset(CInode, item_dirty)),
-    dirty_dentries(member_offset(CDentry, item_dirty)),
-    open_files(member_offset(CInode, item_open_file)),
-    dirty_parent_inodes(member_offset(CInode, item_dirty_parent)),
-    dirty_dirfrag_dir(member_offset(CInode, item_dirty_dirfrag_dir)),
-    dirty_dirfrag_nest(member_offset(CInode, item_dirty_dirfrag_nest)),
-    dirty_dirfrag_dirfragtree(member_offset(CInode, item_dirty_dirfrag_dirfragtree)),
-    slave_updates(0), // passed to begin() manually
-    inotablev(0), sessionmapv(0)
-  { }
+    void wait_for_expiry(MDSInternalContextBase * c) {
+        assert(c != NULL);
+        expiry_waiters.push_back(c);
+    }
+  // cons LogSegment(uint64_t _seq, loff_t off = -1):
+    seq(_seq), offset(off), end(off), num_events(0), dirty_dirfrags(member_offset(CDir, item_dirty)), new_dirfrags(member_offset(CDir, item_new)), dirty_inodes(member_offset(CInode, item_dirty)), dirty_dentries(member_offset(CDentry, item_dirty)), open_files(member_offset(CInode, item_open_file)), dirty_parent_inodes(member_offset(CInode, item_dirty_parent)), dirty_dirfrag_dir(member_offset(CInode, item_dirty_dirfrag_dir)), dirty_dirfrag_nest(member_offset(CInode, item_dirty_dirfrag_nest)), dirty_dirfrag_dirfragtree(member_offset(CInode, item_dirty_dirfrag_dirfragtree)), slave_updates(0), // passed to begin() manually
+        inotablev(0), sessionmapv(0) {
+    }
 };
 
 #endif

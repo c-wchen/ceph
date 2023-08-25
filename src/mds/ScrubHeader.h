@@ -12,7 +12,6 @@
  *
  */
 
-
 #ifndef SCRUB_HEADER_H_
 #define SCRUB_HEADER_H_
 
@@ -25,42 +24,48 @@ class CInode;
  * of where we are doing a recursive scrub
  */
 class ScrubHeader {
-public:
-  ScrubHeader(boost::string_view tag_, bool force_, bool recursive_,
-              bool repair_, Formatter *f_)
-      : tag(tag_), force(force_), recursive(recursive_), repair(repair_),
-        formatter(f_), origin(nullptr)
-  {
-    assert(formatter != nullptr);
-  }
+  public:
+    ScrubHeader(boost::string_view tag_, bool force_, bool recursive_,
+                bool repair_, Formatter * f_)
+    :tag(tag_), force(force_), recursive(recursive_), repair(repair_),
+        formatter(f_), origin(nullptr) {
+        assert(formatter != nullptr);
+    }
+    // Set after construction because it won't be known until we've// started resolving path and locking
+        void set_origin(CInode * origin_) {
+        origin = origin_;
+    }
 
-  // Set after construction because it won't be known until we've
-  // started resolving path and locking
-  void set_origin(CInode *origin_) { origin = origin_; }
+    bool get_recursive() const {
+        return recursive;
+    } bool get_repair() const {
+        return repair;
+    } bool get_force() const {
+        return force;
+    } const CInode *get_origin() const {
+        return origin;
+    } boost::string_view get_tag() const {
+        return tag;
+    } Formatter & get_formatter() const {
+        return *formatter;
+    } bool get_repaired() const {
+        return repaired;
+    } void set_repaired() {
+        repaired = true;
+    }
 
-  bool get_recursive() const { return recursive; }
-  bool get_repair() const { return repair; }
-  bool get_force() const { return force; }
-  const CInode *get_origin() const { return origin; }
-  boost::string_view get_tag() const { return tag; }
-  Formatter &get_formatter() const { return *formatter; }
+  protected:
+    const std::string tag;
+    const bool force;
+    const bool recursive;
+    const bool repair;
+    Formatter *const formatter;
+    CInode *origin;
 
-  bool get_repaired() const { return repaired; }
-  void set_repaired() { repaired = true; }
-
-protected:
-  const std::string tag;
-  const bool force;
-  const bool recursive;
-  const bool repair;
-  Formatter * const formatter;
-  CInode *origin;
-
-  bool repaired = false;  // May be set during scrub if repairs happened
+    bool repaired = false;      // May be set during scrub if repairs happened
 };
 
-typedef ceph::shared_ptr<ScrubHeader> ScrubHeaderRef;
-typedef ceph::shared_ptr<const ScrubHeader> ScrubHeaderRefConst;
+typedef ceph::shared_ptr < ScrubHeader > ScrubHeaderRef;
+typedef ceph::shared_ptr < const ScrubHeader > ScrubHeaderRefConst;
 
 #endif // SCRUB_HEADER_H_
-

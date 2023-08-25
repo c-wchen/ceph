@@ -5,6 +5,7 @@
 
 class CephContext;
 
-int ceph_decode_cms(CephContext *cct, bufferlist& cms_bl, bufferlist& decoded_bl);
+int ceph_decode_cms(CephContext * cct, bufferlist & cms_bl,
+                    bufferlist & decoded_bl);
 
 #endif

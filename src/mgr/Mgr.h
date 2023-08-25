@@ -45,93 +45,90 @@ class Objecter;
 class Client;
 
 class Mgr {
-protected:
-  MonClient *monc;
-  Objecter  *objecter;
-  Client    *client;
-  Messenger *client_messenger;
+  protected:
+    MonClient * monc;
+    Objecter *objecter;
+    Client *client;
+    Messenger *client_messenger;
 
-  mutable Mutex lock;
-  SafeTimer timer;
-  Finisher finisher;
+    mutable Mutex lock;
+    SafeTimer timer;
+    Finisher finisher;
 
-  // Track receipt of initial data during startup
-  Cond fs_map_cond;
-  bool digest_received;
-  Cond digest_cond;
+    // Track receipt of initial data during startup
+    Cond fs_map_cond;
+    bool digest_received;
+    Cond digest_cond;
 
-  PyModuleRegistry *py_module_registry;
-  DaemonStateIndex daemon_state;
-  ClusterState cluster_state;
+    PyModuleRegistry *py_module_registry;
+    DaemonStateIndex daemon_state;
+    ClusterState cluster_state;
 
-  DaemonServer server;
+    DaemonServer server;
 
-  LogChannelRef clog;
-  LogChannelRef audit_clog;
+    LogChannelRef clog;
+    LogChannelRef audit_clog;
 
-  PyModuleConfig load_config();
-  void load_all_metadata();
-  void init();
+    PyModuleConfig load_config();
+    void load_all_metadata();
+    void init();
 
-  bool initialized;
-  bool initializing;
+    bool initialized;
+    bool initializing;
 
-public:
-  Mgr(MonClient *monc_, const MgrMap& mgrmap,
-      PyModuleRegistry *py_module_registry_,
-      Messenger *clientm_, Objecter *objecter_,
-      Client *client_, LogChannelRef clog_, LogChannelRef audit_clog_);
-  ~Mgr();
+  public:
+     Mgr(MonClient * monc_, const MgrMap & mgrmap,
+         PyModuleRegistry * py_module_registry_,
+         Messenger * clientm_, Objecter * objecter_,
+         Client * client_, LogChannelRef clog_, LogChannelRef audit_clog_);
+    ~Mgr();
 
-  bool is_initialized() const {return initialized;}
-  entity_addr_t get_server_addr() const { return server.get_myaddr(); }
+    bool is_initialized() const {
+        return initialized;
+    } entity_addr_t get_server_addr() const {
+        return server.get_myaddr();
+    } void handle_mgr_digest(MMgrDigest * m);
+    void handle_fs_map(MFSMap * m);
+    void handle_osd_map();
+    void handle_log(MLog * m);
+    void handle_service_map(MServiceMap * m);
 
-  void handle_mgr_digest(MMgrDigest* m);
-  void handle_fs_map(MFSMap* m);
-  void handle_osd_map();
-  void handle_log(MLog *m);
-  void handle_service_map(MServiceMap *m);
+    bool got_mgr_map(const MgrMap & m);
 
-  bool got_mgr_map(const MgrMap& m);
+    bool ms_dispatch(Message * m);
 
-  bool ms_dispatch(Message *m);
+    void tick();
 
-  void tick();
+    void background_init(Context * completion);
+    void shutdown();
 
-  void background_init(Context *completion);
-  void shutdown();
-
-  std::vector<MonCommand> get_command_set() const;
-  std::map<std::string, std::string> get_services() const;
+     std::vector < MonCommand > get_command_set() const;
+     std::map < std::string, std::string > get_services() const;
 };
 
 /**
  * Context for completion of metadata mon commands: take
  * the result and stash it in DaemonStateIndex
  */
-class MetadataUpdate : public Context
-{
+class MetadataUpdate:public Context {
 
-private:
-  DaemonStateIndex &daemon_state;
-  DaemonKey key;
+  private:
+    DaemonStateIndex & daemon_state;
+    DaemonKey key;
 
-  std::map<std::string, std::string> defaults;
+     std::map < std::string, std::string > defaults;
 
-public:
-  bufferlist outbl;
-  std::string outs;
+  public:
+     bufferlist outbl;
+     std::string outs;
 
-  MetadataUpdate(DaemonStateIndex &daemon_state_, const DaemonKey &key_)
-    : daemon_state(daemon_state_), key(key_) {}
+     MetadataUpdate(DaemonStateIndex & daemon_state_, const DaemonKey & key_)
+    :daemon_state(daemon_state_), key(key_) {
+    } void set_default(const std::string & k, const std::string & v) {
+        defaults[k] = v;
+    }
 
-  void set_default(const std::string &k, const std::string &v)
-  {
-    defaults[k] = v;
-  }
-
-  void finish(int r) override;
+    void finish(int r) override;
 };
-
 
 #endif

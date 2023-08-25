@@ -12,28 +12,26 @@
  * 
  */
 
-
 #ifndef CEPH_MGENERICMESSAGE_H
 #define CEPH_MGENERICMESSAGE_H
 
 #include "msg/Message.h"
 
-class MGenericMessage : public Message {
-  char tname[20];
-  //long pcid;
+class MGenericMessage:public Message {
+    char tname[20];
+    //long pcid;
 
- public:
-  MGenericMessage(int t=0) : Message(t) { 
-    snprintf(tname, sizeof(tname), "generic%d", get_type());
-  }
-
-  //void set_pcid(long pcid) { this->pcid = pcid; }
-  //long get_pcid() { return pcid; }
-
-  const char *get_type_name() const override { return tname; }
-
-  void decode_payload() override { }
-  void encode_payload(uint64_t features) override { }
+  public:
+   MGenericMessage(int t = 0):Message(t) {
+        snprintf(tname, sizeof(tname), "generic%d", get_type());
+    }
+    //void set_pcid(long pcid) { this->pcid = pcid; }//long get_pcid() { return pcid; }
+        const char *get_type_name() const override {
+        return tname;
+    } void decode_payload() override {
+    }
+    void encode_payload(uint64_t features) override {
+    }
 };
 
 #endif

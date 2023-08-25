@@ -24,24 +24,27 @@
 #include "common/Clock.h"
 #include "log/Log.h"
 
-extern void dout_emergency(const char * const str);
-extern void dout_emergency(const std::string &str);
+extern void dout_emergency(const char *const str);
+extern void dout_emergency(const std::string & str);
 
 // intentionally conflict with endl
-class _bad_endl_use_dendl_t { public: _bad_endl_use_dendl_t(int) {} };
+class _bad_endl_use_dendl_t {
+  public:_bad_endl_use_dendl_t(int) {
+}};
 static const _bad_endl_use_dendl_t endl = 0;
-inline std::ostream& operator<<(std::ostream& out, _bad_endl_use_dendl_t) {
-  assert(0 && "you are using the wrong endl.. use std::endl or dendl");
-  return out;
+inline std::ostream & operator<<(std::ostream & out, _bad_endl_use_dendl_t)
+{
+    assert(0 && "you are using the wrong endl.. use std::endl or dendl");
+    return out;
 }
 
 class DoutPrefixProvider {
-public:
-  virtual string gen_prefix() const = 0;
-  virtual CephContext *get_cct() const = 0;
-  virtual unsigned get_subsys() const = 0;
-  virtual ~DoutPrefixProvider() {}
-};
+  public:
+    virtual string gen_prefix() const = 0;
+    virtual CephContext *get_cct() const = 0;
+    virtual unsigned get_subsys() const = 0;
+    virtual ~ DoutPrefixProvider() {
+}};
 
 // generic macros
 #define dout_prefix *_dout

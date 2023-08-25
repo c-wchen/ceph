@@ -14,65 +14,64 @@
 #define dout_prefix *_dout << "librbd::image::SetFlagsRequest: "
 
 namespace librbd {
-namespace image {
+    namespace image {
 
-using util::create_context_callback;
-using util::create_rados_callback;
+        using util::create_context_callback;
+        using util::create_rados_callback;
 
-template <typename I>
-SetFlagsRequest<I>::SetFlagsRequest(I *image_ctx, uint64_t flags,
-				    uint64_t mask, Context *on_finish)
-  : m_image_ctx(image_ctx), m_flags(flags), m_mask(mask),
-    m_on_finish(on_finish) {
-}
+         template < typename I >
+            SetFlagsRequest < I >::SetFlagsRequest(I * image_ctx,
+                                                   uint64_t flags,
+                                                   uint64_t mask,
+                                                   Context * on_finish)
+        :m_image_ctx(image_ctx), m_flags(flags), m_mask(mask),
+            m_on_finish(on_finish) {
+        } template < typename I > void SetFlagsRequest < I >::send() {
+            send_set_flags();
+        } template < typename I > void SetFlagsRequest < I >::send_set_flags() {
+            CephContext *cct = m_image_ctx->cct;
+            ldout(cct, 20) << __func__ << dendl;
 
-template <typename I>
-void SetFlagsRequest<I>::send() {
-  send_set_flags();
-}
+            RWLock::WLocker snap_locker(m_image_ctx->snap_lock);
+            std::vector < uint64_t > snap_ids;
+            snap_ids.push_back(CEPH_NOSNAP);
+          for (auto it:m_image_ctx->snap_info) {
+                snap_ids.push_back(it.first);
+            }
 
-template <typename I>
-void SetFlagsRequest<I>::send_set_flags() {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 20) << __func__ << dendl;
+            Context *ctx = create_context_callback <
+                SetFlagsRequest < I >,
+                &SetFlagsRequest < I >::handle_set_flags > (this);
+            C_Gather *gather_ctx = new C_Gather(cct, ctx);
 
-  RWLock::WLocker snap_locker(m_image_ctx->snap_lock);
-  std::vector<uint64_t> snap_ids;
-  snap_ids.push_back(CEPH_NOSNAP);
-  for (auto it : m_image_ctx->snap_info) {
-    snap_ids.push_back(it.first);
-  }
+          for (auto snap_id:snap_ids) {
+                librados::ObjectWriteOperation op;
+                cls_client::set_flags(&op, snap_id, m_flags, m_mask);
 
-  Context *ctx = create_context_callback<
-    SetFlagsRequest<I>, &SetFlagsRequest<I>::handle_set_flags>(this);
-  C_Gather *gather_ctx = new C_Gather(cct, ctx);
+                librados::AioCompletion * comp =
+                    create_rados_callback(gather_ctx->new_sub());
+                int r =
+                    m_image_ctx->md_ctx.aio_operate(m_image_ctx->header_oid,
+                                                    comp, &op);
+                assert(r == 0);
+                comp->release();
+            }
+            gather_ctx->activate();
+        }
 
-  for (auto snap_id : snap_ids) {
-    librados::ObjectWriteOperation op;
-    cls_client::set_flags(&op, snap_id, m_flags, m_mask);
+        template < typename I >
+            Context * SetFlagsRequest < I >::handle_set_flags(int *result) {
+            CephContext *cct = m_image_ctx->cct;
+            ldout(cct, 20) << __func__ << ": r=" << *result << dendl;
 
-    librados::AioCompletion *comp =
-      create_rados_callback(gather_ctx->new_sub());
-    int r = m_image_ctx->md_ctx.aio_operate(m_image_ctx->header_oid, comp, &op);
-    assert(r == 0);
-    comp->release();
-  }
-  gather_ctx->activate();
-}
+            if (*result < 0) {
+                lderr(cct) << "set_flags failed: " << cpp_strerror(*result)
+                    << dendl;
+            }
+            return m_on_finish;
+        }
 
-template <typename I>
-Context *SetFlagsRequest<I>::handle_set_flags(int *result) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 20) << __func__ << ": r=" << *result << dendl;
+    }                           // namespace image
+}                               // namespace librbd
 
-  if (*result < 0) {
-    lderr(cct) << "set_flags failed: " << cpp_strerror(*result)
-	       << dendl;
-  }
-  return m_on_finish;
-}
-
-} // namespace image
-} // namespace librbd
-
-template class librbd::image::SetFlagsRequest<librbd::ImageCtx>;
+template class librbd::image::SetFlagsRequest < librbd::ImageCtx >;

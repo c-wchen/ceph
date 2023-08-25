@@ -6,23 +6,23 @@
 
 std::string cpp_strerror(int err)
 {
-  char buf[128];
-  char *errmsg;
+    char buf[128];
+    char *errmsg;
 
-  if (err < 0)
-    err = -err;
-  std::ostringstream oss;
-  buf[0] = '\0';
+    if (err < 0)
+        err = -err;
+    std::ostringstream oss;
+    buf[0] = '\0';
 
-  // strerror_r returns char * on Linux, and does not always fill buf
+    // strerror_r returns char * on Linux, and does not always fill buf
 #ifdef STRERROR_R_CHAR_P
-  errmsg = strerror_r(err, buf, sizeof(buf));
+    errmsg = strerror_r(err, buf, sizeof(buf));
 #else
-  strerror_r(err, buf, sizeof(buf));
-  errmsg = buf;
+    strerror_r(err, buf, sizeof(buf));
+    errmsg = buf;
 #endif
 
-  oss << "(" << err << ") " << errmsg;
+    oss << "(" << err << ") " << errmsg;
 
-  return oss.str();
+    return oss.str();
 }

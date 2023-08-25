@@ -11,7 +11,6 @@
  * foundation.  see file copying.
  */
 
-
 #ifndef EVENT_OUTPUT_H
 #define EVENT_OUTPUT_H
 
@@ -22,21 +21,18 @@ class JournalScanner;
 /**
  * Different output formats for the results of a journal scan
  */
-class EventOutput
-{
+class EventOutput {
   private:
     JournalScanner const &scan;
-    std::string const path;
+     std::string const path;
 
   public:
-    EventOutput(JournalScanner const &scan_, std::string const &path_)
-      : scan(scan_), path(path_) {}
-
-    void summary() const;
+     EventOutput(JournalScanner const &scan_, std::string const &path_)
+    :scan(scan_), path(path_) {
+    } void summary() const;
     void list() const;
     int json() const;
     int binary() const;
 };
 
 #endif // EVENT_OUTPUT_H
-

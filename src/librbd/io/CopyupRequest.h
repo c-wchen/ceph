@@ -16,38 +16,40 @@
 #include <vector>
 #include <atomic>
 
-namespace ZTracer { struct Trace; }
+namespace ZTracer {
+    struct Trace;
+} namespace librbd {
 
-namespace librbd {
+    struct ImageCtx;
 
-struct ImageCtx;
+    namespace io {
 
-namespace io {
+        struct AioCompletion;
+         template < typename I > class AbstractObjectWriteRequest;
 
-struct AioCompletion;
-template <typename I> class AbstractObjectWriteRequest;
+         template < typename ImageCtxT = librbd::ImageCtx > class CopyupRequest {
+          public:
+            static CopyupRequest *create(ImageCtxT * ictx,
+                                         const std::string & oid,
+                                         uint64_t objectno, Extents
+                                         && image_extents,
+                                         const ZTracer::Trace & parent_trace) {
+                return new CopyupRequest(ictx, oid, objectno,
+                                         std::move(image_extents),
+                                         parent_trace);
+            } CopyupRequest(ImageCtxT * ictx, const std::string & oid,
+                            uint64_t objectno, Extents
+                            && image_extents,
+                            const ZTracer::Trace & parent_trace);
+            ~CopyupRequest();
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class CopyupRequest {
-public:
-  static CopyupRequest* create(ImageCtxT *ictx, const std::string &oid,
-                               uint64_t objectno, Extents &&image_extents,
-                               const ZTracer::Trace &parent_trace) {
-    return new CopyupRequest(ictx, oid, objectno, std::move(image_extents),
-                             parent_trace);
-  }
+            void append_request(AbstractObjectWriteRequest < ImageCtxT > *req);
 
-  CopyupRequest(ImageCtxT *ictx, const std::string &oid, uint64_t objectno,
-                Extents &&image_extents, const ZTracer::Trace &parent_trace);
-  ~CopyupRequest();
+            void send();
 
-  void append_request(AbstractObjectWriteRequest<ImageCtxT> *req);
+            void complete(int r);
 
-  void send();
-
-  void complete(int r);
-
-private:
+          private:
   /**
    * Copyup requests go through the following state machine to read from the
    * parent image, update the object map, and copyup the object:
@@ -78,46 +80,48 @@ private:
    * an object map update isn't required. The _COPYUP state is skipped if
    * no data was read from the parent *and* there are no additional ops.
    */
-  enum State {
-    STATE_READ_FROM_PARENT,
-    STATE_OBJECT_MAP_HEAD, // only update the HEAD revision
-    STATE_OBJECT_MAP,      // update HEAD+snaps (if any)
-    STATE_COPYUP
-  };
+            enum State {
+                STATE_READ_FROM_PARENT,
+                STATE_OBJECT_MAP_HEAD,  // only update the HEAD revision
+                STATE_OBJECT_MAP,   // update HEAD+snaps (if any)
+                STATE_COPYUP
+            };
 
-  ImageCtx *m_ictx;
-  std::string m_oid;
-  uint64_t m_object_no;
-  Extents m_image_extents;
-  ZTracer::Trace m_trace;
+            ImageCtx *m_ictx;
+             std::string m_oid;
+            uint64_t m_object_no;
+            Extents m_image_extents;
+             ZTracer::Trace m_trace;
 
-  State m_state;
-  ceph::bufferlist m_copyup_data;
-  std::vector<AbstractObjectWriteRequest<ImageCtxT> *> m_pending_requests;
-  std::atomic<unsigned> m_pending_copyups { 0 };
+            State m_state;
+             ceph::bufferlist m_copyup_data;
+             std::vector < AbstractObjectWriteRequest < ImageCtxT >
+                *>m_pending_requests;
+             std::atomic < unsigned >m_pending_copyups {
+            0};
 
-  AsyncOperation m_async_op;
+            AsyncOperation m_async_op;
 
-  std::vector<uint64_t> m_snap_ids;
-  librados::IoCtx m_data_ctx; // for empty SnapContext
+             std::vector < uint64_t > m_snap_ids;
+             librados::IoCtx m_data_ctx;    // for empty SnapContext
 
-  Mutex m_lock;
+            Mutex m_lock;
 
-  void complete_requests(int r);
+            void complete_requests(int r);
 
-  bool should_complete(int r);
+            bool should_complete(int r);
 
-  void remove_from_list();
+            void remove_from_list();
 
-  bool send_object_map_head();
-  bool send_object_map();
-  bool send_copyup();
-  bool is_copyup_required();
-};
+            bool send_object_map_head();
+            bool send_object_map();
+            bool send_copyup();
+            bool is_copyup_required();
+        };
 
-} // namespace io
-} // namespace librbd
+    }                           // namespace io
+}                               // namespace librbd
 
-extern template class librbd::io::CopyupRequest<librbd::ImageCtx>;
+extern template class librbd::io::CopyupRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_IO_COPYUP_REQUEST_H

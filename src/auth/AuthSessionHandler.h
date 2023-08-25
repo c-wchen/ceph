@@ -12,7 +12,6 @@
  * 
  */
 
-
 #ifndef CEPH_AUTHSESSIONHANDLER_H
 #define CEPH_AUTHSESSIONHANDLER_H
 
@@ -28,30 +27,38 @@ class KeyServer;
 class Message;
 
 struct AuthSessionHandler {
-protected:
-  CephContext *cct;
-  int protocol;
-  CryptoKey key;
+  protected:
+    CephContext * cct;
+    int protocol;
+    CryptoKey key;
 
-public:
-  explicit AuthSessionHandler(CephContext *cct_) : cct(cct_), protocol(CEPH_AUTH_UNKNOWN) {}
+  public:
+     explicit AuthSessionHandler(CephContext * cct_):cct(cct_),
+        protocol(CEPH_AUTH_UNKNOWN) {
+    } AuthSessionHandler(CephContext * cct_, int protocol_,
+                         CryptoKey key_):cct(cct_), protocol(protocol_),
+        key(key_) {
+    }
+    virtual ~ AuthSessionHandler() {
+    }
 
-  AuthSessionHandler(CephContext *cct_, int protocol_, CryptoKey key_) : cct(cct_), 
-    protocol(protocol_), key(key_) {}
-  virtual ~AuthSessionHandler() { }
+    virtual bool no_security() = 0;
+    virtual int sign_message(Message * message) = 0;
+    virtual int check_message_signature(Message * message) = 0;
+    virtual int encrypt_message(Message * message) = 0;
+    virtual int decrypt_message(Message * message) = 0;
 
-  virtual bool no_security() = 0;
-  virtual int sign_message(Message *message) = 0;
-  virtual int check_message_signature(Message *message) = 0;
-  virtual int encrypt_message(Message *message) = 0;
-  virtual int decrypt_message(Message *message) = 0;
-
-  int get_protocol() {return protocol;}
-  CryptoKey get_key() {return key;}
+    int get_protocol() {
+        return protocol;
+    }
+    CryptoKey get_key() {
+        return key;
+    }
 
 };
 
-extern AuthSessionHandler *get_auth_session_handler(CephContext *cct, int protocol, CryptoKey key,
-						    uint64_t features);
+extern AuthSessionHandler *get_auth_session_handler(CephContext * cct,
+                                                    int protocol, CryptoKey key,
+                                                    uint64_t features);
 
 #endif

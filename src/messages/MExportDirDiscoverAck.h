@@ -18,43 +18,48 @@
 #include "msg/Message.h"
 #include "include/types.h"
 
-class MExportDirDiscoverAck : public Message {
-  dirfrag_t dirfrag;
-  bool success;
+class MExportDirDiscoverAck:public Message {
+    dirfrag_t dirfrag;
+    bool success;
 
- public:
-  inodeno_t get_ino() { return dirfrag.ino; }
-  dirfrag_t get_dirfrag() { return dirfrag; }
-  bool is_success() { return success; }
+  public:
+     inodeno_t get_ino() {
+        return dirfrag.ino;
+    } dirfrag_t get_dirfrag() {
+        return dirfrag;
+    }
+    bool is_success() {
+        return success;
+    }
 
-  MExportDirDiscoverAck() : Message(MSG_MDS_EXPORTDIRDISCOVERACK) {}
-  MExportDirDiscoverAck(dirfrag_t df, uint64_t tid, bool s=true) :
-    Message(MSG_MDS_EXPORTDIRDISCOVERACK),
-    dirfrag(df), success(s) {
-    set_tid(tid);
-  }
-private:
-  ~MExportDirDiscoverAck() override {}
+  MExportDirDiscoverAck():Message(MSG_MDS_EXPORTDIRDISCOVERACK) {
+    }
+  MExportDirDiscoverAck(dirfrag_t df, uint64_t tid, bool s = true):
+    Message(MSG_MDS_EXPORTDIRDISCOVERACK), dirfrag(df), success(s) {
+        set_tid(tid);
+    }
+  private:
+    ~MExportDirDiscoverAck()override {
+    }
 
-public:
-  const char *get_type_name() const override { return "ExDisA"; }
-  void print(ostream& o) const override {
-    o << "export_discover_ack(" << dirfrag;
-    if (success) 
-      o << " success)";
-    else
-      o << " failure)";
-  }
-
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(dirfrag, p);
-    ::decode(success, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(dirfrag, payload);
-    ::encode(success, payload);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "ExDisA";
+    } void print(ostream & o) const override {
+        o << "export_discover_ack(" << dirfrag;
+        if (success)
+            o << " success)";
+        else
+            o << " failure)";
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(dirfrag, p);
+        ::decode(success, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(dirfrag, payload);
+        ::encode(success, payload);
+    }
 };
 
 #endif

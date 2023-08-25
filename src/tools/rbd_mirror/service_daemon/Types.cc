@@ -5,25 +5,18 @@
 #include <iostream>
 
 namespace rbd {
-namespace mirror {
-namespace service_daemon {
+    namespace mirror {
+        namespace service_daemon {
 
-std::ostream& operator<<(std::ostream& os, const CalloutLevel& callout_level) {
-  switch (callout_level) {
-  case CALLOUT_LEVEL_INFO:
-    os << "info";
-    break;
-  case CALLOUT_LEVEL_WARNING:
-    os << "warning";
-    break;
-  case CALLOUT_LEVEL_ERROR:
-    os << "error";
-    break;
-  }
-  return os;
-}
-
-} // namespace service_daemon
-} // namespace mirror
-} // namespace rbd
-
+            std::ostream & operator<<(std::ostream & os,
+                                      const CalloutLevel & callout_level) {
+                switch (callout_level) {
+                case CALLOUT_LEVEL_INFO:
+                    os << "info";
+                    break;
+                    case CALLOUT_LEVEL_WARNING:os << "warning";
+                    break;
+                    case CALLOUT_LEVEL_ERROR:os << "error";
+                    break;
+                } return os;
+}} // namespace service_daemon } // namespace mirror }  // namespace rbd

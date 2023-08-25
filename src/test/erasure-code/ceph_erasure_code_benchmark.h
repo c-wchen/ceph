@@ -23,32 +23,32 @@
 using namespace std;
 
 class ErasureCodeBench {
-  int in_size;
-  int max_iterations;
-  int erasures;
-  int k;
-  int m;
+    int in_size;
+    int max_iterations;
+    int erasures;
+    int k;
+    int m;
 
-  string plugin;
+    string plugin;
 
-  bool exhaustive_erasures;
-  vector<int> erased;
-  string workload;
+    bool exhaustive_erasures;
+     vector < int >erased;
+    string workload;
 
-  ErasureCodeProfile profile;
+    ErasureCodeProfile profile;
 
-  bool verbose;
-  boost::intrusive_ptr<CephContext> cct;
-public:
-  int setup(int argc, char** argv);
-  int run();
-  int decode_erasures(const map<int,bufferlist> &all_chunks,
-		      const map<int,bufferlist> &chunks,
-		      unsigned i,
-		      unsigned want_erasures,
-		      ErasureCodeInterfaceRef erasure_code);
-  int decode();
-  int encode();
+    bool verbose;
+     boost::intrusive_ptr < CephContext > cct;
+  public:
+    int setup(int argc, char **argv);
+    int run();
+    int decode_erasures(const map < int, bufferlist > &all_chunks,
+                        const map < int, bufferlist > &chunks,
+                        unsigned i,
+                        unsigned want_erasures,
+                        ErasureCodeInterfaceRef erasure_code);
+    int decode();
+    int encode();
 };
 
 #endif

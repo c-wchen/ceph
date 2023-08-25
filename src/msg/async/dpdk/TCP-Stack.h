@@ -28,13 +28,12 @@ class ServerSocket;
 class ConnectedSocket;
 
 class ipv4_traits;
-template <typename InetTraits>
-class tcp;
+template < typename InetTraits > class tcp;
 
-int tcpv4_listen(tcp<ipv4_traits>& tcpv4, uint16_t port, const SocketOptions &opts,
-                 ServerSocket *sa);
+int tcpv4_listen(tcp < ipv4_traits > &tcpv4, uint16_t port,
+                 const SocketOptions & opts, ServerSocket * sa);
 
-int tcpv4_connect(tcp<ipv4_traits>& tcpv4, const entity_addr_t &addr,
-                  ConnectedSocket *sa);
+int tcpv4_connect(tcp < ipv4_traits > &tcpv4, const entity_addr_t & addr,
+                  ConnectedSocket * sa);
 
 #endif

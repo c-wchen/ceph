@@ -35,56 +35,55 @@
 #define RETURN1_IF_NONZERO(expr) \
   RETURN1_IF_NOT_VAL(0, expr)
 
-extern void* systest_runnable_pthread_helper(void *arg);
-std::string get_temp_pool_name(const char* prefix);
+extern void *systest_runnable_pthread_helper(void *arg);
+std::string get_temp_pool_name(const char *prefix);
 /* Represents a single test thread / process.
  *
  * Inherit from this class and implement the test body in run().
 */
-class SysTestRunnable
-{
-public:
-  static const int ID_STR_SZ = 128;
+class SysTestRunnable {
+  public:
+    static const int ID_STR_SZ = 128;
 
-  SysTestRunnable(int argc, const char **argv);
-  virtual ~SysTestRunnable();
+     SysTestRunnable(int argc, const char **argv);
+     virtual ~ SysTestRunnable();
 
-  /* Returns 0 on success; error code otherwise. */
-  virtual int run() = 0;
+    /* Returns 0 on success; error code otherwise. */
+    virtual int run() = 0;
 
-  /* Return a string identifying the runnable. */ 
-  const char* get_id_str(void) const;
+    /* Return a string identifying the runnable. */
+    const char *get_id_str(void) const;
 
-  /* Start the Runnable */
-  int start();
+    /* Start the Runnable */
+    int start();
 
-  /* Wait until the Runnable is finished. Returns an error string on failure. */
-  std::string join();
+    /* Wait until the Runnable is finished. Returns an error string on failure. */
+     std::string join();
 
-  /* Starts a bunch of SystemTestRunnables and waits until they're done.
-   *
-   * Returns an error string on failure. */
-  static std::string run_until_finished(std::vector < SysTestRunnable * >&
-					runnables);
+    /* Starts a bunch of SystemTestRunnables and waits until they're done.
+     *
+     * Returns an error string on failure. */
+    static std::string run_until_finished(std::vector < SysTestRunnable * >&
+                                          runnables);
 
-protected:
-  int m_argc;
-  const char **m_argv;
+  protected:
+    int m_argc;
+    const char **m_argv;
 
-private:
-  explicit SysTestRunnable(const SysTestRunnable &rhs);
-  SysTestRunnable& operator=(const SysTestRunnable &rhs);
-  void update_id_str(bool started);
-  void set_argv(int argc, const char **argv);
+  private:
+     explicit SysTestRunnable(const SysTestRunnable & rhs);
+     SysTestRunnable & operator=(const SysTestRunnable & rhs);
+    void update_id_str(bool started);
+    void set_argv(int argc, const char **argv);
 
-  friend void* systest_runnable_pthread_helper(void *arg);
+    friend void *systest_runnable_pthread_helper(void *arg);
 
-  Preforker preforker;
-  const char **m_argv_orig;
-  bool m_started;
-  int m_id;
-  pthread_t m_pthread;
-  char m_id_str[ID_STR_SZ];
+    Preforker preforker;
+    const char **m_argv_orig;
+    bool m_started;
+    int m_id;
+    pthread_t m_pthread;
+    char m_id_str[ID_STR_SZ];
 };
 
 #endif

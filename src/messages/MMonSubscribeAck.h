@@ -17,33 +17,32 @@
 
 #include "msg/Message.h"
 
-struct MMonSubscribeAck : public Message {
-  __u32 interval;
-  uuid_d fsid;
-  
-  MMonSubscribeAck() : Message(CEPH_MSG_MON_SUBSCRIBE_ACK),
-		       interval(0) {
-  }
-  MMonSubscribeAck(uuid_d& f, int i) : Message(CEPH_MSG_MON_SUBSCRIBE_ACK),
-				       interval(i), fsid(f) { }
-private:
-  ~MMonSubscribeAck() override {}
+struct MMonSubscribeAck:public Message {
+    __u32 interval;
+    uuid_d fsid;
 
-public:
-  const char *get_type_name() const override { return "mon_subscribe_ack"; }
-  void print(ostream& o) const override {
-    o << "mon_subscribe_ack(" << interval << "s)";
-  }
+     MMonSubscribeAck():Message(CEPH_MSG_MON_SUBSCRIBE_ACK), interval(0) {
+    } MMonSubscribeAck(uuid_d & f, int i):Message(CEPH_MSG_MON_SUBSCRIBE_ACK),
+        interval(i), fsid(f) {
+    }
+  private:
+    ~MMonSubscribeAck()override {
+    }
 
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(interval, p);
-    ::decode(fsid, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(interval, payload);
-    ::encode(fsid, payload);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "mon_subscribe_ack";
+    } void print(ostream & o) const override {
+        o << "mon_subscribe_ack(" << interval << "s)";
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(interval, p);
+        ::decode(fsid, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(interval, payload);
+        ::encode(fsid, payload);
+    }
 };
 
 #endif

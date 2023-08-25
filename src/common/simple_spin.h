@@ -17,25 +17,24 @@
 
 #include <atomic>
 
-inline void simple_spin_lock(std::atomic_flag& lock)
+inline void simple_spin_lock(std::atomic_flag & lock)
 {
- while(lock.test_and_set(std::memory_order_acquire))
-  ;
+    while (lock.test_and_set(std::memory_order_acquire)) ;
 }
 
-inline void simple_spin_unlock(std::atomic_flag& lock)
+inline void simple_spin_unlock(std::atomic_flag & lock)
 {
- lock.clear(std::memory_order_release);
+    lock.clear(std::memory_order_release);
 }
 
-inline void simple_spin_lock(std::atomic_flag *lock)
+inline void simple_spin_lock(std::atomic_flag * lock)
 {
- simple_spin_lock(*lock);
+    simple_spin_lock(*lock);
 }
 
-inline void simple_spin_unlock(std::atomic_flag *lock)
+inline void simple_spin_unlock(std::atomic_flag * lock)
 {
- simple_spin_unlock(*lock);
+    simple_spin_unlock(*lock);
 }
 
 #endif

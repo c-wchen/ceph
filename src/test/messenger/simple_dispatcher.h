@@ -18,23 +18,23 @@
 #include "msg/Dispatcher.h"
 #include "msg/Messenger.h"
 
-class SimpleDispatcher: public Dispatcher {
-private:
-  bool active;
-  Messenger *messenger;
-  uint64_t dcount;
-public:
-  explicit SimpleDispatcher(Messenger *msgr);
-  ~SimpleDispatcher() override;
+class SimpleDispatcher:public Dispatcher {
+  private:
+    bool active;
+    Messenger *messenger;
+    uint64_t dcount;
+  public:
+     explicit SimpleDispatcher(Messenger * msgr);
+    ~SimpleDispatcher() override;
 
-  uint64_t get_dcount() { return dcount; }
+    uint64_t get_dcount() {
+        return dcount;
+    } void set_active() {
+        active = true;
+    };
 
-  void set_active() {
-    active = true;
-  };
-
-  // how i receive messages
-  bool ms_dispatch(Message *m) override;
+    // how i receive messages
+    bool ms_dispatch(Message * m) override;
 
   /**
    * This function will be called whenever a new Connection is made to the
@@ -43,26 +43,28 @@ public:
    * @param con The new Connection which has been established. You are not
    * granted a reference to it -- take one if you need one!
    */
-  void ms_handle_connect(Connection *con) override { };
+    void ms_handle_connect(Connection * con) override {
+    };
 
   /**
    * Callback indicating we have accepted an incoming connection.
    *
    * @param con The (new or existing) Connection associated with the session
    */
-  void ms_handle_accept(Connection *con) override { };
+    void ms_handle_accept(Connection * con) override {
+    };
 
-  /*
-   * this indicates that the ordered+reliable delivery semantics have
-   * been violated.  Messages may have been lost due to a fault
-   * in the network connection.
-   * Only called on lossy Connections or those you've
-   * designated mark_down_on_empty().
-   *
-   * @param con The Connection which broke. You are not granted
-   * a reference to it.
-   */
-  bool ms_handle_reset(Connection *con) override;
+    /*
+     * this indicates that the ordered+reliable delivery semantics have
+     * been violated.  Messages may have been lost due to a fault
+     * in the network connection.
+     * Only called on lossy Connections or those you've
+     * designated mark_down_on_empty().
+     *
+     * @param con The Connection which broke. You are not granted
+     * a reference to it.
+     */
+    bool ms_handle_reset(Connection * con) override;
 
   /**
    * This indicates that the ordered+reliable delivery semantics
@@ -73,9 +75,11 @@ public:
    * @param con The Connection which broke. You are not granted
    * a reference to it.
    */
-  void ms_handle_remote_reset(Connection *con) override;
-  
-  bool ms_handle_refused(Connection *con) override { return false; }
+    void ms_handle_remote_reset(Connection * con) override;
+
+    bool ms_handle_refused(Connection * con) override {
+        return false;
+    }
 
   /**
    * @defgroup Authentication
@@ -94,8 +98,10 @@ public:
    *
    * @return True if this function call properly filled in *a, false otherwise.
    */
-  bool ms_get_authorizer(int dest_type, AuthAuthorizer **a,
-				 bool force_new) override { return false; };
+    bool ms_get_authorizer(int dest_type, AuthAuthorizer ** a,
+                           bool force_new)override {
+        return false;
+    };
 
   /**
    * Verify the authorizer for a new incoming Connection.
@@ -112,15 +118,16 @@ public:
    * @return True if we were able to prove or disprove correctness of
    * authorizer, false otherwise.
    */
-  bool ms_verify_authorizer(Connection *con, int peer_type,
-			    int protocol, bufferlist& authorizer,
-			    bufferlist& authorizer_reply,
-			    bool& isvalid, CryptoKey& session_key,
-			    std::unique_ptr<AuthAuthorizerChallenge> *challenge) override {
-    /* always succeed */
-    isvalid = true;
-    return true;
-  };
+    bool ms_verify_authorizer(Connection * con, int peer_type,
+                              int protocol, bufferlist & authorizer,
+                              bufferlist & authorizer_reply,
+                              bool & isvalid, CryptoKey & session_key,
+                              std::unique_ptr < AuthAuthorizerChallenge >
+                              *challenge)override {
+        /* always succeed */
+        isvalid = true;
+        return true;
+    };
 
 };
 

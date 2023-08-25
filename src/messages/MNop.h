@@ -22,33 +22,31 @@
 /*
  * A message with no (remote) effect.
  */
-class MNop : public Message {
-public:
-  static const int HEAD_VERSION = 1;
-  static const int COMPAT_VERSION = 1;
+class MNop:public Message {
+  public:
+    static const int HEAD_VERSION = 1;
+    static const int COMPAT_VERSION = 1;
 
-  __u32 tag; // ignored tag value
+    __u32 tag;                  // ignored tag value
 
-  MNop()
-    : Message(MSG_NOP, HEAD_VERSION, COMPAT_VERSION)
-    {}
+     MNop()
+    :Message(MSG_NOP, HEAD_VERSION, COMPAT_VERSION) {
+    } ~MNop() {
+    }
 
-  ~MNop() {}
+    void encode_payload(uint64_t _features) {
+        ::encode(tag, payload);
+    }
 
-  void encode_payload(uint64_t _features) {
-    ::encode(tag, payload);
-  }
+    void decode_payload() {
+        bufferlist::iterator p = payload.begin();
+        ::decode(tag, p);
+    }
 
-  void decode_payload() {
-    bufferlist::iterator p = payload.begin();
-    ::decode(tag, p);
-  }
-
-  const char *get_type_name() const { return "MNop"; }
-
-  void print(ostream& out) const {
-    out << get_type_name() << " ";
-  }
-}; /* MNop */
+    const char *get_type_name() const {
+        return "MNop";
+    } void print(ostream & out) const {
+        out << get_type_name() << " ";
+}};                             /* MNop */
 
 #endif /* CEPH_MSG_NOP_H */

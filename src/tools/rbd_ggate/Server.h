@@ -11,78 +11,75 @@
 #include "common/Thread.h"
 
 namespace rbd {
-namespace ggate {
+    namespace ggate {
 
-class Driver;
-struct Request;
+        class Driver;
+        struct Request;
 
-class Server {
-public:
-  Server(Driver *drv, librbd::Image& image);
+        class Server {
+          public:
+            Server(Driver * drv, librbd::Image & image);
 
-  void run();
+            void run();
 
-private:
-  struct IOContext {
-    xlist<IOContext*>::item item;
-    Server *server;
-    Request *req = nullptr;
+          private:
+            struct IOContext {
+                xlist < IOContext * >::item item;
+                Server *server;
+                Request *req = nullptr;
 
-    IOContext(Server *server) : item(this), server(server) {
-    }
-  };
+                 IOContext(Server * server):item(this), server(server) {
+            }};
 
-  class ThreadHelper : public Thread {
-  public:
-    typedef void (Server::*entry_func)();
+            class ThreadHelper:public Thread {
+              public:
+                typedef void (Server::*entry_func) ();
 
-    ThreadHelper(Server *server, entry_func func)
-      : server(server), func(func) {
-    }
+                 ThreadHelper(Server * server, entry_func func)
+                :server(server), func(func) {
+              } protected:
+                 virtual void *entry() {
+                    (server->*func) ();
+                    return nullptr;
+              } private:
+                 Server * server;
+                entry_func func;
+            };
 
-  protected:
-    virtual void* entry() {
-      (server->*func)();
-      return nullptr;
-    }
+            friend std::ostream & operator<<(std::ostream & os,
+                                             const IOContext & ctx);
 
-  private:
-    Server *server;
-    entry_func func;
-  };
+            Driver *m_drv;
+            librbd::Image & m_image;
 
-  friend std::ostream &operator<<(std::ostream &os, const IOContext &ctx);
+            mutable Mutex m_lock;
+            Cond m_cond;
+            bool m_stopping = false;
+            ThreadHelper m_reader_thread, m_writer_thread;
+            xlist < IOContext * >m_io_pending;
+            xlist < IOContext * >m_io_finished;
 
-  Driver *m_drv;
-  librbd::Image &m_image;
+            static void aio_callback(librbd::completion_t cb, void *arg);
 
-  mutable Mutex m_lock;
-  Cond m_cond;
-  bool m_stopping = false;
-  ThreadHelper m_reader_thread, m_writer_thread;
-  xlist<IOContext*> m_io_pending;
-  xlist<IOContext*> m_io_finished;
+            int start();
+            void stop();
 
-  static void aio_callback(librbd::completion_t cb, void *arg);
+            void reader_entry();
+            void writer_entry();
 
-  int start();
-  void stop();
+            void io_start(IOContext * ctx);
+            void io_finish(IOContext * ctx);
 
-  void reader_entry();
-  void writer_entry();
+            IOContext *wait_io_finish();
+            void wait_clean();
 
-  void io_start(IOContext *ctx);
-  void io_finish(IOContext *ctx);
+            void handle_aio(IOContext * ctx, int r);
+        };
 
-  IOContext *wait_io_finish();
-  void wait_clean();
+        std::ostream & operator<<(std::ostream & os,
+                                  const Server::IOContext & ctx);
 
-  void handle_aio(IOContext *ctx, int r);
-};
-
-std::ostream &operator<<(std::ostream &os, const Server::IOContext &ctx);
-
-} // namespace ggate
-} // namespace rbd
+    }                           // namespace ggate
+}                               // namespace rbd
 
 #endif // CEPH_RBD_GGATE_SERVER_H

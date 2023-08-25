@@ -23,37 +23,37 @@
 #include <map>
 using std::map;
 
-class MMDSLoadTargets : public PaxosServiceMessage {
- public:
-  mds_gid_t global_id;
-  set<mds_rank_t> targets;
+class MMDSLoadTargets:public PaxosServiceMessage {
+  public:
+    mds_gid_t global_id;
+    set < mds_rank_t > targets;
 
-  MMDSLoadTargets() : PaxosServiceMessage(MSG_MDS_OFFLOAD_TARGETS, 0) {}
+    MMDSLoadTargets():PaxosServiceMessage(MSG_MDS_OFFLOAD_TARGETS, 0) {
+    } MMDSLoadTargets(mds_gid_t g, set < mds_rank_t > &mds_targets):
+        PaxosServiceMessage(MSG_MDS_OFFLOAD_TARGETS, 0),
+        global_id(g), targets(mds_targets) {
+    }
+  private:
+    ~MMDSLoadTargets()override {
+    }
 
-  MMDSLoadTargets(mds_gid_t g, set<mds_rank_t>& mds_targets) :
-    PaxosServiceMessage(MSG_MDS_OFFLOAD_TARGETS, 0),
-    global_id(g), targets(mds_targets) {}
-private:
-  ~MMDSLoadTargets() override {}
+  public:
+    const char *get_type_name() const override {
+        return "mds_load_targets";
+    } void print(ostream & o) const override {
+        o << "mds_load_targets(" << global_id << " " << targets << ")";
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        paxos_decode(p);
+        ::decode(global_id, p);
+        ::decode(targets, p);
+    }
 
-public:
-  const char* get_type_name() const override { return "mds_load_targets"; }
-  void print(ostream& o) const override {
-    o << "mds_load_targets(" << global_id << " " << targets << ")";
-  }
-
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    paxos_decode(p);
-    ::decode(global_id, p);
-    ::decode(targets, p);
-  }
-
-  void encode_payload(uint64_t features) override {
-    paxos_encode();
-    ::encode(global_id, payload);
-    ::encode(targets, payload);
-  }
+    void encode_payload(uint64_t features) override {
+        paxos_encode();
+        ::encode(global_id, payload);
+        ::encode(targets, payload);
+    }
 };
 
 #endif

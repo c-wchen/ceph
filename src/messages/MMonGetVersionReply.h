@@ -24,41 +24,38 @@
  * MMonGetVersion. The latest version of the requested thing is sent
  * back.
  */
-class MMonGetVersionReply : public Message {
+class MMonGetVersionReply:public Message {
 
-  static const int HEAD_VERSION = 2;
+    static const int HEAD_VERSION = 2;
 
-public:
-  MMonGetVersionReply() : Message(CEPH_MSG_MON_GET_VERSION_REPLY, HEAD_VERSION) { }
+  public:
+     MMonGetVersionReply():Message(CEPH_MSG_MON_GET_VERSION_REPLY, HEAD_VERSION) {
+    } const char *get_type_name() const override {
+        return "mon_get_version_reply";
+    } void print(ostream & o) const override {
+        o << "mon_get_version_reply(handle=" << handle << " version=" << version
+            << ")";
+    } void encode_payload(uint64_t features) override {
+        ::encode(handle, payload);
+        ::encode(version, payload);
+        ::encode(oldest_version, payload);
+    }
 
-  const char *get_type_name() const override {
-    return "mon_get_version_reply";
-  }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(handle, p);
+        ::decode(version, p);
+        if (header.version >= 2)
+            ::decode(oldest_version, p);
+    }
 
-  void print(ostream& o) const override {
-    o << "mon_get_version_reply(handle=" << handle << " version=" << version << ")";
-  }
+    ceph_tid_t handle = 0;
+    version_t version = 0;
+    version_t oldest_version = 0;
 
-  void encode_payload(uint64_t features) override {
-    ::encode(handle, payload);
-    ::encode(version, payload);
-    ::encode(oldest_version, payload);
-  }
-
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(handle, p);
-    ::decode(version, p);
-    if (header.version >= 2)
-      ::decode(oldest_version, p);
-  }
-
-  ceph_tid_t handle = 0;
-  version_t version = 0;
-  version_t oldest_version = 0;
-
-private:
-  ~MMonGetVersionReply() override {}
+  private:
+    ~MMonGetVersionReply()override {
+    }
 };
 
 #endif

@@ -11,40 +11,39 @@ class Context;
 
 namespace librbd {
 
-struct ImageCtx;
+    struct ImageCtx;
 
-namespace watcher { class Notifier; }
+    namespace watcher {
+        class Notifier;
+    } namespace image_watcher {
 
-namespace image_watcher {
+        class NotifyLockOwner {
+          public:
+            static NotifyLockOwner *create(ImageCtx & image_ctx,
+                                           watcher::Notifier & notifier,
+                                           bufferlist
+                                           && bl, Context * on_finish) {
+                return new NotifyLockOwner(image_ctx, notifier, std::move(bl),
+                                           on_finish);
+            } NotifyLockOwner(ImageCtx & image_ctx,
+                              watcher::Notifier & notifier, bufferlist
+                              && bl, Context * on_finish);
 
-class NotifyLockOwner {
-public:
-  static NotifyLockOwner *create(ImageCtx &image_ctx,
-                                 watcher::Notifier &notifier,
-                                 bufferlist &&bl, Context *on_finish) {
-    return new NotifyLockOwner(image_ctx, notifier, std::move(bl), on_finish);
-  }
+            void send();
 
-  NotifyLockOwner(ImageCtx &image_ctx, watcher::Notifier &notifier,
-                  bufferlist &&bl, Context *on_finish);
+          private:
+             ImageCtx & m_image_ctx;
+             watcher::Notifier & m_notifier;
 
-  void send();
+            bufferlist m_bl;
+             watcher::NotifyResponse m_notify_response;
+            Context *m_on_finish;
 
-private:
-  ImageCtx &m_image_ctx;
-  watcher::Notifier &m_notifier;
+            void send_notify();
+            void handle_notify(int r);
 
-  bufferlist m_bl;
-  watcher::NotifyResponse m_notify_response;
-  Context *m_on_finish;
+            void finish(int r);
+        };
 
-  void send_notify();
-  void handle_notify(int r);
-
-  void finish(int r);
-};
-
-} // namespace image_watcher
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_IMAGE_WATCHER_NOTIFY_LOCK_OWNER_H
+} // namespace image_watcher }  // namespace librbd
+#endif                          // CEPH_LIBRBD_IMAGE_WATCHER_NOTIFY_LOCK_OWNER_H

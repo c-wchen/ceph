@@ -21,163 +21,156 @@
 
 namespace crimson {
 
-  namespace simple_scheduler {
+    namespace simple_scheduler {
 
-    template<typename C, typename R, typename Time>
-    class SimpleQueue {
+        template < typename C, typename R, typename Time > class SimpleQueue {
 
-    public:
+          public:
 
-      using RequestRef = std::unique_ptr<R>;
+            using RequestRef = std::unique_ptr < R >;
 
-      // a function to see whether the server can handle another request
-      using CanHandleRequestFunc = std::function<bool(void)>;
+            // a function to see whether the server can handle another request
+            using CanHandleRequestFunc = std::function < bool(void)>;
 
-      // a function to submit a request to the server; the second
-      // parameter is a callback when it's completed
-      using HandleRequestFunc =
-	std::function<void(const C&,RequestRef,NullData)>;
+            // a function to submit a request to the server; the second
+            // parameter is a callback when it's completed
+            using HandleRequestFunc =
+                std::function < void (const C &, RequestRef, NullData) >;
 
-      struct PullReq {
-	enum class Type { returning, none };
+            struct PullReq {
+                enum class Type { returning, none };
 
-	struct Retn {
-	  C           client;
-	  RequestRef  request;
-	};
+                struct Retn {
+                    C client;
+                    RequestRef request;
+                };
 
-	Type                 type;
-	boost::variant<Retn> data;
-      };
+                Type type;
+                 boost::variant < Retn > data;
+            };
 
-    protected:
+          protected:
 
-      enum class Mechanism { push, pull };
+            enum class Mechanism { push, pull };
 
-      struct QRequest {
-	C          client;
-	RequestRef request;
-      };
+            struct QRequest {
+                C client;
+                RequestRef request;
+            };
 
-      bool finishing = false;
-      Mechanism mechanism;
+            bool finishing = false;
+            Mechanism mechanism;
 
-      CanHandleRequestFunc can_handle_f;
-      HandleRequestFunc handle_f;
+            CanHandleRequestFunc can_handle_f;
+            HandleRequestFunc handle_f;
 
-      mutable std::mutex queue_mtx;
-      using DataGuard = std::lock_guard<decltype(queue_mtx)>;
+            mutable std::mutex queue_mtx;
+            using DataGuard = std::lock_guard < decltype(queue_mtx) >;
 
-      std::deque<QRequest> queue;
-
-#ifdef PROFILE
-    public:
-      ProfileTimer<std::chrono::nanoseconds> pull_request_timer;
-      ProfileTimer<std::chrono::nanoseconds> add_request_timer;
-      ProfileTimer<std::chrono::nanoseconds> request_complete_timer;
-    protected:
-#endif
-
-    public:
-
-      // push full constructor
-      SimpleQueue(CanHandleRequestFunc _can_handle_f,
-		  HandleRequestFunc _handle_f) :
-	mechanism(Mechanism::push),
-	can_handle_f(_can_handle_f),
-	handle_f(_handle_f)
-      {
-	// empty
-      }
-
-      SimpleQueue() :
-	mechanism(Mechanism::pull)
-      {
-	// empty
-      }
-
-      ~SimpleQueue() {
-	finishing = true;
-      }
-
-      void add_request(R&& request,
-		       const C& client_id,
-		       const ReqParams& req_params) {
-	add_request(RequestRef(new R(std::move(request))),
-		    client_id, req_params);
-      }
-
-      void add_request(RequestRef&& request,
-		       const C& client_id,
-		       const ReqParams& req_params) {
-	DataGuard g(queue_mtx);
+             std::deque < QRequest > queue;
 
 #ifdef PROFILE
-	add_request_timer.start();
+          public:
+             ProfileTimer < std::chrono::nanoseconds > pull_request_timer;
+             ProfileTimer < std::chrono::nanoseconds > add_request_timer;
+             ProfileTimer < std::chrono::nanoseconds > request_complete_timer;
+          protected:
 #endif
-	queue.emplace_back(QRequest{client_id, std::move(request)});
 
-	if (Mechanism::push == mechanism) {
-	  schedule_request();
-	}
+          public:
+
+            // push full constructor
+             SimpleQueue(CanHandleRequestFunc _can_handle_f,
+                         HandleRequestFunc _handle_f):mechanism(Mechanism::
+                                                                push),
+                can_handle_f(_can_handle_f), handle_f(_handle_f) {
+                // empty
+            } SimpleQueue():mechanism(Mechanism::pull) {
+                // empty
+            } ~SimpleQueue() {
+                finishing = true;
+            }
+
+            void add_request(R && request,
+                             const C & client_id,
+                             const ReqParams & req_params) {
+                add_request(RequestRef(new R(std::move(request))),
+                            client_id, req_params);
+            }
+
+            void add_request(RequestRef && request,
+                             const C & client_id,
+                             const ReqParams & req_params) {
+                DataGuard g(queue_mtx);
 
 #ifdef PROFILE
-	add_request_timer.stop();
+                add_request_timer.start();
 #endif
-      } // add_request
+                queue.emplace_back(QRequest {
+                                   client_id, std::move(request)});
 
-      void request_completed() {
-	assert(Mechanism::push == mechanism);
-	DataGuard g(queue_mtx);
+                if (Mechanism::push == mechanism) {
+                    schedule_request();
+                }
 
 #ifdef PROFILE
-	request_complete_timer.start();
+                add_request_timer.stop();
 #endif
-	schedule_request();
+            }                   // add_request
+
+            void request_completed() {
+                assert(Mechanism::push == mechanism);
+                DataGuard g(queue_mtx);
 
 #ifdef PROFILE
-	request_complete_timer.stop();
+                request_complete_timer.start();
 #endif
-      } // request_completed
-
-      PullReq pull_request() {
-	assert(Mechanism::pull == mechanism);
-	PullReq result;
-	DataGuard g(queue_mtx);
+                schedule_request();
 
 #ifdef PROFILE
-	pull_request_timer.start();
+                request_complete_timer.stop();
 #endif
+            }                   // request_completed
 
-	if (queue.empty()) {
-	  result.type = PullReq::Type::none;
-	} else {
-	  auto front = queue.front();
-	  result.type = PullReq::Type::returning;
-	  result.data =
-	    typename PullReq::Retn{front.client, std::move(front.request)};
-	  queue.pop();
-	}
+            PullReq pull_request() {
+                assert(Mechanism::pull == mechanism);
+                PullReq result;
+                DataGuard g(queue_mtx);
 
 #ifdef PROFILE
-	pull_request_timer.stop();
+                pull_request_timer.start();
 #endif
 
-	return result;
-      }
+                if (queue.empty()) {
+                    result.type = PullReq::Type::none;
+                }
+                else {
+                    auto front = queue.front();
+                    result.type = PullReq::Type::returning;
+                    result.data = typename PullReq::Retn {
+                    front.client, std::move(front.request)};
+                    queue.pop();
+                }
 
-    protected:
+#ifdef PROFILE
+                pull_request_timer.stop();
+#endif
 
-      // queue_mtx should be held when called; should only be called
-      // when mechanism is push
-      void schedule_request() {
-	if (!queue.empty() && can_handle_f()) {
-	  auto& front = queue.front();
-	  static NullData null_data;
-	  handle_f(front.client, std::move(front.request), null_data);
-	  queue.pop_front();
-	}
-      }
+                return result;
+            }
+
+          protected:
+
+            // queue_mtx should be held when called; should only be called
+            // when mechanism is push
+            void schedule_request() {
+                if (!queue.empty() && can_handle_f()) {
+                    auto & front = queue.front();
+                    static NullData null_data;
+                    handle_f(front.client, std::move(front.request), null_data);
+                    queue.pop_front();
+                }
+            }
+        };
     };
-  };
 };

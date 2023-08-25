@@ -36,48 +36,52 @@
  * implemented, and the file is read-only.
  */
 class ConfLine {
-public:
-  ConfLine(const std::string &key_, const std::string val_,
-	   const std::string newsection_, const std::string comment_, int line_no_);
-  bool operator<(const ConfLine &rhs) const;
-  friend std::ostream &operator<<(std::ostream& oss, const ConfLine &l);
+  public:
+    ConfLine(const std::string & key_, const std::string val_,
+             const std::string newsection_, const std::string comment_,
+             int line_no_);
+    bool operator<(const ConfLine & rhs) const;
+    friend std::ostream & operator<<(std::ostream & oss, const ConfLine & l);
 
-  std::string key, val, newsection;
+     std::string key, val, newsection;
 };
 
 class ConfSection {
-public:
-  typedef std::set <ConfLine>::const_iterator const_line_iter_t;
+  public:
+    typedef std::set < ConfLine >::const_iterator const_line_iter_t;
 
-  std::set <ConfLine> lines;
+     std::set < ConfLine > lines;
 };
 
 class ConfFile {
-public:
-  typedef std::map <std::string, ConfSection>::iterator section_iter_t;
-  typedef std::map <std::string, ConfSection>::const_iterator const_section_iter_t;
+  public:
+    typedef std::map < std::string, ConfSection >::iterator section_iter_t;
+    typedef std::map < std::string,
+        ConfSection >::const_iterator const_section_iter_t;
 
-  ConfFile();
-  ~ConfFile();
-  void clear();
-  int parse_file(const std::string &fname, std::deque<std::string> *errors, std::ostream *warnings);
-  int read(const std::string &section, const std::string &key,
-	      std::string &val) const;
+     ConfFile();
+    ~ConfFile();
+    void clear();
+    int parse_file(const std::string & fname,
+                   std::deque < std::string > *errors, std::ostream * warnings);
+    int read(const std::string & section, const std::string & key,
+             std::string & val) const;
 
-  const_section_iter_t sections_begin() const;
-  const_section_iter_t sections_end() const;
+    const_section_iter_t sections_begin() const;
+    const_section_iter_t sections_end() const;
 
-  static void trim_whitespace(std::string &str, bool strip_internal);
-  static std::string normalize_key_name(const std::string &key);
-  friend std::ostream &operator<<(std::ostream &oss, const ConfFile &cf);
+    static void trim_whitespace(std::string & str, bool strip_internal);
+    static std::string normalize_key_name(const std::string & key);
+    friend std::ostream & operator<<(std::ostream & oss, const ConfFile & cf);
 
-private:
-  void load_from_buffer(const char *buf, size_t sz,
-			std::deque<std::string> *errors, std::ostream *warnings);
-  static ConfLine* process_line(int line_no, const char *line,
-			        std::deque<std::string> *errors);
+  private:
+    void load_from_buffer(const char *buf, size_t sz,
+                          std::deque < std::string > *errors,
+                          std::ostream * warnings);
+    static ConfLine *process_line(int line_no, const char *line,
+                                  std::deque < std::string > *errors);
 
-  std::map <std::string, ConfSection> sections;
+     std::map < std::string, ConfSection > sections;
 };
 
 #endif

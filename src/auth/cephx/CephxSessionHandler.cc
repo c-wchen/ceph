@@ -21,150 +21,166 @@
 #include "common/config.h"
 #include "include/ceph_features.h"
 #include "msg/Message.h"
- 
+
 #define dout_subsys ceph_subsys_auth
 
-int CephxSessionHandler::_calc_signature(Message *m, uint64_t *psig)
+int CephxSessionHandler::_calc_signature(Message * m, uint64_t * psig)
 {
-  const ceph_msg_header& header = m->get_header();
-  const ceph_msg_footer& footer = m->get_footer();
+    const ceph_msg_header & header = m->get_header();
+    const ceph_msg_footer & footer = m->get_footer();
 
-  if (!HAVE_FEATURE(features, CEPHX_V2)) {
-    // legacy pre-mimic behavior for compatibility
+    if (!HAVE_FEATURE(features, CEPHX_V2)) {
+        // legacy pre-mimic behavior for compatibility
 
-    // optimized signature calculation
-    // - avoid temporary allocated buffers from encode_encrypt[_enc_bl]
-    // - skip the leading 4 byte wrapper from encode_encrypt
-    struct {
-      __u8 v;
-      __le64 magic;
-      __le32 len;
-      __le32 header_crc;
-      __le32 front_crc;
-      __le32 middle_crc;
-      __le32 data_crc;
-    } __attribute__ ((packed)) sigblock = {
-      1, mswab(AUTH_ENC_MAGIC), mswab<uint32_t>(4*4),
-      mswab<uint32_t>(header.crc), mswab<uint32_t>(footer.front_crc),
-      mswab<uint32_t>(footer.middle_crc), mswab<uint32_t>(footer.data_crc)
-    };
+        // optimized signature calculation
+        // - avoid temporary allocated buffers from encode_encrypt[_enc_bl]
+        // - skip the leading 4 byte wrapper from encode_encrypt
+        struct {
+            __u8 v;
+            __le64 magic;
+            __le32 len;
+            __le32 header_crc;
+            __le32 front_crc;
+            __le32 middle_crc;
+            __le32 data_crc;
+        } __attribute__ ((packed)) sigblock = {
+            1, mswab(AUTH_ENC_MAGIC), mswab < uint32_t > (4 * 4),
+                mswab < uint32_t > (header.crc),
+                mswab < uint32_t > (footer.front_crc),
+                mswab < uint32_t > (footer.middle_crc),
+                mswab < uint32_t > (footer.data_crc)
+        };
 
-    bufferlist bl_plaintext;
-    bl_plaintext.append(buffer::create_static(sizeof(sigblock),
-					      (char*)&sigblock));
+        bufferlist bl_plaintext;
+        bl_plaintext.append(buffer::create_static(sizeof(sigblock),
+                                                  (char *)&sigblock));
 
-    bufferlist bl_ciphertext;
-    if (key.encrypt(cct, bl_plaintext, bl_ciphertext, NULL) < 0) {
-      lderr(cct) << __func__ << " failed to encrypt signature block" << dendl;
-      return -1;
+        bufferlist bl_ciphertext;
+        if (key.encrypt(cct, bl_plaintext, bl_ciphertext, NULL) < 0) {
+            lderr(cct) << __func__ << " failed to encrypt signature block" <<
+                dendl;
+            return -1;
+        }
+
+        bufferlist::iterator ci = bl_ciphertext.begin();
+        ::decode(*psig, ci);
+    }
+    else {
+        // newer mimic+ signatures
+        struct {
+            __le32 header_crc;
+            __le32 front_crc;
+            __le32 front_len;
+            __le32 middle_crc;
+            __le32 middle_len;
+            __le32 data_crc;
+            __le32 data_len;
+            __le32 seq_lower_word;
+        } __attribute__ ((packed)) sigblock = {
+            mswab < uint32_t > (header.crc),
+                mswab < uint32_t > (footer.front_crc),
+                mswab < uint32_t > (header.front_len),
+                mswab < uint32_t > (footer.middle_crc),
+                mswab < uint32_t > (header.middle_len),
+                mswab < uint32_t > (footer.data_crc),
+                mswab < uint32_t > (header.data_len),
+                mswab < uint32_t > (header.seq)
+        };
+
+        bufferlist bl_plaintext;
+        bl_plaintext.append(buffer::create_static(sizeof(sigblock),
+                                                  (char *)&sigblock));
+
+        bufferlist bl_ciphertext;
+        if (key.encrypt(cct, bl_plaintext, bl_ciphertext, NULL) < 0) {
+            lderr(cct) << __func__ << " failed to encrypt signature block" <<
+                dendl;
+            return -1;
+        }
+
+        struct enc {
+            __le64 a, b, c, d;
+        } *penc = reinterpret_cast < enc * >(bl_ciphertext.c_str());
+        *psig = penc->a ^ penc->b ^ penc->c ^ penc->d;
     }
 
-    bufferlist::iterator ci = bl_ciphertext.begin();
-    ::decode(*psig, ci);
-  } else {
-    // newer mimic+ signatures
-    struct {
-      __le32 header_crc;
-      __le32 front_crc;
-      __le32 front_len;
-      __le32 middle_crc;
-      __le32 middle_len;
-      __le32 data_crc;
-      __le32 data_len;
-      __le32 seq_lower_word;
-    } __attribute__ ((packed)) sigblock = {
-      mswab<uint32_t>(header.crc),
-      mswab<uint32_t>(footer.front_crc),
-      mswab<uint32_t>(header.front_len),
-      mswab<uint32_t>(footer.middle_crc),
-      mswab<uint32_t>(header.middle_len),
-      mswab<uint32_t>(footer.data_crc),
-      mswab<uint32_t>(header.data_len),
-      mswab<uint32_t>(header.seq)
-    };
+    ldout(cct, 10) << __func__ << " seq " << m->get_seq()
+        << " front_crc_ = " << footer.front_crc
+        << " middle_crc = " << footer.middle_crc
+        << " data_crc = " << footer.data_crc << " sig = " << *psig << dendl;
+    return 0;
+}
 
-    bufferlist bl_plaintext;
-    bl_plaintext.append(buffer::create_static(sizeof(sigblock),
-					      (char*)&sigblock));
-
-    bufferlist bl_ciphertext;
-    if (key.encrypt(cct, bl_plaintext, bl_ciphertext, NULL) < 0) {
-      lderr(cct) << __func__ << " failed to encrypt signature block" << dendl;
-      return -1;
+int CephxSessionHandler::sign_message(Message * m)
+{
+    // If runtime signing option is off, just return success without signing.
+    if (!cct->_conf->cephx_sign_messages) {
+        return 0;
     }
 
-    struct enc {
-      __le64 a, b, c, d;
-    } *penc = reinterpret_cast<enc*>(bl_ciphertext.c_str());
-    *psig = penc->a ^ penc->b ^ penc->c ^ penc->d;
-  }
+    uint64_t sig;
+    int r = _calc_signature(m, &sig);
+    if (r < 0)
+        return r;
 
-  ldout(cct, 10) << __func__ << " seq " << m->get_seq()
-		 << " front_crc_ = " << footer.front_crc
-		 << " middle_crc = " << footer.middle_crc
-		 << " data_crc = " << footer.data_crc
-		 << " sig = " << *psig
-		 << dendl;
-  return 0;
+    ceph_msg_footer & f = m->get_footer();
+    f.sig = sig;
+    f.flags = (unsigned)f.flags | CEPH_MSG_FOOTER_SIGNED;
+    ldout(cct,
+          20) << "Putting signature in client message(seq # " << m->get_seq()
+        << "): sig = " << sig << dendl;
+    return 0;
 }
 
-int CephxSessionHandler::sign_message(Message *m)
+int CephxSessionHandler::check_message_signature(Message * m)
 {
-  // If runtime signing option is off, just return success without signing.
-  if (!cct->_conf->cephx_sign_messages) {
-    return 0;
-  }
-
-  uint64_t sig;
-  int r = _calc_signature(m, &sig);
-  if (r < 0)
-    return r;
-
-  ceph_msg_footer& f = m->get_footer();
-  f.sig = sig;
-  f.flags = (unsigned)f.flags | CEPH_MSG_FOOTER_SIGNED;
-  ldout(cct, 20) << "Putting signature in client message(seq # " << m->get_seq()
-		 << "): sig = " << sig << dendl;
-  return 0;
-}
-
-int CephxSessionHandler::check_message_signature(Message *m)
-{
-  // If runtime signing option is off, just return success without checking signature.
-  if (!cct->_conf->cephx_sign_messages) {
-    return 0;
-  }
-  if ((features & CEPH_FEATURE_MSG_AUTH) == 0) {
-    // it's fine, we didn't negotiate this feature.
-    return 0;
-  }
-
-  uint64_t sig;
-  int r = _calc_signature(m, &sig);
-  if (r < 0)
-    return r;
-
-  if (sig != m->get_footer().sig) {
-    // Should have been signed, but signature check failed.  PLR
-    if (!(m->get_footer().flags & CEPH_MSG_FOOTER_SIGNED)) {
-      ldout(cct, 0) << "SIGN: MSG " << m->get_seq() << " Sender did not set CEPH_MSG_FOOTER_SIGNED." << dendl;
+    // If runtime signing option is off, just return success without checking signature.
+    if (!cct->_conf->cephx_sign_messages) {
+        return 0;
     }
-    ldout(cct, 0) << "SIGN: MSG " << m->get_seq() << " Message signature does not match contents." << dendl;
-    ldout(cct, 0) << "SIGN: MSG " << m->get_seq() << "Signature on message:" << dendl;
-    ldout(cct, 0) << "SIGN: MSG " << m->get_seq() << "    sig: " << m->get_footer().sig << dendl;
-    ldout(cct, 0) << "SIGN: MSG " << m->get_seq() << "Locally calculated signature:" << dendl;
-    ldout(cct, 0) << "SIGN: MSG " << m->get_seq() << "    sig_check:" << sig << dendl;
+    if ((features & CEPH_FEATURE_MSG_AUTH) == 0) {
+        // it's fine, we didn't negotiate this feature.
+        return 0;
+    }
 
-    // For the moment, printing an error message to the log and
-    // returning failure is sufficient.  In the long term, we should
-    // probably have code parsing the log looking for this kind of
-    // security failure, particularly when there are large numbers of
-    // them, since the latter is a potential sign of an attack.  PLR
+    uint64_t sig;
+    int r = _calc_signature(m, &sig);
+    if (r < 0)
+        return r;
 
-    ldout(cct, 0) << "Signature failed." << dendl;
-    return (SESSION_SIGNATURE_FAILURE);
-  }
+    if (sig != m->get_footer().sig) {
+        // Should have been signed, but signature check failed.  PLR
+        if (!(m->get_footer().flags & CEPH_MSG_FOOTER_SIGNED)) {
+            ldout(cct,
+                  0) << "SIGN: MSG " << m->
+                get_seq() << " Sender did not set CEPH_MSG_FOOTER_SIGNED." <<
+                dendl;
+        }
+        ldout(cct,
+              0) << "SIGN: MSG " << m->
+            get_seq() << " Message signature does not match contents." << dendl;
+        ldout(cct,
+              0) << "SIGN: MSG " << m->
+            get_seq() << "Signature on message:" << dendl;
+        ldout(cct,
+              0) << "SIGN: MSG " << m->get_seq() << "    sig: " << m->
+            get_footer().sig << dendl;
+        ldout(cct,
+              0) << "SIGN: MSG " << m->
+            get_seq() << "Locally calculated signature:" << dendl;
+        ldout(cct,
+              0) << "SIGN: MSG " << m->
+            get_seq() << "    sig_check:" << sig << dendl;
 
-  return 0;
+        // For the moment, printing an error message to the log and
+        // returning failure is sufficient.  In the long term, we should
+        // probably have code parsing the log looking for this kind of
+        // security failure, particularly when there are large numbers of
+        // them, since the latter is a potential sign of an attack.  PLR
+
+        ldout(cct, 0) << "Signature failed." << dendl;
+        return (SESSION_SIGNATURE_FAILURE);
+    }
+
+    return 0;
 }
-

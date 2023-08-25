@@ -5,22 +5,17 @@
 #define CEPH_LIBRBD_JOURNAL_TYPE_TRAITS_H
 
 namespace journal {
-class Future;
-class Journaler;
-class ReplayEntry;
-}
+    class Future;
+    class Journaler;
+    class ReplayEntry;
+} namespace librbd {
+    namespace journal {
 
-namespace librbd {
-namespace journal {
+        template < typename ImageCtxT > struct TypeTraits {
+            typedef::journal::Journaler Journaler;
+            typedef::journal::Future Future;
+            typedef::journal::ReplayEntry ReplayEntry;
+        };
 
-template <typename ImageCtxT>
-struct TypeTraits {
-  typedef ::journal::Journaler Journaler;
-  typedef ::journal::Future Future;
-  typedef ::journal::ReplayEntry ReplayEntry;
-};
-
-} // namespace journal
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_JOURNAL_TYPE_TRAITS_H
+} // namespace journal }        // namespace librbd
+#endif                          // CEPH_LIBRBD_JOURNAL_TYPE_TRAITS_H

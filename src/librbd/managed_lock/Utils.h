@@ -8,16 +8,13 @@
 #include <string>
 
 namespace librbd {
-namespace managed_lock {
-namespace util {
+    namespace managed_lock {
+        namespace util {
 
-const std::string &get_watcher_lock_tag();
+            const std::string & get_watcher_lock_tag();
 
-bool decode_lock_cookie(const std::string &tag, uint64_t *handle);
-std::string encode_lock_cookie(uint64_t watch_handle);
+            bool decode_lock_cookie(const std::string & tag, uint64_t * handle);
+             std::string encode_lock_cookie(uint64_t watch_handle);
 
-} // namespace util
-} // namespace managed_lock
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_MANAGED_LOCK_UTILS_H
+} // namespace util } // namespace managed_lock }   // namespace librbd
+#endif                          // CEPH_LIBRBD_MANAGED_LOCK_UTILS_H

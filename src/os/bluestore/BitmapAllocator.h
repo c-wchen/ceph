@@ -12,39 +12,32 @@
 #include "include/mempool.h"
 #include "common/debug.h"
 
-class BitmapAllocator : public Allocator,
-  public AllocatorLevel02<AllocatorLevel01Loose> {
-  CephContext* cct;
+class BitmapAllocator:public Allocator,
+    public AllocatorLevel02 < AllocatorLevel01Loose > {
+    CephContext *cct;
 
-public:
-  BitmapAllocator(CephContext* _cct, int64_t capacity, int64_t alloc_unit);
-  ~BitmapAllocator() override
-  {
-  }
+  public:
+     BitmapAllocator(CephContext * _cct, int64_t capacity, int64_t alloc_unit);
+    ~BitmapAllocator() override {
+    } int64_t allocate(uint64_t want_size, uint64_t alloc_unit,
+                       uint64_t max_alloc_size, int64_t hint,
+                       PExtentVector * extents) override;
 
+    void release(const interval_set < uint64_t > &release_set) override;
 
-  int64_t allocate(
-    uint64_t want_size, uint64_t alloc_unit, uint64_t max_alloc_size,
-    int64_t hint, PExtentVector *extents) override;
+    uint64_t get_free() override {
+        return get_available();
+    }
 
-  void release(
-    const interval_set<uint64_t>& release_set) override;
+    void dump() override;
+    double get_fragmentation(uint64_t) override {
+        return _get_fragmentation();
+    }
 
-  uint64_t get_free() override
-  {
-    return get_available();
-  }
+    void init_add_free(uint64_t offset, uint64_t length) override;
+    void init_rm_free(uint64_t offset, uint64_t length) override;
 
-  void dump() override;
-  double get_fragmentation(uint64_t) override
-  {
-    return _get_fragmentation();
-  }
-
-  void init_add_free(uint64_t offset, uint64_t length) override;
-  void init_rm_free(uint64_t offset, uint64_t length) override;
-
-  void shutdown() override;
+    void shutdown() override;
 };
 
 #endif

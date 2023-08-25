@@ -16,61 +16,59 @@
 #include "messages/MPing.h"
 #include "messages/MDataPing.h"
 
-XioDispatcher::XioDispatcher(Messenger *msgr) :
-  Dispatcher(msgr->cct),
-  active(false),
-  messenger(msgr),
-  dcount(0)
+XioDispatcher::XioDispatcher(Messenger * msgr):
+Dispatcher(msgr->cct), active(false), messenger(msgr), dcount(0)
 {
-  // nothing
+    // nothing
 }
 
-XioDispatcher::~XioDispatcher() {
-  // nothing
+XioDispatcher::~XioDispatcher()
+{
+    // nothing
 }
 
-bool XioDispatcher::ms_dispatch(Message *m)
+bool XioDispatcher::ms_dispatch(Message * m)
 {
-  ConnectionRef conn;
-  uint64_t dc = 0;
+    ConnectionRef conn;
+    uint64_t dc = 0;
 
-  dc = dcount++;
+    dc = dcount++;
 
-  switch (m->get_type()) {
-  case CEPH_MSG_PING:
-    break;
-  case MSG_DATA_PING:
-  {
-    MDataPing* mdp __attribute__((unused)) = static_cast<MDataPing*>(m);
-    //cout << "MDataPing " << mdp->tag << " " << mdp->counter << std::endl;
-    //mdp->get_data().hexdump(cout);
-  }
-    break;
-  default:
-    abort();
-  }
-
-  if (unlikely(m->get_magic() & MSG_MAGIC_TRACE_CTR)) {
-    if (unlikely(dc % 65536) == 0) {
-      struct timespec ts;
-      clock_gettime(CLOCK_REALTIME_COARSE, &ts);
-      std::cout << "ping " << dc << " nanos: " <<
-	ts.tv_nsec + (ts.tv_sec * 1000000000)  << std::endl;
+    switch (m->get_type()) {
+    case CEPH_MSG_PING:
+        break;
+    case MSG_DATA_PING:
+        {
+            MDataPing *mdp __attribute__ ((unused)) =
+                static_cast < MDataPing * >(m);
+            //cout << "MDataPing " << mdp->tag << " " << mdp->counter << std::endl;
+            //mdp->get_data().hexdump(cout);
+        }
+        break;
+    default:
+        abort();
     }
-  } /* trace ctr */
 
-  m->put();
+    if (unlikely(m->get_magic() & MSG_MAGIC_TRACE_CTR)) {
+        if (unlikely(dc % 65536) == 0) {
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME_COARSE, &ts);
+            std::cout << "ping " << dc << " nanos: " <<
+                ts.tv_nsec + (ts.tv_sec * 1000000000) << std::endl;
+        }
+    }                           /* trace ctr */
 
-  return true;
+    m->put();
+
+    return true;
 }
 
-bool XioDispatcher::ms_handle_reset(Connection *con)
+bool XioDispatcher::ms_handle_reset(Connection * con)
 {
-  return true;
+    return true;
 }
 
-void XioDispatcher::ms_handle_remote_reset(Connection *con)
+void XioDispatcher::ms_handle_remote_reset(Connection * con)
 {
-  // nothing
+    // nothing
 }
-

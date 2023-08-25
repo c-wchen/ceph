@@ -9,32 +9,29 @@
 #include <vector>
 
 namespace librbd {
-namespace io {
+    namespace io {
 
-typedef enum {
-  AIO_TYPE_NONE = 0,
-  AIO_TYPE_GENERIC,
-  AIO_TYPE_OPEN,
-  AIO_TYPE_CLOSE,
-  AIO_TYPE_READ,
-  AIO_TYPE_WRITE,
-  AIO_TYPE_DISCARD,
-  AIO_TYPE_FLUSH,
-  AIO_TYPE_WRITESAME,
-  AIO_TYPE_COMPARE_AND_WRITE,
-} aio_type_t;
+        typedef enum {
+            AIO_TYPE_NONE = 0,
+            AIO_TYPE_GENERIC,
+            AIO_TYPE_OPEN,
+            AIO_TYPE_CLOSE,
+            AIO_TYPE_READ,
+            AIO_TYPE_WRITE,
+            AIO_TYPE_DISCARD,
+            AIO_TYPE_FLUSH,
+            AIO_TYPE_WRITESAME,
+            AIO_TYPE_COMPARE_AND_WRITE,
+        } aio_type_t;
 
-enum Direction {
-  DIRECTION_READ,
-  DIRECTION_WRITE,
-  DIRECTION_BOTH
-};
+        enum Direction {
+            DIRECTION_READ,
+            DIRECTION_WRITE,
+            DIRECTION_BOTH
+        };
 
-typedef std::vector<std::pair<uint64_t, uint64_t> > Extents;
-typedef std::map<uint64_t, uint64_t> ExtentMap;
+        typedef std::vector < std::pair < uint64_t, uint64_t > >Extents;
+        typedef std::map < uint64_t, uint64_t > ExtentMap;
 
-} // namespace io
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_IO_TYPES_H
-
+} // namespace io }             // namespace librbd
+#endif                          // CEPH_LIBRBD_IO_TYPES_H

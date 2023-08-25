@@ -21,20 +21,20 @@
 
 #include "common/config.h"
 
-struct HealthService : public QuorumService
-{
-  enum {
-    SERVICE_HEALTH_DATA              = 0x01
-  };
+struct HealthService:public QuorumService {
+    enum {
+        SERVICE_HEALTH_DATA = 0x01
+    };
 
-  HealthService(Monitor *m) : QuorumService(m) { }
-  ~HealthService() override { }
+     HealthService(Monitor * m):QuorumService(m) {
+    } ~HealthService() override {
+    }
 
-  bool service_dispatch(MonOpRequestRef op) override {
-    return service_dispatch_op(op);
-  }
+    bool service_dispatch(MonOpRequestRef op) override {
+        return service_dispatch_op(op);
+    }
 
-  virtual bool service_dispatch_op(MonOpRequestRef op) = 0;
+    virtual bool service_dispatch_op(MonOpRequestRef op) = 0;
 };
 
 #endif // CEPH_MON_HEALTH_SERVICE_H

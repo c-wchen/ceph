@@ -39,63 +39,59 @@
 #include "rgw_replica_log.h"
 
 class RGWObjectExpirer {
-protected:
-  RGWRados *store;
+  protected:
+    RGWRados * store;
 
-  int init_bucket_info(const std::string& tenant_name,
-                       const std::string& bucket_name,
-                       const std::string& bucket_id,
-                       RGWBucketInfo& bucket_info);
+    int init_bucket_info(const std::string & tenant_name,
+                         const std::string & bucket_name,
+                         const std::string & bucket_id,
+                         RGWBucketInfo & bucket_info);
 
-  class OEWorker : public Thread {
-    CephContext *cct;
-    RGWObjectExpirer *oe;
-    Mutex lock;
-    Cond cond;
+    class OEWorker:public Thread {
+        CephContext *cct;
+        RGWObjectExpirer *oe;
+        Mutex lock;
+        Cond cond;
+
+      public:
+         OEWorker(CephContext * const cct, RGWObjectExpirer * const oe)
+        :cct(cct), oe(oe), lock("OEWorker") {
+        } void *entry() override;
+        void stop();
+    };
+
+    OEWorker *worker {
+    nullptr};
+    std::atomic < bool > down_flag = {
+    false};
 
   public:
-    OEWorker(CephContext * const cct,
-             RGWObjectExpirer * const oe)
-      : cct(cct),
-        oe(oe),
-        lock("OEWorker") {
+    explicit RGWObjectExpirer(RGWRados * _store)
+  :    store(_store), worker(NULL) {
+    }
+    ~RGWObjectExpirer() {
+        stop_processor();
     }
 
-    void *entry() override;
-    void stop();
-  };
+    int garbage_single_object(objexp_hint_entry & hint);
 
-  OEWorker *worker{nullptr};
-  std::atomic<bool> down_flag = { false };
+    void garbage_chunk(std::list < cls_timeindex_entry > &entries,  /* in  */
+                       bool & need_trim);   /* out */
 
-public:
-  explicit RGWObjectExpirer(RGWRados *_store)
-    : store(_store), worker(NULL) {
-  }
-  ~RGWObjectExpirer() {
-    stop_processor();
-  }
+    void trim_chunk(const std::string & shard,
+                    const utime_t & from,
+                    const utime_t & to,
+                    const string & from_marker, const string & to_marker);
 
-  int garbage_single_object(objexp_hint_entry& hint);
+    bool process_single_shard(const std::string & shard,
+                              const utime_t & last_run,
+                              const utime_t & round_start);
 
-  void garbage_chunk(std::list<cls_timeindex_entry>& entries, /* in  */
-                     bool& need_trim);                        /* out */
+    bool inspect_all_shards(const utime_t & last_run,
+                            const utime_t & round_start);
 
-  void trim_chunk(const std::string& shard,
-                  const utime_t& from,
-                  const utime_t& to,
-                  const string& from_marker,
-                  const string& to_marker);
-
-  bool process_single_shard(const std::string& shard,
-                            const utime_t& last_run,
-                            const utime_t& round_start);
-
-  bool inspect_all_shards(const utime_t& last_run,
-                          const utime_t& round_start);
-
-  bool going_down();
-  void start_processor();
-  void stop_processor();
+    bool going_down();
+    void start_processor();
+    void stop_processor();
 };
 #endif /* CEPH_OBJEXP_H */

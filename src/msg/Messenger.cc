@@ -14,61 +14,63 @@
 #include "msg/xio/XioMessenger.h"
 #endif
 
-Messenger *Messenger::create_client_messenger(CephContext *cct, string lname)
+Messenger *Messenger::create_client_messenger(CephContext * cct, string lname)
 {
-  std::string public_msgr_type = cct->_conf->ms_public_type.empty() ? cct->_conf->get_val<std::string>("ms_type") : cct->_conf->ms_public_type;
-  uint64_t nonce = 0;
-  get_random_bytes((char*)&nonce, sizeof(nonce));
-  return Messenger::create(cct, public_msgr_type, entity_name_t::CLIENT(),
-			   std::move(lname), nonce, 0);
+    std::string public_msgr_type =
+        cct->_conf->ms_public_type.empty()? cct->_conf->get_val < std::string >
+        ("ms_type") : cct->_conf->ms_public_type;
+    uint64_t nonce = 0;
+    get_random_bytes((char *)&nonce, sizeof(nonce));
+    return Messenger::create(cct, public_msgr_type, entity_name_t::CLIENT(),
+                             std::move(lname), nonce, 0);
 }
 
-Messenger *Messenger::create(CephContext *cct, const string &type,
-			     entity_name_t name, string lname,
-			     uint64_t nonce, uint64_t cflags)
+Messenger *Messenger::create(CephContext * cct, const string & type,
+                             entity_name_t name, string lname,
+                             uint64_t nonce, uint64_t cflags)
 {
-  int r = -1;
-  if (type == "random") {
-    static std::random_device seed;
-    static std::default_random_engine random_engine(seed());
-    static Spinlock random_lock;
+    int r = -1;
+    if (type == "random") {
+        static std::random_device seed;
+        static std::default_random_engine random_engine(seed());
+        static Spinlock random_lock;
 
-    std::lock_guard<Spinlock> lock(random_lock);
-    std::uniform_int_distribution<> dis(0, 1);
-    r = dis(random_engine);
-  }
-  if (r == 0 || type == "simple")
-    return new SimpleMessenger(cct, name, std::move(lname), nonce);
-  else if (r == 1 || type.find("async") != std::string::npos)
-    return new AsyncMessenger(cct, name, type, std::move(lname), nonce);
+        std::lock_guard < Spinlock > lock(random_lock);
+        std::uniform_int_distribution <> dis(0, 1);
+        r = dis(random_engine);
+    }
+    if (r == 0 || type == "simple")
+        return new SimpleMessenger(cct, name, std::move(lname), nonce);
+    else if (r == 1 || type.find("async") != std::string::npos)
+        return new AsyncMessenger(cct, name, type, std::move(lname), nonce);
 #ifdef HAVE_XIO
-  else if ((type == "xio") &&
-	   cct->check_experimental_feature_enabled("ms-type-xio"))
-    return new XioMessenger(cct, name, std::move(lname), nonce, cflags);
+    else if ((type == "xio") &&
+             cct->check_experimental_feature_enabled("ms-type-xio"))
+        return new XioMessenger(cct, name, std::move(lname), nonce, cflags);
 #endif
-  lderr(cct) << "unrecognized ms_type '" << type << "'" << dendl;
-  return nullptr;
+    lderr(cct) << "unrecognized ms_type '" << type << "'" << dendl;
+    return nullptr;
 }
 
-void Messenger::set_endpoint_addr(const entity_addr_t& a,
-                                  const entity_name_t &name)
+void Messenger::set_endpoint_addr(const entity_addr_t & a,
+                                  const entity_name_t & name)
 {
-  size_t hostlen;
-  if (a.get_family() == AF_INET)
-    hostlen = sizeof(struct sockaddr_in);
-  else if (a.get_family() == AF_INET6)
-    hostlen = sizeof(struct sockaddr_in6);
-  else
-    hostlen = 0;
+    size_t hostlen;
+    if (a.get_family() == AF_INET)
+        hostlen = sizeof(struct sockaddr_in);
+    else if (a.get_family() == AF_INET6)
+        hostlen = sizeof(struct sockaddr_in6);
+    else
+        hostlen = 0;
 
-  if (hostlen) {
-    char buf[NI_MAXHOST] = { 0 };
-    getnameinfo(a.get_sockaddr(), hostlen, buf, sizeof(buf),
-                NULL, 0, NI_NUMERICHOST);
+    if (hostlen) {
+        char buf[NI_MAXHOST] = { 0 };
+        getnameinfo(a.get_sockaddr(), hostlen, buf, sizeof(buf),
+                    NULL, 0, NI_NUMERICHOST);
 
-    trace_endpoint.copy_ip(buf);
-  }
-  trace_endpoint.set_port(a.get_port());
+        trace_endpoint.copy_ip(buf);
+    }
+    trace_endpoint.set_port(a.get_port());
 }
 
 /*
@@ -78,10 +80,10 @@ void Messenger::set_endpoint_addr(const entity_addr_t& a,
  */
 int Messenger::get_default_crc_flags(md_config_t * conf)
 {
-  int r = 0;
-  if (conf->ms_crc_data)
-    r |= MSG_CRC_DATA;
-  if (conf->ms_crc_header)
-    r |= MSG_CRC_HEADER;
-  return r;
+    int r = 0;
+    if (conf->ms_crc_data)
+        r |= MSG_CRC_DATA;
+    if (conf->ms_crc_header)
+        r |= MSG_CRC_HEADER;
+    return r;
 }

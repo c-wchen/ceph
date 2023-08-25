@@ -28,25 +28,23 @@ class CrossProcessSem;
  * 4. notifies on the object
  * 5. posts to notified_sem
  */
-class StRadosNotify : public SysTestRunnable
-{
-public:
-  StRadosNotify(int argc, const char **argv,
-		CrossProcessSem *setup_sem,
-		CrossProcessSem *notify_sem,
-		CrossProcessSem *notified_sem,
-		int notify_retcode,
-		const std::string &pool_name,
-		const std::string &obj_name);
-  ~StRadosNotify() override;
-  int run() override;
-private:
-  CrossProcessSem *m_setup_sem;
-  CrossProcessSem *m_notify_sem;
-  CrossProcessSem *m_notified_sem;
-  int m_notify_retcode;
-  std::string m_pool_name;
-  std::string m_obj_name;
+class StRadosNotify:public SysTestRunnable {
+  public:
+    StRadosNotify(int argc, const char **argv,
+                  CrossProcessSem * setup_sem,
+                  CrossProcessSem * notify_sem,
+                  CrossProcessSem * notified_sem,
+                  int notify_retcode,
+                  const std::string & pool_name, const std::string & obj_name);
+    ~StRadosNotify() override;
+    int run() override;
+  private:
+     CrossProcessSem * m_setup_sem;
+    CrossProcessSem *m_notify_sem;
+    CrossProcessSem *m_notified_sem;
+    int m_notify_retcode;
+     std::string m_pool_name;
+     std::string m_obj_name;
 };
 
 #endif

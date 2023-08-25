@@ -5,7 +5,6 @@
  * Copyright (C) 2016 Red Hat Inc.
  */
 
-
 #include "dmclock_recs.h"
 #include "dmclock_server.h"
 #include "dmclock_client.h"
@@ -16,41 +15,38 @@
 
 #include "simulate.h"
 
-
 namespace crimson {
-  namespace test_dmc {
-    
-    namespace dmc = crimson::dmclock;
-    namespace sim = crimson::qos_simulation;
+    namespace test_dmc {
 
-    struct DmcAccum {
-      uint64_t reservation_count = 0;
-      uint64_t proportion_count = 0;
-    };
+        namespace dmc = crimson::dmclock;
+        namespace sim = crimson::qos_simulation;
 
-    using DmcQueue = dmc::PushPriorityQueue<ClientId,sim::TestRequest>;
+        struct DmcAccum {
+            uint64_t reservation_count = 0;
+            uint64_t proportion_count = 0;
+        };
 
-    using DmcServer = sim::SimulatedServer<DmcQueue,
-					   dmc::ReqParams,
-					   dmc::PhaseType,
-					   DmcAccum>;
+        using DmcQueue = dmc::PushPriorityQueue < ClientId, sim::TestRequest >;
 
-    using DmcClient = sim::SimulatedClient<dmc::ServiceTracker<ServerId>,
-					   dmc::ReqParams,
-					   dmc::PhaseType,
-					   DmcAccum>;
+        using DmcServer = sim::SimulatedServer < DmcQueue,
+            dmc::ReqParams, dmc::PhaseType, DmcAccum >;
 
-    using CreateQueueF = std::function<DmcQueue*(DmcQueue::CanHandleRequestFunc,
-						 DmcQueue::HandleRequestFunc)>;
+        using DmcClient =
+            sim::SimulatedClient < dmc::ServiceTracker < ServerId >,
+            dmc::ReqParams, dmc::PhaseType, DmcAccum >;
 
-    using MySim = sim::Simulation<ServerId,ClientId,DmcServer,DmcClient>;
+        using CreateQueueF =
+            std::function < DmcQueue * (DmcQueue::CanHandleRequestFunc,
+                                        DmcQueue::HandleRequestFunc) >;
 
-    using SubmitFunc = DmcClient::SubmitFunc;
+        using MySim =
+            sim::Simulation < ServerId, ClientId, DmcServer, DmcClient >;
 
-    extern void dmc_server_accumulate_f(DmcAccum& a,
-					const dmc::PhaseType& phase);
+        using SubmitFunc = DmcClient::SubmitFunc;
 
-    extern void dmc_client_accumulate_f(DmcAccum& a,
-					const dmc::PhaseType& phase);
-  } // namespace test_dmc
-} // namespace crimson
+        extern void dmc_server_accumulate_f(DmcAccum & a,
+                                            const dmc::PhaseType & phase);
+
+        extern void dmc_client_accumulate_f(DmcAccum & a,
+                                            const dmc::PhaseType & phase);
+} // namespace test_dmc }       // namespace crimson

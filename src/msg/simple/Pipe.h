@@ -22,7 +22,6 @@
 #include "msg/Messenger.h"
 #include "PipeConnection.h"
 
-
 class SimpleMessenger;
 class DispatchQueue;
 
@@ -37,48 +36,55 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
    * around in a state where it can provide enough data for the SimpleMessenger
    * to provide reliable Message delivery when it manages to reconnect.
    */
-  class Pipe : public RefCountedObject {
+class Pipe:public RefCountedObject {
     /**
      * The Reader thread handles all reads off the socket -- not just
      * Messages, but also acks and other protocol bits (excepting startup,
      * when the Writer does a couple of reads).
      * All the work is implemented in Pipe itself, of course.
      */
-    class Reader : public Thread {
-      Pipe *pipe;
-    public:
-      explicit Reader(Pipe *p) : pipe(p) {}
-      void *entry() override { pipe->reader(); return 0; }
-    } reader_thread;
+    class Reader:public Thread {
+        Pipe *pipe;
+      public:
+         explicit Reader(Pipe * p):pipe(p) {
+        } void *entry() override {
+            pipe->reader();
+            return 0;
+    }}
+    reader_thread;
 
     /**
      * The Writer thread handles all writes to the socket (after startup).
      * All the work is implemented in Pipe itself, of course.
      */
-    class Writer : public Thread {
-      Pipe *pipe;
-    public:
-      explicit Writer(Pipe *p) : pipe(p) {}
-      void *entry() override { pipe->writer(); return 0; }
-    } writer_thread;
+    class Writer:public Thread {
+        Pipe *pipe;
+      public:
+         explicit Writer(Pipe * p):pipe(p) {
+        } void *entry() override {
+            pipe->writer();
+            return 0;
+        }
+    }
+    writer_thread;
 
     class DelayedDelivery;
     DelayedDelivery *delay_thread;
   public:
-    Pipe(SimpleMessenger *r, int st, PipeConnection *con);
-    ~Pipe() override;
+    Pipe(SimpleMessenger * r, int st, PipeConnection * con);
+    ~Pipe()override;
 
     SimpleMessenger *msgr;
     uint64_t conn_id;
-    ostream& _pipe_prefix(std::ostream &out) const;
+    ostream & _pipe_prefix(std::ostream & out) const;
 
-    Pipe* get() {
-      return static_cast<Pipe*>(RefCountedObject::get());
+    Pipe *get() {
+        return static_cast < Pipe * >(RefCountedObject::get());
     }
 
     bool is_connected() {
-      Mutex::Locker l(pipe_lock);
-      return state == STATE_OPEN;
+        Mutex::Locker l(pipe_lock);
+        return state == STATE_OPEN;
     }
 
     char *recv_buf;
@@ -87,29 +93,37 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
     size_t recv_len;
 
     enum {
-      STATE_ACCEPTING,
-      STATE_CONNECTING,
-      STATE_OPEN,
-      STATE_STANDBY,
-      STATE_CLOSED,
-      STATE_CLOSING,
-      STATE_WAIT       // just wait for racing connection
+        STATE_ACCEPTING,
+        STATE_CONNECTING,
+        STATE_OPEN,
+        STATE_STANDBY,
+        STATE_CLOSED,
+        STATE_CLOSING,
+        STATE_WAIT              // just wait for racing connection
     };
 
     static const char *get_state_name(int s) {
-      switch (s) {
-      case STATE_ACCEPTING: return "accepting";
-      case STATE_CONNECTING: return "connecting";
-      case STATE_OPEN: return "open";
-      case STATE_STANDBY: return "standby";
-      case STATE_CLOSED: return "closed";
-      case STATE_CLOSING: return "closing";
-      case STATE_WAIT: return "wait";
-      default: return "UNKNOWN";
-      }
+        switch (s) {
+        case STATE_ACCEPTING:
+            return "accepting";
+        case STATE_CONNECTING:
+            return "connecting";
+        case STATE_OPEN:
+            return "open";
+        case STATE_STANDBY:
+            return "standby";
+        case STATE_CLOSED:
+            return "closed";
+        case STATE_CLOSING:
+            return "closing";
+        case STATE_WAIT:
+            return "wait";
+        default:
+            return "UNKNOWN";
+        }
     }
     const char *get_state_name() {
-      return get_state_name(state);
+        return get_state_name(state);
     }
 
   private:
@@ -121,52 +135,53 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
     int peer_type;
     entity_addr_t peer_addr;
     Messenger::Policy policy;
-    
+
     Mutex pipe_lock;
     int state;
-    std::atomic<bool> state_closed = { false }; // true iff state = STATE_CLOSED
+    std::atomic < bool > state_closed = {
+    false};                     // true iff state = STATE_CLOSED
 
     // session_security handles any signatures or encryptions required for this pipe's msgs. PLR
 
-    ceph::shared_ptr<AuthSessionHandler> session_security;
+    ceph::shared_ptr < AuthSessionHandler > session_security;
 
   protected:
     friend class SimpleMessenger;
     PipeConnectionRef connection_state;
 
-    utime_t backoff;         // backoff time
+    utime_t backoff;            // backoff time
 
     bool reader_running, reader_needs_join;
-    bool reader_dispatching; /// reader thread is dispatching without pipe_lock
-    bool notify_on_dispatch_done; /// something wants a signal when dispatch done
+    bool reader_dispatching;    /// reader thread is dispatching without pipe_lock
+    bool notify_on_dispatch_done;   /// something wants a signal when dispatch done
     bool writer_running;
 
-    map<int, list<Message*> > out_q;  // priority queue for outbound msgs
+    map < int, list < Message * >>out_q;    // priority queue for outbound msgs
     DispatchQueue *in_q;
-    list<Message*> sent;
+    list < Message * >sent;
     Cond cond;
     bool send_keepalive;
     bool send_keepalive_ack;
     utime_t keepalive_ack_stamp;
-    bool halt_delivery; //if a pipe's queue is destroyed, stop adding to it
-    
+    bool halt_delivery;         //if a pipe's queue is destroyed, stop adding to it
+
     __u32 connect_seq, peer_global_seq;
     uint64_t out_seq;
     uint64_t in_seq, in_seq_acked;
-    
+
     void set_socket_options();
 
-    int accept();   // server handshake
-    int connect();  // client handshake
+    int accept();               // server handshake
+    int connect();              // client handshake
     void reader();
     void writer();
     void unlock_maybe_reap();
 
     int randomize_out_seq();
 
-    int read_message(Message **pm,
-		     AuthSessionHandler *session_security_copy);
-    int write_message(const ceph_msg_header& h, const ceph_msg_footer& f, bufferlist& body);
+    int read_message(Message ** pm, AuthSessionHandler * session_security_copy);
+    int write_message(const ceph_msg_header & h, const ceph_msg_footer & f,
+                      bufferlist & body);
     /**
      * Write the given data (of length len) to the Pipe's socket. This function
      * will loop until all passed data has been written out.
@@ -178,21 +193,21 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
      * @param more Should be set true if this is one part of a larger message
      * @return 0, or -1 on failure (unrecoverable -- close the socket).
      */
-    int do_sendmsg(struct msghdr *msg, unsigned len, bool more=false);
+    int do_sendmsg(struct msghdr *msg, unsigned len, bool more = false);
     int write_ack(uint64_t s);
     int write_keepalive();
-    int write_keepalive2(char tag, const utime_t &t);
+    int write_keepalive2(char tag, const utime_t & t);
 
-    void fault(bool reader=false);
+    void fault(bool reader = false);
 
     void was_session_reset();
 
     /* Clean up sent list */
     void handle_ack(uint64_t seq);
 
-    public:
-    Pipe(const Pipe& other);
-    const Pipe& operator=(const Pipe& other);
+  public:
+    Pipe(const Pipe & other);
+    const Pipe & operator=(const Pipe & other);
 
     void start_reader();
     void start_writer();
@@ -200,23 +215,29 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
     void join_reader();
 
     // public constructors
-    static const Pipe& Server(int s);
-    static const Pipe& Client(const entity_addr_t& pi);
+    static const Pipe & Server(int s);
+    static const Pipe & Client(const entity_addr_t & pi);
 
-    uint64_t get_out_seq() { return out_seq; }
+    uint64_t get_out_seq() {
+        return out_seq;
+    }
 
-    bool is_queued() { return !out_q.empty() || send_keepalive || send_keepalive_ack; }
+    bool is_queued() {
+        return !out_q.empty() || send_keepalive || send_keepalive_ack;
+    }
 
-    entity_addr_t& get_peer_addr() { return peer_addr; }
+    entity_addr_t & get_peer_addr() {
+        return peer_addr;
+    }
 
-    void set_peer_addr(const entity_addr_t& a) {
-      if (&peer_addr != &a)  // shut up valgrind
-        peer_addr = a;
-      connection_state->set_peer_addr(a);
+    void set_peer_addr(const entity_addr_t & a) {
+        if (&peer_addr != &a)   // shut up valgrind
+            peer_addr = a;
+        connection_state->set_peer_addr(a);
     }
     void set_peer_type(int t) {
-      peer_type = t;
-      connection_state->set_peer_type(t);
+        peer_type = t;
+        connection_state->set_peer_type(t);
     }
 
     void register_pipe();
@@ -228,29 +249,29 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
     /// fast_dispatch in progress.
     void stop_and_wait();
 
-    void _send(Message *m) {
-      assert(pipe_lock.is_locked());
-      out_q[m->get_priority()].push_back(m);
-      cond.Signal();
+    void _send(Message * m) {
+        assert(pipe_lock.is_locked());
+        out_q[m->get_priority()].push_back(m);
+        cond.Signal();
     }
     void _send_keepalive() {
-      assert(pipe_lock.is_locked());
-      send_keepalive = true;
-      cond.Signal();
+        assert(pipe_lock.is_locked());
+        send_keepalive = true;
+        cond.Signal();
     }
     Message *_get_next_outgoing() {
-      assert(pipe_lock.is_locked());
-      Message *m = 0;
-      while (!m && !out_q.empty()) {
-        map<int, list<Message*> >::reverse_iterator p = out_q.rbegin();
-        if (!p->second.empty()) {
-          m = p->second.front();
-          p->second.pop_front();
+        assert(pipe_lock.is_locked());
+        Message *m = 0;
+        while (!m && !out_q.empty()) {
+            map < int, list < Message * >>::reverse_iterator p = out_q.rbegin();
+            if (!p->second.empty()) {
+                m = p->second.front();
+                p->second.pop_front();
+            }
+            if (p->second.empty())
+                out_q.erase(p->first);
         }
-        if (p->second.empty())
-          out_q.erase(p->first);
-      }
-      return m;
+        return m;
     }
 
     /// move all messages in the sent list back into the queue at the highest priority.
@@ -260,18 +281,20 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
     void discard_out_queue();
 
     void shutdown_socket() {
-      recv_reset();
-      if (sd >= 0)
-        ::shutdown(sd, SHUT_RDWR);
+        recv_reset();
+        if (sd >= 0)
+            ::shutdown(sd, SHUT_RDWR);
     }
 
     void recv_reset() {
-      recv_len = 0;
-      recv_ofs = 0;
+        recv_len = 0;
+        recv_ofs = 0;
     }
     ssize_t do_recv(char *buf, size_t len, int flags);
     ssize_t buffered_recv(char *buf, size_t len, int flags);
-    bool has_pending_data() { return recv_len > recv_ofs; }
+    bool has_pending_data() {
+        return recv_len > recv_ofs;
+    }
 
     /**
      * do a blocking read of len bytes from socket
@@ -310,7 +333,6 @@ static const int SM_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
      */
     int tcp_write(const char *buf, unsigned len);
 
-  };
-
+};
 
 #endif

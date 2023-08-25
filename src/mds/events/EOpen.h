@@ -18,44 +18,45 @@
 #include "../LogEvent.h"
 #include "EMetaBlob.h"
 
-class EOpen : public LogEvent {
-public:
-  EMetaBlob metablob;
-  vector<inodeno_t> inos;
-  vector<vinodeno_t> snap_inos;
+class EOpen:public LogEvent {
+  public:
+    EMetaBlob metablob;
+    vector < inodeno_t > inos;
+    vector < vinodeno_t > snap_inos;
 
-  EOpen() : LogEvent(EVENT_OPEN) { }
-  explicit EOpen(MDLog *mdlog) :
-    LogEvent(EVENT_OPEN), metablob(mdlog) { }
-
-  void print(ostream& out) const override {
-    out << "EOpen " << metablob << ", " << inos.size() << " open files";
-  }
-
-  EMetaBlob *get_metablob() override { return &metablob; }
-
-  void add_clean_inode(CInode *in) {
-    if (!in->is_base()) {
-      metablob.add_dir_context(in->get_projected_parent_dn()->get_dir());
-      metablob.add_primary_dentry(in->get_projected_parent_dn(), 0, false);
-      if (in->last == CEPH_NOSNAP)
-	inos.push_back(in->ino());
-      else
-	snap_inos.push_back(in->vino());
+    EOpen():LogEvent(EVENT_OPEN) {
+    } explicit EOpen(MDLog * mdlog): LogEvent(EVENT_OPEN), metablob(mdlog) {
     }
-  }
-  void add_ino(inodeno_t ino) {
-    inos.push_back(ino);
-  }
 
-  void encode(bufferlist& bl, uint64_t features) const override;
-  void decode(bufferlist::iterator& bl) override;
-  void dump(Formatter *f) const override;
-  static void generate_test_instances(list<EOpen*>& ls);
+    void print(ostream & out) const override {
+        out << "EOpen " << metablob << ", " << inos.size() << " open files";
+    } EMetaBlob *get_metablob() override {
+        return &metablob;
+    }
 
-  void update_segment() override;
-  void replay(MDSRank *mds) override;
+    void add_clean_inode(CInode * in) {
+        if (!in->is_base()) {
+            metablob.add_dir_context(in->get_projected_parent_dn()->get_dir());
+            metablob.add_primary_dentry(in->get_projected_parent_dn(), 0,
+                                        false);
+            if (in->last == CEPH_NOSNAP)
+                inos.push_back(in->ino());
+            else
+                snap_inos.push_back(in->vino());
+        }
+    }
+    void add_ino(inodeno_t ino) {
+        inos.push_back(ino);
+    }
+
+    void encode(bufferlist & bl, uint64_t features) const override;
+    void decode(bufferlist::iterator & bl) override;
+    void dump(Formatter * f) const override;
+    static void generate_test_instances(list < EOpen * >&ls);
+
+    void update_segment() override;
+    void replay(MDSRank * mds) override;
 };
-WRITE_CLASS_ENCODER_FEATURES(EOpen)
 
+WRITE_CLASS_ENCODER_FEATURES(EOpen)
 #endif

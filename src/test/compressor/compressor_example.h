@@ -27,27 +27,26 @@
 #include "osd/osd_types.h"
 #include "compressor/Compressor.h"
 
-class CompressorExample : public Compressor {
-public:
-  CompressorExample() : Compressor(COMP_ALG_NONE, "example") {}
-  ~CompressorExample() override {}
+class CompressorExample:public Compressor {
+  public:
+    CompressorExample():Compressor(COMP_ALG_NONE, "example") {
+    } ~CompressorExample() override {
+    }
 
-  int compress(const bufferlist &in, bufferlist &out) override
-  {
-    out = in;
-    return 0;
-  }
+    int compress(const bufferlist & in, bufferlist & out) override {
+        out = in;
+        return 0;
+    }
 
-  int decompress(const bufferlist &in, bufferlist &out) override
-  {
-    out = in;
-    return 0;
-  }
-  int decompress(bufferlist::iterator &p, size_t compressed_len, bufferlist &out) override
-  {
-    p.copy(MIN(p.get_remaining(), compressed_len), out);
-    return 0;
-  }
+    int decompress(const bufferlist & in, bufferlist & out) override {
+        out = in;
+        return 0;
+    }
+    int decompress(bufferlist::iterator & p, size_t compressed_len,
+                   bufferlist & out) override {
+        p.copy(MIN(p.get_remaining(), compressed_len), out);
+        return 0;
+    }
 };
 
 #endif

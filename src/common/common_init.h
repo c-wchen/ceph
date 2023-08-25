@@ -23,20 +23,20 @@ class CephContext;
 class CephInitParameters;
 
 enum common_init_flags_t {
-  // Set up defaults that make sense for an unprivileged deamon
-  CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS = 0x1,
+    // Set up defaults that make sense for an unprivileged deamon
+    CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS = 0x1,
 
-  // By default, don't read a configuration file
-  CINIT_FLAG_NO_DEFAULT_CONFIG_FILE = 0x2,
+    // By default, don't read a configuration file
+    CINIT_FLAG_NO_DEFAULT_CONFIG_FILE = 0x2,
 
-  // Don't close stderr (in daemonize)
-  CINIT_FLAG_NO_CLOSE_STDERR = 0x4,
+    // Don't close stderr (in daemonize)
+    CINIT_FLAG_NO_CLOSE_STDERR = 0x4,
 
-  // don't do anything daemonish, like create /var/run/ceph, or print a banner
-  CINIT_FLAG_NO_DAEMON_ACTIONS = 0x8,
+    // don't do anything daemonish, like create /var/run/ceph, or print a banner
+    CINIT_FLAG_NO_DAEMON_ACTIONS = 0x8,
 
-  // don't drop privileges
-  CINIT_FLAG_DEFER_DROP_PRIVILEGES = 0x10,
+    // don't drop privileges
+    CINIT_FLAG_DEFER_DROP_PRIVILEGES = 0x10,
 };
 
 /*
@@ -56,12 +56,12 @@ enum common_init_flags_t {
  *
  * Your library may also supply functions to read a configuration file.
  */
-CephContext *common_preinit(const CephInitParameters &iparams,
-			    enum code_environment_t code_env, int flags);
+CephContext *common_preinit(const CephInitParameters & iparams,
+                            enum code_environment_t code_env, int flags);
 
 /* Print out some parse errors. */
-void complain_about_parse_errors(CephContext *cct,
-				 std::deque<std::string> *parse_errors);
+void complain_about_parse_errors(CephContext * cct,
+                                 std::deque < std::string > *parse_errors);
 
 /* This function is called after you have done your last
  * fork. When you make this call, the system will initialize everything that
@@ -75,6 +75,6 @@ void complain_about_parse_errors(CephContext *cct,
  * libraries. The most obvious reason for this is that the threads started by
  * the Ceph libraries would be destroyed by a fork().
  */
-void common_init_finish(CephContext *cct);
+void common_init_finish(CephContext * cct);
 
 #endif

@@ -12,43 +12,41 @@
  * 
  */
 
-
 #ifndef CEPH_MMGRMAP_H
 #define CEPH_MMGRMAP_H
 
 #include "msg/Message.h"
 #include "mon/MgrMap.h"
 
-class MMgrMap : public Message {
-protected:
-  MgrMap map;
+class MMgrMap:public Message {
+  protected:
+    MgrMap map;
 
-public:
-  const MgrMap & get_map() {return map;}
+  public:
+    const MgrMap & get_map() {
+        return map;
+    } MMgrMap():Message(MSG_MGR_MAP) {
+    }
+  MMgrMap(const MgrMap & map_):
+    Message(MSG_MGR_MAP), map(map_) {
+    }
 
-  MMgrMap() : 
-    Message(MSG_MGR_MAP) {}
-  MMgrMap(const MgrMap &map_) :
-    Message(MSG_MGR_MAP), map(map_)
-  {
-  }
+  private:
+    ~MMgrMap()override {
+    }
 
-private:
-  ~MMgrMap() override {}
-
-public:
-  const char *get_type_name() const override { return "mgrmap"; }
-  void print(ostream& out) const override {
-    out << get_type_name() << "(e " << map.epoch << ")";
-  }
-
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(map, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(map, payload, features);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "mgrmap";
+    } void print(ostream & out) const override {
+        out << get_type_name() << "(e " << map.epoch << ")";
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(map, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(map, payload, features);
+    }
 };
 
 #endif

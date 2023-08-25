@@ -24,9 +24,9 @@
 
 const shard_id_t shard_id_t::NO_SHARD(-1);
 
-ostream &operator<<(ostream &lhs, const shard_id_t &rhs)
+ostream & operator<<(ostream & lhs, const shard_id_t & rhs)
 {
-  return lhs << (unsigned)(uint8_t)rhs.id;
+    return lhs << (unsigned)(uint8_t) rhs.id;
 }
 
 #endif

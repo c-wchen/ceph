@@ -5,7 +5,6 @@
 
 class CephContext;
 
-
 #define CEPH_PICK_ADDRESS_PUBLIC     0x01
 #define CEPH_PICK_ADDRESS_CLUSTER    0x02
 
@@ -28,13 +27,14 @@ class CephContext;
 
   This function will exit on error.
  */
-void pick_addresses(CephContext *cct, int needs);
+void pick_addresses(CephContext * cct, int needs);
 
 /**
  * Find a network interface whose address matches the address/netmask
  * in `network`.
  */
-std::string pick_iface(CephContext *cct, const struct sockaddr_storage &network);
+std::string pick_iface(CephContext * cct,
+                       const struct sockaddr_storage &network);
 
 /**
  * check for a locally configured address
@@ -45,13 +45,12 @@ std::string pick_iface(CephContext *cct, const struct sockaddr_storage &network)
  * @param ls list of addresses
  * @param match [out] pointer to match, if an item in @a ls is found configured locally.
  */
-bool have_local_addr(CephContext *cct, const list<entity_addr_t>& ls, entity_addr_t *match);
+bool have_local_addr(CephContext * cct, const list < entity_addr_t > &ls,
+                     entity_addr_t * match);
 
-
-const struct sockaddr *find_ip_in_subnet_list(
-  CephContext *cct,
-  const struct ifaddrs *ifa,
-  const std::string &networks,
-  const std::string &interfaces);
+const struct sockaddr *find_ip_in_subnet_list(CephContext * cct,
+                                              const struct ifaddrs *ifa,
+                                              const std::string & networks,
+                                              const std::string & interfaces);
 
 #endif

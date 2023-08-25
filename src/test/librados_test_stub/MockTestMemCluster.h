@@ -12,20 +12,18 @@ struct CephContext;
 
 namespace librados {
 
-class TestRadosClient;
+    class TestRadosClient;
 
-class MockTestMemCluster : public TestCluster {
-public:
-  TestRadosClient *create_rados_client(CephContext *cct) override {
-    return new ::testing::NiceMock<librados::MockTestMemRadosClient>(
-      cct, &m_mem_cluster);
-  }
+    class MockTestMemCluster:public TestCluster {
+      public:
+        TestRadosClient * create_rados_client(CephContext * cct) override {
+            return new::testing::NiceMock < librados::MockTestMemRadosClient >
+                (cct, &m_mem_cluster);
+      } private:
+         TestMemCluster m_mem_cluster;
 
-private:
-  TestMemCluster m_mem_cluster;
+    };
 
-};
-
-} // namespace librados
+}                               // namespace librados
 
 #endif // LIBRADOS_MOCK_TEST_MEM_CLUSTER_H

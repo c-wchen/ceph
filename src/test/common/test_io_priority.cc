@@ -19,25 +19,26 @@
 
 #include "common/io_priority.h"
 
-TEST(io_priority, ceph_ioprio_string_to_class) {
-  ASSERT_EQ(IOPRIO_CLASS_IDLE, ceph_ioprio_string_to_class("idle"));
-  ASSERT_EQ(IOPRIO_CLASS_IDLE, ceph_ioprio_string_to_class("IDLE"));
+TEST(io_priority, ceph_ioprio_string_to_class)
+{
+    ASSERT_EQ(IOPRIO_CLASS_IDLE, ceph_ioprio_string_to_class("idle"));
+    ASSERT_EQ(IOPRIO_CLASS_IDLE, ceph_ioprio_string_to_class("IDLE"));
 
-  ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("be"));
-  ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("BE"));
-  ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("besteffort"));
-  ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("BESTEFFORT"));
-  ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("best effort"));
-  ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("BEST EFFORT"));
+    ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("be"));
+    ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("BE"));
+    ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("besteffort"));
+    ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("BESTEFFORT"));
+    ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("best effort"));
+    ASSERT_EQ(IOPRIO_CLASS_BE, ceph_ioprio_string_to_class("BEST EFFORT"));
 
-  ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("rt"));
-  ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("RT"));
-  ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("realtime"));
-  ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("REALTIME"));
-  ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("real time"));
-  ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("REAL TIME"));
+    ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("rt"));
+    ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("RT"));
+    ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("realtime"));
+    ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("REALTIME"));
+    ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("real time"));
+    ASSERT_EQ(IOPRIO_CLASS_RT, ceph_ioprio_string_to_class("REAL TIME"));
 
-  ASSERT_EQ(-EINVAL, ceph_ioprio_string_to_class("invalid"));
+    ASSERT_EQ(-EINVAL, ceph_ioprio_string_to_class("invalid"));
 }
 
 /*

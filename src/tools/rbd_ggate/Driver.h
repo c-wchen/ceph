@@ -10,40 +10,37 @@
 #include "ggate_drv.h"
 
 namespace rbd {
-namespace ggate {
+    namespace ggate {
 
-struct Request;
+        struct Request;
 
-class Driver {
-public:
-  static int load();
-  static int kill(const std::string &devname);
-  static int list(std::list<std::string> &devs);
+        class Driver {
+          public:
+            static int load();
+            static int kill(const std::string & devname);
+            static int list(std::list < std::string > &devs);
 
-  Driver(const std::string &devname, size_t sectorsize, size_t mediasize,
-         bool readonly, const std::string &info);
+             Driver(const std::string & devname, size_t sectorsize,
+                    size_t mediasize, bool readonly, const std::string & info);
 
-  int init();
-  void shut_down();
+            int init();
+            void shut_down();
 
-  std::string get_devname() const;
+             std::string get_devname() const;
 
-  int recv(Request **req);
-  int send(Request *req);
+            int recv(Request ** req);
+            int send(Request * req);
 
-  int resize(size_t newsize);
+            int resize(size_t newsize);
 
-private:
-  std::string m_devname;
-  size_t m_sectorsize;
-  size_t m_mediasize;
-  bool m_readonly;
-  std::string m_info;
-  ggate_drv_t m_drv = 0;
-};
+          private:
+             std::string m_devname;
+            size_t m_sectorsize;
+            size_t m_mediasize;
+            bool m_readonly;
+             std::string m_info;
+            ggate_drv_t m_drv = 0;
+        };
 
-} // namespace ggate
-} // namespace rbd
-
-#endif // CEPH_RBD_GGATE_DRIVER_H
-
+} // namespace ggate }          // namespace rbd
+#endif                          // CEPH_RBD_GGATE_DRIVER_H

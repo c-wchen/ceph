@@ -11,29 +11,28 @@ class ContextWQ;
 class SafeTimer;
 class ThreadPool;
 
-namespace librbd { struct ImageCtx; }
+namespace librbd {
+    struct ImageCtx;
+} namespace rbd {
+    namespace mirror {
 
-namespace rbd {
-namespace mirror {
+        template < typename ImageCtxT = librbd::ImageCtx > struct Threads {
+            ThreadPool *thread_pool = nullptr;
+            ContextWQ *work_queue = nullptr;
 
-template <typename ImageCtxT = librbd::ImageCtx>
-struct Threads {
-  ThreadPool *thread_pool = nullptr;
-  ContextWQ *work_queue = nullptr;
+            SafeTimer *timer = nullptr;
+            Mutex timer_lock;
 
-  SafeTimer *timer = nullptr;
-  Mutex timer_lock;
+            explicit Threads(CephContext * cct);
+             Threads(const Threads &) = delete;
+             Threads & operator=(const Threads &) = delete;
 
-  explicit Threads(CephContext *cct);
-  Threads(const Threads&) = delete;
-  Threads& operator=(const Threads&) = delete;
-
-  ~Threads();
-};
+            ~Threads();
+        };
 
 } // namespace mirror
-} // namespace rbd
-
-extern template class rbd::mirror::Threads<librbd::ImageCtx>;
+        }
+    // namespace rbd
+    extern template class rbd::mirror::Threads < librbd::ImageCtx >;
 
 #endif // CEPH_RBD_MIRROR_THREADS_H

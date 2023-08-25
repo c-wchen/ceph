@@ -24,72 +24,78 @@ class Context;
 class MDSInternalContextBase;
 
 class MDSTable {
-public:
-  MDSRank *mds;
-protected:
-  const char *table_name;
-  bool per_mds;
-  mds_rank_t rank;
+  public:
+    MDSRank * mds;
+  protected:
+    const char *table_name;
+    bool per_mds;
+    mds_rank_t rank;
 
-  object_t get_object_name() const;
-  
-  static const int STATE_UNDEF   = 0;
-  static const int STATE_OPENING = 1;
-  static const int STATE_ACTIVE  = 2;
-  //static const int STATE_COMMITTING = 3;
-  int state;
-  
-  version_t version, committing_version, committed_version, projected_version;
-  
-  map<version_t, list<MDSInternalContextBase*> > waitfor_save;
-  
-public:
-  MDSTable(MDSRank *m, const char *n, bool is_per_mds) :
-    mds(m), table_name(n), per_mds(is_per_mds), rank(MDS_RANK_NONE),
-    state(STATE_UNDEF),
-    version(0), committing_version(0), committed_version(0), projected_version(0) {}
-  virtual ~MDSTable() {}
+    object_t get_object_name() const;
 
-  void set_rank(mds_rank_t r)
-  {
-    rank = r;
-  }
+    static const int STATE_UNDEF = 0;
+    static const int STATE_OPENING = 1;
+    static const int STATE_ACTIVE = 2;
+    //static const int STATE_COMMITTING = 3;
+    int state;
 
-  version_t get_version() const { return version; }
-  version_t get_committed_version() const { return committed_version; }
-  version_t get_committing_version() const { return committing_version; }
-  version_t get_projected_version() const { return projected_version; }
-  
-  void force_replay_version(version_t v) {
-    version = projected_version = v;
-  }
+    version_t version, committing_version, committed_version, projected_version;
 
-  //version_t project_version() { return ++projected_version; }
-  //version_t inc_version() { return ++version; }
+     map < version_t, list < MDSInternalContextBase * >>waitfor_save;
 
-  // load/save from disk (hack)
-  bool is_undef() const { return state == STATE_UNDEF; }
-  bool is_active() const { return state == STATE_ACTIVE; }
-  bool is_opening() const { return state == STATE_OPENING; }
+  public:
+     MDSTable(MDSRank * m, const char *n, bool is_per_mds):mds(m),
+        table_name(n), per_mds(is_per_mds), rank(MDS_RANK_NONE),
+        state(STATE_UNDEF), version(0), committing_version(0),
+        committed_version(0), projected_version(0) {
+    } virtual ~ MDSTable() {
+    }
 
-  void reset();
-  void save(MDSInternalContextBase *onfinish=0, version_t need=0);
-  void save_2(int r, version_t v);
+    void set_rank(mds_rank_t r) {
+        rank = r;
+    }
 
-  void shutdown() {
-    if (is_active()) save(0);
-  }
+    version_t get_version() const {
+        return version;
+    } version_t get_committed_version() const {
+        return committed_version;
+    } version_t get_committing_version() const {
+        return committing_version;
+    } version_t get_projected_version() const {
+        return projected_version;
+    } void force_replay_version(version_t v) {
+        version = projected_version = v;
+    }
 
-  void load(MDSInternalContextBase *onfinish);
-  void load_2(int, bufferlist&, Context *onfinish);
+    //version_t project_version() { return ++projected_version; }
+    //version_t inc_version() { return ++version; }
 
-  // child must overload these
-  virtual void reset_state() = 0;
-  virtual void decode_state(bufferlist::iterator& p) = 0;
-  virtual void encode_state(bufferlist& bl) const = 0;
+    // load/save from disk (hack)
+    bool is_undef() const {
+        return state == STATE_UNDEF;
+    } bool is_active() const {
+        return state == STATE_ACTIVE;
+    } bool is_opening() const {
+        return state == STATE_OPENING;
+    } void reset();
+    void save(MDSInternalContextBase * onfinish = 0, version_t need = 0);
+    void save_2(int r, version_t v);
 
-  friend class C_IO_MT_Load;
-  friend class C_IO_MT_Save;
+    void shutdown() {
+        if (is_active())
+            save(0);
+    }
+
+    void load(MDSInternalContextBase * onfinish);
+    void load_2(int, bufferlist &, Context * onfinish);
+
+    // child must overload these
+    virtual void reset_state() = 0;
+    virtual void decode_state(bufferlist::iterator & p) = 0;
+    virtual void encode_state(bufferlist & bl) const = 0;
+
+    friend class C_IO_MT_Load;
+    friend class C_IO_MT_Save;
 };
 
 #endif

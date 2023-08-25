@@ -8,7 +8,6 @@
 
 #define RGW_BUCKET_INIT_INDEX "bucket_init_index"
 
-
 #define RGW_BUCKET_SET_TAG_TIMEOUT "bucket_set_tag_timeout"
 #define RGW_BUCKET_LIST "bucket_list"
 #define RGW_BUCKET_CHECK_INDEX "bucket_check_index"
@@ -53,6 +52,5 @@
 #define RGW_LC_PUT_HEAD "lc_put_head"
 #define RGW_LC_GET_HEAD "lc_get_head"
 #define RGW_LC_LIST_ENTRIES "lc_list_entries"
-
 
 #endif

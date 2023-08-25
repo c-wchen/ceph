@@ -19,41 +19,41 @@
 
 #include "include/types.h"
 
+class MMDSResolveAck:public Message {
+  public:
+    map < metareqid_t, bufferlist > commit;
+    vector < metareqid_t > abort;
 
-class MMDSResolveAck : public Message {
- public:
-  map<metareqid_t, bufferlist> commit;
-  vector<metareqid_t> abort;
+    MMDSResolveAck():Message(MSG_MDS_RESOLVEACK) {
+  } private:
+    ~MMDSResolveAck() override {
+    }
 
-  MMDSResolveAck() : Message(MSG_MDS_RESOLVEACK) {}
-private:
-  ~MMDSResolveAck() override {}
+  public:
+    const char *get_type_name() const override {
+        return "resolve_ack";
+    }
+    /*void print(ostream& out) const {
+       out << "resolve_ack.size()
+       << "+" << ambiguous_imap.size()
+       << " imports +" << slave_requests.size() << " slave requests)";
+       }
+     */ void add_commit(metareqid_t r) {
+        commit[r].clear();
+    }
+    void add_abort(metareqid_t r) {
+        abort.push_back(r);
+    }
 
-public:
-  const char *get_type_name() const override { return "resolve_ack"; }
-  /*void print(ostream& out) const {
-    out << "resolve_ack.size()
-	<< "+" << ambiguous_imap.size()
-	<< " imports +" << slave_requests.size() << " slave requests)";
-  }
-  */
-  
-  void add_commit(metareqid_t r) {
-    commit[r].clear();
-  }
-  void add_abort(metareqid_t r) {
-    abort.push_back(r);
-  }
-
-  void encode_payload(uint64_t features) override {
-    ::encode(commit, payload);
-    ::encode(abort, payload);
-  }
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(commit, p);
-    ::decode(abort, p);
-  }
+    void encode_payload(uint64_t features) override {
+        ::encode(commit, payload);
+        ::encode(abort, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(commit, p);
+        ::decode(abort, p);
+    }
 };
 
 #endif

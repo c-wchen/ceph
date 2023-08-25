@@ -53,7 +53,6 @@
       (l.a == r.a && (l.b <= r.b));					\
   }
 
-
 #define WRITE_EQ_OPERATORS_3(type, a, b, c)				\
   inline bool operator==(const type &l, const type &r) {		\
     return l.a == r.a && l.b == r.b && l.c == r.c;			\
@@ -117,8 +116,6 @@
 		      (l.b == r.b && (l.c < r.c ||			\
 				      (l.c == r.c && (l.d <= r.d)))))); \
   }
-
-
 
 #define WRITE_EQ_OPERATORS_5(type, a, b, c, d, e)			\
   inline bool operator==(const type &l, const type &r) {		\

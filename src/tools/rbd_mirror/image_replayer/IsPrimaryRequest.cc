@@ -17,108 +17,121 @@
                            << this << " " << __func__ << " "
 
 namespace rbd {
-namespace mirror {
-namespace image_replayer {
+    namespace mirror {
+        namespace image_replayer {
 
-using librbd::util::create_context_callback;
-using librbd::util::create_rados_callback;
+            using librbd::util::create_context_callback;
+            using librbd::util::create_rados_callback;
 
-template <typename I>
-IsPrimaryRequest<I>::IsPrimaryRequest(I *image_ctx, bool *primary,
-                                      Context *on_finish)
-  : m_image_ctx(image_ctx), m_primary(primary), m_on_finish(on_finish) {
-}
+             template < typename I >
+                IsPrimaryRequest < I >::IsPrimaryRequest(I * image_ctx,
+                                                         bool * primary,
+                                                         Context * on_finish)
+            :m_image_ctx(image_ctx), m_primary(primary), m_on_finish(on_finish) {
+            } template < typename I > void IsPrimaryRequest < I >::send() {
+                send_get_mirror_state();
+            } template < typename I >
+                void IsPrimaryRequest < I >::send_get_mirror_state() {
+                dout(20) << dendl;
 
-template <typename I>
-void IsPrimaryRequest<I>::send() {
-  send_get_mirror_state();
-}
+                librados::ObjectReadOperation op;
+                librbd::cls_client::mirror_image_get_start(&op,
+                                                           m_image_ctx->id);
 
-template <typename I>
-void IsPrimaryRequest<I>::send_get_mirror_state() {
-  dout(20) << dendl;
+                librados::AioCompletion * aio_comp = create_rados_callback <
+                    IsPrimaryRequest < I >,
+                    &IsPrimaryRequest < I >::handle_get_mirror_state > (this);
+                int r =
+                    m_image_ctx->md_ctx.aio_operate(RBD_MIRRORING, aio_comp,
+                                                    &op,
+                                                    &m_out_bl);
+                 assert(r == 0);
+                 aio_comp->release();
+            } template < typename I >
+                void IsPrimaryRequest < I >::handle_get_mirror_state(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  librados::ObjectReadOperation op;
-  librbd::cls_client::mirror_image_get_start(&op, m_image_ctx->id);
+                cls::rbd::MirrorImage mirror_image;
+                if (r == 0) {
+                    bufferlist::iterator iter = m_out_bl.begin();
+                    r = librbd::cls_client::mirror_image_get_finish(&iter,
+                                                                    &mirror_image);
+                    if (r == 0) {
+                        if (mirror_image.state ==
+                            cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
+                            send_is_tag_owner();
+                            return;
+                        }
+                        else if (mirror_image.state ==
+                                 cls::rbd::MIRROR_IMAGE_STATE_DISABLING) {
+                            dout(5) << ": image mirroring is being disabled" <<
+                                dendl;
+                            r = -ENOENT;
+                        }
+                        else {
+                            derr << ": image mirroring is disabled" << dendl;
+                            r = -EINVAL;
+                        }
+                    }
+                    else {
+                        derr << ": failed to decode image mirror state: " <<
+                            cpp_strerror(r)
+                            << dendl;
+                    }
+                }
+                else if (r == -ENOENT) {
+                    dout(5) << ": image is not mirrored" << dendl;
+                }
+                else {
+                    derr << ": failed to retrieve image mirror state: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                }
 
-  librados::AioCompletion *aio_comp = create_rados_callback<
-    IsPrimaryRequest<I>, &IsPrimaryRequest<I>::handle_get_mirror_state>(this);
-  int r = m_image_ctx->md_ctx.aio_operate(RBD_MIRRORING, aio_comp, &op,
-                                          &m_out_bl);
-  assert(r == 0);
-  aio_comp->release();
-}
+                finish(r);
+            }
 
-template <typename I>
-void IsPrimaryRequest<I>::handle_get_mirror_state(int r) {
-  dout(20) << ": r=" << r << dendl;
+            template < typename I >
+                void IsPrimaryRequest < I >::send_is_tag_owner() {
+                // deduce the class type for the journal to support unit tests
+                using Journal = typename std::decay <
+                    typename std::remove_pointer < decltype(std::declval < I >
+                                                            ().
+                                                            journal) >::type >::
+                    type;
 
-  cls::rbd::MirrorImage mirror_image;
-  if (r == 0) {
-    bufferlist::iterator iter = m_out_bl.begin();
-    r = librbd::cls_client::mirror_image_get_finish(&iter, &mirror_image);
-    if (r == 0) {
-      if (mirror_image.state == cls::rbd::MIRROR_IMAGE_STATE_ENABLED) {
-        send_is_tag_owner();
-        return;
-      } else if (mirror_image.state == cls::rbd::MIRROR_IMAGE_STATE_DISABLING) {
-        dout(5) << ": image mirroring is being disabled" << dendl;
-        r = -ENOENT;
-      } else {
-        derr << ": image mirroring is disabled" << dendl;
-        r = -EINVAL;
-      }
-    } else {
-      derr << ": failed to decode image mirror state: " << cpp_strerror(r)
-           << dendl;
-    }
-  } else if (r == -ENOENT) {
-    dout(5) << ": image is not mirrored" << dendl;
-  } else {
-    derr << ": failed to retrieve image mirror state: " << cpp_strerror(r)
-         << dendl;
-  }
+                dout(20) << dendl;
 
-  finish(r);
-}
+                Context *ctx = create_context_callback <
+                    IsPrimaryRequest < I >,
+                    &IsPrimaryRequest < I >::handle_is_tag_owner > (this);
 
-template <typename I>
-void IsPrimaryRequest<I>::send_is_tag_owner() {
-  // deduce the class type for the journal to support unit tests
-  using Journal = typename std::decay<
-    typename std::remove_pointer<decltype(std::declval<I>().journal)>
-    ::type>::type;
+                Journal::is_tag_owner(m_image_ctx, m_primary, ctx);
+            }
 
-  dout(20) << dendl;
+            template < typename I >
+                void IsPrimaryRequest < I >::handle_is_tag_owner(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  Context *ctx = create_context_callback<
-    IsPrimaryRequest<I>, &IsPrimaryRequest<I>::handle_is_tag_owner>(this);
+                if (r < 0) {
+                    derr << ": failed to query remote image tag owner: " <<
+                        cpp_strerror(r)
+                        << dendl;
+                }
 
-  Journal::is_tag_owner(m_image_ctx, m_primary, ctx);
-}
+                finish(r);
+            }
 
-template <typename I>
-void IsPrimaryRequest<I>::handle_is_tag_owner(int r) {
-  dout(20) << ": r=" << r << dendl;
+            template < typename I > void IsPrimaryRequest < I >::finish(int r) {
+                dout(20) << ": r=" << r << dendl;
 
-  if (r < 0) {
-    derr << ": failed to query remote image tag owner: " << cpp_strerror(r)
-         << dendl;
-  }
+                m_on_finish->complete(r);
+                delete this;
+            }
 
-  finish(r);
-}
+        }                       // namespace image_replayer
+    }                           // namespace mirror
+}                               // namespace rbd
 
-template <typename I>
-void IsPrimaryRequest<I>::finish(int r) {
-  dout(20) << ": r=" << r << dendl;
-
-  m_on_finish->complete(r);
-  delete this;
-}
-
-} // namespace image_replayer
-} // namespace mirror
-} // namespace rbd
-
-template class rbd::mirror::image_replayer::IsPrimaryRequest<librbd::ImageCtx>;
+template class rbd::mirror::image_replayer::IsPrimaryRequest <
+    librbd::ImageCtx >;

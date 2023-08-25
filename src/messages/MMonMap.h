@@ -19,37 +19,38 @@
 #include "msg/Message.h"
 #include "mon/MonMap.h"
 
-class MMonMap : public Message {
-public:
-  bufferlist monmapbl;
+class MMonMap:public Message {
+  public:
+    bufferlist monmapbl;
 
-  MMonMap() : Message(CEPH_MSG_MON_MAP) { }
-  explicit MMonMap(bufferlist &bl) : Message(CEPH_MSG_MON_MAP) { 
-    monmapbl.claim(bl);
-  }
-private:
-  ~MMonMap() override {}
-
-public:
-  const char *get_type_name() const override { return "mon_map"; }
-
-  void encode_payload(uint64_t features) override { 
-    if (monmapbl.length() &&
-	((features & CEPH_FEATURE_MONENC) == 0 ||
-	 (features & CEPH_FEATURE_MSG_ADDR2) == 0)) {
-      // reencode old-format monmap
-      MonMap t;
-      t.decode(monmapbl);
-      monmapbl.clear();
-      t.encode(monmapbl, features);
+    MMonMap():Message(CEPH_MSG_MON_MAP) {
+    } explicit MMonMap(bufferlist & bl):Message(CEPH_MSG_MON_MAP) {
+        monmapbl.claim(bl);
+    }
+  private:
+    ~MMonMap()override {
     }
 
-    ::encode(monmapbl, payload);
-  }
-  void decode_payload() override { 
-    bufferlist::iterator p = payload.begin();
-    ::decode(monmapbl, p);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "mon_map";
+    } void encode_payload(uint64_t features) override {
+        if (monmapbl.length() &&
+            ((features & CEPH_FEATURE_MONENC) == 0 ||
+             (features & CEPH_FEATURE_MSG_ADDR2) == 0)) {
+            // reencode old-format monmap
+            MonMap t;
+            t.decode(monmapbl);
+            monmapbl.clear();
+            t.encode(monmapbl, features);
+        }
+
+        ::encode(monmapbl, payload);
+    }
+    void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(monmapbl, p);
+    }
 };
 
 #endif

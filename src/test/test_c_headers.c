@@ -11,20 +11,20 @@
 
 int main(int argc, char **argv)
 {
-	int ret;
+    int ret;
 
-	/* librados.h */
-	rados_t cluster;
-	ret = rados_create(&cluster, NULL);
-	if (ret < 0) {
-		return EXIT_FAILURE;
-	}
-	/* libcephfs.h */
-	struct ceph_mount_info *cmount;
-	ret = ceph_create(&cmount, NULL);
-	if (ret < 0) {
-		return EXIT_FAILURE;
-	}
+    /* librados.h */
+    rados_t cluster;
+    ret = rados_create(&cluster, NULL);
+    if (ret < 0) {
+        return EXIT_FAILURE;
+    }
+    /* libcephfs.h */
+    struct ceph_mount_info *cmount;
+    ret = ceph_create(&cmount, NULL);
+    if (ret < 0) {
+        return EXIT_FAILURE;
+    }
 
-	return 0;
+    return 0;
 }

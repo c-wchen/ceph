@@ -17,54 +17,51 @@
 
 #include <atomic>
 
-struct RGWRequest
-{
-  uint64_t id;
-  struct req_state *s;
-  string req_str;
-  RGWOp *op;
-  utime_t ts;
+struct RGWRequest {
+    uint64_t id;
+    struct req_state *s;
+    string req_str;
+    RGWOp *op;
+    utime_t ts;
 
-  explicit RGWRequest(uint64_t id) : id(id), s(NULL), op(NULL) {}
+    explicit RGWRequest(uint64_t id):id(id), s(NULL), op(NULL) {
+    } virtual ~ RGWRequest() {
+    }
 
-  virtual ~RGWRequest() {}
+    void init_state(req_state * _s) {
+        s = _s;
+    }
 
-  void init_state(req_state *_s) {
-    s = _s;
-  }
-
-  void log_format(struct req_state *s, const char *fmt, ...);
-  void log_init();
-  void log(struct req_state *s, const char *msg);
-}; /* RGWRequest */
+    void log_format(struct req_state *s, const char *fmt, ...);
+    void log_init();
+    void log(struct req_state *s, const char *msg);
+};                              /* RGWRequest */
 
 #if defined(WITH_RADOSGW_FCGI_FRONTEND)
-struct RGWFCGXRequest : public RGWRequest {
-  FCGX_Request *fcgx;
-  QueueRing<FCGX_Request *> *qr;
+struct RGWFCGXRequest:public RGWRequest {
+    FCGX_Request *fcgx;
+     QueueRing < FCGX_Request * >*qr;
 
-  RGWFCGXRequest(uint64_t req_id, QueueRing<FCGX_Request *> *_qr)
-	  : RGWRequest(req_id), qr(_qr) {
-    qr->dequeue(&fcgx);
-  }
-
-  ~RGWFCGXRequest() override {
-    FCGX_Finish_r(fcgx);
-    qr->enqueue(fcgx);
-  }
+     RGWFCGXRequest(uint64_t req_id, QueueRing < FCGX_Request * >*_qr)
+    :RGWRequest(req_id), qr(_qr) {
+        qr->dequeue(&fcgx);
+    } ~RGWFCGXRequest() override {
+        FCGX_Finish_r(fcgx);
+        qr->enqueue(fcgx);
+    }
 };
 #endif
 
-struct RGWLoadGenRequest : public RGWRequest {
-	string method;
-	string resource;
-	int content_length;
-	std::atomic<bool>* fail_flag = nullptr;
+struct RGWLoadGenRequest:public RGWRequest {
+    string method;
+    string resource;
+    int content_length;
+     std::atomic < bool > *fail_flag = nullptr;
 
-RGWLoadGenRequest(uint64_t req_id, const string& _m, const  string& _r, int _cl,
-		std::atomic<bool> *ff)
-	: RGWRequest(req_id), method(_m), resource(_r), content_length(_cl),
-		fail_flag(ff) {}
-};
+     RGWLoadGenRequest(uint64_t req_id, const string & _m, const string & _r,
+                       int _cl, std::atomic < bool > *ff)
+    :RGWRequest(req_id), method(_m), resource(_r), content_length(_cl),
+        fail_flag(ff) {
+}};
 
 #endif /* RGW_REQUEST_H */

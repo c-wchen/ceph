@@ -13,8 +13,8 @@ class RGWRados;
  * RGWRealmReloader responds to new period notifications by recreating RGWRados
  * with the updated realm configuration.
  */
-class RGWRealmReloader : public RGWRealmWatcher::Watcher {
- public:
+class RGWRealmReloader:public RGWRealmWatcher::Watcher {
+  public:
   /**
    * Pauser is an interface to pause/resume frontends. Frontend cooperation
    * is required to ensure that they stop issuing requests on the old
@@ -22,42 +22,42 @@ class RGWRealmReloader : public RGWRealmWatcher::Watcher {
    *
    * This abstraction avoids a depency on class RGWFrontend.
    */
-  class Pauser {
-   public:
-    virtual ~Pauser() = default;
+    class Pauser {
+      public:
+        virtual ~ Pauser() = default;
 
-    /// pause all frontends while realm reconfiguration is in progress
-    virtual void pause() = 0;
-    /// resume all frontends with the given RGWRados instance
-    virtual void resume(RGWRados* store) = 0;
-  };
+        /// pause all frontends while realm reconfiguration is in progress
+        virtual void pause() = 0;
+        /// resume all frontends with the given RGWRados instance
+        virtual void resume(RGWRados * store) = 0;
+    };
 
-  RGWRealmReloader(RGWRados*& store, std::map<std::string, std::string>& service_map_meta,
-                   Pauser* frontends);
-  ~RGWRealmReloader() override;
+    RGWRealmReloader(RGWRados * &store, std::map < std::string,
+                     std::string > &service_map_meta, Pauser * frontends);
+    ~RGWRealmReloader()override;
 
-  /// respond to realm notifications by scheduling a reload()
-  void handle_notify(RGWRealmNotify type, bufferlist::iterator& p) override;
+    /// respond to realm notifications by scheduling a reload()
+    void handle_notify(RGWRealmNotify type, bufferlist::iterator & p) override;
 
- private:
-  /// pause frontends and replace the RGWRados instance
-  void reload();
+  private:
+    /// pause frontends and replace the RGWRados instance
+    void reload();
 
-  class C_Reload; //< Context that calls reload()
+    class C_Reload;             //< Context that calls reload()
 
-  /// main()'s RGWRados pointer as a reference, modified by reload()
-  RGWRados*& store;
-  std::map<std::string, std::string>& service_map_meta;
-  Pauser *const frontends;
+    /// main()'s RGWRados pointer as a reference, modified by reload()
+    RGWRados *&store;
+    std::map < std::string, std::string > &service_map_meta;
+    Pauser *const frontends;
 
-  /// reload() takes a significant amount of time, so we don't want to run
-  /// it in the handle_notify() thread. we choose a timer thread instead of a
-  /// Finisher because it allows us to cancel events that were scheduled while
-  /// reload() is still running
-  SafeTimer timer;
-  Mutex mutex; //< protects access to timer and reload_scheduled
-  Cond cond; //< to signal reload() after an invalid realm config
-  C_Reload* reload_scheduled; //< reload() context if scheduled
+    /// reload() takes a significant amount of time, so we don't want to run
+    /// it in the handle_notify() thread. we choose a timer thread instead of a
+    /// Finisher because it allows us to cancel events that were scheduled while
+    /// reload() is still running
+    SafeTimer timer;
+    Mutex mutex;                //< protects access to timer and reload_scheduled
+    Cond cond;                  //< to signal reload() after an invalid realm config
+    C_Reload *reload_scheduled; //< reload() context if scheduled
 };
 
 #endif // RGW_REALM_RELOADER_H

@@ -8,30 +8,24 @@
 #include "include/Context.h"
 #include "os/ObjectStore.h"
 
-class TestFileStoreBackend : public Backend {
-  ObjectStore *os;
-  Finisher finisher;
-  map<string, ObjectStore::Sequencer> osrs;
-  const bool write_infos;
+class TestFileStoreBackend:public Backend {
+    ObjectStore *os;
+    Finisher finisher;
+     map < string, ObjectStore::Sequencer > osrs;
+    const bool write_infos;
 
-public:
-  TestFileStoreBackend(ObjectStore *os, bool write_infos);
-  ~TestFileStoreBackend() override {
-    finisher.stop();
-  }
-  void write(
-    const string &oid,
-    uint64_t offset,
-    const bufferlist &bl,
-    Context *on_applied,
-    Context *on_commit) override;
+  public:
+     TestFileStoreBackend(ObjectStore * os, bool write_infos);
+    ~TestFileStoreBackend() override {
+        finisher.stop();
+    } void write(const string & oid,
+                 uint64_t offset,
+                 const bufferlist & bl,
+                 Context * on_applied, Context * on_commit) override;
 
-  void read(
-    const string &oid,
-    uint64_t offset,
-    uint64_t length,
-    bufferlist *bl,
-    Context *on_complete) override;
+    void read(const string & oid,
+              uint64_t offset,
+              uint64_t length, bufferlist * bl, Context * on_complete) override;
 };
 
 #endif

@@ -14,7 +14,6 @@
 #ifndef JOURNAL_RESETTER_H_
 #define JOURNAL_RESETTER_H_
 
-
 #include "MDSUtility.h"
 
 class Journaler;
@@ -25,19 +24,18 @@ class Journaler;
  * To use, create a Resetter, call init(), and then call reset() with the name
  * of the file to dump to.
  */
-class Resetter : public MDSUtility {
-protected:
-  int _write_reset_event(Journaler *journaler);
+class Resetter:public MDSUtility {
+  protected:
+    int _write_reset_event(Journaler * journaler);
 
-public:
-  Resetter() {}
-
+  public:
+     Resetter() {
+    }
   /**
    * For use when no journal header/pointer was present: write one
    * out from scratch.
-   */
-  int reset_hard(mds_role_t role);
-  int reset(mds_role_t role);
+   */ int reset_hard(mds_role_t role);
+    int reset(mds_role_t role);
 };
 
 #endif /* JOURNAL_RESETTER_H_ */

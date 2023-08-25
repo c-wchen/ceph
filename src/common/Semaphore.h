@@ -12,40 +12,33 @@
  * 
  */
 
-
 #ifndef CEPH_Sem_Posix__H
 #define CEPH_Sem_Posix__H
 
-class Semaphore
-{
-  Mutex m;
-  Cond c;
-  int count;
+class Semaphore {
+    Mutex m;
+    Cond c;
+    int count;
 
   public:
 
-  Semaphore() : m("Semaphore::m")
-  {
-    count = 0;
-  }
-
-  void Put()
-  { 
-    m.Lock();
-    count++;
-    c.Signal();
-    m.Unlock();
-  }
-
-  void Get() 
-  { 
-    m.Lock();
-    while(count <= 0) {
-      c.Wait(m);
+     Semaphore():m("Semaphore::m") {
+        count = 0;
+    } void Put() {
+        m.Lock();
+        count++;
+        c.Signal();
+        m.Unlock();
     }
-    count--;
-    m.Unlock();
-  }
+
+    void Get() {
+        m.Lock();
+        while (count <= 0) {
+            c.Wait(m);
+        }
+        count--;
+        m.Unlock();
+    }
 };
 
 #endif // !_Mutex_Posix_

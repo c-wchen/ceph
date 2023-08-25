@@ -24,32 +24,31 @@
 #include "rgw_xml.h"
 #include "rgw_cors.h"
 
-class RGWCORSRule_S3 : public RGWCORSRule, public XMLObj
-{
+class RGWCORSRule_S3:public RGWCORSRule, public XMLObj {
   public:
-    RGWCORSRule_S3() {}
-    ~RGWCORSRule_S3() override {}
-    
-    bool xml_end(const char *el) override;
-    void to_xml(XMLFormatter& f);
+    RGWCORSRule_S3() {
+    } ~RGWCORSRule_S3() override {
+    }
+
+    bool xml_end(const char *el)override;
+    void to_xml(XMLFormatter & f);
 };
 
-class RGWCORSConfiguration_S3 : public RGWCORSConfiguration, public XMLObj
-{
+class RGWCORSConfiguration_S3:public RGWCORSConfiguration, public XMLObj {
   public:
-    RGWCORSConfiguration_S3() {}
-    ~RGWCORSConfiguration_S3() override {}
+    RGWCORSConfiguration_S3() {
+    } ~RGWCORSConfiguration_S3() override {
+    }
 
     bool xml_end(const char *el) override;
-    void to_xml(ostream& out);
+    void to_xml(ostream & out);
 };
 
-class RGWCORSXMLParser_S3 : public RGWXMLParser
-{
-  CephContext *cct;
+class RGWCORSXMLParser_S3:public RGWXMLParser {
+    CephContext *cct;
 
-  XMLObj *alloc_obj(const char *el) override;
-public:
-  explicit RGWCORSXMLParser_S3(CephContext *_cct) : cct(_cct) {}
-};
-#endif /*CEPH_RGW_CORS_S3_H*/
+    XMLObj *alloc_obj(const char *el) override;
+  public:
+     explicit RGWCORSXMLParser_S3(CephContext * _cct):cct(_cct) {
+}};
+#endif /*CEPH_RGW_CORS_S3_H */

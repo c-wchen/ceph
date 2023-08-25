@@ -7,18 +7,15 @@
 #include "rgw_common.h"
 
 namespace ceph {
-  class DNSResolver;
-}
+    class DNSResolver;
+} class RGWResolver {
+    DNSResolver *resolver;
 
-class RGWResolver {
-  DNSResolver *resolver;
-
-public:
-  ~RGWResolver();
-  RGWResolver();
-  int resolve_cname(const string& hostname, string& cname, bool *found);
+  public:
+    ~RGWResolver();
+     RGWResolver();
+    int resolve_cname(const string & hostname, string & cname, bool * found);
 };
-
 
 extern void rgw_init_resolver(void);
 extern void rgw_shutdown_resolver(void);

@@ -23,20 +23,20 @@
 
 class FileStoreDiff {
 
- private:
-  FileStore *a_store;
-  FileStore *b_store;
+  private:
+    FileStore * a_store;
+    FileStore *b_store;
 
-  bool diff_objects(FileStore *a_store, FileStore *b_store, coll_t coll);
-  bool diff_objects_stat(struct stat& a, struct stat& b);
-  bool diff_attrs(std::map<std::string,bufferptr>& b,
-      std::map<std::string,bufferptr>& a);
+    bool diff_objects(FileStore * a_store, FileStore * b_store, coll_t coll);
+    bool diff_objects_stat(struct stat &a, struct stat &b);
+    bool diff_attrs(std::map < std::string, bufferptr > &b,
+                    std::map < std::string, bufferptr > &a);
 
-public:
-  FileStoreDiff(FileStore *a, FileStore *b);
-  virtual ~FileStoreDiff();
+  public:
+     FileStoreDiff(FileStore * a, FileStore * b);
+     virtual ~ FileStoreDiff();
 
-  bool diff();
+    bool diff();
 };
 
 #endif /* FILESTOREDIFF_H_ */

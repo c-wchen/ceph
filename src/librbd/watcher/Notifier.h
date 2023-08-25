@@ -14,50 +14,49 @@
 
 namespace librbd {
 
-namespace watcher {
+    namespace watcher {
 
-struct NotifyResponse;
+        struct NotifyResponse;
 
-class Notifier {
-public:
-  static const uint64_t NOTIFY_TIMEOUT;
+        class Notifier {
+          public:
+            static const uint64_t NOTIFY_TIMEOUT;
 
-  Notifier(ContextWQ *work_queue, librados::IoCtx &ioctx,
-           const std::string &oid);
-  ~Notifier();
+             Notifier(ContextWQ * work_queue, librados::IoCtx & ioctx,
+                      const std::string & oid);
+            ~Notifier();
 
-  void flush(Context *on_finish);
-  void notify(bufferlist &bl, NotifyResponse *response, Context *on_finish);
+            void flush(Context * on_finish);
+            void notify(bufferlist & bl, NotifyResponse * response,
+                        Context * on_finish);
 
-private:
-  typedef std::list<Context*> Contexts;
+          private:
+            typedef std::list < Context * >Contexts;
 
-  struct C_AioNotify : public Context {
-    Notifier *notifier;
-    NotifyResponse *response;
-    Context *on_finish;
-    bufferlist out_bl;
+            struct C_AioNotify:public Context {
+                Notifier *notifier;
+                NotifyResponse *response;
+                Context *on_finish;
+                bufferlist out_bl;
 
-    C_AioNotify(Notifier *notifier, NotifyResponse *response,
-                Context *on_finish);
+                 C_AioNotify(Notifier * notifier, NotifyResponse * response,
+                             Context * on_finish);
 
-    void finish(int r) override;
-  };
+                void finish(int r) override;
+            };
 
-  ContextWQ *m_work_queue;
-  librados::IoCtx &m_ioctx;
-  CephContext *m_cct;
-  std::string m_oid;
+            ContextWQ *m_work_queue;
+             librados::IoCtx & m_ioctx;
+            CephContext *m_cct;
+             std::string m_oid;
 
-  Mutex m_aio_notify_lock;
-  size_t m_pending_aio_notifies = 0;
-  Contexts m_aio_notify_flush_ctxs;
+            Mutex m_aio_notify_lock;
+            size_t m_pending_aio_notifies = 0;
+            Contexts m_aio_notify_flush_ctxs;
 
-  void handle_notify(int r, Context *on_finish);
+            void handle_notify(int r, Context * on_finish);
 
-};
+        };
 
-} // namespace watcher
-} // namespace librbd
-
-#endif // CEPH_LIBRBD_WATCHER_NOTIFIER_H
+} // namespace watcher }        // namespace librbd
+#endif                          // CEPH_LIBRBD_WATCHER_NOTIFIER_H

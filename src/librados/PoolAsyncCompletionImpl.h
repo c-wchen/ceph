@@ -22,98 +22,95 @@
 #include "include/rados/librados.hpp"
 
 namespace librados {
-  struct PoolAsyncCompletionImpl {
-    Mutex lock;
-    Cond cond;
-    int ref, rval;
-    bool released;
-    bool done;
+    struct PoolAsyncCompletionImpl {
+        Mutex lock;
+        Cond cond;
+        int ref, rval;
+        bool released;
+        bool done;
 
-    rados_callback_t callback;
-    void *callback_arg;
+        rados_callback_t callback;
+        void *callback_arg;
 
-    PoolAsyncCompletionImpl() : lock("PoolAsyncCompletionImpl lock"),
-				ref(1), rval(0), released(false), done(false),
-				callback(0), callback_arg(0) {}
+         PoolAsyncCompletionImpl():lock("PoolAsyncCompletionImpl lock"),
+            ref(1), rval(0), released(false), done(false),
+            callback(0), callback_arg(0) {
+        } int set_callback(void *cb_arg, rados_callback_t cb) {
+            lock.Lock();
+            callback = cb;
+            callback_arg = cb_arg;
+            lock.Unlock();
+            return 0;
+        } int wait() {
+            lock.Lock();
+            while (!done)
+                cond.Wait(lock);
+            lock.Unlock();
+            return 0;
+        }
+        int is_complete() {
+            lock.Lock();
+            int r = done;
+            lock.Unlock();
+            return r;
+        }
+        int get_return_value() {
+            lock.Lock();
+            int r = rval;
+            lock.Unlock();
+            return r;
+        }
+        void get() {
+            lock.Lock();
+            assert(ref > 0);
+            ref++;
+            lock.Unlock();
+        }
+        void release() {
+            lock.Lock();
+            assert(!released);
+            released = true;
+            put_unlock();
+        }
+        void put() {
+            lock.Lock();
+            put_unlock();
+        }
+        void put_unlock() {
+            assert(ref > 0);
+            int n = --ref;
+            lock.Unlock();
+            if (!n)
+                delete this;
+        }
+    };
 
-    int set_callback(void *cb_arg, rados_callback_t cb) {
-      lock.Lock();
-      callback = cb;
-      callback_arg = cb_arg;
-      lock.Unlock();
-      return 0;
-    }
-    int wait() {
-      lock.Lock();
-      while (!done)
-	cond.Wait(lock);
-      lock.Unlock();
-      return 0;
-    }
-    int is_complete() {
-      lock.Lock();
-      int r = done;
-      lock.Unlock();
-      return r;
-    }
-    int get_return_value() {
-      lock.Lock();
-      int r = rval;
-      lock.Unlock();
-      return r;
-    }
-    void get() {
-      lock.Lock();
-      assert(ref > 0);
-      ref++;
-      lock.Unlock();
-    }
-    void release() {
-      lock.Lock();
-      assert(!released);
-      released = true;
-      put_unlock();
-    }
-    void put() {
-      lock.Lock();
-      put_unlock();
-    }
-    void put_unlock() {
-      assert(ref > 0);
-      int n = --ref;
-      lock.Unlock();
-      if (!n)
-	delete this;
-    }
-  };
+    class C_PoolAsync_Safe:public Context {
+        PoolAsyncCompletionImpl *c;
 
-  class C_PoolAsync_Safe : public Context {
-    PoolAsyncCompletionImpl *c;
+      public:
+         explicit C_PoolAsync_Safe(PoolAsyncCompletionImpl * _c):c(_c) {
+            c->get();
+        } ~C_PoolAsync_Safe() override {
+            c->put();
+        }
 
-  public:
-    explicit C_PoolAsync_Safe(PoolAsyncCompletionImpl *_c) : c(_c) {
-      c->get();
-    }
-    ~C_PoolAsync_Safe() override {
-      c->put();
-    }
-  
-    void finish(int r) override {
-      c->lock.Lock();
-      c->rval = r;
-      c->done = true;
-      c->cond.Signal();
+        void finish(int r) override {
+            c->lock.Lock();
+            c->rval = r;
+            c->done = true;
+            c->cond.Signal();
 
-      if (c->callback) {
-	rados_callback_t cb = c->callback;
-	void *cb_arg = c->callback_arg;
-	c->lock.Unlock();
-	cb(c, cb_arg);
-	c->lock.Lock();
-      }
+            if (c->callback) {
+                rados_callback_t cb = c->callback;
+                void *cb_arg = c->callback_arg;
+                c->lock.Unlock();
+                cb(c, cb_arg);
+                c->lock.Lock();
+            }
 
-      c->lock.Unlock();
-    }
-  };
+            c->lock.Unlock();
+        }
+    };
 }
 #endif

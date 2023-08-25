@@ -20,38 +20,33 @@
 #include "compressor/CompressionPlugin.h"
 #include "compressor_example.h"
 
-class CompressorPluginExample : public CompressionPlugin {
-public:
+class CompressorPluginExample:public CompressionPlugin {
+  public:
 
-  explicit CompressorPluginExample(CephContext* cct) : CompressionPlugin(cct)
-  {}
-
-  int factory(CompressorRef *cs,
-		      ostream *ss) override
-  {
-    if (compressor == 0) {
-      CompressorExample *interface = new CompressorExample();
-      compressor = CompressorRef(interface);
+    explicit CompressorPluginExample(CephContext * cct):CompressionPlugin(cct) {
+    } int factory(CompressorRef * cs, ostream * ss) override {
+        if (compressor == 0) {
+            CompressorExample *interface = new CompressorExample();
+            compressor = CompressorRef(interface);
+        }
+        *cs = compressor;
+        return 0;
     }
-    *cs = compressor;
-    return 0;
-  }
 };
 
 // -----------------------------------------------------------------------------
 
 const char *__ceph_plugin_version()
 {
-  return CEPH_GIT_NICE_VER;
+    return CEPH_GIT_NICE_VER;
 }
 
 // -----------------------------------------------------------------------------
 
-int __ceph_plugin_init(CephContext *cct,
-                       const std::string& type,
-                       const std::string& name)
+int __ceph_plugin_init(CephContext * cct,
+                       const std::string & type, const std::string & name)
 {
-  PluginRegistry *instance = cct->get_plugin_registry();
+    PluginRegistry *instance = cct->get_plugin_registry();
 
-  return instance->add(type, name, new CompressorPluginExample(cct));
+    return instance->add(type, name, new CompressorPluginExample(cct));
 }

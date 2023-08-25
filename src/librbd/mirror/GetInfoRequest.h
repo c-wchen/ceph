@@ -9,34 +9,32 @@
 #include <string>
 
 struct Context;
-namespace cls { namespace rbd { struct MirrorImage; } }
+namespace cls {
+    namespace rbd {
+        struct MirrorImage;
+}} namespace librbd {
 
-namespace librbd {
+    struct ImageCtx;
 
-struct ImageCtx;
+    namespace mirror {
 
-namespace mirror {
+        template < typename ImageCtxT = librbd::ImageCtx > class GetInfoRequest {
+          public:
+            static GetInfoRequest *create(ImageCtxT & image_ctx,
+                                          cls::rbd::MirrorImage * mirror_image,
+                                          PromotionState * promotion_state,
+                                          Context * on_finish) {
+                return new GetInfoRequest(image_ctx, mirror_image,
+                                          promotion_state, on_finish);
+            } GetInfoRequest(ImageCtxT & image_ctx,
+                             cls::rbd::MirrorImage * mirror_image,
+                             PromotionState * promotion_state,
+                             Context * on_finish)
+            :m_image_ctx(image_ctx), m_mirror_image(mirror_image),
+                m_promotion_state(promotion_state), m_on_finish(on_finish) {
+            } void send();
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class GetInfoRequest {
-public:
-  static GetInfoRequest *create(ImageCtxT &image_ctx,
-                                cls::rbd::MirrorImage *mirror_image,
-                                PromotionState *promotion_state,
-                                Context *on_finish) {
-    return new GetInfoRequest(image_ctx, mirror_image, promotion_state,
-                              on_finish);
-  }
-
-  GetInfoRequest(ImageCtxT &image_ctx, cls::rbd::MirrorImage *mirror_image,
-                 PromotionState *promotion_state, Context *on_finish)
-    : m_image_ctx(image_ctx), m_mirror_image(mirror_image),
-      m_promotion_state(promotion_state), m_on_finish(on_finish) {
-  }
-
-  void send();
-
-private:
+          private:
   /**
    * @verbatim
    *
@@ -57,31 +55,30 @@ private:
    * @endverbatim
    */
 
-  ImageCtxT &m_image_ctx;
-  cls::rbd::MirrorImage *m_mirror_image;
-  PromotionState *m_promotion_state;
-  Context *m_on_finish;
+            ImageCtxT & m_image_ctx;
+            cls::rbd::MirrorImage * m_mirror_image;
+            PromotionState *m_promotion_state;
+            Context *m_on_finish;
 
-  bufferlist m_out_bl;
-  std::string m_mirror_uuid;
+            bufferlist m_out_bl;
+            std::string m_mirror_uuid;
 
-  void refresh_image();
-  void handle_refresh_image(int r);
+            void refresh_image();
+            void handle_refresh_image(int r);
 
-  void get_mirror_image();
-  void handle_get_mirror_image(int r);
+            void get_mirror_image();
+            void handle_get_mirror_image(int r);
 
-  void get_tag_owner();
-  void handle_get_tag_owner(int r);
+            void get_tag_owner();
+            void handle_get_tag_owner(int r);
 
-  void finish(int r);
+            void finish(int r);
 
-};
+        };
 
-} // namespace mirror
-} // namespace librbd
+    }                           // namespace mirror
+}                               // namespace librbd
 
-extern template class librbd::mirror::GetInfoRequest<librbd::ImageCtx>;
+extern template class librbd::mirror::GetInfoRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MIRROR_GET_INFO_REQUEST_H
-

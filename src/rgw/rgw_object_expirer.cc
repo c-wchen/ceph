@@ -38,68 +38,72 @@ using namespace std;
 static RGWRados *store = NULL;
 
 class StoreDestructor {
-  RGWRados *store;
+    RGWRados *store;
 
-public:
-  explicit StoreDestructor(RGWRados *_s) : store(_s) {}
-  ~StoreDestructor() {
-    if (store) {
-      RGWStoreManager::close_storage(store);
+  public:
+     explicit StoreDestructor(RGWRados * _s):store(_s) {
+    } ~StoreDestructor() {
+        if (store) {
+            RGWStoreManager::close_storage(store);
+        }
     }
-  }
 };
 
 static void usage()
 {
-  generic_server_usage();
+    generic_server_usage();
 }
 
 int main(const int argc, const char **argv)
 {
-  vector<const char *> args;
-  argv_to_vec(argc, argv, args);
-  env_to_vec(args);
+    vector < const char *>args;
+    argv_to_vec(argc, argv, args);
+    env_to_vec(args);
 
-  auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
-			 CODE_ENVIRONMENT_DAEMON,
-			 CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS, "rgw_data");
+    auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
+                           CODE_ENVIRONMENT_DAEMON,
+                           CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS, "rgw_data");
 
-  for (std::vector<const char *>::iterator i = args.begin(); i != args.end(); ) {
-    if (ceph_argparse_double_dash(args, i)) {
-      break;
-    } else if (ceph_argparse_flag(args, i, "-h", "--help", (char*)NULL)) {
-      usage();
-      return 0;
+    for (std::vector < const char *>::iterator i = args.begin();
+         i != args.end();) {
+        if (ceph_argparse_double_dash(args, i)) {
+            break;
+        }
+        else if (ceph_argparse_flag(args, i, "-h", "--help", (char *)NULL)) {
+            usage();
+            return 0;
+        }
     }
-  }
 
-  if (g_conf->daemonize) {
-    global_init_daemonize(g_ceph_context);
-  }
+    if (g_conf->daemonize) {
+        global_init_daemonize(g_ceph_context);
+    }
 
-  common_init_finish(g_ceph_context);
+    common_init_finish(g_ceph_context);
 
-  store = RGWStoreManager::get_storage(g_ceph_context, false, false, false, false, false);
-  if (!store) {
-    std::cerr << "couldn't init storage provider" << std::endl;
-    return EIO;
-  }
+    store =
+        RGWStoreManager::get_storage(g_ceph_context, false, false, false, false,
+                                     false);
+    if (!store) {
+        std::cerr << "couldn't init storage provider" << std::endl;
+        return EIO;
+    }
 
-  rgw_user_init(store);
-  rgw_bucket_init(store->meta_mgr);
+    rgw_user_init(store);
+    rgw_bucket_init(store->meta_mgr);
 
-  /* Guard to not forget about closing the rados store. */
-  StoreDestructor store_dtor(store);
+    /* Guard to not forget about closing the rados store. */
+    StoreDestructor store_dtor(store);
 
-  RGWObjectExpirer objexp(store);
-  objexp.start_processor();
+    RGWObjectExpirer objexp(store);
+    objexp.start_processor();
 
-  const utime_t interval(g_ceph_context->_conf->rgw_objexp_gc_interval, 0);
-  while (true) {
-    interval.sleep();
-  }
+    const utime_t interval(g_ceph_context->_conf->rgw_objexp_gc_interval, 0);
+    while (true) {
+        interval.sleep();
+    }
 
-  /* unreachable */
+    /* unreachable */
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

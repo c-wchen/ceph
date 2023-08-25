@@ -36,58 +36,56 @@ class MMonMap;
 class MMonCommand;
 class MMonJoin;
 
-class MonmapMonitor : public PaxosService {
- public:
-  MonmapMonitor(Monitor *mn, Paxos *p, const string& service_name)
-    : PaxosService(mn, p, service_name)
-  {
-  }
-  MonMap pending_map; //the pending map awaiting passage
+class MonmapMonitor:public PaxosService {
+  public:
+    MonmapMonitor(Monitor * mn, Paxos * p, const string & service_name)
+    :PaxosService(mn, p, service_name) {
+    } MonMap pending_map;       //the pending map awaiting passage
 
-  void create_initial() override;
+    void create_initial() override;
 
-  void update_from_paxos(bool *need_bootstrap) override;
+    void update_from_paxos(bool * need_bootstrap) override;
 
-  void create_pending() override;
+    void create_pending() override;
 
-  void encode_pending(MonitorDBStore::TransactionRef t) override;
-  // we always encode the full map; we have no use for full versions
-  void encode_full(MonitorDBStore::TransactionRef t) override { }
+    void encode_pending(MonitorDBStore::TransactionRef t) override;
+    // we always encode the full map; we have no use for full versions
+    void encode_full(MonitorDBStore::TransactionRef t) override {
+    }
 
-  void on_active() override;
-  void apply_mon_features(const mon_feature_t& features);
+    void on_active() override;
+    void apply_mon_features(const mon_feature_t & features);
 
-  void dump_info(Formatter *f);
+    void dump_info(Formatter * f);
 
-  bool preprocess_query(MonOpRequestRef op) override;
-  bool prepare_update(MonOpRequestRef op) override;
+    bool preprocess_query(MonOpRequestRef op) override;
+    bool prepare_update(MonOpRequestRef op) override;
 
-  bool preprocess_join(MonOpRequestRef op);
-  bool prepare_join(MonOpRequestRef op);
+    bool preprocess_join(MonOpRequestRef op);
+    bool prepare_join(MonOpRequestRef op);
 
-  bool preprocess_command(MonOpRequestRef op);
-  bool prepare_command(MonOpRequestRef op);
+    bool preprocess_command(MonOpRequestRef op);
+    bool prepare_command(MonOpRequestRef op);
 
-  void get_health(list<pair<health_status_t,string> >& summary,
-		  list<pair<health_status_t,string> > *detail,
-		  CephContext *cct) const override;
+    void get_health(list < pair < health_status_t, string > >&summary,
+                    list < pair < health_status_t, string > >*detail,
+                    CephContext * cct) const override;
 
-  int get_monmap(bufferlist &bl);
+    int get_monmap(bufferlist & bl);
 
-  /*
-   * Since monitors are pretty
-   * important, this implementation will just write 0.0.
-   */
-  bool should_propose(double& delay) override;
+    /*
+     * Since monitors are pretty
+     * important, this implementation will just write 0.0.
+     */
+    bool should_propose(double &delay) override;
 
-  void check_sub(Subscription *sub);
+    void check_sub(Subscription * sub);
 
-private:
-  void check_subs();
+  private:
+    void check_subs();
 
-private:
-  bufferlist monmap_bl;
+  private:
+    bufferlist monmap_bl;
 };
-
 
 #endif

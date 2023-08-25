@@ -9,21 +9,21 @@
 struct Context;
 
 class AsyncOpTracker {
-public:
-  AsyncOpTracker();
-  ~AsyncOpTracker();
+  public:
+    AsyncOpTracker();
+    ~AsyncOpTracker();
 
-  void start_op();
-  void finish_op();
+    void start_op();
+    void finish_op();
 
-  void wait_for_ops(Context *on_finish);
+    void wait_for_ops(Context * on_finish);
 
-  bool empty();
+    bool empty();
 
-private:
-  Mutex m_lock;
-  uint32_t m_pending_ops = 0;
-  Context *m_on_finish = nullptr;
+  private:
+     Mutex m_lock;
+    uint32_t m_pending_ops = 0;
+    Context *m_on_finish = nullptr;
 
 };
 

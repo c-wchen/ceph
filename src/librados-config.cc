@@ -21,59 +21,59 @@
 
 void usage()
 {
-  cout << "usage: librados-config [option]\n"
-       << "where options are:\n"
-       << "  --version                    library version\n"
-       << "  --vernum                     library version code\n";
+    cout << "usage: librados-config [option]\n"
+        << "where options are:\n"
+        << "  --version                    library version\n"
+        << "  --vernum                     library version code\n";
 }
 
 void usage_exit()
 {
-  usage();
-  exit(1);
+    usage();
+    exit(1);
 }
 
-int main(int argc, const char **argv) 
+int main(int argc, const char **argv)
 {
-  vector<const char*> args;
-  argv_to_vec(argc, argv, args);
-  env_to_vec(args);
+    vector < const char *>args;
+    argv_to_vec(argc, argv, args);
+    env_to_vec(args);
 
-  bool opt_version = false;
-  bool opt_vernum = false;
+    bool opt_version = false;
+    bool opt_vernum = false;
 
-  auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
-			 CODE_ENVIRONMENT_UTILITY,
-			 CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
-  common_init_finish(g_ceph_context);
-  for (std::vector<const char*>::iterator i = args.begin();
-       i != args.end(); ) {
-    if (strcmp(*i, "--") == 0) {
-      break;
+    auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
+                           CODE_ENVIRONMENT_UTILITY,
+                           CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
+    common_init_finish(g_ceph_context);
+    for (std::vector < const char *>::iterator i = args.begin();
+         i != args.end();) {
+        if (strcmp(*i, "--") == 0) {
+            break;
+        }
+        else if (strcmp(*i, "--version") == 0) {
+            opt_version = true;
+            i = args.erase(i);
+        }
+        else if (strcmp(*i, "--vernum") == 0) {
+            opt_vernum = true;
+            i = args.erase(i);
+        }
+        else
+            ++i;
     }
-    else if (strcmp(*i, "--version") == 0) {
-      opt_version = true;
-      i = args.erase(i);
+
+    if (!opt_version && !opt_vernum)
+        usage_exit();
+
+    if (opt_version) {
+        int maj, min, ext;
+        rados_version(&maj, &min, &ext);
+        cout << maj << "." << min << "." << ext << std::endl;
     }
-    else if (strcmp(*i, "--vernum") == 0) {
-      opt_vernum = true;
-      i = args.erase(i);
+    else if (opt_vernum) {
+        cout << hex << LIBRADOS_VERSION_CODE << dec << std::endl;
     }
-    else
-      ++i;
-  }
 
-  if (!opt_version && !opt_vernum)
-    usage_exit();
-
-  if (opt_version) {
-    int maj, min, ext;
-    rados_version(&maj, &min, &ext);
-    cout << maj << "." << min << "." << ext << std::endl;
-  } else if (opt_vernum) {
-    cout << hex << LIBRADOS_VERSION_CODE << dec << std::endl;
-  }
-
-  return 0;
+    return 0;
 }
-

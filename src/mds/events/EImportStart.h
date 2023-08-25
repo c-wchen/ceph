@@ -24,38 +24,40 @@ class MDSRank;
 #include "EMetaBlob.h"
 #include "../LogEvent.h"
 
-class EImportStart : public LogEvent {
-protected:
-  dirfrag_t base;
-  vector<dirfrag_t> bounds;
-  mds_rank_t from;
+class EImportStart:public LogEvent {
+  protected:
+    dirfrag_t base;
+    vector < dirfrag_t > bounds;
+    mds_rank_t from;
 
-public:
-  EMetaBlob metablob;
-  bufferlist client_map;  // encoded map<__u32,entity_inst_t>
-  version_t cmapv{0};
+  public:
+     EMetaBlob metablob;
+    bufferlist client_map;      // encoded map<__u32,entity_inst_t>
+    version_t cmapv {
+    0};
 
-  EImportStart(MDLog *log, dirfrag_t di, vector<dirfrag_t>& b, mds_rank_t f) :
-    LogEvent(EVENT_IMPORTSTART),
-    base(di), bounds(b), from(f), metablob(log) { }
-  EImportStart() :
-    LogEvent(EVENT_IMPORTSTART), from(MDS_RANK_NONE) { }
-  
-  void print(ostream& out) const override {
-    out << "EImportStart " << base << " from mds." << from << " " << metablob;
-  }
+     EImportStart(MDLog * log, dirfrag_t di, vector < dirfrag_t > &b,
+                  mds_rank_t f): LogEvent(EVENT_IMPORTSTART), base(di),
+        bounds(b), from(f), metablob(log) {
+    } EImportStart(): LogEvent(EVENT_IMPORTSTART), from(MDS_RANK_NONE) {
+    }
 
-  EMetaBlob *get_metablob() override { return &metablob; }
-  
-  void encode(bufferlist &bl, uint64_t features) const override;
-  void decode(bufferlist::iterator &bl) override;
-  void dump(Formatter *f) const override;
-  static void generate_test_instances(list<EImportStart*>& ls);
-  
-  void update_segment() override;
-  void replay(MDSRank *mds) override;
+    void print(ostream & out) const override {
+        out << "EImportStart " << base << " from mds." << from << " " <<
+            metablob;
+    } EMetaBlob *get_metablob() override {
+        return &metablob;
+    }
+
+    void encode(bufferlist & bl, uint64_t features) const override;
+    void decode(bufferlist::iterator & bl) override;
+    void dump(Formatter * f) const override;
+    static void generate_test_instances(list < EImportStart * >&ls);
+
+    void update_segment() override;
+    void replay(MDSRank * mds) override;
 
 };
-WRITE_CLASS_ENCODER_FEATURES(EImportStart)
 
+WRITE_CLASS_ENCODER_FEATURES(EImportStart)
 #endif

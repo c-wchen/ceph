@@ -30,7 +30,6 @@
 #include "common/debug.h"
 #include "common/config.h"
 
-
 // ======================================================
 
 // abstract Connection, for keeping per-connection state
@@ -38,59 +37,54 @@
 class Message;
 class Messenger;
 
-struct Connection : public RefCountedObject {
-  mutable Mutex lock;
-  Messenger *msgr;
-  RefCountedObject *priv;
-  int peer_type;
-  entity_addr_t peer_addr;
-  utime_t last_keepalive, last_keepalive_ack;
-private:
-  uint64_t features;
-public:
-  bool failed; // true if we are a lossy connection that has failed.
+struct Connection:public RefCountedObject {
+    mutable Mutex lock;
+    Messenger *msgr;
+    RefCountedObject *priv;
+    int peer_type;
+    entity_addr_t peer_addr;
+    utime_t last_keepalive, last_keepalive_ack;
+  private:
+     uint64_t features;
+  public:
+     bool failed;               // true if we are a lossy connection that has failed.
 
-  int rx_buffers_version;
-  map<ceph_tid_t,pair<bufferlist,int> > rx_buffers;
+    int rx_buffers_version;
+     map < ceph_tid_t, pair < bufferlist, int >>rx_buffers;
 
-  friend class boost::intrusive_ptr<Connection>;
-  friend class PipeConnection;
+    friend class boost::intrusive_ptr < Connection >;
+    friend class PipeConnection;
 
-public:
-  Connection(CephContext *cct, Messenger *m)
-    // we are managed exlusively by ConnectionRef; make it so you can
-    //   ConnectionRef foo = new Connection;
-    : RefCountedObject(cct, 0),
-      lock("Connection::lock"),
-      msgr(m),
-      priv(NULL),
-      peer_type(-1),
-      features(0),
-      failed(false),
-      rx_buffers_version(0) {
-  }
-
-  ~Connection() override {
-    //generic_dout(0) << "~Connection " << this << dendl;
-    if (priv) {
-      //generic_dout(0) << "~Connection " << this << " dropping priv " << priv << dendl;
-      priv->put();
+  public:
+     Connection(CephContext * cct, Messenger * m)
+        // we are managed exlusively by ConnectionRef; make it so you can
+        //   ConnectionRef foo = new Connection;
+    :RefCountedObject(cct, 0),
+        lock("Connection::lock"),
+        msgr(m),
+        priv(NULL),
+        peer_type(-1), features(0), failed(false), rx_buffers_version(0) {
+    } ~Connection() override {
+        //generic_dout(0) << "~Connection " << this << dendl;
+        if (priv) {
+            //generic_dout(0) << "~Connection " << this << " dropping priv " << priv << dendl;
+            priv->put();
+        }
     }
-  }
 
-  void set_priv(RefCountedObject *o) {
-    Mutex::Locker l(lock);
-    if (priv)
-      priv->put();
-    priv = o;
-  }
+    void set_priv(RefCountedObject * o) {
+        Mutex::Locker l(lock);
+        if (priv)
+            priv->put();
+        priv = o;
+    }
 
-  RefCountedObject *get_priv() {
-    Mutex::Locker l(lock);
-    if (priv)
-      return priv->get();
-    return NULL;
-  }
+    RefCountedObject *get_priv() {
+        Mutex::Locker l(lock);
+        if (priv)
+            return priv->get();
+        return NULL;
+    }
 
   /**
    * Used to judge whether this connection is ready to send. Usually, the
@@ -99,11 +93,11 @@ public:
    *
    * @return true if ready to send, or false otherwise
    */
-  virtual bool is_connected() = 0;
+    virtual bool is_connected() = 0;
 
-  Messenger *get_messenger() {
-    return msgr;
-  }
+    Messenger *get_messenger() {
+        return msgr;
+    }
 
   /**
    * Queue the given Message to send out on the given Connection.
@@ -116,14 +110,14 @@ public:
    *
    * @return 0 on success, or -errno on failure.
    */
-  virtual int send_message(Message *m) = 0;
+    virtual int send_message(Message * m) = 0;
   /**
    * Send a "keepalive" ping along the given Connection, if it's working.
    * If the underlying connection has broken, this function does nothing.
    *
    * @return 0, or implementation-defined error numbers.
    */
-  virtual void send_keepalive() = 0;
+    virtual void send_keepalive() = 0;
   /**
    * Mark down the given Connection.
    *
@@ -134,7 +128,7 @@ public:
    *
    * It does not generate any notifications to the Dispatcher.
    */
-  virtual void mark_down() = 0;
+    virtual void mark_down() = 0;
 
   /**
    * Mark a Connection as "disposable", setting it to lossy
@@ -148,60 +142,71 @@ public:
    * implementation during connect that looks unused; is there
    * more of a contract that that's enforcing?
    */
-  virtual void mark_disposable() = 0;
+    virtual void mark_disposable() = 0;
 
+    int get_peer_type() const {
+        return peer_type;
+    } void set_peer_type(int t) {
+        peer_type = t;
+    }
 
-  int get_peer_type() const { return peer_type; }
-  void set_peer_type(int t) { peer_type = t; }
+    bool peer_is_mon() const {
+        return peer_type == CEPH_ENTITY_TYPE_MON;
+    } bool peer_is_mgr() const {
+        return peer_type == CEPH_ENTITY_TYPE_MGR;
+    } bool peer_is_mds() const {
+        return peer_type == CEPH_ENTITY_TYPE_MDS;
+    } bool peer_is_osd() const {
+        return peer_type == CEPH_ENTITY_TYPE_OSD;
+    } bool peer_is_client() const {
+        return peer_type == CEPH_ENTITY_TYPE_CLIENT;
+    } const entity_addr_t & get_peer_addr() const {
+        return peer_addr;
+    } void set_peer_addr(const entity_addr_t & a) {
+        peer_addr = a;
+    }
 
-  bool peer_is_mon() const { return peer_type == CEPH_ENTITY_TYPE_MON; }
-  bool peer_is_mgr() const { return peer_type == CEPH_ENTITY_TYPE_MGR; }
-  bool peer_is_mds() const { return peer_type == CEPH_ENTITY_TYPE_MDS; }
-  bool peer_is_osd() const { return peer_type == CEPH_ENTITY_TYPE_OSD; }
-  bool peer_is_client() const { return peer_type == CEPH_ENTITY_TYPE_CLIENT; }
+    uint64_t get_features() const {
+        return features;
+    } bool has_feature(uint64_t f) const {
+        return features & f;
+    } bool has_features(uint64_t f) const {
+        return (features & f) == f;
+    } void set_features(uint64_t f) {
+        features = f;
+    }
+    void set_feature(uint64_t f) {
+        features |= f;
+    }
 
-  const entity_addr_t& get_peer_addr() const { return peer_addr; }
-  void set_peer_addr(const entity_addr_t& a) { peer_addr = a; }
+    void post_rx_buffer(ceph_tid_t tid, bufferlist & bl) {
+        Mutex::Locker l(lock);
+        ++rx_buffers_version;
+        rx_buffers[tid] = pair < bufferlist, int >(bl, rx_buffers_version);
+    }
 
-  uint64_t get_features() const { return features; }
-  bool has_feature(uint64_t f) const { return features & f; }
-  bool has_features(uint64_t f) const {
-    return (features & f) == f;
-  }
-  void set_features(uint64_t f) { features = f; }
-  void set_feature(uint64_t f) { features |= f; }
+    void revoke_rx_buffer(ceph_tid_t tid) {
+        Mutex::Locker l(lock);
+        rx_buffers.erase(tid);
+    }
 
-  void post_rx_buffer(ceph_tid_t tid, bufferlist& bl) {
-    Mutex::Locker l(lock);
-    ++rx_buffers_version;
-    rx_buffers[tid] = pair<bufferlist,int>(bl, rx_buffers_version);
-  }
-
-  void revoke_rx_buffer(ceph_tid_t tid) {
-    Mutex::Locker l(lock);
-    rx_buffers.erase(tid);
-  }
-
-  utime_t get_last_keepalive() const {
-    Mutex::Locker l(lock);
-    return last_keepalive;
-  }
-  void set_last_keepalive(utime_t t) {
-    Mutex::Locker l(lock);
-    last_keepalive = t;
-  }
-  utime_t get_last_keepalive_ack() const {
-    Mutex::Locker l(lock);
-    return last_keepalive_ack;
-  }
-  void set_last_keepalive_ack(utime_t t) {
-    Mutex::Locker l(lock);
-    last_keepalive_ack = t;
-  }
+    utime_t get_last_keepalive() const {
+        Mutex::Locker l(lock);
+        return last_keepalive;
+    } void set_last_keepalive(utime_t t) {
+        Mutex::Locker l(lock);
+        last_keepalive = t;
+    }
+    utime_t get_last_keepalive_ack() const {
+        Mutex::Locker l(lock);
+        return last_keepalive_ack;
+    } void set_last_keepalive_ack(utime_t t) {
+        Mutex::Locker l(lock);
+        last_keepalive_ack = t;
+    }
 
 };
 
-typedef boost::intrusive_ptr<Connection> ConnectionRef;
-
+typedef boost::intrusive_ptr < Connection > ConnectionRef;
 
 #endif /* CEPH_CONNECTION_H */

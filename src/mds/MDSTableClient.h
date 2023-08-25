@@ -24,69 +24,72 @@ class LogSegment;
 class MMDSTableRequest;
 
 class MDSTableClient {
-protected:
-  MDSRank *mds;
-  int table;
+  protected:
+    MDSRank * mds;
+    int table;
 
-  uint64_t last_reqid;
+    uint64_t last_reqid;
 
-  bool server_ready;
+    bool server_ready;
 
-  // prepares
-  struct _pending_prepare {
-    MDSInternalContextBase *onfinish;
-    version_t *ptid;
-    bufferlist *pbl; 
-    bufferlist mutation;
+    // prepares
+    struct _pending_prepare {
+        MDSInternalContextBase *onfinish;
+        version_t *ptid;
+        bufferlist *pbl;
+        bufferlist mutation;
 
-    _pending_prepare() : onfinish(0), ptid(0), pbl(0) {}
-    _pending_prepare(MDSInternalContextBase *c, version_t *pt, bufferlist *pb, bufferlist& m) :
-      onfinish(c), ptid(pt), pbl(pb), mutation(m) {}
-  };
+         _pending_prepare():onfinish(0), ptid(0), pbl(0) {
+        } _pending_prepare(MDSInternalContextBase * c, version_t * pt,
+                           bufferlist * pb, bufferlist & m):onfinish(c),
+            ptid(pt), pbl(pb), mutation(m) {
+    }};
 
-  map<uint64_t, _pending_prepare> pending_prepare;
-  map<version_t, uint64_t> prepared_update;
-  list<_pending_prepare> waiting_for_reqid;
+    map < uint64_t, _pending_prepare > pending_prepare;
+    map < version_t, uint64_t > prepared_update;
+    list < _pending_prepare > waiting_for_reqid;
 
-  // pending commits
-  map<version_t, LogSegment*> pending_commit;
-  map<version_t, list<MDSInternalContextBase*> > ack_waiters;
+    // pending commits
+    map < version_t, LogSegment * >pending_commit;
+    map < version_t, list < MDSInternalContextBase * > >ack_waiters;
 
-  void handle_reply(class MMDSTableQuery *m);  
-  void _logged_ack(version_t tid);
-  friend class C_LoggedAck;
+    void handle_reply(class MMDSTableQuery * m);
+    void _logged_ack(version_t tid);
+    friend class C_LoggedAck;
 
-public:
-  MDSTableClient(MDSRank *m, int tab) :
-    mds(m), table(tab), last_reqid(~0ULL), server_ready(false) {}
-  virtual ~MDSTableClient() {}
+  public:
+    MDSTableClient(MDSRank * m, int tab):mds(m), table(tab), last_reqid(~0ULL),
+        server_ready(false) {
+    }
+    virtual ~ MDSTableClient() {
+    }
 
-  void handle_request(MMDSTableRequest *m);
+    void handle_request(MMDSTableRequest * m);
 
-  void _prepare(bufferlist& mutation, version_t *ptid, bufferlist *pbl, MDSInternalContextBase *onfinish);
-  void commit(version_t tid, LogSegment *ls);
+    void _prepare(bufferlist & mutation, version_t * ptid, bufferlist * pbl,
+                  MDSInternalContextBase * onfinish);
+    void commit(version_t tid, LogSegment * ls);
 
-  void resend_commits();
-  void resend_prepares();
+    void resend_commits();
+    void resend_prepares();
 
-  // for recovery (by me)
-  void got_journaled_agree(version_t tid, LogSegment *ls);
-  void got_journaled_ack(version_t tid);
+    // for recovery (by me)
+    void got_journaled_agree(version_t tid, LogSegment * ls);
+    void got_journaled_ack(version_t tid);
 
-  bool has_committed(version_t tid) const {
-    return pending_commit.count(tid) == 0;
-  }
-  void wait_for_ack(version_t tid, MDSInternalContextBase *c) {
-    ack_waiters[tid].push_back(c);
-  }
+    bool has_committed(version_t tid) const {
+        return pending_commit.count(tid) == 0;
+    } void wait_for_ack(version_t tid, MDSInternalContextBase * c) {
+        ack_waiters[tid].push_back(c);
+    }
 
-  void handle_mds_failure(mds_rank_t mds);
+    void handle_mds_failure(mds_rank_t mds);
 
-  // child must implement
-  virtual void resend_queries() = 0;
-  virtual void handle_query_result(MMDSTableRequest *m) = 0;
+    // child must implement
+    virtual void resend_queries() = 0;
+    virtual void handle_query_result(MMDSTableRequest * m) = 0;
 
-  // and friendly front-end for _prepare.
+    // and friendly front-end for _prepare.
 
 };
 

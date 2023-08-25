@@ -12,58 +12,62 @@
  * 
  */
 
-
 #ifndef CEPH_MDENTRYLINK_H
 #define CEPH_MDENTRYLINK_H
 
 #include <boost/utility/string_view.hpp>
 
-class MDentryLink : public Message {
-  dirfrag_t subtree;
-  dirfrag_t dirfrag;
-  string dn;
-  bool is_primary;
+class MDentryLink:public Message {
+    dirfrag_t subtree;
+    dirfrag_t dirfrag;
+    string dn;
+    bool is_primary;
 
- public:
-  dirfrag_t get_subtree() { return subtree; }
-  dirfrag_t get_dirfrag() { return dirfrag; }
-  string& get_dn() { return dn; }
-  bool get_is_primary() { return is_primary; }
+  public:
+     dirfrag_t get_subtree() {
+        return subtree;
+    } dirfrag_t get_dirfrag() {
+        return dirfrag;
+    }
+    string & get_dn() {
+        return dn;
+    }
+    bool get_is_primary() {
+        return is_primary;
+    }
 
-  bufferlist bl;
+    bufferlist bl;
 
-  MDentryLink() :
-    Message(MSG_MDS_DENTRYLINK) { }
-  MDentryLink(dirfrag_t r, dirfrag_t df, boost::string_view n, bool p) :
-    Message(MSG_MDS_DENTRYLINK),
-    subtree(r),
-    dirfrag(df),
-    dn(n),
-    is_primary(p) {}
-private:
-  ~MDentryLink() override {}
+  MDentryLink():
+    Message(MSG_MDS_DENTRYLINK) {
+    }
+  MDentryLink(dirfrag_t r, dirfrag_t df, boost::string_view n, bool p):
+    Message(MSG_MDS_DENTRYLINK), subtree(r), dirfrag(df), dn(n), is_primary(p) {
+    }
+  private:
+    ~MDentryLink()override {
+    }
 
-public:
-  const char *get_type_name() const override { return "dentry_link";}
-  void print(ostream& o) const override {
-    o << "dentry_link(" << dirfrag << " " << dn << ")";
-  }
-  
-  void decode_payload() override {
-    bufferlist::iterator p = payload.begin();
-    ::decode(subtree, p);
-    ::decode(dirfrag, p);
-    ::decode(dn, p);
-    ::decode(is_primary, p);
-    ::decode(bl, p);
-  }
-  void encode_payload(uint64_t features) override {
-    ::encode(subtree, payload);
-    ::encode(dirfrag, payload);
-    ::encode(dn, payload);
-    ::encode(is_primary, payload);
-    ::encode(bl, payload);
-  }
+  public:
+    const char *get_type_name() const override {
+        return "dentry_link";
+    } void print(ostream & o) const override {
+        o << "dentry_link(" << dirfrag << " " << dn << ")";
+    } void decode_payload() override {
+        bufferlist::iterator p = payload.begin();
+        ::decode(subtree, p);
+        ::decode(dirfrag, p);
+        ::decode(dn, p);
+        ::decode(is_primary, p);
+        ::decode(bl, p);
+    }
+    void encode_payload(uint64_t features) override {
+        ::encode(subtree, payload);
+        ::encode(dirfrag, payload);
+        ::encode(dn, payload);
+        ::encode(is_primary, payload);
+        ::encode(bl, payload);
+    }
 };
 
 #endif

@@ -7,7 +7,7 @@
 #include <features.h>
 
 #ifndef __STRING
-# define __STRING(x) #x
+#define __STRING(x) #x
 #endif
 
 #elif defined(__FreeBSD__)
@@ -19,7 +19,7 @@
 #endif
 
 #ifdef __CEPH__
-# include "acconfig.h"
+#include "acconfig.h"
 #endif
 
 #ifdef __cplusplus
@@ -27,7 +27,7 @@ class CephContext;
 
 namespace ceph {
 
-struct BackTrace;
+    struct BackTrace;
 #endif
 
 /*
@@ -44,9 +44,9 @@ struct BackTrace;
  * C++ function names. We define __CEPH_NO_PRETTY_FUNC if we want to avoid
  * broken versions of G++.
  */
-# if defined __cplusplus ? !__GNUC_PREREQ (2, 6) : !__GNUC_PREREQ (2, 4)
-#   define __CEPH_NO_PRETTY_FUNC
-# endif
+#if defined __cplusplus ? !__GNUC_PREREQ (2, 6) : !__GNUC_PREREQ (2, 4)
+#define __CEPH_NO_PRETTY_FUNC
+#endif
 
 #endif
 
@@ -55,27 +55,31 @@ struct BackTrace;
  * specific overrides.
  */
 #if defined(HAVE_PRETTY_FUNC) && !defined(__CEPH_NO_PRETTY_FUNC)
-# define __CEPH_ASSERT_FUNCTION __PRETTY_FUNCTION__
+#define __CEPH_ASSERT_FUNCTION __PRETTY_FUNCTION__
 #elif defined(HAVE_FUNC)
-# define __CEPH_ASSERT_FUNCTION __func__
+#define __CEPH_ASSERT_FUNCTION __func__
 #else
-# define __CEPH_ASSERT_FUNCTION ((__const char *) 0)
+#define __CEPH_ASSERT_FUNCTION ((__const char *) 0)
 #endif
 
 #ifdef __cplusplus
-extern void register_assert_context(CephContext *cct);
+    extern void register_assert_context(CephContext * cct);
 #endif
 
-extern void __ceph_assert_fail(const char *assertion, const char *file, int line, const char *function)
-  __attribute__ ((__noreturn__));
-extern void __ceph_assertf_fail(const char *assertion, const char *file, int line, const char *function, const char* msg, ...)
-  __attribute__ ((__noreturn__));
-extern void __ceph_assert_warn(const char *assertion, const char *file, int line, const char *function);
+    extern void __ceph_assert_fail(const char *assertion, const char *file,
+                                   int line, const char *function)
+        __attribute__ ((__noreturn__));
+    extern void __ceph_assertf_fail(const char *assertion, const char *file,
+                                    int line, const char *function,
+                                    const char *msg, ...)
+        __attribute__ ((__noreturn__));
+    extern void __ceph_assert_warn(const char *assertion, const char *file,
+                                   int line, const char *function);
 
 #ifdef __cplusplus
-# define _CEPH_ASSERT_VOID_CAST static_cast<void>
+#define _CEPH_ASSERT_VOID_CAST static_cast<void>
 #else
-# define _CEPH_ASSERT_VOID_CAST (void)
+#define _CEPH_ASSERT_VOID_CAST (void)
 #endif
 
 #define assert_warn(expr)							\
@@ -84,9 +88,7 @@ extern void __ceph_assert_warn(const char *assertion, const char *file, int line
    : __ceph_assert_warn (__STRING(expr), __FILE__, __LINE__, __CEPH_ASSERT_FUNCTION))
 
 #ifdef __cplusplus
-}
-
-using namespace ceph;
+} using namespace ceph;
 
 #endif
 
@@ -107,7 +109,7 @@ using namespace ceph;
 
 // wipe any prior assert definition
 #ifdef assert
-# undef assert
+#undef assert
 #endif
 
 // make _ASSERT_H something that *must* have a value other than what

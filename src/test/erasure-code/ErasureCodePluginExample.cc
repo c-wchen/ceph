@@ -21,23 +21,24 @@
 #include "erasure-code/ErasureCodePlugin.h"
 #include "ErasureCodeExample.h"
 
-class ErasureCodePluginExample : public ErasureCodePlugin {
-public:
-  int factory(const std::string &directory,
-		      ErasureCodeProfile &profile,
-                      ErasureCodeInterfaceRef *erasure_code,
-		      ostream *ss) override
-  {
-    *erasure_code = ErasureCodeInterfaceRef(new ErasureCodeExample());
-    (*erasure_code)->init(profile, ss);
-    return 0;
-  }
-};
+class ErasureCodePluginExample:public ErasureCodePlugin {
+  public:
+    int factory(const std::string & directory,
+                ErasureCodeProfile & profile,
+                ErasureCodeInterfaceRef * erasure_code, ostream * ss) override {
+        *erasure_code = ErasureCodeInterfaceRef(new ErasureCodeExample());
+        (*erasure_code)->init(profile, ss);
+        return 0;
+}};
 
-const char *__erasure_code_version() { return CEPH_GIT_NICE_VER; }
+const char *__erasure_code_version()
+{
+    return CEPH_GIT_NICE_VER;
+}
 
 int __erasure_code_init(char *plugin_name, char *directory)
 {
-  ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
-  return instance.add(plugin_name, new ErasureCodePluginExample());
+    ErasureCodePluginRegistry & instance =
+        ErasureCodePluginRegistry::instance();
+    return instance.add(plugin_name, new ErasureCodePluginExample());
 }

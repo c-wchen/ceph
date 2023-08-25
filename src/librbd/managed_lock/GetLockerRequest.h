@@ -9,50 +9,51 @@
 
 class Context;
 
-namespace librados { class IoCtx; }
+namespace librados {
+    class IoCtx;
+} namespace librbd {
 
-namespace librbd {
+    struct ImageCtx;
 
-struct ImageCtx;
+    namespace managed_lock {
 
-namespace managed_lock {
+        struct Locker;
 
-struct Locker;
+         template < typename ImageCtxT = ImageCtx > class GetLockerRequest {
+          public:
+            static GetLockerRequest *create(librados::IoCtx & ioctx,
+                                            const std::string & oid,
+                                            bool exclusive, Locker * locker,
+                                            Context * on_finish) {
+                return new GetLockerRequest(ioctx, oid, exclusive, locker,
+                                            on_finish);
+            } void send();
 
-template <typename ImageCtxT = ImageCtx>
-class GetLockerRequest {
-public:
-  static GetLockerRequest* create(librados::IoCtx& ioctx,
-                                  const std::string& oid, bool exclusive,
-                                  Locker *locker, Context *on_finish) {
-    return new GetLockerRequest(ioctx, oid, exclusive, locker, on_finish);
-  }
+          private:
+             librados::IoCtx & m_ioctx;
+            CephContext *m_cct;
+             std::string m_oid;
+            bool m_exclusive;
+            Locker *m_locker;
+            Context *m_on_finish;
 
-  void send();
+            bufferlist m_out_bl;
 
-private:
-  librados::IoCtx &m_ioctx;
-  CephContext *m_cct;
-  std::string m_oid;
-  bool m_exclusive;
-  Locker *m_locker;
-  Context *m_on_finish;
+             GetLockerRequest(librados::IoCtx & ioctx, const std::string & oid,
+                              bool exclusive, Locker * locker,
+                              Context * on_finish);
 
-  bufferlist m_out_bl;
+            void send_get_lockers();
+            void handle_get_lockers(int r);
 
-  GetLockerRequest(librados::IoCtx& ioctx, const std::string& oid,
-                   bool exclusive, Locker *locker, Context *on_finish);
+            void finish(int r);
 
-  void send_get_lockers();
-  void handle_get_lockers(int r);
+        };
 
-  void finish(int r);
+    }                           // namespace managed_lock
+}                               // namespace librbd
 
-};
-
-} // namespace managed_lock
-} // namespace librbd
-
-extern template class librbd::managed_lock::GetLockerRequest<librbd::ImageCtx>;
+extern template class librbd::managed_lock::GetLockerRequest <
+    librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_MANAGED_LOCK_GET_LOCKER_REQUEST_H
