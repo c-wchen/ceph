@@ -7,14 +7,17 @@
 #include "msg/Message.h"
 #include "osd/osd_types.h"
 
-class MOSDFastDispatchOp:public Message {
-  public:
+class MOSDFastDispatchOp: public Message
+{
+public:
     MOSDFastDispatchOp(int t, int version, int compat_version)
-    :Message {
-    t, version, compat_version} {
+        : Message {
+        t, version, compat_version}
+    {
     }
     virtual epoch_t get_map_epoch() const = 0;
-    virtual epoch_t get_min_epoch() const {
+    virtual epoch_t get_min_epoch() const
+    {
         return get_map_epoch();
     } virtual spg_t get_spg() const = 0;
 };

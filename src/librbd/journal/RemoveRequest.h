@@ -19,58 +19,63 @@ using journal::Journaler;
 class Context;
 class ContextWQ;
 
-namespace journal {
-    class Journaler;
-} namespace librbd {
+namespace journal
+{
+class Journaler;
+} namespace librbd
+{
 
-    class ImageCtx;
+class ImageCtx;
 
-    namespace journal {
+namespace journal
+{
 
-        template < typename ImageCtxT = ImageCtx > class RemoveRequest {
-          public:
-            static RemoveRequest *create(IoCtx & ioctx,
-                                         const std::string & image_id,
-                                         const std::string & client_id,
-                                         ContextWQ * op_work_queue,
-                                         Context * on_finish) {
-                return new RemoveRequest(ioctx, image_id, client_id,
-                                         op_work_queue, on_finish);
-            } void send();
+template < typename ImageCtxT = ImageCtx > class RemoveRequest
+{
+public:
+    static RemoveRequest *create(IoCtx &ioctx,
+                                 const std::string &image_id,
+                                 const std::string &client_id,
+                                 ContextWQ *op_work_queue,
+                                 Context *on_finish)
+    {
+        return new RemoveRequest(ioctx, image_id, client_id,
+                                 op_work_queue, on_finish);
+    } void send();
 
-          private:
-            typedef typename TypeTraits < ImageCtxT >::Journaler Journaler;
+private:
+    typedef typename TypeTraits < ImageCtxT >::Journaler Journaler;
 
-            RemoveRequest(IoCtx & ioctx, const std::string & image_id,
-                          const std::string & client_id,
-                          ContextWQ * op_work_queue, Context * on_finish);
+    RemoveRequest(IoCtx &ioctx, const std::string &image_id,
+                  const std::string &client_id,
+                  ContextWQ *op_work_queue, Context *on_finish);
 
-            IoCtx & m_ioctx;
-            std::string m_image_id;
-            std::string m_image_client_id;
-            ContextWQ *m_op_work_queue;
-            Context *m_on_finish;
+    IoCtx &m_ioctx;
+    std::string m_image_id;
+    std::string m_image_client_id;
+    ContextWQ *m_op_work_queue;
+    Context *m_on_finish;
 
-            CephContext *m_cct;
-            Journaler *m_journaler;
-            SafeTimer *m_timer;
-            ceph::mutex * m_timer_lock;
-            int m_r_saved;
+    CephContext *m_cct;
+    Journaler *m_journaler;
+    SafeTimer *m_timer;
+    ceph::mutex *m_timer_lock;
+    int m_r_saved;
 
-            void stat_journal();
-            Context *handle_stat_journal(int *result);
+    void stat_journal();
+    Context *handle_stat_journal(int *result);
 
-            void init_journaler();
-            Context *handle_init_journaler(int *result);
+    void init_journaler();
+    Context *handle_init_journaler(int *result);
 
-            void remove_journal();
-            Context *handle_remove_journal(int *result);
+    void remove_journal();
+    Context *handle_remove_journal(int *result);
 
-            void shut_down_journaler(int r);
-            Context *handle_journaler_shutdown(int *result);
-        };
+    void shut_down_journaler(int r);
+    Context *handle_journaler_shutdown(int *result);
+};
 
-    }                           // namespace journal
+}                           // namespace journal
 }                               // namespace librbd
 
 extern template class librbd::journal::RemoveRequest < librbd::ImageCtx >;

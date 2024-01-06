@@ -13,7 +13,7 @@ extern "C" {
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 
-    int get_linux_version(void);
+int get_linux_version(void);
 
 #ifdef __cplusplus
 }

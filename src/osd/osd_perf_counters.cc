@@ -4,24 +4,24 @@
 #include "osd_perf_counters.h"
 #include "include/common_fwd.h"
 
-PerfCounters *build_osd_logger(CephContext * cct)
+PerfCounters *build_osd_logger(CephContext *cct)
 {
     PerfCountersBuilder osd_plb(cct, "osd", l_osd_first, l_osd_last);
 
     // Latency axis configuration for op histograms, values are in nanoseconds
     PerfHistogramCommon::axis_config_d op_hist_x_axis_config {
         "Latency (usec)", PerfHistogramCommon::SCALE_LOG2,  ///< Latency in logarithmic scale
-            0,                  ///< Start at 0
-            100000,             ///< Quantization unit is 100usec
-            32,                 ///< Enough to cover much longer than slow requests
+        0,                  ///< Start at 0
+        100000,             ///< Quantization unit is 100usec
+        32,                 ///< Enough to cover much longer than slow requests
     };
 
     // Op size axis configuration for op histograms, values are in bytes
     PerfHistogramCommon::axis_config_d op_hist_y_axis_config {
         "Request size (bytes)", PerfHistogramCommon::SCALE_LOG2,    ///< Request size in logarithmic scale
-            0,                  ///< Start at 0
-            512,                ///< Quantization unit is 512 bytes
-            32,                 ///< Enough to cover requests larger than GB
+        0,                  ///< Start at 0
+        512,                ///< Quantization unit is 512 bytes
+        32,                 ///< Enough to cover requests larger than GB
     };
 
     // All the basic OSD operation stats are to be considered useful
@@ -115,8 +115,10 @@ PerfCounters *build_osd_logger(CephContext * cct)
     // are low priority unless otherwise specified.
     osd_plb.set_prio_default(PerfCountersBuilder::PRIO_DEBUGONLY);
 
-    osd_plb.add_time_avg(l_osd_op_before_queue_op_lat, "op_before_queue_op_lat", "Latency of IO before calling queue(before really queue into ShardedOpWq)");   // client io before queue op_wq latency
-    osd_plb.add_time_avg(l_osd_op_before_dequeue_op_lat, "op_before_dequeue_op_lat", "Latency of IO before calling dequeue_op(already dequeued and get PG lock)");  // client io before dequeue_op latency
+    osd_plb.add_time_avg(l_osd_op_before_queue_op_lat, "op_before_queue_op_lat",
+                         "Latency of IO before calling queue(before really queue into ShardedOpWq)");   // client io before queue op_wq latency
+    osd_plb.add_time_avg(l_osd_op_before_dequeue_op_lat, "op_before_dequeue_op_lat",
+                         "Latency of IO before calling dequeue_op(already dequeued and get PG lock)");  // client io before dequeue_op latency
 
     osd_plb.add_u64_counter(l_osd_sop, "subop", "Suboperations");
     osd_plb.add_u64_counter(l_osd_sop_inb, "subop_in_bytes",
@@ -291,7 +293,7 @@ PerfCounters *build_osd_logger(CephContext * cct)
     return osd_plb.create_perf_counters();
 }
 
-PerfCounters *build_recoverystate_perf(CephContext * cct)
+PerfCounters *build_recoverystate_perf(CephContext *cct)
 {
     PerfCountersBuilder rs_perf(cct, "recoverystate_perf", rs_first, rs_last);
 

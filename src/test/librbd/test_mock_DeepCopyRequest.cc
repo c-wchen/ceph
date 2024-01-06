@@ -21,120 +21,138 @@
 #include "gtest/gtest.h"
 #include <boost/scope_exit.hpp>
 
-namespace librbd {
+namespace librbd
+{
 
-    namespace {
+namespace
+{
 
-        struct MockTestImageCtx:public librbd::MockImageCtx {
-            explicit MockTestImageCtx(librbd::ImageCtx & image_ctx)
-            :librbd::MockImageCtx(image_ctx) {
-        }};
+struct MockTestImageCtx: public librbd::MockImageCtx {
+    explicit MockTestImageCtx(librbd::ImageCtx &image_ctx)
+        : librbd::MockImageCtx(image_ctx)
+    {
+    }
+};
 
-    }                           // anonymous namespace
+}                           // anonymous namespace
 
-    namespace deep_copy {
+namespace deep_copy
+{
 
-        template <> class ImageCopyRequest < librbd::MockTestImageCtx > {
-          public:
-            static ImageCopyRequest *s_instance;
-            Context *on_finish;
+template <> class ImageCopyRequest < librbd::MockTestImageCtx >
+{
+public:
+    static ImageCopyRequest *s_instance;
+    Context *on_finish;
 
-            static ImageCopyRequest *create(librbd::MockTestImageCtx *
-                                            src_image_ctx,
-                                            librbd::MockTestImageCtx *
-                                            dst_image_ctx,
-                                            librados::snap_t src_snap_id_start,
-                                            librados::snap_t src_snap_id_end,
-                                            librados::snap_t dst_snap_id_start,
-                                            bool flatten,
-                                            const ObjectNumber & object_number,
-                                            const SnapSeqs & snap_seqs,
-                                            Handler * handler,
-                                            Context * on_finish) {
-                ceph_assert(s_instance != nullptr);
-                s_instance->on_finish = on_finish;
-                return s_instance;
-            } ImageCopyRequest() {
-                s_instance = this;
-            }
+    static ImageCopyRequest *create(librbd::MockTestImageCtx *
+                                    src_image_ctx,
+                                    librbd::MockTestImageCtx *
+                                    dst_image_ctx,
+                                    librados::snap_t src_snap_id_start,
+                                    librados::snap_t src_snap_id_end,
+                                    librados::snap_t dst_snap_id_start,
+                                    bool flatten,
+                                    const ObjectNumber &object_number,
+                                    const SnapSeqs &snap_seqs,
+                                    Handler *handler,
+                                    Context *on_finish)
+    {
+        ceph_assert(s_instance != nullptr);
+        s_instance->on_finish = on_finish;
+        return s_instance;
+    } ImageCopyRequest()
+    {
+        s_instance = this;
+    }
 
-            void put() {
-            }
+    void put()
+    {
+    }
 
-            void get() {
-            }
+    void get()
+    {
+    }
 
-            MOCK_METHOD0(cancel, void ());
-            MOCK_METHOD0(send, void ());
-        };
+    MOCK_METHOD0(cancel, void ());
+    MOCK_METHOD0(send, void ());
+};
 
-        template <> class MetadataCopyRequest < librbd::MockTestImageCtx > {
-          public:
-            static MetadataCopyRequest *s_instance;
-            Context *on_finish;
+template <> class MetadataCopyRequest < librbd::MockTestImageCtx >
+{
+public:
+    static MetadataCopyRequest *s_instance;
+    Context *on_finish;
 
-            static MetadataCopyRequest *create(librbd::MockTestImageCtx *
-                                               src_image_ctx,
-                                               librbd::MockTestImageCtx *
-                                               dst_image_ctx,
-                                               Context * on_finish) {
-                ceph_assert(s_instance != nullptr);
-                s_instance->on_finish = on_finish;
-                return s_instance;
-            }
+    static MetadataCopyRequest *create(librbd::MockTestImageCtx *
+                                       src_image_ctx,
+                                       librbd::MockTestImageCtx *
+                                       dst_image_ctx,
+                                       Context *on_finish)
+    {
+        ceph_assert(s_instance != nullptr);
+        s_instance->on_finish = on_finish;
+        return s_instance;
+    }
 
-            MetadataCopyRequest() {
-                s_instance = this;
-            }
+    MetadataCopyRequest()
+    {
+        s_instance = this;
+    }
 
-            MOCK_METHOD0(send, void ());
-        };
+    MOCK_METHOD0(send, void ());
+};
 
-        template <> class SnapshotCopyRequest < librbd::MockTestImageCtx > {
-          public:
-            static SnapshotCopyRequest *s_instance;
-            Context *on_finish;
+template <> class SnapshotCopyRequest < librbd::MockTestImageCtx >
+{
+public:
+    static SnapshotCopyRequest *s_instance;
+    Context *on_finish;
 
-            static SnapshotCopyRequest *create(librbd::MockTestImageCtx *
-                                               src_image_ctx,
-                                               librbd::MockTestImageCtx *
-                                               dst_image_ctx,
-                                               librados::
-                                               snap_t src_snap_id_start,
-                                               librados::snap_t src_snap_id_end,
-                                               librados::
-                                               snap_t dst_snap_id_start,
-                                               bool flatten,
-                                               librbd::asio::ContextWQ *
-                                               work_queue, SnapSeqs * snap_seqs,
-                                               Context * on_finish) {
-                ceph_assert(s_instance != nullptr);
-                s_instance->on_finish = on_finish;
-                return s_instance;
-            }
+    static SnapshotCopyRequest *create(librbd::MockTestImageCtx *
+                                       src_image_ctx,
+                                       librbd::MockTestImageCtx *
+                                       dst_image_ctx,
+                                       librados::
+                                       snap_t src_snap_id_start,
+                                       librados::snap_t src_snap_id_end,
+                                       librados::
+                                       snap_t dst_snap_id_start,
+                                       bool flatten,
+                                       librbd::asio::ContextWQ *
+                                       work_queue, SnapSeqs *snap_seqs,
+                                       Context *on_finish)
+    {
+        ceph_assert(s_instance != nullptr);
+        s_instance->on_finish = on_finish;
+        return s_instance;
+    }
 
-            SnapshotCopyRequest() {
-                s_instance = this;
-            }
+    SnapshotCopyRequest()
+    {
+        s_instance = this;
+    }
 
-            void put() {
-            }
+    void put()
+    {
+    }
 
-            void get() {
-            }
+    void get()
+    {
+    }
 
-            MOCK_METHOD0(cancel, void ());
-            MOCK_METHOD0(send, void ());
-        };
+    MOCK_METHOD0(cancel, void ());
+    MOCK_METHOD0(send, void ());
+};
 
-        ImageCopyRequest < librbd::MockTestImageCtx > *ImageCopyRequest <
-            librbd::MockTestImageCtx >::s_instance = nullptr;
-        MetadataCopyRequest < librbd::MockTestImageCtx > *MetadataCopyRequest <
-            librbd::MockTestImageCtx >::s_instance = nullptr;
-        SnapshotCopyRequest < librbd::MockTestImageCtx > *SnapshotCopyRequest <
-            librbd::MockTestImageCtx >::s_instance = nullptr;
+ImageCopyRequest < librbd::MockTestImageCtx > *ImageCopyRequest <
+librbd::MockTestImageCtx >::s_instance = nullptr;
+MetadataCopyRequest < librbd::MockTestImageCtx > *MetadataCopyRequest <
+librbd::MockTestImageCtx >::s_instance = nullptr;
+SnapshotCopyRequest < librbd::MockTestImageCtx > *SnapshotCopyRequest <
+librbd::MockTestImageCtx >::s_instance = nullptr;
 
-    }                           // namespace deep_copy
+}                           // namespace deep_copy
 }                               // namespace librbd
 
 // template definitions
@@ -149,24 +167,26 @@ using::testing::ReturnNew;
 using::testing::SetArgPointee;
 using::testing::WithArg;
 
-class TestMockDeepCopyRequest:public TestMockFixture {
-  public:
+class TestMockDeepCopyRequest: public TestMockFixture
+{
+public:
     typedef librbd::DeepCopyRequest < librbd::MockTestImageCtx >
-        MockDeepCopyRequest;
+    MockDeepCopyRequest;
     typedef librbd::deep_copy::ImageCopyRequest < librbd::MockTestImageCtx >
-        MockImageCopyRequest;
+    MockImageCopyRequest;
     typedef librbd::deep_copy::MetadataCopyRequest < librbd::MockTestImageCtx >
-        MockMetadataCopyRequest;
+    MockMetadataCopyRequest;
     typedef librbd::deep_copy::SnapshotCopyRequest < librbd::MockTestImageCtx >
-        MockSnapshotCopyRequest;
+    MockSnapshotCopyRequest;
 
-    librbd::ImageCtx * m_src_image_ctx;
-    librbd::ImageCtx * m_dst_image_ctx;
+    librbd::ImageCtx *m_src_image_ctx;
+    librbd::ImageCtx *m_dst_image_ctx;
 
     std::shared_ptr < librbd::AsioEngine > m_asio_engine;
-    librbd::asio::ContextWQ * m_work_queue;
+    librbd::asio::ContextWQ *m_work_queue;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         TestMockFixture::SetUp();
 
         librbd::RBD rbd;
@@ -177,83 +197,100 @@ class TestMockDeepCopyRequest:public TestMockFixture {
         m_asio_engine =
             std::make_shared < librbd::AsioEngine > (m_src_image_ctx->md_ctx);
         m_work_queue = m_asio_engine->get_work_queue();
-    } void TearDown() override {
+    } void TearDown() override
+    {
         TestMockFixture::TearDown();
     }
 
-    void expect_test_features(librbd::MockImageCtx & mock_image_ctx) {
+    void expect_test_features(librbd::MockImageCtx &mock_image_ctx)
+    {
         EXPECT_CALL(mock_image_ctx, test_features(_, _))
-            .WillRepeatedly(WithArg < 0 >
-                            (Invoke([&mock_image_ctx] (uint64_t features) {
-                                    return (mock_image_ctx.
-                                            features & features) != 0;}
-                             )));
+        .WillRepeatedly(WithArg < 0 >
+        (Invoke([&mock_image_ctx](uint64_t features) {
+            return (mock_image_ctx.
+                    features & features) != 0;
+        }
+                               )));
     }
 
-    void expect_start_op(librbd::MockExclusiveLock & mock_exclusive_lock) {
+    void expect_start_op(librbd::MockExclusiveLock &mock_exclusive_lock)
+    {
         EXPECT_CALL(mock_exclusive_lock,
-                    start_op(_)).WillOnce(Return(new LambdaContext([](int) {
-                                                                   })));
+        start_op(_)).WillOnce(Return(new LambdaContext([](int) {
+        })));
     }
 
-    void expect_rollback_object_map(librbd::MockObjectMap & mock_object_map,
-                                    int r) {
+    void expect_rollback_object_map(librbd::MockObjectMap &mock_object_map,
+                                    int r)
+    {
         EXPECT_CALL(mock_object_map, rollback(_, _))
-            .WillOnce(WithArg < 1 > (Invoke([this, r] (Context * ctx) {
-                                            m_work_queue->queue(ctx, r);})));
+        .WillOnce(WithArg < 1 > (Invoke([this, r](Context * ctx) {
+            m_work_queue->queue(ctx, r);
+        })));
     }
 
-    void expect_create_object_map(librbd::MockTestImageCtx & mock_image_ctx,
-                                  librbd::MockObjectMap * mock_object_map) {
+    void expect_create_object_map(librbd::MockTestImageCtx &mock_image_ctx,
+                                  librbd::MockObjectMap *mock_object_map)
+    {
         EXPECT_CALL(mock_image_ctx, create_object_map(CEPH_NOSNAP))
-            .WillOnce(Return(mock_object_map));
+        .WillOnce(Return(mock_object_map));
     }
 
-    void expect_open_object_map(librbd::MockTestImageCtx & mock_image_ctx,
-                                librbd::MockObjectMap & mock_object_map,
-                                int r) {
+    void expect_open_object_map(librbd::MockTestImageCtx &mock_image_ctx,
+                                librbd::MockObjectMap &mock_object_map,
+                                int r)
+    {
         EXPECT_CALL(mock_object_map, open(_))
-            .WillOnce(Invoke([this, r] (Context * ctx) {
-                             m_work_queue->queue(ctx, r);}));
+        .WillOnce(Invoke([this, r](Context * ctx) {
+            m_work_queue->queue(ctx, r);
+        }));
     }
 
     void expect_copy_snapshots(MockSnapshotCopyRequest &
-                               mock_snapshot_copy_request, int r) {
+                               mock_snapshot_copy_request, int r)
+    {
         EXPECT_CALL(mock_snapshot_copy_request, send())
-            .WillOnce(Invoke([this, &mock_snapshot_copy_request, r] () {
-                             m_work_queue->queue(mock_snapshot_copy_request.
-                                                 on_finish, r);}));
+        .WillOnce(Invoke([this, &mock_snapshot_copy_request, r]() {
+            m_work_queue->queue(mock_snapshot_copy_request.
+                                on_finish, r);
+        }));
     }
 
-    void expect_copy_image(MockImageCopyRequest & mock_image_copy_request,
-                           int r) {
+    void expect_copy_image(MockImageCopyRequest &mock_image_copy_request,
+                           int r)
+    {
         EXPECT_CALL(mock_image_copy_request, send())
-            .WillOnce(Invoke([this, &mock_image_copy_request, r] () {
-                             m_work_queue->queue(mock_image_copy_request.
-                                                 on_finish, r);}));
+        .WillOnce(Invoke([this, &mock_image_copy_request, r]() {
+            m_work_queue->queue(mock_image_copy_request.
+                                on_finish, r);
+        }));
     }
 
-    void expect_copy_object_map(librbd::MockExclusiveLock & mock_exclusive_lock,
-                                librbd::MockObjectMap * mock_object_map,
-                                int r) {
+    void expect_copy_object_map(librbd::MockExclusiveLock &mock_exclusive_lock,
+                                librbd::MockObjectMap *mock_object_map,
+                                int r)
+    {
         expect_start_op(mock_exclusive_lock);
         expect_rollback_object_map(*mock_object_map, r);
     }
 
-    void expect_refresh_object_map(librbd::MockTestImageCtx & mock_image_ctx,
-                                   librbd::MockObjectMap * mock_object_map,
-                                   int r) {
+    void expect_refresh_object_map(librbd::MockTestImageCtx &mock_image_ctx,
+                                   librbd::MockObjectMap *mock_object_map,
+                                   int r)
+    {
         expect_start_op(*mock_image_ctx.exclusive_lock);
         expect_create_object_map(mock_image_ctx, mock_object_map);
         expect_open_object_map(mock_image_ctx, *mock_object_map, r);
     }
 
     void expect_copy_metadata(MockMetadataCopyRequest &
-                              mock_metadata_copy_request, int r) {
+                              mock_metadata_copy_request, int r)
+    {
         EXPECT_CALL(mock_metadata_copy_request, send())
-            .WillOnce(Invoke([this, &mock_metadata_copy_request, r] () {
-                             m_work_queue->queue(mock_metadata_copy_request.
-                                                 on_finish, r);}));
+        .WillOnce(Invoke([this, &mock_metadata_copy_request, r]() {
+            m_work_queue->queue(mock_metadata_copy_request.
+                                on_finish, r);
+        }));
     }
 };
 
@@ -334,7 +371,7 @@ TEST_F(TestMockDeepCopyRequest, ErrorOnRefreshObjectMap)
     librbd::MockExclusiveLock mock_exclusive_lock;
     mock_dst_image_ctx.exclusive_lock = &mock_exclusive_lock;
 
-    librbd::MockObjectMap * mock_object_map = new librbd::MockObjectMap();
+    librbd::MockObjectMap *mock_object_map = new librbd::MockObjectMap();
     mock_dst_image_ctx.object_map = mock_object_map;
 
     expect_test_features(mock_dst_image_ctx);
@@ -431,9 +468,9 @@ TEST_F(TestMockDeepCopyRequest, Snap)
 {
     EXPECT_EQ(0, snap_create(*m_src_image_ctx, "copy"));
     EXPECT_EQ(0, librbd::api::Image <>::snap_set(m_src_image_ctx,
-                                                 cls::rbd::
-                                                 UserSnapshotNamespace(),
-                                                 "copy"));
+              cls::rbd::
+              UserSnapshotNamespace(),
+              "copy"));
 
     librbd::MockTestImageCtx mock_src_image_ctx(*m_src_image_ctx);
     librbd::MockTestImageCtx mock_dst_image_ctx(*m_dst_image_ctx);
@@ -462,7 +499,8 @@ TEST_F(TestMockDeepCopyRequest, Snap)
 
     C_SaferCond ctx;
     librbd::SnapSeqs snap_seqs = { {
-    m_src_image_ctx->snap_id, 123}
+            m_src_image_ctx->snap_id, 123
+        }
     };
     librbd::deep_copy::NoOpHandler no_op;
     auto request =
@@ -482,9 +520,9 @@ TEST_F(TestMockDeepCopyRequest, ErrorOnRollbackObjectMap)
 
     EXPECT_EQ(0, snap_create(*m_src_image_ctx, "copy"));
     EXPECT_EQ(0, librbd::api::Image <>::snap_set(m_src_image_ctx,
-                                                 cls::rbd::
-                                                 UserSnapshotNamespace(),
-                                                 "copy"));
+              cls::rbd::
+              UserSnapshotNamespace(),
+              "copy"));
 
     librbd::MockTestImageCtx mock_src_image_ctx(*m_src_image_ctx);
     librbd::MockTestImageCtx mock_dst_image_ctx(*m_dst_image_ctx);
@@ -507,7 +545,8 @@ TEST_F(TestMockDeepCopyRequest, ErrorOnRollbackObjectMap)
 
     C_SaferCond ctx;
     librbd::SnapSeqs snap_seqs = { {
-    m_src_image_ctx->snap_id, 123}
+            m_src_image_ctx->snap_id, 123
+        }
     };
     librbd::deep_copy::NoOpHandler no_op;
     auto request =

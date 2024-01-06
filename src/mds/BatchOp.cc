@@ -29,7 +29,7 @@ void BatchOp::forward(mds_rank_t target)
 void BatchOp::respond(int r)
 {
     dout(20) << __func__ << ": responding to batch ops with result=" << r <<
-        ": ";
+             ": ";
     print(*_dout);
     *_dout << dendl;
     _respond(r);

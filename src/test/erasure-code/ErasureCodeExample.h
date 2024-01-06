@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -11,7 +11,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #ifndef CEPH_ERASURE_CODE_EXAMPLE_H
@@ -35,16 +35,20 @@
 
 #define MINIMUM_TO_RECOVER 2u
 
-class ErasureCodeExample final:public ErasureCode {
-  public:
-    ~ErasureCodeExample() override {
-    } int create_rule(const std::string & name,
-                      CrushWrapper & crush, std::ostream * ss) const override {
+class ErasureCodeExample final: public ErasureCode
+{
+public:
+    ~ErasureCodeExample() override
+    {
+    } int create_rule(const std::string &name,
+                      CrushWrapper &crush, std::ostream *ss) const override
+    {
         return crush.add_simple_rule(name, "default", "host", "",
                                      "indep", pg_pool_t::TYPE_ERASURE, ss);
-    } int minimum_to_decode_with_cost(const std::set < int >&want_to_read,
-                                      const std::map < int, int >&available,
-                                      std::set < int >*minimum) override {
+    } int minimum_to_decode_with_cost(const std::set < int > &want_to_read,
+                                      const std::map < int, int > &available,
+                                      std::set < int > *minimum) override
+    {
         //
         // If one chunk is more expensive to fetch than the others,
         // recover it instead. For instance, if the cost reflects the
@@ -55,31 +59,37 @@ class ErasureCodeExample final:public ErasureCode {
         std::map < int, int >c2c(available);
         if (c2c.size() > DATA_CHUNKS) {
             if (c2c[FIRST_DATA_CHUNK] > c2c[SECOND_DATA_CHUNK] &&
-                c2c[FIRST_DATA_CHUNK] > c2c[CODING_CHUNK])
+                c2c[FIRST_DATA_CHUNK] > c2c[CODING_CHUNK]) {
                 c2c.erase(FIRST_DATA_CHUNK);
-            else if (c2c[SECOND_DATA_CHUNK] > c2c[FIRST_DATA_CHUNK] &&
-                     c2c[SECOND_DATA_CHUNK] > c2c[CODING_CHUNK])
+            } else if (c2c[SECOND_DATA_CHUNK] > c2c[FIRST_DATA_CHUNK] &&
+                       c2c[SECOND_DATA_CHUNK] > c2c[CODING_CHUNK]) {
                 c2c.erase(SECOND_DATA_CHUNK);
-            else if (c2c[CODING_CHUNK] > c2c[FIRST_DATA_CHUNK] &&
-                     c2c[CODING_CHUNK] > c2c[SECOND_DATA_CHUNK])
+            } else if (c2c[CODING_CHUNK] > c2c[FIRST_DATA_CHUNK] &&
+                       c2c[CODING_CHUNK] > c2c[SECOND_DATA_CHUNK]) {
                 c2c.erase(CODING_CHUNK);
+            }
         }
         std::set < int >available_chunks;
         for (std::map < int, int >::const_iterator i = c2c.begin();
-             i != c2c.end(); ++i)
+             i != c2c.end(); ++i) {
             available_chunks.insert(i->first);
+        }
         return _minimum_to_decode(want_to_read, available_chunks, minimum);
     }
 
-    unsigned int get_chunk_count() const override {
+    unsigned int get_chunk_count() const override
+    {
         return DATA_CHUNKS + CODING_CHUNKS;
-    } unsigned int get_data_chunk_count() const override {
+    } unsigned int get_data_chunk_count() const override
+    {
         return DATA_CHUNKS;
-    } unsigned int get_chunk_size(unsigned int object_size) const override {
+    } unsigned int get_chunk_size(unsigned int object_size) const override
+    {
         return (object_size / DATA_CHUNKS) + 1;
-    } int encode(const std::set < int >&want_to_encode,
-                 const bufferlist & in,
-                 std::map < int, bufferlist > *encoded) override {
+    } int encode(const std::set < int > &want_to_encode,
+                 const bufferlist &in,
+                 std::map < int, bufferlist > *encoded) override
+    {
         //
         // make sure all data chunks have the same length, allocating
         // padding if necessary.
@@ -102,7 +112,7 @@ class ErasureCodeExample final:public ErasureCode {
         // populate the bufferlist with bufferptr pointing
         // to chunk boundaries
         //
-        const bufferptr & ptr = out.front();
+        const bufferptr &ptr = out.front();
         for (auto j = want_to_encode.begin(); j != want_to_encode.end(); ++j) {
             bufferlist tmp;
             bufferptr chunk(ptr, (*j) * chunk_length, chunk_length);
@@ -113,15 +123,17 @@ class ErasureCodeExample final:public ErasureCode {
         return 0;
     }
 
-    int encode_chunks(const std::set < int >&want_to_encode,
-                      std::map < int, bufferlist > *encoded) override {
+    int encode_chunks(const std::set < int > &want_to_encode,
+                      std::map < int, bufferlist > *encoded) override
+    {
         ceph_abort();
         return 0;
     }
 
-    int _decode(const std::set < int >&want_to_read,
+    int _decode(const std::set < int > &want_to_read,
                 const std::map < int, bufferlist > &chunks,
-                std::map < int, bufferlist > *decoded) override {
+                std::map < int, bufferlist > *decoded) override
+    {
         //
         // All chunks have the same size
         //
@@ -134,15 +146,13 @@ class ErasureCodeExample final:public ErasureCode {
                 // to the decoded argument.
                 //
                 (*decoded)[*i] = chunks.find(*i)->second;
-            }
-            else if (chunks.size() != 2) {
+            } else if (chunks.size() != 2) {
                 //
                 // If a chunk is missing and there are not enough chunks
                 // to recover, abort.
                 //
                 return -ERANGE;
-            }
-            else {
+            } else {
                 //
                 // No matter what the missing chunk is, XOR of the other
                 // two recovers it.
@@ -166,16 +176,19 @@ class ErasureCodeExample final:public ErasureCode {
         return 0;
     }
 
-    int decode_chunks(const std::set < int >&want_to_read,
+    int decode_chunks(const std::set < int > &want_to_read,
                       const std::map < int, bufferlist > &chunks,
-                      std::map < int, bufferlist > *decoded) override {
+                      std::map < int, bufferlist > *decoded) override
+    {
         ceph_abort();
         return 0;
     }
 
-    const std::vector < int >&get_chunk_mapping() const override {
+    const std::vector < int > &get_chunk_mapping() const override
+    {
         static std::vector < int >mapping;
-         return mapping;
-}};
+        return mapping;
+    }
+};
 
 #endif

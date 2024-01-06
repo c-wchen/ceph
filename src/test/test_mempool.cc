@@ -27,13 +27,13 @@ using namespace std;
 
 void check_usage(mempool::pool_index_t ix)
 {
-    mempool::pool_t * pool = &mempool::get_pool(ix);
+    mempool::pool_t *pool = &mempool::get_pool(ix);
     mempool::stats_t total;
     map < std::string, mempool::stats_t > m;
     pool->get_stats(&total, &m);
     size_t usage = pool->allocated_bytes();
     size_t sum = 0;
-  for (auto & p:m) {
+    for (auto &p : m) {
         sum += p.second.bytes;
     }
     if (sum != usage) {
@@ -44,7 +44,7 @@ void check_usage(mempool::pool_index_t ix)
     EXPECT_EQ(sum, usage);
 }
 
-template < typename A, typename B > void eq_elements(const A & a, const B & b)
+template < typename A, typename B > void eq_elements(const A &a, const B &b)
 {
     auto lhs = a.begin();
     auto rhs = b.begin();
@@ -56,7 +56,7 @@ template < typename A, typename B > void eq_elements(const A & a, const B & b)
     EXPECT_EQ(rhs, b.end());
 }
 
-template < typename A, typename B > void eq_pairs(const A & a, const B & b)
+template < typename A, typename B > void eq_pairs(const A &a, const B &b)
 {
     auto lhs = a.begin();
     auto rhs = b.begin();
@@ -69,20 +69,20 @@ template < typename A, typename B > void eq_pairs(const A & a, const B & b)
     EXPECT_EQ(rhs, b.end());
 }
 
-#define MAKE_INSERTER(inserter)				\
-  template<typename A,typename B>			\
-void do_##inserter(A& a, B& b, int count, int base) {	\
-  for (int i = 0; i < count; ++i) {			\
-    a.inserter(base + i);				\
-    b.inserter(base + i);				\
-  }							\
+#define MAKE_INSERTER(inserter)             \
+  template<typename A,typename B>           \
+void do_##inserter(A& a, B& b, int count, int base) {   \
+  for (int i = 0; i < count; ++i) {         \
+    a.inserter(base + i);               \
+    b.inserter(base + i);               \
+  }                         \
 }
 
 MAKE_INSERTER(push_back);
 MAKE_INSERTER(insert);
 
 template < typename A, typename B >
-    void do_insert_key(A & a, B & b, int count, int base)
+void do_insert_key(A &a, B &b, int count, int base)
 {
     for (int i = 0; i < count; ++i) {
         a.insert(make_pair(base + i, base + i));
@@ -176,12 +176,16 @@ struct obj {
     MEMPOOL_CLASS_HELPERS();
     int a;
     int b;
-     obj():a(1), b(1) {
-    } explicit obj(int _a):a(_a), b(2) {
+    obj(): a(1), b(1)
+    {
+    } explicit obj(int _a): a(_a), b(2)
+    {
     }
-    obj(int _a, int _b):a(_a), b(_b) {
+    obj(int _a, int _b): a(_a), b(_b)
+    {
     }
-    friend inline bool operator<(const obj & l, const obj & r) {
+    friend inline bool operator<(const obj &l, const obj &r)
+    {
         return l.a < r.a;
     }
 };
@@ -391,9 +395,9 @@ TEST(mempool, bufferlist_c_str)
 TEST(mempool, btree_map_test)
 {
     typedef mempool::pool_allocator < mempool::mempool_osd,
-        pair < const uint64_t, uint64_t >> allocator_t;
+            pair < const uint64_t, uint64_t >> allocator_t;
     typedef btree::btree_map < uint64_t, uint64_t, std::less < uint64_t >,
-        allocator_t > btree_t;
+            allocator_t > btree_t;
 
     {
         btree_t btree;
@@ -414,16 +418,18 @@ TEST(mempool, check_shard_select)
 {
     const size_t samples = mempool::num_shards * 100;
     std::atomic_int shards[mempool::num_shards] = {
-    0};
+        0
+    };
     std::vector < std::thread > workers;
     for (size_t i = 0; i < samples; i++) {
         workers.push_back(std::thread([&]() {
-                                      size_t i =
-                                      mempool::pool_t::pick_a_shard_int();
-                                      shards[i]++;}
-                          ));
+            size_t i =
+                mempool::pool_t::pick_a_shard_int();
+            shards[i]++;
+        }
+                                     ));
     }
-  for (auto & t:workers) {
+    for (auto &t : workers) {
         t.join();
     }
     workers.clear();

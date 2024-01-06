@@ -11,7 +11,7 @@
 using namespace std::chrono_literals;
 
 RadosTestFixture::RadosTestFixture()
-:  m_timer_lock(ceph::make_mutex("m_timer_lock")), m_listener(this)
+    :  m_timer_lock(ceph::make_mutex("m_timer_lock")), m_listener(this)
 {
 }
 
@@ -54,7 +54,7 @@ void RadosTestFixture::SetUp()
 
 void RadosTestFixture::TearDown()
 {
-  for (auto metadata:m_metadatas) {
+    for (auto metadata : m_metadatas) {
         C_SaferCond ctx;
         metadata->shut_down(&ctx);
         ASSERT_EQ(0, ctx.wait());
@@ -62,7 +62,7 @@ void RadosTestFixture::TearDown()
 
     {
         std::lock_guard locker {
-        m_timer_lock};
+            m_timer_lock};
         m_timer->shutdown();
     }
     delete m_timer;
@@ -71,17 +71,16 @@ void RadosTestFixture::TearDown()
     delete m_work_queue;
 }
 
-int RadosTestFixture::create(const std::string & oid, uint8_t order,
+int RadosTestFixture::create(const std::string &oid, uint8_t order,
                              uint8_t splay_width)
 {
     return cls::journal::client::create(m_ioctx, oid, order, splay_width, -1);
 }
 
-ceph::ref_t < journal::JournalMetadata >
-    RadosTestFixture::create_metadata(const std::string & oid,
-                                      const std::string & client_id,
-                                      double commit_interval,
-                                      int max_concurrent_object_sets)
+ceph::ref_t < journal::JournalMetadata > RadosTestFixture::create_metadata(const std::string &oid,
+        const std::string &client_id,
+        double commit_interval,
+        int max_concurrent_object_sets)
 {
     journal::Settings settings;
     settings.commit_interval = commit_interval;
@@ -89,39 +88,39 @@ ceph::ref_t < journal::JournalMetadata >
 
     auto metadata =
         ceph::make_ref < journal::JournalMetadata > (m_work_queue, m_timer,
-                                                     &m_timer_lock, m_ioctx,
-                                                     oid, client_id, settings);
+            &m_timer_lock, m_ioctx,
+            oid, client_id, settings);
     m_metadatas.push_back(metadata);
     return metadata;
 }
 
-int RadosTestFixture::append(const std::string & oid, const bufferlist & bl)
+int RadosTestFixture::append(const std::string &oid, const bufferlist &bl)
 {
     librados::ObjectWriteOperation op;
     op.append(bl);
     return m_ioctx.operate(oid, &op);
 }
 
-int RadosTestFixture::client_register(const std::string & oid,
-                                      const std::string & id,
-                                      const std::string & description)
+int RadosTestFixture::client_register(const std::string &oid,
+                                      const std::string &id,
+                                      const std::string &description)
 {
     bufferlist data;
     data.append(description);
     return cls::journal::client::client_register(m_ioctx, oid, id, data);
 }
 
-int RadosTestFixture::client_commit(const std::string & oid,
-                                    const std::string & id,
+int RadosTestFixture::client_commit(const std::string &oid,
+                                    const std::string &id,
                                     const cls::journal::
-                                    ObjectSetPosition & commit_position)
+                                    ObjectSetPosition &commit_position)
 {
     librados::ObjectWriteOperation op;
     cls::journal::client::client_commit(&op, id, commit_position);
     return m_ioctx.operate(oid, &op);
 }
 
-bufferlist RadosTestFixture::create_payload(const std::string & payload)
+bufferlist RadosTestFixture::create_payload(const std::string &payload)
 {
     bufferlist bl;
     bl.append(payload);
@@ -140,7 +139,7 @@ bool RadosTestFixture::wait_for_update(const ceph::ref_t <
                                        journal::JournalMetadata > &metadata)
 {
     std::unique_lock locker {
-    m_listener.mutex};
+        m_listener.mutex};
     while (m_listener.updates[metadata.get()] == 0) {
         if (m_listener.cond.wait_for(locker, 10 s) == std::cv_status::timeout) {
             return false;

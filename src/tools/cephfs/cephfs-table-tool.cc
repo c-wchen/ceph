@@ -31,7 +31,7 @@ int main(int argc, const char **argv)
     int rc = tt.init();
     if (rc != 0) {
         std::cerr << "Error in initialization: " << cpp_strerror(rc) << std::
-            endl;
+                  endl;
         return rc;
     }
 

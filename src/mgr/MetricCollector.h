@@ -19,16 +19,18 @@
 class MMgrReport;
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    class MetricCollector {
-  public:
-    virtual ~ MetricCollector() {
+class MetricCollector
+{
+public:
+    virtual ~ MetricCollector()
+    {
     }
 
     using Limits = std::set < Limit >;
 
-    MetricCollector(MetricListener & listener);
+    MetricCollector(MetricListener &listener);
 
-    MetricQueryID add_query(const Query & query,
+    MetricQueryID add_query(const Query &query,
                             const std::optional < Limit > &limit);
 
     int remove_query(MetricQueryID query_id);
@@ -37,16 +39,17 @@ template < typename Query, typename Limit, typename Key, typename Report >
 
     void reregister_queries();
 
-    std::map < Query, Limits > get_queries()const {
+    std::map < Query, Limits > get_queries()const
+    {
         std::lock_guard locker(lock);
 
         std::map < Query, Limits > result;
-        for (auto &[query, limits]:queries) {
+        for (auto &[query, limits] : queries) {
             auto result_it = result.insert({ query, {}
                                            }
-            ).first;
+                                          ).first;
             if (is_limited(limits)) {
-              for (auto & limit:limits) {
+                for (auto &limit : limits) {
                     if (limit.second) {
                         result_it->second.insert(*limit.second);
                     }
@@ -57,15 +60,15 @@ template < typename Query, typename Limit, typename Key, typename Report >
         return result;
     }
 
-    virtual void process_reports(const MetricPayload & payload) = 0;
-    virtual int get_counters(PerfCollector * collector) = 0;
+    virtual void process_reports(const MetricPayload &payload) = 0;
+    virtual int get_counters(PerfCollector *collector) = 0;
 
-  protected:
+protected:
     typedef std::optional < Limit > OptionalLimit;
     typedef std::map < MetricQueryID, OptionalLimit > QueryIDLimit;
     typedef std::map < Query, QueryIDLimit > Queries;
     typedef std::map < MetricQueryID, std::map < Key,
-        PerformanceCounters >> Counters;
+            PerformanceCounters >> Counters;
     typedef std::function < void (PerformanceCounter *,
                                   const PerformanceCounter &) > UpdateCallback;
 
@@ -79,15 +82,16 @@ template < typename Query, typename Limit, typename Key, typename Report >
     int get_counters_generic(MetricQueryID query_id, std::map < Key,
                              PerformanceCounters > *counters);
 
-  private:
-    MetricListener & listener;
+private:
+    MetricListener &listener;
     MetricQueryID next_query_id = 0;
 
-    bool is_limited(const std::map < MetricQueryID, OptionalLimit > &limits) const {
-        return std::any_of(begin(limits), end(limits),[](auto & limits) {
-                           return limits.second.has_value();
-                           }
-        );
+    bool is_limited(const std::map < MetricQueryID, OptionalLimit > &limits) const
+    {
+        return std::any_of(begin(limits), end(limits), [](auto & limits) {
+            return limits.second.has_value();
+        }
+                          );
     }
 };
 

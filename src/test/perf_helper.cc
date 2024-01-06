@@ -20,27 +20,32 @@
 
 using namespace ceph;
 
-namespace PerfHelper {
+namespace PerfHelper
+{
 
 /// Flush the CPU data cache by reading and writing 100MB of new data.
-    void flush_cache() {
-        int hundredMegs = 100 * 1024 * 1024;
-        volatile char *block = new char[hundredMegs];
-        for (int i = 0; i < hundredMegs; i++)
-             block[i] = 1;
-         delete[] block;
+void flush_cache()
+{
+    int hundredMegs = 100 * 1024 * 1024;
+    volatile char *block = new char[hundredMegs];
+    for (int i = 0; i < hundredMegs; i++) {
+        block[i] = 1;
     }
+    delete[] block;
+}
 /// Used in functionCall(). uint64_t plus_one(uint64_t x) {
-        return x + 1;
-    }
+return x + 1;
+}
 
 /// Used in throwIntNL.
-    void throw_int() {
-        throw 0;
-    }
+void throw_int()
+{
+    throw 0;
+}
 
 /// Used in throwExceptionNL.
-    void throw_end_of_buffer() {
-        throw buffer::end_of_buffer();
-    }
+void throw_end_of_buffer()
+{
+    throw buffer::end_of_buffer();
+}
 }

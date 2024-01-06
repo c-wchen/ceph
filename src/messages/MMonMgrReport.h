@@ -21,34 +21,40 @@
 #include "mon/health_check.h"
 #include "mon/PGMap.h"
 
-class MMonMgrReport final:public PaxosServiceMessage {
-  private:
+class MMonMgrReport final: public PaxosServiceMessage
+{
+private:
     static constexpr int HEAD_VERSION = 3;
     static constexpr int COMPAT_VERSION = 1;
 
-  public:
+public:
     // PGMapDigest is in data payload
-     health_check_map_t health_checks;
-     ceph::buffer::list service_map_bl; // encoded ServiceMap
-     std::map < std::string, ProgressEvent > progress_events;
+    health_check_map_t health_checks;
+    ceph::buffer::list service_map_bl; // encoded ServiceMap
+    std::map < std::string, ProgressEvent > progress_events;
     uint64_t gid = 0;
 
-     MMonMgrReport()
-    :PaxosServiceMessage {
-    MSG_MON_MGR_REPORT, 0, HEAD_VERSION, COMPAT_VERSION} {
+    MMonMgrReport()
+        : PaxosServiceMessage {
+        MSG_MON_MGR_REPORT, 0, HEAD_VERSION, COMPAT_VERSION}
+    {
     }
-  private:
-    ~MMonMgrReport()final {
+private:
+    ~MMonMgrReport()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "monmgrreport";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << get_type_name() << "(gid " << gid
             << ", " << health_checks.checks.size() << " checks, "
             << progress_events.size() << " progress events)";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         paxos_encode();
         encode(health_checks, payload);
@@ -73,7 +79,8 @@ class MMonMgrReport final:public PaxosServiceMessage {
             set_data(bl);
         }
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         paxos_decode(p);
@@ -86,9 +93,9 @@ class MMonMgrReport final:public PaxosServiceMessage {
             decode(gid, p);
         }
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

@@ -23,26 +23,26 @@ using ceph::Formatter;
 
 // cnode_t
 
-void kstore_cnode_t::encode(bufferlist & bl) const const
+void kstore_cnode_t::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(bits, bl);
     ENCODE_FINISH(bl);
 }
 
-void kstore_cnode_t::decode(bufferlist::const_iterator & p)
+void kstore_cnode_t::decode(bufferlist::const_iterator &p)
 {
     DECODE_START(1, p);
     decode(bits, p);
     DECODE_FINISH(p);
 }
 
-void kstore_cnode_t::dump(Formatter * f) const const
+void kstore_cnode_t::dump(Formatter *f) const const
 {
     f->dump_unsigned("bits", bits);
 }
 
-void kstore_cnode_t::generate_test_instances(list < kstore_cnode_t * >&o)
+void kstore_cnode_t::generate_test_instances(list < kstore_cnode_t * > &o)
 {
     o.push_back(new kstore_cnode_t());
     o.push_back(new kstore_cnode_t(0));
@@ -51,7 +51,7 @@ void kstore_cnode_t::generate_test_instances(list < kstore_cnode_t * >&o)
 
 // kstore_onode_t
 
-void kstore_onode_t::encode(bufferlist & bl) const const
+void kstore_onode_t::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(nid, bl);
@@ -65,7 +65,7 @@ void kstore_onode_t::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void kstore_onode_t::decode(bufferlist::const_iterator & p)
+void kstore_onode_t::decode(bufferlist::const_iterator &p)
 {
     DECODE_START(1, p);
     decode(nid, p);
@@ -79,7 +79,7 @@ void kstore_onode_t::decode(bufferlist::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-void kstore_onode_t::dump(Formatter * f) const const
+void kstore_onode_t::dump(Formatter *f) const const
 {
     f->dump_unsigned("nid", nid);
     f->dump_unsigned("size", size);
@@ -98,7 +98,7 @@ void kstore_onode_t::dump(Formatter * f) const const
     f->dump_unsigned("alloc_hint_flags", alloc_hint_flags);
 }
 
-void kstore_onode_t::generate_test_instances(list < kstore_onode_t * >&o)
+void kstore_onode_t::generate_test_instances(list < kstore_onode_t * > &o)
 {
     o.push_back(new kstore_onode_t());
     // FIXME

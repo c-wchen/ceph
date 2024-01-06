@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -12,7 +12,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include "common/debug.h"
@@ -28,7 +28,7 @@ extern "C" int jerasure_init(int count, int *words)
         int r = galois_init_default_field(words[i]);
         if (r) {
             derr << "failed to galois_init_default_field(" << words[i] << ")" <<
-                dendl;
+                 dendl;
             return -r;
         }
     }

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 #ifndef MDS_AUTH_CAPS_H
 #define MDS_AUTH_CAPS_H
@@ -58,31 +58,43 @@ struct MDSCapSpec {
     static const unsigned RWPS = (READ | WRITE | SET_VXATTR | SNAPSHOT);
     static const unsigned RWFPS = (READ | WRITE | FULL | SET_VXATTR | SNAPSHOT);
 
-     MDSCapSpec() = default;
-     MDSCapSpec(unsigned _caps):caps(_caps) {
-        if (caps & ALL)
+    MDSCapSpec() = default;
+    MDSCapSpec(unsigned _caps): caps(_caps)
+    {
+        if (caps & ALL) {
             caps |= RWFPS;
-    } bool allow_all() const {
+        }
+    } bool allow_all() const
+    {
         return (caps & ALL);
-    } bool allow_read() const {
+    } bool allow_read() const
+    {
         return (caps & READ);
-    } bool allow_write() const {
+    } bool allow_write() const
+    {
         return (caps & WRITE);
-    } bool allows(bool r, bool w) const {
-        if (allow_all())
+    } bool allows(bool r, bool w) const
+    {
+        if (allow_all()) {
             return true;
-        if (r && !allow_read())
+        }
+        if (r && !allow_read()) {
             return false;
-        if (w && !allow_write())
+        }
+        if (w && !allow_write()) {
             return false;
+        }
         return true;
-    } bool allow_snapshot() const {
+    } bool allow_snapshot() const
+    {
         return (caps & SNAPSHOT);
-    } bool allow_set_vxattr() const {
+    } bool allow_set_vxattr() const
+    {
         return (caps & SET_VXATTR);
-    } bool allow_full() const {
+    } bool allow_full() const
+    {
         return (caps & FULL);
-  } private:
+    } private:
     unsigned caps = 0;
 };
 
@@ -90,52 +102,59 @@ struct MDSCapSpec {
 struct MDSCapMatch {
     static const int64_t MDS_AUTH_UID_ANY = -1;
 
-     MDSCapMatch():uid(MDS_AUTH_UID_ANY), fs_name(std::string()) {
+    MDSCapMatch(): uid(MDS_AUTH_UID_ANY), fs_name(std::string())
+    {
     } MDSCapMatch(int64_t uid_, std::vector < gid_t > &gids_):
-        uid(uid_), gids(gids_), fs_name(std::string()) {
+        uid(uid_), gids(gids_), fs_name(std::string())
+    {
     }
 
-    explicit MDSCapMatch(const std::string & path_)
-    :uid(MDS_AUTH_UID_ANY), path(path_), fs_name(std::string()) {
+    explicit MDSCapMatch(const std::string &path_)
+        : uid(MDS_AUTH_UID_ANY), path(path_), fs_name(std::string())
+    {
         normalize_path();
     }
 
     explicit MDSCapMatch(std::string path,
-                         std::string fs_name):uid(MDS_AUTH_UID_ANY),
-        path(std::move(path)), fs_name(std::move(fs_name)) {
+                         std::string fs_name): uid(MDS_AUTH_UID_ANY),
+        path(std::move(path)), fs_name(std::move(fs_name))
+    {
         normalize_path();
     }
 
     explicit MDSCapMatch(std::string path, std::string fs_name,
-                         bool root_squash_):uid(MDS_AUTH_UID_ANY),
+                         bool root_squash_): uid(MDS_AUTH_UID_ANY),
         path(std::move(path)), fs_name(std::move(fs_name)),
-        root_squash(root_squash_) {
+        root_squash(root_squash_)
+    {
         normalize_path();
     }
 
-    MDSCapMatch(const std::string & path_, int64_t uid_,
+    MDSCapMatch(const std::string &path_, int64_t uid_,
                 std::vector < gid_t > &gids_)
-    :uid(uid_), gids(gids_), path(path_), fs_name(std::string()) {
+        : uid(uid_), gids(gids_), path(path_), fs_name(std::string())
+    {
         normalize_path();
     }
 
     void normalize_path();
 
-    bool is_match_all() const {
+    bool is_match_all() const
+    {
         return uid == MDS_AUTH_UID_ANY && path == "";
     }
     // check whether this grant matches against a given file and caller uid:gid
-        bool match(std::string_view target_path,
-                   const int caller_uid,
-                   const int caller_gid,
-                   const std::vector < uint64_t > *caller_gid_list)const;
+    bool match(std::string_view target_path,
+               const int caller_uid,
+               const int caller_gid,
+               const std::vector < uint64_t > *caller_gid_list)const;
 
-  /**
-   * Check whether this path *might* be accessible (actual permission
-   * depends on the stronger check in match()).
-   *
-   * @param target_path filesystem path without leading '/'
-   */
+    /**
+     * Check whether this path *might* be accessible (actual permission
+     * depends on the stronger check in match()).
+     *
+     * @param target_path filesystem path without leading '/'
+     */
     bool match_path(std::string_view target_path) const;
 
     int64_t uid;                // Require UID to be equal to this, if !=MDS_AUTH_UID_ANY
@@ -146,13 +165,16 @@ struct MDSCapMatch {
 };
 
 struct MDSCapGrant {
-    MDSCapGrant(const MDSCapSpec & spec_, const MDSCapMatch & match_,
+    MDSCapGrant(const MDSCapSpec &spec_, const MDSCapMatch &match_,
                 boost::optional < std::string > n)
-    :spec(spec_), match(match_) {
+        : spec(spec_), match(match_)
+    {
         if (n) {
             network = *n;
             parse_network();
-    }} MDSCapGrant() {
+        }
+    } MDSCapGrant()
+    {
     }
 
     void parse_network();
@@ -167,22 +189,26 @@ struct MDSCapGrant {
     bool network_valid = true;
 };
 
-class MDSAuthCaps {
-  public:
+class MDSAuthCaps
+{
+public:
     MDSAuthCaps() = default;
-    explicit MDSAuthCaps(CephContext * cct_):cct(cct_) {
+    explicit MDSAuthCaps(CephContext *cct_): cct(cct_)
+    {
     }
     // this ctor is used by spirit/phoenix; doesn't need cct.
-        explicit MDSAuthCaps(const std::vector < MDSCapGrant >
-                             &grants_):grants(grants_) {
+    explicit MDSAuthCaps(const std::vector < MDSCapGrant >
+                         &grants_): grants(grants_)
+    {
     }
 
-    void clear() {
+    void clear()
+    {
         grants.clear();
     }
 
     void set_allow_all();
-    bool parse(CephContext * cct, std::string_view str, std::ostream * err);
+    bool parse(CephContext *cct, std::string_view str, std::ostream *err);
 
     bool allow_all() const;
     bool is_capable(std::string_view inode_path,
@@ -190,13 +216,15 @@ class MDSAuthCaps {
                     uid_t uid, gid_t gid,
                     const std::vector < uint64_t > *caller_gid_list,
                     unsigned mask, uid_t new_uid, gid_t new_gid,
-                    const entity_addr_t & addr) const;
+                    const entity_addr_t &addr) const;
     bool path_capable(std::string_view inode_path) const;
 
-    bool fs_name_capable(std::string_view fs_name, unsigned mask) const {
+    bool fs_name_capable(std::string_view fs_name, unsigned mask) const
+    {
         if (allow_all()) {
             return true;
-        } for (const MDSCapGrant & g:grants) {
+        }
+        for (const MDSCapGrant &g : grants) {
             if (g.match.fs_name == fs_name || g.match.fs_name.empty() ||
                 g.match.fs_name == "*") {
                 if (mask & MAY_READ && g.spec.allow_read()) {
@@ -212,16 +240,16 @@ class MDSAuthCaps {
         return false;
     }
 
-    friend std::ostream & operator<<(std::ostream & out,
-                                     const MDSAuthCaps & cap);
-  private:
-    CephContext * cct = nullptr;
+    friend std::ostream &operator<<(std::ostream &out,
+                                    const MDSAuthCaps &cap);
+private:
+    CephContext *cct = nullptr;
     std::vector < MDSCapGrant > grants;
 };
 
-std::ostream & operator<<(std::ostream & out, const MDSCapMatch & match);
-std::ostream & operator<<(std::ostream & out, const MDSCapSpec & spec);
-std::ostream & operator<<(std::ostream & out, const MDSCapGrant & grant);
-std::ostream & operator<<(std::ostream & out, const MDSAuthCaps & cap);
+std::ostream &operator<<(std::ostream &out, const MDSCapMatch &match);
+std::ostream &operator<<(std::ostream &out, const MDSCapSpec &spec);
+std::ostream &operator<<(std::ostream &out, const MDSCapGrant &grant);
+std::ostream &operator<<(std::ostream &out, const MDSAuthCaps &cap);
 
 #endif // MDS_AUTH_CAPS_H

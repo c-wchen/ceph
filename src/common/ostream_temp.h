@@ -14,41 +14,48 @@ typedef enum {
     CLOG_UNKNOWN = -1,
 } clog_type;
 
-class OstreamTemp {
-  public:
-    class OstreamTempSink {
-      public:
-        virtual void do_log(clog_type prio, std::stringstream & ss) = 0;
-         virtual ~ OstreamTempSink() {
-    }};
-    OstreamTemp(clog_type type_, OstreamTempSink * parent_);
+class OstreamTemp
+{
+public:
+    class OstreamTempSink
+    {
+    public:
+        virtual void do_log(clog_type prio, std::stringstream &ss) = 0;
+        virtual ~ OstreamTempSink()
+        {
+        }
+    };
+    OstreamTemp(clog_type type_, OstreamTempSink *parent_);
     OstreamTemp(OstreamTemp && rhs) = default;
     ~OstreamTemp();
 
-    template < typename T > std::ostream & operator<<(const T & rhs) {
+    template < typename T > std::ostream &operator<<(const T &rhs)
+    {
         return ss << rhs;
     }
 
-  private:
+private:
     clog_type type;
     OstreamTempSink *parent;
     std::stringstream ss;
 };
 
-class LoggerSinkSet:public OstreamTemp::OstreamTempSink {
-  public:
-    virtual void info(std::stringstream & s) = 0;
-    virtual void warn(std::stringstream & s) = 0;
-    virtual void error(std::stringstream & s) = 0;
-    virtual void sec(std::stringstream & s) = 0;
-    virtual void debug(std::stringstream & s) = 0;
+class LoggerSinkSet: public OstreamTemp::OstreamTempSink
+{
+public:
+    virtual void info(std::stringstream &s) = 0;
+    virtual void warn(std::stringstream &s) = 0;
+    virtual void error(std::stringstream &s) = 0;
+    virtual void sec(std::stringstream &s) = 0;
+    virtual void debug(std::stringstream &s) = 0;
     virtual OstreamTemp info() = 0;
     virtual OstreamTemp warn() = 0;
     virtual OstreamTemp error() = 0;
     virtual OstreamTemp sec() = 0;
     virtual OstreamTemp debug() = 0;
-    virtual void do_log(clog_type prio, std::stringstream & ss) = 0;
-    virtual void do_log(clog_type prio, const std::string & ss) = 0;
-    virtual ~ LoggerSinkSet() {
+    virtual void do_log(clog_type prio, std::stringstream &ss) = 0;
+    virtual void do_log(clog_type prio, const std::string &ss) = 0;
+    virtual ~ LoggerSinkSet()
+    {
     };
 };

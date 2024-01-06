@@ -42,11 +42,11 @@ FS *FS::create(uint64_t f_type)
 {
     switch (f_type) {
 #ifdef HAVE_LIBXFS
-    case XFS_SUPER_MAGIC:
-        return new XFS;
+        case XFS_SUPER_MAGIC:
+            return new XFS;
 #endif
-    default:
-        return new FS;
+        default:
+            return new FS;
     }
 }
 
@@ -65,7 +65,7 @@ int FS::set_alloc_hint(int fd, uint64_t hint)
 }
 
 #ifdef HAVE_NAME_TO_HANDLE_AT
-int FS::get_handle(int fd, std::string * h)
+int FS::get_handle(int fd, std::string *h)
 {
     char buf[sizeof(struct file_handle) + MAX_HANDLE_SZ];
     struct file_handle *fh = (struct file_handle *)buf;
@@ -80,7 +80,7 @@ int FS::get_handle(int fd, std::string * h)
     return 0;
 }
 
-int FS::open_handle(int mount_fd, const std::string & h, int flags)
+int FS::open_handle(int mount_fd, const std::string &h, int flags)
 {
     if (h.length() < sizeof(struct file_handle)) {
         return -EINVAL;
@@ -90,19 +90,20 @@ int FS::open_handle(int mount_fd, const std::string & h, int flags)
         return -ERANGE;
     }
     int fd = open_by_handle_at(mount_fd, fh, flags);
-    if (fd < 0)
+    if (fd < 0) {
         return -errno;
+    }
     return fd;
 }
 
 #else // HAVE_NAME_TO_HANDLE_AT
 
-int FS::get_handle(int fd, std::string * h)
+int FS::get_handle(int fd, std::string *h)
 {
     return -EOPNOTSUPP;
 }
 
-int FS::open_handle(int mount_fd, const std::string & h, int flags)
+int FS::open_handle(int mount_fd, const std::string &h, int flags)
 {
     return -EOPNOTSUPP;
 }
@@ -178,7 +179,7 @@ int FS::zero(int fd, uint64_t offset, uint64_t length)
         r = bl.write_fd(fd);
     }
 
-  out:
+out:
     return r;
 }
 

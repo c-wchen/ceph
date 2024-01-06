@@ -43,16 +43,16 @@ using ceph::make_message;
 using ceph::mono_clock;
 using ceph::mono_time;
 
-static ostream & _prefix(std::ostream * _dout, Monitor & mon)
+static ostream &_prefix(std::ostream *_dout, Monitor &mon)
 {
     return *_dout << "mon." << mon.name << "@" << mon.rank
-        << "(" << mon.get_state_name()
-        << ").mgrstat ";
+           << "(" << mon.get_state_name()
+           << ").mgrstat ";
 }
 
-MgrStatMonitor::MgrStatMonitor(Monitor & mn, Paxos & p,
-                               const string & service_name)
-:  PaxosService(mn, p, service_name)
+MgrStatMonitor::MgrStatMonitor(Monitor &mn, Paxos &p,
+                               const string &service_name)
+    :  PaxosService(mn, p, service_name)
 {
 }
 
@@ -68,7 +68,7 @@ void MgrStatMonitor::create_initial()
     encode(service_map, pending_service_map_bl, CEPH_FEATURES_ALL);
 }
 
-void MgrStatMonitor::update_from_paxos(bool * need_bootstrap)
+void MgrStatMonitor::update_from_paxos(bool *need_bootstrap)
 {
     version = get_last_committed();
     dout(10) << " " << version << dendl;
@@ -85,12 +85,11 @@ void MgrStatMonitor::update_from_paxos(bool * need_bootstrap)
                 decode(progress_events, p);
             }
             dout(10) << __func__ << " v" << version
-                << " service_map e" << service_map.epoch
-                << " " << progress_events.size() << " progress events" << dendl;
-        }
-        catch(ceph::buffer::error & e) {
+                     << " service_map e" << service_map.epoch
+                     << " " << progress_events.size() << " progress events" << dendl;
+        } catch (ceph::buffer::error &e) {
             derr << "failed to decode mgrstat state; luminous dev version? "
-                << e.what() << dendl;
+                 << e.what() << dendl;
         }
     }
     check_subs();
@@ -110,7 +109,7 @@ void MgrStatMonitor::update_logger()
 
     mon.cluster_logger->set(l_cluster_num_pool, digest.pg_pool_sum.size());
     uint64_t num_pg = 0;
-  for (auto i:digest.num_pg_by_pool) {
+    for (auto i : digest.num_pg_by_pool) {
         num_pg += i.second;
     }
     mon.cluster_logger->set(l_cluster_num_pg, num_pg);
@@ -120,11 +119,13 @@ void MgrStatMonitor::update_logger()
          p != digest.num_pg_by_state.end(); ++p) {
         if (p->first & PG_STATE_ACTIVE) {
             active += p->second;
-            if (p->first & PG_STATE_CLEAN)
+            if (p->first & PG_STATE_CLEAN) {
                 active_clean += p->second;
+            }
         }
-        if (p->first & PG_STATE_PEERING)
+        if (p->first & PG_STATE_PEERING) {
             peering += p->second;
+        }
     }
     mon.cluster_logger->set(l_cluster_num_pg_active_clean, active_clean);
     mon.cluster_logger->set(l_cluster_num_pg_active, active);
@@ -189,16 +190,16 @@ bool MgrStatMonitor::preprocess_query(MonOpRequestRef op)
 {
     auto m = op->get_req < PaxosServiceMessage > ();
     switch (m->get_type()) {
-    case CEPH_MSG_STATFS:
-        return preprocess_statfs(op);
-    case MSG_MON_MGR_REPORT:
-        return preprocess_report(op);
-    case MSG_GETPOOLSTATS:
-        return preprocess_getpoolstats(op);
-    default:
-        mon.no_reply(op);
-        derr << "Unhandled message type " << m->get_type() << dendl;
-        return true;
+        case CEPH_MSG_STATFS:
+            return preprocess_statfs(op);
+        case MSG_MON_MGR_REPORT:
+            return preprocess_report(op);
+        case MSG_GETPOOLSTATS:
+            return preprocess_getpoolstats(op);
+        default:
+            mon.no_reply(op);
+            derr << "Unhandled message type " << m->get_type() << dendl;
+            return true;
     }
 }
 
@@ -206,12 +207,12 @@ bool MgrStatMonitor::prepare_update(MonOpRequestRef op)
 {
     auto m = op->get_req < PaxosServiceMessage > ();
     switch (m->get_type()) {
-    case MSG_MON_MGR_REPORT:
-        return prepare_report(op);
-    default:
-        mon.no_reply(op);
-        derr << "Unhandled message type " << m->get_type() << dendl;
-        return true;
+        case MSG_MON_MGR_REPORT:
+            return prepare_report(op);
+        default:
+            mon.no_reply(op);
+            derr << "Unhandled message type " << m->get_type() << dendl;
+            return true;
     }
 }
 
@@ -238,8 +239,8 @@ bool MgrStatMonitor::prepare_report(MonOpRequestRef op)
     }
     pending_progress_events.swap(m->progress_events);
     dout(10) << __func__ << " " << pending_digest << ", "
-        << pending_health_checks.checks.size() << " health checks, "
-        << progress_events.size() << " progress events" << dendl;
+             << pending_health_checks.checks.size() << " health checks, "
+             << progress_events.size() << " progress events" << dendl;
     dout(20) << "pending_digest:\n";
     JSONFormatter jf(true);
     jf.open_object_section("pending_digest");
@@ -257,7 +258,7 @@ bool MgrStatMonitor::prepare_report(MonOpRequestRef op)
     dout(20) << "progress events:\n";
     JSONFormatter jf(true);
     jf.open_object_section("progress_events");
-  for (auto & i:pending_progress_events) {
+    for (auto &i : pending_progress_events) {
         jf.dump_object(i.first.c_str(), i.second);
     }
     jf.close_section();
@@ -271,29 +272,32 @@ bool MgrStatMonitor::preprocess_getpoolstats(MonOpRequestRef op)
     op->mark_pgmon_event(__func__);
     auto m = op->get_req < MGetPoolStats > ();
     auto session = op->get_session();
-    if (!session)
+    if (!session) {
         return true;
+    }
     if (!session->is_capable("pg", MON_CAP_R)) {
         dout(0) << "MGetPoolStats received from entity with insufficient caps "
-            << session->caps << dendl;
+                << session->caps << dendl;
         return true;
     }
     if (m->fsid != mon.monmap->fsid) {
         dout(0) << __func__ << " on fsid "
-            << m->fsid << " != " << mon.monmap->fsid << dendl;
+                << m->fsid << " != " << mon.monmap->fsid << dendl;
         return true;
     }
     epoch_t ver = get_last_committed();
     auto reply = new MGetPoolStatsReply(m->fsid, m->get_tid(), ver);
     reply->per_pool = digest.use_per_pool_stats();
-  for (const auto & pool_name:m->pools) {
+    for (const auto &pool_name : m->pools) {
         const auto pool_id =
             mon.osdmon()->osdmap.lookup_pg_pool_name(pool_name);
-        if (pool_id == -ENOENT)
+        if (pool_id == -ENOENT) {
             continue;
+        }
         auto pool_stat = get_pool_stat(pool_id);
-        if (!pool_stat)
+        if (!pool_stat) {
             continue;
+        }
         reply->pool_stats[pool_name] = *pool_stat;
     }
     mon.send_reply(op, reply);
@@ -306,19 +310,20 @@ bool MgrStatMonitor::preprocess_statfs(MonOpRequestRef op)
     auto statfs = op->get_req < MStatfs > ();
     auto session = op->get_session();
 
-    if (!session)
+    if (!session) {
         return true;
+    }
     if (!session->is_capable("pg", MON_CAP_R)) {
         dout(0) << "MStatfs received from entity with insufficient privileges "
-            << session->caps << dendl;
+                << session->caps << dendl;
         return true;
     }
     if (statfs->fsid != mon.monmap->fsid) {
         dout(0) << __func__ << " on fsid " << statfs->fsid
-            << " != " << mon.monmap->fsid << dendl;
+                << " != " << mon.monmap->fsid << dendl;
         return true;
     }
-    const auto & pool = statfs->data_pool;
+    const auto &pool = statfs->data_pool;
     if (pool && !mon.osdmon()->osdmap.have_pg_pool(*pool)) {
         // There's no error field for MStatfsReply so just ignore the request.
         // This is known to happen when a client is still accessing a removed fs.
@@ -326,7 +331,7 @@ bool MgrStatMonitor::preprocess_statfs(MonOpRequestRef op)
         return true;
     }
     dout(10) << __func__ << " " << *statfs
-        << " from " << statfs->get_orig_source() << dendl;
+             << " from " << statfs->get_orig_source() << dendl;
     epoch_t ver = get_last_committed();
     auto reply = new MStatfsReply(statfs->fsid, statfs->get_tid(), ver);
     reply->h.st = get_statfs(mon.osdmon()->osdmap, pool);
@@ -334,20 +339,20 @@ bool MgrStatMonitor::preprocess_statfs(MonOpRequestRef op)
     return true;
 }
 
-void MgrStatMonitor::check_sub(Subscription * sub)
+void MgrStatMonitor::check_sub(Subscription *sub)
 {
     dout(10) << __func__
-        << " next " << sub->next
-        << " vs service_map.epoch " << service_map.epoch << dendl;
+             << " next " << sub->next
+             << " vs service_map.epoch " << service_map.epoch << dendl;
     if (sub->next <= service_map.epoch) {
         auto m = new MServiceMap(service_map);
         sub->session->con->send_message(m);
         if (sub->onetime) {
-            mon.with_session_map([sub] (MonSessionMap & session_map) {
-                                 session_map.remove_sub(sub);}
-            );
-        }
-        else {
+            mon.with_session_map([sub](MonSessionMap & session_map) {
+                session_map.remove_sub(sub);
+            }
+                                );
+        } else {
             sub->next = service_map.epoch + 1;
         }
     }

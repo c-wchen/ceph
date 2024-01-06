@@ -32,7 +32,7 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "tcp "
 
-void tcp_option::parse(uint8_t * beg, uint8_t * end)
+void tcp_option::parse(uint8_t *beg, uint8_t *end)
 {
     while (beg < end) {
         auto kind = option_kind(*beg);
@@ -44,41 +44,41 @@ void tcp_option::parse(uint8_t * beg, uint8_t * end)
             }
         }
         switch (kind) {
-        case option_kind::mss:
-            _mss_received = true;
-            _remote_mss = ntoh(reinterpret_cast < mss * >(beg)->mss);
-            beg += option_len::mss;
-            break;
-        case option_kind::win_scale:
-            _win_scale_received = true;
-            _remote_win_scale = reinterpret_cast < win_scale * >(beg)->shift;
-            // We can turn on win_scale option, 7 is Linux's default win scale size
-            _local_win_scale = 7;
-            beg += option_len::win_scale;
-            break;
-        case option_kind::sack:
-            _sack_received = true;
-            beg += option_len::sack;
-            break;
-        case option_kind::nop:
-            beg += option_len::nop;
-            break;
-        case option_kind::eol:
-            return;
-        default:
-            // Ignore options we do not understand
-            auto len = *(beg + 1);
-            beg += len;
-            // Prevent infinite loop
-            if (len == 0) {
+            case option_kind::mss:
+                _mss_received = true;
+                _remote_mss = ntoh(reinterpret_cast < mss * >(beg)->mss);
+                beg += option_len::mss;
+                break;
+            case option_kind::win_scale:
+                _win_scale_received = true;
+                _remote_win_scale = reinterpret_cast < win_scale * >(beg)->shift;
+                // We can turn on win_scale option, 7 is Linux's default win scale size
+                _local_win_scale = 7;
+                beg += option_len::win_scale;
+                break;
+            case option_kind::sack:
+                _sack_received = true;
+                beg += option_len::sack;
+                break;
+            case option_kind::nop:
+                beg += option_len::nop;
+                break;
+            case option_kind::eol:
                 return;
-            }
-            break;
+            default:
+                // Ignore options we do not understand
+                auto len = *(beg + 1);
+                beg += len;
+                // Prevent infinite loop
+                if (len == 0) {
+                    return;
+                }
+                break;
         }
     }
 }
 
-uint8_t tcp_option::fill(tcp_hdr * th, uint8_t options_size)
+uint8_t tcp_option::fill(tcp_hdr *th, uint8_t options_size)
 {
     auto hdr = reinterpret_cast < uint8_t * >(th);
     auto off = hdr + sizeof(tcp_hdr);
@@ -88,14 +88,14 @@ uint8_t tcp_option::fill(tcp_hdr * th, uint8_t options_size)
 
     if (syn_on) {
         if (_mss_received || !ack_on) {
-            auto mss = new(off) tcp_option::mss;
+            auto mss = new (off) tcp_option::mss;
             mss->mss = _local_mss;
             off += mss->len;
             size += mss->len;
             *mss = mss->hton();
         }
         if (_win_scale_received || !ack_on) {
-            auto win_scale = new(off) tcp_option::win_scale;
+            auto win_scale = new (off) tcp_option::win_scale;
             win_scale->shift = _local_win_scale;
             off += win_scale->len;
             size += win_scale->len;
@@ -105,11 +105,11 @@ uint8_t tcp_option::fill(tcp_hdr * th, uint8_t options_size)
         // Insert NOP option
         auto size_max = align_up(uint8_t(size + 1), tcp_option::align);
         while (size < size_max - uint8_t(option_len::eol)) {
-            new(off) tcp_option::nop;
+            new (off) tcp_option::nop;
             off += option_len::nop;
             size += option_len::nop;
         }
-        new(off) tcp_option::eol;
+        new (off) tcp_option::eol;
         size += option_len::eol;
     }
     ceph_assert(size == options_size);
@@ -136,11 +136,11 @@ uint8_t tcp_option::get_size(bool syn_on, bool ack_on)
     return size;
 }
 
-ipv4_tcp::ipv4_tcp(ipv4 & inet, EventCenter * c)
-:  
-_inet_l4(inet),
-_tcp(std::unique_ptr < tcp <
-     ipv4_traits >> (new tcp < ipv4_traits > (inet.cct, _inet_l4, c)))
+ipv4_tcp::ipv4_tcp(ipv4 &inet, EventCenter *c)
+    :
+    _inet_l4(inet),
+    _tcp(std::unique_ptr < tcp <
+         ipv4_traits >> (new tcp < ipv4_traits > (inet.cct, _inet_l4, c)))
 {
 }
 
@@ -153,17 +153,17 @@ void ipv4_tcp::received(Packet p, ipv4_address from, ipv4_address to)
     _tcp->received(std::move(p), from, to);
 }
 
-bool ipv4_tcp::forward(forward_hash & out_hash_data, Packet & p, size_t off)
+bool ipv4_tcp::forward(forward_hash &out_hash_data, Packet &p, size_t off)
 {
     return _tcp->forward(out_hash_data, p, off);
 }
 
 int tcpv4_listen(tcp < ipv4_traits > &tcpv4, uint16_t port,
-                 const SocketOptions & opts, int type, unsigned addr_slot,
-                 ServerSocket * sock)
+                 const SocketOptions &opts, int type, unsigned addr_slot,
+                 ServerSocket *sock)
 {
     auto p = new DPDKServerSocketImpl < tcp < ipv4_traits >> (tcpv4, port, opts,
-                                                              type, addr_slot);
+        type, addr_slot);
     int r = p->listen();
     if (r < 0) {
         delete p;
@@ -173,8 +173,8 @@ int tcpv4_listen(tcp < ipv4_traits > &tcpv4, uint16_t port,
     return 0;
 }
 
-int tcpv4_connect(tcp < ipv4_traits > &tcpv4, const entity_addr_t & addr,
-                  ConnectedSocket * sock)
+int tcpv4_connect(tcp < ipv4_traits > &tcpv4, const entity_addr_t &addr,
+                  ConnectedSocket *sock)
 {
     auto conn = tcpv4.connect(addr);
     *sock =
@@ -185,14 +185,14 @@ int tcpv4_connect(tcp < ipv4_traits > &tcpv4, const entity_addr_t & addr,
 }
 
 template < typename InetTraits >
-    void tcp < InetTraits >::respond_with_reset(tcp_hdr * rth, ipaddr local_ip,
-                                                ipaddr foreign_ip)
+void tcp < InetTraits >::respond_with_reset(tcp_hdr *rth, ipaddr local_ip,
+        ipaddr foreign_ip)
 {
     ldout(cct,
           20) << __func__ << " tcp header rst=" << bool(rth->
-                                                        f_rst) << " fin=" <<
-        bool(rth->f_fin)
-        << " syn=" << bool(rth->f_syn) << dendl;
+                  f_rst) << " fin=" <<
+              bool(rth->f_fin)
+              << " syn=" << bool(rth->f_syn) << dendl;
     if (rth->f_rst) {
         return;
     }
@@ -220,8 +220,7 @@ template < typename InetTraits >
     if (get_hw_features().tx_csum_l4_offload) {
         th->checksum = ~csum.get();
         oi.needs_csum = true;
-    }
-    else {
+    } else {
         csum.sum(p);
         th->checksum = csum.get();
         oi.needs_csum = false;
@@ -237,16 +236,16 @@ template < typename InetTraits >
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 template < typename InetTraits >
-    std::ostream & tcp < InetTraits >::tcb::_prefix(std::ostream * _dout)
+std::ostream &tcp < InetTraits >::tcb::_prefix(std::ostream *_dout)
 {
     return *_dout << "tcp " << _local_ip << ":" << _local_port << " -> " <<
-        _foreign_ip << ":" << _foreign_port << " tcb(" << this << " fd=" << fd
-        << " s=" << _state << ").";
+           _foreign_ip << ":" << _foreign_port << " tcb(" << this << " fd=" << fd
+           << " s=" << _state << ").";
 }
 
 template < typename InetTraits >
-    void tcp < InetTraits >::tcb::input_handle_listen_state(tcp_hdr * th,
-                                                            Packet p)
+void tcp < InetTraits >::tcb::input_handle_listen_state(tcp_hdr *th,
+        Packet p)
 {
     auto opt_len = th->data_offset * 4 - sizeof(tcp_hdr);
     auto opt_start =
@@ -279,8 +278,8 @@ template < typename InetTraits >
 }
 
 template < typename InetTraits >
-    void tcp < InetTraits >::tcb::input_handle_syn_sent_state(tcp_hdr * th,
-                                                              Packet p)
+void tcp < InetTraits >::tcb::input_handle_syn_sent_state(tcp_hdr *th,
+        Packet p)
 {
     auto opt_len = th->data_offset * 4 - sizeof(tcp_hdr);
     auto opt_start =
@@ -293,9 +292,9 @@ template < typename InetTraits >
 
     ldout(_tcp.cct,
           20) << __func__ << " tcp header seq " << seg_seq.
-        raw << " ack " << seg_ack.raw << " fin=" << bool(th->
-                                                         f_fin) << " syn=" <<
-        bool(th->f_syn) << dendl;
+              raw << " ack " << seg_ack.raw << " fin=" << bool(th->
+                      f_fin) << " syn=" <<
+              bool(th->f_syn) << dendl;
 
     bool acceptable = false;
     // 3.1 first check the ACK bit
@@ -317,8 +316,7 @@ template < typename InetTraits >
         // return.  Otherwise (no ACK) drop the segment and return.
         if (acceptable) {
             return do_reset();
-        }
-        else {
+        } else {
             return;
         }
     }
@@ -347,8 +345,7 @@ template < typename InetTraits >
             init_from_options(th, opt_start, opt_end);
             do_established();
             output();
-        }
-        else {
+        } else {
             // Otherwise enter SYN_RECEIVED, form a SYN,ACK segment
             // <SEQ=ISS><ACK=RCV.NXT><CTL=SYN,ACK>
             ldout(_tcp.cct,
@@ -363,8 +360,8 @@ template < typename InetTraits >
 }
 
 template < typename InetTraits >
-    void tcp < InetTraits >::tcb::input_handle_other_state(tcp_hdr * th,
-                                                           Packet p)
+void tcp < InetTraits >::tcb::input_handle_other_state(tcp_hdr *th,
+        Packet p)
 {
     p.trim_front(th->data_offset * 4);
     bool do_output = false;
@@ -374,11 +371,11 @@ template < typename InetTraits >
     auto seg_len = p.len();
     ldout(_tcp.cct,
           20) << __func__ << " tcp header seq " << seg_seq.
-        raw << " ack " << seg_ack.raw << " snd next " << _snd.next.
-        raw << " unack " << _snd.unacknowledged.raw << " rcv next " << _rcv.
-        next.raw << " len " << seg_len << " fin=" << bool(th->
-                                                          f_fin) << " syn=" <<
-        bool(th->f_syn) << dendl;
+              raw << " ack " << seg_ack.raw << " snd next " << _snd.next.
+              raw << " unack " << _snd.unacknowledged.raw << " rcv next " << _rcv.
+              next.raw << " len " << seg_len << " fin=" << bool(th->
+                      f_fin) << " syn=" <<
+              bool(th->f_syn) << dendl;
 
     // 4.1 first check sequence number
     if (!segment_acceptable(seg_seq, seg_len)) {
@@ -401,9 +398,9 @@ template < typename InetTraits >
     if (seg_seq != _rcv.next) {
         ldout(_tcp.cct,
               10) << __func__ << " out of order, expect " << _rcv.next.
-            raw << " actual " << seg_seq.raw << " out of order size " << _rcv.
-            out_of_order.map.size()
-            << dendl;
+                  raw << " actual " << seg_seq.raw << " out of order size " << _rcv.
+                  out_of_order.map.size()
+                  << dendl;
         insert_out_of_order(seg_seq, std::move(p));
         // A TCP receiver SHOULD send an immediate duplicate ACK
         // when an out-of-order segment arrives.
@@ -465,8 +462,7 @@ template < typename InetTraits >
     if (!th->f_ack) {
         // if the ACK bit is off drop the segment and return
         return;
-    }
-    else {
+    } else {
         // SYN_RECEIVED STATE
         if (in_state(SYN_RECEIVED)) {
             // If SND.UNA =< SEG.ACK =< SND.NXT then enter ESTABLISHED state
@@ -474,38 +470,35 @@ template < typename InetTraits >
             if (_snd.unacknowledged <= seg_ack && seg_ack <= _snd.next) {
                 ldout(_tcp.cct,
                       20) << __func__ << " SYN_RECEIVED -> ESTABLISHED" <<
-                    dendl;
+                          dendl;
                 do_established();
                 if (_tcp.push_listen_queue(_local_port, this)) {
                     ldout(_tcp.cct,
                           20) << __func__ << " successfully accepting socket" <<
-                        dendl;
-                }
-                else {
+                              dendl;
+                } else {
                     ldout(_tcp.cct,
                           5) << __func__ <<
-                        " not exist listener or full queue, reset" << dendl;
+                             " not exist listener or full queue, reset" << dendl;
                     return respond_with_reset(th);
                 }
-            }
-            else {
+            } else {
                 // <SEQ=SEG.ACK><CTL=RST>
                 return respond_with_reset(th);
             }
         }
-        auto update_window =[this, th, seg_seq, seg_ack] {
+        auto update_window = [this, th, seg_seq, seg_ack] {
             ldout(_tcp.cct,
                   20) << __func__ << " window update seg_seq=" << seg_seq <<
-                " seg_ack=" << seg_ack << " old window=" << th->
-                window << " new window=" << int (_snd.window_scale) << dendl;
+                      " seg_ack=" << seg_ack << " old window=" << th->
+                      window << " new window=" << int (_snd.window_scale) << dendl;
             _snd.window = th->window << _snd.window_scale;
             _snd.wl1 = seg_seq;
             _snd.wl2 = seg_ack;
             if (_snd.window == 0) {
                 _persist_time_out = _rto;
                 start_persist_timer();
-            }
-            else {
+            } else {
                 stop_persist_timer();
             }
         };
@@ -526,412 +519,447 @@ template < typename InetTraits >
                 // some data is acked, try send more data
                 do_output_data = true;
 
-                auto set_retransmit_timer =[this] {
-                    if (_snd.data.empty()){
-                                           // All outstanding segments are acked, turn off the timer.
-                                           stop_retransmit_timer();
-                                           // Signal the waiter of this event
-                                           signal_all_data_acked();}
-                                           else {
-                                           // Restart the timer becasue new data is acked.
-                                           start_retransmit_timer();}
-                                           }; if (_snd.dupacks >= 3) {
-                                           // We are in fast retransmit / fast recovery phase
-                                           uint32_t smss = _snd.mss;
-                                           if (seg_ack > _snd.recover) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " ack: full_ack" << dendl;
-                                           // Set cwnd to min (ssthresh, max(FlightSize, SMSS) + SMSS)
-                                           _snd.cwnd =
-                                           std::min(_snd.ssthresh,
-                                                    std::max(flight_size(),
-                                                             smss) + smss);
-                                           // Exit the fast recovery procedure
-                                           exit_fast_recovery();
-                                           set_retransmit_timer();}
-                                           else {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " ack: partial_ack" << dendl;
-                                           // Retransmit the first unacknowledged segment
-                                           fast_retransmit();
-                                           // Deflate the congestion window by the amount of new data
-                                           // acknowledged by the Cumulative Acknowledgment field
-                                           _snd.cwnd -= acked_bytes;
-                                           // If the partial ACK acknowledges at least one SMSS of new
-                                           // data, then add back SMSS bytes to the congestion window
-                                           if (acked_bytes >= smss) {
-                                           _snd.cwnd += smss;}
-                                           // Send a new segment if permitted by the new value of
-                                           // cwnd.  Do not exit the fast recovery procedure For
-                                           // the first partial ACK that arrives during fast
-                                           // recovery, also reset the retransmit timer.
-                                           if (++_snd.partial_ack == 1) {
-                                           start_retransmit_timer();}
-                                           }
-                                           }
-                                           else {
-                                           // RFC5681: The fast retransmit algorithm uses the arrival
-                                           // of 3 duplicate ACKs (as defined in section 2, without
-                                           // any intervening ACKs which move SND.UNA) as an
-                                           // indication that a segment has been lost.
-                                           //
-                                           // So, here we reset dupacks to zero becasue this ACK moves
-                                           // SND.UNA.
-                                           exit_fast_recovery();
-                                           set_retransmit_timer();}
-                                           }
-                                           else if (!_snd.data.empty()
-                                                    && seg_len == 0
-                                                    && th->f_fin == 0
-                                                    && th->f_syn == 0
-                                                    && th->ack ==
-                                                    _snd.unacknowledged
-                                                    && uint32_t(th->
-                                                                window << _snd.
-                                                                window_scale) ==
-                                                    _snd.window) {
-                                           // Note:
-                                           // RFC793 states:
-                                           // If the ACK is a duplicate (SEG.ACK < SND.UNA), it can be ignored
-                                           // RFC5681 states:
-                                           // The TCP sender SHOULD use the "fast retransmit" algorithm to detect
-                                           // and repair loss, based on incoming duplicate ACKs.
-                                           // Here, We follow RFC5681.
-                                           _snd.dupacks++;
-                                           uint32_t smss = _snd.mss;
-                                           // 3 duplicated ACKs trigger a fast retransmit
-                                           if (_snd.dupacks == 1
-                                               || _snd.dupacks == 2) {
-                                           // RFC5681 Step 3.1
-                                           // Send cwnd + 2 * smss per RFC3042
-                                           do_output_data = true;}
-                                           else
-                                           if (_snd.dupacks == 3) {
-                                           // RFC6582 Step 3.2
-                                           if (seg_ack - 1 > _snd.recover) {
-                                           _snd.recover = _snd.next - 1;
-                                           // RFC5681 Step 3.2
-                                           _snd.ssthresh =
-                                           std::
-                                           max((flight_size() -
-                                                _snd.limited_transfer) / 2,
-                                               2 * smss); fast_retransmit();}
-                                           else {
-                                           // Do not enter fast retransmit and do not reset ssthresh
-                                           }
-                                           // RFC5681 Step 3.3
-                                           _snd.cwnd = _snd.ssthresh + 3 * smss;}
-                                           else
-                                           if (_snd.dupacks > 3) {
-                                           // RFC5681 Step 3.4
-                                           _snd.cwnd += smss;
-                                           // RFC5681 Step 3.5
-                                           do_output_data = true;}
-                                           }
-                                           else
-                                           if (seg_ack > _snd.next) {
-                                           // If the ACK acks something not yet sent (SEG.ACK > SND.NXT)
-                                           // then send an ACK, drop the segment, and return
-                                           return output();}
-                                           else
-                                           if (_snd.window == 0
-                                               && th->window > 0) {
-                                           update_window();
-                                           do_output_data = true;}
-                                           }
-                                           // FIN_WAIT_1 STATE
-                                           if (in_state(FIN_WAIT_1)) {
-                                           // In addition to the processing for the ESTABLISHED state, if
-                                           // our FIN is now acknowledged then enter FIN-WAIT-2 and continue
-                                           // processing in that state.
-                                           if (seg_ack == _snd.next + 1) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " ack: FIN_WAIT_1 -> FIN_WAIT_2" <<
-                                           dendl; _state = FIN_WAIT_2;
-                                           do_local_fin_acked();}
-                                           }
-                                           // FIN_WAIT_2 STATE
-                                           if (in_state(FIN_WAIT_2)) {
-                                           // In addition to the processing for the ESTABLISHED state, if
-                                           // the retransmission queue is empty, the user’s CLOSE can be
-                                           // acknowledged ("ok") but do not delete the TCB.
-                                           // TODO
-                                           }
-                                           // CLOSING STATE
-                                           if (in_state(CLOSING)) {
-                                           if (seg_ack == _snd.next + 1) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " ack: CLOSING -> TIME_WAIT" <<
-                                           dendl; do_local_fin_acked();
-                                           return do_time_wait();}
-                                           else {
-                                           return;}
-                                           }
-                                           // LAST_ACK STATE
-                                           if (in_state(LAST_ACK)) {
-                                           if (seg_ack == _snd.next + 1) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " ack: LAST_ACK -> CLOSED" << dendl;
-                                           do_local_fin_acked();
-                                           return do_closed();}
-                                           }
-                                           // TIME_WAIT STATE
-                                           if (in_state(TIME_WAIT)) {
-                                           // The only thing that can arrive in this state is a
-                                           // retransmission of the remote FIN. Acknowledge it, and restart
-                                           // the 2 MSL timeout.
-                                           // TODO
-                                           }
-                                           }
+                auto set_retransmit_timer = [this] {
+                    if (_snd.data.empty()) {
+                        // All outstanding segments are acked, turn off the timer.
+                        stop_retransmit_timer();
+                        // Signal the waiter of this event
+                        signal_all_data_acked();
+                    } else {
+                        // Restart the timer becasue new data is acked.
+                        start_retransmit_timer();
+                    }
+                };
+                if (_snd.dupacks >= 3) {
+                    // We are in fast retransmit / fast recovery phase
+                    uint32_t smss = _snd.mss;
+                    if (seg_ack > _snd.recover) {
+                        ldout(_tcp.cct,
+                              20) << __func__ <<
+                                  " ack: full_ack" << dendl;
+                        // Set cwnd to min (ssthresh, max(FlightSize, SMSS) + SMSS)
+                        _snd.cwnd =
+                            std::min(_snd.ssthresh,
+                                     std::max(flight_size(),
+                                              smss) + smss);
+                        // Exit the fast recovery procedure
+                        exit_fast_recovery();
+                        set_retransmit_timer();
+                    } else {
+                        ldout(_tcp.cct,
+                              20) << __func__ <<
+                                  " ack: partial_ack" << dendl;
+                        // Retransmit the first unacknowledged segment
+                        fast_retransmit();
+                        // Deflate the congestion window by the amount of new data
+                        // acknowledged by the Cumulative Acknowledgment field
+                        _snd.cwnd -= acked_bytes;
+                        // If the partial ACK acknowledges at least one SMSS of new
+                        // data, then add back SMSS bytes to the congestion window
+                        if (acked_bytes >= smss) {
+                            _snd.cwnd += smss;
+                        }
+                        // Send a new segment if permitted by the new value of
+                        // cwnd.  Do not exit the fast recovery procedure For
+                        // the first partial ACK that arrives during fast
+                        // recovery, also reset the retransmit timer.
+                        if (++_snd.partial_ack == 1) {
+                            start_retransmit_timer();
+                        }
+                    }
+                } else {
+                    // RFC5681: The fast retransmit algorithm uses the arrival
+                    // of 3 duplicate ACKs (as defined in section 2, without
+                    // any intervening ACKs which move SND.UNA) as an
+                    // indication that a segment has been lost.
+                    //
+                    // So, here we reset dupacks to zero becasue this ACK moves
+                    // SND.UNA.
+                    exit_fast_recovery();
+                    set_retransmit_timer();
+                }
+            } else if (!_snd.data.empty()
+                       && seg_len == 0
+                       && th->f_fin == 0
+                       && th->f_syn == 0
+                       && th->ack ==
+                       _snd.unacknowledged
+                       && uint32_t(th->
+                                   window << _snd.
+                                   window_scale) ==
+                       _snd.window) {
+                // Note:
+                // RFC793 states:
+                // If the ACK is a duplicate (SEG.ACK < SND.UNA), it can be ignored
+                // RFC5681 states:
+                // The TCP sender SHOULD use the "fast retransmit" algorithm to detect
+                // and repair loss, based on incoming duplicate ACKs.
+                // Here, We follow RFC5681.
+                _snd.dupacks++;
+                uint32_t smss = _snd.mss;
+                // 3 duplicated ACKs trigger a fast retransmit
+                if (_snd.dupacks == 1
+                    || _snd.dupacks == 2) {
+                    // RFC5681 Step 3.1
+                    // Send cwnd + 2 * smss per RFC3042
+                    do_output_data = true;
+                } else if (_snd.dupacks == 3) {
+                    // RFC6582 Step 3.2
+                    if (seg_ack - 1 > _snd.recover) {
+                        _snd.recover = _snd.next - 1;
+                        // RFC5681 Step 3.2
+                        _snd.ssthresh =
+                            std::
+                            max((flight_size() -
+                                 _snd.limited_transfer) / 2,
+                                2 * smss);
+                        fast_retransmit();
+                    } else {
+                        // Do not enter fast retransmit and do not reset ssthresh
+                    }
+                    // RFC5681 Step 3.3
+                    _snd.cwnd = _snd.ssthresh + 3 * smss;
+                } else if (_snd.dupacks > 3) {
+                    // RFC5681 Step 3.4
+                    _snd.cwnd += smss;
+                    // RFC5681 Step 3.5
+                    do_output_data = true;
+                }
+            } else if (seg_ack > _snd.next) {
+                // If the ACK acks something not yet sent (SEG.ACK > SND.NXT)
+                // then send an ACK, drop the segment, and return
+                return output();
+            } else if (_snd.window == 0
+                       && th->window > 0) {
+                update_window();
+                do_output_data = true;
+            }
+        }
+        // FIN_WAIT_1 STATE
+        if (in_state(FIN_WAIT_1)) {
+            // In addition to the processing for the ESTABLISHED state, if
+            // our FIN is now acknowledged then enter FIN-WAIT-2 and continue
+            // processing in that state.
+            if (seg_ack == _snd.next + 1) {
+                ldout(_tcp.cct,
+                      20) << __func__ <<
+                          " ack: FIN_WAIT_1 -> FIN_WAIT_2" <<
+                          dendl;
+                _state = FIN_WAIT_2;
+                do_local_fin_acked();
+            }
+        }
+        // FIN_WAIT_2 STATE
+        if (in_state(FIN_WAIT_2)) {
+            // In addition to the processing for the ESTABLISHED state, if
+            // the retransmission queue is empty, the user’s CLOSE can be
+            // acknowledged ("ok") but do not delete the TCB.
+            // TODO
+        }
+        // CLOSING STATE
+        if (in_state(CLOSING)) {
+            if (seg_ack == _snd.next + 1) {
+                ldout(_tcp.cct,
+                      20) << __func__ <<
+                          " ack: CLOSING -> TIME_WAIT" <<
+                          dendl;
+                do_local_fin_acked();
+                return do_time_wait();
+            } else {
+                return;
+            }
+        }
+        // LAST_ACK STATE
+        if (in_state(LAST_ACK)) {
+            if (seg_ack == _snd.next + 1) {
+                ldout(_tcp.cct,
+                      20) << __func__ <<
+                          " ack: LAST_ACK -> CLOSED" << dendl;
+                do_local_fin_acked();
+                return do_closed();
+            }
+        }
+        // TIME_WAIT STATE
+        if (in_state(TIME_WAIT)) {
+            // The only thing that can arrive in this state is a
+            // retransmission of the remote FIN. Acknowledge it, and restart
+            // the 2 MSL timeout.
+            // TODO
+        }
+    }
 
-                                           // 4.6 sixth, check the URG bit
-                                           if (th->f_urg) {
-                                           // TODO
-                                           }
+    // 4.6 sixth, check the URG bit
+    if (th->f_urg) {
+        // TODO
+    }
 
-                                           // 4.7 seventh, process the segment text
-                                           if (in_state
-                                               (ESTABLISHED | FIN_WAIT_1 |
-                                                FIN_WAIT_2)) {
-                                           if (p.len()) {
-                                           // Once the TCP takes responsibility for the data it advances
-                                           // RCV.NXT over the data accepted, and adjusts RCV.WND as
-                                           // apporopriate to the current buffer availability.  The total of
-                                           // RCV.NXT and RCV.WND should not be reduced.
-                                           _rcv.data.push_back(std::move(p));
-                                           _rcv.next += seg_len;
-                                           auto merged = merge_out_of_order();
-                                           signal_data_received();
-                                           // Send an acknowledgment of the form:
-                                           // <SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
-                                           // This acknowledgment should be piggybacked on a segment being
-                                           // transmitted if possible without incurring undue delay.
-                                           if (merged) {
-                                           // TCP receiver SHOULD send an immediate ACK when the
-                                           // incoming segment fills in all or part of a gap in the
-                                           // sequence space.
-                                           do_output = true;}
-                                           else {
-                                           do_output = should_send_ack(seg_len);}
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ << " merged="
-                                           << merged << " do_output=" <<
-                                           do_output << dendl;}
-                                           }
-                                           else
-                                           if (in_state
-                                               (CLOSE_WAIT | CLOSING | LAST_ACK
-                                                | TIME_WAIT)) {
-                                           // This should not occur, since a FIN has been received from the
-                                           // remote side. Ignore the segment text.
-                                           return;}
+    // 4.7 seventh, process the segment text
+    if (in_state
+        (ESTABLISHED | FIN_WAIT_1 |
+         FIN_WAIT_2)) {
+        if (p.len()) {
+            // Once the TCP takes responsibility for the data it advances
+            // RCV.NXT over the data accepted, and adjusts RCV.WND as
+            // apporopriate to the current buffer availability.  The total of
+            // RCV.NXT and RCV.WND should not be reduced.
+            _rcv.data.push_back(std::move(p));
+            _rcv.next += seg_len;
+            auto merged = merge_out_of_order();
+            signal_data_received();
+            // Send an acknowledgment of the form:
+            // <SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
+            // This acknowledgment should be piggybacked on a segment being
+            // transmitted if possible without incurring undue delay.
+            if (merged) {
+                // TCP receiver SHOULD send an immediate ACK when the
+                // incoming segment fills in all or part of a gap in the
+                // sequence space.
+                do_output = true;
+            } else {
+                do_output = should_send_ack(seg_len);
+            }
+            ldout(_tcp.cct,
+                  20) << __func__ << " merged="
+                      << merged << " do_output=" <<
+                      do_output << dendl;
+        }
+    } else if (in_state
+               (CLOSE_WAIT | CLOSING | LAST_ACK
+                | TIME_WAIT)) {
+        // This should not occur, since a FIN has been received from the
+        // remote side. Ignore the segment text.
+        return;
+    }
 
-  // 4.8 eighth, check the FIN bit
-                                           if (th->f_fin) {
-                                           if (in_state
-                                               (CLOSED | LISTEN | SYN_SENT)) {
-                                           // Do not process the FIN if the state is CLOSED, LISTEN or SYN-SENT
-                                           // since the SEG.SEQ cannot be validated; drop the segment and return.
-                                           return;}
-                                           auto fin_seq = seg_seq + seg_len;
-                                           if (fin_seq == _rcv.next) {
-                                           _rcv.next = fin_seq + 1;
-                                           // If this <FIN> packet contains data as well, we can ACK both data
-                                           // and <FIN> in a single packet, so canncel the previous ACK.
-                                           clear_delayed_ack();
-                                           do_output = false;
-                                           // Send ACK for the FIN!
-                                           output();
-                                           signal_data_received();
-                                           _errno = 0;
-                                           if (in_state
-                                               (SYN_RECEIVED | ESTABLISHED)) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " fin: SYN_RECEIVED or ESTABLISHED -> CLOSE_WAIT"
-                                           << dendl; _state = CLOSE_WAIT;
-                                           // EOF
-                                           }
-                                           if (in_state(FIN_WAIT_1)) {
-                                           // If our FIN has been ACKed (perhaps in this segment), then
-                                           // enter TIME-WAIT, start the time-wait timer, turn off the other
-                                           // timers; otherwise enter the CLOSING state.
-                                           // Note: If our FIN has been ACKed, we should be in FIN_WAIT_2
-                                           // not FIN_WAIT_1 if we reach here.
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " fin: FIN_WAIT_1 -> CLOSING" <<
-                                           dendl; _state = CLOSING;}
-                                           if (in_state(FIN_WAIT_2)) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " fin: FIN_WAIT_2 -> TIME_WAIT" <<
-                                           dendl; return do_time_wait();}
-                                           }
-                                           }
-                                           if (do_output
-                                               || (do_output_data
-                                                   && can_send())) {
-                                           // Since we will do output, we can canncel scheduled delayed ACK.
-                                           clear_delayed_ack(); output();}
-                                           }
+    // 4.8 eighth, check the FIN bit
+    if (th->f_fin) {
+        if (in_state
+            (CLOSED | LISTEN | SYN_SENT)) {
+            // Do not process the FIN if the state is CLOSED, LISTEN or SYN-SENT
+            // since the SEG.SEQ cannot be validated; drop the segment and return.
+            return;
+        }
+        auto fin_seq = seg_seq + seg_len;
+        if (fin_seq == _rcv.next) {
+            _rcv.next = fin_seq + 1;
+            // If this <FIN> packet contains data as well, we can ACK both data
+            // and <FIN> in a single packet, so canncel the previous ACK.
+            clear_delayed_ack();
+            do_output = false;
+            // Send ACK for the FIN!
+            output();
+            signal_data_received();
+            _errno = 0;
+            if (in_state
+                (SYN_RECEIVED | ESTABLISHED)) {
+                ldout(_tcp.cct,
+                      20) << __func__ <<
+                          " fin: SYN_RECEIVED or ESTABLISHED -> CLOSE_WAIT"
+                          << dendl;
+                _state = CLOSE_WAIT;
+                // EOF
+            }
+            if (in_state(FIN_WAIT_1)) {
+                // If our FIN has been ACKed (perhaps in this segment), then
+                // enter TIME-WAIT, start the time-wait timer, turn off the other
+                // timers; otherwise enter the CLOSING state.
+                // Note: If our FIN has been ACKed, we should be in FIN_WAIT_2
+                // not FIN_WAIT_1 if we reach here.
+                ldout(_tcp.cct,
+                      20) << __func__ <<
+                          " fin: FIN_WAIT_1 -> CLOSING" <<
+                          dendl;
+                _state = CLOSING;
+            }
+            if (in_state(FIN_WAIT_2)) {
+                ldout(_tcp.cct,
+                      20) << __func__ <<
+                          " fin: FIN_WAIT_2 -> TIME_WAIT" <<
+                          dendl;
+                return do_time_wait();
+            }
+        }
+    }
+    if (do_output
+        || (do_output_data
+            && can_send())) {
+        // Since we will do output, we can canncel scheduled delayed ACK.
+        clear_delayed_ack();
+        output();
+    }
+}
 
-                                           template < typename InetTraits >
-                                           void tcp <
-                                           InetTraits >::tcb::connect() {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ << dendl;
-                                           // An initial send sequence number (ISS) is selected.  A SYN segment of the
-                                           // form <SEQ=ISS><CTL=SYN> is sent.  Set SND.UNA to ISS, SND.NXT to ISS+1,
-                                           // enter SYN-SENT state, and return.
-                                           do_setup_isn();
-                                           // Local receive window scale factor
-                                           _rcv.window_scale =
-                                           _option._local_win_scale = 7;
-                                           // Maximum segment size local can receive
-                                           _rcv.mss = _option._local_mss =
-                                           local_mss();
-                                           // Linux's default window size
-                                           _rcv.window =
-                                           29200 << _rcv.window_scale;
-                                           do_syn_sent();}
+template < typename InetTraits >
+void tcp <
+InetTraits >::tcb::connect()
+{
+    ldout(_tcp.cct,
+          20) << __func__ << dendl;
+    // An initial send sequence number (ISS) is selected.  A SYN segment of the
+    // form <SEQ=ISS><CTL=SYN> is sent.  Set SND.UNA to ISS, SND.NXT to ISS+1,
+    // enter SYN-SENT state, and return.
+    do_setup_isn();
+    // Local receive window scale factor
+    _rcv.window_scale =
+    _option._local_win_scale = 7;
+    // Maximum segment size local can receive
+    _rcv.mss = _option._local_mss =
+                   local_mss();
+    // Linux's default window size
+    _rcv.window =
+        29200 << _rcv.window_scale;
+    do_syn_sent();
+}
 
-                                           template < typename InetTraits >
-                                           void tcp <
-                                           InetTraits >::tcb::
-                                           close_final_cleanup() {
-                                           if (_snd._all_data_acked_fd >= 0) {
-                                           center->delete_file_event(_snd.
-                                                                     _all_data_acked_fd,
-                                                                     EVENT_READABLE);
-                                           _tcp.manager.close(_snd.
-                                                              _all_data_acked_fd);
-                                           _snd._all_data_acked_fd = -1;}
+template < typename InetTraits >
+void tcp <
+InetTraits >::tcb::
+close_final_cleanup()
+{
+    if (_snd._all_data_acked_fd >= 0) {
+        center->delete_file_event(_snd.
+                                  _all_data_acked_fd,
+                                  EVENT_READABLE);
+        _tcp.manager.close(_snd.
+                           _all_data_acked_fd);
+        _snd._all_data_acked_fd = -1;
+    }
 
-                                           _snd.closed = true;
-                                           signal_data_received();
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " unsent_len=" << _snd.
-                                           unsent_len << dendl;
-                                           if (in_state(CLOSE_WAIT)) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " CLOSE_WAIT -> LAST_ACK" << dendl;
-                                           _state = LAST_ACK;}
-                                           else
-                                           if (in_state(ESTABLISHED)) {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " ESTABLISHED -> FIN_WAIT_1" <<
-                                           dendl; _state = FIN_WAIT_1;}
-  // Send <FIN> to remote
-  // Note: we call output_one to make sure a packet with FIN actually
-  // sent out. If we only call output() and _packetq is not empty,
-  // tcp::tcb::get_packet(), packet with FIN will not be generated.
-                                           output_one();
-                                           output();
-                                           center->delete_file_event(fd,
-                                                                     EVENT_READABLE
-                                                                     |
-                                                                     EVENT_WRITABLE);}
+    _snd.closed = true;
+    signal_data_received();
+    ldout(_tcp.cct,
+          20) << __func__ <<
+              " unsent_len=" << _snd.
+              unsent_len << dendl;
+    if (in_state(CLOSE_WAIT)) {
+        ldout(_tcp.cct,
+              20) << __func__ <<
+                  " CLOSE_WAIT -> LAST_ACK" << dendl;
+        _state = LAST_ACK;
+    } else if (in_state(ESTABLISHED)) {
+        ldout(_tcp.cct,
+              20) << __func__ <<
+                  " ESTABLISHED -> FIN_WAIT_1" <<
+                  dendl;
+        _state = FIN_WAIT_1;
+    }
+    // Send <FIN> to remote
+    // Note: we call output_one to make sure a packet with FIN actually
+    // sent out. If we only call output() and _packetq is not empty,
+    // tcp::tcb::get_packet(), packet with FIN will not be generated.
+    output_one();
+    output();
+    center->delete_file_event(fd,
+                              EVENT_READABLE
+                              |
+                              EVENT_WRITABLE);
+}
 
-                                           template < typename InetTraits >
-                                           void tcp <
-                                           InetTraits >::tcb::retransmit() {
-                                           auto output_update_rto =[this] {
-                                           output();
-                                           // According to RFC6298, Update RTO <- RTO * 2 to perform binary exponential back-off
-                                           this->_rto =
-                                           std::min(this->_rto * 2,
-                                                    this->_rto_max);
-                                           start_retransmit_timer();};
-                                           // Retransmit SYN
-                                           if (syn_needs_on()) {
-                                           if (_snd.syn_retransmit++ <
-                                               _max_nr_retransmit) {
-                                           output_update_rto();}
-                                           else {
-                                           _errno = -ECONNABORTED;
-                                           ldout(_tcp.cct,
-                                                 5) << __func__ <<
-                                           " syn retransmit exceed max " <<
-                                           _max_nr_retransmit << dendl;
-                                           _errno = -ETIMEDOUT; cleanup();
-                                           return;}
-                                           }
+template < typename InetTraits >
+void tcp <
+InetTraits >::tcb::retransmit()
+{
+    auto output_update_rto = [this] {
+        output();
+        // According to RFC6298, Update RTO <- RTO * 2 to perform binary exponential back-off
+        this->_rto =
+        std::min(this->_rto * 2,
+                 this->_rto_max);
+        start_retransmit_timer();
+    };
+    // Retransmit SYN
+    if (syn_needs_on()) {
+        if (_snd.syn_retransmit++ <
+            _max_nr_retransmit) {
+            output_update_rto();
+        } else {
+            _errno = -ECONNABORTED;
+            ldout(_tcp.cct,
+                  5) << __func__ <<
+                     " syn retransmit exceed max " <<
+                     _max_nr_retransmit << dendl;
+            _errno = -ETIMEDOUT;
+            cleanup();
+            return;
+        }
+    }
 
-                                           // Retransmit FIN
-                                           if (fin_needs_on()) {
-                                           if (_snd.fin_retransmit++ <
-                                               _max_nr_retransmit) {
-                                           output_update_rto();}
-                                           else {
-                                           ldout(_tcp.cct,
-                                                 5) << __func__ <<
-                                           " fin retransmit exceed max " <<
-                                           _max_nr_retransmit << dendl;
-                                           _errno = -ETIMEDOUT; cleanup();
-                                           return;}
-                                           }
+    // Retransmit FIN
+    if (fin_needs_on()) {
+        if (_snd.fin_retransmit++ <
+            _max_nr_retransmit) {
+            output_update_rto();
+        } else {
+            ldout(_tcp.cct,
+                  5) << __func__ <<
+                     " fin retransmit exceed max " <<
+                     _max_nr_retransmit << dendl;
+            _errno = -ETIMEDOUT;
+            cleanup();
+            return;
+        }
+    }
 
-                                           // Retransmit Data
-                                           if (_snd.data.empty()) {
-                                           return;}
+    // Retransmit Data
+    if (_snd.data.empty()) {
+        return;
+    }
 
-                                           // If there are unacked data, retransmit the earliest segment
-                                           auto & unacked_seg =
-                                           _snd.data.front();
-                                           // According to RFC5681
-                                           // Update ssthresh only for the first retransmit
-                                           uint32_t smss = _snd.mss;
-                                           if (unacked_seg.nr_transmits == 0) {
-                                           _snd.ssthresh =
-                                           std::max(flight_size() / 2,
-                                                    2 * smss);}
-                                           // RFC6582 Step 4
-                                           _snd.recover = _snd.next - 1;
-                                           // Start the slow start process
-                                           _snd.cwnd = smss;
-                                           // End fast recovery
-                                           exit_fast_recovery();
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " unack data size " << _snd.data.
-                                           size()
-                                           << " nr=" << unacked_seg.
-                                           nr_transmits << dendl;
-                                           if (unacked_seg.nr_transmits <
-                                               _max_nr_retransmit) {
-                                           unacked_seg.nr_transmits++;}
-                                           else {
-                                           // Delete connection when max num of retransmission is reached
-                                           ldout(_tcp.cct,
-                                                 5) << __func__ <<
-                                           " seg retransmit exceed max " <<
-                                           _max_nr_retransmit << dendl;
-                                           _errno = -ETIMEDOUT; cleanup();
-                                           return;}
-                                           retransmit_one();
-                                           output_update_rto();}
+    // If there are unacked data, retransmit the earliest segment
+    auto &unacked_seg =
+        _snd.data.front();
+    // According to RFC5681
+    // Update ssthresh only for the first retransmit
+    uint32_t smss = _snd.mss;
+    if (unacked_seg.nr_transmits == 0) {
+        _snd.ssthresh =
+            std::max(flight_size() / 2,
+                     2 * smss);
+    }
+    // RFC6582 Step 4
+    _snd.recover = _snd.next - 1;
+    // Start the slow start process
+    _snd.cwnd = smss;
+    // End fast recovery
+    exit_fast_recovery();
+    ldout(_tcp.cct,
+          20) << __func__ <<
+              " unack data size " << _snd.data.
+              size()
+              << " nr=" << unacked_seg.
+              nr_transmits << dendl;
+    if (unacked_seg.nr_transmits <
+        _max_nr_retransmit) {
+        unacked_seg.nr_transmits++;
+    } else {
+        // Delete connection when max num of retransmission is reached
+        ldout(_tcp.cct,
+              5) << __func__ <<
+                 " seg retransmit exceed max " <<
+                 _max_nr_retransmit << dendl;
+        _errno = -ETIMEDOUT;
+        cleanup();
+        return;
+    }
+    retransmit_one();
+    output_update_rto();
+}
 
-                                           template < typename InetTraits >
-                                           void tcp <
-                                           InetTraits >::tcb::persist() {
-                                           ldout(_tcp.cct,
-                                                 20) << __func__ <<
-                                           " persist timer fired" << dendl;
-                                           // Send 1 byte packet to probe peer's window size
-                                           _snd.window_probe = true;
-                                           output_one();
-                                           _snd.window_probe = false; output();
-                                           // Perform binary exponential back-off per RFC1122
-                                           _persist_time_out =
-                                           std::min(_persist_time_out * 2,
-                                                    _rto_max);
-                                           start_persist_timer();}
+template < typename InetTraits >
+void tcp <
+InetTraits >::tcb::persist()
+{
+    ldout(_tcp.cct,
+          20) << __func__ <<
+              " persist timer fired" << dendl;
+    // Send 1 byte packet to probe peer's window size
+    _snd.window_probe = true;
+    output_one();
+    _snd.window_probe = false;
+    output();
+    // Perform binary exponential back-off per RFC1122
+    _persist_time_out =
+        std::min(_persist_time_out * 2,
+                 _rto_max);
+    start_persist_timer();
+}

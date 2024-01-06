@@ -28,42 +28,50 @@
 
 using namespace std;
 
-class SharedPtrRegistryTest:public SharedPtrRegistry < unsigned int, int > {
-  public:
-    ceph::mutex & get_lock() {
+class SharedPtrRegistryTest: public SharedPtrRegistry < unsigned int, int >
+{
+public:
+    ceph::mutex &get_lock()
+    {
         return lock;
-    } map < unsigned int, pair < std::weak_ptr < int >, int *>>&get_contents() {
+    } map < unsigned int, pair < std::weak_ptr < int >, int *>> &get_contents()
+    {
         return contents;
     }
 };
 
-class SharedPtrRegistry_all:public::testing::Test {
-  public:
+class SharedPtrRegistry_all: public::testing::Test
+{
+public:
 
-    class Thread_wait:public Thread {
-      public:
-        SharedPtrRegistryTest & registry;
+    class Thread_wait: public Thread
+    {
+    public:
+        SharedPtrRegistryTest &registry;
         unsigned int key;
         int value;
         std::shared_ptr < int >ptr;
         enum in_method_t { LOOKUP, LOOKUP_OR_CREATE } in_method;
 
-        Thread_wait(SharedPtrRegistryTest & _registry, unsigned int _key,
-                    int _value, in_method_t _in_method):registry(_registry),
-            key(_key), value(_value), in_method(_in_method) {
-        } void *entry() override {
+        Thread_wait(SharedPtrRegistryTest &_registry, unsigned int _key,
+                    int _value, in_method_t _in_method): registry(_registry),
+            key(_key), value(_value), in_method(_in_method)
+        {
+        } void *entry() override
+        {
             switch (in_method) {
-            case LOOKUP_OR_CREATE:
-                if (value)
-                    ptr = registry.lookup_or_create < int >(key, value);
-                else
-                ptr = registry.lookup_or_create(key);
-                break;
-            case LOOKUP:
-                ptr = std::shared_ptr < int >(new int);
-                *ptr = value;
-                ptr = registry.lookup(key);
-                break;
+                case LOOKUP_OR_CREATE:
+                    if (value) {
+                        ptr = registry.lookup_or_create < int >(key, value);
+                    } else {
+                        ptr = registry.lookup_or_create(key);
+                    }
+                    break;
+                case LOOKUP:
+                    ptr = std::shared_ptr < int >(new int);
+                    *ptr = value;
+                    ptr = registry.lookup(key);
+                    break;
             }
             return NULL;
         }
@@ -72,24 +80,27 @@ class SharedPtrRegistry_all:public::testing::Test {
     static const useconds_t DELAY_MAX = 20 * 1000 * 1000;
     static useconds_t delay;
 
-    bool wait_for(SharedPtrRegistryTest & registry, int waiting) {
+    bool wait_for(SharedPtrRegistryTest &registry, int waiting)
+    {
         do {
             //
             // the delay variable is supposed to be initialized to zero. It would be fine
-            // to usleep(0) but we take this opportunity to test the loop. It will try 
+            // to usleep(0) but we take this opportunity to test the loop. It will try
             // again and therefore show that the logic ( increasing the delay ) actually
-            // works. 
+            // works.
             //
-            if (delay > 0)
+            if (delay > 0) {
                 usleep(delay);
+            }
             {
                 std::lock_guard l(registry.get_lock());
-                if (registry.waiting == waiting)
+                if (registry.waiting == waiting) {
                     break;
+                }
             }
             if (delay > 0)
                 cout << "delay " << delay <<
-                    "us, is not long enough, try again\n";
+                     "us, is not long enough, try again\n";
         } while ((delay = delay * 2 + 1) < DELAY_MAX);
         return delay < DELAY_MAX;
     }
@@ -226,7 +237,7 @@ TEST_F(SharedPtrRegistry_all, get_next)
         // entries with expired pointers are silentely ignored
         const unsigned int key_gone = 222;
         registry.get_contents()[key_gone] =
-            make_pair(std::shared_ptr < int >(), (int *)0);
+                    make_pair(std::shared_ptr < int >(), (int *)0);
 
         const unsigned int key1 = 111;
         std::shared_ptr < int >ptr1 = registry.lookup_or_create(key1);
@@ -250,7 +261,7 @@ TEST_F(SharedPtrRegistry_all, get_next)
         //
         SharedPtrRegistryTest registry;
         const unsigned int key1 = 111;
-        std::shared_ptr < int >*ptr1 =
+        std::shared_ptr < int > *ptr1 =
             new std::shared_ptr < int >(registry.lookup_or_create(key1));
         const unsigned int key2 = 222;
         std::shared_ptr < int >ptr2 = registry.lookup_or_create(key2);
@@ -298,21 +309,25 @@ TEST_F(SharedPtrRegistry_all, remove)
     }
 }
 
-class SharedPtrRegistry_destructor:public::testing::Test {
-  public:
+class SharedPtrRegistry_destructor: public::testing::Test
+{
+public:
 
     typedef enum { UNDEFINED, YES, NO } DieEnum;
     static DieEnum died;
 
     struct TellDie {
-        TellDie() {
+        TellDie()
+        {
             died = NO;
-        } ~TellDie() {
+        } ~TellDie()
+        {
             died = YES;
         } int value = 0;
     };
 
-    void SetUp() override {
+    void SetUp() override
+    {
         died = UNDEFINED;
     }
 };

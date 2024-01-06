@@ -31,25 +31,32 @@ struct req_state;
 #define INFO_PIECES        "info"
 #define GET_TORRENT        "torrent"
 
-class TorrentBencode {
-  public:
-    TorrentBencode() {
-    } ~TorrentBencode() {
+class TorrentBencode
+{
+public:
+    TorrentBencode()
+    {
+    } ~TorrentBencode()
+    {
     }
 
     //control characters
-    void bencode_dict(bufferlist & bl) {
+    void bencode_dict(bufferlist &bl)
+    {
         bl.append('d');
     }
-    void bencode_list(bufferlist & bl) {
+    void bencode_list(bufferlist &bl)
+    {
         bl.append('l');
     }
-    void bencode_end(bufferlist & bl) {
+    void bencode_end(bufferlist &bl)
+    {
         bl.append('e');
     }
 
     //single values
-    void bencode(int value, bufferlist & bl) {
+    void bencode(int value, bufferlist &bl)
+    {
         bl.append('i');
         char info[100] = { 0 };
         sprintf(info, "%d", value);
@@ -58,25 +65,29 @@ class TorrentBencode {
     }
 
     //single values
-    void bencode(const std::string & str, bufferlist & bl) {
+    void bencode(const std::string &str, bufferlist &bl)
+    {
         bencode_key(str, bl);
     }
 
     //dictionary elements
-    void bencode(const std::string & key, int value, bufferlist & bl) {
+    void bencode(const std::string &key, int value, bufferlist &bl)
+    {
         bencode_key(key, bl);
         bencode(value, bl);
     }
 
     //dictionary elements
-    void bencode(const std::string & key, const std::string & value,
-                 bufferlist & bl) {
+    void bencode(const std::string &key, const std::string &value,
+                 bufferlist &bl)
+    {
         bencode_key(key, bl);
         bencode(value, bl);
     }
 
     //key len
-    void bencode_key(const std::string & key, bufferlist & bl) {
+    void bencode_key(const std::string &key, bufferlist &bl)
+    {
         int len = key.length();
         char info[100] = { 0 };
         sprintf(info, "%d:", len);
@@ -86,8 +97,9 @@ class TorrentBencode {
 };
 
 /* torrent file struct */
-class seed {
-  private:
+class seed
+{
+private:
     struct {
         int piece_length;       // each piece length
         bufferlist sha1_bl;     // save sha1
@@ -98,7 +110,7 @@ class seed {
     std::string announce;       // tracker
     std::string origin;         // origin
     time_t create_date {
-    0};                         // time of the file created
+        0};                         // time of the file created
     std::string comment;        // comment
     std::string create_by;      // app name and version
     std::string encoding;       // if encode use gbk rather than gtf-8 use this field
@@ -107,35 +119,35 @@ class seed {
     bufferlist bl;              // bufflist ready to send
 
     req_state *s {
-    nullptr};
-    rgw::sal::Driver * driver {
-    nullptr};
+        nullptr};
+    rgw::sal::Driver *driver {
+        nullptr};
     SHA1 h;
 
     TorrentBencode dencode;
-  public:
+public:
     seed();
     ~seed();
 
     int get_params();
-    void init(req_state * p_req, rgw::sal::Driver * _driver);
-    int get_torrent_file(rgw::sal::Object * object,
-                         uint64_t & total_len,
-                         ceph::bufferlist & bl_data, rgw_obj & obj);
+    void init(req_state *p_req, rgw::sal::Driver *_driver);
+    int get_torrent_file(rgw::sal::Object *object,
+                         uint64_t &total_len,
+                         ceph::bufferlist &bl_data, rgw_obj &obj);
 
     off_t get_data_len();
     bool get_flag();
 
-    void set_create_date(ceph::real_time & value);
-    void set_info_name(const std::string & value);
-    void update(bufferlist & bl);
+    void set_create_date(ceph::real_time &value);
+    void set_info_name(const std::string &value);
+    void update(bufferlist &bl);
     int complete(optional_yield y);
 
-  private:
+private:
     void do_encode();
     void set_announce();
     void set_exist(bool exist);
     void set_info_pieces(char *buff);
-    void sha1(SHA1 * h, bufferlist & bl, off_t bl_len);
+    void sha1(SHA1 *h, bufferlist &bl, off_t bl_len);
     int save_torrent_file(optional_yield y);
 };

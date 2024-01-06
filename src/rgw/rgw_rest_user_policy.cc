@@ -20,7 +20,7 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-void RGWRestUserPolicy::dump(Formatter * f) const const
+void RGWRestUserPolicy::dump(Formatter *f) const const
 {
     encode_json("PolicyName", policy_name, f);
     encode_json("UserName", user_name, f);
@@ -50,8 +50,8 @@ int RGWRestUserPolicy::verify_permission(optional_yield y)
     std::string user_name = s->info.args.get("UserName");
     rgw_user user_id(user_name);
     if (!verify_user_permission(this, s, rgw::ARN(rgw::ARN(user_id.id,
-                                                           "user",
-                                                           user_id.tenant)),
+                                "user",
+                                user_id.tenant)),
                                 op)) {
         return -EACCES;
     }
@@ -74,12 +74,12 @@ bool RGWRestUserPolicy::validate_input()
     return true;
 }
 
-int RGWUserPolicyRead::check_caps(const RGWUserCaps & caps)
+int RGWUserPolicyRead::check_caps(const RGWUserCaps &caps)
 {
     return caps.check_cap("user-policy", RGW_CAP_READ);
 }
 
-int RGWUserPolicyWrite::check_caps(const RGWUserCaps & caps)
+int RGWUserPolicyWrite::check_caps(const RGWUserCaps &caps)
 {
     return caps.check_cap("user-policy", RGW_CAP_WRITE);
 }
@@ -98,8 +98,8 @@ int RGWPutUserPolicy::get_params()
     if (policy_name.empty() || user_name.empty() || policy.empty()) {
         ldpp_dout(this,
                   20) <<
-            "ERROR: one of policy name, user name or policy document is empty"
-            << dendl;
+                      "ERROR: one of policy name, user name or policy document is empty"
+                      << dendl;
         return -EINVAL;
     }
 
@@ -141,7 +141,7 @@ void RGWPutUserPolicy::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "ERROR: forward_request_to_master returned ret=" <<
-            op_ret << dendl;
+                     op_ret << dendl;
         return;
     }
 
@@ -165,7 +165,7 @@ void RGWPutUserPolicy::execute(optional_yield y)
         if (policies.size() > max_num) {
             ldpp_dout(this,
                       4) << "IAM user policies has reached the num config: " <<
-                max_num << ", cant add another" << dendl;
+                         max_num << ", cant add another" << dendl;
             op_ret = -ERR_INVALID_REQUEST;
             s->err.message =
                 "The number of IAM user policies should not exceed allowed limit "
@@ -179,12 +179,10 @@ void RGWPutUserPolicy::execute(optional_yield y)
         if (op_ret < 0) {
             op_ret = -ERR_INTERNAL_ERROR;
         }
-    }
-    catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         ldpp_dout(this, 0) << "ERROR: failed to decode user policies" << dendl;
         op_ret = -EIO;
-    }
-    catch(rgw::IAM::PolicyParseException & e) {
+    } catch (rgw::IAM::PolicyParseException &e) {
         ldpp_dout(this, 5) << "failed to parse policy: " << e.what() << dendl;
         s->err.message = e.what();
         op_ret = -ERR_MALFORMED_DOC;
@@ -211,7 +209,7 @@ int RGWGetUserPolicy::get_params()
 
     if (policy_name.empty() || user_name.empty()) {
         ldpp_dout(this, 20) << "ERROR: one of policy name or user name is empty"
-            << dendl;
+                            << dendl;
         return -EINVAL;
     }
 
@@ -247,26 +245,23 @@ void RGWGetUserPolicy::execute(optional_yield y)
             bufferlist bl = it->second;
             try {
                 decode(policies, bl);
-            }
-            catch(buffer::error & err) {
+            } catch (buffer::error &err) {
                 ldpp_dout(this,
                           0) << "ERROR: failed to decode user policies" <<
-                    dendl;
+                             dendl;
                 op_ret = -EIO;
                 return;
             }
             if (auto it = policies.find(policy_name); it != policies.end()) {
                 policy = policies[policy_name];
                 dump(s->formatter);
-            }
-            else {
+            } else {
                 ldpp_dout(this,
                           0) << "ERROR: policy not found" << policy << dendl;
                 op_ret = -ERR_NO_SUCH_ENTITY;
                 return;
             }
-        }
-        else {
+        } else {
             ldpp_dout(this,
                       0) << "ERROR: RGW_ATTR_USER_POLICY not found" << dendl;
             op_ret = -ERR_NO_SUCH_ENTITY;
@@ -326,23 +321,21 @@ void RGWListUserPolicies::execute(optional_yield y)
             bufferlist bl = it->second;
             try {
                 decode(policies, bl);
-            }
-            catch(buffer::error & err) {
+            } catch (buffer::error &err) {
                 ldpp_dout(this,
                           0) << "ERROR: failed to decode user policies" <<
-                    dendl;
+                             dendl;
                 op_ret = -EIO;
                 return;
             }
             s->formatter->open_object_section("PolicyNames");
-          for (const auto & p:policies) {
+            for (const auto &p : policies) {
                 s->formatter->dump_string("member", p.first);
             }
             s->formatter->close_section();
             s->formatter->close_section();
             s->formatter->close_section();
-        }
-        else {
+        } else {
             ldpp_dout(this,
                       0) << "ERROR: RGW_ATTR_USER_POLICY not found" << dendl;
             op_ret = -ERR_NO_SUCH_ENTITY;
@@ -367,7 +360,7 @@ int RGWDeleteUserPolicy::get_params()
     if (policy_name.empty() || user_name.empty()) {
         ldpp_dout(this,
                   20) << "ERROR: One of policy name or user name is empty" <<
-            dendl;
+                      dendl;
         return -EINVAL;
     }
 
@@ -405,12 +398,12 @@ void RGWDeleteUserPolicy::execute(optional_yield y)
         if (op_ret != -ENOENT) {
             ldpp_dout(this,
                       5) << "forward_request_to_master returned ret=" << op_ret
-                << dendl;
+                         << dendl;
             return;
         }
         ldpp_dout(this,
                   0) << "ERROR: forward_request_to_master returned ret=" <<
-            op_ret << dendl;
+                     op_ret << dendl;
     }
 
     std::map < std::string, std::string > policies;
@@ -419,8 +412,7 @@ void RGWDeleteUserPolicy::execute(optional_yield y)
         bufferlist out_bl = it->second;
         try {
             decode(policies, out_bl);
-        }
-        catch(buffer::error & err) {
+        } catch (buffer::error &err) {
             ldpp_dout(this,
                       0) << "ERROR: failed to decode user policies" << dendl;
             op_ret = -EIO;
@@ -444,13 +436,11 @@ void RGWDeleteUserPolicy::execute(optional_yield y)
                 s->formatter->close_section();
                 s->formatter->close_section();
             }
-        }
-        else {
+        } else {
             op_ret = -ERR_NO_SUCH_ENTITY;
             return;
         }
-    }
-    else {
+    } else {
         op_ret = -ERR_NO_SUCH_ENTITY;
         return;
     }

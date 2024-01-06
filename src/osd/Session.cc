@@ -20,9 +20,9 @@ void Session::clear_backoffs()
         ls.swap(backoffs);
         backoff_count = 0;
     }
-  for (auto & i:ls) {
-      for (auto & p:i.second) {
-          for (auto & b:p.second) {
+    for (auto &i : ls) {
+        for (auto &p : i.second) {
+            for (auto &b : p.second) {
                 std::lock_guard l(b->lock);
                 if (b->pg) {
                     ceph_assert(b->session == this);
@@ -30,8 +30,7 @@ void Session::clear_backoffs()
                     b->pg->rm_backoff(b);
                     b->pg.reset();
                     b->session.reset();
-                }
-                else if (b->session) {
+                } else if (b->session) {
                     ceph_assert(b->session == this);
                     ceph_assert(b->is_deleting());
                     b->session.reset();
@@ -41,22 +40,22 @@ void Session::clear_backoffs()
     }
 }
 
-void Session::ack_backoff(CephContext * cct,
+void Session::ack_backoff(CephContext *cct,
                           spg_t pgid,
                           uint64_t id,
-                          const hobject_t & begin, const hobject_t & end)
+                          const hobject_t &begin, const hobject_t &end)
 {
     std::lock_guard l(backoff_lock);
     auto p = backoffs.find(pgid);
     if (p == backoffs.end()) {
         dout(20) << __func__ << " " << pgid << " " << id << " [" << begin << ","
-            << end << ") pg not found" << dendl;
+                 << end << ") pg not found" << dendl;
         return;
     }
     auto q = p->second.find(begin);
     if (q == p->second.end()) {
         dout(20) << __func__ << " " << pgid << " " << id << " [" << begin << ","
-            << end << ") begin not found" << dendl;
+                 << end << ") begin not found" << dendl;
         return;
     }
     for (auto i = q->second.begin(); i != q->second.end(); ++i) {
@@ -65,8 +64,7 @@ void Session::ack_backoff(CephContext * cct,
             if (b->is_new()) {
                 b->state = Backoff::STATE_ACKED;
                 dout(20) << __func__ << " now " << *b << dendl;
-            }
-            else if (b->is_deleting()) {
+            } else if (b->is_deleting()) {
                 dout(20) << __func__ << " deleting " << *b << dendl;
                 q->second.erase(i);
                 --backoff_count;
@@ -85,13 +83,13 @@ void Session::ack_backoff(CephContext * cct,
     ceph_assert(!backoff_count == backoffs.empty());
 }
 
-bool Session::check_backoff(CephContext * cct, spg_t pgid,
-                            const hobject_t & oid, const Message * m)
+bool Session::check_backoff(CephContext *cct, spg_t pgid,
+                            const hobject_t &oid, const Message *m)
 {
     auto b = have_backoff(pgid, oid);
     if (b) {
         dout(10) << __func__ << " session " << this << " has backoff " << *b
-            << " for " << *m << dendl;
+                 << " for " << *m << dendl;
         ceph_assert(!b->is_acked()
                     || !g_conf()->osd_debug_crash_on_ignored_backoff);
         return true;

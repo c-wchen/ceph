@@ -14,16 +14,16 @@
 #define dout_prefix *_dout << "mgr.metric_collector " << __func__ << ": "
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    MetricCollector < Query, Limit, Key,
-    Report >::MetricCollector(MetricListener & listener)
-:  listener(listener)
+MetricCollector < Query, Limit, Key,
+                Report >::MetricCollector(MetricListener &listener)
+                    :  listener(listener)
 {
 }
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    MetricQueryID MetricCollector < Query, Limit, Key,
-    Report >::add_query(const Query & query,
-                        const std::optional < Limit > &limit)
+MetricQueryID MetricCollector < Query, Limit, Key,
+              Report >::add_query(const Query &query,
+                                  const std::optional < Limit > &limit)
 {
     dout(20) << "query=" << query << ", limit=" << limit << dendl;
     uint64_t query_id;
@@ -36,23 +36,22 @@ template < typename Query, typename Limit, typename Key, typename Report >
         auto it = queries.find(query);
         if (it == queries.end()) {
             it = queries.emplace(query, std::map < MetricQueryID,
-                                 OptionalLimit > {
-                                 }
-            ).first;
+            OptionalLimit > {
+            }
+                                ).first;
             notify = true;
-        }
-        else if (is_limited(it->second)) {
+        } else if (is_limited(it->second)) {
             notify = true;
         }
 
         it->second.emplace(query_id, limit);
         counters.emplace(query_id, std::map < Key, PerformanceCounters > {
-                         }
-        );
+        }
+                        );
     }
 
     dout(10) << query << " " << (limit ? stringify(*limit) : "unlimited")
-        << " query_id=" << query_id << dendl;
+             << " query_id=" << query_id << dendl;
 
     if (notify) {
         listener.handle_query_updated();
@@ -62,7 +61,7 @@ template < typename Query, typename Limit, typename Key, typename Report >
 }
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    int MetricCollector < Query, Limit, Key,
+int MetricCollector < Query, Limit, Key,
     Report >::remove_query(MetricQueryID query_id)
 {
     dout(20) << "query_id=" << query_id << dendl;
@@ -83,8 +82,7 @@ template < typename Query, typename Limit, typename Key, typename Report >
             if (it->second.empty()) {
                 it = queries.erase(it);
                 notify = true;
-            }
-            else if (is_limited(it->second)) {
+            } else if (is_limited(it->second)) {
                 ++it;
                 notify = true;
             }
@@ -109,7 +107,7 @@ template < typename Query, typename Limit, typename Key, typename Report >
 }
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    void MetricCollector < Query, Limit, Key, Report >::remove_all_queries()
+void MetricCollector < Query, Limit, Key, Report >::remove_all_queries()
 {
     dout(20) << dendl;
     bool notify;
@@ -127,14 +125,14 @@ template < typename Query, typename Limit, typename Key, typename Report >
 }
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    void MetricCollector < Query, Limit, Key, Report >::reregister_queries()
+void MetricCollector < Query, Limit, Key, Report >::reregister_queries()
 {
     dout(20) << dendl;
     listener.handle_query_updated();
 }
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    int MetricCollector < Query, Limit, Key,
+int MetricCollector < Query, Limit, Key,
     Report >::get_counters_generic(MetricQueryID query_id, std::map < Key,
                                    PerformanceCounters > *c)
 {
@@ -154,9 +152,9 @@ template < typename Query, typename Limit, typename Key, typename Report >
 }
 
 template < typename Query, typename Limit, typename Key, typename Report >
-    void MetricCollector < Query, Limit, Key,
-    Report >::process_reports_generic(const std::map < Query, Report > &reports,
-                                      UpdateCallback callback)
+void MetricCollector < Query, Limit, Key,
+     Report >::process_reports_generic(const std::map < Query, Report > &reports,
+                                       UpdateCallback callback)
 {
     ceph_assert(ceph_mutex_is_locked(lock));
 
@@ -164,21 +162,22 @@ template < typename Query, typename Limit, typename Key, typename Report >
         return;
     }
 
-  for (auto &[query, report]:reports) {
+    for (auto &[query, report] : reports) {
         dout(10) << "report for " << query << " query: "
-            << report.group_packed_performance_counters.size() << " records"
-            << dendl;
+                 << report.group_packed_performance_counters.size() << " records"
+                 << dendl;
 
-      for (auto &[key, bl]:report.group_packed_performance_counters) {
+        for (auto &[key, bl] : report.group_packed_performance_counters) {
             auto bl_it = bl.cbegin();
 
-          for (auto & p:queries[query]) {
-                auto & key_counters = counters[p.first][key];
+            for (auto &p : queries[query]) {
+                auto &key_counters = counters[p.first][key];
                 if (key_counters.empty()) {
                     key_counters.resize(query.performance_counter_descriptors.
-                                        size(), {
-                                        0, 0}
-                    );
+                    size(), {
+                        0, 0
+                    }
+                                       );
                 }
             }
 
@@ -194,10 +193,10 @@ template < typename Query, typename Limit, typename Key, typename Report >
                 PerformanceCounter c;
                 desc_it->unpack_counter(bl_it, &c);
                 dout(20) << "counter " << key << " " << *desc_it << ": " << c <<
-                    dendl;
+                         dendl;
 
-              for (auto & p:queries[query]) {
-                    auto & key_counters = counters[p.first][key];
+                for (auto &p : queries[query]) {
+                    auto &key_counters = counters[p.first][key];
                     callback(&key_counters[i], c);
                 }
                 desc_it++;
@@ -207,7 +206,7 @@ template < typename Query, typename Limit, typename Key, typename Report >
 }
 
 template class
-    MetricCollector < OSDPerfMetricQuery, OSDPerfMetricLimit, OSDPerfMetricKey,
-    OSDPerfMetricReport >;
+MetricCollector < OSDPerfMetricQuery, OSDPerfMetricLimit, OSDPerfMetricKey,
+                  OSDPerfMetricReport >;
 template class MetricCollector < MDSPerfMetricQuery, MDSPerfMetricLimit,
-    MDSPerfMetricKey, MDSPerfMetrics >;
+                                 MDSPerfMetricKey, MDSPerfMetrics >;

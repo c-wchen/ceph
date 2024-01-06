@@ -29,28 +29,27 @@
 #include "ErasureCodeIsa.h"
 // -----------------------------------------------------------------------------
 
-int ErasureCodePluginIsa::factory(const std::string & directory,
-                                  ceph::ErasureCodeProfile & profile,
-                                  ceph::ErasureCodeInterfaceRef * erasure_code,
-                                  std::ostream * ss)
+int ErasureCodePluginIsa::factory(const std::string &directory,
+                                  ceph::ErasureCodeProfile &profile,
+                                  ceph::ErasureCodeInterfaceRef *erasure_code,
+                                  std::ostream *ss)
 {
     ErasureCodeIsa *interface;
     std::string t;
-    if (profile.find("technique") == profile.end())
+    if (profile.find("technique") == profile.end()) {
         profile["technique"] = "reed_sol_van";
+    }
     t = profile.find("technique")->second;
     if ((t == "reed_sol_van")) {
         interface = new ErasureCodeIsaDefault(tcache,
-                                              ErasureCodeIsaDefault::
-                                              kVandermonde);
-    }
-    else {
+                                                  ErasureCodeIsaDefault::
+                                                  kVandermonde);
+    } else {
         if ((t == "cauchy")) {
             interface = new ErasureCodeIsaDefault(tcache,
-                                                  ErasureCodeIsaDefault::
-                                                  kCauchy);
-        }
-        else {
+                                                      ErasureCodeIsaDefault::
+                                                      kCauchy);
+        } else {
             *ss << "technique=" << t << " is not a valid coding technique. "
                 << " Choose one of the following: "
                 << "reed_sol_van," << "cauchy" << std::endl;
@@ -78,7 +77,7 @@ const char *__erasure_code_version()
 
 int __erasure_code_init(char *plugin_name, char *directory)
 {
-    auto & instance = ceph::ErasureCodePluginRegistry::instance();
+    auto &instance = ceph::ErasureCodePluginRegistry::instance();
 
     return instance.add(plugin_name, new ErasureCodePluginIsa());
 }

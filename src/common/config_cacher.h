@@ -18,36 +18,43 @@
 #include "common/config_obs.h"
 #include "common/config.h"
 
-template < typename ValueT > class md_config_cacher_t:public md_config_obs_t {
-    ConfigProxy & conf;
+template < typename ValueT > class md_config_cacher_t: public md_config_obs_t
+{
+    ConfigProxy &conf;
     const char *const option_name;
     std::atomic < ValueT > value_cache;
 
-    const char **get_tracked_conf_keys() const override {
+    const char **get_tracked_conf_keys() const override
+    {
         const static char *keys[] = { option_name, nullptr };
         return keys;
     }
 
-    void handle_conf_change(const ConfigProxy & conf,
-                            const std::set < std::string > &changed) override {
+    void handle_conf_change(const ConfigProxy &conf,
+                            const std::set < std::string > &changed) override
+    {
         if (changed.count(option_name)) {
             value_cache.store(conf.get_val < ValueT > (option_name));
         }
     }
 
-  public:
-    md_config_cacher_t(ConfigProxy & conf, const char *const option_name)
-    :conf(conf), option_name(option_name) {
+public:
+    md_config_cacher_t(ConfigProxy &conf, const char *const option_name)
+        : conf(conf), option_name(option_name)
+    {
         conf.add_observer(this);
         std::atomic_init(&value_cache, conf.get_val < ValueT > (option_name));
     }
 
-    ~md_config_cacher_t() {
+    ~md_config_cacher_t()
+    {
         conf.remove_observer(this);
     }
 
-    operator  ValueT() const {
+    operator  ValueT() const
+    {
         return value_cache.load();
-}};
+    }
+};
 
 #endif // CEPH_CONFIG_CACHER_H

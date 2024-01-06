@@ -45,31 +45,37 @@ using std::vector;
  *
  * DO NOT EXPECT      * hangs, crashes
  */
-class StRadosOpenPool:public SysTestRunnable {
-  public:
+class StRadosOpenPool: public SysTestRunnable
+{
+public:
     StRadosOpenPool(int argc, const char **argv,
-                    CrossProcessSem * pool_setup_sem,
-                    CrossProcessSem * open_pool_sem,
-                    const std::string & pool_name)
-    :SysTestRunnable(argc, argv),
-        m_pool_setup_sem(pool_setup_sem),
-        m_open_pool_sem(open_pool_sem), m_pool_name(pool_name) {
-    } ~StRadosOpenPool() override {
+                    CrossProcessSem *pool_setup_sem,
+                    CrossProcessSem *open_pool_sem,
+                    const std::string &pool_name)
+        : SysTestRunnable(argc, argv),
+          m_pool_setup_sem(pool_setup_sem),
+          m_open_pool_sem(open_pool_sem), m_pool_name(pool_name)
+    {
+    } ~StRadosOpenPool() override
+    {
     }
 
-    int run() override {
+    int run() override
+    {
         rados_t cl;
         RETURN1_IF_NONZERO(rados_create(&cl, NULL));
         rados_conf_parse_argv(cl, m_argc, m_argv);
         std::string log_name =
             SysTestSettings::inst().get_log_name(get_id_str());
-        if (!log_name.empty())
+        if (!log_name.empty()) {
             rados_conf_set(cl, "log_file", log_name.c_str());
+        }
         RETURN1_IF_NONZERO(rados_conf_read_file(cl, NULL));
         rados_conf_parse_env(cl, NULL);
         RETURN1_IF_NONZERO(rados_connect(cl));
-        if (m_pool_setup_sem)
+        if (m_pool_setup_sem) {
             m_pool_setup_sem->wait();
+        }
 
         printf("%s: rados_pool_create.\n", get_id_str());
         rados_pool_create(cl, m_pool_name.c_str());
@@ -77,16 +83,17 @@ class StRadosOpenPool:public SysTestRunnable {
         printf("%s: rados_ioctx_create.\n", get_id_str());
         RETURN1_IF_NONZERO(rados_ioctx_create
                            (cl, m_pool_name.c_str(), &io_ctx));
-        if (m_open_pool_sem)
+        if (m_open_pool_sem) {
             m_open_pool_sem->post();
+        }
         rados_ioctx_destroy(io_ctx);
         rados_pool_delete(cl, m_pool_name.c_str());
         rados_shutdown(cl);
         return 0;
     }
 
-  private:
-    CrossProcessSem * m_pool_setup_sem;
+private:
+    CrossProcessSem *m_pool_setup_sem;
     CrossProcessSem *m_open_pool_sem;
     std::string m_pool_name;
 };
@@ -99,7 +106,7 @@ const char *get_id_str()
 int main(int argc, const char **argv)
 {
     const std::string pool = get_temp_pool_name(argv[0]);
-    // first test: create a pool, shut down the client, access that 
+    // first test: create a pool, shut down the client, access that
     // pool in a different process.
     CrossProcessSem *pool_setup_sem = NULL;
     RETURN1_IF_NONZERO(CrossProcessSem::create(0, &pool_setup_sem));
@@ -115,7 +122,7 @@ int main(int argc, const char **argv)
         return EXIT_FAILURE;
     }
 
-    // second test: create a pool, access that 
+    // second test: create a pool, access that
     // pool in a different process, THEN shut down the first client.
     CrossProcessSem *pool_setup_sem2 = NULL;
     RETURN1_IF_NONZERO(CrossProcessSem::create(0, &pool_setup_sem2));

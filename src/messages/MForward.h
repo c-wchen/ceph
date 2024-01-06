@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  * Client requests often need to get forwarded from some monitor
  * to the leader. This class encapsulates the original message
  * along with the client's caps so the leader can do proper permissions
@@ -24,8 +24,9 @@
 #include "include/encoding.h"
 #include "include/stringify.h"
 
-class MForward final:public Message {
-  public:
+class MForward final: public Message
+{
+public:
     uint64_t tid;
     uint8_t client_type;
     entity_addrvec_t client_addrs;
@@ -35,29 +36,32 @@ class MForward final:public Message {
     EntityName entity_name;
     PaxosServiceMessage *msg;   // incoming or outgoing message
 
-     std::string msg_desc;      // for operator<< only
+    std::string msg_desc;      // for operator<< only
 
     static constexpr int HEAD_VERSION = 4;
     static constexpr int COMPAT_VERSION = 4;
 
-     MForward():Message {
-    MSG_FORWARD, HEAD_VERSION, COMPAT_VERSION},
-        tid(0), con_features(0), msg(NULL) {
+    MForward(): Message {
+        MSG_FORWARD, HEAD_VERSION, COMPAT_VERSION},
+    tid(0), con_features(0), msg(NULL)
+    {
     }
-    MForward(uint64_t t, PaxosServiceMessage * m, uint64_t feat,
-             const MonCap & caps):Message {
-    MSG_FORWARD, HEAD_VERSION, COMPAT_VERSION},
-        tid(t), client_caps(caps), msg(NULL) {
+    MForward(uint64_t t, PaxosServiceMessage *m, uint64_t feat,
+             const MonCap &caps): Message {
+        MSG_FORWARD, HEAD_VERSION, COMPAT_VERSION},
+    tid(t), client_caps(caps), msg(NULL)
+    {
         client_type = m->get_source().type();
         client_addrs = m->get_source_addrs();
-        if (auto & con = m->get_connection()) {
+        if (auto &con = m->get_connection()) {
             client_socket_addr = con->get_peer_socket_addr();
         }
         con_features = feat;
         msg = (PaxosServiceMessage *) m->get();
     }
-  private:
-    ~MForward()final {
+private:
+    ~MForward()final
+    {
         if (msg) {
             // message was unclaimed
             msg->put();
@@ -65,8 +69,9 @@ class MForward final:public Message {
         }
     }
 
-  public:
-    void encode_payload(uint64_t features) override {
+public:
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         if (!HAVE_FEATURE(features, SERVER_NAUTILUS)) {
             header.version = 3;
@@ -110,7 +115,8 @@ class MForward final:public Message {
         encode(entity_name, payload);
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(tid, p);
@@ -120,8 +126,7 @@ class MForward final:public Message {
             client_type = client.name.type();
             client_addrs = entity_addrvec_t(client.addr);
             client_socket_addr = client.addr;
-        }
-        else {
+        } else {
             decode(client_type, p);
             decode(client_addrs, p);
             decode(client_socket_addr, p);
@@ -132,7 +137,8 @@ class MForward final:public Message {
         decode(entity_name, p);
     }
 
-    PaxosServiceMessage *claim_message() {
+    PaxosServiceMessage *claim_message()
+    {
         // let whoever is claiming the message deal with putting it.
         ceph_assert(msg);
         msg_desc = stringify(*msg);
@@ -141,22 +147,23 @@ class MForward final:public Message {
         return m;
     }
 
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "forward";
-    } void print(std::ostream & o) const override {
+    } void print(std::ostream &o) const override
+    {
         o << "forward(";
         if (msg) {
             o << *msg;
-        }
-        else {
+        } else {
             o << msg_desc;
         }
         o << " caps " << client_caps
-            << " tid " << tid << " con_features " << con_features << ")";
+          << " tid " << tid << " con_features " << con_features << ")";
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

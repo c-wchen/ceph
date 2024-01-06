@@ -17,10 +17,13 @@
 
 #include "crypto/crypto_accel.h"
 
-class OpenSSLCryptoAccel:public CryptoAccel {
-  public:
-    OpenSSLCryptoAccel() {
-    } virtual ~ OpenSSLCryptoAccel() {
+class OpenSSLCryptoAccel: public CryptoAccel
+{
+public:
+    OpenSSLCryptoAccel()
+    {
+    } virtual ~ OpenSSLCryptoAccel()
+    {
     }
 
     bool cbc_encrypt(unsigned char *out, const unsigned char *in, size_t size,

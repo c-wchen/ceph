@@ -13,11 +13,14 @@
 
 using namespace std;
 
-class CryptoEnvironment:public::testing::Environment {
-  public:
-    void SetUp() override {
+class CryptoEnvironment: public::testing::Environment
+{
+public:
+    void SetUp() override
+    {
         ceph::crypto::init();
-}};
+    }
+};
 
 TEST(AES, ValidateSecret)
 {
@@ -98,20 +101,20 @@ TEST(AES, EncryptNoBl)
     std::unique_ptr < CryptoKeyHandler > kh(h->get_key_handler(secret, error));
 
     const CryptoKey::in_slice_t plain_slice {
-    sizeof(plaintext), plaintext};
+        sizeof(plaintext), plaintext};
 
     // we need to deduce size first
     const CryptoKey::out_slice_t probe_slice {
-    0, nullptr};
+        0, nullptr};
     const auto needed = kh->encrypt(plain_slice, probe_slice);
     ASSERT_GE(needed, plain_slice.length);
 
     boost::container::small_vector <
-        // FIXME?
-        //unsigned char, sizeof(plaintext) + kh->get_block_size()> buf;
+    // FIXME?
+    //unsigned char, sizeof(plaintext) + kh->get_block_size()> buf;
     unsigned char, sizeof(plaintext) + 16 > buf(needed);
     const CryptoKey::out_slice_t cipher_slice {
-    needed, buf.data()};
+        needed, buf.data()};
     const auto cipher_size = kh->encrypt(plain_slice, cipher_slice);
     ASSERT_EQ(cipher_size, needed);
 
@@ -197,9 +200,9 @@ TEST(AES, DecryptNoBl)
     std::unique_ptr < CryptoKeyHandler > kh(h->get_key_handler(secret, error));
 
     CryptoKey::in_slice_t cipher_slice {
-    sizeof(ciphertext), ciphertext};
+        sizeof(ciphertext), ciphertext};
     CryptoKey::out_slice_t plain_slice {
-    sizeof(plaintext), plaintext};
+        sizeof(plaintext), plaintext};
     const auto plain_size = kh->decrypt(cipher_slice, plain_slice);
 
     ASSERT_EQ(plain_size, sizeof(want_plaintext));
@@ -223,23 +226,23 @@ template < std::size_t TextSizeV > static void aes_loop_cephx()
     random.get_bytes(reinterpret_cast < char *>(plaintext), sizeof(plaintext));
 
     const CryptoKey::in_slice_t plain_slice {
-    sizeof(plaintext), plaintext};
+        sizeof(plaintext), plaintext};
 
     // we need to deduce size first
     const CryptoKey::out_slice_t probe_slice {
-    0, nullptr};
+        0, nullptr};
     const auto needed = kh->encrypt(plain_slice, probe_slice);
     ASSERT_GE(needed, plain_slice.length);
 
     boost::container::small_vector <
-        // FIXME?
-        //unsigned char, sizeof(plaintext) + kh->get_block_size()> buf;
+    // FIXME?
+    //unsigned char, sizeof(plaintext) + kh->get_block_size()> buf;
     unsigned char, sizeof(plaintext) + 16 > buf(needed);
 
     std::size_t cipher_size;
     for (std::size_t i = 0; i < 1000000; i++) {
         const CryptoKey::out_slice_t cipher_slice {
-        needed, buf.data()};
+            needed, buf.data()};
         cipher_size = kh->encrypt(plain_slice, cipher_slice);
         ASSERT_EQ(cipher_size, needed);
     }

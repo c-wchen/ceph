@@ -41,8 +41,9 @@ namespace RCf = rgw::cls::fifo;
 auto cct = new CephContext(CEPH_ENTITY_TYPE_CLIENT);
 const DoutPrefix dp(cct, 1, "test log backing: ");
 
-class LogBacking:public testing::Test {
-  protected:
+class LogBacking: public testing::Test
+{
+protected:
     static constexpr int SHARDS = 3;
     const std::string pool_name = get_temp_pool_name();
     lr::Rados rados;
@@ -50,45 +51,51 @@ class LogBacking:public testing::Test {
     lr::Rados rados2;
     lr::IoCtx ioctx2;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         ASSERT_EQ("", create_one_pool_pp(pool_name, rados));
         ASSERT_EQ(0, rados.ioctx_create(pool_name.c_str(), ioctx));
         connect_cluster_pp(rados2);
         ASSERT_EQ(0, rados2.ioctx_create(pool_name.c_str(), ioctx2));
-    } void TearDown() override {
+    } void TearDown() override
+    {
         destroy_one_pool_pp(pool_name, rados);
     }
 
-    std::string get_oid(uint64_t gen_id, int i) const {
+    std::string get_oid(uint64_t gen_id, int i) const
+    {
         return (gen_id > 0 ?
                 fmt::format("shard@G{}.{}", gen_id, i) :
                 fmt::format("shard.{}", i));
-    } void make_omap() {
+    } void make_omap()
+    {
         for (int i = 0; i < SHARDS; ++i) {
             using ceph::encode;
             lr::ObjectWriteOperation op;
             cb::list bl;
             encode(i, bl);
             cls_log_add(op, ceph_clock_now(), {
-                        }, "meow", bl);
+            }, "meow", bl);
             auto r =
                 rgw_rados_operate(&dp, ioctx, get_oid(0, i), &op, null_yield);
             ASSERT_GE(r, 0);
         }
     }
 
-    void add_omap(int i) {
+    void add_omap(int i)
+    {
         using ceph::encode;
         lr::ObjectWriteOperation op;
         cb::list bl;
         encode(i, bl);
         cls_log_add(op, ceph_clock_now(), {
-                    }, "meow", bl);
+        }, "meow", bl);
         auto r = rgw_rados_operate(&dp, ioctx, get_oid(0, i), &op, null_yield);
         ASSERT_GE(r, 0);
     }
 
-    void empty_omap() {
+    void empty_omap()
+    {
         for (int i = 0; i < SHARDS; ++i) {
             auto oid = get_oid(0, i);
             std::string to_marker;
@@ -97,9 +104,9 @@ class LogBacking:public testing::Test {
                 std::list < cls_log_entry > entries;
                 bool truncated = false;
                 cls_log_list(op, {
-                             }, {
-                             }, {
-                             }, 1, entries, &to_marker, &truncated);
+                }, {
+                }, {
+                }, 1, entries, &to_marker, &truncated);
                 auto r =
                     rgw_rados_operate(&dp, ioctx, oid, &op, nullptr,
                                       null_yield);
@@ -109,9 +116,9 @@ class LogBacking:public testing::Test {
             {
                 lr::ObjectWriteOperation op;
                 cls_log_trim(op, {
-                             }, {
-                             }, {
-                             }, to_marker);
+                }, {
+                }, {
+                }, to_marker);
                 auto r = rgw_rados_operate(&dp, ioctx, oid, &op, null_yield);
                 ASSERT_GE(r, 0);
             }
@@ -120,9 +127,9 @@ class LogBacking:public testing::Test {
                 std::list < cls_log_entry > entries;
                 bool truncated = false;
                 cls_log_list(op, {
-                             }, {
-                             }, {
-                             }, 1, entries, &to_marker, &truncated);
+                }, {
+                }, {
+                }, 1, entries, &to_marker, &truncated);
                 auto r =
                     rgw_rados_operate(&dp, ioctx, oid, &op, nullptr,
                                       null_yield);
@@ -132,7 +139,8 @@ class LogBacking:public testing::Test {
         }
     }
 
-    void make_fifo() {
+    void make_fifo()
+    {
         for (int i = 0; i < SHARDS; ++i) {
             std::unique_ptr < RCf::FIFO > fifo;
             auto r =
@@ -142,7 +150,8 @@ class LogBacking:public testing::Test {
         }
     }
 
-    void add_fifo(int i) {
+    void add_fifo(int i)
+    {
         using ceph::encode;
         std::unique_ptr < RCf::FIFO > fifo;
         auto r = RCf::FIFO::open(&dp, ioctx, get_oid(0, i), &fifo, null_yield);
@@ -154,7 +163,8 @@ class LogBacking:public testing::Test {
         ASSERT_GE(0, r);
     }
 
-    void assert_empty() {
+    void assert_empty()
+    {
         std::vector < lr::ObjectItem > result;
         lr::ObjectCursor next;
         auto r =
@@ -170,18 +180,20 @@ TEST_F(LogBacking, TestOmap)
 {
     make_omap();
     auto stat = log_backing_type(&dp, ioctx, log_type::fifo, SHARDS,
-                                 [this] (int shard){ return get_oid(0, shard);
-                                 }
-                                 , null_yield);
+    [this](int shard) {
+        return get_oid(0, shard);
+    }
+    , null_yield);
     ASSERT_EQ(log_type::omap, *stat);
 }
 
 TEST_F(LogBacking, TestOmapEmpty)
 {
     auto stat = log_backing_type(&dp, ioctx, log_type::omap, SHARDS,
-                                 [this] (int shard){ return get_oid(0, shard);
-                                 }
-                                 , null_yield);
+    [this](int shard) {
+        return get_oid(0, shard);
+    }
+    , null_yield);
     ASSERT_EQ(log_type::omap, *stat);
 }
 
@@ -189,18 +201,20 @@ TEST_F(LogBacking, TestFIFO)
 {
     make_fifo();
     auto stat = log_backing_type(&dp, ioctx, log_type::fifo, SHARDS,
-                                 [this] (int shard){ return get_oid(0, shard);
-                                 }
-                                 , null_yield);
+    [this](int shard) {
+        return get_oid(0, shard);
+    }
+    , null_yield);
     ASSERT_EQ(log_type::fifo, *stat);
 }
 
 TEST_F(LogBacking, TestFIFOEmpty)
 {
     auto stat = log_backing_type(&dp, ioctx, log_type::fifo, SHARDS,
-                                 [this] (int shard){ return get_oid(0, shard);
-                                 }
-                                 , null_yield);
+    [this](int shard) {
+        return get_oid(0, shard);
+    }
+    , null_yield);
     ASSERT_EQ(log_type::fifo, *stat);
 }
 
@@ -223,27 +237,31 @@ TEST(CursorGen, RoundTrip)
     }
 }
 
-class generations final:public logback_generations {
-  public:
+class generations final: public logback_generations
+{
+public:
 
     entries_t got_entries;
     std::optional < uint64_t > tail;
 
     using logback_generations::logback_generations;
 
-    bs::error_code handle_init(entries_t e) noexcept {
+    bs::error_code handle_init(entries_t e) noexcept
+    {
         got_entries = e;
         return {
         };
     }
 
-    bs::error_code handle_new_gens(entries_t e) noexcept {
+    bs::error_code handle_new_gens(entries_t e) noexcept
+    {
         got_entries = e;
         return {
         };
     }
 
-    bs::error_code handle_empty_to(uint64_t new_tail) noexcept {
+    bs::error_code handle_empty_to(uint64_t new_tail) noexcept
+    {
         tail = new_tail;
         return {
         };
@@ -254,12 +272,13 @@ TEST_F(LogBacking, GenerationSingle)
 {
     auto lgr =
         logback_generations::init < generations > (&dp, ioctx, "foobar",
-                                                   [this] (uint64_t gen_id,
-                                                           int shard){
-                                                   return get_oid(gen_id,
-                                                                  shard);}
-                                                   , SHARDS, log_type::fifo,
-                                                   null_yield);
+            [this](uint64_t gen_id,
+    int shard) {
+        return get_oid(gen_id,
+                       shard);
+    }
+    , SHARDS, log_type::fifo,
+    null_yield);
     ASSERT_TRUE(lgr);
 
     auto lg = std::move(*lgr);
@@ -276,12 +295,13 @@ TEST_F(LogBacking, GenerationSingle)
     lg.reset();
 
     lg = *logback_generations::init < generations > (&dp, ioctx, "foobar",
-                                                     [this] (uint64_t gen_id,
-                                                             int shard) {
-                                                     return get_oid(gen_id,
-                                                                    shard);}
-                                                     , SHARDS, log_type::fifo,
-                                                     null_yield);
+         [this](uint64_t gen_id,
+    int shard) {
+        return get_oid(gen_id,
+                       shard);
+    }
+    , SHARDS, log_type::fifo,
+    null_yield);
 
     ASSERT_EQ(0, lg->got_entries.begin()->first);
 
@@ -302,12 +322,13 @@ TEST_F(LogBacking, GenerationSingle)
     lg.reset();
 
     lg = *logback_generations::init < generations > (&dp, ioctx, "foobar",
-                                                     [this] (uint64_t gen_id,
-                                                             int shard) {
-                                                     return get_oid(gen_id,
-                                                                    shard);}
-                                                     , SHARDS, log_type::fifo,
-                                                     null_yield);
+         [this](uint64_t gen_id,
+    int shard) {
+        return get_oid(gen_id,
+                       shard);
+    }
+    , SHARDS, log_type::fifo,
+    null_yield);
 
     ASSERT_EQ(2, lg->got_entries.size());
     ASSERT_EQ(0, lg->got_entries[0].gen_id);
@@ -326,12 +347,13 @@ TEST_F(LogBacking, GenerationSingle)
     lg.reset();
 
     lg = *logback_generations::init < generations > (&dp, ioctx, "foobar",
-                                                     [this] (uint64_t gen_id,
-                                                             int shard) {
-                                                     return get_oid(gen_id,
-                                                                    shard);}
-                                                     , SHARDS, log_type::fifo,
-                                                     null_yield);
+         [this](uint64_t gen_id,
+    int shard) {
+        return get_oid(gen_id,
+                       shard);
+    }
+    , SHARDS, log_type::fifo,
+    null_yield);
 
     ASSERT_EQ(1, lg->got_entries.size());
     ASSERT_EQ(1, lg->got_entries[1].gen_id);
@@ -343,12 +365,13 @@ TEST_F(LogBacking, GenerationWN)
 {
     auto lg1 =
         *logback_generations::init < generations > (&dp, ioctx, "foobar",
-                                                    [this] (uint64_t gen_id,
-                                                            int shard){
-                                                    return get_oid(gen_id,
-                                                                   shard);}
-                                                    , SHARDS, log_type::fifo,
-                                                    null_yield);
+            [this](uint64_t gen_id,
+    int shard) {
+        return get_oid(gen_id,
+                       shard);
+    }
+    , SHARDS, log_type::fifo,
+    null_yield);
 
     auto ec = lg1->new_backing(&dp, log_type::omap, null_yield);
     ASSERT_FALSE(ec);
@@ -362,12 +385,13 @@ TEST_F(LogBacking, GenerationWN)
 
     auto lg2 =
         *logback_generations::init < generations > (&dp, ioctx2, "foobar",
-                                                    [this] (uint64_t gen_id,
-                                                            int shard){
-                                                    return get_oid(gen_id,
-                                                                   shard);}
-                                                    , SHARDS, log_type::fifo,
-                                                    null_yield);
+            [this](uint64_t gen_id,
+    int shard) {
+        return get_oid(gen_id,
+                       shard);
+    }
+    , SHARDS, log_type::fifo,
+    null_yield);
 
     ASSERT_EQ(2, lg2->got_entries.size());
 

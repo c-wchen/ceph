@@ -37,7 +37,7 @@ void MonSub::acked(uint32_t interval)
 
 bool MonSub::reload()
 {
-  for (auto &[what, sub]:sub_sent) {
+    for (auto &[what, sub] : sub_sent) {
         if (sub_new.count(what) == 0) {
             sub_new[what] = sub;
         }
@@ -45,76 +45,68 @@ bool MonSub::reload()
     return have_new();
 }
 
-void MonSub::got(const std::string & what, version_t have)
+void MonSub::got(const std::string &what, version_t have)
 {
     if (auto i = sub_new.find(what); i != sub_new.end()) {
-        auto & sub = i->second;
+        auto &sub = i->second;
         if (sub.start <= have) {
             if (sub.flags & CEPH_SUBSCRIBE_ONETIME) {
                 sub_new.erase(i);
-            }
-            else {
+            } else {
                 sub.start = have + 1;
             }
         }
-    }
-    else if (auto i = sub_sent.find(what); i != sub_sent.end()) {
-        auto & sub = i->second;
+    } else if (auto i = sub_sent.find(what); i != sub_sent.end()) {
+        auto &sub = i->second;
         if (sub.start <= have) {
             if (sub.flags & CEPH_SUBSCRIBE_ONETIME) {
                 sub_sent.erase(i);
-            }
-            else {
+            } else {
                 sub.start = have + 1;
             }
         }
     }
 }
 
-bool MonSub::want(const std::string & what, version_t start, unsigned flags)
+bool MonSub::want(const std::string &what, version_t start, unsigned flags)
 {
     if (auto sub = sub_new.find(what);
         sub != sub_new.end() &&
         sub->second.start == start && sub->second.flags == flags) {
         return false;
-    }
-    else if (auto sub = sub_sent.find(what);
-             sub != sub_sent.end() &&
-             sub->second.start == start && sub->second.flags == flags) {
+    } else if (auto sub = sub_sent.find(what);
+               sub != sub_sent.end() &&
+               sub->second.start == start && sub->second.flags == flags) {
         return false;
-    }
-    else {
+    } else {
         sub_new[what].start = start;
         sub_new[what].flags = flags;
         return true;
     }
 }
 
-bool MonSub::inc_want(const std::string & what, version_t start, unsigned flags)
+bool MonSub::inc_want(const std::string &what, version_t start, unsigned flags)
 {
     if (auto sub = sub_new.find(what); sub != sub_new.end()) {
         if (sub->second.start >= start) {
             return false;
-        }
-        else {
+        } else {
             sub->second.start = start;
             sub->second.flags = flags;
             return true;
         }
-    }
-    else if (auto sub = sub_sent.find(what);
-             sub == sub_sent.end() || sub->second.start < start) {
-        auto & item = sub_new[what];
+    } else if (auto sub = sub_sent.find(what);
+               sub == sub_sent.end() || sub->second.start < start) {
+        auto &item = sub_new[what];
         item.start = start;
         item.flags = flags;
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
 
-void MonSub::unwant(const std::string & what)
+void MonSub::unwant(const std::string &what)
 {
     sub_sent.erase(what);
     sub_new.erase(what);

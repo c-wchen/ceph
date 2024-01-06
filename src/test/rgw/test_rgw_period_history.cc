@@ -20,60 +20,69 @@
 #include <gtest/gtest.h>
 
 using namespace std;
-namespace {
+namespace
+{
 
 // construct a period with the given fields
-    RGWPeriod make_period(const std::string & id, epoch_t realm_epoch,
-                          const std::string & predecessor) {
-        RGWPeriod period(id);
-        period.set_realm_epoch(realm_epoch);
-        period.set_predecessor(predecessor);
-        return period;
-    }
+RGWPeriod make_period(const std::string &id, epoch_t realm_epoch,
+                      const std::string &predecessor)
+{
+    RGWPeriod period(id);
+    period.set_realm_epoch(realm_epoch);
+    period.set_predecessor(predecessor);
+    return period;
+}
 
-    const auto current_period = make_period("5", 5, "4");
+const auto current_period = make_period("5", 5, "4");
 
 // mock puller that throws an exception if it's called
-    struct ErrorPuller:public RGWPeriodHistory::Puller {
-        int pull(const DoutPrefixProvider * dpp, const std::string & id,
-                 RGWPeriod & period, optional_yield) override {
-            throw std::runtime_error("unexpected call to pull");
-    }};
-    ErrorPuller puller;         // default puller
+struct ErrorPuller: public RGWPeriodHistory::Puller {
+    int pull(const DoutPrefixProvider *dpp, const std::string &id,
+             RGWPeriod &period, optional_yield) override
+    {
+        throw std::runtime_error("unexpected call to pull");
+    }
+};
+ErrorPuller puller;         // default puller
 
 // mock puller that records the period ids requested and returns an error
-    using Ids = std::vector < std::string >;
-    class RecordingPuller:public RGWPeriodHistory::Puller {
-        const int error;
-      public:
-         explicit RecordingPuller(int error):error(error) {
-        } Ids ids;
-        int pull(const DoutPrefixProvider * dpp, const std::string & id,
-                 RGWPeriod & period, optional_yield) override {
-            ids.push_back(id);
-            return error;
-        }
-    };
+using Ids = std::vector < std::string >;
+class RecordingPuller: public RGWPeriodHistory::Puller
+{
+    const int error;
+public:
+    explicit RecordingPuller(int error): error(error)
+    {
+    } Ids ids;
+    int pull(const DoutPrefixProvider *dpp, const std::string &id,
+             RGWPeriod &period, optional_yield) override
+    {
+        ids.push_back(id);
+        return error;
+    }
+};
 
 // mock puller that returns a fake period by parsing the period id
-    struct NumericPuller:public RGWPeriodHistory::Puller {
-        int pull(const DoutPrefixProvider * dpp, const std::string & id,
-                 RGWPeriod & period, optional_yield) override {
-            // relies on numeric period ids to divine the realm_epoch
-            auto realm_epoch = boost::lexical_cast < epoch_t > (id);
-            auto predecessor =
-                boost::lexical_cast < std::string > (realm_epoch - 1);
-             period = make_period(id, realm_epoch, predecessor);
-             return 0;
-    }};
+struct NumericPuller: public RGWPeriodHistory::Puller {
+    int pull(const DoutPrefixProvider *dpp, const std::string &id,
+             RGWPeriod &period, optional_yield) override
+    {
+        // relies on numeric period ids to divine the realm_epoch
+        auto realm_epoch = boost::lexical_cast < epoch_t > (id);
+        auto predecessor =
+            boost::lexical_cast < std::string > (realm_epoch - 1);
+        period = make_period(id, realm_epoch, predecessor);
+        return 0;
+    }
+};
 
 }                               // anonymous namespace
 
 // for ASSERT_EQ()
-bool operator==(const RGWPeriod & lhs, const RGWPeriod & rhs)
+bool operator==(const RGWPeriod &lhs, const RGWPeriod &rhs)
 {
     return lhs.get_id() == rhs.get_id()
-        && lhs.get_realm_epoch() == rhs.get_realm_epoch();
+           && lhs.get_realm_epoch() == rhs.get_realm_epoch();
 }
 
 TEST(PeriodHistory, InsertBefore)
@@ -131,7 +140,7 @@ TEST(PeriodHistory, InsertWayAfter)
 TEST(PeriodHistory, PullPredecessorsBeforeCurrent)
 {
     RecordingPuller puller {
-    -EFAULT};
+        -EFAULT};
     RGWPeriodHistory history(g_ceph_context, &puller, current_period);
     const DoutPrefix dp(g_ceph_context, 1, "test rgw period history: ");
 
@@ -141,7 +150,7 @@ TEST(PeriodHistory, PullPredecessorsBeforeCurrent)
     ASSERT_FALSE(c1);
     ASSERT_EQ(-EFAULT, c1.get_error());
     ASSERT_EQ(Ids {
-              "4"}, puller.ids);
+        "4"}, puller.ids);
 
     auto c4 = history.insert(make_period("4", 4, "3"));
     ASSERT_TRUE(c4);
@@ -149,8 +158,8 @@ TEST(PeriodHistory, PullPredecessorsBeforeCurrent)
     c1 = history.attach(&dp, make_period("1", 1, ""), null_yield);
     ASSERT_FALSE(c1);
     ASSERT_EQ(-EFAULT, c1.get_error());
-    ASSERT_EQ(Ids( {
-                  "4", "3"}), puller.ids);
+    ASSERT_EQ(Ids({
+        "4", "3"}), puller.ids);
 
     auto c3 = history.insert(make_period("3", 3, "2"));
     ASSERT_TRUE(c3);
@@ -158,22 +167,22 @@ TEST(PeriodHistory, PullPredecessorsBeforeCurrent)
     c1 = history.attach(&dp, make_period("1", 1, ""), null_yield);
     ASSERT_FALSE(c1);
     ASSERT_EQ(-EFAULT, c1.get_error());
-    ASSERT_EQ(Ids( {
-                  "4", "3", "2"}), puller.ids);
+    ASSERT_EQ(Ids({
+        "4", "3", "2"}), puller.ids);
 
     auto c2 = history.insert(make_period("2", 2, "1"));
     ASSERT_TRUE(c2);
 
     c1 = history.attach(&dp, make_period("1", 1, ""), null_yield);
     ASSERT_TRUE(c1);
-    ASSERT_EQ(Ids( {
-                  "4", "3", "2"}), puller.ids);
+    ASSERT_EQ(Ids({
+        "4", "3", "2"}), puller.ids);
 }
 
 TEST(PeriodHistory, PullPredecessorsAfterCurrent)
 {
     RecordingPuller puller {
-    -EFAULT};
+        -EFAULT};
     RGWPeriodHistory history(g_ceph_context, &puller, current_period);
     const DoutPrefix dp(g_ceph_context, 1, "test rgw period history: ");
 
@@ -183,24 +192,24 @@ TEST(PeriodHistory, PullPredecessorsAfterCurrent)
     ASSERT_FALSE(c9);
     ASSERT_EQ(-EFAULT, c9.get_error());
     ASSERT_EQ(Ids {
-              "8"}, puller.ids);
+        "8"}, puller.ids);
 
     auto c8 = history.attach(&dp, make_period("8", 8, "7"), null_yield);
     ASSERT_FALSE(c8);
     ASSERT_EQ(-EFAULT, c8.get_error());
-    ASSERT_EQ(Ids( {
-                  "8", "7"}), puller.ids);
+    ASSERT_EQ(Ids({
+        "8", "7"}), puller.ids);
 
     auto c7 = history.attach(&dp, make_period("7", 7, "6"), null_yield);
     ASSERT_FALSE(c7);
     ASSERT_EQ(-EFAULT, c7.get_error());
-    ASSERT_EQ(Ids( {
-                  "8", "7", "6"}), puller.ids);
+    ASSERT_EQ(Ids({
+        "8", "7", "6"}), puller.ids);
 
     auto c6 = history.attach(&dp, make_period("6", 6, "5"), null_yield);
     ASSERT_TRUE(c6);
-    ASSERT_EQ(Ids( {
-                  "8", "7", "6"}), puller.ids);
+    ASSERT_EQ(Ids({
+        "8", "7", "6"}), puller.ids);
 }
 
 TEST(PeriodHistory, MergeBeforeCurrent)

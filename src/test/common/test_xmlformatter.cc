@@ -32,8 +32,8 @@ TEST(xmlformatter, multiline)
     formatter.dump_string("string", "string");
 
     std::string cmp = ""
-        "<integer>10</integer><float>10</float><string>string</string>"
-        "<integer>20</integer><float>20</float><string>string</string>";
+                      "<integer>10</integer><float>10</float><string>string</string>"
+                      "<integer>20</integer><float>20</float><string>string</string>";
 
     formatter.flush(sout);
     EXPECT_EQ(cmp, sout.str());
@@ -50,7 +50,7 @@ TEST(xmlformatter, multiflush)
     formatter.flush(sout1);
 
     std::string cmp = ""
-        "<integer>10</integer>" "<float>10</float>" "<string>string</string>";
+                      "<integer>10</integer>" "<float>10</float>" "<string>string</string>";
 
     EXPECT_EQ(cmp, sout1.str());
 
@@ -60,7 +60,7 @@ TEST(xmlformatter, multiflush)
     formatter.flush(sout2);
 
     cmp = ""
-        "<integer>20</integer>" "<float>20</float>" "<string>string</string>";
+          "<integer>20</integer>" "<float>20</float>" "<string>string</string>";
 
     EXPECT_EQ(cmp, sout2.str());
 }
@@ -78,9 +78,9 @@ TEST(xmlformatter, pretty)
     formatter.close_section();
     formatter.flush(sout);
     std::string cmp = ""
-        "<xml>\n"
-        " <Integer>10</Integer>\n"
-        " <Float>10</Float>\n" " <String>String</String>\n" "</xml>\n\n";
+                      "<xml>\n"
+                      " <Integer>10</Integer>\n"
+                      " <Float>10</Float>\n" " <String>String</String>\n" "</xml>\n\n";
     EXPECT_EQ(cmp, sout.str());
 }
 
@@ -95,7 +95,7 @@ TEST(xmlformatter, lowercased)
     formatter.dump_string("String", "String");
     formatter.flush(sout);
     std::string cmp = ""
-        "<integer>10</integer>" "<float>10</float>" "<string>String</string>";
+                      "<integer>10</integer>" "<float>10</float>" "<string>String</string>";
     EXPECT_EQ(cmp, sout.str());
 }
 
@@ -110,8 +110,8 @@ TEST(xmlformatter, underscored)
     formatter.dump_string("String Item", "String");
     formatter.flush(sout);
     std::string cmp = ""
-        "<Integer_Item>10</Integer_Item>"
-        "<Float_Item>10</Float_Item>" "<String_Item>String</String_Item>";
+                      "<Integer_Item>10</Integer_Item>"
+                      "<Float_Item>10</Float_Item>" "<String_Item>String</String_Item>";
 
     EXPECT_EQ(cmp, sout.str());
 }
@@ -127,8 +127,8 @@ TEST(xmlformatter, lowercased_underscored)
     formatter.dump_string("String Item", "String");
     formatter.flush(sout);
     std::string cmp = ""
-        "<integer_item>10</integer_item>"
-        "<float_item>10</float_item>" "<string_item>String</string_item>";
+                      "<integer_item>10</integer_item>"
+                      "<float_item>10</float_item>" "<string_item>String</string_item>";
     EXPECT_EQ(cmp, sout.str());
 }
 
@@ -143,7 +143,7 @@ TEST(xmlformatter, pretty_lowercased_underscored)
     formatter.dump_string("String Item", "String");
     formatter.flush(sout);
     std::string cmp = ""
-        "<integer_item>10</integer_item>\n"
-        "<float_item>10</float_item>\n" "<string_item>String</string_item>\n\n";
+                      "<integer_item>10</integer_item>\n"
+                      "<float_item>10</float_item>\n" "<string_item>String</string_item>\n\n";
     EXPECT_EQ(cmp, sout.str());
 }

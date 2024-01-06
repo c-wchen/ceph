@@ -7,18 +7,23 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-class RGWOp_Info_Get:public RGWRESTOp {
+class RGWOp_Info_Get: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Info_Get() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Info_Get()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("info", RGW_CAP_READ);
     }
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_info";
-}};
+    }
+};
 
 void RGWOp_Info_Get::execute(optional_yield y)
 {

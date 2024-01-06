@@ -23,20 +23,23 @@
 #include "include/types.h"
 #include "common/Cond.h"
 
-class FS {
-  public:
-    virtual ~ FS() {
+class FS
+{
+public:
+    virtual ~ FS()
+    {
     } static FS *create(uint64_t f_type);
     static FS *create_by_fd(int fd);
 
-    virtual const char *get_name() {
+    virtual const char *get_name()
+    {
         return "generic";
     }
 
     virtual int set_alloc_hint(int fd, uint64_t hint);
 
-    virtual int get_handle(int fd, std::string * h);
-    virtual int open_handle(int mount_fd, const std::string & h, int flags);
+    virtual int get_handle(int fd, std::string *h);
+    virtual int open_handle(int mount_fd, const std::string &h, int flags);
 
     virtual int copy_file_range(int to_fd, uint64_t to_offset,
                                 int from_fd,

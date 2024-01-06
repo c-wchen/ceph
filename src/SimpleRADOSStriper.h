@@ -27,58 +27,65 @@
 #include "common/ceph_time.h"
 #include "common/perf_counters.h"
 
-class[[gnu::visibility("default")]] SimpleRADOSStriper {
-  public:
+class[[gnu::visibility("default")]] SimpleRADOSStriper
+{
+public:
     using aiocompletionptr = std::unique_ptr < librados::AioCompletion >;
     using clock = ceph::coarse_mono_clock;
     using time = ceph::coarse_mono_time;
 
     static inline const uint64_t object_size = 22;  /* power of 2 */
     static inline const uint64_t min_growth = (1 << 27);    /* 128 MB */
-    static int config_logger(CephContext * cct, std::string_view name,
+    static int config_logger(CephContext *cct, std::string_view name,
                              std::shared_ptr < PerfCounters > *l);
 
     SimpleRADOSStriper() = default;
     SimpleRADOSStriper(librados::IoCtx _ioctx, std::string _oid)
-  :    ioctx(std::move(_ioctx))
-        , oid(std::move(_oid)) {
+        :    ioctx(std::move(_ioctx))
+        , oid(std::move(_oid))
+    {
         cookie.generate_random();
         auto r = librados::Rados(ioctx);
         myaddrs = r.get_addrs();
     }
     SimpleRADOSStriper(const SimpleRADOSStriper &) = delete;
-    SimpleRADOSStriper & operator=(const SimpleRADOSStriper &) = delete;
-    SimpleRADOSStriper & operator=(SimpleRADOSStriper &&) = delete;
+    SimpleRADOSStriper &operator=(const SimpleRADOSStriper &) = delete;
+    SimpleRADOSStriper &operator=(SimpleRADOSStriper &&) = delete;
     SimpleRADOSStriper(SimpleRADOSStriper &&) = delete;
     ~SimpleRADOSStriper();
 
     int create();
     int open();
     int remove();
-    int stat(uint64_t * size);
+    int stat(uint64_t *size);
     ssize_t write(const void *data, size_t len, uint64_t off);
     ssize_t read(void *data, size_t len, uint64_t off);
     int truncate(size_t size);
     int flush();
     int lock(uint64_t timeoutms);
     int unlock();
-    int is_locked() const {
+    int is_locked() const
+    {
         return locked;
-    } int print_lockers(std::ostream & out);
-    void set_logger(std::shared_ptr < PerfCounters > l) {
+    } int print_lockers(std::ostream &out);
+    void set_logger(std::shared_ptr < PerfCounters > l)
+    {
         logger = std::move(l);
     }
-    void set_lock_interval(std::chrono::milliseconds t) {
+    void set_lock_interval(std::chrono::milliseconds t)
+    {
         lock_keeper_interval = t;
     }
-    void set_lock_timeout(std::chrono::milliseconds t) {
+    void set_lock_timeout(std::chrono::milliseconds t)
+    {
         lock_keeper_timeout = t;
     }
-    void set_blocklist_the_dead(bool b) {
+    void set_blocklist_the_dead(bool b)
+    {
         blocklist_the_dead = b;
     }
 
-  protected:
+protected:
     struct extent {
         std::string soid;
         size_t len;
@@ -93,9 +100,10 @@ class[[gnu::visibility("default")]] SimpleRADOSStriper {
     int wait_for_aios(bool block);
     int recover_lock();
     extent get_next_extent(uint64_t off, size_t len) const;
-    extent get_first_extent() const {
+    extent get_first_extent() const
+    {
         return get_next_extent(0, 0);
-  } private:
+    } private:
     static inline const char XATTR_EXCL[] = "striper.excl";
     static inline const char XATTR_SIZE[] = "striper.size";
     static inline const char XATTR_ALLOCATED[] = "striper.allocated";
@@ -119,9 +127,9 @@ class[[gnu::visibility("default")]] SimpleRADOSStriper {
     std::mutex lock_keeper_mutex;
     time last_renewal = time::min();
     std::chrono::milliseconds lock_keeper_interval {
-    2000};
+        2000};
     std::chrono::milliseconds lock_keeper_timeout {
-    30000};
+        30000};
     std::atomic < bool > blocklisted = false;
     bool shutdown = false;
     version_t version = 0;

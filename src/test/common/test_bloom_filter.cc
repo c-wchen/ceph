@@ -50,14 +50,16 @@ TEST(BloomFilter, Sweep)
             ASSERT_TRUE(bf.contains("foo"));
             ASSERT_TRUE(bf.contains("bar"));
 
-            for (int n = 0; n < max; n++)
+            for (int n = 0; n < max; n++) {
                 bf.insert("ok" + stringify(n));
+            }
 
             int test = max * 100;
             int hit = 0;
             for (int n = 0; n < test; n++)
-                if (bf.contains("asdf" + stringify(n)))
+                if (bf.contains("asdf" + stringify(n))) {
                     hit++;
+                }
 
             ASSERT_TRUE(bf.contains("foo"));
             ASSERT_TRUE(bf.contains("bar"));
@@ -70,7 +72,7 @@ TEST(BloomFilter, Sweep)
             double byte_per_insert = (double)bl.length() / (double)max;
 
             std::cout << max << "\t" << fpp << "\t" << actual << "\t" << bl.
-                length() << "\t" << byte_per_insert << std::endl;
+                      length() << "\t" << byte_per_insert << std::endl;
             ASSERT_TRUE(actual < fpp * 10);
 
         }
@@ -83,9 +85,9 @@ TEST(BloomFilter, SweepInt)
     std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
     std::cout.precision(5);
     std::
-        cout <<
-        "# max\tfpp\tactual\tsize\tB/insert\tdensity\tapprox_element_count" <<
-        std::endl;
+    cout <<
+         "# max\tfpp\tactual\tsize\tB/insert\tdensity\tapprox_element_count" <<
+         std::endl;
     for (int ex = 3; ex < 12; ex += 2) {
         for (float fpp = .001; fpp < .5; fpp *= 4.0) {
             int max = 2 << ex;
@@ -104,14 +106,16 @@ TEST(BloomFilter, SweepInt)
             // but a different one in each instance.
             srand(seed++);
 
-            for (int n = 0; n < max; n++)
+            for (int n = 0; n < max; n++) {
                 bf.insert((uint32_t) rand());
+            }
 
             int test = max * 100;
             int hit = 0;
             for (int n = 0; n < test; n++)
-                if (bf.contains((uint32_t) rand()))
+                if (bf.contains((uint32_t) rand())) {
                     hit++;
+                }
 
             ASSERT_TRUE(123);
             ASSERT_TRUE(456);
@@ -124,9 +128,9 @@ TEST(BloomFilter, SweepInt)
             double byte_per_insert = (double)bl.length() / (double)max;
 
             std::cout << max << "\t" << fpp << "\t" << actual << "\t" << bl.
-                length() << "\t" << byte_per_insert << "\t" << bf.
-                density() << "\t" << bf.
-                approx_unique_element_count() << std::endl;
+                      length() << "\t" << byte_per_insert << "\t" << bf.
+                      density() << "\t" << bf.
+                      approx_unique_element_count() << std::endl;
             ASSERT_TRUE(actual < fpp * 3);
             ASSERT_TRUE(actual > fpp / 3);
             ASSERT_TRUE(bf.density() > 0.40);
@@ -158,17 +162,20 @@ TEST(BloomFilter, CompressibleSweep)
         }
 
         unsigned est = bf.approx_unique_element_count();
-        if (div > 1)
+        if (div > 1) {
             bf.compress(1.0 / div);
+        }
 
-      for (auto val:values)
+        for (auto val : values) {
             ASSERT_TRUE(bf.contains(val));
+        }
 
         int test = max * 100;
         int hit = 0;
         for (int n = 0; n < test; n++)
-            if (bf.contains((uint32_t) rand()))
+            if (bf.contains((uint32_t) rand())) {
                 hit++;
+            }
 
         double actual = (double)hit / (double)test;
 
@@ -178,12 +185,12 @@ TEST(BloomFilter, CompressibleSweep)
         double byte_per_insert = (double)bl.length() / (double)max;
         unsigned est_after = bf.approx_unique_element_count();
         std::cout << max
-            << "\t" << t
-            << "\t" << est
-            << "\t" << est_after
-            << "\t" << fpp
-            << "\t" << actual
-            << "\t" << bl.length() << "\t" << byte_per_insert << std::endl;
+                  << "\t" << t
+                  << "\t" << est
+                  << "\t" << est_after
+                  << "\t" << fpp
+                  << "\t" << actual
+                  << "\t" << bl.length() << "\t" << byte_per_insert << std::endl;
 
         ASSERT_TRUE(actual < fpp * 2.0);
         ASSERT_TRUE(actual > fpp / 2.0);
@@ -199,8 +206,8 @@ TEST(BloomFilter, BinSweep)
     int total_max = 16384;
     float total_fpp = .01;
     std::
-        cout << "total_inserts " << total_max << " target-fpp " << total_fpp <<
-        std::endl;
+    cout << "total_inserts " << total_max << " target-fpp " << total_fpp <<
+         std::endl;
     for (int bins = 1; bins < 16; ++bins) {
         int max = total_max / bins;
         float fpp = total_fpp / bins;   //pow(total_fpp, bins);
@@ -219,7 +226,7 @@ TEST(BloomFilter, BinSweep)
         int test = max * 100;
         for (int i = 0; i < test; ++i) {
             for (std::vector < std::unique_ptr < bloom_filter >>::iterator j =
-                 ls.begin(); j != ls.end(); ++j) {
+                     ls.begin(); j != ls.end(); ++j) {
                 if ((*j)->contains(i * 732)) {  // note: sequential i does not work here; the intenral int hash is weak!!
                     hit++;
                     break;
@@ -229,8 +236,8 @@ TEST(BloomFilter, BinSweep)
 
         double actual = (double)hit / (double)test;
         std::cout << "bins " << bins << " bin-max " << max << " bin-fpp " << fpp
-            << " actual-fpp " << actual
-            << " total-size " << bl.length() << std::endl;
+                  << " actual-fpp " << actual
+                  << " total-size " << bl.length() << std::endl;
     }
 }
 
@@ -274,8 +281,8 @@ TEST(BloomFilter, Sequence)
 
         double actual = (double)hit / (double)test;
         std::
-            cout << "seq " << seq << " max " << max << " fpp " << fpp <<
-            " actual " << actual << std::endl;
+        cout << "seq " << seq << " max " << max << " fpp " << fpp <<
+             " actual " << actual << std::endl;
     }
 }
 
@@ -313,8 +320,7 @@ TEST(BloomFilter, SequenceDouble)
                         hit++;
                         break;
                     }
-                }
-                else {
+                } else {
                     run = 0;
                 }
             }
@@ -322,9 +328,9 @@ TEST(BloomFilter, SequenceDouble)
 
         double actual = (double)hit / (double)test;
         std::
-            cout << "seq " << seq << " max " << max << " fpp " << fpp <<
-            " actual " << actual << " expected " << (fpp * fpp *
-                                                     (double)seq) << std::endl;
+        cout << "seq " << seq << " max " << max << " fpp " << fpp <<
+             " actual " << actual << " expected " << (fpp * fpp *
+                     (double)seq) << std::endl;
     }
 }
 

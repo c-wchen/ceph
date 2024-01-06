@@ -11,12 +11,12 @@
 
 using namespace std;
 
-MemoryModel::MemoryModel(CephContext * cct_)
-:  cct(cct_)
+MemoryModel::MemoryModel(CephContext *cct_)
+    :  cct(cct_)
 {
 }
 
-void MemoryModel::_sample(snap * psnap)
+void MemoryModel::_sample(snap *psnap)
 {
     ifstream f;
 
@@ -24,25 +24,26 @@ void MemoryModel::_sample(snap * psnap)
     if (!f.is_open()) {
         ldout(cct,
               0) << "check_memory_usage unable to open " PROCPREFIX
-            "/proc/self/status" << dendl;
+                 "/proc/self/status" << dendl;
         return;
     }
     while (!f.eof()) {
         string line;
         getline(f, line);
 
-        if (strncmp(line.c_str(), "VmSize:", 7) == 0)
+        if (strncmp(line.c_str(), "VmSize:", 7) == 0) {
             psnap->size = atol(line.c_str() + 7);
-        else if (strncmp(line.c_str(), "VmRSS:", 6) == 0)
+        } else if (strncmp(line.c_str(), "VmRSS:", 6) == 0) {
             psnap->rss = atol(line.c_str() + 7);
-        else if (strncmp(line.c_str(), "VmHWM:", 6) == 0)
+        } else if (strncmp(line.c_str(), "VmHWM:", 6) == 0) {
             psnap->hwm = atol(line.c_str() + 7);
-        else if (strncmp(line.c_str(), "VmLib:", 6) == 0)
+        } else if (strncmp(line.c_str(), "VmLib:", 6) == 0) {
             psnap->lib = atol(line.c_str() + 7);
-        else if (strncmp(line.c_str(), "VmPeak:", 7) == 0)
+        } else if (strncmp(line.c_str(), "VmPeak:", 7) == 0) {
             psnap->peak = atol(line.c_str() + 7);
-        else if (strncmp(line.c_str(), "VmData:", 7) == 0)
+        } else if (strncmp(line.c_str(), "VmData:", 7) == 0) {
             psnap->data = atol(line.c_str() + 7);
+        }
     }
     f.close();
 
@@ -50,7 +51,7 @@ void MemoryModel::_sample(snap * psnap)
     if (!f.is_open()) {
         ldout(cct,
               0) << "check_memory_usage unable to open " PROCPREFIX
-            "/proc/self/maps" << dendl;
+                 "/proc/self/maps" << dendl;
         return;
     }
 
@@ -62,15 +63,19 @@ void MemoryModel::_sample(snap * psnap)
 
         const char *start = line.c_str();
         const char *dash = start;
-        while (*dash && *dash != '-')
+        while (*dash && *dash != '-') {
             dash++;
-        if (!*dash)
+        }
+        if (!*dash) {
             continue;
+        }
         const char *end = dash + 1;
-        while (*end && *end != ' ')
+        while (*end && *end != ' ') {
             end++;
-        if (!*end)
+        }
+        if (!*end) {
             continue;
+        }
         unsigned long long as = strtoll(start, 0, 16);
         unsigned long long ae = strtoll(dash + 1, 0, 16);
 
@@ -82,11 +87,13 @@ void MemoryModel::_sample(snap * psnap)
         int skip = 4;
         while (skip--) {
             end++;
-            while (*end && *end != ' ')
+            while (*end && *end != ' ') {
                 end++;
+            }
         }
-        if (*end)
+        if (*end) {
             end++;
+        }
 
         long size = ae - as;
         //ldout(cct, 0) << "size " << size << " mode is '" << mode << "' end is '" << end << "'" << dendl;
@@ -94,8 +101,9 @@ void MemoryModel::_sample(snap * psnap)
         /*
          * anything 'rw' and anon is assumed to be heap.
          */
-        if (mode[0] == 'r' && mode[1] == 'w' && !*end)
+        if (mode[0] == 'r' && mode[1] == 'w' && !*end) {
             heap += size;
+        }
     }
 
     psnap->heap = heap >> 10;

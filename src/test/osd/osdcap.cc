@@ -175,62 +175,126 @@ TEST(OSDCap, AllowAll)
     ASSERT_TRUE(cap.parse("allow *", NULL));
     ASSERT_TRUE(cap.allow_all());
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "anamespace", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "anamespace", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "anamespace", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "anamespace", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // 'allow *' overrides allow list
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "anamespace", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "anamespace", {
-                               }, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "anamespace", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "anamespace", { {
-                               "application", { {
-                               "key", "value"}}}}, "asdf", true, true, { {
-                               "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "asdf", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 }
 
 TEST(OSDCap, AllowPool)
@@ -241,49 +305,97 @@ TEST(OSDCap, AllowPool)
     ASSERT_TRUE(r);
 
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true->false for classes not on allow list
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, AllowPools)
@@ -294,79 +406,143 @@ TEST(OSDCap, AllowPools)
     ASSERT_TRUE(r);
 
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true-false for classes not on allow list
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "", true, false, {
-                               }, addr));
+    }, "", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "ns", {
-                               }, "", true, false, {
-                               }, addr));
+    }, "", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, false, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "", true, false, {
-                                }, addr));
+    }, "", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "ns", {
-                                }, "", true, false, {
-                                }, addr));
+    }, "", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, false, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "", true, false, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "", true, false, {
+    }, addr));
 }
 
 TEST(OSDCap, AllowPools2)
@@ -377,19 +553,25 @@ TEST(OSDCap, AllowPools2)
     ASSERT_TRUE(r);
 
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true-false for classes not on allow list
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "", true, false, {
-                               }, addr));
+    }, "", true, false, {
+    }, addr));
 }
 
 TEST(OSDCap, ObjectPrefix)
@@ -400,34 +582,52 @@ TEST(OSDCap, ObjectPrefix)
     ASSERT_TRUE(r);
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "food", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "food", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo_bar", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo_bar", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true-false for classes not on allow list
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "food", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "food", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo_bar", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo_bar", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "_foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "_foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, " foo ", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, " foo ", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "fo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "fo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, ObjectPoolAndPrefix)
@@ -438,34 +638,52 @@ TEST(OSDCap, ObjectPoolAndPrefix)
     ASSERT_TRUE(r);
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "food", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "food", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo_bar", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo_bar", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true-false for classes not on allow list
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "food", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "food", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo_bar", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo_bar", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "food", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "food", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "fo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "fo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, Namespace)
@@ -475,14 +693,14 @@ TEST(OSDCap, Namespace)
     ASSERT_TRUE(cap.parse("allow rw namespace=nfoo"));
 
     ASSERT_TRUE(cap.is_capable("bar", "nfoo", {
-                               }, "foo", true, true, {
-                               }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "nfoobar", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, NamespaceGlob)
@@ -492,18 +710,18 @@ TEST(OSDCap, NamespaceGlob)
     ASSERT_TRUE(cap.parse("allow rw namespace=nfoo*"));
 
     ASSERT_TRUE(cap.is_capable("bar", "nfoo", {
-                               }, "foo", true, true, {
-                               }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "nfoobar", {
-                               }, "foo", true, true, {
-                               }, addr));
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "nfo", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, BasicR)
@@ -513,24 +731,32 @@ TEST(OSDCap, BasicR)
     ASSERT_TRUE(cap.parse("allow r", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, BasicW)
@@ -540,24 +766,30 @@ TEST(OSDCap, BasicW)
     ASSERT_TRUE(cap.parse("allow w", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, {
-                               }, addr));
+    }, "foo", false, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, BasicX)
@@ -567,34 +799,46 @@ TEST(OSDCap, BasicX)
     ASSERT_TRUE(cap.parse("allow x", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true->false when class not on allow list
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, BasicRW)
@@ -604,24 +848,30 @@ TEST(OSDCap, BasicRW)
     ASSERT_TRUE(cap.parse("allow rw", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, {
-                               }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, {
-                               }, addr));
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, BasicRX)
@@ -631,34 +881,46 @@ TEST(OSDCap, BasicRX)
     ASSERT_TRUE(cap.parse("allow rx", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true->false for class not on allow list
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, BasicWX)
@@ -668,34 +930,46 @@ TEST(OSDCap, BasicWX)
     ASSERT_TRUE(cap.parse("allow wx", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, {
-                               }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true->false for class not on allow list
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, BasicRWX)
@@ -705,48 +979,72 @@ TEST(OSDCap, BasicRWX)
     ASSERT_TRUE(cap.parse("allow rwx", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false for class not on allow list
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 }
 
 TEST(OSDCap, BasicRWClassRClassW)
@@ -756,48 +1054,72 @@ TEST(OSDCap, BasicRWClassRClassW)
     ASSERT_TRUE(cap.parse("allow rw class-read class-write", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 }
 
 TEST(OSDCap, ClassR)
@@ -807,25 +1129,33 @@ TEST(OSDCap, ClassR)
     ASSERT_TRUE(cap.parse("allow class-read", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, ClassW)
@@ -835,25 +1165,33 @@ TEST(OSDCap, ClassW)
     ASSERT_TRUE(cap.parse("allow class-write", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, ClassRW)
@@ -863,37 +1201,53 @@ TEST(OSDCap, ClassRW)
     ASSERT_TRUE(cap.parse("allow class-read class-write", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, BasicRClassR)
@@ -903,84 +1257,132 @@ TEST(OSDCap, BasicRClassR)
     ASSERT_TRUE(cap.parse("allow r class-read", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, {
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "any", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "any", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "any", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "any", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "any", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "any", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "any", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "any", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "any", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "any", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "any", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, PoolClassR)
@@ -991,221 +1393,363 @@ TEST(OSDCap, PoolClassR)
                 parse("allow pool bar r class-read, allow pool foo rwx", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, {
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "ns", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "ns", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "ns", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, {
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", false, false, {
-                                }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, PoolClassRNS)
@@ -1218,187 +1762,301 @@ TEST(OSDCap, PoolClassRNS)
                  NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, {
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, false, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, false, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "other", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "other", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "other", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "other", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "other", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, false, {
-                                }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", false, false, {
-                                }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("baz", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, NSClassR)
@@ -1411,173 +2069,279 @@ TEST(OSDCap, NSClassR)
                  NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("bar", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", false, false, {
-                               }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", false, false, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, false, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", false, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, { {
-                               "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, false, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", false, true, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "test", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "test", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "test", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "test", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "test", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "test", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("bar", "test", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "test", {
-                               }, "foo", true, false, {
-                               }, addr));
+    }, "foo", true, false, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "test", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "test", {
-                                }, "foo", true, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", true, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "test", {
-                                }, "foo", true, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", true, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "test", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "test", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "test", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "bad", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "bad", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "bad", {
-                                }, "foo", false, false, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "bad", {
-                                }, "foo", false, false, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "bad", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", false, false, { {
-                                "cls", "", false, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, false, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, PoolTagBasic)
@@ -1587,136 +2351,251 @@ TEST(OSDCap, PoolTagBasic)
     ASSERT_TRUE(cap.parse("allow rwx tag application key=value", NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}, {
-                               "app2", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", {
-                                }}}, "foo", true, true, {
-                                }, addr));
+            "application", {
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key2", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key2", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "foo", "bar"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "app2", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "app2", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "foo", "bar"}, {
-                                "key2", "value"}}}, {
-                                "app2", { {
-                                "foo", "bar"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key2", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", false, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", false, false, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, false, {
-                                }, addr));
+    }, "foo", true, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, {
-                                }, addr));
+    }, "foo", false, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, false, {
-                                }, addr));
+    }, "foo", false, false, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", false, true, { {
-                               "cls", "", true, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", false, true, { {
-                               "cls", "", true, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", false, true, { {
-                               "cls", "", false, true, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", false, true, { {
-                               "cls", "", false, false, true}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", false, false, true
+        }
+    }, addr));
     // true->false when class not allow listed
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", false, true, { {
-                                "cls", "", false, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", false, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", false, true, { {
-                                "cls", "", true, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", true, true, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", false, true, { {
-                                "cls", "", true, false, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", true, false, false
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", false, true, { {
-                                "cls", "", false, true, false}}, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", false, true, { {
+            "cls", "", false, true, false
+        }
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", true, false, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", true, false, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, true, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, true, true
+        }
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", false, true, { {
-                                "cls", "", false, false, true}}, addr));
+    }, "foo", false, true, { {
+            "cls", "", false, false, true
+        }
+    }, addr));
 }
 
 TEST(OSDCap, PoolTagWildK)
@@ -1726,49 +2605,88 @@ TEST(OSDCap, PoolTagWildK)
     ASSERT_TRUE(cap.parse("allow rwx tag application *=value", NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}, {
-                               "app2", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key2", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key2", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", {
-                                }}}, "foo", true, true, {
-                                }, addr));
+            "application", {
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "foo", "bar"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "app2", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "app2", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key2", "value"}}}, {
-                               "app2", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key2", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, PoolTagWildV)
@@ -1778,45 +2696,82 @@ TEST(OSDCap, PoolTagWildV)
     ASSERT_TRUE(cap.parse("allow rwx tag application key=*", NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}, {
-                               "app2", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key2", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key2", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "foo", "bar"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "app2", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "app2", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "foo", "bar"}, {
-                                "key2", "value"}}}, {
-                                "app2", { {
-                                "foo", "bar"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key2", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, PoolTagWildKV)
@@ -1826,49 +2781,88 @@ TEST(OSDCap, PoolTagWildKV)
     ASSERT_TRUE(cap.parse("allow rwx tag application *=*", NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key", "value"}}}, {
-                               "app2", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", {
-                               }}}, "foo", true, true, {
-                               }, addr));
+            "application", {
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "key2", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key2", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "app2", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "app2", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_TRUE(cap.is_capable("foo", "", { {
-                               "application", { {
-                               "foo", "bar"}, {
-                               "key2", "value"}}}, {
-                               "app2", { {
-                               "foo", "bar"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "foo", "bar"
+                }, {
+                    "key2", "value"
+                }
+            }
+        }, {
+            "app2", { {
+                    "foo", "bar"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, NSPool)
@@ -1880,32 +2874,52 @@ TEST(OSDCap, NSPool)
                       NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns2", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key", "value2"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value2"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key2", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key2", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, NSPoolGlob)
@@ -1917,32 +2931,52 @@ TEST(OSDCap, NSPoolGlob)
                       NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "ns", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
 
     ASSERT_TRUE(cap.is_capable("foo", "ns2", { {
-                               "application", { {
-                               "key", "value"}}}}, "foo", true, true, {
-                               }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", { {
-                                "application", { {
-                                "key", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key", "value2"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key", "value2"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "ns", { {
-                                "application", { {
-                                "key2", "value"}}}}, "foo", true, true, {
-                                }, addr));
+            "application", { {
+                    "key2", "value"
+                }
+            }
+        }
+    }, "foo", true, true, {
+    }, addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }, "foo", true, true, {
-                                }, addr));
+    }, "foo", true, true, {
+    }, addr));
 }
 
 TEST(OSDCap, OutputParsed)
@@ -1953,63 +2987,113 @@ TEST(OSDCap, OutputParsed)
         const char *output;
     };
     CapsTest test_values[] = {
-        {"allow *",
-         "osdcap[grant(*)]"},
-        {"allow r",
-         "osdcap[grant(r)]"},
-        {"allow rx",
-         "osdcap[grant(rx)]"},
-        {"allow rwx",
-         "osdcap[grant(rwx)]"},
-        {"allow rw class-read class-write",
-         "osdcap[grant(rwx)]"},
-        {"allow rw class-read",
-         "osdcap[grant(rw class-read)]"},
-        {"allow rw class-write",
-         "osdcap[grant(rw class-write)]"},
-        {"allow rwx pool images",
-         "osdcap[grant(pool images rwx)]"},
-        {"allow r pool images",
-         "osdcap[grant(pool images r)]"},
-        {"allow pool images rwx",
-         "osdcap[grant(pool images rwx)]"},
-        {"allow pool images r",
-         "osdcap[grant(pool images r)]"},
-        {"allow pool images w",
-         "osdcap[grant(pool images w)]"},
-        {"allow pool images x",
-         "osdcap[grant(pool images x)]"},
-        {"allow r pool images namespace ''",
-         "osdcap[grant(pool images namespace \"\" r)]"},
-        {"allow r pool images namespace foo",
-         "osdcap[grant(pool images namespace foo r)]"},
-        {"allow r pool images namespace \"\"",
-         "osdcap[grant(pool images namespace \"\" r)]"},
-        {"allow r namespace foo",
-         "osdcap[grant(namespace foo r)]"},
-        {"allow pool images r; allow pool rbd rwx",
-         "osdcap[grant(pool images r),grant(pool rbd rwx)]"},
-        {"allow pool images r, allow pool rbd rwx",
-         "osdcap[grant(pool images r),grant(pool rbd rwx)]"},
-        {"allow class-read object_prefix rbd_children, allow pool libvirt-pool-test rwx",
-         "osdcap[grant(object_prefix rbd_children  class-read),grant(pool libvirt-pool-test rwx)]"},
-        {"allow rwx tag application key=value",
-         "osdcap[grant(app application key key val value rwx)]"},
-        {"allow rwx namespace ns* tag application key=value",
-         "osdcap[grant(namespace ns* app application key key val value rwx)]"},
-        {"allow all",
-         "osdcap[grant(*)]"},
-        {"allow rwx tag application all=all",
-         "osdcap[grant(app application key * val * rwx)]"},
-        {"allow rwx network 1.2.3.4/24",
-         "osdcap[grant(rwx network 1.2.3.4/24)]"},
+        {
+            "allow *",
+            "osdcap[grant(*)]"
+        },
+        {
+            "allow r",
+            "osdcap[grant(r)]"
+        },
+        {
+            "allow rx",
+            "osdcap[grant(rx)]"
+        },
+        {
+            "allow rwx",
+            "osdcap[grant(rwx)]"
+        },
+        {
+            "allow rw class-read class-write",
+            "osdcap[grant(rwx)]"
+        },
+        {
+            "allow rw class-read",
+            "osdcap[grant(rw class-read)]"
+        },
+        {
+            "allow rw class-write",
+            "osdcap[grant(rw class-write)]"
+        },
+        {
+            "allow rwx pool images",
+            "osdcap[grant(pool images rwx)]"
+        },
+        {
+            "allow r pool images",
+            "osdcap[grant(pool images r)]"
+        },
+        {
+            "allow pool images rwx",
+            "osdcap[grant(pool images rwx)]"
+        },
+        {
+            "allow pool images r",
+            "osdcap[grant(pool images r)]"
+        },
+        {
+            "allow pool images w",
+            "osdcap[grant(pool images w)]"
+        },
+        {
+            "allow pool images x",
+            "osdcap[grant(pool images x)]"
+        },
+        {
+            "allow r pool images namespace ''",
+            "osdcap[grant(pool images namespace \"\" r)]"
+        },
+        {
+            "allow r pool images namespace foo",
+            "osdcap[grant(pool images namespace foo r)]"
+        },
+        {
+            "allow r pool images namespace \"\"",
+            "osdcap[grant(pool images namespace \"\" r)]"
+        },
+        {
+            "allow r namespace foo",
+            "osdcap[grant(namespace foo r)]"
+        },
+        {
+            "allow pool images r; allow pool rbd rwx",
+            "osdcap[grant(pool images r),grant(pool rbd rwx)]"
+        },
+        {
+            "allow pool images r, allow pool rbd rwx",
+            "osdcap[grant(pool images r),grant(pool rbd rwx)]"
+        },
+        {
+            "allow class-read object_prefix rbd_children, allow pool libvirt-pool-test rwx",
+            "osdcap[grant(object_prefix rbd_children  class-read),grant(pool libvirt-pool-test rwx)]"
+        },
+        {
+            "allow rwx tag application key=value",
+            "osdcap[grant(app application key key val value rwx)]"
+        },
+        {
+            "allow rwx namespace ns* tag application key=value",
+            "osdcap[grant(namespace ns* app application key key val value rwx)]"
+        },
+        {
+            "allow all",
+            "osdcap[grant(*)]"
+        },
+        {
+            "allow rwx tag application all=all",
+            "osdcap[grant(app application key * val * rwx)]"
+        },
+        {
+            "allow rwx network 1.2.3.4/24",
+            "osdcap[grant(rwx network 1.2.3.4/24)]"
+        },
     };
 
     size_t num_tests = sizeof(test_values) / sizeof(*test_values);
     for (size_t i = 0; i < num_tests; ++i) {
         OSDCap cap;
         std::cout << "Testing input '" << test_values[i].
-            input << "'" << std::endl;
+                  input << "'" << std::endl;
         ASSERT_TRUE(cap.parse(test_values[i].input));
         ASSERT_EQ(test_values[i].output, stringify(cap));
     }
@@ -2023,79 +3107,91 @@ TEST(OSDCap, AllowClass)
 
     // can call any method on class foo regardless of allow list status
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+    }
+    , addr));
 
     // does not permit invoking class bar
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, AllowClassMethod)
@@ -2106,115 +3202,133 @@ TEST(OSDCap, AllowClassMethod)
 
     // can call the xyz method on class foo regardless of allow list status
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "xyz", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "xyz", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "xyz", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "xyz", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "xyz", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "xyz", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "xyz", true, false, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "xyz", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "xyz", false, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "xyz", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "xyz", true, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "xyz", true, true, false
+        }
+    }
+    , addr));
 
     // does not permit invoking class bar
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "xyz", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "xyz", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "xyz", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "xyz", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "xyz", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "xyz", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "xyz", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "xyz", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "xyz", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "xyz", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "xyz", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "xyz", true, true, false
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, AllowClass2)
@@ -2224,78 +3338,90 @@ TEST(OSDCap, AllowClass2)
     ASSERT_TRUE(cap.parse("allow class foo, allow class bar", NULL));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", true, false, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", false, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", true, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, AllowClassRWX)
@@ -2306,81 +3432,93 @@ TEST(OSDCap, AllowClassRWX)
 
     // can call any method on class foo regardless of allow list status
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+    }
+    , addr));
 
     // does not permit invoking class bar
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
 
     // allows class bar if it is allow listed
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, AllowClassMulti)
@@ -2392,1050 +3530,1306 @@ TEST(OSDCap, AllowClassMulti)
     // can call any method on foo, but not bar, so the entire op is rejected
     // bar with allow list is rejected because it still needs rwx/class-read,write
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     // these are OK because 'bar' is on the allow list BUT the calls don't read or write
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     // can call any method on foo or bar regardless of allow list status
     OSDCap cap2;
     ASSERT_TRUE(cap2.parse("allow class foo, allow class bar", NULL));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, true, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, false, true}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap2.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, AllowClassMultiRWX)
@@ -3446,533 +4840,661 @@ TEST(OSDCap, AllowClassMultiRWX)
 
     // can call anything on foo, but only allow listed methods on bar
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     // fails because bar not allow listed
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, true, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, true, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, true, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", true, false, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", true, false, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", true, false, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, true, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, true, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, true, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, true}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, true}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, true}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, true}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, true}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, true
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, false}
-                               , {
-                               "bar", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, false}
-                               , {
-                               "bar", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, false}
-                               , {
-                               "bar", "", false, true, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("bar", "", {
-                               }
-                               , "foo", false, false, { {
-                               "foo", "", false, false, false}
-                               , {
-                               "bar", "", false, false, true}
-                               }
-                               , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, false, true
+        }
+    }
+    , addr));
 
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", true, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", true, false, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, true, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, true, false
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("bar", "", {
-                                }
-                                , "foo", false, false, { {
-                                "foo", "", false, false, false}
-                                , {
-                                "bar", "", false, false, false}
-                                }
-                                , addr));
+    }
+    , "foo", false, false, { {
+            "foo", "", false, false, false
+        }
+        , {
+            "bar", "", false, false, false
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, AllowProfile)
@@ -3983,164 +5505,182 @@ TEST(OSDCap, AllowProfile)
                 parse("profile read-only, profile read-write pool abc", NULL));
     ASSERT_FALSE(cap.allow_all());
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }
-                                , "asdf", true, true, {
-                                }
-                                , addr));
+    }
+    , "asdf", true, true, {
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }
-                               , "asdf", true, false, {
-                               }
-                               , addr));
+    }
+    , "asdf", true, false, {
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("abc", "", {
-                               }
-                               , "asdf", false, true, {
-                               }
-                               , addr));
+    }
+    , "asdf", false, true, {
+    }
+    , addr));
 
     // RBD
     cap.grants.clear();
     ASSERT_TRUE(cap.parse("profile rbd pool abc", NULL));
     ASSERT_FALSE(cap.allow_all());
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }
-                                , "asdf", true, true, {
-                                }
-                                , addr));
+    }
+    , "asdf", true, true, {
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }
-                                , "rbd_children", true, false, {
-                                }
-                                , addr));
+    }
+    , "rbd_children", true, false, {
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }
-                               , "rbd_children", false, false, { {
-                               "rbd", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "rbd_children", false, false, { {
+            "rbd", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("abc", "", {
-                               }
-                               , "asdf", true, true, { {
-                               "rbd", "", true, true, true}
-                               }
-                               , addr));
+    }
+    , "asdf", true, true, { {
+            "rbd", "", true, true, true
+        }
+    }
+    , addr));
 
     cap.grants.clear();
     ASSERT_TRUE(cap.parse("profile rbd-read-only pool abc", NULL));
     ASSERT_FALSE(cap.allow_all());
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }
-                                , "rbd_children", true, false, {
-                                }
-                                , addr));
+    }
+    , "rbd_children", true, false, {
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("abc", "", {
-                               }
-                               , "asdf", true, false, { {
-                               "rbd", "", true, false, true}
-                               }
-                               , addr));
+    }
+    , "asdf", true, false, { {
+            "rbd", "", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("abc", "", {
-                                }
-                                , "asdf", true, true, {
-                                }
-                                , addr));
+    }
+    , "asdf", true, true, {
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("abc", "", {
-                               }
-                               , "rbd_header.ABC", false, false, { {
-                               "rbd", "child_attach", true, true, true}
-                               }
-                               , addr));
+    }
+    , "rbd_header.ABC", false, false, { {
+            "rbd", "child_attach", true, true, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("abc", "", {
-                               }
-                               , "rbd_header.ABC", false, false, { {
-                               "rbd", "child_detach", true, true, true}
-                               }
-                               , addr));
+    }
+    , "rbd_header.ABC", false, false, { {
+            "rbd", "child_detach", true, true, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("abc", "", {
-                                }
-                                , "rbd_header.ABC", false, false, { {
-                                "rbd", "other function", true, true, true}
-                                }
-                                , addr));
+    }
+    , "rbd_header.ABC", false, false, { {
+            "rbd", "other function", true, true, true
+        }
+    }
+    , addr));
 
     cap.grants.clear();
     ASSERT_TRUE(cap.parse("profile rbd pool pool1 namespace ns1", nullptr));
     ASSERT_TRUE(cap.is_capable("pool1", "", {
-                               }
-                               , "rbd_info", false, false, { {
-                               "rbd", "metadata_list", true, false, true}
-                               }
-                               , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("pool1", "ns1", {
-                               }
-                               , "rbd_info", false, false, { {
-                               "rbd", "metadata_list", true, false, true}
-                               }
-                               , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool1", "ns2", {
-                                }
-                                , "rbd_info", false, false, { {
-                                "rbd", "metadata_list", true, false, true}
-                                }
-                                , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool2", "", {
-                                }
-                                , "rbd_info", false, false, { {
-                                "rbd", "metadata_list", true, false, true}
-                                }
-                                , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool1", "", {
-                                }
-                                , "asdf", false, false, { {
-                                "rbd", "metadata_list", true, false, true}
-                                }
-                                , addr));
+    }
+    , "asdf", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool1", "", {
-                                }
-                                , "rbd_info", false, false, { {
-                                "rbd", "other_method", true, false, true}
-                                }
-                                , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "other_method", true, false, true
+        }
+    }
+    , addr));
 
     cap.grants.clear();
     ASSERT_TRUE(cap.parse("profile rbd-read-only pool pool1 namespace ns1",
                           nullptr));
     ASSERT_TRUE(cap.is_capable("pool1", "", {
-                               }
-                               , "rbd_info", false, false, { {
-                               "rbd", "metadata_list", true, false, true}
-                               }
-                               , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_TRUE(cap.is_capable("pool1", "ns1", {
-                               }
-                               , "rbd_info", false, false, { {
-                               "rbd", "metadata_list", true, false, true}
-                               }
-                               , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool1", "ns2", {
-                                }
-                                , "rbd_info", false, false, { {
-                                "rbd", "metadata_list", true, false, true}
-                                }
-                                , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool2", "", {
-                                }
-                                , "rbd_info", false, false, { {
-                                "rbd", "metadata_list", true, false, true}
-                                }
-                                , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool1", "", {
-                                }
-                                , "asdf", false, false, { {
-                                "rbd", "metadata_list", true, false, true}
-                                }
-                                , addr));
+    }
+    , "asdf", false, false, { {
+            "rbd", "metadata_list", true, false, true
+        }
+    }
+    , addr));
     ASSERT_FALSE(cap.is_capable("pool1", "", {
-                                }
-                                , "rbd_info", false, false, { {
-                                "rbd", "other_method", true, false, true}
-                                }
-                                , addr));
+    }
+    , "rbd_info", false, false, { {
+            "rbd", "other_method", true, false, true
+        }
+    }
+    , addr));
 }
 
 TEST(OSDCap, network)
@@ -4157,21 +5697,24 @@ TEST(OSDCap, network)
                  NULL));
 
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }
-                               , "asdf", true, true, { {
-                               "cls", "", true, true, true}
-                               }
-                               , a));
+    }
+    , "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }
+    , a));
     ASSERT_TRUE(cap.is_capable("foo", "", {
-                               }
-                               , "asdf", true, true, { {
-                               "cls", "", true, true, true}
-                               }
-                               , b));
+    }
+    , "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }
+    , b));
     ASSERT_FALSE(cap.is_capable("foo", "", {
-                                }
-                                , "asdf", true, true, { {
-                                "cls", "", true, true, true}
-                                }
-                                , c));
+    }
+    , "asdf", true, true, { {
+            "cls", "", true, true, true
+        }
+    }
+    , c));
 }

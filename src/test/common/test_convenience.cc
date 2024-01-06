@@ -22,7 +22,7 @@
 
 // A just god would not allow the C++ standard to make taking the
 // address of member functions in the standard library undefined behavior.
-static std::string::size_type l(const std::string & s)
+static std::string::size_type l(const std::string &s)
 {
     return s.size();
 }

@@ -18,16 +18,16 @@ TEST(AuthRegistry, con_modes)
     std::vector < uint32_t > modes;
 
     const std::vector < uint32_t > crc_secure = { CEPH_CON_MODE_CRC,
-        CEPH_CON_MODE_SECURE
-    };
+                                                  CEPH_CON_MODE_SECURE
+                                                };
     const std::vector < uint32_t > secure_crc = { CEPH_CON_MODE_SECURE,
-        CEPH_CON_MODE_CRC
-    };
+                                                  CEPH_CON_MODE_CRC
+                                                };
     const std::vector < uint32_t > secure = { CEPH_CON_MODE_SECURE };
 
     cct->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "*");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "*");
 
     // baseline: everybody agrees
     cct->_set_module_type(CEPH_ENTITY_TYPE_CLIENT);
@@ -44,8 +44,8 @@ TEST(AuthRegistry, con_modes)
     reg.get_supported_modes(CEPH_ENTITY_TYPE_OSD, CEPH_AUTH_CEPHX, &modes);
     ASSERT_EQ(modes, crc_secure);
     ASSERT_EQ((uint32_t) CEPH_CON_MODE_CRC, reg.pick_mode(CEPH_ENTITY_TYPE_OSD,
-                                                          CEPH_AUTH_CEPHX,
-                                                          crc_secure));
+              CEPH_AUTH_CEPHX,
+              crc_secure));
 
     // what mons prefer secure, internal to mon cluster only
     cct->_conf.set_val("ms_mon_cluster_mode", "secure");

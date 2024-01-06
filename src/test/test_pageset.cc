@@ -4,10 +4,10 @@
 
 #include "os/memstore/PageSet.h"
 
-template < typename T > bool is_aligned(T * ptr)
+template < typename T > bool is_aligned(T *ptr)
 {
     const auto align_mask = alignof(T) - 1;
-    return (reinterpret_cast < uintptr_t > (ptr) & align_mask) == 0;
+    return (reinterpret_cast < uintptr_t >(ptr) & align_mask) == 0;
 }
 
 TEST(PageSet, AllocAligned)
@@ -153,9 +153,10 @@ TEST(PageSet, GetHoles)
     // allocate pages at offsets 1, 2, 5, and 7
     PageSet pages(1);
     PageSet::page_vector range;
-  for (uint64_t i:{
-         1, 2, 5, 7}
-    )
+    for (uint64_t i : {
+             1, 2, 5, 7
+         }
+        )
         pages.alloc_range(i, 1, range);
     range.clear();
 
@@ -257,9 +258,10 @@ TEST(PageSet, FreeHoles)
     // allocate pages at offsets 1, 2, 5, and 7
     PageSet pages(1);
     PageSet::page_vector range;
-  for (uint64_t i:{
-         1, 2, 5, 7}
-    )
+    for (uint64_t i : {
+             1, 2, 5, 7
+         }
+        )
         pages.alloc_range(i, 1, range);
     range.clear();
 

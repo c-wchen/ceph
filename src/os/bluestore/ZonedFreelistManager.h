@@ -22,7 +22,8 @@
 
 using cfg_reader_t = std::function < int (const std::string &, std::string *) >;
 
-class ZonedFreelistManager:public FreelistManager {
+class ZonedFreelistManager: public FreelistManager
+{
     std::string meta_prefix;    ///< device size, zone size, etc.
     std::string info_prefix;    ///< per zone write pointer, dead bytes
     mutable ceph::mutex lock = ceph::make_mutex("ZonedFreelistManager::lock");
@@ -37,14 +38,14 @@ class ZonedFreelistManager:public FreelistManager {
     uint64_t enumerate_zone_num;
 
     void write_zone_state_delta_to_db(uint64_t zone_num,
-                                      const zone_state_t & zone_state,
+                                      const zone_state_t &zone_state,
                                       KeyValueDB::Transaction txn);
     void write_zone_state_reset_to_db(uint64_t zone_num,
-                                      const zone_state_t & zone_state,
+                                      const zone_state_t &zone_state,
                                       KeyValueDB::Transaction txn);
     void load_zone_state_from_db(uint64_t zone_num,
-                                 zone_state_t & zone_state,
-                                 KeyValueDB::Iterator & it) const;
+                                 zone_state_t &zone_state,
+                                 KeyValueDB::Iterator &it) const;
 
     void init_zone_states(KeyValueDB::Transaction txn);
 
@@ -55,11 +56,11 @@ class ZonedFreelistManager:public FreelistManager {
 
     int _read_cfg(cfg_reader_t cfg_reader);
 
-  public:
-    ZonedFreelistManager(CephContext * cct,
+public:
+    ZonedFreelistManager(CephContext *cct,
                          std::string meta_prefix, std::string info_prefix);
 
-    static void setup_merge_operator(KeyValueDB * db, std::string prefix);
+    static void setup_merge_operator(KeyValueDB *db, std::string prefix);
 
     int create(uint64_t size,
                uint64_t granularity,
@@ -67,16 +68,16 @@ class ZonedFreelistManager:public FreelistManager {
                uint64_t first_sequential_zone,
                KeyValueDB::Transaction txn) override;
 
-    int init(KeyValueDB * kvdb,
+    int init(KeyValueDB *kvdb,
              bool db_in_read_only, cfg_reader_t cfg_reader) override;
 
     void shutdown() override;
-    void sync(KeyValueDB * kvdb) override;
-    void dump(KeyValueDB * kvdb) override;
+    void sync(KeyValueDB *kvdb) override;
+    void dump(KeyValueDB *kvdb) override;
 
     void enumerate_reset() override;
-    bool enumerate_next(KeyValueDB * kvdb,
-                        uint64_t * offset, uint64_t * length) override;
+    bool enumerate_next(KeyValueDB *kvdb,
+                        uint64_t *offset, uint64_t *length) override;
 
     void allocate(uint64_t offset,
                   uint64_t length, KeyValueDB::Transaction txn) override;
@@ -84,19 +85,22 @@ class ZonedFreelistManager:public FreelistManager {
     void release(uint64_t offset,
                  uint64_t length, KeyValueDB::Transaction txn) override;
 
-    inline uint64_t get_size() const override {
+    inline uint64_t get_size() const override
+    {
         return size;
-    } inline uint64_t get_alloc_units() const override {
+    } inline uint64_t get_alloc_units() const override
+    {
         return size / bytes_per_block;
-    } inline uint64_t get_alloc_size() const override {
+    } inline uint64_t get_alloc_size() const override
+    {
         return bytes_per_block;
     } void get_meta(uint64_t target_size,
                     std::vector < std::pair < std::string,
                     std::string >> *) const override;
 
-    std::vector < zone_state_t > get_zone_states(KeyValueDB * kvdb) const;
+    std::vector < zone_state_t > get_zone_states(KeyValueDB *kvdb) const;
 
-    void mark_zone_to_clean_free(uint64_t zone, KeyValueDB * kvdb);
+    void mark_zone_to_clean_free(uint64_t zone, KeyValueDB *kvdb);
 };
 
 #endif

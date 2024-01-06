@@ -22,103 +22,117 @@
 
 using namespace std::literals;
 
-namespace {
-    template < typename TC > void run_some() {
-        static constexpr auto MAX_FUTURES = 5;
-        ceph::timer < TC > timer;
-        std::vector < std::future < void >>futures;
-        for (auto i = 0; i < MAX_FUTURES; ++i) {
-            auto t = TC::now() + 2 s;
-            std::promise < void >p;
-            futures.push_back(p.get_future());
-            timer.add_event(t,[p = std::move(p)] ()mutable {
-                            p.set_value();});
-        }
-      for (auto & f:futures)
-            f.get();
-    }
-
-    template < typename TC > void run_orderly() {
-        ceph::timer < TC > timer;
-
-        std::future < typename TC::time_point > first;
-        std::future < typename TC::time_point > second;
-
-        {
-            std::promise < typename TC::time_point > p;
-            second = p.get_future();
-            timer.add_event(4 s,[p = std::move(p)] ()mutable {
-                            p.set_value(TC::now());});
-        }
-        {
-            std::promise < typename TC::time_point > p;
-            first = p.get_future();
-            timer.add_event(2 s,[p = std::move(p)] ()mutable {
-                            p.set_value(TC::now());});
-        }
-
-        EXPECT_LT(first.get(), second.get());
-    }
-
-    struct Destructo {
-        bool armed = true;
+namespace
+{
+template < typename TC > void run_some()
+{
+    static constexpr auto MAX_FUTURES = 5;
+    ceph::timer < TC > timer;
+    std::vector < std::future < void >>futures;
+    for (auto i = 0; i < MAX_FUTURES; ++i) {
+        auto t = TC::now() + 2 s;
         std::promise < void >p;
+        futures.push_back(p.get_future());
+        timer.add_event(t, [p = std::move(p)]()mutable {
+            p.set_value();});
+    }
+    for (auto &f : futures) {
+        f.get();
+    }
+}
 
-        Destructo(std::promise < void >&&p):p(std::move(p)) {
-        } Destructo(const Destructo &) = delete;
-        Destructo & operator =(const Destructo &) = delete;
-        Destructo(Destructo && rhs) {
-            p = std::move(rhs.p);
-            armed = rhs.armed;
-            rhs.armed = false;
-        }
-        Destructo & operator =(Destructo & rhs) {
-            p = std::move(rhs.p);
-            rhs.armed = false;
-            armed = rhs.armed;
-            rhs.armed = false;
-            return *this;
-        }
+template < typename TC > void run_orderly()
+{
+    ceph::timer < TC > timer;
 
-        ~Destructo() {
-            if (armed)
-                p.set_value();
-        }
-        void operator () () const {
-            FAIL();
-    }};
+    std::future < typename TC::time_point > first;
+    std::future < typename TC::time_point > second;
 
-    template < typename TC > void cancel_all() {
-        ceph::timer < TC > timer;
-        static constexpr auto MAX_FUTURES = 5;
-        std::vector < std::future < void >>futures;
-        for (auto i = 0; i < MAX_FUTURES; ++i) {
-            std::promise < void >p;
-            futures.push_back(p.get_future());
-            timer.add_event(100 s + i * 1 s, Destructo(std::move(p)));
-        }
-        timer.cancel_all_events();
-      for (auto & f:futures)
-            f.get();
+    {
+        std::promise < typename TC::time_point > p;
+        second = p.get_future();
+        timer.add_event(4 s, [p = std::move(p)]()mutable {
+            p.set_value(TC::now());});
+    }
+    {
+        std::promise < typename TC::time_point > p;
+        first = p.get_future();
+        timer.add_event(2 s, [p = std::move(p)]()mutable {
+            p.set_value(TC::now());});
     }
 
-    template < typename TC > void cancellation() {
-        ceph::timer < TC > timer;
-        {
-            std::promise < void >p;
-            auto f = p.get_future();
-            auto e = timer.add_event(100 s, Destructo(std::move(p)));
-            EXPECT_TRUE(timer.cancel_event(e));
-        }
-        {
-            std::promise < void >p;
-            auto f = p.get_future();
-            auto e = timer.add_event(1 s,[p = std::move(p)] ()mutable {
-                                     p.set_value();});
-            f.get();
-            EXPECT_FALSE(timer.cancel_event(e));
+    EXPECT_LT(first.get(), second.get());
+}
+
+struct Destructo {
+    bool armed = true;
+    std::promise < void >p;
+
+    Destructo(std::promise < void >&&p): p(std::move(p))
+    {
+    } Destructo(const Destructo &) = delete;
+    Destructo &operator =(const Destructo &) = delete;
+    Destructo(Destructo && rhs)
+    {
+        p = std::move(rhs.p);
+        armed = rhs.armed;
+        rhs.armed = false;
+    }
+    Destructo &operator =(Destructo &rhs)
+    {
+        p = std::move(rhs.p);
+        rhs.armed = false;
+        armed = rhs.armed;
+        rhs.armed = false;
+        return *this;
+    }
+
+    ~Destructo()
+    {
+        if (armed) {
+            p.set_value();
         }
     }
+    void operator()() const
+    {
+        FAIL();
+    }
+};
+
+template < typename TC > void cancel_all()
+{
+    ceph::timer < TC > timer;
+    static constexpr auto MAX_FUTURES = 5;
+    std::vector < std::future < void >>futures;
+    for (auto i = 0; i < MAX_FUTURES; ++i) {
+        std::promise < void >p;
+        futures.push_back(p.get_future());
+        timer.add_event(100 s + i * 1 s, Destructo(std::move(p)));
+    }
+    timer.cancel_all_events();
+    for (auto &f : futures) {
+        f.get();
+    }
+}
+
+template < typename TC > void cancellation()
+{
+    ceph::timer < TC > timer;
+    {
+        std::promise < void >p;
+        auto f = p.get_future();
+        auto e = timer.add_event(100 s, Destructo(std::move(p)));
+        EXPECT_TRUE(timer.cancel_event(e));
+    }
+    {
+        std::promise < void >p;
+        auto f = p.get_future();
+        auto e = timer.add_event(1 s, [p = std::move(p)]()mutable {
+            p.set_value();});
+        f.get();
+        EXPECT_FALSE(timer.cancel_event(e));
+    }
+}
 }
 
 TEST(RunSome, Steady)

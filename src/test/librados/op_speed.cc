@@ -20,7 +20,7 @@ int main()
         op.read(0, 0, &bl, nullptr);
         op.stat2(&sz, &tm, nullptr);
         op.getxattrs(&xattrs, nullptr);
-        op.omap_get_vals2( {
-                          }, 1000, &omap, &more, nullptr);
+        op.omap_get_vals2({
+        }, 1000, &omap, &more, nullptr);
     }
 }

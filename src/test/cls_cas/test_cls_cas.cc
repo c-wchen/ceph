@@ -20,25 +20,28 @@
 using namespace std;
 
 /// creates a temporary pool and initializes an IoCtx for each test
-class cls_cas:public::testing::Test {
+class cls_cas: public::testing::Test
+{
     librados::Rados rados;
     std::string pool_name;
-  protected:
+protected:
     librados::IoCtx ioctx;
 
-    void SetUp() {
+    void SetUp()
+    {
         pool_name = get_temp_pool_name();
         /* create pool */
         ASSERT_EQ("", create_one_pool_pp(pool_name, rados));
         ASSERT_EQ(0, rados.ioctx_create(pool_name.c_str(), ioctx));
-    } void TearDown() {
+    } void TearDown()
+    {
         /* remove pool */
         ioctx.close();
         ASSERT_EQ(0, destroy_one_pool_pp(pool_name, rados));
     }
 };
 
-static librados::ObjectWriteOperation * new_op()
+static librados::ObjectWriteOperation *new_op()
 {
     return new librados::ObjectWriteOperation();
 }
@@ -207,8 +210,7 @@ TEST_F(cls_cas, dup_get)
             // should not referenced anymore, but by_object is an exception
             // and by_object is used by default.
             ASSERT_EQ(bl.length(), ioctx.read(oid, t, 0, 0));
-        }
-        else {
+        } else {
             // the last reference was removed
             ASSERT_EQ(-ENOENT, ioctx.read(oid, t, 0, 0));
         }
@@ -304,10 +306,11 @@ TEST_F(cls_cas, get_wrong_data)
 static int count_bits(unsigned long n)
 {
     // base case
-    if (n == 0)
+    if (n == 0) {
         return 0;
-    else
+    } else {
         return 1 + count_bits(n & (n - 1));
+    }
 }
 
 TEST(chunk_refs_t, size)
@@ -330,8 +333,8 @@ TEST(chunk_refs_t, size)
             r.dynamic_encode(bl, 512);
             if (count_bits(i) == 1) {
                 cout << i << "\t" << bl.length()
-                    << "\t" << r.describe_encoding()
-                    << std::endl;
+                     << "\t" << r.describe_encoding()
+                     << std::endl;
             }
 
             // verify reencoding is correct
@@ -342,7 +345,7 @@ TEST(chunk_refs_t, size)
             encode(a, bl2);
             if (!bl.contents_equal(bl2)) {
                 std::unique_ptr < Formatter >
-                    f(Formatter::create("json-pretty"));
+                f(Formatter::create("json-pretty"));
                 cout << "original:\n";
                 f->dump_object("refs", r);
                 f->flush(cout);

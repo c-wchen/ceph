@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef _BACKWARD_BACKWARD_WARNING_H
@@ -36,7 +36,7 @@
 
 using namespace std;
 
-int Dumper::init(mds_role_t role_, const std::string & type)
+int Dumper::init(mds_role_t role_, const std::string &type)
 {
     role = role_;
 
@@ -53,24 +53,21 @@ int Dumper::init(mds_role_t role_, const std::string & type)
         int jp_load_result = jp.load(objecter);
         if (jp_load_result != 0) {
             std::
-                cerr << "Error loading journal: " <<
-                cpp_strerror(jp_load_result) << std::endl;
+            cerr << "Error loading journal: " <<
+                 cpp_strerror(jp_load_result) << std::endl;
             return jp_load_result;
-        }
-        else {
+        } else {
             ino = jp.front;
         }
-    }
-    else if (type == "purge_queue") {
+    } else if (type == "purge_queue") {
         ino = MDS_INO_PURGE_QUEUE + role.rank;
-    }
-    else {
-        ceph_abort();           // should not get here 
+    } else {
+        ceph_abort();           // should not get here
     }
     return 0;
 }
 
-int Dumper::recover_journal(Journaler * journaler)
+int Dumper::recover_journal(Journaler *journaler)
 {
     C_SaferCond cond;
     lock.lock();
@@ -81,8 +78,7 @@ int Dumper::recover_journal(Journaler * journaler)
     if (r < 0) {                // Error
         derr << "error on recovery: " << cpp_strerror(r) << dendl;
         return r;
-    }
-    else {
+    } else {
         dout(10) << "completed journal recovery" << dendl;
         return 0;
     }
@@ -121,13 +117,18 @@ int Dumper::dump(const char *dump_file)
        length %llu (0x%llx)\n    write_pos %llu (0x%llx)\n    format %llu\n\
        trimmed_pos %llu (0x%llx)\n    stripe_unit %lu (0x%lx)\n    stripe_count %lu (0x%lx)\n\
        object_size %lu (0x%lx)\n    fsid %s\n%c",
-                 role.rank, (unsigned long long)start, (unsigned long long)start, (unsigned long long)len, (unsigned long long)len, (unsigned long long)journaler.last_committed.write_pos, (unsigned long long)journaler.last_committed.write_pos, (unsigned long long)journaler.last_committed.stream_format,
-                 (unsigned long long)journaler.last_committed.trimmed_pos, (unsigned long long)journaler.last_committed.trimmed_pos, (unsigned long)journaler.last_committed.layout.stripe_unit, (unsigned long)journaler.last_committed.layout.stripe_unit, (unsigned long)journaler.last_committed.layout.stripe_count,
-                 (unsigned long)journaler.last_committed.layout.stripe_count, (unsigned long)journaler.last_committed.layout.object_size, (unsigned long)journaler.last_committed.layout.object_size, fsid_str, 4);
+                 role.rank, (unsigned long long)start, (unsigned long long)start, (unsigned long long)len, (unsigned long long)len,
+                 (unsigned long long)journaler.last_committed.write_pos, (unsigned long long)journaler.last_committed.write_pos,
+                 (unsigned long long)journaler.last_committed.stream_format,
+                 (unsigned long long)journaler.last_committed.trimmed_pos, (unsigned long long)journaler.last_committed.trimmed_pos,
+                 (unsigned long)journaler.last_committed.layout.stripe_unit, (unsigned long)journaler.last_committed.layout.stripe_unit,
+                 (unsigned long)journaler.last_committed.layout.stripe_count,
+                 (unsigned long)journaler.last_committed.layout.stripe_count, (unsigned long)journaler.last_committed.layout.object_size,
+                 (unsigned long)journaler.last_committed.layout.object_size, fsid_str, 4);
         r = safe_write(fd, buf, sizeof(buf));
         if (r) {
             derr << "Error " << r << " (" << cpp_strerror(r) <<
-                ") writing journal file header" << dendl;
+                 ") writing journal file header" << dendl;
             ::close(fd);
             return r;
         }
@@ -137,7 +138,7 @@ int Dumper::dump(const char *dump_file)
         if (seeked == (off64_t) - 1) {
             r = errno;
             derr << "Error " << r << " (" << cpp_strerror(r) <<
-                ") seeking to 0x" << std::hex << start << std::dec << dendl;
+                 ") seeking to 0x" << std::hex << start << std::dec << dendl;
             ::close(fd);
             return r;
         }
@@ -149,7 +150,7 @@ int Dumper::dump(const char *dump_file)
         for (uint64_t pos = start; pos < start + len; pos += chunk_size) {
             bufferlist bl;
             dout(10) << "Reading at pos=0x" << std::hex << pos << std::
-                dec << dendl;
+                     dec << dendl;
 
             const uint32_t read_size =
                 std::min < uint64_t > (chunk_size, end - pos);
@@ -162,18 +163,18 @@ int Dumper::dump(const char *dump_file)
             r = cond.wait();
             if (r < 0) {
                 derr << "Error " << r << " (" << cpp_strerror(r) << ") reading "
-                    "journal at offset 0x" << std::hex << pos << std::
-                    dec << dendl;
+                     "journal at offset 0x" << std::hex << pos << std::
+                     dec << dendl;
                 ::close(fd);
                 return r;
             }
             dout(10) << "Got 0x" << std::hex << bl.length() << std::dec
-                << " bytes" << dendl;
+                     << " bytes" << dendl;
 
             r = bl.write_fd(fd);
             if (r) {
                 derr << "Error " << r << " (" << cpp_strerror(r) <<
-                    ") writing journal file" << dendl;
+                     ") writing journal file" << dendl;
                 ::close(fd);
                 return r;
             }
@@ -183,21 +184,20 @@ int Dumper::dump(const char *dump_file)
         if (r) {
             r = errno;
             derr << "Error " << r << " (" << cpp_strerror(r) <<
-                ") closing journal file" << dendl;
+                 ") closing journal file" << dendl;
             return r;
         }
 
         cout << "wrote " << len << " bytes at offset " << start << " to " <<
-            dump_file << "\n" << "NOTE: this is a _sparse_ file; you can\n" <<
-            "\t$ tar cSzf " << dump_file << ".tgz " << dump_file << "\n" <<
-            "      to efficiently compress it while preserving sparseness." <<
-            std::endl;
+             dump_file << "\n" << "NOTE: this is a _sparse_ file; you can\n" <<
+             "\t$ tar cSzf " << dump_file << ".tgz " << dump_file << "\n" <<
+             "      to efficiently compress it while preserving sparseness." <<
+             std::endl;
         return 0;
-    }
-    else {
+    } else {
         int err = errno;
         derr << "unable to open " << dump_file << ": " << cpp_strerror(err) <<
-            dendl;
+             dendl;
         return err;
     }
 }
@@ -216,14 +216,14 @@ int Dumper::undump(const char *dump_file, bool force)
     int recovered = recover_journal(&journaler);
     if (recovered != 0) {
         derr << "recover_journal failed, try to get header from dump file " <<
-            dendl;
+             dendl;
     }
 
     int fd =::open(dump_file, O_RDONLY | O_BINARY);
     if (fd < 0) {
         r = errno;
         derr << "couldn't open " << dump_file << ": " << cpp_strerror(r) <<
-            dendl;
+             dendl;
         return r;
     }
 
@@ -260,14 +260,13 @@ int Dumper::undump(const char *dump_file, bool force)
 
             if (fsid != monc->get_fsid()) {
                 derr <<
-                    "Imported journal fsid does not match online cluster fsid"
-                    << dendl;
+                     "Imported journal fsid does not match online cluster fsid"
+                     << dendl;
                 derr << "Use --force to skip fsid check" << dendl;
                 ::close(fd);
                 return -EINVAL;
             }
-        }
-        else {
+        } else {
             derr << "Invalid header, no fsid embeded" << dendl;
             ::close(fd);
             return -EINVAL;
@@ -278,34 +277,29 @@ int Dumper::undump(const char *dump_file, bool force)
         stripe_unit = journaler.last_committed.layout.stripe_unit;
         stripe_count = journaler.last_committed.layout.stripe_count;
         object_size = journaler.last_committed.layout.object_size;
-    }
-    else {
+    } else {
         // try to get layout from dump file header, if failed set layout to default
         if (strstr(buf, "stripe_unit")) {
             sscanf(strstr(buf, "stripe_unit"), "stripe_unit %lu", &stripe_unit);
-        }
-        else {
+        } else {
             stripe_unit = file_layout_t::get_default().stripe_unit;
         }
         if (strstr(buf, "stripe_count")) {
             sscanf(strstr(buf, "stripe_count"), "stripe_count %lu",
                    &stripe_count);
-        }
-        else {
+        } else {
             stripe_count = file_layout_t::get_default().stripe_count;
         }
         if (strstr(buf, "object_size")) {
             sscanf(strstr(buf, "object_size"), "object_size %lu", &object_size);
-        }
-        else {
+        } else {
             object_size = file_layout_t::get_default().object_size;
         }
     }
 
     if (strstr(buf, "trimmed_pos")) {
         sscanf(strstr(buf, "trimmed_pos"), "trimmed_pos %llu", &trimmed_pos);
-    }
-    else {
+    } else {
         // Old format dump, any untrimmed objects before expire_pos will
         // be discarded as trash.
         trimmed_pos = start - (start % object_size);
@@ -313,26 +307,26 @@ int Dumper::undump(const char *dump_file, bool force)
 
     if (trimmed_pos > start) {
         derr << std::hex << "Invalid header (trimmed 0x" << trimmed_pos
-            << " > expire 0x" << start << std::dec << dendl;
+             << " > expire 0x" << start << std::dec << dendl;
         ::close(fd);
         return -EINVAL;
     }
 
     if (start > write_pos) {
         derr << std::hex << "Invalid header (expire 0x" << start
-            << " > write 0x" << write_pos << std::dec << dendl;
+             << " > write 0x" << write_pos << std::dec << dendl;
         ::close(fd);
         return -EINVAL;
     }
 
     cout << "start " << start <<
-        " len " << len <<
-        " write_pos " << write_pos <<
-        " format " << format <<
-        " trimmed_pos " << trimmed_pos <<
-        " stripe_unit " << stripe_unit <<
-        " stripe_count " << stripe_count <<
-        " object_size " << object_size << std::endl;
+         " len " << len <<
+         " write_pos " << write_pos <<
+         " format " << format <<
+         " trimmed_pos " << trimmed_pos <<
+         " stripe_unit " << stripe_unit <<
+         " stripe_count " << stripe_count <<
+         " object_size " << object_size << std::endl;
 
     Journaler::Header h;
     h.trimmed_pos = trimmed_pos;
@@ -379,7 +373,7 @@ int Dumper::undump(const char *dump_file, bool force)
         ceph_assert(object_size > 0);
         uint64_t last_obj = h.write_pos / object_size;
         uint64_t purge_count = 2;
-        /* When the length is zero, the last_obj should be zeroed 
+        /* When the length is zero, the last_obj should be zeroed
          * from the offset determined by the new write_pos instead of being purged.
          */
         if (!len) {
@@ -388,14 +382,14 @@ int Dumper::undump(const char *dump_file, bool force)
         }
         C_SaferCond purge_cond;
         cout << "Purging " << purge_count << " objects from " << last_obj <<
-            std::endl;
+             std::endl;
         lock.lock();
         filer.purge_range(ino, &h.layout, snapc, last_obj, purge_count,
                           ceph::real_clock::now(), 0, &purge_cond);
         lock.unlock();
         purge_cond.wait();
     }
-    /* When the length is zero, zero the last object 
+    /* When the length is zero, zero the last object
      * from the offset determined by the new write_pos.
      */
     if (!len) {

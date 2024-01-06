@@ -63,7 +63,7 @@ TEST(ErasureCodeLrc, parse_rule)
     profile["crush-steps"] = "[[\"choose\", \"host\", 2]]";
     EXPECT_EQ(0, lrc.parse_rule(profile, &cerr));
 
-    const ErasureCodeLrc::Step & step = lrc.rule_steps.front();
+    const ErasureCodeLrc::Step &step = lrc.rule_steps.front();
     EXPECT_EQ("choose", step.op);
     EXPECT_EQ("host", step.type);
     EXPECT_EQ(2, step.n);
@@ -74,13 +74,13 @@ TEST(ErasureCodeLrc, parse_rule)
     EXPECT_EQ(0, lrc.parse_rule(profile, &cerr));
     EXPECT_EQ(2U, lrc.rule_steps.size());
     {
-        const ErasureCodeLrc::Step & step = lrc.rule_steps[0];
+        const ErasureCodeLrc::Step &step = lrc.rule_steps[0];
         EXPECT_EQ("choose", step.op);
         EXPECT_EQ("rack", step.type);
         EXPECT_EQ(2, step.n);
     }
     {
-        const ErasureCodeLrc::Step & step = lrc.rule_steps[1];
+        const ErasureCodeLrc::Step &step = lrc.rule_steps[1];
         EXPECT_EQ("chooseleaf", step.op);
         EXPECT_EQ("host", step.type);
         EXPECT_EQ(5, step.n);
@@ -146,8 +146,9 @@ TEST(ErasureCodeTest, create_rule)
     EXPECT_EQ(1, lrc.create_rule(rule_name, *c, &cerr));
 
     vector < __u32 > weight;
-    for (int o = 0; o < c->get_max_devices(); o++)
+    for (int o = 0; o < c->get_max_devices(); o++) {
         weight.push_back(0x10000);
+    }
     int rule = c->get_rule_id(rule_name);
     vector < int >out;
     unsigned int n = racks * hosts;
@@ -177,9 +178,9 @@ TEST(ErasureCodeLrc, parse_kml)
     profile["k"] = "4";
     EXPECT_EQ(ERROR_LRC_ALL_OR_NOTHING, lrc.parse_kml(profile, &cerr));
     const char *generated[] = { "mapping",
-        "layers",
-        "crush-steps"
-    };
+                                "layers",
+                                "crush-steps"
+                              };
     profile["m"] = "2";
     profile["l"] = "3";
 
@@ -488,8 +489,9 @@ TEST(ErasureCodeLrc, minimum_to_decode)
             want_to_read.insert(lrc.get_chunk_count() - 1);
             // all chunks are available except the last chunk
             set < int >available_chunks;
-            for (int i = 0; i < (int)lrc.get_chunk_count() - 1; i++)
+            for (int i = 0; i < (int)lrc.get_chunk_count() - 1; i++) {
                 available_chunks.insert(i);
+            }
             // _____DDDDc can recover c
             set < int >minimum;
             EXPECT_EQ(0,
@@ -506,8 +508,9 @@ TEST(ErasureCodeLrc, minimum_to_decode)
             set < int >want_to_read;
             want_to_read.insert(0);
             set < int >available_chunks;
-            for (int i = 1; i < (int)lrc.get_chunk_count(); i++)
+            for (int i = 1; i < (int)lrc.get_chunk_count(); i++) {
                 available_chunks.insert(i);
+            }
             set < int >minimum;
             EXPECT_EQ(0,
                       lrc._minimum_to_decode(want_to_read, available_chunks,
@@ -604,9 +607,9 @@ TEST(ErasureCodeLrc, encode_decode)
     ErasureCodeProfile profile;
     profile["mapping"] = "__DD__DD";
     const char *description_string = "[ " "  [ \"_cDD_cDD\", \"\" ],"   // global layer
-        "  [ \"c_DD____\", \"\" ]," // first local layer
-        "  [ \"____cDDD\", \"\" ]," // second local layer
-        "]";
+                                     "  [ \"c_DD____\", \"\" ]," // first local layer
+                                     "  [ \"____cDDD\", \"\" ]," // second local layer
+                                     "]";
     profile["layers"] = description_string;
     EXPECT_EQ(0, lrc.init(profile, &cerr));
     EXPECT_EQ(4U, lrc.get_data_chunk_count());
@@ -625,7 +628,7 @@ TEST(ErasureCodeLrc, encode_decode)
         tmp.claim_append(encoded[i]);
         encoded[i].swap(tmp);
     }
-    const vector < int >&mapping = lrc.get_chunk_mapping();
+    const vector < int > &mapping = lrc.get_chunk_mapping();
     char c = 'A';
     for (unsigned int i = 0; i < lrc.get_data_chunk_count(); i++) {
         int j = mapping[i];
@@ -763,7 +766,7 @@ TEST(ErasureCodeLrc, encode_decode_2)
         tmp.claim_append(encoded[i]);
         encoded[i].swap(tmp);
     }
-    const vector < int >&mapping = lrc.get_chunk_mapping();
+    const vector < int > &mapping = lrc.get_chunk_mapping();
     char c = 'A';
     for (unsigned int i = 0; i < lrc.get_data_chunk_count(); i++) {
         int j = mapping[i];
@@ -808,8 +811,9 @@ TEST(ErasureCodeLrc, encode_decode_2)
     }
     {
         set < int >want_to_read;
-        for (unsigned int i = 0; i < lrc.get_chunk_count(); i++)
+        for (unsigned int i = 0; i < lrc.get_chunk_count(); i++) {
             want_to_read.insert(i);
+        }
         map < int, bufferlist > chunks;
         chunks[1] = encoded[1];
         chunks[3] = encoded[3];
@@ -854,8 +858,9 @@ TEST(ErasureCodeLrc, encode_decode_2)
     }
     {
         set < int >want_to_read;
-        for (unsigned int i = 0; i < lrc.get_chunk_count(); i++)
+        for (unsigned int i = 0; i < lrc.get_chunk_count(); i++) {
             want_to_read.insert(i);
+        }
         map < int, bufferlist > chunks;
         chunks[1] = encoded[1];
         chunks[3] = encoded[3];

@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     try {
         using namespace boost::program_options;
         options_description desc {
-        "Options"};
+            "Options"};
         desc.add_options()
             ("help,h", "Help screen")
             ("num_qos_classes", value < int >()->default_value(1),
@@ -23,8 +23,7 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
         num_qos_classes = vm["num_qos_classes"].as < int >();
-    }
-    catch(const boost::program_options::error & ex) {
+    } catch (const boost::program_options::error &ex) {
         std::cerr << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
@@ -40,7 +39,7 @@ int main(int argc, char **argv)
         g_ceph_context = cct.get();
     }
     std::shared_ptr < ActiveRateLimiter >
-        ratelimit(new ActiveRateLimiter(g_ceph_context));
+    ratelimit(new ActiveRateLimiter(g_ceph_context));
     ratelimit->start();
     auto dout = DoutPrefix(g_ceph_context, ceph_subsys_rgw, "rate limiter: ");
     for (int i = 0; i < num_qos_classes; i++) {

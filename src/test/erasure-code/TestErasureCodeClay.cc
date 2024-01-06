@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -11,7 +11,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include <errno.h>
@@ -95,7 +95,7 @@ TEST(ErasureCodeClay, encode_decode)
             map < int, bufferlist > decoded;
             EXPECT_EQ(0,
                       clay._decode(set <
-                                   int >(want_to_decode, want_to_decode + 2),
+                                   int > (want_to_decode, want_to_decode + 2),
                                    degraded, &decoded));
             EXPECT_EQ(4u, decoded.size());
             EXPECT_EQ(length, decoded[j].length());
@@ -117,7 +117,7 @@ TEST(ErasureCodeClay, encode_decode)
         EXPECT_EQ(0, clay.minimum_to_decode(want_to_read, available, &minimum));
         map < int, bufferlist > helper;
         for (map < int, vector < pair < int, int >>>::iterator h =
-             minimum.begin(); h != minimum.end(); ++h) {
+                 minimum.begin(); h != minimum.end(); ++h) {
             for (vector < pair < int, int >>::iterator ind = h->second.begin();
                  ind != h->second.end(); ++ind) {
                 bufferlist temp;
@@ -127,7 +127,7 @@ TEST(ErasureCodeClay, encode_decode)
             }
         }
         for (map < int, vector < pair < int, int >>>::iterator h =
-             minimum.begin(); h != minimum.end(); ++h) {
+                 minimum.begin(); h != minimum.end(); ++h) {
             EXPECT_EQ(length / clay.q, helper[h->first].length());
         }
         EXPECT_EQ(3u, helper.size());
@@ -170,14 +170,12 @@ TEST(ErasureCodeClay, encode_decode_aloof_nodes)
     unsigned length = encoded[0].length();
     if (in.length() < length) {
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
-    }
-    else if (in.length() <= 2 * length) {
+    } else if (in.length() <= 2 * length) {
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
         EXPECT_EQ(0,
                   memcmp(encoded[1].c_str(), in.c_str() + length,
                          in.length() - length));
-    }
-    else {
+    } else {
         EXPECT_EQ(1, in.length() <= 3 * length);
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
         EXPECT_EQ(0, memcmp(encoded[1].c_str(), in.c_str() + length, length));
@@ -213,8 +211,8 @@ TEST(ErasureCodeClay, encode_decode_aloof_nodes)
                 map < int, bufferlist > decoded;
                 EXPECT_EQ(0,
                           clay._decode(set <
-                                       int >(want_to_decode,
-                                             want_to_decode + 3), degraded,
+                                       int > (want_to_decode,
+                                              want_to_decode + 3), degraded,
                                        &decoded));
                 EXPECT_EQ(6u, decoded.size());
                 EXPECT_EQ(length, decoded[j].length());
@@ -243,7 +241,7 @@ TEST(ErasureCodeClay, encode_decode_aloof_nodes)
         clay.minimum_to_decode(want_to_read, available, &minimum);
         map < int, bufferlist > helper;
         for (map < int, vector < pair < int, int >>>::iterator h =
-             minimum.begin(); h != minimum.end(); ++h) {
+                 minimum.begin(); h != minimum.end(); ++h) {
             for (vector < pair < int, int >>::iterator ind = h->second.begin();
                  ind != h->second.end(); ++ind) {
                 bufferlist temp;
@@ -253,7 +251,7 @@ TEST(ErasureCodeClay, encode_decode_aloof_nodes)
             }
         }
         for (map < int, vector < pair < int, int >>>::iterator h =
-             minimum.begin(); h != minimum.end(); ++h) {
+                 minimum.begin(); h != minimum.end(); ++h) {
             EXPECT_EQ(length / clay.q, helper[h->first].length());
         }
         EXPECT_EQ((unsigned)clay.d, helper.size());
@@ -299,21 +297,18 @@ TEST(ErasureCodeClay, encode_decode_shortening_case)
     unsigned length = encoded[0].length();
     if (in.length() < length) {
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
-    }
-    else if (in.length() <= 2 * length) {
+    } else if (in.length() <= 2 * length) {
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
         EXPECT_EQ(0,
                   memcmp(encoded[1].c_str(), in.c_str() + length,
                          in.length() - length));
-    }
-    else if (in.length() <= 3 * length) {
+    } else if (in.length() <= 3 * length) {
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
         EXPECT_EQ(0, memcmp(encoded[1].c_str(), in.c_str() + length, length));
         EXPECT_EQ(0,
                   memcmp(encoded[2].c_str(), in.c_str() + 2 * length,
                          in.length() - 2 * length));
-    }
-    else {
+    } else {
         EXPECT_EQ(1, in.length() <= 4 * length);
         EXPECT_EQ(0, memcmp(encoded[0].c_str(), in.c_str(), in.length()));
         EXPECT_EQ(0, memcmp(encoded[1].c_str(), in.c_str() + length, length));
@@ -352,8 +347,8 @@ TEST(ErasureCodeClay, encode_decode_shortening_case)
                 map < int, bufferlist > decoded;
                 EXPECT_EQ(0,
                           clay._decode(set <
-                                       int >(want_to_decode,
-                                             want_to_decode + 3), degraded,
+                                       int > (want_to_decode,
+                                              want_to_decode + 3), degraded,
                                        &decoded));
                 EXPECT_EQ(7u, decoded.size());
                 EXPECT_EQ(length, decoded[j].length());
@@ -382,7 +377,7 @@ TEST(ErasureCodeClay, encode_decode_shortening_case)
         clay.minimum_to_decode(want_to_read, available, &minimum);
         map < int, bufferlist > helper;
         for (map < int, vector < pair < int, int >>>::iterator h =
-             minimum.begin(); h != minimum.end(); ++h) {
+                 minimum.begin(); h != minimum.end(); ++h) {
             for (vector < pair < int, int >>::iterator ind = h->second.begin();
                  ind != h->second.end(); ++ind) {
                 bufferlist temp;
@@ -392,10 +387,10 @@ TEST(ErasureCodeClay, encode_decode_shortening_case)
             }
         }
         for (map < int, vector < pair < int, int >>>::iterator h =
-             minimum.begin(); h != minimum.end(); ++h) {
+                 minimum.begin(); h != minimum.end(); ++h) {
             EXPECT_EQ(length / clay.q, helper[h->first].length());
         }
-        EXPECT_EQ(static_cast < size_t > (clay.d), helper.size());
+        EXPECT_EQ(static_cast < size_t >(clay.d), helper.size());
         map < int, bufferlist > decoded;
         EXPECT_EQ(0, clay.decode(want_to_read, helper, &decoded, length));
         EXPECT_EQ(1u, decoded.size());
@@ -597,8 +592,9 @@ TEST(ErasureCodeClay, create_rule)
         int x = 0;
         c->do_rule(ruleid, x, out, clay.get_chunk_count(), weight, 0);
         ASSERT_EQ(out.size(), clay.get_chunk_count());
-        for (unsigned i = 0; i < out.size(); ++i)
+        for (unsigned i = 0; i < out.size(); ++i) {
             ASSERT_NE(CRUSH_ITEM_NONE, out[i]);
+        }
     }
     {
         stringstream ss;
@@ -626,7 +622,7 @@ TEST(ErasureCodeClay, create_rule)
     }
 }
 
-/* 
+/*
  * Local Variables:
  * compile-command: "cd ../.. ;
  *   make -j4 unittest_erasure_code_clay &&

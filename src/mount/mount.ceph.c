@@ -68,22 +68,25 @@ struct ceph_mount_info {
 static void mon_addr_as_resolve_param(char *mon_addr)
 {
     for (; *mon_addr; ++mon_addr)
-        if (*mon_addr == '/')
+        if (*mon_addr == '/') {
             *mon_addr = ',';
+        }
 }
 
 static void resolved_mon_addr_as_mount_opt(char *mon_addr)
 {
     for (; *mon_addr; ++mon_addr)
-        if (*mon_addr == ',')
+        if (*mon_addr == ',') {
             *mon_addr = '/';
+        }
 }
 
 static void resolved_mon_addr_as_mount_dev(char *mon_addr)
 {
     for (; *mon_addr; ++mon_addr)
-        if (*mon_addr == '/')
+        if (*mon_addr == '/') {
             *mon_addr = ',';
+        }
 }
 
 static void block_signals(int how)
@@ -113,15 +116,15 @@ void mount_ceph_debug(const char *fmt, ...)
 static void append_opt(const char *key, const char *value,
                        struct ceph_mount_info *cmi, int *pos)
 {
-    if (*pos != 0)
+    if (*pos != 0) {
         *pos = safe_cat(&cmi->cmi_opts, &cmi->cmi_opts_len, *pos, ",");
+    }
 
     if (value) {
         *pos = safe_cat(&cmi->cmi_opts, &cmi->cmi_opts_len, *pos, key);
         *pos = safe_cat(&cmi->cmi_opts, &cmi->cmi_opts_len, *pos, "=");
         *pos = safe_cat(&cmi->cmi_opts, &cmi->cmi_opts_len, *pos, value);
-    }
-    else {
+    } else {
         *pos = safe_cat(&cmi->cmi_opts, &cmi->cmi_opts_len, *pos, key);
     }
 }
@@ -150,14 +153,16 @@ static int remove_opt(struct ceph_mount_info *cmi, const char *key,
 
     ++key_sep;
     char *value_end = strstr(key_sep, ",");
-    if (!value_end)
+    if (!value_end) {
         value_end = key_sep + strlen(key_sep);
+    }
 
     if (value_end != key_sep && value) {
         size_t len1 = value_end - key_sep;
         *value = strndup(key_sep, len1 + 1);
-        if (!*value)
+        if (!*value) {
             return -ENOMEM;
+        }
         (*value)[len1] = '\0';
     }
 
@@ -166,8 +171,7 @@ static int remove_opt(struct ceph_mount_info *cmi, const char *key,
     if (len2) {
         ++value_end;
         memmove(key_start, value_end, len2);
-    }
-    else {
+    } else {
         /* last kv pair - swallow the comma */
         if (*(key_start - 1) == ',') {
             --key_start;
@@ -206,21 +210,23 @@ static int parse_old_dev(const char *dev_str, struct ceph_mount_info *cmi,
         free(cmi->cmi_mons);
         /* overrides mon_addr passed via mount option (if any) */
         cmi->cmi_mons = strndup(dev_str, len);
-        if (!cmi->cmi_mons)
+        if (!cmi->cmi_mons) {
             return -ENOMEM;
+        }
         mon_addr_specified = true;
-    }
-    else {
+    } else {
         /* reset mon_addr=<> mount option */
         mon_addr_specified = false;
     }
 
     mount_path++;
     cmi->cmi_path = strdup(mount_path);
-    if (!cmi->cmi_path)
+    if (!cmi->cmi_path) {
         return -ENOMEM;
-    if (!cmi->cmi_name)
+    }
+    if (!cmi->cmi_name) {
         record_name(CEPH_AUTH_NAME_DEFAULT, cmi);
+    }
 
     cmi->format = MOUNT_DEV_FORMAT_OLD;
     return 0;
@@ -282,8 +288,9 @@ static int parse_new_dev(const char *dev_str, struct ceph_mount_info *cmi,
         }
 
         cmi->cmi_fsid = strndup(name_end, len);
-        if (!cmi->cmi_fsid)
+        if (!cmi->cmi_fsid) {
             return -ENOMEM;
+        }
     }
 
     ++dot;
@@ -298,19 +305,22 @@ static int parse_new_dev(const char *dev_str, struct ceph_mount_info *cmi,
         return -EINVAL;
     }
     cmi->cmi_fsname = strndup(dot, len);
-    if (!cmi->cmi_fsname)
+    if (!cmi->cmi_fsname) {
         return -ENOMEM;
+    }
 
     ++fs_name;
     if (strlen(fs_name)) {
         cmi->cmi_path = strdup(fs_name);
-        if (!cmi->cmi_path)
+        if (!cmi->cmi_path) {
             return -ENOMEM;
+        }
     }
 
     /* new-style dev - force using v2 addrs first */
-    if (!ms_mode_specified && !mon_addr_specified)
+    if (!ms_mode_specified && !mon_addr_specified) {
         append_opt("ms_mode", CEPH_DEFAULT_V2_MS_MODE, cmi, opt_pos);
+    }
 
     cmi->format = MOUNT_DEV_FORMAT_NEW;
     return 0;
@@ -322,12 +332,15 @@ static int parse_dev(const char *dev_str, struct ceph_mount_info *cmi,
     int ret;
 
     ret = parse_new_dev(dev_str, cmi, opt_pos);
-    if (ret < 0 && ret != -ENODEV)
+    if (ret < 0 && ret != -ENODEV) {
         return -EINVAL;
-    if (ret)
+    }
+    if (ret) {
         ret = parse_old_dev(dev_str, cmi, opt_pos);
-    if (ret < 0)
+    }
+    if (ret < 0) {
         fprintf(stderr, "error parsing device string\n");
+    }
     return ret;
 }
 
@@ -346,15 +359,15 @@ static int finalize_src(struct ceph_mount_info *cmi, int *opt_pos,
     mon_addr_as_resolve_param(addr);
 
     src = resolve_addrs(addr);
-    if (!src)
+    if (!src) {
         return -1;
+    }
 
     mount_ceph_debug("mount.ceph: resolved to: \"%s\"\n", src);
     if (opt_pos) {
         resolved_mon_addr_as_mount_opt(src);
         append_opt("mon_addr", src, cmi, opt_pos);
-    }
-    else if (resolved_addr) {
+    } else if (resolved_addr) {
         *resolved_addr = strdup(src);
     }
     free(src);
@@ -393,8 +406,9 @@ static int fetch_config_info(struct ceph_mount_info *cmi)
     struct ceph_config_info *cci;
 
     /* Don't do anything if we already have requisite info */
-    if (cmi->cmi_secret[0] && cmi->cmi_mons && cmi->cmi_fsid)
+    if (cmi->cmi_secret[0] && cmi->cmi_mons && cmi->cmi_fsid) {
         return 0;
+    }
 
     cci = mmap((void *)0, sizeof(*cci), PROT_READ | PROT_WRITE,
                MAP_ANONYMOUS | MAP_SHARED, -1, 0);
@@ -417,16 +431,16 @@ static int fetch_config_info(struct ceph_mount_info *cmi)
 
         /* child */
         ret = drop_capabilities();
-        if (ret)
+        if (ret) {
             exit(1);
+        }
 
         name_pos = safe_cat(&entity_name, &name_len, name_pos, "client.");
         name_pos = safe_cat(&entity_name, &name_len, name_pos, cmi->cmi_name);
         mount_ceph_get_config_info(cmi->cmi_conf, entity_name, v2_addrs, cci);
         free(entity_name);
         exit(0);
-    }
-    else {
+    } else {
         /* parent */
         pid = wait(&ret);
         if (!WIFEXITED(ret)) {
@@ -451,24 +465,25 @@ static int fetch_config_info(struct ceph_mount_info *cmi)
             len = strnlen(cci->cci_secret, SECRET_BUFSIZE);
             if (len < SECRET_BUFSIZE) {
                 memcpy(cmi->cmi_secret, cci->cci_secret, len + 1);
-            }
-            else {
+            } else {
                 mount_ceph_debug("secret is too long (len=%zu max=%zu)!\n", len,
                                  SECRET_BUFSIZE);
             }
         }
         if (!cmi->cmi_mons && cci->cci_mons[0]) {
             len = strnlen(cci->cci_mons, MON_LIST_BUFSIZE);
-            if (len < MON_LIST_BUFSIZE)
+            if (len < MON_LIST_BUFSIZE) {
                 cmi->cmi_mons = strndup(cci->cci_mons, len + 1);
+            }
         }
         if (!cmi->cmi_fsid) {
             len = strnlen(cci->cci_fsid, CLUSTER_FSID_LEN);
-            if (len < CLUSTER_FSID_LEN)
+            if (len < CLUSTER_FSID_LEN) {
                 cmi->cmi_fsid = strndup(cci->cci_fsid, len + 1);
+            }
         }
     }
-  out:
+out:
     munmap(cci, sizeof(*cci));
     return ret;
 }
@@ -482,8 +497,9 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
     char *next_keyword = NULL;
     char *name = NULL;
 
-    if (data == EMPTY_STRING)
+    if (data == EMPTY_STRING) {
         goto out;
+    }
 
     mount_ceph_debug("parsing options: %s\n", data);
 
@@ -492,13 +508,15 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
         bool skip = true;
 
         /*  check if ends with trailing comma */
-        if (*data == 0)
+        if (*data == 0) {
             break;
+        }
         next_keyword = strchr(data, ',');
 
         /* temporarily null terminate end of keyword=value pair */
-        if (next_keyword)
+        if (next_keyword) {
             *next_keyword++ = 0;
+        }
 
         /* temporarily null terminate keyword to make keyword and value distinct */
         if ((value = strchr(data, '=')) != NULL) {
@@ -508,73 +526,52 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
 
         if (strcmp(data, "ro") == 0) {
             cmi->cmi_flags |= MS_RDONLY;
-        }
-        else if (strcmp(data, "rw") == 0) {
+        } else if (strcmp(data, "rw") == 0) {
             cmi->cmi_flags &= ~MS_RDONLY;
-        }
-        else if (strcmp(data, "nosuid") == 0) {
+        } else if (strcmp(data, "nosuid") == 0) {
             cmi->cmi_flags |= MS_NOSUID;
-        }
-        else if (strcmp(data, "suid") == 0) {
+        } else if (strcmp(data, "suid") == 0) {
             cmi->cmi_flags &= ~MS_NOSUID;
-        }
-        else if (strcmp(data, "dev") == 0) {
+        } else if (strcmp(data, "dev") == 0) {
             cmi->cmi_flags &= ~MS_NODEV;
-        }
-        else if (strcmp(data, "nodev") == 0) {
+        } else if (strcmp(data, "nodev") == 0) {
             cmi->cmi_flags |= MS_NODEV;
-        }
-        else if (strcmp(data, "noexec") == 0) {
+        } else if (strcmp(data, "noexec") == 0) {
             cmi->cmi_flags |= MS_NOEXEC;
-        }
-        else if (strcmp(data, "exec") == 0) {
+        } else if (strcmp(data, "exec") == 0) {
             cmi->cmi_flags &= ~MS_NOEXEC;
-        }
-        else if (strcmp(data, "sync") == 0) {
+        } else if (strcmp(data, "sync") == 0) {
             cmi->cmi_flags |= MS_SYNCHRONOUS;
-        }
-        else if (strcmp(data, "remount") == 0) {
+        } else if (strcmp(data, "remount") == 0) {
             cmi->cmi_flags |= MS_REMOUNT;
-        }
-        else if (strcmp(data, "mandlock") == 0) {
+        } else if (strcmp(data, "mandlock") == 0) {
             cmi->cmi_flags |= MS_MANDLOCK;
-        }
-        else if ((strcmp(data, "nobrl") == 0) || (strcmp(data, "nolock") == 0)) {
+        } else if ((strcmp(data, "nobrl") == 0) || (strcmp(data, "nolock") == 0)) {
             cmi->cmi_flags &= ~MS_MANDLOCK;
-        }
-        else if (strcmp(data, "noatime") == 0) {
+        } else if (strcmp(data, "noatime") == 0) {
             cmi->cmi_flags |= MS_NOATIME;
-        }
-        else if (strcmp(data, "nodiratime") == 0) {
+        } else if (strcmp(data, "nodiratime") == 0) {
             cmi->cmi_flags |= MS_NODIRATIME;
-        }
-        else if (strcmp(data, "relatime") == 0) {
+        } else if (strcmp(data, "relatime") == 0) {
             cmi->cmi_flags |= MS_RELATIME;
-        }
-        else if (strcmp(data, "strictatime") == 0) {
+        } else if (strcmp(data, "strictatime") == 0) {
             cmi->cmi_flags |= MS_STRICTATIME;
-        }
-        else if (strcmp(data, "noauto") == 0) {
+        } else if (strcmp(data, "noauto") == 0) {
             /* ignore */
-        }
-        else if (strcmp(data, "_netdev") == 0) {
+        } else if (strcmp(data, "_netdev") == 0) {
             /* ignore */
-        }
-        else if (strcmp(data, "nofail") == 0) {
+        } else if (strcmp(data, "nofail") == 0) {
             /* ignore */
-        }
-        else if (strcmp(data, "fs") == 0) {
+        } else if (strcmp(data, "fs") == 0) {
             if (!value || !*value) {
                 fprintf(stderr, "mount option fs requires a value.\n");
                 return -EINVAL;
             }
             data = "mds_namespace";
             skip = false;
-        }
-        else if (strcmp(data, "nofallback") == 0) {
+        } else if (strcmp(data, "nofallback") == 0) {
             no_fallback = true;
-        }
-        else if (strcmp(data, "secretfile") == 0) {
+        } else if (strcmp(data, "secretfile") == 0) {
             int ret;
 
             if (!value || !*value) {
@@ -589,8 +586,7 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
                 fprintf(stderr, "error reading secret file: %d\n", ret);
                 return ret;
             }
-        }
-        else if (strcmp(data, "secret") == 0) {
+        } else if (strcmp(data, "secret") == 0) {
             size_t len;
 
             if (!value || !*value) {
@@ -599,20 +595,20 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
             }
 
             len = strnlen(value, sizeof(cmi->cmi_secret)) + 1;
-            if (len <= sizeof(cmi->cmi_secret))
+            if (len <= sizeof(cmi->cmi_secret)) {
                 memcpy(cmi->cmi_secret, value, len);
-        }
-        else if (strcmp(data, "conf") == 0) {
+            }
+        } else if (strcmp(data, "conf") == 0) {
             if (!value || !*value) {
                 fprintf(stderr, "mount option conf requires a value.\n");
                 return -EINVAL;
             }
             /* keep pointer to value */
             cmi->cmi_conf = strdup(value);
-            if (!cmi->cmi_conf)
+            if (!cmi->cmi_conf) {
                 return -ENOMEM;
-        }
-        else if (strcmp(data, "name") == 0) {
+            }
+        } else if (strcmp(data, "name") == 0) {
             if (!value || !*value) {
                 fprintf(stderr, "mount option name requires a value.\n");
                 return -EINVAL;
@@ -620,8 +616,7 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
             /* keep pointer to value */
             name = value;
             skip = false;
-        }
-        else if (strcmp(data, "ms_mode") == 0) {
+        } else if (strcmp(data, "ms_mode") == 0) {
             if (!value || !*value) {
                 fprintf(stderr, "mount option ms_mode requires a value.\n");
                 return -EINVAL;
@@ -630,44 +625,47 @@ static int parse_options(const char *data, struct ceph_mount_info *cmi,
             v2_addrs = strcmp(value, "legacy");
             skip = false;
             ms_mode_specified = true;
-        }
-        else if (strcmp(data, "mon_addr") == 0) {
+        } else if (strcmp(data, "mon_addr") == 0) {
             /* monitor address to use for mounting */
             if (!value || !*value) {
                 fprintf(stderr, "mount option mon_addr requires a value.\n");
                 return -EINVAL;
             }
             cmi->cmi_mons = strdup(value);
-            if (!cmi->cmi_mons)
+            if (!cmi->cmi_mons) {
                 return -ENOMEM;
+            }
             mon_addr_specified = true;
-        }
-        else {
+        } else {
             /* unrecognized mount options, passing to kernel */
             skip = false;
         }
 
         /* Copy (possibly modified) option to out */
-        if (!skip)
+        if (!skip) {
             append_opt(data, value, cmi, opt_pos);
+        }
         data = next_keyword;
     } while (data);
 
-  out:
+out:
     /*
      * set ->cmi_name conditionally -- this gets checked when parsing new
      * device format. for old device format, ->cmi_name is set to default
      * user name when name option is not passed in.
      */
-    if (name)
+    if (name) {
         record_name(name, cmi);
-    if (cmi->cmi_opts)
+    }
+    if (cmi->cmi_opts) {
         mount_ceph_debug("mount.ceph: options \"%s\".\n", cmi->cmi_opts);
+    }
 
     if (!cmi->cmi_opts) {
         cmi->cmi_opts = strdup(EMPTY_STRING);
-        if (!cmi->cmi_opts)
+        if (!cmi->cmi_opts) {
             return -ENOMEM;
+        }
     }
     return 0;
 }
@@ -696,8 +694,9 @@ static int parse_arguments(int argc, char *const *const argv,
     }
 
     // The first two arguments are positional
-    if (argc < 3)
+    if (argc < 3) {
         return -EINVAL;
+    }
     *src = argv[1];
     *node = argv[2];
 
@@ -705,22 +704,22 @@ static int parse_arguments(int argc, char *const *const argv,
     *opts = EMPTY_STRING;
     while ((opt = getopt_long(argc, argv, "hnvfo:", long_options, NULL)) != -1) {
         switch (opt) {
-        case 'h':              // -h or --help
-            return 1;
-        case 'n':              // -n or --no-mtab
-            skip_mtab_flag = true;
-            break;
-        case 'v':              // -v or --verbose
-            verboseflag = true;
-            break;
-        case 'f':              // -f or --fake
-            fakeflag = true;
-            break;
-        case 'o':              // -o or --options
-            *opts = optarg;
-            break;
-        default:
-            return -EINVAL;
+            case 'h':              // -h or --help
+                return 1;
+            case 'n':              // -n or --no-mtab
+                skip_mtab_flag = true;
+                break;
+            case 'v':              // -v or --verbose
+                verboseflag = true;
+                break;
+            case 'f':              // -f or --fake
+                fakeflag = true;
+                break;
+            case 'o':              // -o or --options
+                *opts = optarg;
+                break;
+            default:
+                return -EINVAL;
         }
     }
     return 0;
@@ -733,8 +732,9 @@ static void modprobe(void)
     int r;
 
     r = module_load("ceph", NULL);
-    if (r)
+    if (r) {
         printf("failed to load ceph kernel module (%d)\n", r);
+    }
 }
 
 static void usage(const char *prog_name)
@@ -794,8 +794,9 @@ static int mount_new_device_format(const char *node,
     pos = safe_cat(&rsrc, &len, pos, ".");
     pos = safe_cat(&rsrc, &len, pos, cmi->cmi_fsname);
     pos = safe_cat(&rsrc, &len, pos, "=");
-    if (cmi->cmi_path)
+    if (cmi->cmi_path) {
         safe_cat(&rsrc, &len, pos, cmi->cmi_path);
+    }
 
     mount_ceph_debug("mount.ceph: trying mount with new device syntax: %s\n",
                      rsrc);
@@ -803,8 +804,9 @@ static int mount_new_device_format(const char *node,
         mount_ceph_debug("mount.ceph: options \"%s\" will pass to kernel\n",
                          cmi->cmi_opts);
     r = call_mount_system_call(rsrc, node, cmi);
-    if (r)
+    if (r) {
         r = -errno;
+    }
     free(rsrc);
     return r;
 }
@@ -830,7 +832,7 @@ static int mount_old_device_format(const char *node,
      */
     if (v2_addrs && !ms_mode_specified && !mon_addr_specified) {
         mount_ceph_debug
-            ("mount.ceph: switching to using v1 address with old syntax\n");
+        ("mount.ceph: switching to using v1 address with old syntax\n");
         v2_addrs = false;
         free(mon_addr);
         free(cmi->cmi_mons);
@@ -850,17 +852,20 @@ static int mount_old_device_format(const char *node,
     }
 
     pos = strlen(cmi->cmi_opts);
-    if (cmi->cmi_fsname)
+    if (cmi->cmi_fsname) {
         append_opt("mds_namespace", cmi->cmi_fsname, cmi, &pos);
-    if (cmi->cmi_fsid)
+    }
+    if (cmi->cmi_fsid) {
         append_opt("fsid", cmi->cmi_fsid, cmi, &pos);
+    }
 
     pos = 0;
     resolved_mon_addr_as_mount_dev(mon_addr);
     pos = safe_cat(&rsrc, &len, pos, mon_addr);
     pos = safe_cat(&rsrc, &len, pos, ":");
-    if (cmi->cmi_path)
+    if (cmi->cmi_path) {
         safe_cat(&rsrc, &len, pos, cmi->cmi_path);
+    }
 
     mount_ceph_debug("mount.ceph: trying mount with old device syntax: %s\n",
                      rsrc);
@@ -886,8 +891,9 @@ static bool should_fallback()
     int ret;
     struct stat stbuf;
 
-    if (!no_fallback)
+    if (!no_fallback) {
         return true;
+    }
 
     ret = stat(CEPH_V2_MOUNT_SUPPORT_PATH, &stbuf);
     if (ret) {
@@ -940,21 +946,22 @@ static int do_mount(const char *dev, const char *node,
     }
 
     /* pass-through or fallback to old-style mount device */
-    if (retval && fallback)
+    if (retval && fallback) {
         retval = mount_old_device_format(node, cmi);
+    }
     if (retval) {
         retval = EX_FAIL;
         switch (errno) {
-        case ENODEV:
-            fprintf(stderr,
-                    "mount error: ceph filesystem not supported by the system\n");
-            break;
-        case EHOSTUNREACH:
-            fprintf(stderr,
-                    "mount error: no mds server is up or the cluster is laggy\n");
-            break;
-        default:
-            fprintf(stderr, "mount error %d = %s\n", errno, strerror(errno));
+            case ENODEV:
+                fprintf(stderr,
+                        "mount error: ceph filesystem not supported by the system\n");
+                break;
+            case EHOSTUNREACH:
+                fprintf(stderr,
+                        "mount error: no mds server is up or the cluster is laggy\n");
+                break;
+            default:
+                fprintf(stderr, "mount error %d = %s\n", errno, strerror(errno));
         }
     }
 
@@ -970,11 +977,13 @@ static int append_key_or_secret_option(struct ceph_mount_info *cmi)
 {
     int pos = strlen(cmi->cmi_opts);
 
-    if (!cmi->cmi_secret[0] && !is_kernel_secret(cmi->cmi_name))
+    if (!cmi->cmi_secret[0] && !is_kernel_secret(cmi->cmi_name)) {
         return 0;
+    }
 
-    if (pos)
+    if (pos) {
         pos = safe_cat(&cmi->cmi_opts, &cmi->cmi_opts_len, pos, ",");
+    }
 
     /* when parsing kernel options (-o remount) we get '<hidden>' as the secret */
     if (cmi->cmi_secret[0] && (strcmp(cmi->cmi_secret, "<hidden>") != 0)) {
@@ -1048,7 +1057,7 @@ int main(int argc, char *argv[])
     block_signals(SIG_BLOCK);
     retval = do_mount(dev, node, &cmi);
     block_signals(SIG_UNBLOCK);
-  out:
+out:
     ceph_mount_info_free(&cmi);
     return retval;
 }

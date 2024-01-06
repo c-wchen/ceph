@@ -17,13 +17,13 @@
 int64_t HybridAllocator::allocate(uint64_t want,
                                   uint64_t unit,
                                   uint64_t max_alloc_size,
-                                  int64_t hint, PExtentVector * extents)
+                                  int64_t hint, PExtentVector *extents)
 {
     ldout(cct, 10) << __func__ << std::hex
-        << " want 0x" << want
-        << " unit 0x" << unit
-        << " max_alloc_size 0x" << max_alloc_size
-        << " hint 0x" << hint << std::dec << dendl;
+                   << " want 0x" << want
+                   << " unit 0x" << unit
+                   << " max_alloc_size 0x" << max_alloc_size
+                   << " hint 0x" << hint << std::dec << dendl;
     ceph_assert(std::has_single_bit(unit));
     ceph_assert(want % unit == 0);
 
@@ -31,7 +31,7 @@ int64_t HybridAllocator::allocate(uint64_t want,
         max_alloc_size = want;
     }
     if (constexpr auto cap =
-        std::numeric_limits < decltype(bluestore_pextent_t::length) >::max();
+            std::numeric_limits < decltype(bluestore_pextent_t::length) >::max();
         max_alloc_size >= cap) {
         max_alloc_size = p2align(uint64_t(cap), (uint64_t) get_block_size());
     }
@@ -59,8 +59,7 @@ int64_t HybridAllocator::allocate(uint64_t want,
                 local_extents.insert(local_extents.end(), ++orig_pos,
                                      extents->end());
                 extents->resize(orig_size);
-            }
-            else {
+            } else {
                 extents->swap(local_extents);
             }
             bmap_alloc->release(local_extents);
@@ -71,13 +70,11 @@ int64_t HybridAllocator::allocate(uint64_t want,
                 _allocate(want - res, unit, max_alloc_size, hint, extents);
             if (res2 < 0) {
                 res = res2;     // caller to do the release
-            }
-            else {
+            } else {
                 res += res2;
             }
         }
-    }
-    else {
+    } else {
         res = _allocate(want, unit, max_alloc_size, hint, extents);
         if (res < 0) {
             // got a failure, release already allocated and
@@ -86,8 +83,7 @@ int64_t HybridAllocator::allocate(uint64_t want,
                 local_extents.insert(local_extents.end(), ++orig_pos,
                                      extents->end());
                 extents->resize(orig_size);
-            }
-            else {
+            } else {
                 extents->swap(local_extents);
             }
             _release(local_extents);
@@ -95,12 +91,11 @@ int64_t HybridAllocator::allocate(uint64_t want,
         }
         if ((uint64_t) res < want) {
             auto res2 = bmap_alloc ?
-                bmap_alloc->allocate(want - res, unit, max_alloc_size, hint,
-                                     extents) : 0;
+                        bmap_alloc->allocate(want - res, unit, max_alloc_size, hint,
+                                             extents) : 0;
             if (res2 < 0) {
                 res = res2;     // caller to do the release
-            }
-            else {
+            } else {
                 res += res2;
             }
         }
@@ -144,12 +139,13 @@ void HybridAllocator::dump()
         bmap_alloc->dump();
     }
     ldout(cct, 0) << __func__ << " avl_free: " << _get_free()
-        << " bmap_free: " << (bmap_alloc ? bmap_alloc->get_free() : 0)
-        << dendl;
+                  << " bmap_free: " << (bmap_alloc ? bmap_alloc->get_free() : 0)
+                  << dendl;
 }
 
-void HybridAllocator::foreach(std::function <
-                              void (uint64_t offset, uint64_t length) > notify)
+void HybridAllocator::
+foreach (std::function <
+         void (uint64_t offset, uint64_t length) > notify)
 {
     std::lock_guard l(lock);
     AvlAllocator::_foreach(notify);
@@ -160,24 +156,27 @@ void HybridAllocator::foreach(std::function <
 
 void HybridAllocator::init_rm_free(uint64_t offset, uint64_t length)
 {
-    if (!length)
+    if (!length) {
         return;
+    }
     std::lock_guard l(lock);
     ldout(cct, 10) << __func__ << std::hex
-        << " offset 0x" << offset
-        << " length 0x" << length << std::dec << dendl;
-    _try_remove_from_tree(offset, length,[&](uint64_t o, uint64_t l, bool found) {
-                          if (!found) {
-                          if (bmap_alloc) {
-                          bmap_alloc->init_rm_free(o, l);}
-                          else {
-                          lderr(cct) << "init_rm_free lambda " << std::hex
-                          << "Uexpected extent: "
-                          << " 0x" << o << "~" << l
-                          << std::dec << dendl; ceph_assert(false);}
-                          }
-                          }
-    ) ;
+                   << " offset 0x" << offset
+                   << " length 0x" << length << std::dec << dendl;
+    _try_remove_from_tree(offset, length, [&](uint64_t o, uint64_t l, bool found) {
+        if (!found) {
+            if (bmap_alloc) {
+                bmap_alloc->init_rm_free(o, l);
+            } else {
+                lderr(cct) << "init_rm_free lambda " << std::hex
+                           << "Uexpected extent: "
+                           << " 0x" << o << "~" << l
+                           << std::dec << dendl;
+                ceph_assert(false);
+            }
+        }
+    }
+                         ) ;
 }
 
 void HybridAllocator::shutdown()
@@ -195,11 +194,11 @@ void HybridAllocator::_spillover_range(uint64_t start, uint64_t end)
 {
     auto size = end - start;
     dout(20) << __func__
-        << std::hex << " " << start << "~" << size << std::dec << dendl;
+             << std::hex << " " << start << "~" << size << std::dec << dendl;
     ceph_assert(size);
     if (!bmap_alloc) {
         dout(1) << __func__
-            << std::hex << " constructing fallback allocator" << dendl;
+                << std::hex << " constructing fallback allocator" << dendl;
         bmap_alloc = new BitmapAllocator(cct,
                                          get_capacity(),
                                          get_block_size(),

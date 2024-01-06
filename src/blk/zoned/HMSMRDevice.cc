@@ -25,14 +25,14 @@ extern "C" {
 #define dout_prefix *_dout << "smrbdev(" << this << " " << path << ") "
 using namespace std;
 
-HMSMRDevice::HMSMRDevice(CephContext * cct,
+HMSMRDevice::HMSMRDevice(CephContext *cct,
                          aio_callback_t cb,
                          void *cbpriv, aio_callback_t d_cb, void *d_cbpriv)
-:KernelDevice(cct, cb, cbpriv, d_cb, d_cbpriv)
+    : KernelDevice(cct, cb, cbpriv, d_cb, d_cbpriv)
 {
 }
 
-bool HMSMRDevice::support(const std::string & path)
+bool HMSMRDevice::support(const std::string &path)
 {
     return zbd_device_is_zoned(path.c_str()) == 1;
 }
@@ -46,7 +46,7 @@ int HMSMRDevice::_post_open()
     if (zbd_fd < 0) {
         r = errno;
         derr << __func__ << " zbd_open failed on " << path << ": "
-            << cpp_strerror(r) << dendl;
+             << cpp_strerror(r) << dendl;
         return -r;
     }
 
@@ -55,7 +55,7 @@ int HMSMRDevice::_post_open()
     if (zbd_report_nr_zones(zbd_fd, 0, 0, ZBD_RO_NOT_WP, &nr_zones) != 0) {
         r = -errno;
         derr << __func__ << " zbd_report_nr_zones failed on " << path << ": "
-            << cpp_strerror(r) << dendl;
+             << cpp_strerror(r) << dendl;
         goto fail;
     }
 
@@ -71,12 +71,12 @@ int HMSMRDevice::_post_open()
     conventional_region_size = nr_zones * zone_size;
 
     dout(10) << __func__ << " setting zone size to " << zone_size
-        << " and conventional region size to " << conventional_region_size
-        << dendl;
+             << " and conventional region size to " << conventional_region_size
+             << dendl;
 
     return 0;
 
-  fail:
+fail:
     zbd_close(zbd_fd);
     zbd_fd = -1;
     return r;
@@ -101,7 +101,7 @@ void HMSMRDevice::reset_zone(uint64_t zone)
     dout(10) << __func__ << " zone 0x" << std::hex << zone << std::dec << dendl;
     if (zbd_reset_zones(zbd_fd, zone * zone_size, zone_size) != 0) {
         derr << __func__ << " resetting zone failed for zone 0x" << std::hex
-            << zone << std::dec << dendl;
+             << zone << std::dec << dendl;
         ceph_abort("zbd_reset_zones failed");
     }
 }
@@ -116,7 +116,7 @@ std::vector < uint64_t > HMSMRDevice::get_zones()
         zbd_report_zones(zbd_fd, 0, 0, ZBD_RO_ALL, zones.data(), &num_zones);
     if (r != 0) {
         derr << __func__ << " zbd_report_zones failed on " << path << ": "
-            << cpp_strerror(errno) << dendl;
+             << cpp_strerror(errno) << dendl;
         ceph_abort("zbd_report_zones failed");
     }
 

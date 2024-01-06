@@ -24,12 +24,14 @@ void parse_mime_map_line(const char *start, const char *end)
     char *l = line;
 #define DELIMS " \t\n\r"
 
-    while (isspace(*l))
+    while (isspace(*l)) {
         l++;
+    }
 
     char *mime = strsep(&l, DELIMS);
-    if (!mime)
+    if (!mime) {
         return;
+    }
 
     char *ext;
     do {
@@ -53,7 +55,7 @@ void parse_mime_map(const char *buf)
     }
 }
 
-static int ext_mime_map_init(const DoutPrefixProvider * dpp, CephContext * cct,
+static int ext_mime_map_init(const DoutPrefixProvider *dpp, CephContext *cct,
                              const char *ext_map)
 {
     int fd = open(ext_map, O_RDONLY);
@@ -62,7 +64,7 @@ static int ext_mime_map_init(const DoutPrefixProvider * dpp, CephContext * cct,
     if (fd < 0) {
         ret = -errno;
         ldpp_dout(dpp, 0) << __func__ << " failed to open file=" << ext_map
-            << " : " << cpp_strerror(-ret) << dendl;
+                          << " : " << cpp_strerror(-ret) << dendl;
         return ret;
     }
 
@@ -71,7 +73,7 @@ static int ext_mime_map_init(const DoutPrefixProvider * dpp, CephContext * cct,
     if (ret < 0) {
         ret = -errno;
         ldpp_dout(dpp, 0) << __func__ << " failed to stat file=" << ext_map
-            << " : " << cpp_strerror(-ret) << dendl;
+                          << " : " << cpp_strerror(-ret) << dendl;
         goto done;
     }
 
@@ -94,22 +96,23 @@ static int ext_mime_map_init(const DoutPrefixProvider * dpp, CephContext * cct,
 
     parse_mime_map(buf);
     ret = 0;
-  done:
+done:
     free(buf);
     close(fd);
     return ret;
 }
 
-const char *rgw_find_mime_by_ext(string & ext)
+const char *rgw_find_mime_by_ext(string &ext)
 {
     map < string, string >::iterator iter = ext_mime_map->find(ext);
-    if (iter == ext_mime_map->end())
+    if (iter == ext_mime_map->end()) {
         return NULL;
+    }
 
     return iter->second.c_str();
 }
 
-int rgw_tools_init(const DoutPrefixProvider * dpp, CephContext * cct)
+int rgw_tools_init(const DoutPrefixProvider *dpp, CephContext *cct)
 {
     ext_mime_map = new std::map < std::string, std::string >;
     ext_mime_map_init(dpp, cct, cct->_conf->rgw_mime_types_file.c_str());

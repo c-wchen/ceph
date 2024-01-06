@@ -146,7 +146,7 @@ TEST(pg_interval_t, check_new_interval)
         int pg_num = 4;
         __u8 min_size = 2;
         boost::scoped_ptr < IsPGRecoverablePredicate >
-            recoverable(new ReplicatedBackend::RPCRecPred());
+        recoverable(new ReplicatedBackend::RPCRecPred());
         {
             OSDMap::Incremental inc(epoch + 1);
             inc.new_pools[pool_id].min_size = min_size;
@@ -180,20 +180,20 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_FALSE(PastIntervals::check_new_interval(old_primary,
-                                                           new_primary,
-                                                           old_acting,
-                                                           new_acting,
-                                                           old_up_primary,
-                                                           new_up_primary,
-                                                           old_up,
-                                                           new_up,
-                                                           same_interval_since,
-                                                           last_epoch_clean,
-                                                           osdmap,
-                                                           lastmap,
-                                                           pgid,
-                                                           *recoverable,
-                                                           &past_intervals));
+                         new_primary,
+                         old_acting,
+                         new_acting,
+                         old_up_primary,
+                         new_up_primary,
+                         old_up,
+                         new_up,
+                         same_interval_since,
+                         last_epoch_clean,
+                         osdmap,
+                         lastmap,
+                         pgid,
+                         *recoverable,
+                         &past_intervals));
             ASSERT_TRUE(past_intervals.empty());
         }
 
@@ -209,20 +209,20 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals));
             old_primary = new_primary;
         }
 
@@ -238,20 +238,20 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -265,20 +265,20 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          _new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        _new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -299,20 +299,20 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -333,21 +333,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pg_t(pg_num - 1,
-                                                               pool_id),
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pg_t(pg_num - 1,
+                             pool_id),
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -368,12 +368,13 @@ TEST(pg_interval_t, check_new_interval)
             PastIntervals past_intervals;
 
             ASSERT_TRUE(past_intervals.empty());
-            ASSERT_TRUE(PastIntervals::check_new_interval(old_primary, new_primary, old_acting, new_acting, old_up_primary, new_up_primary, old_up, new_up, same_interval_since, last_epoch_clean, lastmap, // reverse order!
-                                                          osdmap,
-                                                          pg_t(pg_num - 1,
-                                                               pool_id),
-                                                          *recoverable,
-                                                          &past_intervals));
+            ASSERT_TRUE(PastIntervals::check_new_interval(old_primary, new_primary, old_acting, new_acting, old_up_primary,
+                        new_up_primary, old_up, new_up, same_interval_since, last_epoch_clean, lastmap, // reverse order!
+                        osdmap,
+                        pg_t(pg_num - 1,
+                             pool_id),
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -393,21 +394,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pg_t(pg_num - 1,
-                                                               pool_id),
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pg_t(pg_num - 1,
+                             pool_id),
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -427,21 +428,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pg_t(pg_num / 2 - 1,
-                                                               pool_id),
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pg_t(pg_num / 2 - 1,
+                             pool_id),
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -460,12 +461,13 @@ TEST(pg_interval_t, check_new_interval)
             PastIntervals past_intervals;
 
             ASSERT_TRUE(past_intervals.empty());
-            ASSERT_TRUE(PastIntervals::check_new_interval(old_primary, new_primary, old_acting, new_acting, old_up_primary, new_up_primary, old_up, new_up, same_interval_since, last_epoch_clean, lastmap, // reverse order!
-                                                          osdmap,
-                                                          pg_t(pg_num / 2 - 1,
-                                                               pool_id),
-                                                          *recoverable,
-                                                          &past_intervals));
+            ASSERT_TRUE(PastIntervals::check_new_interval(old_primary, new_primary, old_acting, new_acting, old_up_primary,
+                        new_up_primary, old_up, new_up, same_interval_since, last_epoch_clean, lastmap, // reverse order!
+                        osdmap,
+                        pg_t(pg_num / 2 - 1,
+                             pool_id),
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -485,21 +487,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pg_t(pg_num / 2 - 1,
-                                                               pool_id),
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pg_t(pg_num / 2 - 1,
+                             pool_id),
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -520,20 +522,20 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals));
         }
 
         //
@@ -549,21 +551,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals,
-                                                          &out));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals,
+                        &out));
             ASSERT_NE(string::npos, out.str().find("acting set is too small"));
         }
 
@@ -599,21 +601,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals,
-                                                          &out));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals,
+                        &out));
             ASSERT_NE(string::npos, out.str().find("acting set is too small"));
         }
 
@@ -632,21 +634,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals,
-                                                          &out));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals,
+                        &out));
             ASSERT_NE(string::npos, out.str().find("includes interval"));
         }
         //
@@ -675,21 +677,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals,
-                                                          &out));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals,
+                        &out));
             ASSERT_NE(string::npos, out.str().find("presumed to have been rw"));
         }
 
@@ -722,21 +724,21 @@ TEST(pg_interval_t, check_new_interval)
 
             ASSERT_TRUE(past_intervals.empty());
             ASSERT_TRUE(PastIntervals::check_new_interval(old_primary,
-                                                          new_primary,
-                                                          old_acting,
-                                                          new_acting,
-                                                          old_up_primary,
-                                                          new_up_primary,
-                                                          old_up,
-                                                          new_up,
-                                                          same_interval_since,
-                                                          last_epoch_clean,
-                                                          osdmap,
-                                                          lastmap,
-                                                          pgid,
-                                                          *recoverable,
-                                                          &past_intervals,
-                                                          &out));
+                        new_primary,
+                        old_acting,
+                        new_acting,
+                        old_up_primary,
+                        new_up_primary,
+                        old_up,
+                        new_up,
+                        same_interval_since,
+                        last_epoch_clean,
+                        osdmap,
+                        lastmap,
+                        pgid,
+                        *recoverable,
+                        &past_intervals,
+                        &out));
             ASSERT_NE(string::npos,
                       out.str().find("does not include interval"));
         }
@@ -1322,8 +1324,9 @@ TEST(pg_pool_t_test, get_pg_num_divisor)
     p.set_pg_num(16);
     p.set_pgp_num(16);
 
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < 16; ++i) {
         ASSERT_EQ(16u, p.get_pg_num_divisor(pg_t(i, 1)));
+    }
 
     p.set_pg_num(12);
     p.set_pgp_num(12);
@@ -1353,7 +1356,7 @@ TEST(pg_pool_t_test, get_random_pg_position)
         uint32_t h = p.get_random_pg_position(pgid, rand());
         uint32_t ps = p.raw_hash_to_pg(h);
         cout << p.get_pg_num() << " " << pgid << ": "
-            << h << " -> " << pg_t(ps, 1) << std::endl;
+             << h << " -> " << pg_t(ps, 1) << std::endl;
         ASSERT_EQ(pgid.ps(), ps);
     }
 }
@@ -1611,13 +1614,16 @@ TEST(pool_opts_t, deep_scrub_interval)
     EXPECT_FALSE(opts.is_set(pool_opts_t::DEEP_SCRUB_INTERVAL));
 }
 
-struct RequiredPredicate:IsPGRecoverablePredicate {
+struct RequiredPredicate: IsPGRecoverablePredicate {
     unsigned required_size;
     explicit RequiredPredicate(unsigned
-                               required_size):required_size(required_size) {
-    } bool operator() (const set < pg_shard_t > &have)const override {
+                               required_size): required_size(required_size)
+    {
+    } bool operator()(const set < pg_shard_t > &have)const override
+    {
         return have.size() >= required_size;
-}};
+    }
+};
 
 using namespace std;
 struct MapPredicate {
@@ -1625,12 +1631,15 @@ struct MapPredicate {
     explicit MapPredicate(const vector < pair < int,
                           pair < PastIntervals::osd_state_t,
                           epoch_t >>> &_states)
-    :states(_states.begin(), _states.end()) {
-    } PastIntervals::osd_state_t operator() (epoch_t start, int osd,
-                                             epoch_t * lost_at) {
+        : states(_states.begin(), _states.end())
+    {
+    } PastIntervals::osd_state_t operator()(epoch_t start, int osd,
+                                            epoch_t *lost_at)
+    {
         auto val = states.at(osd);
-        if (lost_at)
+        if (lost_at) {
             *lost_at = val.second;
+        }
         return val.first;
     }
 };
@@ -1642,8 +1651,9 @@ using ival = PastIntervals::pg_interval_t;
 using ivallst = std::list < ival >;
 const int N = 0x7fffffff /* CRUSH_ITEM_NONE, can't import crush.h here */ ;
 
-struct PITest:::testing::Test {
-    PITest() {
+struct PITest::: testing::Test {
+    PITest()
+    {
     } void run(bool ec_pool,
                ivallst intervals,
                epoch_t last_epoch_started,
@@ -1651,7 +1661,8 @@ struct PITest:::testing::Test {
                vector < pair < int, pair < PastIntervals::osd_state_t,
                epoch_t >>> osd_states, vector < int >up, vector < int >acting,
                set < pg_shard_t > probe, set < int >down, map < int,
-               epoch_t > blocked_by, bool pg_down) {
+               epoch_t > blocked_by, bool pg_down)
+    {
         RequiredPredicate rec_pred(min_to_peer);
         MapPredicate map_pred(osd_states);
 
@@ -1662,15 +1673,15 @@ struct PITest:::testing::Test {
                              pg_down, new RequiredPredicate(rec_pred));
 
         PastIntervals compact;
-      for (auto && i:intervals) {
+        for (auto && i : intervals) {
             compact.add_interval(ec_pool, i);
         }
         PI::PriorSet compact_ps = compact.get_prior_set(ec_pool,
-                                                        last_epoch_started,
-                                                        new
-                                                        RequiredPredicate
-                                                        (rec_pred), map_pred,
-                                                        up, acting, nullptr);
+                                  last_epoch_started,
+                                  new
+                                  RequiredPredicate
+                                  (rec_pred), map_pred,
+                                  up, acting, nullptr);
         ASSERT_EQ(correct, compact_ps);
     }
 };
@@ -1678,465 +1689,562 @@ struct PITest:::testing::Test {
 TEST_F(PITest, past_intervals_rep)
 {
     run(
-           /* ec_pool    */ false,
-           /* intervals  */
-           {
-           ival { {
-           0, 1, 2}
-           , {
-           0, 1, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           1, 2}
-           , {
-           1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           2}
-           , {
-           2}
-           , 31, 35, false, 2, 2}
-           , ival { {
-           0, 2}
-           , {
-           0, 2}
-           , 36, 50, true, 0, 0}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 1,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::UP, 0))
-           , make_pair(2, make_pair(PI::DOWN, 0))
-           }
-           ,
-           /* acting     */  {
-           0, 1}
-           ,
-           /* up         */  {
-           0, 1}
-           ,
-           /* probe      */  {
-           pst(0), pst(1)}
-           ,
-           /* down       */  {
-           2}
-           ,
-           /* blocked_by */  {
-           }
-           ,
-           /* pg_down    */ false);
+        /* ec_pool    */ false,
+        /* intervals  */
+    {
+        ival { {
+                0, 1, 2
+            }
+            , {
+                0, 1, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                1, 2
+            }
+            , {
+                1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                2
+            }
+            , {
+                2
+            }
+            , 31, 35, false, 2, 2}
+        , ival { {
+                0, 2
+            }
+            , {
+                0, 2
+            }
+            , 36, 50, true, 0, 0}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 1,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::UP, 0))
+        , make_pair(2, make_pair(PI::DOWN, 0))
+    }
+    ,
+    /* acting     */  {
+        0, 1
+    }
+    ,
+    /* up         */  {
+        0, 1
+    }
+    ,
+    /* probe      */  {
+        pst(0), pst(1)
+    }
+    ,
+    /* down       */  {
+        2
+    }
+    ,
+    /* blocked_by */  {
+    }
+    ,
+    /* pg_down    */ false);
 }
 
 TEST_F(PITest, past_intervals_ec)
 {
     run(
-           /* ec_pool    */ true,
-           /* intervals  */
-           {
-           ival { {
-           0, 1, 2}
-           , {
-           0, 1, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           N, 1, 2}
-           , {
-           N, 1, 2}
-           , 21, 30, true, 1, 1}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 2,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::DOWN, 0))
-           , make_pair(1, make_pair(PI::UP, 0))
-           , make_pair(2, make_pair(PI::UP, 0))
-           }
-           ,
-           /* acting     */  {
-           N, 1, 2}
-           ,
-           /* up         */  {
-           N, 1, 2}
-           ,
-           /* probe      */  {
-           pst(1, sit(1)), pst(2, sit(2))}
-           ,
-           /* down       */  {
-           0}
-           ,
-           /* blocked_by */  {
-           }
-           ,
-           /* pg_down    */ false);
+        /* ec_pool    */ true,
+        /* intervals  */
+    {
+        ival { {
+                0, 1, 2
+            }
+            , {
+                0, 1, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                N, 1, 2
+            }
+            , {
+                N, 1, 2
+            }
+            , 21, 30, true, 1, 1}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 2,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::DOWN, 0))
+        , make_pair(1, make_pair(PI::UP, 0))
+        , make_pair(2, make_pair(PI::UP, 0))
+    }
+    ,
+    /* acting     */  {
+        N, 1, 2
+    }
+    ,
+    /* up         */  {
+        N, 1, 2
+    }
+    ,
+    /* probe      */  {
+        pst(1, sit(1)), pst(2, sit(2))
+    }
+    ,
+    /* down       */  {
+        0
+    }
+    ,
+    /* blocked_by */  {
+    }
+    ,
+    /* pg_down    */ false);
 }
 
 TEST_F(PITest, past_intervals_rep_down)
 {
     run(
-           /* ec_pool    */ false,
-           /* intervals  */
-           {
-           ival { {
-           0, 1, 2}
-           , {
-           0, 1, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           1, 2}
-           , {
-           1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           2}
-           , {
-           2}
-           , 31, 35, true, 2, 2}
-           , ival { {
-           0, 2}
-           , {
-           0, 2}
-           , 36, 50, true, 0, 0}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 1,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::UP, 0))
-           , make_pair(2, make_pair(PI::DOWN, 0))
-           }
-           ,
-           /* acting     */  {
-           0, 1}
-           ,
-           /* up         */  {
-           0, 1}
-           ,
-           /* probe      */  {
-           pst(0), pst(1)}
-           ,
-           /* down       */  {
-           2}
-           ,
-           /* blocked_by */  { {
-           2, 0}
-           }
-           ,
-           /* pg_down    */ true);
+        /* ec_pool    */ false,
+        /* intervals  */
+    {
+        ival { {
+                0, 1, 2
+            }
+            , {
+                0, 1, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                1, 2
+            }
+            , {
+                1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                2
+            }
+            , {
+                2
+            }
+            , 31, 35, true, 2, 2}
+        , ival { {
+                0, 2
+            }
+            , {
+                0, 2
+            }
+            , 36, 50, true, 0, 0}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 1,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::UP, 0))
+        , make_pair(2, make_pair(PI::DOWN, 0))
+    }
+    ,
+    /* acting     */  {
+        0, 1
+    }
+    ,
+    /* up         */  {
+        0, 1
+    }
+    ,
+    /* probe      */  {
+        pst(0), pst(1)
+    }
+    ,
+    /* down       */  {
+        2
+    }
+    ,
+    /* blocked_by */  { {
+            2, 0
+        }
+    }
+    ,
+    /* pg_down    */ true);
 }
 
 TEST_F(PITest, past_intervals_ec_down)
 {
     run(
-           /* ec_pool    */ true,
-           /* intervals  */
-           {
-           ival { {
-           0, 1, 2}
-           , {
-           0, 1, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           N, 1, 2}
-           , {
-           N, 1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           N, N, 2}
-           , {
-           N, N, 2}
-           , 31, 35, false, 2, 2}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 2,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::DOWN, 0))
-           , make_pair(2, make_pair(PI::UP, 0))
-           }
-           ,
-           /* acting     */  {
-           0, N, 2}
-           ,
-           /* up         */  {
-           0, N, 2}
-           ,
-           /* probe      */  {
-           pst(0, sit(0)), pst(2, sit(2))}
-           ,
-           /* down       */  {
-           1}
-           ,
-           /* blocked_by */  { {
-           1, 0}
-           }
-           ,
-           /* pg_down    */ true);
+        /* ec_pool    */ true,
+        /* intervals  */
+    {
+        ival { {
+                0, 1, 2
+            }
+            , {
+                0, 1, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                N, 1, 2
+            }
+            , {
+                N, 1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                N, N, 2
+            }
+            , {
+                N, N, 2
+            }
+            , 31, 35, false, 2, 2}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 2,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::DOWN, 0))
+        , make_pair(2, make_pair(PI::UP, 0))
+    }
+    ,
+    /* acting     */  {
+        0, N, 2
+    }
+    ,
+    /* up         */  {
+        0, N, 2
+    }
+    ,
+    /* probe      */  {
+        pst(0, sit(0)), pst(2, sit(2))
+    }
+    ,
+    /* down       */  {
+        1
+    }
+    ,
+    /* blocked_by */  { {
+            1, 0
+        }
+    }
+    ,
+    /* pg_down    */ true);
 }
 
 TEST_F(PITest, past_intervals_rep_no_subsets)
 {
     run(
-           /* ec_pool    */ false,
-           /* intervals  */
-           {
-           ival { {
-           0, 2}
-           , {
-           0, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           1, 2}
-           , {
-           1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           0, 1}
-           , {
-           0, 1}
-           , 31, 35, true, 0, 0}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 1,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::UP, 0))
-           , make_pair(2, make_pair(PI::DOWN, 0))
-           }
-           ,
-           /* acting     */  {
-           0, 1}
-           ,
-           /* up         */  {
-           0, 1}
-           ,
-           /* probe      */  {
-           pst(0), pst(1)}
-           ,
-           /* down       */  {
-           2}
-           ,
-           /* blocked_by */  {
-           }
-           ,
-           /* pg_down    */ false);
+        /* ec_pool    */ false,
+        /* intervals  */
+    {
+        ival { {
+                0, 2
+            }
+            , {
+                0, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                1, 2
+            }
+            , {
+                1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                0, 1
+            }
+            , {
+                0, 1
+            }
+            , 31, 35, true, 0, 0}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 1,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::UP, 0))
+        , make_pair(2, make_pair(PI::DOWN, 0))
+    }
+    ,
+    /* acting     */  {
+        0, 1
+    }
+    ,
+    /* up         */  {
+        0, 1
+    }
+    ,
+    /* probe      */  {
+        pst(0), pst(1)
+    }
+    ,
+    /* down       */  {
+        2
+    }
+    ,
+    /* blocked_by */  {
+    }
+    ,
+    /* pg_down    */ false);
 }
 
 TEST_F(PITest, past_intervals_ec_no_subsets)
 {
     run(
-           /* ec_pool    */ true,
-           /* intervals  */
-           {
-           ival { {
-           0, N, 2}
-           , {
-           0, N, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           N, 1, 2}
-           , {
-           N, 1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           0, 1, N}
-           , {
-           0, 1, N}
-           , 31, 35, true, 0, 0}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 2,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::DOWN, 0))
-           , make_pair(2, make_pair(PI::UP, 0))
-           }
-           ,
-           /* acting     */  {
-           0, N, 2}
-           ,
-           /* up         */  {
-           0, N, 2}
-           ,
-           /* probe      */  {
-           pst(0, sit(0)), pst(2, sit(2))}
-           ,
-           /* down       */  {
-           1}
-           ,
-           /* blocked_by */  { {
-           1, 0}
-           }
-           ,
-           /* pg_down    */ true);
+        /* ec_pool    */ true,
+        /* intervals  */
+    {
+        ival { {
+                0, N, 2
+            }
+            , {
+                0, N, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                N, 1, 2
+            }
+            , {
+                N, 1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                0, 1, N
+            }
+            , {
+                0, 1, N
+            }
+            , 31, 35, true, 0, 0}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 2,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::DOWN, 0))
+        , make_pair(2, make_pair(PI::UP, 0))
+    }
+    ,
+    /* acting     */  {
+        0, N, 2
+    }
+    ,
+    /* up         */  {
+        0, N, 2
+    }
+    ,
+    /* probe      */  {
+        pst(0, sit(0)), pst(2, sit(2))
+    }
+    ,
+    /* down       */  {
+        1
+    }
+    ,
+    /* blocked_by */  { {
+            1, 0
+        }
+    }
+    ,
+    /* pg_down    */ true);
 }
 
 TEST_F(PITest, past_intervals_ec_no_subsets2)
 {
     run(
-           /* ec_pool    */ true,
-           /* intervals  */
-           {
-           ival { {
-           N, 1, 2}
-           , {
-           N, 1, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           0, N, 2}
-           , {
-           0, N, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           0, 3, N}
-           , {
-           0, 3, N}
-           , 31, 35, true, 0, 0}
-           }
-           ,
-           /* les        */ 31,
-           /* min_peer   */ 2,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::DOWN, 0))
-           , make_pair(2, make_pair(PI::UP, 0))
-           , make_pair(3, make_pair(PI::UP, 0))
-           }
-           ,
-           /* acting     */  {
-           0, N, 2}
-           ,
-           /* up         */  {
-           0, N, 2}
-           ,
-           /* probe      */  {
-           pst(0, sit(0)), pst(2, sit(2)), pst(3, sit(1))}
-           ,
-           /* down       */  {
-           1}
-           ,
-           /* blocked_by */  {
-           }
-           ,
-           /* pg_down    */ false);
+        /* ec_pool    */ true,
+        /* intervals  */
+    {
+        ival { {
+                N, 1, 2
+            }
+            , {
+                N, 1, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                0, N, 2
+            }
+            , {
+                0, N, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                0, 3, N
+            }
+            , {
+                0, 3, N
+            }
+            , 31, 35, true, 0, 0}
+    }
+    ,
+    /* les        */ 31,
+    /* min_peer   */ 2,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::DOWN, 0))
+        , make_pair(2, make_pair(PI::UP, 0))
+        , make_pair(3, make_pair(PI::UP, 0))
+    }
+    ,
+    /* acting     */  {
+        0, N, 2
+    }
+    ,
+    /* up         */  {
+        0, N, 2
+    }
+    ,
+    /* probe      */  {
+        pst(0, sit(0)), pst(2, sit(2)), pst(3, sit(1))
+    }
+    ,
+    /* down       */  {
+        1
+    }
+    ,
+    /* blocked_by */  {
+    }
+    ,
+    /* pg_down    */ false);
 }
 
 TEST_F(PITest, past_intervals_rep_lost)
 {
     run(
-           /* ec_pool    */ false,
-           /* intervals  */
-           {
-           ival { {
-           0, 1, 2}
-           , {
-           0, 1, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           1, 2}
-           , {
-           1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           2}
-           , {
-           2}
-           , 31, 35, true, 2, 2}
-           , ival { {
-           0, 2}
-           , {
-           0, 2}
-           , 36, 50, true, 0, 0}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 1,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::UP, 0))
-           , make_pair(2, make_pair(PI::LOST, 55))
-           }
-           ,
-           /* acting     */  {
-           0, 1}
-           ,
-           /* up         */  {
-           0, 1}
-           ,
-           /* probe      */  {
-           pst(0), pst(1)}
-           ,
-           /* down       */  {
-           2}
-           ,
-           /* blocked_by */  {
-           }
-           ,
-           /* pg_down    */ false);
+        /* ec_pool    */ false,
+        /* intervals  */
+    {
+        ival { {
+                0, 1, 2
+            }
+            , {
+                0, 1, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                1, 2
+            }
+            , {
+                1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                2
+            }
+            , {
+                2
+            }
+            , 31, 35, true, 2, 2}
+        , ival { {
+                0, 2
+            }
+            , {
+                0, 2
+            }
+            , 36, 50, true, 0, 0}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 1,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::UP, 0))
+        , make_pair(2, make_pair(PI::LOST, 55))
+    }
+    ,
+    /* acting     */  {
+        0, 1
+    }
+    ,
+    /* up         */  {
+        0, 1
+    }
+    ,
+    /* probe      */  {
+        pst(0), pst(1)
+    }
+    ,
+    /* down       */  {
+        2
+    }
+    ,
+    /* blocked_by */  {
+    }
+    ,
+    /* pg_down    */ false);
 }
 
 TEST_F(PITest, past_intervals_ec_lost)
 {
     run(
-           /* ec_pool    */ true,
-           /* intervals  */
-           {
-           ival { {
-           0, N, 2}
-           , {
-           0, N, 2}
-           , 10, 20, true, 0, 0}
-           , ival { {
-           N, 1, 2}
-           , {
-           N, 1, 2}
-           , 21, 30, true, 1, 1}
-           , ival { {
-           0, 1, N}
-           , {
-           0, 1, N}
-           , 31, 35, true, 0, 0}
-           }
-           ,
-           /* les        */ 5,
-           /* min_peer   */ 2,
-           /* osd states at end */
-           {
-           make_pair(0, make_pair(PI::UP, 0))
-           , make_pair(1, make_pair(PI::LOST, 36))
-           , make_pair(2, make_pair(PI::UP, 0))
-           }
-           ,
-           /* acting     */  {
-           0, N, 2}
-           ,
-           /* up         */  {
-           0, N, 2}
-           ,
-           /* probe      */  {
-           pst(0, sit(0)), pst(2, sit(2))}
-           ,
-           /* down       */  {
-           1}
-           ,
-           /* blocked_by */  {
-           }
-           ,
-           /* pg_down    */ false);
+        /* ec_pool    */ true,
+        /* intervals  */
+    {
+        ival { {
+                0, N, 2
+            }
+            , {
+                0, N, 2
+            }
+            , 10, 20, true, 0, 0}
+        , ival { {
+                N, 1, 2
+            }
+            , {
+                N, 1, 2
+            }
+            , 21, 30, true, 1, 1}
+        , ival { {
+                0, 1, N
+            }
+            , {
+                0, 1, N
+            }
+            , 31, 35, true, 0, 0}
+    }
+    ,
+    /* les        */ 5,
+    /* min_peer   */ 2,
+    /* osd states at end */
+    {
+        make_pair(0, make_pair(PI::UP, 0))
+        , make_pair(1, make_pair(PI::LOST, 36))
+        , make_pair(2, make_pair(PI::UP, 0))
+    }
+    ,
+    /* acting     */  {
+        0, N, 2
+    }
+    ,
+    /* up         */  {
+        0, N, 2
+    }
+    ,
+    /* probe      */  {
+        pst(0, sit(0)), pst(2, sit(2))
+    }
+    ,
+    /* down       */  {
+        1
+    }
+    ,
+    /* blocked_by */  {
+    }
+    ,
+    /* pg_down    */ false);
 }
 
 void ci_ref_test(object_manifest_t l,
@@ -2154,9 +2262,9 @@ void ci_ref_test(object_manifest_t l,
     if (l.chunk_map.empty() || g.chunk_map.empty()) {
         object_ref_delta_t delta;
         to_remove.calc_refs_to_drop_on_removal(l.chunk_map.
-                                               empty()? nullptr : &l,
+                                               empty() ? nullptr : &l,
                                                g.chunk_map.
-                                               empty()? nullptr : &g, delta);
+                                               empty() ? nullptr : &g, delta);
         ASSERT_EQ(expected_delta, delta);
     }
 }
@@ -2195,9 +2303,9 @@ object_manifest_t mk_manifest(std::map < uint64_t, std::tuple < uint64_t,
 {
     object_manifest_t ret;
     ret.type = object_manifest_t::TYPE_CHUNKED;
-  for (auto &[offset, tgt]:m) {
+    for (auto &[offset, tgt] : m) {
         auto &[tgt_off, length, name] = tgt;
-        auto & ci = ret.chunk_map[offset];
+        auto &ci = ret.chunk_map[offset];
         ci.offset = tgt_off;
         ci.length = length;
         ci.oid = mk_hobject(name);
@@ -2208,7 +2316,7 @@ object_manifest_t mk_manifest(std::map < uint64_t, std::tuple < uint64_t,
 object_ref_delta_t mk_delta(std::map < string, int >_m)
 {
     std::map < hobject_t, int >m;
-  for (auto &[name, delta]:_m) {
+    for (auto &[name, delta] : _m) {
         m.insert(std::make_pair(mk_hobject(name), delta));
     }
     return object_ref_delta_t(std::move(m));
@@ -2216,188 +2324,216 @@ object_ref_delta_t mk_delta(std::map < string, int >_m)
 
 TEST(chunk_info_test, calc_refs_to_drop)
 {
-    ci_ref_test(mk_manifest( {
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_manifest( {
-                               }
-                ), mk_delta( { {
-                            "foo", -1}
-                            }
-                ));
+    ci_ref_test(mk_manifest({
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({
+    }
+    ), mk_delta({ {
+            "foo", -1
+        }
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_to_drop_match)
 {
-    ci_ref_test(mk_manifest( { {
-                            0, {
-                            0, 1024, "foo"}
-                            }
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_delta( {
-                            }
-                ));
+    ci_ref_test(mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_to_drop_head_match)
 {
-    ci_ref_test(mk_manifest( {
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_delta( {
-                            }
-                ));
+    ci_ref_test(mk_manifest({
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_to_drop_tail_match)
 {
-    ci_ref_test(mk_manifest( { {
-                            0, {
-                            0, 1024, "foo"}
-                            }
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_manifest( {
-                               }
-                ), mk_delta( {
-                            }
-                ));
+    ci_ref_test(mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({
+    }
+    ), mk_delta({
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_to_drop_second_reference)
 {
-    ci_ref_test(mk_manifest( { {
-                            0, {
-                            0, 1024, "foo"}
-                            }
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               , {
-                               4 << 10, {
-                               0, 1 << 10, "foo"}
-                               }
-                               }
-                ), mk_manifest( {
-                               }
-                ), mk_delta( { {
-                            "foo", -1}
-                            }
-                ));
+    ci_ref_test(mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+        , {
+            4 << 10, {
+                0, 1 << 10, "foo"
+            }
+        }
+    }
+    ), mk_manifest({
+    }
+    ), mk_delta({ {
+            "foo", -1
+        }
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_offsets_dont_match)
 {
-    ci_ref_test(mk_manifest( { {
-                            0, {
-                            0, 1024, "foo"}
-                            }
-                            }
-                ), mk_manifest( { {
-                               512, {
-                               0, 1024, "foo"}
-                               }
-                               , {
-                               (4 << 10) + 512, {
-                               0, 1 << 10, "foo"}
-                               }
-                               }
-                ), mk_manifest( {
-                               }
-                ), mk_delta( { {
-                            "foo", -2}
-                            }
-                ));
+    ci_ref_test(mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            512, {
+                0, 1024, "foo"
+            }
+        }
+        , {
+            (4 << 10) + 512, {
+                0, 1 << 10, "foo"
+            }
+        }
+    }
+    ), mk_manifest({
+    }
+    ), mk_delta({ {
+            "foo", -2
+        }
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_g_l_match)
 {
-    ci_ref_test(mk_manifest( { {
-                            4096, {
-                            0, 1024, "foo"}
-                            }
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "foo"}
-                               }
-                               , {
-                               4096, {
-                               0, 1024, "bar"}
-                               }
-                               }
-                ), mk_manifest( { {
-                               4096, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_delta( { {
-                            "foo", -2}
-                            , {
-                            "bar", -1}
-                            }
-                ));
+    ci_ref_test(mk_manifest({ {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "bar"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({ {
+            "foo", -2
+        }
+        , {
+            "bar", -1
+        }
+    }
+                                                                  ));
 
 }
 
 TEST(chunk_info_test, calc_refs_g_l_match_no_this)
 {
-    ci_ref_test(mk_manifest( { {
-                            4096, {
-                            0, 1024, "foo"}
-                            }
-                            }
-                ), mk_manifest( { {
-                               0, {
-                               0, 1024, "bar"}
-                               }
-                               }
-                ), mk_manifest( { {
-                               4096, {
-                               0, 1024, "foo"}
-                               }
-                               }
-                ), mk_delta( { {
-                            "foo", -1}
-                            , {
-                            "bar", -1}
-                            }
-                ));
+    ci_ref_test(mk_manifest({ {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "bar"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({ {
+            "foo", -1
+        }
+        , {
+            "bar", -1
+        }
+    }
+                                                                  ));
 
 }
 
@@ -2406,30 +2542,36 @@ TEST(chunk_info_test, calc_refs_modify_mismatch)
     ObjectCleanRegions clean_regions(0, 8192, false);
     clean_regions.mark_data_region_dirty(0, 1024);
     clean_regions.mark_data_region_dirty(512, 1024);
-    ci_ref_test_on_modify(mk_manifest( { {
-                                      512, {
-                                      2048, 1024, "foo"}
-                                      }
-                                      , {
-                                      4096, {
-                                      0, 1024, "foo"}
-                                      }
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 1024, "bar"}
-                                         }
-                                         , {
-                                         512, {
-                                         2048, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     , {
-                                                     "ttt", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({ {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "bar"
+            }
+        }
+        , {
+            512, {
+                2048, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+        , {
+            "ttt", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_modify_match)
@@ -2438,32 +2580,38 @@ TEST(chunk_info_test, calc_refs_modify_match)
     clean_regions.mark_data_region_dirty(0, 1024);
     clean_regions.mark_data_region_dirty(512, 1024);
     clean_regions.mark_data_region_dirty(4096, 1024);
-    ci_ref_test_on_modify(mk_manifest( { {
-                                      512, {
-                                      2048, 1024, "foo"}
-                                      }
-                                      , {
-                                      4096, {
-                                      0, 1024, "ttt"}
-                                      }
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 1024, "bar"}
-                                         }
-                                         , {
-                                         512, {
-                                         2048, 1024, "foo"}
-                                         }
-                                         , {
-                                         4096, {
-                                         0, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({ {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "bar"
+            }
+        }
+        , {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_modify_match_dirty_overlap)
@@ -2471,29 +2619,35 @@ TEST(chunk_info_test, calc_refs_modify_match_dirty_overlap)
     ObjectCleanRegions clean_regions(0, 8192, false);
     clean_regions.mark_data_region_dirty(0, 256);
     clean_regions.mark_data_region_dirty(256, 4096);
-    ci_ref_test_on_modify(mk_manifest( {
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 256, "bar"}
-                                         }
-                                         , {
-                                         512, {
-                                         2048, 1024, "foo"}
-                                         }
-                                         , {
-                                         4096, {
-                                         0, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     , {
-                                                     "foo", -1}
-                                                     , {
-                                                     "ttt", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 256, "bar"
+            }
+        }
+        , {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+        , {
+            "foo", -1
+        }
+        , {
+            "ttt", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_modify_match_dirty_overlap2)
@@ -2502,32 +2656,38 @@ TEST(chunk_info_test, calc_refs_modify_match_dirty_overlap2)
     clean_regions.mark_data_region_dirty(0, 256);
     clean_regions.mark_data_region_dirty(256, 1024);
     clean_regions.mark_data_region_dirty(3584, 1024);
-    ci_ref_test_on_modify(mk_manifest( { {
-                                      512, {
-                                      2048, 1024, "foo"}
-                                      }
-                                      , {
-                                      4096, {
-                                      0, 1024, "ttt"}
-                                      }
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 256, "bar"}
-                                         }
-                                         , {
-                                         512, {
-                                         2048, 1024, "foo"}
-                                         }
-                                         , {
-                                         4096, {
-                                         0, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({ {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 256, "bar"
+            }
+        }
+        , {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_modify_match_dirty_overlap3)
@@ -2535,32 +2695,38 @@ TEST(chunk_info_test, calc_refs_modify_match_dirty_overlap3)
     ObjectCleanRegions clean_regions(0, 8192, false);
     clean_regions.mark_data_region_dirty(0, 256);
     clean_regions.mark_data_region_dirty(256, 4096);
-    ci_ref_test_on_modify(mk_manifest( { {
-                                      512, {
-                                      2048, 1024, "foo"}
-                                      }
-                                      , {
-                                      4096, {
-                                      0, 1024, "ttt"}
-                                      }
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 256, "bar"}
-                                         }
-                                         , {
-                                         512, {
-                                         2048, 1024, "foo"}
-                                         }
-                                         , {
-                                         4096, {
-                                         0, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({ {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 256, "bar"
+            }
+        }
+        , {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_modify_match_clone_overlap)
@@ -2569,36 +2735,44 @@ TEST(chunk_info_test, calc_refs_modify_match_clone_overlap)
     clean_regions.mark_data_region_dirty(0, 256);
     clean_regions.mark_data_region_dirty(256, 1024);
     clean_regions.mark_data_region_dirty(3584, 1024);
-    ci_ref_test_on_modify(mk_manifest( { {
-                                      512, {
-                                      2048, 1024, "foo"}
-                                      }
-                                      , {
-                                      4096, {
-                                      0, 1024, "ttt"}
-                                      }
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 256, "bar"}
-                                         }
-                                         , {
-                                         256, {
-                                         2048, 1024, "foo"}
-                                         }
-                                         , {
-                                         3584, {
-                                         0, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     , {
-                                                     "foo", -1}
-                                                     , {
-                                                     "ttt", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({ {
+            512, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 256, "bar"
+            }
+        }
+        , {
+            256, {
+                2048, 1024, "foo"
+            }
+        }
+        , {
+            3584, {
+                0, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+        , {
+            "foo", -1
+        }
+        , {
+            "ttt", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_modify_no_snap)
@@ -2606,208 +2780,248 @@ TEST(chunk_info_test, calc_refs_modify_no_snap)
     ObjectCleanRegions clean_regions(0, 8192, false);
     clean_regions.mark_data_region_dirty(0, 1024);
     clean_regions.mark_data_region_dirty(512, 1024);
-    ci_ref_test_on_modify(mk_manifest( {
-                                      }
-                          ), mk_manifest( { {
-                                         0, {
-                                         0, 1024, "bar"}
-                                         }
-                                         , {
-                                         512, {
-                                         2048, 1024, "ttt"}
-                                         }
-                                         }
-                          ), clean_regions, mk_delta( { {
-                                                     "bar", -1}
-                                                     , {
-                                                     "ttt", -1}
-                                                     }
-                          ));
+    ci_ref_test_on_modify(mk_manifest({
+    }
+    ), mk_manifest({ {
+            0, {
+                0, 1024, "bar"
+            }
+        }
+        , {
+            512, {
+                2048, 1024, "ttt"
+            }
+        }
+    }
+    ), clean_regions, mk_delta({ {
+            "bar", -1
+        }
+        , {
+            "ttt", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_inc)
 {
-    ci_ref_test_inc_on_set(mk_manifest( { {
-                                       256, {
-                                       0, 256, "aaa"}
-                                       }
-                                       , {
-                                       4096, {
-                                       0, 1024, "foo"}
-                                       }
-                                       }
-                           ), mk_manifest( { {
-                                          1024, {
-                                          0, 1024, "bar"}
-                                          }
-                                          }
-                           ), mk_manifest( { {
-                                          4096, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_delta( { {
-                                       "bar", 1}
-                                       }
-                           ));
+    ci_ref_test_inc_on_set(mk_manifest({ {
+            256, {
+                0, 256, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            1024, {
+                0, 1024, "bar"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({ {
+            "bar", 1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_inc2)
 {
-    ci_ref_test_inc_on_set(mk_manifest( { {
-                                       512, {
-                                       0, 1024, "aaa"}
-                                       }
-                                       , {
-                                       4096, {
-                                       0, 1024, "foo"}
-                                       }
-                                       }
-                           ), mk_manifest( { {
-                                          1024, {
-                                          0, 1024, "bar"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "bbb"}
-                                          }
-                                          }
-                           ), mk_manifest( { {
-                                          512, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_delta( { {
-                                       "bar", 1}
-                                       , {
-                                       "bbb", 1}
-                                       }
-                           ));
+    ci_ref_test_inc_on_set(mk_manifest({ {
+            512, {
+                0, 1024, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            1024, {
+                0, 1024, "bar"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "bbb"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            512, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({ {
+            "bar", 1
+        }
+        , {
+            "bbb", 1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_inc_no_l)
 {
-    ci_ref_test_inc_on_set(mk_manifest( {
-                                       }
-                           ), mk_manifest( { {
-                                          1024, {
-                                          0, 1024, "bar"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "bbb"}
-                                          }
-                                          }
-                           ), mk_manifest( { {
-                                          512, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_delta( { {
-                                       "bar", 1}
-                                       , {
-                                       "bbb", 1}
-                                       }
-                           ));
+    ci_ref_test_inc_on_set(mk_manifest({
+    }
+    ), mk_manifest({ {
+            1024, {
+                0, 1024, "bar"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "bbb"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            512, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({ {
+            "bar", 1
+        }
+        , {
+            "bbb", 1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_inc_no_g)
 {
-    ci_ref_test_inc_on_set(mk_manifest( { {
-                                       512, {
-                                       0, 1024, "aaa"}
-                                       }
-                                       , {
-                                       4096, {
-                                       0, 1024, "foo"}
-                                       }
-                                       }
-                           ), mk_manifest( { {
-                                          1024, {
-                                          0, 1024, "bar"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_manifest( {
-                                          }
-                           ), mk_delta( { {
-                                       "bar", 1}
-                                       }
-                           ));
+    ci_ref_test_inc_on_set(mk_manifest({ {
+            512, {
+                0, 1024, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            1024, {
+                0, 1024, "bar"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({
+    }
+    ), mk_delta({ {
+            "bar", 1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_inc_match_g_l)
 {
-    ci_ref_test_inc_on_set(mk_manifest( { {
-                                       256, {
-                                       0, 256, "aaa"}
-                                       }
-                                       , {
-                                       4096, {
-                                       0, 1024, "foo"}
-                                       }
-                                       }
-                           ), mk_manifest( { {
-                                          256, {
-                                          0, 256, "aaa"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_manifest( { {
-                                          256, {
-                                          0, 256, "aaa"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_delta( { {
-                                       "aaa", -1}
-                                       , {
-                                       "foo", -1}
-                                       }
-                           ));
+    ci_ref_test_inc_on_set(mk_manifest({ {
+            256, {
+                0, 256, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            256, {
+                0, 256, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            256, {
+                0, 256, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_delta({ {
+            "aaa", -1
+        }
+        , {
+            "foo", -1
+        }
+    }
+                                                                             ));
 }
 
 TEST(chunk_info_test, calc_refs_inc_match)
 {
-    ci_ref_test_inc_on_set(mk_manifest( { {
-                                       256, {
-                                       0, 256, "bbb"}
-                                       }
-                                       , {
-                                       4096, {
-                                       0, 1024, "foo"}
-                                       }
-                                       }
-                           ), mk_manifest( { {
-                                          256, {
-                                          0, 256, "aaa"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "foo"}
-                                          }
-                                          }
-                           ), mk_manifest( { {
-                                          256, {
-                                          0, 256, "aaa"}
-                                          }
-                                          , {
-                                          4096, {
-                                          0, 1024, "ccc"}
-                                          }
-                                          }
-                           ), mk_delta( {
-                                       }
-                           ));
+    ci_ref_test_inc_on_set(mk_manifest({ {
+            256, {
+                0, 256, "bbb"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            256, {
+                0, 256, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "foo"
+            }
+        }
+    }
+    ), mk_manifest({ {
+            256, {
+                0, 256, "aaa"
+            }
+        }
+        , {
+            4096, {
+                0, 1024, "ccc"
+            }
+        }
+    }
+    ), mk_delta({
+    }
+                                                                             ));
 }
 
 /*

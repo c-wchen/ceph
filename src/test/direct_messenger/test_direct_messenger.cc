@@ -16,21 +16,27 @@
 #include "messages/MPing.h"
 
 /// mock dispatcher that calls the given callback
-class MockDispatcher:public Dispatcher {
+class MockDispatcher: public Dispatcher
+{
     std::function < void (Message *) > callback;
-  public:
-     MockDispatcher(CephContext * cct,
-                    std::function < void (Message *) > callback)
-    :Dispatcher(cct), callback(std::move(callback)) {
-    } bool ms_handle_reset(Connection * con) override {
+public:
+    MockDispatcher(CephContext *cct,
+                   std::function < void (Message *) > callback)
+        : Dispatcher(cct), callback(std::move(callback))
+    {
+    } bool ms_handle_reset(Connection *con) override
+    {
         return false;
     }
-    void ms_handle_remote_reset(Connection * con) override {
+    void ms_handle_remote_reset(Connection *con) override
+    {
     }
-    bool ms_handle_refused(Connection * con) override {
+    bool ms_handle_refused(Connection *con) override
+    {
         return false;
     }
-    bool ms_dispatch(Message * m) override {
+    bool ms_dispatch(Message *m) override
+    {
         callback(m);
         m->put();
         return true;
@@ -54,17 +60,19 @@ TEST(DirectMessenger, SyncDispatch)
     bool got_request = false;
     bool got_reply = false;
 
-    MockDispatcher client_dispatcher(cct,[&](Message * m) {
-                                     got_reply = true;}
-    );
+    MockDispatcher client_dispatcher(cct, [&](Message * m) {
+        got_reply = true;
+    }
+                                    );
     client.add_dispatcher_head(&client_dispatcher);
 
-    MockDispatcher server_dispatcher(cct,[&](Message * m) {
-                                     got_request = true;
-                                     ASSERT_EQ(0,
-                                               m->get_connection()->
-                                               send_message(new MPing()));}
-    );
+    MockDispatcher server_dispatcher(cct, [&](Message * m) {
+        got_request = true;
+        ASSERT_EQ(0,
+                  m->get_connection()->
+                  send_message(new MPing()));
+    }
+                                    );
     server.add_dispatcher_head(&server_dispatcher);
 
     ASSERT_EQ(0, client.start());
@@ -138,7 +146,7 @@ TEST(DirectMessenger, AsyncDispatch)
     std::condition_variable cond;
     bool done = false;
 
-    auto wait_for_reply =[&]{
+    auto wait_for_reply = [&] {
         std::unique_lock < std::mutex > lock(mutex);
         while (!done) {
             cond.wait(lock);
@@ -147,20 +155,23 @@ TEST(DirectMessenger, AsyncDispatch)
     };
 
     // client dispatcher signals the condition variable on reply
-    MockDispatcher client_dispatcher(cct,[&](Message * m) {
-                                     std::lock_guard < std::mutex > lock(mutex);
-                                     done = true; cond.notify_one();}
-    );
+    MockDispatcher client_dispatcher(cct, [&](Message * m) {
+        std::lock_guard < std::mutex > lock(mutex);
+        done = true;
+        cond.notify_one();
+    }
+                                    );
     client.add_dispatcher_head(&client_dispatcher);
 
-    MockDispatcher server_dispatcher(cct,[&](Message * m) {
-                                     // hold the lock over the call to send_message() to prove that the client's
-                                     // dispatch is asynchronous. if it isn't, it will deadlock
-                                     std::lock_guard < std::mutex > lock(mutex);
-                                     ASSERT_EQ(0,
-                                               m->get_connection()->
-                                               send_message(new MPing()));}
-    );
+    MockDispatcher server_dispatcher(cct, [&](Message * m) {
+        // hold the lock over the call to send_message() to prove that the client's
+        // dispatch is asynchronous. if it isn't, it will deadlock
+        std::lock_guard < std::mutex > lock(mutex);
+        ASSERT_EQ(0,
+                  m->get_connection()->
+                  send_message(new MPing()));
+    }
+                                    );
     server.add_dispatcher_head(&server_dispatcher);
 
     ASSERT_EQ(0, client.start());
@@ -228,19 +239,21 @@ TEST(DirectMessenger, WaitShutdown)
     ASSERT_EQ(0, server.start());
 
     std::atomic < bool > client_waiting {
-    false};
+        false};
     std::atomic < bool > server_waiting {
-    false};
+        false};
 
     // spawn threads to wait() on each of the messengers
     std::thread client_thread([&] {
-                              client_waiting = true;
-                              client.wait(); client_waiting = false;}
-    );
+        client_waiting = true;
+        client.wait(); client_waiting = false;
+    }
+                             );
     std::thread server_thread([&] {
-                              server_waiting = true;
-                              server.wait(); server_waiting = false;}
-    );
+        server_waiting = true;
+        server.wait(); server_waiting = false;
+    }
+                             );
 
     // give them time to start
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -306,7 +319,7 @@ TEST(DirectMessenger, SendShutdown)
 
     // put client on the heap so we can free it early
     std::unique_ptr < DirectMessenger > client {
-    new DirectMessenger(cct, entity_name_t::CLIENT(1),
+        new DirectMessenger(cct, entity_name_t::CLIENT(1),
                             "client", 0, new FastStrategy())};
     DirectMessenger server(cct, entity_name_t::CLIENT(2),
                            "server", 0, new FastStrategy());

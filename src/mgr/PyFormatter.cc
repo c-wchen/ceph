@@ -64,14 +64,13 @@ void PyFormatter::dump_bool(std::string_view name, bool b)
     if (b) {
         Py_INCREF(Py_True);
         dump_pyobject(name, Py_True);
-    }
-    else {
+    } else {
         Py_INCREF(Py_False);
         dump_pyobject(name, Py_False);
     }
 }
 
-std::ostream & PyFormatter::dump_stream(std::string_view name)
+std::ostream &PyFormatter::dump_stream(std::string_view name)
 {
     // Give the caller an ostream, construct a PyString,
     // and remember the association between the two.  On flush,
@@ -97,26 +96,24 @@ void PyFormatter::dump_format_va(std::string_view name, const char *ns,
 /**
  * Steals reference to `p`
  */
-void PyFormatter::dump_pyobject(std::string_view name, PyObject * p)
+void PyFormatter::dump_pyobject(std::string_view name, PyObject *p)
 {
     if (PyList_Check(cursor)) {
         PyList_Append(cursor, p);
         Py_DECREF(p);
-    }
-    else if (PyDict_Check(cursor)) {
+    } else if (PyDict_Check(cursor)) {
         PyObject *key = PyUnicode_DecodeUTF8(name.data(), name.size(), nullptr);
         PyDict_SetItem(cursor, key, p);
         Py_DECREF(key);
         Py_DECREF(p);
-    }
-    else {
+    } else {
         ceph_abort();
     }
 }
 
 void PyFormatter::finish_pending_streams()
 {
-  for (const auto & i:pending_streams) {
+    for (const auto &i : pending_streams) {
         PyObject *tmp_cur = cursor;
         cursor = i->cursor;
         dump_pyobject(i->name.c_str(),

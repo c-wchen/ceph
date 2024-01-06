@@ -10,34 +10,37 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    class ImageCtx;
+class ImageCtx;
 
-    namespace operation {
+namespace operation
+{
 
-      template < typename ImageCtxT = ImageCtx > class SnapshotLimitRequest:public Request < ImageCtxT >
-        {
-          public:
-            SnapshotLimitRequest(ImageCtxT & image_ctx, Context * on_finish,
-                                 uint64_t limit);
+template < typename ImageCtxT = ImageCtx > class SnapshotLimitRequest: public Request < ImageCtxT >
+{
+public:
+    SnapshotLimitRequest(ImageCtxT &image_ctx, Context *on_finish,
+                         uint64_t limit);
 
-          protected:
-            void send_op() override;
-            bool should_complete(int r) override;
+protected:
+    void send_op() override;
+    bool should_complete(int r) override;
 
-             journal::Event create_event(uint64_t op_tid) const override {
-                return journal::SnapLimitEvent(op_tid, m_snap_limit);
-          } private:
-             uint64_t m_snap_limit;
+    journal::Event create_event(uint64_t op_tid) const override
+    {
+        return journal::SnapLimitEvent(op_tid, m_snap_limit);
+    } private:
+    uint64_t m_snap_limit;
 
-            void send_limit_snaps();
-        };
+    void send_limit_snaps();
+};
 
 } // namespace operation
-        }
-    // namespace librbd
-    extern template class librbd::operation::SnapshotLimitRequest <
+}
+// namespace librbd
+extern template class librbd::operation::SnapshotLimitRequest <
     librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_OPERATION_SNAPSHOT_LIMIT_REQUEST_H

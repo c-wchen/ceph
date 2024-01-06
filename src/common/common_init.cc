@@ -27,7 +27,7 @@
 #define dout_subsys ceph_subsys_
 
 #ifndef WITH_SEASTAR
-CephContext *common_preinit(const CephInitParameters & iparams,
+CephContext *common_preinit(const CephInitParameters &iparams,
                             enum code_environment_t code_env, int flags)
 {
     // set code environment
@@ -37,7 +37,7 @@ CephContext *common_preinit(const CephInitParameters & iparams,
     // Create a configuration object
     CephContext *cct = new CephContext(iparams.module_type, code_env, flags);
 
-    auto & conf = cct->_conf;
+    auto &conf = cct->_conf;
     // add config observers here
 
     // Set up our entity name.
@@ -48,8 +48,7 @@ CephContext *common_preinit(const CephInitParameters & iparams,
     // in these locations.  the mon already forces $mon_data/keyring.
     if (conf->name.is_mds()) {
         conf.set_val_default("keyring", "$mds_data/keyring");
-    }
-    else if (conf->name.is_osd()) {
+    } else if (conf->name.is_osd()) {
         conf.set_val_default("keyring", "$osd_data/keyring");
     }
 
@@ -75,11 +74,12 @@ CephContext *common_preinit(const CephInitParameters & iparams,
 }
 #endif // #ifndef WITH_SEASTAR
 
-void complain_about_parse_error(CephContext * cct,
-                                const std::string & parse_error)
+void complain_about_parse_error(CephContext *cct,
+                                const std::string &parse_error)
 {
-    if (parse_error.empty())
+    if (parse_error.empty()) {
         return;
+    }
     lderr(cct) << "Errors while parsing config file!" << dendl;
     lderr(cct) << parse_error << dendl;
 }
@@ -88,7 +88,7 @@ void complain_about_parse_error(CephContext * cct,
 
 /* Please be sure that this can safely be called multiple times by the
  * same application. */
-void common_init_finish(CephContext * cct)
+void common_init_finish(CephContext *cct)
 {
     // only do this once per cct
     if (cct->_finished) {
@@ -103,15 +103,16 @@ void common_init_finish(CephContext * cct)
     }
 
     int flags = cct->get_init_flags();
-    if (!(flags & CINIT_FLAG_NO_DAEMON_ACTIONS))
+    if (!(flags & CINIT_FLAG_NO_DAEMON_ACTIONS)) {
         cct->start_service_thread();
+    }
 
     if ((flags & CINIT_FLAG_DEFER_DROP_PRIVILEGES) &&
         (cct->get_set_uid() || cct->get_set_gid())) {
         cct->get_admin_socket()->chown(cct->get_set_uid(), cct->get_set_gid());
     }
 
-    const auto & conf = cct->_conf;
+    const auto &conf = cct->_conf;
 
     if (!conf->admin_socket.empty() && !conf->admin_socket_mode.empty()) {
         int ret = 0;
@@ -120,14 +121,12 @@ void common_init_finish(CephContext * cct)
         ret = strict_strtol(conf->admin_socket_mode.c_str(), 8, &err);
         if (err.empty()) {
             if (!(ret & (~ACCESSPERMS))) {
-                cct->get_admin_socket()->chmod(static_cast < mode_t > (ret));
-            }
-            else {
+                cct->get_admin_socket()->chmod(static_cast < mode_t >(ret));
+            } else {
                 lderr(cct) << "Invalid octal permissions string: "
-                    << conf->admin_socket_mode << dendl;
+                           << conf->admin_socket_mode << dendl;
             }
-        }
-        else {
+        } else {
             lderr(cct) << "Invalid octal string: " << err << dendl;
         }
     }

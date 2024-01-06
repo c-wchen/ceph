@@ -16,31 +16,32 @@
 #include "common/Formatter.h"
 
 // -- pow2_hist_t --
-void pow2_hist_t::dump(ceph::Formatter * f) const const
+void pow2_hist_t::dump(ceph::Formatter *f) const const
 {
     f->open_array_section("histogram");
     for (std::vector < int32_t >::const_iterator p = h.begin(); p != h.end();
-         ++p)
+         ++p) {
         f->dump_int("count", *p);
+    }
     f->close_section();
     f->dump_int("upper_bound", upper_bound());
 }
 
-void pow2_hist_t::encode(ceph::buffer::list & bl) const const
+void pow2_hist_t::encode(ceph::buffer::list &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(h, bl);
     ENCODE_FINISH(bl);
 }
 
-void pow2_hist_t::decode(ceph::buffer::list::const_iterator & p)
+void pow2_hist_t::decode(ceph::buffer::list::const_iterator &p)
 {
     DECODE_START(1, p);
     decode(h, p);
     DECODE_FINISH(p);
 }
 
-void pow2_hist_t::generate_test_instances(std::list < pow2_hist_t * >&ls)
+void pow2_hist_t::generate_test_instances(std::list < pow2_hist_t * > &ls)
 {
     ls.push_back(new pow2_hist_t);
     ls.push_back(new pow2_hist_t);

@@ -6,7 +6,7 @@
 
 using namespace ceph;
 
-std::string get_temp_pool_name(const std::string & prefix)
+std::string get_temp_pool_name(const std::string &prefix)
 {
     char hostname[80];
     char out[160];
@@ -19,14 +19,14 @@ std::string get_temp_pool_name(const std::string & prefix)
     return prefix + out;
 }
 
-void assert_eq_sparse(bufferlist & expected,
+void assert_eq_sparse(bufferlist &expected,
                       const std::map < uint64_t, uint64_t > &extents,
-                      bufferlist & actual)
+                      bufferlist &actual)
 {
     auto i = expected.begin();
     auto p = actual.begin();
     uint64_t pos = 0;
-  for (auto extent:extents) {
+    for (auto extent : extents) {
         const uint64_t start = extent.first;
         const uint64_t end = start + extent.second;
         for (; pos < end; ++i, ++pos) {
@@ -34,8 +34,7 @@ void assert_eq_sparse(bufferlist & expected,
             if (pos < start) {
                 // check the hole
                 ASSERT_EQ('\0', *i);
-            }
-            else {
+            } else {
                 // then the extent
                 ASSERT_EQ(*i, *p);
                 ++p;

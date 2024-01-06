@@ -1,7 +1,7 @@
 #include "cls_timeindex_types.h"
 #include "common/Formatter.h"
 
-void cls_timeindex_entry::dump(Formatter * f) const const
+void cls_timeindex_entry::dump(Formatter *f) const const
 {
     f->dump_stream("key_ts") << key_ts;
     f->dump_string("key_ext", key_ext);
@@ -9,7 +9,7 @@ void cls_timeindex_entry::dump(Formatter * f) const const
 }
 
 void cls_timeindex_entry::generate_test_instances(std::list <
-                                                  cls_timeindex_entry * >&o)
+        cls_timeindex_entry * > &o)
 {
     cls_timeindex_entry *i = new cls_timeindex_entry;
     i->key_ts = utime_t(0, 0);

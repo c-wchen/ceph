@@ -7,21 +7,21 @@
 #undef dout_prefix
 #define dout_prefix *_dout << " RDMAIWARPServerSocketImpl "
 
-RDMAIWARPServerSocketImpl::RDMAIWARPServerSocketImpl(CephContext * cct,
-                                                     std::shared_ptr <
-                                                     Infiniband > &ib,
-                                                     std::shared_ptr <
-                                                     RDMADispatcher >
-                                                     &rdma_dispatcher,
-                                                     RDMAWorker * w,
-                                                     entity_addr_t & a,
-                                                     unsigned addr_slot)
-:RDMAServerSocketImpl(cct, ib, rdma_dispatcher, w, a, addr_slot)
+RDMAIWARPServerSocketImpl::RDMAIWARPServerSocketImpl(CephContext *cct,
+        std::shared_ptr <
+        Infiniband > &ib,
+        std::shared_ptr <
+        RDMADispatcher >
+        &rdma_dispatcher,
+        RDMAWorker *w,
+        entity_addr_t &a,
+        unsigned addr_slot)
+    : RDMAServerSocketImpl(cct, ib, rdma_dispatcher, w, a, addr_slot)
 {
 }
 
-int RDMAIWARPServerSocketImpl::listen(entity_addr_t & sa,
-                                      const SocketOptions & opt)
+int RDMAIWARPServerSocketImpl::listen(entity_addr_t &sa,
+                                      const SocketOptions &opt)
 {
     ldout(cct, 20) << __func__ << " bind to rdma point" << dendl;
     cm_channel = rdma_create_event_channel();
@@ -34,8 +34,8 @@ int RDMAIWARPServerSocketImpl::listen(entity_addr_t & sa,
     if (rc < 0) {
         rc = -errno;
         ldout(cct, 10) << __func__ << " unable to bind to " << sa.get_sockaddr()
-            << " on port " << sa.
-            get_port() << ": " << cpp_strerror(errno) << dendl;
+                       << " on port " << sa.
+                       get_port() << ": " << cpp_strerror(errno) << dendl;
         goto err;
     }
     rc = rdma_listen(cm_id, 128);
@@ -43,8 +43,8 @@ int RDMAIWARPServerSocketImpl::listen(entity_addr_t & sa,
         rc = -errno;
         ldout(cct,
               10) << __func__ << " unable to listen to " << sa.get_sockaddr()
-            << " on port " << sa.
-            get_port() << ": " << cpp_strerror(errno) << dendl;
+                  << " on port " << sa.
+                  get_port() << ": " << cpp_strerror(errno) << dendl;
         goto err;
     }
     server_setup_socket = cm_channel->fd;
@@ -54,19 +54,19 @@ int RDMAIWARPServerSocketImpl::listen(entity_addr_t & sa,
     }
     ldout(cct,
           20) << __func__ << " fd of cm_channel is " << server_setup_socket <<
-        dendl;
+              dendl;
     return 0;
 
-  err:
+err:
     server_setup_socket = -1;
     rdma_destroy_id(cm_id);
     rdma_destroy_event_channel(cm_channel);
     return rc;
 }
 
-int RDMAIWARPServerSocketImpl::accept(ConnectedSocket * sock,
-                                      const SocketOptions & opt,
-                                      entity_addr_t * out, Worker * w)
+int RDMAIWARPServerSocketImpl::accept(ConnectedSocket *sock,
+                                      const SocketOptions &opt,
+                                      entity_addr_t *out, Worker *w)
 {
     ldout(cct, 15) << __func__ << dendl;
 
@@ -78,22 +78,23 @@ int RDMAIWARPServerSocketImpl::accept(ConnectedSocket * sock,
     };
     int ret = poll(&pfd, 1, 0);
     ceph_assert(ret >= 0);
-    if (!ret)
+    if (!ret) {
         return -EAGAIN;
+    }
 
     struct rdma_cm_event *cm_event;
     rdma_get_cm_event(cm_channel, &cm_event);
     ldout(cct,
           20) << __func__ << " event name: " << rdma_event_str(cm_event->
-                                                               event) << dendl;
+                  event) << dendl;
 
     struct rdma_cm_id *event_cm_id = cm_event->id;
     struct rdma_event_channel *event_channel = rdma_create_event_channel();
 
     if (net.set_nonblock(event_channel->fd) < 0) {
         lderr(cct) << __func__ <<
-            " failed to switch event channel to non-block, close event channel "
-            << dendl;
+                   " failed to switch event channel to non-block, close event channel "
+                   << dendl;
         rdma_destroy_event_channel(event_channel);
         rdma_ack_cm_event(cm_event);
         return -errno;

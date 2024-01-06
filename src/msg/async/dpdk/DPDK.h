@@ -46,9 +46,11 @@
 #include "toeplitz.h"
 
 struct free_deleter {
-    void operator() (void *p) {
+    void operator()(void *p)
+    {
         ::free(p);
-}};
+    }
+};
 
 enum {
     l_dpdk_dev_first = 58800,
@@ -90,15 +92,18 @@ class DPDKWorker;
 typedef void *MARKER[0];      /**< generic marker for a point in a structure */
 #endif
 
-class DPDKQueuePair {
+class DPDKQueuePair
+{
     using packet_provider_type = std::function < std::optional < Packet > () >;
-  public:
-    void configure_proxies(const std::map < unsigned, float >&cpu_weights);
+public:
+    void configure_proxies(const std::map < unsigned, float > &cpu_weights);
     // build REdirection TAble for cpu_weights map: target cpu -> weight
-    void build_sw_reta(const std::map < unsigned, float >&cpu_weights);
-    void proxy_send(Packet p) {
+    void build_sw_reta(const std::map < unsigned, float > &cpu_weights);
+    void proxy_send(Packet p)
+    {
         _proxy_packetq.push_back(std::move(p));
-    } void register_packet_provider(packet_provider_type func) {
+    } void register_packet_provider(packet_provider_type func)
+    {
         _pkt_providers.push_back(std::move(func));
     }
     bool poll_tx();
@@ -106,86 +111,89 @@ class DPDKQueuePair {
 
     class tx_buf_factory;
 
-    class tx_buf {
+    class tx_buf
+    {
         friend class DPDKQueuePair;
-      public:
-        static tx_buf *me(rte_mbuf * mbuf) {
+    public:
+        static tx_buf *me(rte_mbuf *mbuf)
+        {
             return reinterpret_cast < tx_buf * >(mbuf);
-      } private:
-    /**
-     * Checks if the original packet of a given cluster should be linearized
-     * due to HW limitations.
-     *
-     * @param head head of a cluster to check
-     *
-     * @return TRUE if a packet should be linearized.
-     */
-        static bool i40e_should_linearize(rte_mbuf * head);
+        } private:
+        /**
+         * Checks if the original packet of a given cluster should be linearized
+         * due to HW limitations.
+         *
+         * @param head head of a cluster to check
+         *
+         * @return TRUE if a packet should be linearized.
+         */
+        static bool i40e_should_linearize(rte_mbuf *head);
 
-    /**
-     * Sets the offload info in the head buffer of an rte_mbufs cluster.
-     *
-     * @param p an original packet the cluster is built for
-     * @param qp QP handle
-     * @param head a head of an rte_mbufs cluster
-     */
-        static void set_cluster_offload_info(const Packet & p,
-                                             const DPDKQueuePair & qp,
-                                             rte_mbuf * head);
+        /**
+         * Sets the offload info in the head buffer of an rte_mbufs cluster.
+         *
+         * @param p an original packet the cluster is built for
+         * @param qp QP handle
+         * @param head a head of an rte_mbufs cluster
+         */
+        static void set_cluster_offload_info(const Packet &p,
+                                             const DPDKQueuePair &qp,
+                                             rte_mbuf *head);
 
-    /**
-     * Creates a tx_buf cluster representing a given packet in a "zero-copy"
-     * way.
-     *
-     * @param p packet to translate
-     * @param qp DPDKQueuePair handle
-     *
-     * @return the HEAD tx_buf of the cluster or nullptr in case of a
-     *         failure
-     */
-        static tx_buf *from_packet_zc(CephContext * cct, Packet
-                                      && p, DPDKQueuePair & qp);
+        /**
+         * Creates a tx_buf cluster representing a given packet in a "zero-copy"
+         * way.
+         *
+         * @param p packet to translate
+         * @param qp DPDKQueuePair handle
+         *
+         * @return the HEAD tx_buf of the cluster or nullptr in case of a
+         *         failure
+         */
+        static tx_buf *from_packet_zc(CephContext *cct, Packet
+                                      && p, DPDKQueuePair &qp);
 
-    /**
-     * Copy the contents of the "packet" into the given cluster of
-     * rte_mbuf's.
-     *
-     * @note Size of the cluster has to be big enough to accommodate all the
-     *       contents of the given packet.
-     *
-     * @param p packet to copy
-     * @param head head of the rte_mbuf's cluster
-     */
-        static void copy_packet_to_cluster(const Packet & p, rte_mbuf * head);
+        /**
+         * Copy the contents of the "packet" into the given cluster of
+         * rte_mbuf's.
+         *
+         * @note Size of the cluster has to be big enough to accommodate all the
+         *       contents of the given packet.
+         *
+         * @param p packet to copy
+         * @param head head of the rte_mbuf's cluster
+         */
+        static void copy_packet_to_cluster(const Packet &p, rte_mbuf *head);
 
-    /**
-     * Creates a tx_buf cluster representing a given packet in a "copy" way.
-     *
-     * @param p packet to translate
-     * @param qp DPDKQueuePair handle
-     *
-     * @return the HEAD tx_buf of the cluster or nullptr in case of a
-     *         failure
-     */
-        static tx_buf *from_packet_copy(Packet && p, DPDKQueuePair & qp);
+        /**
+         * Creates a tx_buf cluster representing a given packet in a "copy" way.
+         *
+         * @param p packet to translate
+         * @param qp DPDKQueuePair handle
+         *
+         * @return the HEAD tx_buf of the cluster or nullptr in case of a
+         *         failure
+         */
+        static tx_buf *from_packet_copy(Packet && p, DPDKQueuePair &qp);
 
-    /**
-     * Zero-copy handling of a single fragment.
-     *
-     * @param do_one_buf Functor responsible for a single rte_mbuf
-     *                   handling
-     * @param qp DPDKQueuePair handle (in)
-     * @param frag Fragment to copy (in)
-     * @param head Head of the cluster (out)
-     * @param last_seg Last segment of the cluster (out)
-     * @param nsegs Number of segments in the cluster (out)
-     *
-     * @return TRUE in case of success
-     */
+        /**
+         * Zero-copy handling of a single fragment.
+         *
+         * @param do_one_buf Functor responsible for a single rte_mbuf
+         *                   handling
+         * @param qp DPDKQueuePair handle (in)
+         * @param frag Fragment to copy (in)
+         * @param head Head of the cluster (out)
+         * @param last_seg Last segment of the cluster (out)
+         * @param nsegs Number of segments in the cluster (out)
+         *
+         * @return TRUE in case of success
+         */
         template < class DoOneBufFunc >
-            static bool do_one_frag(DoOneBufFunc do_one_buf, DPDKQueuePair & qp,
-                                    fragment & frag, rte_mbuf * &head,
-                                    rte_mbuf * &last_seg, unsigned &nsegs) {
+        static bool do_one_frag(DoOneBufFunc do_one_buf, DPDKQueuePair &qp,
+                                fragment &frag, rte_mbuf*&head,
+                                rte_mbuf*&last_seg, unsigned &nsegs)
+        {
             size_t len, left_to_set = frag.size;
             char *base = frag.base;
 
@@ -230,58 +238,61 @@ class DPDKQueuePair {
             return true;
         }
 
-    /**
-     * Zero-copy handling of a single fragment.
-     *
-     * @param qp DPDKQueuePair handle (in)
-     * @param frag Fragment to copy (in)
-     * @param head Head of the cluster (out)
-     * @param last_seg Last segment of the cluster (out)
-     * @param nsegs Number of segments in the cluster (out)
-     *
-     * @return TRUE in case of success
-     */
-        static bool translate_one_frag(DPDKQueuePair & qp, fragment & frag,
-                                       rte_mbuf * &head, rte_mbuf * &last_seg,
-                                       unsigned &nsegs) {
+        /**
+         * Zero-copy handling of a single fragment.
+         *
+         * @param qp DPDKQueuePair handle (in)
+         * @param frag Fragment to copy (in)
+         * @param head Head of the cluster (out)
+         * @param last_seg Last segment of the cluster (out)
+         * @param nsegs Number of segments in the cluster (out)
+         *
+         * @return TRUE in case of success
+         */
+        static bool translate_one_frag(DPDKQueuePair &qp, fragment &frag,
+                                       rte_mbuf*&head, rte_mbuf*&last_seg,
+                                       unsigned &nsegs)
+        {
             return do_one_frag(set_one_data_buf, qp, frag, head,
                                last_seg, nsegs);
         }
 
-    /**
-     * Copies one fragment into the cluster of rte_mbuf's.
-     *
-     * @param qp DPDKQueuePair handle (in)
-     * @param frag Fragment to copy (in)
-     * @param head Head of the cluster (out)
-     * @param last_seg Last segment of the cluster (out)
-     * @param nsegs Number of segments in the cluster (out)
-     *
-     * We return the "last_seg" to avoid traversing the cluster in order to get
-     * it.
-     *
-     * @return TRUE in case of success
-     */
-        static bool copy_one_frag(DPDKQueuePair & qp, fragment & frag,
-                                  rte_mbuf * &head, rte_mbuf * &last_seg,
-                                  unsigned &nsegs) {
+        /**
+         * Copies one fragment into the cluster of rte_mbuf's.
+         *
+         * @param qp DPDKQueuePair handle (in)
+         * @param frag Fragment to copy (in)
+         * @param head Head of the cluster (out)
+         * @param last_seg Last segment of the cluster (out)
+         * @param nsegs Number of segments in the cluster (out)
+         *
+         * We return the "last_seg" to avoid traversing the cluster in order to get
+         * it.
+         *
+         * @return TRUE in case of success
+         */
+        static bool copy_one_frag(DPDKQueuePair &qp, fragment &frag,
+                                  rte_mbuf*&head, rte_mbuf*&last_seg,
+                                  unsigned &nsegs)
+        {
             return do_one_frag(copy_one_data_buf, qp, frag, head,
                                last_seg, nsegs);
         }
 
-    /**
-     * Allocates a single rte_mbuf and sets it to point to a given data
-     * buffer.
-     *
-     * @param qp DPDKQueuePair handle (in)
-     * @param m New allocated rte_mbuf (out)
-     * @param va virtual address of a data buffer (in)
-     * @param buf_len length of the data to copy (in)
-     *
-     * @return The actual number of bytes that has been set in the mbuf
-     */
-        static size_t set_one_data_buf(DPDKQueuePair & qp, rte_mbuf * &m,
-                                       char *va, size_t buf_len) {
+        /**
+         * Allocates a single rte_mbuf and sets it to point to a given data
+         * buffer.
+         *
+         * @param qp DPDKQueuePair handle (in)
+         * @param m New allocated rte_mbuf (out)
+         * @param va virtual address of a data buffer (in)
+         * @param buf_len length of the data to copy (in)
+         *
+         * @return The actual number of bytes that has been set in the mbuf
+         */
+        static size_t set_one_data_buf(DPDKQueuePair &qp, rte_mbuf*&m,
+                                       char *va, size_t buf_len)
+        {
             static constexpr size_t max_frag_len = 15 * 1024;   // 15K
 
             // FIXME: current all tx buf is allocated without rte_malloc
@@ -292,8 +303,9 @@ class DPDKQueuePair {
             // size.
             //
             rte_iova_t pa = rte_malloc_virt2iova(va);
-            if (!pa)
+            if (!pa) {
                 return copy_one_data_buf(qp, m, va, buf_len);
+            }
 
             ceph_assert(buf_len);
             tx_buf *buf = qp.get_tx_buf();
@@ -309,30 +321,31 @@ class DPDKQueuePair {
             return len;
         }
 
-    /**
-     *  Allocates a single rte_mbuf and copies a given data into it.
-     *
-     * @param qp DPDKQueuePair handle (in)
-     * @param m New allocated rte_mbuf (out)
-     * @param data Data to copy from (in)
-     * @param buf_len length of the data to copy (in)
-     *
-     * @return The actual number of bytes that has been copied
-     */
-        static size_t copy_one_data_buf(DPDKQueuePair & qp, rte_mbuf * &m,
+        /**
+         *  Allocates a single rte_mbuf and copies a given data into it.
+         *
+         * @param qp DPDKQueuePair handle (in)
+         * @param m New allocated rte_mbuf (out)
+         * @param data Data to copy from (in)
+         * @param buf_len length of the data to copy (in)
+         *
+         * @return The actual number of bytes that has been copied
+         */
+        static size_t copy_one_data_buf(DPDKQueuePair &qp, rte_mbuf*&m,
                                         char *data, size_t buf_len);
 
-    /**
-     * Checks if the first fragment of the given packet satisfies the
-     * zero-copy flow requirement: its first 128 bytes should not cross the
-     * 4K page boundary. This is required in order to avoid splitting packet
-     * headers.
-     *
-     * @param p packet to check
-     *
-     * @return TRUE if packet is ok and FALSE otherwise.
-     */
-        static bool check_frag0(Packet & p) {
+        /**
+         * Checks if the first fragment of the given packet satisfies the
+         * zero-copy flow requirement: its first 128 bytes should not cross the
+         * 4K page boundary. This is required in order to avoid splitting packet
+         * headers.
+         *
+         * @param p packet to check
+         *
+         * @return TRUE if packet is ok and FALSE otherwise.
+         */
+        static bool check_frag0(Packet &p)
+        {
             //
             // First frag is special - it has headers that should not be split.
             // If the addressing is such that the first fragment has to be
@@ -341,24 +354,28 @@ class DPDKQueuePair {
             // physically contiguous area. If that's the case - we are good to
             // go.
             //
-            if (p.frag(0).size < 128)
+            if (p.frag(0).size < 128) {
                 return false;
+            }
 
             return true;
         }
 
-      public:
-      tx_buf(tx_buf_factory & fc):_fc(fc) {
+    public:
+        tx_buf(tx_buf_factory &fc): _fc(fc)
+        {
 
             _buf_physaddr = _mbuf.buf_iova;
             _data_off = _mbuf.data_off;
         }
 
-        rte_mbuf *rte_mbuf_p() {
+        rte_mbuf *rte_mbuf_p()
+        {
             return &_mbuf;
         }
 
-        void set_zc_info(void *va, phys_addr_t pa, size_t len) {
+        void set_zc_info(void *va, phys_addr_t pa, size_t len)
+        {
             // mbuf_put()
             _mbuf.data_len = len;
             _mbuf.pkt_len = len;
@@ -370,7 +387,8 @@ class DPDKQueuePair {
             _is_zc = true;
         }
 
-        void reset_zc() {
+        void reset_zc()
+        {
 
             //
             // If this mbuf was the last in a cluster and contains an
@@ -385,8 +403,7 @@ class DPDKQueuePair {
                 //
                 _p.reset();
 
-            }
-            else if (!_is_zc) {
+            } else if (!_is_zc) {
                 return;
             }
 
@@ -398,7 +415,8 @@ class DPDKQueuePair {
             _is_zc = false;
         }
 
-        void recycle() {
+        void recycle()
+        {
             struct rte_mbuf *m = &_mbuf, *m_next;
 
             while (m != nullptr) {
@@ -409,11 +427,12 @@ class DPDKQueuePair {
             }
         }
 
-        void set_packet(Packet && p) {
+        void set_packet(Packet && p)
+        {
             _p = std::move(p);
         }
 
-      private:
+    private:
         struct rte_mbuf _mbuf;
         MARKER private_start;
         std::optional < Packet > _p;
@@ -422,11 +441,12 @@ class DPDKQueuePair {
         // TRUE if underlying mbuf has been used in the zero-copy flow
         bool _is_zc = false;
         // buffers' factory the buffer came from
-        tx_buf_factory & _fc;
+        tx_buf_factory &_fc;
         MARKER private_end;
     };
 
-    class tx_buf_factory {
+    class tx_buf_factory
+    {
         //
         // Number of buffers to free in each GC iteration:
         // We want the buffers to be allocated from the mempool as many as
@@ -437,18 +457,20 @@ class DPDKQueuePair {
         // possible packets count number here.
         //
         static constexpr int gc_count = 1;
-      public:
-         tx_buf_factory(CephContext * c, DPDKDevice * dev, uint8_t qid);
-        ~tx_buf_factory() {
+    public:
+        tx_buf_factory(CephContext *c, DPDKDevice *dev, uint8_t qid);
+        ~tx_buf_factory()
+        {
             // put all mbuf back into mempool in order to make the next factory work
             while (gc()) ;
             rte_mempool_put_bulk(_pool, (void **)_ring.data(), _ring.size());
         }
-    /**
-     * @note Should not be called if there are no free tx_buf's
-     *
-     * @return a free tx_buf object
-     */ tx_buf *get() {
+        /**
+         * @note Should not be called if there are no free tx_buf's
+         *
+         * @return a free tx_buf object
+         */ tx_buf *get()
+        {
             // Take completed from the HW first
             tx_buf *pkt = get_one_completed();
             if (pkt) {
@@ -470,14 +492,17 @@ class DPDKQueuePair {
             return pkt;
         }
 
-        void put(tx_buf * buf) {
+        void put(tx_buf *buf)
+        {
             buf->reset_zc();
             _ring.push_back(buf);
         }
 
-        unsigned ring_size() const {
+        unsigned ring_size() const
+        {
             return _ring.size();
-        } bool gc() {
+        } bool gc()
+        {
             for (int cnt = 0; cnt < gc_count; ++cnt) {
                 auto tx_buf_p = get_one_completed();
                 if (!tx_buf_p) {
@@ -489,78 +514,87 @@ class DPDKQueuePair {
 
             return true;
         }
-      private:
-    /**
-     * Fill the mbufs circular buffer: after this the _pool will become
-     * empty. We will use it to catch the completed buffers:
-     *
-     * - Underlying PMD drivers will "free" the mbufs once they are
-     *   completed.
-     * - We will poll the _pktmbuf_pool_tx till it's empty and release
-     *   all the buffers from the freed mbufs.
-     */
-        void init_factory() {
-            while (rte_mbuf * mbuf = rte_pktmbuf_alloc(_pool)) {
-                _ring.push_back(new(tx_buf::me(mbuf)) tx_buf {
-                                *this}
-                );
+    private:
+        /**
+         * Fill the mbufs circular buffer: after this the _pool will become
+         * empty. We will use it to catch the completed buffers:
+         *
+         * - Underlying PMD drivers will "free" the mbufs once they are
+         *   completed.
+         * - We will poll the _pktmbuf_pool_tx till it's empty and release
+         *   all the buffers from the freed mbufs.
+         */
+        void init_factory()
+        {
+            while (rte_mbuf *mbuf = rte_pktmbuf_alloc(_pool)) {
+                _ring.push_back(new (tx_buf::me(mbuf)) tx_buf {
+                    *this}
+                               );
             }
         }
 
-    /**
-     * PMD puts the completed buffers back into the mempool they have
-     * originally come from.
-     *
-     * @note rte_pktmbuf_alloc() resets the mbuf so there is no need to call
-     *       rte_pktmbuf_reset() here again.
-     *
-     * @return a single tx_buf that has been completed by HW.
-     */
-        tx_buf *get_one_completed() {
+        /**
+         * PMD puts the completed buffers back into the mempool they have
+         * originally come from.
+         *
+         * @note rte_pktmbuf_alloc() resets the mbuf so there is no need to call
+         *       rte_pktmbuf_reset() here again.
+         *
+         * @return a single tx_buf that has been completed by HW.
+         */
+        tx_buf *get_one_completed()
+        {
             return tx_buf::me(rte_pktmbuf_alloc(_pool));
         }
 
-      private:
-        CephContext * cct;
+    private:
+        CephContext *cct;
         std::vector < tx_buf * >_ring;
         rte_mempool *_pool = nullptr;
     };
 
-  public:
-    explicit DPDKQueuePair(CephContext * c, EventCenter * cen, DPDKDevice * dev,
+public:
+    explicit DPDKQueuePair(CephContext *c, EventCenter *cen, DPDKDevice *dev,
                            uint8_t qid);
-    ~DPDKQueuePair() {
+    ~DPDKQueuePair()
+    {
         if (device_stat_time_fd) {
             center->delete_time_event(device_stat_time_fd);
         }
         rx_gc(true);
     }
 
-    void rx_start() {
+    void rx_start()
+    {
         _rx_poller.emplace(this);
     }
 
-    uint32_t send(circular_buffer < Packet > &pb) {
+    uint32_t send(circular_buffer < Packet > &pb)
+    {
         // Zero-copy send
-        return _send(pb,[&](Packet && p) {
-                     return tx_buf::from_packet_zc(cct, std::move(p), *this);}
-        );
+        return _send(pb, [&](Packet && p) {
+            return tx_buf::from_packet_zc(cct, std::move(p), *this);
+        }
+                    );
     }
 
-    DPDKDevice & port()const {
+    DPDKDevice &port()const
+    {
         return *_dev;
-    } tx_buf *get_tx_buf() {
+    } tx_buf *get_tx_buf()
+    {
         return _tx_buf_factory.get();
     }
 
     void handle_stats();
 
-  private:
+private:
     template < class Func >
-        uint32_t _send(circular_buffer < Packet > &pb, Func
-                       && packet_to_tx_buf_p) {
+    uint32_t _send(circular_buffer < Packet > &pb, Func
+                   && packet_to_tx_buf_p)
+    {
         if (_tx_burst.size() == 0) {
-          for (auto && p:pb) {
+            for (auto && p : pb) {
                 // TODO: ceph_assert() in a fast path! Remove me ASAP!
                 ceph_assert(p.len());
 
@@ -599,19 +633,21 @@ class DPDKQueuePair {
         return sent;
     }
 
-  /**
-   * Allocate a new data buffer and set the mbuf to point to it.
-   *
-   * Do some DPDK hacks to work on PMD: it assumes that the buf_addr
-   * points to the private data of RTE_PKTMBUF_HEADROOM before the actual
-   * data buffer.
-   *
-   * @param m mbuf to update
-   */
-    static bool refill_rx_mbuf(rte_mbuf * m, size_t size,
-                               std::vector < void *>&datas) {
-        if (datas.empty())
+    /**
+     * Allocate a new data buffer and set the mbuf to point to it.
+     *
+     * Do some DPDK hacks to work on PMD: it assumes that the buf_addr
+     * points to the private data of RTE_PKTMBUF_HEADROOM before the actual
+     * data buffer.
+     *
+     * @param m mbuf to update
+     */
+    static bool refill_rx_mbuf(rte_mbuf *m, size_t size,
+                               std::vector < void *> &datas)
+    {
+        if (datas.empty()) {
             return false;
+        }
         void *data = datas.back();
         datas.pop_back();
 
@@ -629,43 +665,43 @@ class DPDKQueuePair {
 
     bool init_rx_mbuf_pool();
     bool rx_gc(bool force = false);
-    bool refill_one_cluster(rte_mbuf * head);
+    bool refill_one_cluster(rte_mbuf *head);
 
-  /**
-   * Polls for a burst of incoming packets. This function will not block and
-   * will immediately return after processing all available packets.
-   *
-   */
+    /**
+     * Polls for a burst of incoming packets. This function will not block and
+     * will immediately return after processing all available packets.
+     *
+     */
     bool poll_rx_once();
 
-  /**
-   * Translates an rte_mbuf's into packet and feeds them to _rx_stream.
-   *
-   * @param bufs An array of received rte_mbuf's
-   * @param count Number of buffers in the bufs[]
-   */
+    /**
+     * Translates an rte_mbuf's into packet and feeds them to _rx_stream.
+     *
+     * @param bufs An array of received rte_mbuf's
+     * @param count Number of buffers in the bufs[]
+     */
     void process_packets(struct rte_mbuf **bufs, uint16_t count);
 
-  /**
-   * Translate rte_mbuf into the "packet".
-   * @param m mbuf to translate
-   *
-   * @return a "optional" object representing the newly received data if in an
-   *         "engaged" state or an error if in a "disengaged" state.
-   */
-    std::optional < Packet > from_mbuf(rte_mbuf * m);
+    /**
+     * Translate rte_mbuf into the "packet".
+     * @param m mbuf to translate
+     *
+     * @return a "optional" object representing the newly received data if in an
+     *         "engaged" state or an error if in a "disengaged" state.
+     */
+    std::optional < Packet > from_mbuf(rte_mbuf *m);
 
-  /**
-   * Transform an LRO rte_mbuf cluster into the "packet" object.
-   * @param m HEAD of the mbufs' cluster to transform
-   *
-   * @return a "optional" object representing the newly received LRO packet if
-   *         in an "engaged" state or an error if in a "disengaged" state.
-   */
-    std::optional < Packet > from_mbuf_lro(rte_mbuf * m);
+    /**
+     * Transform an LRO rte_mbuf cluster into the "packet" object.
+     * @param m HEAD of the mbufs' cluster to transform
+     *
+     * @return a "optional" object representing the newly received LRO packet if
+     *         in an "engaged" state or an error if in a "disengaged" state.
+     */
+    std::optional < Packet > from_mbuf_lro(rte_mbuf *m);
 
-  private:
-    CephContext * cct;
+private:
+    CephContext *cct;
     std::vector < packet_provider_type > _pkt_providers;
     std::optional < std::array < uint8_t, 128 >> _sw_reta;
     circular_buffer < Packet > _proxy_packetq;
@@ -693,48 +729,60 @@ class DPDKQueuePair {
     uint64_t tx_count = 0;
 #endif
 
-    class DPDKTXPoller:public EventCenter::Poller {
+    class DPDKTXPoller: public EventCenter::Poller
+    {
         DPDKQueuePair *qp;
 
-      public:
-         explicit DPDKTXPoller(DPDKQueuePair * qp)
-        :EventCenter::Poller(qp->center, "DPDK::DPDKTXPoller"), qp(qp) {
-        } virtual int poll() {
+    public:
+        explicit DPDKTXPoller(DPDKQueuePair *qp)
+            : EventCenter::Poller(qp->center, "DPDK::DPDKTXPoller"), qp(qp)
+        {
+        } virtual int poll()
+        {
             return qp->poll_tx();
         }
     }
     _tx_poller;
 
-    class DPDKRXGCPoller:public EventCenter::Poller {
+    class DPDKRXGCPoller: public EventCenter::Poller
+    {
         DPDKQueuePair *qp;
 
-      public:
-         explicit DPDKRXGCPoller(DPDKQueuePair * qp)
-        :EventCenter::Poller(qp->center, "DPDK::DPDKRXGCPoller"), qp(qp) {
-        } virtual int poll() {
+    public:
+        explicit DPDKRXGCPoller(DPDKQueuePair *qp)
+            : EventCenter::Poller(qp->center, "DPDK::DPDKRXGCPoller"), qp(qp)
+        {
+        } virtual int poll()
+        {
             return qp->rx_gc();
         }
     }
     _rx_gc_poller;
     tx_buf_factory _tx_buf_factory;
-    class DPDKRXPoller:public EventCenter::Poller {
+    class DPDKRXPoller: public EventCenter::Poller
+    {
         DPDKQueuePair *qp;
 
-      public:
-         explicit DPDKRXPoller(DPDKQueuePair * qp)
-        :EventCenter::Poller(qp->center, "DPDK::DPDKRXPoller"), qp(qp) {
-        } virtual int poll() {
+    public:
+        explicit DPDKRXPoller(DPDKQueuePair *qp)
+            : EventCenter::Poller(qp->center, "DPDK::DPDKRXPoller"), qp(qp)
+        {
+        } virtual int poll()
+        {
             return qp->poll_rx_once();
         }
     };
     std::optional < DPDKRXPoller > _rx_poller;
-    class DPDKTXGCPoller:public EventCenter::Poller {
+    class DPDKTXGCPoller: public EventCenter::Poller
+    {
         DPDKQueuePair *qp;
 
-      public:
-         explicit DPDKTXGCPoller(DPDKQueuePair * qp)
-        :EventCenter::Poller(qp->center, "DPDK::DPDKTXGCPoller"), qp(qp) {
-        } virtual int poll() {
+    public:
+        explicit DPDKTXGCPoller(DPDKQueuePair *qp)
+            : EventCenter::Poller(qp->center, "DPDK::DPDKTXGCPoller"), qp(qp)
+        {
+        } virtual int poll()
+        {
             return qp->_tx_buf_factory.gc();
         }
     }
@@ -743,12 +791,13 @@ class DPDKQueuePair {
     uint16_t _tx_burst_idx = 0;
 };
 
-class DPDKDevice {
-  public:
-    CephContext * cct;
+class DPDKDevice
+{
+public:
+    CephContext *cct;
     PerfCounters *perf_logger;
-     std::vector < std::unique_ptr < DPDKQueuePair >> _queues;
-     std::vector < DPDKWorker * >workers;
+    std::vector < std::unique_ptr < DPDKQueuePair >> _queues;
+    std::vector < DPDKWorker * >workers;
     size_t _rss_table_bits = 0;
     uint8_t _port_idx;
     uint16_t _num_queues;
@@ -758,62 +807,63 @@ class DPDKDevice {
     unsigned _home_cpu;
     bool _use_lro;
     bool _enable_fc;
-     std::vector < uint16_t > _redir_table;
+    std::vector < uint16_t > _redir_table;
     rss_key_type _rss_key;
     struct rte_flow *_flow = nullptr;
     bool _is_i40e_device = false;
     bool _is_vmxnet3_device = false;
-     std::unique_ptr < AdminSocketHook > dfx_hook;
+    std::unique_ptr < AdminSocketHook > dfx_hook;
 
-  public:
-     rte_eth_dev_info _dev_info = {
+public:
+    rte_eth_dev_info _dev_info = {
     };
 
-  /**
-   * The final stage of a port initialization.
-   * @note Must be called *after* all queues from stage (2) have been
-   *       initialized.
-   */
+    /**
+     * The final stage of a port initialization.
+     * @note Must be called *after* all queues from stage (2) have been
+     *       initialized.
+     */
     int init_port_fini();
 
-    void nic_stats_dump(Formatter * f);
-    void nic_xstats_dump(Formatter * f);
-  private:
-  /**
-   * Port initialization consists of 3 main stages:
-   * 1) General port initialization which ends with a call to
-   *    rte_eth_dev_configure() where we request the needed number of Rx and
-   *    Tx queues.
-   * 2) Individual queues initialization. This is done in the constructor of
-   *    DPDKQueuePair class. In particular the memory pools for queues are allocated
-   *    in this stage.
-   * 3) The final stage of the initialization which starts with the call of
-   *    rte_eth_dev_start() after which the port becomes fully functional. We
-   *    will also wait for a link to get up in this stage.
-   */
+    void nic_stats_dump(Formatter *f);
+    void nic_xstats_dump(Formatter *f);
+private:
+    /**
+     * Port initialization consists of 3 main stages:
+     * 1) General port initialization which ends with a call to
+     *    rte_eth_dev_configure() where we request the needed number of Rx and
+     *    Tx queues.
+     * 2) Individual queues initialization. This is done in the constructor of
+     *    DPDKQueuePair class. In particular the memory pools for queues are allocated
+     *    in this stage.
+     * 3) The final stage of the initialization which starts with the call of
+     *    rte_eth_dev_start() after which the port becomes fully functional. We
+     *    will also wait for a link to get up in this stage.
+     */
 
-  /**
-   * First stage of the port initialization.
-   *
-   * @return 0 in case of success and an appropriate error code in case of an
-   *         error.
-   */
+    /**
+     * First stage of the port initialization.
+     *
+     * @return 0 in case of success and an appropriate error code in case of an
+     *         error.
+     */
     int init_port_start();
 
-  /**
-   * Check the link status of out port in up to 9s, and print them finally.
-   */
+    /**
+     * Check the link status of out port in up to 9s, and print them finally.
+     */
     int check_port_link_status();
 
-  /**
-   * Configures the HW Flow Control
-   */
+    /**
+     * Configures the HW Flow Control
+     */
     void set_hw_flow_control();
 
-  public:
-  DPDKDevice(CephContext * c, uint8_t port_idx, uint16_t num_queues, bool use_lro, bool enable_fc):
-    cct(c), _port_idx(port_idx), _num_queues(num_queues),
-        _home_cpu(0), _use_lro(use_lro), _enable_fc(enable_fc) {
+public:
+    DPDKDevice(CephContext *c, uint8_t port_idx, uint16_t num_queues, bool use_lro, bool enable_fc):
+        cct(c), _port_idx(port_idx), _num_queues(num_queues),
+        _home_cpu(0), _use_lro(use_lro), _enable_fc(enable_fc)
+    {
         _queues =
             std::vector < std::unique_ptr < DPDKQueuePair >> (_num_queues);
         /* now initialise the port we will use */
@@ -848,110 +898,133 @@ class DPDKDevice {
         cct->get_perfcounters_collection()->add(perf_logger);
     }
 
-    ~DPDKDevice() {
+    ~DPDKDevice()
+    {
         cct->get_admin_socket()->unregister_commands(dfx_hook.get());
         dfx_hook.reset();
-        if (_flow)
+        if (_flow) {
             rte_flow_destroy(_port_idx, _flow, nullptr);
+        }
         rte_eth_dev_stop(_port_idx);
     }
 
-    DPDKQueuePair & queue_for_cpu(unsigned cpu) {
+    DPDKQueuePair &queue_for_cpu(unsigned cpu)
+    {
         return *_queues[cpu];
     }
-    void l2receive(int qid, Packet p) {
+    void l2receive(int qid, Packet p)
+    {
         _queues[qid]->_rx_stream.produce(std::move(p));
     }
     subscription < Packet > receive(unsigned cpuid,
                                     std::function < int (Packet) >
-                                    next_packet) {
+                                    next_packet)
+    {
         auto sub = _queues[cpuid]->_rx_stream.listen(std::move(next_packet));
         _queues[cpuid]->rx_start();
         return sub;
     }
-    ethernet_address hw_address() {
+    ethernet_address hw_address()
+    {
         struct rte_ether_addr mac;
         rte_eth_macaddr_get(_port_idx, &mac);
 
         return mac.addr_bytes;
     }
-    hw_features get_hw_features() {
+    hw_features get_hw_features()
+    {
         return _hw_features;
     }
-    const rss_key_type & rss_key() const {
+    const rss_key_type &rss_key() const
+    {
         return _rss_key;
-    } uint16_t hw_queues_count() {
+    } uint16_t hw_queues_count()
+    {
         return _num_queues;
     }
-    std::unique_ptr < DPDKQueuePair > init_local_queue(CephContext * c,
-                                                       EventCenter * center,
-                                                       std::string hugepages,
-                                                       uint16_t qid) {
+    std::unique_ptr < DPDKQueuePair > init_local_queue(CephContext *c,
+            EventCenter *center,
+            std::string hugepages,
+            uint16_t qid)
+    {
         std::unique_ptr < DPDKQueuePair > qp;
         qp = std::unique_ptr < DPDKQueuePair >
-            (new DPDKQueuePair(c, center, this, qid));
+             (new DPDKQueuePair(c, center, this, qid));
         return qp;
     }
-    unsigned hash2qid(uint32_t hash) {
+    unsigned hash2qid(uint32_t hash)
+    {
         // return hash % hw_queues_count();
         return _redir_table[hash & (_redir_table.size() - 1)];
     }
-    void set_local_queue(unsigned i, std::unique_ptr < DPDKQueuePair > qp) {
+    void set_local_queue(unsigned i, std::unique_ptr < DPDKQueuePair > qp)
+    {
         ceph_assert(!_queues[i]);
         _queues[i] = std::move(qp);
     }
-    void unset_local_queue(unsigned i) {
+    void unset_local_queue(unsigned i)
+    {
         ceph_assert(_queues[i]);
         _queues[i].reset();
     }
     template < typename Func >
-        unsigned forward_dst(unsigned src_cpuid, Func && hashfn) {
-        auto & qp = queue_for_cpu(src_cpuid);
-        if (!qp._sw_reta)
+    unsigned forward_dst(unsigned src_cpuid, Func && hashfn)
+    {
+        auto &qp = queue_for_cpu(src_cpuid);
+        if (!qp._sw_reta) {
             return src_cpuid;
+        }
 
         ceph_assert(!qp._sw_reta);
         auto hash = hashfn() >> _rss_table_bits;
-        auto & reta = *qp._sw_reta;
+        auto &reta = *qp._sw_reta;
         return reta[hash % reta.size()];
     }
-    unsigned hash2cpu(uint32_t hash) {
+    unsigned hash2cpu(uint32_t hash)
+    {
         // there is an assumption here that qid == get_id() which will
         // not necessary be true in the future
-        return forward_dst(hash2qid(hash),[hash] {
-                           return hash;
-                           }
-        );
+        return forward_dst(hash2qid(hash), [hash] {
+            return hash;
+        }
+                          );
     }
 
-    hw_features & hw_features_ref() {
+    hw_features &hw_features_ref()
+    {
         return _hw_features;
     }
 
-    const rte_eth_rxconf *def_rx_conf() const {
+    const rte_eth_rxconf *def_rx_conf() const
+    {
         return &_dev_info.default_rxconf;
-    } const rte_eth_txconf *def_tx_conf() const {
+    } const rte_eth_txconf *def_tx_conf() const
+    {
         return &_dev_info.default_txconf;
     }
-  /**
-   *  Set the RSS table in the device and store it in the internal vector.
-   */ void set_rss_table();
+    /**
+     *  Set the RSS table in the device and store it in the internal vector.
+     */ void set_rss_table();
 
-    uint8_t port_idx() {
+    uint8_t port_idx()
+    {
         return _port_idx;
     }
-    bool is_i40e_device() const {
+    bool is_i40e_device() const
+    {
         return _is_i40e_device;
-    } bool is_vmxnet3_device() const {
+    } bool is_vmxnet3_device() const
+    {
         return _is_vmxnet3_device;
-}};
+    }
+};
 
-std::unique_ptr < DPDKDevice > create_dpdk_net_device(CephContext * c,
-                                                      unsigned cores,
-                                                      uint8_t port_idx =
-                                                      0, bool use_lro =
-                                                      true, bool enable_fc =
-                                                      true);
+std::unique_ptr < DPDKDevice > create_dpdk_net_device(CephContext *c,
+        unsigned cores,
+        uint8_t port_idx =
+            0, bool use_lro =
+            true, bool enable_fc =
+            true);
 
 /**
  * @return Number of bytes needed for mempool objects of each QP.

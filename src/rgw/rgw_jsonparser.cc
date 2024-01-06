@@ -18,7 +18,7 @@
 
 using namespace std;
 
-void dump_array(JSONObj * obj)
+void dump_array(JSONObj *obj)
 {
 
     JSONObjIter iter = obj->find_first();
@@ -35,24 +35,28 @@ struct Key {
     string access_key;
     string secret_key;
 
-    void decode_json(JSONObj * obj) {
+    void decode_json(JSONObj *obj)
+    {
         JSONDecoder::decode_json("user", user, obj);
         JSONDecoder::decode_json("access_key", access_key, obj);
         JSONDecoder::decode_json("secret_key", secret_key, obj);
-}};
+    }
+};
 
 struct UserInfo {
     string uid;
     string display_name;
     int max_buckets;
-     list < Key > keys;
+    list < Key > keys;
 
-    void decode_json(JSONObj * obj) {
+    void decode_json(JSONObj *obj)
+    {
         JSONDecoder::decode_json("user_id", uid, obj);
         JSONDecoder::decode_json("display_name", display_name, obj);
         JSONDecoder::decode_json("max_buckets", max_buckets, obj);
         JSONDecoder::decode_json("keys", keys, obj);
-}};
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -73,8 +77,9 @@ int main(int argc, char **argv)
         done = feof(stdin);
 
         bool ret = parser.parse(buf, len);
-        if (!ret)
+        if (!ret) {
             cerr << "parse error" << std::endl;
+        }
 
         if (done) {
             bl.append(buf, len);
@@ -113,8 +118,7 @@ int main(int argc, char **argv)
 
     try {
         ui.decode_json(&parser);
-    }
-    catch(const JSONDecoder::err & e) {
+    } catch (const JSONDecoder::err &e) {
         cout << "failed to decode JSON input: " << e.what() << std::endl;
         exit(1);
     }

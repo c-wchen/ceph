@@ -7,17 +7,20 @@
 class Dentry;
 struct Inode;
 
-class Dir {
-  public:
-    Inode * parent_inode;       // my inode
+class Dir
+{
+public:
+    Inode *parent_inode;        // my inode
     ceph::unordered_map < std::string, Dentry * >dentries;
     unsigned num_null_dentries = 0;
 
-     std::vector < Dentry * >readdir_cache;
+    std::vector < Dentry * >readdir_cache;
 
-    explicit Dir(Inode * in) {
+    explicit Dir(Inode *in)
+    {
         parent_inode = in;
-    } bool is_empty() {
+    } bool is_empty()
+    {
         return dentries.empty();
     }
 };

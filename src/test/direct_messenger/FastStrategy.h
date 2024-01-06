@@ -16,23 +16,31 @@
 #define FAST_STRATEGY_H
 #include "DispatchStrategy.h"
 
-class FastStrategy:public DispatchStrategy {
-  public:
-    FastStrategy() {
-    } void ds_dispatch(Message * m) override {
+class FastStrategy: public DispatchStrategy
+{
+public:
+    FastStrategy()
+    {
+    } void ds_dispatch(Message *m) override
+    {
         msgr->ms_fast_preprocess(m);
-        if (msgr->ms_can_fast_dispatch(m))
+        if (msgr->ms_can_fast_dispatch(m)) {
             msgr->ms_fast_dispatch(m);
-        else
+        } else {
             msgr->ms_deliver_dispatch(m);
+        }
     }
-    void shutdown() override {
+    void shutdown() override
+    {
     }
-    void start() override {
+    void start() override
+    {
     }
-    void wait() override {
+    void wait() override
+    {
     }
-    virtual ~ FastStrategy() {
+    virtual ~ FastStrategy()
+    {
     }
 };
 #endif /* FAST_STRATEGY_H */

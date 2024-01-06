@@ -29,8 +29,8 @@ RGWResolver::RGWResolver()
     resolver = DNSResolver::get_instance();
 }
 
-int RGWResolver::resolve_cname(const string & hostname, string & cname,
-                               bool * found)
+int RGWResolver::resolve_cname(const string &hostname, string &cname,
+                               bool *found)
 {
     return resolver->resolve_cname(g_ceph_context, hostname, &cname, found);
 }

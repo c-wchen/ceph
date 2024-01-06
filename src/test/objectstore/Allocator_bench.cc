@@ -23,18 +23,22 @@ typedef boost::mt11213b gen_type;
 
 using namespace std;
 
-class AllocTest:public::testing::TestWithParam < const char *> {
+class AllocTest: public::testing::TestWithParam < const char *>
+{
 
-  public:
+public:
     boost::scoped_ptr < Allocator > alloc;
-    AllocTest():alloc(0) {
-    } void init_alloc(int64_t size, uint64_t min_alloc_size) {
+    AllocTest(): alloc(0)
+    {
+    } void init_alloc(int64_t size, uint64_t min_alloc_size)
+    {
         std::cout << "Creating alloc type " << string(GetParam()) << " \n";
         alloc.reset(Allocator::create(g_ceph_context, GetParam(), size,
                                       min_alloc_size));
     }
 
-    void init_close() {
+    void init_close()
+    {
         alloc.reset(0);
     }
     void doOverwriteTest(uint64_t capacity, uint64_t prefill,
@@ -57,42 +61,50 @@ void dump_mempools()
     ldout(g_ceph_context, 0) << ostr.str() << dendl;
 }
 
-class AllocTracker {
+class AllocTracker
+{
     std::vector < uint64_t > allocations;
     uint64_t head = 0;
     uint64_t tail = 0;
     uint64_t size = 0;
     boost::uniform_int <> u1;
 
-  public:
+public:
     AllocTracker(uint64_t capacity, uint64_t alloc_unit)
-    :u1(0, capacity) {
+        : u1(0, capacity)
+    {
         ceph_assert(alloc_unit >= 0x100);
         ceph_assert(capacity <= (uint64_t(1) << 48));   // we use 5 octets (bytes 1 - 5) to store
         // offset to save the required space.
         // This supports capacity up to 281 TB
 
         allocations.resize(capacity / alloc_unit);
-    } inline uint64_t get_head() const {
+    } inline uint64_t get_head() const
+    {
         return head;
-    } inline uint64_t get_tail() const {
+    } inline uint64_t get_tail() const
+    {
         return tail;
-    } bool push(uint64_t offs, uint32_t len) {
+    } bool push(uint64_t offs, uint32_t len)
+    {
         ceph_assert((len & 0xff) == 0);
         ceph_assert((offs & 0xff) == 0);
         ceph_assert((offs & 0xffff000000000000) == 0);
 
-        if (head + 1 == tail)
+        if (head + 1 == tail) {
             return false;
+        }
         uint64_t val = (offs << 16) | (len >> 8);
         allocations[head++] = val;
         head %= allocations.size();
         ++size;
         return true;
     }
-    bool pop(uint64_t * offs, uint32_t * len) {
-        if (size == 0)
+    bool pop(uint64_t *offs, uint32_t *len)
+    {
+        if (size == 0) {
             return false;
+        }
         uint64_t val = allocations[tail++];
         *len = uint64_t((val & 0xffffff) << 8);
         *offs = (val >> 16) & ~uint64_t(0xff);
@@ -100,10 +112,12 @@ class AllocTracker {
         --size;
         return true;
     }
-    bool pop_random(gen_type & rng, uint64_t * offs, uint32_t * len,
-                    uint32_t max_len = 0) {
-        if (size == 0)
+    bool pop_random(gen_type &rng, uint64_t *offs, uint32_t *len,
+                    uint32_t max_len = 0)
+    {
+        if (size == 0) {
             return false;
+        }
 
         uint64_t pos = (u1(rng) % size) + tail;
         pos %= allocations.size();
@@ -114,8 +128,7 @@ class AllocTracker {
             val = ((*offs + max_len) << 16) | ((*len - max_len) >> 8);
             allocations[pos] = val;
             *len = max_len;
-        }
-        else {
+        } else {
             allocations[pos] = allocations[tail++];
             tail %= allocations.size();
             --size;
@@ -137,11 +150,11 @@ TEST_P(AllocTest, test_alloc_bench_seq)
     utime_t start = ceph_clock_now();
     for (uint64_t i = 0; i < capacity; i += want_size) {
         tmp.clear();
-        EXPECT_EQ(static_cast < int64_t > (want_size),
+        EXPECT_EQ(static_cast < int64_t >(want_size),
                   alloc->allocate(want_size, alloc_unit, 0, 0, &tmp));
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
 
@@ -152,7 +165,7 @@ TEST_P(AllocTest, test_alloc_bench_seq)
         alloc->release(release_set);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "release " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     std::cout << "Executed in " << ceph_clock_now() - start << std::endl;
@@ -184,7 +197,7 @@ TEST_P(AllocTest, test_alloc_bench)
         }
         i += r;
 
-      for (auto a:tmp) {
+        for (auto a : tmp) {
             bool full = !at.push(a.offset, a.length);
             EXPECT_EQ(full, false);
         }
@@ -204,7 +217,7 @@ TEST_P(AllocTest, test_alloc_bench)
 
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     std::cout << "Executed in " << ceph_clock_now() - start << std::endl;
@@ -238,13 +251,13 @@ void AllocTest::doOverwriteTest(uint64_t capacity, uint64_t prefill,
         }
         i += r;
 
-      for (auto a:tmp) {
+        for (auto a : tmp) {
             bool full = !at.push(a.offset, a.length);
             EXPECT_EQ(full, false);
         }
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc " << i / 1024 / 1024 << " mb of "
-                << cap / 1024 / 1024 << std::endl;
+                      << cap / 1024 / 1024 << std::endl;
         }
     }
 
@@ -273,14 +286,14 @@ void AllocTest::doOverwriteTest(uint64_t capacity, uint64_t prefill,
         }
         i += r;
 
-      for (auto a:tmp) {
+        for (auto a : tmp) {
             bool full = !at.push(a.offset, a.length);
             EXPECT_EQ(full, false);
         }
 
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "reuse " << i / 1024 / 1024 << " mb of "
-                << cap / 1024 / 1024 << std::endl;
+                      << cap / 1024 / 1024 << std::endl;
         }
     }
     std::cout << "Executed in " << ceph_clock_now() - start << std::endl;
@@ -342,11 +355,11 @@ TEST_P(AllocTest, mempoolAccounting)
         }
     }
 
-    delete(alloc);
+    delete (alloc);
     ASSERT_EQ(mempool::bluestore_alloc::allocated_bytes(), bytes);
     ASSERT_EQ(mempool::bluestore_alloc::allocated_items(), items);
 }
 
 INSTANTIATE_TEST_SUITE_P(Allocator,
-                         AllocTest,::testing::Values("stupid", "bitmap", "avl",
-                                                     "btree", "hybrid"));
+                         AllocTest, ::testing::Values("stupid", "bitmap", "avl",
+                                 "btree", "hybrid"));

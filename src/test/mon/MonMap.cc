@@ -34,11 +34,14 @@ using::testing::SetArrayArgument;
 using::testing::DoAll;
 using::testing::StrEq;
 
-class MonMapTest:public::testing::Test {
-  protected:
-    virtual void SetUp() {
+class MonMapTest: public::testing::Test
+{
+protected:
+    virtual void SetUp()
+    {
         g_ceph_context->_conf->subsys.set_log_level(dout_subsys, TEST_DEBUG);
-    } virtual void TearDown() {
+    } virtual void TearDown()
+    {
         DNSResolver::get_instance(nullptr);
     }
 };
@@ -61,67 +64,67 @@ TEST_F(MonMapTest, DISABLED_build_initial_config_from_dns)
 #ifdef HAVE_RES_NQUERY
         EXPECT_CALL(*resolvH,
                     res_nsearch(_, StrEq("_cephmon._tcp"), C_IN, T_SRV, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_search_msg_ok_payload,
-                       ns_search_msg_ok_payload + len), Return(len)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_search_msg_ok_payload,
+                   ns_search_msg_ok_payload + len), Return(len)));
 
         EXPECT_CALL(*resolvH,
                     res_nquery(_, StrEq("mon.a.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_query_msg_mon_a_payload,
-                       ns_query_msg_mon_a_payload + lena), Return(lena)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_query_msg_mon_a_payload,
+                   ns_query_msg_mon_a_payload + lena), Return(lena)));
 
         EXPECT_CALL(*resolvH,
                     res_nquery(_, StrEq("mon.c.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_query_msg_mon_c_payload,
-                       ns_query_msg_mon_c_payload + lenc), Return(lenc)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_query_msg_mon_c_payload,
+                   ns_query_msg_mon_c_payload + lenc), Return(lenc)));
 
         EXPECT_CALL(*resolvH,
                     res_nquery(_, StrEq("mon.b.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_query_msg_mon_b_payload,
-                       ns_query_msg_mon_b_payload + lenb), Return(lenb)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_query_msg_mon_b_payload,
+                   ns_query_msg_mon_b_payload + lenb), Return(lenb)));
 #else
         EXPECT_CALL(*resolvH,
                     res_search(StrEq("_cephmon._tcp"), C_IN, T_SRV, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_search_msg_ok_payload,
-                       ns_search_msg_ok_payload + len), Return(len)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_search_msg_ok_payload,
+                   ns_search_msg_ok_payload + len), Return(len)));
 
         EXPECT_CALL(*resolvH,
                     res_query(StrEq("mon.a.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_query_msg_mon_a_payload,
-                       ns_query_msg_mon_a_payload + lena), Return(lena)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_query_msg_mon_a_payload,
+                   ns_query_msg_mon_a_payload + lena), Return(lena)));
 
         EXPECT_CALL(*resolvH,
                     res_query(StrEq("mon.c.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_query_msg_mon_c_payload,
-                       ns_query_msg_mon_c_payload + lenc), Return(lenc)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_query_msg_mon_c_payload,
+                   ns_query_msg_mon_c_payload + lenc), Return(lenc)));
 
         EXPECT_CALL(*resolvH,
                     res_query(StrEq("mon.b.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_query_msg_mon_b_payload,
-                       ns_query_msg_mon_b_payload + lenb), Return(lenb)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_query_msg_mon_b_payload,
+                   ns_query_msg_mon_b_payload + lenb), Return(lenb)));
 #endif
     }
 
@@ -158,11 +161,11 @@ TEST_F(MonMapTest, DISABLED_build_initial_config_from_dns_fail)
 #ifdef HAVE_RES_NQUERY
     EXPECT_CALL(*resolvH,
                 res_nsearch(_, StrEq("_ceph-mon._tcp"), C_IN, T_SRV, _, _))
-        .WillOnce(Return(0));
+    .WillOnce(Return(0));
 #else
     EXPECT_CALL(*resolvH,
                 res_search(StrEq("_ceph-mon._tcp"), C_IN, T_SRV, _, _))
-        .WillOnce(Return(0));
+    .WillOnce(Return(0));
 #endif
 
     boost::intrusive_ptr < CephContext > cct =
@@ -195,68 +198,68 @@ TEST_F(MonMapTest, DISABLED_build_initial_config_from_dns_with_domain)
         EXPECT_CALL(*resolvH,
                     res_nsearch(_, StrEq("_cephmon._tcp.ceph.com"), C_IN, T_SRV,
                                 _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_search_msg_ok_payload,
-                       ns_search_msg_ok_payload + len), Return(len)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_search_msg_ok_payload,
+                   ns_search_msg_ok_payload + len), Return(len)));
 
         EXPECT_CALL(*resolvH,
                     res_nquery(_, StrEq("mon.a.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_query_msg_mon_a_payload,
-                       ns_query_msg_mon_a_payload + lena), Return(lena)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_query_msg_mon_a_payload,
+                   ns_query_msg_mon_a_payload + lena), Return(lena)));
 
         EXPECT_CALL(*resolvH,
                     res_nquery(_, StrEq("mon.c.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_query_msg_mon_c_payload,
-                       ns_query_msg_mon_c_payload + lenc), Return(lenc)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_query_msg_mon_c_payload,
+                   ns_query_msg_mon_c_payload + lenc), Return(lenc)));
 
         EXPECT_CALL(*resolvH,
                     res_nquery(_, StrEq("mon.b.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 4 >
-                      (ns_query_msg_mon_b_payload,
-                       ns_query_msg_mon_b_payload + lenb), Return(lenb)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 4 >
+                  (ns_query_msg_mon_b_payload,
+                   ns_query_msg_mon_b_payload + lenb), Return(lenb)));
 #else
         EXPECT_CALL(*resolvH,
                     res_search(StrEq("_cephmon._tcp.ceph.com"), C_IN, T_SRV, _,
                                _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_search_msg_ok_payload,
-                       ns_search_msg_ok_payload + len), Return(len)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_search_msg_ok_payload,
+                   ns_search_msg_ok_payload + len), Return(len)));
 
         EXPECT_CALL(*resolvH,
                     res_query(StrEq("mon.a.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_query_msg_mon_a_payload,
-                       ns_query_msg_mon_a_payload + lena), Return(lena)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_query_msg_mon_a_payload,
+                   ns_query_msg_mon_a_payload + lena), Return(lena)));
 
         EXPECT_CALL(*resolvH,
                     res_query(StrEq("mon.c.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_query_msg_mon_c_payload,
-                       ns_query_msg_mon_c_payload + lenc), Return(lenc)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_query_msg_mon_c_payload,
+                   ns_query_msg_mon_c_payload + lenc), Return(lenc)));
 
         EXPECT_CALL(*resolvH,
                     res_query(StrEq("mon.b.ceph.com"), C_IN, T_A, _, _))
-            .
-            WillOnce(DoAll
-                     (SetArrayArgument < 3 >
-                      (ns_query_msg_mon_b_payload,
-                       ns_query_msg_mon_b_payload + lenb), Return(lenb)));
+        .
+        WillOnce(DoAll
+                 (SetArrayArgument < 3 >
+                  (ns_query_msg_mon_b_payload,
+                   ns_query_msg_mon_b_payload + lenb), Return(lenb)));
 #endif
     }
 
@@ -294,7 +297,7 @@ TEST(MonMapBuildInitial, build_initial_mon_host_from_dns)
     int r = monmap.build_initial(cct.get(), false, std::cerr);
     ASSERT_EQ(r, 0);
     ASSERT_GE(monmap.mon_info.size(), 1u);
-  for (const auto &[name, info]:monmap.mon_info) {
+    for (const auto &[name, info] : monmap.mon_info) {
         std::cerr << info << std::endl;
     }
 }

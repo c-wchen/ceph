@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_Sem_Posix__H
@@ -17,18 +17,21 @@
 
 #include "common/ceph_mutex.h"
 
-class Semaphore {
+class Semaphore
+{
     ceph::mutex m = ceph::make_mutex("Semaphore::m");
     ceph::condition_variable c;
     int count = 0;
 
-  public:
+public:
 
-    void Put() {
+    void Put()
+    {
         std::lock_guard l(m);
         count++;
         c.notify_all();
-    } void Get() {
+    } void Get()
+    {
         std::unique_lock l(m);
         while (count <= 0) {
             c.wait(l);

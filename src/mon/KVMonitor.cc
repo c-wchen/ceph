@@ -16,20 +16,20 @@ using std::set;
 using std::string;
 using std::stringstream;
 
-static ostream & _prefix(std::ostream * _dout, const Monitor & mon,
-                         const KVMonitor * hmon)
+static ostream &_prefix(std::ostream *_dout, const Monitor &mon,
+                        const KVMonitor *hmon)
 {
     return *_dout << "mon." << mon.name << "@" << mon.rank
-        << "(" << mon.get_state_name() << ").kv ";
+           << "(" << mon.get_state_name() << ").kv ";
 }
 
 const string KV_PREFIX = "mon_config_key";
 
 const int MAX_HISTORY = 50;
 
-static bool is_binary_string(const string & s)
+static bool is_binary_string(const string &s)
 {
-  for (auto c:s) {
+    for (auto c : s) {
         // \n and \t are escaped in JSON; other control characters are not.
         if ((c < 0x20 && c != '\n' && c != '\t') || c >= 0x7f) {
             return true;
@@ -38,8 +38,8 @@ static bool is_binary_string(const string & s)
     return false;
 }
 
-KVMonitor::KVMonitor(Monitor & m, Paxos & p, const string & service_name)
-:  PaxosService(m, p, service_name)
+KVMonitor::KVMonitor(Monitor &m, Paxos &p, const string &service_name)
+    :  PaxosService(m, p, service_name)
 {
 }
 
@@ -55,7 +55,7 @@ void KVMonitor::create_initial()
     pending.clear();
 }
 
-void KVMonitor::update_from_paxos(bool * need_bootstrap)
+void KVMonitor::update_from_paxos(bool *need_bootstrap)
 {
     if (version == get_last_committed()) {
         return;
@@ -82,13 +82,12 @@ void KVMonitor::encode_pending(MonitorDBStore::TransactionRef t)
     put_version(t, version + 1, bl);
 
     // make actual changes
-  for (auto & p:pending) {
+    for (auto &p : pending) {
         string key = p.first;
         if (p.second) {
             dout(20) << __func__ << " set " << key << dendl;
             t->put(KV_PREFIX, key, *p.second);
-        }
-        else {
+        } else {
             dout(20) << __func__ << " rm " << key << dendl;
             t->erase(KV_PREFIX, key);
         }
@@ -125,15 +124,14 @@ void KVMonitor::on_active()
 bool KVMonitor::preprocess_query(MonOpRequestRef op)
 {
     switch (op->get_req()->get_type()) {
-    case MSG_MON_COMMAND:
-        try {
-            return preprocess_command(op);
-        }
-        catch(const bad_cmd_get & e) {
-            bufferlist bl;
-            mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
-            return true;
-        }
+        case MSG_MON_COMMAND:
+            try {
+                return preprocess_command(op);
+            } catch (const bad_cmd_get &e) {
+                bufferlist bl;
+                mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
+                return true;
+            }
     }
     return false;
 }
@@ -162,20 +160,17 @@ bool KVMonitor::preprocess_command(MonOpRequestRef op)
 
     if (prefix == "config-key get") {
         err = mon.store->get(KV_PREFIX, key, odata);
-    }
-    else if (prefix == "config-key exists") {
+    } else if (prefix == "config-key exists") {
         bool exists = mon.store->exists(KV_PREFIX, key);
         ss << "key '" << key << "'";
         if (exists) {
             ss << " exists";
             err = 0;
-        }
-        else {
+        } else {
             ss << " doesn't exist";
             err = -ENOENT;
         }
-    }
-    else if (prefix == "config-key list" || prefix == "config-key ls") {
+    } else if (prefix == "config-key list" || prefix == "config-key ls") {
         if (!f) {
             f.reset(Formatter::create("json-pretty"));
         }
@@ -192,8 +187,7 @@ bool KVMonitor::preprocess_command(MonOpRequestRef op)
         f->flush(tmp_ss);
         odata.append(tmp_ss);
         err = 0;
-    }
-    else if (prefix == "config-key dump") {
+    } else if (prefix == "config-key dump") {
         if (!f) {
             f.reset(Formatter::create("json-pretty"));
         }
@@ -212,8 +206,7 @@ bool KVMonitor::preprocess_command(MonOpRequestRef op)
                 ostringstream ss;
                 ss << "<<< binary blob of length " << s.size() << " >>>";
                 f->dump_string(iter->key().c_str(), ss.str());
-            }
-            else {
+            } else {
                 f->dump_string(iter->key().c_str(), s);
             }
             iter->next();
@@ -224,8 +217,7 @@ bool KVMonitor::preprocess_command(MonOpRequestRef op)
         f->flush(tmp_ss);
         odata.append(tmp_ss);
         err = 0;
-    }
-    else {
+    } else {
         return false;
     }
 
@@ -237,17 +229,16 @@ bool KVMonitor::prepare_update(MonOpRequestRef op)
 {
     Message *m = op->get_req();
     dout(7) << "prepare_update " << *m
-        << " from " << m->get_orig_source_inst() << dendl;
+            << " from " << m->get_orig_source_inst() << dendl;
     switch (m->get_type()) {
-    case MSG_MON_COMMAND:
-        try {
-            return prepare_command(op);
-        }
-        catch(const bad_cmd_get & e) {
-            bufferlist bl;
-            mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
-            return true;
-        }
+        case MSG_MON_COMMAND:
+            try {
+                return prepare_command(op);
+            } catch (const bad_cmd_get &e) {
+                bufferlist bl;
+                mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
+                return true;
+            }
     }
     return false;
 }
@@ -281,38 +272,35 @@ bool KVMonitor::prepare_command(MonOpRequestRef op)
         if (cmd_getval(cmdmap, "val", val)) {
             // they specified a value in the command instead of a file
             data.append(val);
-        }
-        else if (m->get_data_len() > 0) {
+        } else if (m->get_data_len() > 0) {
             // they specified '-i <file>'
             data = m->get_data();
         }
         if (data.length() > (size_t) g_conf()->mon_config_key_max_entry_size) {
             err = -EFBIG;       // File too large
             ss << "error: entry size limited to "
-                << g_conf()->mon_config_key_max_entry_size << " bytes. "
-                << "Use 'mon config key max entry size' to manually adjust";
+               << g_conf()->mon_config_key_max_entry_size << " bytes. "
+               << "Use 'mon config key max entry size' to manually adjust";
             goto reply;
         }
 
         ss << "set " << key;
         pending[key] = data;
         goto update;
-    }
-    else if (prefix == "config-key del" || prefix == "config-key rm") {
+    } else if (prefix == "config-key del" || prefix == "config-key rm") {
         ss << "key deleted";
         pending[key].reset();
         goto update;
-    }
-    else {
+    } else {
         ss << "unknown command " << prefix;
         err = -EINVAL;
     }
 
-  reply:
+reply:
     mon.reply_command(op, err, ss.str(), odata, get_last_committed());
     return false;
 
-  update:
+update:
     // see if there is an actual change
     if (pending.empty()) {
         err = 0;
@@ -321,18 +309,18 @@ bool KVMonitor::prepare_command(MonOpRequestRef op)
     force_immediate_propose();  // faster response
     wait_for_finished_proposal(op,
                                new Monitor::C_Command(mon, op, 0, ss.str(),
-                                                      odata,
-                                                      get_last_committed() +
-                                                      1));
+                                       odata,
+                                       get_last_committed() +
+                                       1));
     return true;
 }
 
-static string _get_dmcrypt_prefix(const uuid_d & uuid, const string k)
+static string _get_dmcrypt_prefix(const uuid_d &uuid, const string k)
 {
     return "dm-crypt/osd/" + stringify(uuid) + "/" + k;
 }
 
-bool KVMonitor::_have_prefix(const string & prefix)
+bool KVMonitor::_have_prefix(const string &prefix)
 {
     KeyValueDB::Iterator iter = mon.store->get_iterator(KV_PREFIX);
 
@@ -347,7 +335,7 @@ bool KVMonitor::_have_prefix(const string & prefix)
     return false;
 }
 
-int KVMonitor::validate_osd_destroy(const int32_t id, const uuid_d & uuid)
+int KVMonitor::validate_osd_destroy(const int32_t id, const uuid_d &uuid)
 {
     string dmcrypt_prefix = _get_dmcrypt_prefix(uuid, "");
     string daemon_prefix = "daemon-private/osd." + stringify(id) + "/";
@@ -358,14 +346,15 @@ int KVMonitor::validate_osd_destroy(const int32_t id, const uuid_d & uuid)
     return 0;
 }
 
-void KVMonitor::do_osd_destroy(int32_t id, uuid_d & uuid)
+void KVMonitor::do_osd_destroy(int32_t id, uuid_d &uuid)
 {
     string dmcrypt_prefix = _get_dmcrypt_prefix(uuid, "");
     string daemon_prefix = "daemon-private/osd." + stringify(id) + "/";
 
-  for (auto & prefix:{
-         dmcrypt_prefix, daemon_prefix}
-    ) {
+    for (auto &prefix : {
+             dmcrypt_prefix, daemon_prefix
+         }
+        ) {
         KeyValueDB::Iterator iter = mon.store->get_iterator(KV_PREFIX);
         iter->lower_bound(prefix);
         if (iter->key().find(prefix) != 0) {
@@ -377,8 +366,8 @@ void KVMonitor::do_osd_destroy(int32_t id, uuid_d & uuid)
     propose_pending();
 }
 
-int KVMonitor::validate_osd_new(const uuid_d & uuid,
-                                const string & dmcrypt_key, stringstream & ss)
+int KVMonitor::validate_osd_new(const uuid_d &uuid,
+                                const string &dmcrypt_key, stringstream &ss)
 {
     string dmcrypt_prefix = _get_dmcrypt_prefix(uuid, "luks");
     bufferlist value;
@@ -389,8 +378,8 @@ int KVMonitor::validate_osd_new(const uuid_d & uuid,
         int err = mon.store->get(KV_PREFIX, dmcrypt_prefix, existing_value);
         if (err < 0) {
             dout(10) << __func__ <<
-                " unable to get dm-crypt key from store (r = " << err << ")" <<
-                dendl;
+                     " unable to get dm-crypt key from store (r = " << err << ")" <<
+                     dendl;
             return err;
         }
         if (existing_value.contents_equal(value)) {
@@ -403,7 +392,7 @@ int KVMonitor::validate_osd_new(const uuid_d & uuid,
     return 0;
 }
 
-void KVMonitor::do_osd_new(const uuid_d & uuid, const string & dmcrypt_key)
+void KVMonitor::do_osd_new(const uuid_d &uuid, const string &dmcrypt_key)
 {
     ceph_assert(paxos.is_plugged());
 
@@ -416,30 +405,31 @@ void KVMonitor::do_osd_new(const uuid_d & uuid, const string & dmcrypt_key)
     propose_pending();
 }
 
-void KVMonitor::check_sub(MonSession * s)
+void KVMonitor::check_sub(MonSession *s)
 {
     if (!s->authenticated) {
         dout(20) << __func__ << " not authenticated " << s->
-            entity_name << dendl;
+                 entity_name << dendl;
         return;
     }
-  for (auto & p:s->sub_map) {
+    for (auto &p : s->sub_map) {
         if (p.first.find("kv:") == 0) {
             check_sub(p.second);
         }
     }
 }
 
-void KVMonitor::check_sub(Subscription * sub)
+void KVMonitor::check_sub(Subscription *sub)
 {
     dout(10) << __func__
-        << " next " << sub->next << " have " << version << dendl;
+             << " next " << sub->next << " have " << version << dendl;
     if (sub->next <= version) {
         maybe_send_update(sub);
         if (sub->onetime) {
-            mon.with_session_map([sub] (MonSessionMap & session_map) {
-                                 session_map.remove_sub(sub);}
-            );
+            mon.with_session_map([sub](MonSessionMap & session_map) {
+                session_map.remove_sub(sub);
+            }
+                                );
         }
     }
 }
@@ -448,7 +438,7 @@ void KVMonitor::check_all_subs()
 {
     dout(10) << __func__ << dendl;
     int updated = 0, total = 0;
-  for (auto & i:mon.session_map.subs) {
+    for (auto &i : mon.session_map.subs) {
         if (i.first.find("kv:") == 0) {
             auto p = i.second->begin();
             while (!p.end()) {
@@ -464,7 +454,7 @@ void KVMonitor::check_all_subs()
     dout(10) << __func__ << " updated " << updated << " / " << total << dendl;
 }
 
-bool KVMonitor::maybe_send_update(Subscription * sub)
+bool KVMonitor::maybe_send_update(Subscription *sub)
 {
     if (sub->next > version) {
         return false;
@@ -488,7 +478,7 @@ bool KVMonitor::maybe_send_update(Subscription * sub)
             auto p = bl.cbegin();
             ceph::decode(pending, p);
 
-          for (auto & i:pending) {
+            for (auto &i : pending) {
                 if (i.first.find(m->prefix) == 0) {
                     m->data[i.first] = i.second;
                 }
@@ -496,10 +486,9 @@ bool KVMonitor::maybe_send_update(Subscription * sub)
         }
 
         dout(10) << __func__ << " incremental keys for " << m->prefix
-            << ", v " << sub->next << ".." << version
-            << ", " << m->data.size() << " keys" << dendl;
-    }
-    else {
+                 << ", v " << sub->next << ".." << version
+                 << ", " << m->data.size() << " keys" << dendl;
+    } else {
         m->incremental = false;
 
         KeyValueDB::Iterator iter = mon.store->get_iterator(KV_PREFIX);
@@ -510,7 +499,7 @@ bool KVMonitor::maybe_send_update(Subscription * sub)
         }
 
         dout(10) << __func__ << " sending full dump of " << m->prefix
-            << ", " << m->data.size() << " keys" << dendl;
+                 << ", " << m->data.size() << " keys" << dendl;
     }
     sub->session->con->send_message(m);
     sub->next = version + 1;

@@ -50,9 +50,9 @@ void TestObjectStoreState::init(int colls, int objs)
         auto ch = m_store->create_new_collection(cid);
         coll_entry_t *entry = coll_create(pgid, ch);
         dout(5) << "init create collection " << entry->m_cid
-            << " meta " << entry->m_meta_obj << dendl;
+                << " meta " << entry->m_meta_obj << dendl;
 
-        ObjectStore::Transaction * t = new ObjectStore::Transaction;
+        ObjectStore::Transaction *t = new ObjectStore::Transaction;
         t->create_collection(entry->m_cid, 32);
         bufferlist hint;
         uint32_t pg_num = colls;
@@ -63,7 +63,7 @@ void TestObjectStoreState::init(int colls, int objs)
                            ObjectStore::Transaction::
                            COLL_HINT_EXPECTED_NUM_OBJECTS, hint);
         dout(5) << "give collection hint, number of objects per collection: " <<
-            num_objs << dendl;
+                num_objs << dendl;
         t->touch(cid, entry->m_meta_obj);
 
         for (int i = 0; i < objs; i++) {
@@ -85,14 +85,13 @@ void TestObjectStoreState::init(int colls, int objs)
         m_next_coll_nr++;
     }
     dout(5) << "init has " << m_in_flight.
-        load() << "in-flight transactions" << dendl;
+            load() << "in-flight transactions" << dendl;
     wait_for_done();
     dout(5) << "init finished" << dendl;
 }
 
-TestObjectStoreState::coll_entry_t *
-    TestObjectStoreState::coll_create(spg_t pgid,
-                                      ObjectStore::CollectionHandle ch)
+TestObjectStoreState::coll_entry_t *TestObjectStoreState::coll_create(spg_t pgid,
+        ObjectStore::CollectionHandle ch)
 {
     char meta_buf[100];
     memset(meta_buf, 0, 100);
@@ -100,8 +99,7 @@ TestObjectStoreState::coll_entry_t *
     return (new coll_entry_t(pgid, ch, meta_buf));
 }
 
-TestObjectStoreState::coll_entry_t *
-    TestObjectStoreState::get_coll(coll_t cid, bool erase)
+TestObjectStoreState::coll_entry_t *TestObjectStoreState::get_coll(coll_t cid, bool erase)
 {
     dout(5) << "get_coll id " << cid << dendl;
 
@@ -116,21 +114,22 @@ TestObjectStoreState::coll_entry_t *
     }
 
     dout(5) << "get_coll id " << cid;
-    if (!entry)
+    if (!entry) {
         *_dout << " non-existent";
-    else
+    } else {
         *_dout << " name " << entry->m_cid;
+    }
     *_dout << dendl;
     return entry;
 }
 
-TestObjectStoreState::coll_entry_t *
-    TestObjectStoreState::get_coll_at(int pos, bool erase)
+TestObjectStoreState::coll_entry_t *TestObjectStoreState::get_coll_at(int pos, bool erase)
 {
     dout(5) << "get_coll_at pos " << pos << dendl;
 
-    if (m_collections.empty())
+    if (m_collections.empty()) {
         return NULL;
+    }
 
     ceph_assert((size_t) pos < m_collections_ids.size());
 
@@ -148,7 +147,7 @@ TestObjectStoreState::coll_entry_t *
     }
 
     dout(5) << "get_coll_at pos " << pos << ": "
-        << entry->m_cid << "(removed: " << erase << ")" << dendl;
+            << entry->m_cid << "(removed: " << erase << ")" << dendl;
 
     return entry;
 }
@@ -169,8 +168,9 @@ TestObjectStoreState::coll_entry_t::~coll_entry_t()
 
 bool TestObjectStoreState::coll_entry_t::check_for_obj(int id)
 {
-    if (m_objects.count(id))
+    if (m_objects.count(id)) {
         return true;
+    }
     return false;
 }
 
@@ -179,7 +179,7 @@ hobject_t *TestObjectStoreState::coll_entry_t::touch_obj(int id)
     map < int, hobject_t * >::iterator it = m_objects.find(id);
     if (it != m_objects.end()) {
         dout(5) << "touch_obj coll id " << m_cid
-            << " name " << it->second->oid.name << dendl;
+                << " name " << it->second->oid.name << dendl;
         return it->second;
     }
 
@@ -216,16 +216,17 @@ hobject_t *TestObjectStoreState::coll_entry_t::get_obj(int id, bool remove)
     map < int, hobject_t * >::iterator it = m_objects.find(id);
     if (it == m_objects.end()) {
         dout(5) << "get_obj coll " << m_cid
-            << " obj #" << id << " non-existent" << dendl;
+                << " obj #" << id << " non-existent" << dendl;
         return NULL;
     }
 
     hobject_t *obj = it->second;
-    if (remove)
+    if (remove) {
         m_objects.erase(it);
+    }
 
     dout(5) << "get_obj coll " << m_cid << " id " << id
-        << ": " << obj->oid.name << "(removed: " << remove << ")" << dendl;
+            << ": " << obj->oid.name << "(removed: " << remove << ")" << dendl;
 
     return obj;
 }
@@ -246,11 +247,11 @@ hobject_t *TestObjectStoreState::coll_entry_t::remove_obj_at(int pos, int *key)
 }
 
 hobject_t *TestObjectStoreState::coll_entry_t::get_obj_at(int pos,
-                                                          bool remove, int *key)
+        bool remove, int *key)
 {
     if (m_objects.empty()) {
         dout(5) << "get_obj_at coll " << m_cid << " pos " << pos
-            << " in an empty collection" << dendl;
+                << " in an empty collection" << dendl;
         return NULL;
     }
 
@@ -265,31 +266,33 @@ hobject_t *TestObjectStoreState::coll_entry_t::get_obj_at(int pos,
 
     if (ret == NULL) {
         dout(5) << "get_obj_at coll " << m_cid << " pos " << pos
-            << " non-existent" << dendl;
+                << " non-existent" << dendl;
         return NULL;
     }
 
-    if (key != NULL)
+    if (key != NULL) {
         *key = it->first;
+    }
 
-    if (remove)
+    if (remove) {
         m_objects.erase(it);
+    }
 
     dout(5) << "get_obj_at coll id " << m_cid << " pos " << pos
-        << ": " << ret->oid.name << "(removed: " << remove << ")" << dendl;
+            << ": " << ret->oid.name << "(removed: " << remove << ")" << dendl;
 
     return ret;
 }
 
 hobject_t *TestObjectStoreState::coll_entry_t::replace_obj(int id,
-                                                           hobject_t * obj)
+        hobject_t *obj)
 {
     hobject_t *old_obj = remove_obj(id);
     m_objects.insert(make_pair(id, obj));
     return old_obj;
 }
 
-int TestObjectStoreState::coll_entry_t::get_random_obj_id(rngen_t & gen)
+int TestObjectStoreState::coll_entry_t::get_random_obj_id(rngen_t &gen)
 {
     ceph_assert(!m_objects.empty());
 

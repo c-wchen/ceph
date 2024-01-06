@@ -5,7 +5,7 @@
 
 #include "FixedCDC.h"
 
-void FixedCDC::calc_chunks(const bufferlist & bl,
+void FixedCDC::calc_chunks(const bufferlist &bl,
                            std::vector < std::pair < uint64_t,
                            uint64_t >> *chunks) const const
 {

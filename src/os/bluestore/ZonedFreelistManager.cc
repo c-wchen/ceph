@@ -31,10 +31,10 @@ using ceph::decode;
 using ceph::encode;
 
 void ZonedFreelistManager::write_zone_state_delta_to_db(uint64_t zone_num,
-                                                        const zone_state_t &
-                                                        zone_state,
-                                                        KeyValueDB::
-                                                        Transaction txn)
+        const zone_state_t &
+        zone_state,
+        KeyValueDB::
+        Transaction txn)
 {
     string key;
     _key_encode_u64(zone_num, &key);
@@ -44,10 +44,10 @@ void ZonedFreelistManager::write_zone_state_delta_to_db(uint64_t zone_num,
 }
 
 void ZonedFreelistManager::write_zone_state_reset_to_db(uint64_t zone_num,
-                                                        const zone_state_t &
-                                                        zone_state,
-                                                        KeyValueDB::
-                                                        Transaction txn)
+        const zone_state_t &
+        zone_state,
+        KeyValueDB::
+        Transaction txn)
 {
     string key;
     _key_encode_u64(zone_num, &key);
@@ -57,9 +57,9 @@ void ZonedFreelistManager::write_zone_state_reset_to_db(uint64_t zone_num,
 }
 
 void ZonedFreelistManager::load_zone_state_from_db(uint64_t zone_num,
-                                                   zone_state_t & zone_state,
-                                                   KeyValueDB::
-                                                   Iterator & it) const const
+        zone_state_t &zone_state,
+        KeyValueDB::
+        Iterator &it) const const
 {
     string k = it->key();
     uint64_t zone_num_from_db;
@@ -80,19 +80,19 @@ void ZonedFreelistManager::init_zone_states(KeyValueDB::Transaction txn)
     }
 }
 
-void ZonedFreelistManager::setup_merge_operator(KeyValueDB * db, string prefix)
+void ZonedFreelistManager::setup_merge_operator(KeyValueDB *db, string prefix)
 {
     std::shared_ptr < Int64ArrayMergeOperator >
-        merge_op(new Int64ArrayMergeOperator);
+    merge_op(new Int64ArrayMergeOperator);
     db->set_merge_operator(prefix, merge_op);
 }
 
-ZonedFreelistManager::ZonedFreelistManager(CephContext * cct,
-                                           string meta_prefix,
-                                           string info_prefix)
-:  
-FreelistManager(cct),
-meta_prefix(meta_prefix), info_prefix(info_prefix), enumerate_zone_num(~0UL)
+ZonedFreelistManager::ZonedFreelistManager(CephContext *cct,
+        string meta_prefix,
+        string info_prefix)
+    :
+    FreelistManager(cct),
+    meta_prefix(meta_prefix), info_prefix(info_prefix), enumerate_zone_num(~0UL)
 {
 }
 
@@ -112,11 +112,11 @@ int ZonedFreelistManager::create(uint64_t new_size,
     ceph_assert(size % zone_size == 0);
 
     dout(1) << __func__ << std::hex
-        << " size 0x" << size
-        << " bytes_per_block 0x" << bytes_per_block
-        << " zone size 0x " << zone_size
-        << " num_zones 0x" << num_zones
-        << " starting_zone 0x" << starting_zone_num << dendl;
+            << " size 0x" << size
+            << " bytes_per_block 0x" << bytes_per_block
+            << " zone size 0x " << zone_size
+            << " num_zones 0x" << num_zones
+            << " starting_zone 0x" << starting_zone_num << dendl;
     {
         bufferlist bl;
         encode(size, bl);
@@ -148,7 +148,7 @@ int ZonedFreelistManager::create(uint64_t new_size,
     return 0;
 }
 
-int ZonedFreelistManager::init(KeyValueDB * kvdb,
+int ZonedFreelistManager::init(KeyValueDB *kvdb,
                                bool db_in_read_only, cfg_reader_t cfg_reader)
 {
     dout(1) << __func__ << dendl;
@@ -160,15 +160,15 @@ int ZonedFreelistManager::init(KeyValueDB * kvdb,
     ceph_assert(num_zones == size / zone_size);
 
     dout(10) << __func__ << std::hex
-        << " size 0x" << size
-        << " bytes_per_block 0x" << bytes_per_block
-        << " zone size 0x" << zone_size
-        << " num_zones 0x" << num_zones
-        << " starting_zone 0x" << starting_zone_num << std::dec << dendl;
+             << " size 0x" << size
+             << " bytes_per_block 0x" << bytes_per_block
+             << " zone size 0x" << zone_size
+             << " num_zones 0x" << num_zones
+             << " starting_zone 0x" << starting_zone_num << std::dec << dendl;
     return 0;
 }
 
-void ZonedFreelistManager::sync(KeyValueDB * kvdb)
+void ZonedFreelistManager::sync(KeyValueDB *kvdb)
 {
 }
 
@@ -193,8 +193,8 @@ void ZonedFreelistManager::enumerate_reset()
 // also return two contiguous empty zones in two calls.  This does not violate
 // current semantics of the call and appears to work fine with the clients of
 // this call.
-bool ZonedFreelistManager::enumerate_next(KeyValueDB * kvdb,
-                                          uint64_t * offset, uint64_t * length)
+bool ZonedFreelistManager::enumerate_next(KeyValueDB *kvdb,
+        uint64_t *offset, uint64_t *length)
 {
     std::lock_guard l(lock);
 
@@ -205,8 +205,7 @@ bool ZonedFreelistManager::enumerate_next(KeyValueDB * kvdb,
         enumerate_p->lower_bound(string());
         ceph_assert(enumerate_p->valid());
         enumerate_zone_num = 0;
-    }
-    else {
+    } else {
         enumerate_p->next();
         if (!enumerate_p->valid()) {
             dout(30) << __func__ << " end" << dendl;
@@ -222,18 +221,18 @@ bool ZonedFreelistManager::enumerate_next(KeyValueDB * kvdb,
     *length = zone_size - zone_state.get_write_pointer();
 
     dout(30) << __func__ << std::hex << " 0x" << *offset << "~" << *length
-        << std::dec << dendl;
+             << std::dec << dendl;
 
     return true;
 }
 
-void ZonedFreelistManager::dump(KeyValueDB * kvdb)
+void ZonedFreelistManager::dump(KeyValueDB *kvdb)
 {
     enumerate_reset();
     uint64_t offset, length;
     while (enumerate_next(kvdb, &offset, &length)) {
         dout(20) << __func__ << " 0x" << std::hex << offset << "~" << length
-            << std::dec << dendl;
+                 << std::dec << dendl;
     }
 }
 
@@ -246,7 +245,7 @@ void ZonedFreelistManager::allocate(uint64_t offset,
         uint64_t zone_num = offset / zone_size;
         uint64_t this_len = std::min(length, zone_size - offset % zone_size);
         dout(10) << __func__ << " 0x" << std::hex << offset << "~" << this_len
-            << " zone 0x" << zone_num << std::dec << dendl;
+                 << " zone 0x" << zone_num << std::dec << dendl;
         zone_state_t zone_state;
         zone_state.increment_write_pointer(this_len);
         write_zone_state_delta_to_db(zone_num, zone_state, txn);
@@ -268,7 +267,7 @@ void ZonedFreelistManager::release(uint64_t offset,
         uint64_t zone_num = offset / zone_size;
         uint64_t this_len = std::min(length, zone_size - offset % zone_size);
         dout(10) << __func__ << " 0x" << std::hex << offset << "~" << this_len
-            << " zone 0x" << zone_num << std::dec << dendl;
+                 << " zone 0x" << zone_num << std::dec << dendl;
         zone_state_t zone_state;
         zone_state.increment_num_dead_bytes(this_len);
         write_zone_state_delta_to_db(zone_num, zone_state, txn);
@@ -290,8 +289,7 @@ void ZonedFreelistManager::get_meta(uint64_t target_size,
     res->emplace_back("zfm_starting_zone_num", stringify(starting_zone_num));
 }
 
-std::vector < zone_state_t >
-    ZonedFreelistManager::get_zone_states(KeyValueDB * kvdb) const const
+std::vector < zone_state_t > ZonedFreelistManager::get_zone_states(KeyValueDB *kvdb) const const
 {
     std::vector < zone_state_t > zone_states;
     auto p = kvdb->get_iterator(info_prefix);
@@ -335,14 +333,13 @@ int ZonedFreelistManager::_read_cfg(cfg_reader_t cfg_reader)
             *(vals[i]) = strict_iecstrtoll(val.c_str(), &err);
             if (!err.empty()) {
                 derr << __func__ << " Failed to parse - "
-                    << keys[i] << ":" << val << ", error: " << err << dendl;
+                     << keys[i] << ":" << val << ", error: " << err << dendl;
                 return -EINVAL;
             }
-        }
-        else {
+        } else {
             // this is expected for legacy deployed OSDs
             dout(0) << __func__ << " " << keys[i] << " not found in bdev meta"
-                << dendl;
+                    << dendl;
             return r;
         }
     }
@@ -350,7 +347,7 @@ int ZonedFreelistManager::_read_cfg(cfg_reader_t cfg_reader)
 }
 
 void ZonedFreelistManager::mark_zone_to_clean_free(uint64_t zone,
-                                                   KeyValueDB * kvdb)
+        KeyValueDB *kvdb)
 {
     dout(10) << __func__ << " zone 0x" << std::hex << zone << std::dec << dendl;
 

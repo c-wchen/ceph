@@ -6,7 +6,7 @@
 
 using namespace std;
 
-template < typename T > static void test_encode_and_decode(const T & src)
+template < typename T > static void test_encode_and_decode(const T &src)
 {
     bufferlist bl(1000000);
     encode(src, bl);
@@ -15,7 +15,7 @@ template < typename T > static void test_encode_and_decode(const T & src)
     decode(dst, i);
     ASSERT_EQ(src,
               dst) << "Encoding roundtrip changed the string: orig=" << src <<
-        ", but new=" << dst;
+                   ", but new=" << dst;
 }
 
 TEST(EncodingRoundTrip, StringSimple)
@@ -37,7 +37,7 @@ TEST(EncodingRoundTrip, StringNewline)
 }
 
 template < typename Size, typename T >
-    static void test_encode_and_nohead_nohead(Size len, const T & src)
+static void test_encode_and_nohead_nohead(Size len, const T &src)
 {
     bufferlist bl(1000000);
     encode(len, bl);
@@ -48,7 +48,7 @@ template < typename Size, typename T >
     decode_nohead(len, dst, i);
     ASSERT_EQ(src,
               dst) << "Encoding roundtrip changed the string: orig=" << src <<
-        ", but new=" << dst;
+                   ", but new=" << dst;
 }
 
 TEST(EncodingRoundTrip, StringNoHead)
@@ -57,9 +57,9 @@ TEST(EncodingRoundTrip, StringNoHead)
     auto size = str.size();
     test_encode_and_nohead_nohead(static_cast < int >(size), str);
     test_encode_and_nohead_nohead(static_cast < unsigned >(size), str);
-    test_encode_and_nohead_nohead(static_cast < uint32_t > (size), str);
-    test_encode_and_nohead_nohead(static_cast < __u32 > (size), str);
-    test_encode_and_nohead_nohead(static_cast < size_t > (size), str);
+    test_encode_and_nohead_nohead(static_cast < uint32_t >(size), str);
+    test_encode_and_nohead_nohead(static_cast < __u32 >(size), str);
+    test_encode_and_nohead_nohead(static_cast < size_t >(size), str);
 }
 
 TEST(EncodingRoundTrip, BufferListNoHead)
@@ -69,22 +69,25 @@ TEST(EncodingRoundTrip, BufferListNoHead)
     auto size = bl.length();
     test_encode_and_nohead_nohead(static_cast < int >(size), bl);
     test_encode_and_nohead_nohead(static_cast < unsigned >(size), bl);
-    test_encode_and_nohead_nohead(static_cast < uint32_t > (size), bl);
-    test_encode_and_nohead_nohead(static_cast < __u32 > (size), bl);
-    test_encode_and_nohead_nohead(static_cast < size_t > (size), bl);
+    test_encode_and_nohead_nohead(static_cast < uint32_t >(size), bl);
+    test_encode_and_nohead_nohead(static_cast < __u32 >(size), bl);
+    test_encode_and_nohead_nohead(static_cast < size_t >(size), bl);
 }
 
 typedef std::multimap < int, std::string > multimap_t;
 typedef multimap_t::value_type my_val_ty;
 
-namespace std {
-    static std::ostream & operator<<(std::ostream & oss,
-                                     const multimap_t & multimap) {
-        for (multimap_t::const_iterator m = multimap.begin();
-             m != multimap.end(); ++m) {
-            oss << m->first << "->" << m->second << " ";
-        } return oss;
+namespace std
+{
+static std::ostream &operator<<(std::ostream &oss,
+                                const multimap_t &multimap)
+{
+    for (multimap_t::const_iterator m = multimap.begin();
+         m != multimap.end(); ++m) {
+        oss << m->first << "->" << m->second << " ";
     }
+    return oss;
+}
 }
 
 TEST(EncodingRoundTrip, Multimap)
@@ -102,70 +105,85 @@ TEST(EncodingRoundTrip, Multimap)
 ///////////////////////////////////////////////////////
 // ConstructorCounter
 ///////////////////////////////////////////////////////
-template < typename T > class ConstructorCounter {
-  public:
-  ConstructorCounter():data(0) {
+template < typename T > class ConstructorCounter
+{
+public:
+    ConstructorCounter(): data(0)
+    {
         default_ctor++;
     }
 
-    explicit ConstructorCounter(const T & data_)
-    :data(data_) {
+    explicit ConstructorCounter(const T &data_)
+        : data(data_)
+    {
         one_arg_ctor++;
     }
 
-    ConstructorCounter(const ConstructorCounter & rhs)
-    :data(rhs.data) {
+    ConstructorCounter(const ConstructorCounter &rhs)
+        : data(rhs.data)
+    {
         copy_ctor++;
     }
 
-    ConstructorCounter & operator=(const ConstructorCounter & rhs) {
+    ConstructorCounter &operator=(const ConstructorCounter &rhs)
+    {
         data = rhs.data;
         assigns++;
         return *this;
     }
 
-    static void init(void) {
+    static void init(void)
+    {
         default_ctor = 0;
         one_arg_ctor = 0;
         copy_ctor = 0;
         assigns = 0;
     }
 
-    static int get_default_ctor(void) {
+    static int get_default_ctor(void)
+    {
         return default_ctor;
     }
 
-    static int get_one_arg_ctor(void) {
+    static int get_one_arg_ctor(void)
+    {
         return one_arg_ctor;
     }
 
-    static int get_copy_ctor(void) {
+    static int get_copy_ctor(void)
+    {
         return copy_ctor;
     }
 
-    static int get_assigns(void) {
+    static int get_assigns(void)
+    {
         return assigns;
     }
 
-    bool operator<(const ConstructorCounter & rhs)const {
+    bool operator<(const ConstructorCounter &rhs)const
+    {
         return data < rhs.data;
-    } bool operator==(const ConstructorCounter & rhs)const {
+    } bool operator==(const ConstructorCounter &rhs)const
+    {
         return data == rhs.data;
-    } friend void decode(ConstructorCounter & s, bufferlist::const_iterator & p) {
+    } friend void decode(ConstructorCounter &s, bufferlist::const_iterator &p)
+    {
         decode(s.data, p);
     }
 
-    friend void encode(const ConstructorCounter & s, bufferlist & p) {
+    friend void encode(const ConstructorCounter &s, bufferlist &p)
+    {
         encode(s.data, p);
     }
 
-    friend ostream & operator<<(ostream & oss, const ConstructorCounter & cc) {
+    friend ostream &operator<<(ostream &oss, const ConstructorCounter &cc)
+    {
         oss << cc.data;
         return oss;
     }
 
     T data;
-  private:
+private:
     static int default_ctor;
     static int one_arg_ctor;
     static int copy_ctor;
@@ -185,8 +203,8 @@ template < class T > int ConstructorCounter < T >::one_arg_ctor = 0;
 template < class T > int ConstructorCounter < T >::copy_ctor = 0;
 template < class T > int ConstructorCounter < T >::assigns = 0;
 
-static std::ostream & operator<<(std::ostream & oss,
-                                 const multimap2_t & multimap)
+static std::ostream &operator<<(std::ostream &oss,
+                                const multimap2_t &multimap)
 {
     for (multimap2_t::const_iterator m = multimap.begin();
          m != multimap.end(); ++m) {
@@ -219,41 +237,46 @@ TEST(EncodingRoundTrip, MultimapConstructorCounter)
     EXPECT_EQ(my_val_t::get_assigns(), 0);
 }
 
-namespace ceph {
+namespace ceph
+{
 // make sure that the legacy encode/decode methods are selected
 // over the ones defined using templates. the later is likely to
 // be slower, see also the definition of "WRITE_INT_DENC" in
 // include/denc.h
-    template <>
-        void encode < uint64_t, denc_traits < uint64_t >> (const uint64_t &,
-                                                           bufferlist &,
-                                                           uint64_t f) {
-        static_assert(denc_traits < uint64_t >::supported,
-                      "should support new encoder");
-        static_assert(!denc_traits < uint64_t >::featured,
-                      "should not be featured");
-        ASSERT_EQ(0UL, f);
-        // make sure the test fails if i get called
-        ASSERT_TRUE(false);
-    } template <>
-        void encode < ceph_le64, denc_traits < ceph_le64 >> (const ceph_le64 &,
-                                                             bufferlist &,
-                                                             uint64_t f) {
-        static_assert(denc_traits < ceph_le64 >::supported,
-                      "should support new encoder");
-        static_assert(!denc_traits < ceph_le64 >::featured,
-                      "should not be featured");
-        ASSERT_EQ(0UL, f);
-        // make sure the test fails if i get called
-        ASSERT_TRUE(false);
-    }
+template <>
+void encode < uint64_t, denc_traits < uint64_t >> (const uint64_t &,
+        bufferlist &,
+        uint64_t f)
+{
+    static_assert(denc_traits < uint64_t >::supported,
+                  "should support new encoder");
+    static_assert(!denc_traits < uint64_t >::featured,
+                  "should not be featured");
+    ASSERT_EQ(0UL, f);
+    // make sure the test fails if i get called
+    ASSERT_TRUE(false);
+} template <>
+void encode < ceph_le64, denc_traits < ceph_le64 >> (const ceph_le64 &,
+        bufferlist &,
+        uint64_t f)
+{
+    static_assert(denc_traits < ceph_le64 >::supported,
+                  "should support new encoder");
+    static_assert(!denc_traits < ceph_le64 >::featured,
+                  "should not be featured");
+    ASSERT_EQ(0UL, f);
+    // make sure the test fails if i get called
+    ASSERT_TRUE(false);
+}
 }
 
-namespace {
-    // search `underlying_type` in denc.h for supported underlying types
-    enum class Colour:int8_t { R, G, B };
-    ostream & operator<<(ostream & os, Colour c) {
-        switch (c) {
+namespace
+{
+// search `underlying_type` in denc.h for supported underlying types
+enum class Colour : int8_t { R, G, B };
+ostream &operator<<(ostream &os, Colour c)
+{
+    switch (c) {
         case Colour::R:
             return os << "Colour::R";
         case Colour::G:
@@ -262,8 +285,8 @@ namespace {
             return os << "Colour::B";
         default:
             return os << "Colour::???";
-        }
     }
+}
 }
 
 TEST(EncodingRoundTrip, Integers)
@@ -311,22 +334,21 @@ TEST(EncodingException, Macros)
     } tests[] = {
         {
             DECODE_ERR_OLDVERSION(__PRETTY_FUNCTION__, 100, 200),
-                fmt::
-                format
-                ("{} no longer understand old encoding version 100 < 200: Malformed input",
-                 __PRETTY_FUNCTION__)
+            fmt::
+            format
+            ("{} no longer understand old encoding version 100 < 200: Malformed input",
+             __PRETTY_FUNCTION__)
         }, {
             DECODE_ERR_PAST(__PRETTY_FUNCTION__),
-                fmt::
-                format("{} decode past end of struct encoding: Malformed input",
-                       __PRETTY_FUNCTION__)
+            fmt::
+            format("{} decode past end of struct encoding: Malformed input",
+                   __PRETTY_FUNCTION__)
         }
     };
-  for (auto &[exec, expected_what]:tests) {
+    for (auto &[exec, expected_what] : tests) {
         try {
             throw exec;
-        }
-        catch(const exception & e) {
+        } catch (const exception &e) {
             ASSERT_NE(string(e.what()).find(expected_what), string::npos);
         }
     }

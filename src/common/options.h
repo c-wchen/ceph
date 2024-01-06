@@ -26,50 +26,65 @@ struct Option {
         TYPE_MILLISECS = 10,
     };
 
-    static const char *type_to_c_type_str(type_t t) {
+    static const char *type_to_c_type_str(type_t t)
+    {
         switch (t) {
-        case TYPE_UINT:
-            return "uint64_t";
-            case TYPE_INT:return "int64_t";
-            case TYPE_STR:return "std::string";
-            case TYPE_FLOAT:return "double";
-            case TYPE_BOOL:return "bool";
-            case TYPE_ADDR:return "entity_addr_t";
-            case TYPE_ADDRVEC:return "entity_addrvec_t";
-            case TYPE_UUID:return "uuid_d";
-            case TYPE_SIZE:return "uint64_t";
-            case TYPE_SECS:return "secs";
-            case TYPE_MILLISECS:return "millisecs";
-            default:return "unknown";
-    }} static const char *type_to_str(type_t t) {
+            case TYPE_UINT:
+                return "uint64_t";
+            case TYPE_INT:
+                return "int64_t";
+            case TYPE_STR:
+                return "std::string";
+            case TYPE_FLOAT:
+                return "double";
+            case TYPE_BOOL:
+                return "bool";
+            case TYPE_ADDR:
+                return "entity_addr_t";
+            case TYPE_ADDRVEC:
+                return "entity_addrvec_t";
+            case TYPE_UUID:
+                return "uuid_d";
+            case TYPE_SIZE:
+                return "uint64_t";
+            case TYPE_SECS:
+                return "secs";
+            case TYPE_MILLISECS:
+                return "millisecs";
+            default:
+                return "unknown";
+        }
+    } static const char *type_to_str(type_t t)
+    {
         switch (t) {
-        case TYPE_UINT:
-            return "uint";
-        case TYPE_INT:
-            return "int";
-        case TYPE_STR:
-            return "str";
-        case TYPE_FLOAT:
-            return "float";
-        case TYPE_BOOL:
-            return "bool";
-        case TYPE_ADDR:
-            return "addr";
-        case TYPE_ADDRVEC:
-            return "addrvec";
-        case TYPE_UUID:
-            return "uuid";
-        case TYPE_SIZE:
-            return "size";
-        case TYPE_SECS:
-            return "secs";
-        case TYPE_MILLISECS:
-            return "millisecs";
-        default:
-            return "unknown";
+            case TYPE_UINT:
+                return "uint";
+            case TYPE_INT:
+                return "int";
+            case TYPE_STR:
+                return "str";
+            case TYPE_FLOAT:
+                return "float";
+            case TYPE_BOOL:
+                return "bool";
+            case TYPE_ADDR:
+                return "addr";
+            case TYPE_ADDRVEC:
+                return "addrvec";
+            case TYPE_UUID:
+                return "uuid";
+            case TYPE_SIZE:
+                return "size";
+            case TYPE_SECS:
+                return "secs";
+            case TYPE_MILLISECS:
+                return "millisecs";
+            default:
+                return "unknown";
         }
     }
-    static int str_to_type(const std::string & s) {
+    static int str_to_type(const std::string &s)
+    {
         if (s == "uint") {
             return TYPE_UINT;
         }
@@ -106,11 +121,11 @@ struct Option {
         return -1;
     }
 
-  /**
-   * Basic: for users, configures some externally visible functional aspect
-   * Advanced: for users, configures some internal behaviour
-   * Development: not for users.  May be dangerous, may not be documented.
-   */
+    /**
+     * Basic: for users, configures some externally visible functional aspect
+     * Advanced: for users, configures some internal behaviour
+     * Development: not for users.  May be dangerous, may not be documented.
+     */
     enum level_t {
         LEVEL_BASIC = 0,
         LEVEL_ADVANCED = 1,
@@ -118,16 +133,17 @@ struct Option {
         LEVEL_UNKNOWN = 3,
     };
 
-    static const char *level_to_str(level_t l) {
+    static const char *level_to_str(level_t l)
+    {
         switch (l) {
-        case LEVEL_BASIC:
-            return "basic";
-        case LEVEL_ADVANCED:
-            return "advanced";
-        case LEVEL_DEV:
-            return "dev";
-        default:
-            return "unknown";
+            case LEVEL_BASIC:
+                return "basic";
+            case LEVEL_ADVANCED:
+                return "advanced";
+            case LEVEL_DEV:
+                return "dev";
+            default:
+                return "unknown";
         }
     }
 
@@ -143,22 +159,25 @@ struct Option {
 
     struct size_t {
         std::uint64_t value;
-        operator  uint64_t() const {
-            return static_cast < uint64_t > (value);
-        } bool operator==(const size_t & rhs)const {
+        operator  uint64_t() const
+        {
+            return static_cast < uint64_t >(value);
+        } bool operator==(const size_t &rhs)const
+        {
             return value == rhs.value;
-    }};
+        }
+    };
 
     using value_t = std::variant <
-        std::monostate,
-        std::string,
-        uint64_t,
-        int64_t,
-        double,
-        bool,
-        entity_addr_t,
-        entity_addrvec_t,
-        std::chrono::seconds, std::chrono::milliseconds, size_t, uuid_d >;
+                    std::monostate,
+                    std::string,
+                    uint64_t,
+                    int64_t,
+                    double,
+                    bool,
+                    entity_addr_t,
+                    entity_addrvec_t,
+                    std::chrono::seconds, std::chrono::milliseconds, size_t, uuid_d >;
     const std::string name;
     const type_t type;
     const level_t level;
@@ -173,7 +192,7 @@ struct Option {
     value_t value;
     value_t daemon_value;
 
-    static std::string to_str(const value_t & v);
+    static std::string to_str(const value_t &v);
 
     // Items like mon, osd, rgw, rbd, ceph-fuse.  This is advisory metadata
     // for presentation layers (like web dashboards, or generated docs), so that
@@ -195,89 +214,92 @@ struct Option {
     value_t min, max;
     std::vector < const char *>enum_allowed;
 
-  /**
-   * Return nonzero and set second argument to error string if the
-   * value is invalid.
-   *
-   * These callbacks are more than just validators, as they can also
-   * modify the value as it passes through.
-   */
+    /**
+     * Return nonzero and set second argument to error string if the
+     * value is invalid.
+     *
+     * These callbacks are more than just validators, as they can also
+     * modify the value as it passes through.
+     */
     typedef std::function < int (std::string *, std::string *) > validator_fn_t;
     validator_fn_t validator;
 
     Option(std::string const &name, type_t t, level_t l)
-    :name(name), type(t), level(l) {
+        : name(name), type(t), level(l)
+    {
         // While value_t is nullable (via std::monostate), we don't ever
         // want it set that way in an Option instance: within an instance,
         // the type of ::value should always match the declared type.
         switch (type) {
-        case TYPE_INT:
-            value = int64_t(0);
-            break;
-        case TYPE_UINT:
-            value = uint64_t(0);
-            break;
-        case TYPE_STR:
-            value = std::string("");
-            break;
-        case TYPE_FLOAT:
-            value = 0.0;
-            break;
-        case TYPE_BOOL:
-            value = false;
-            break;
-        case TYPE_ADDR:
-            value = entity_addr_t();
-            break;
-        case TYPE_ADDRVEC:
-            value = entity_addrvec_t();
-            break;
-        case TYPE_UUID:
-            value = uuid_d();
-            break;
-        case TYPE_SIZE:
-            value = size_t {
-            0};
-            break;
-        case TYPE_SECS:
-            value = std::chrono::seconds {
-            0};
-            break;
-        case TYPE_MILLISECS:
-            value = std::chrono::milliseconds {
-            0};
-            break;
-        default:
-            ceph_abort();
+            case TYPE_INT:
+                value = int64_t(0);
+                break;
+            case TYPE_UINT:
+                value = uint64_t(0);
+                break;
+            case TYPE_STR:
+                value = std::string("");
+                break;
+            case TYPE_FLOAT:
+                value = 0.0;
+                break;
+            case TYPE_BOOL:
+                value = false;
+                break;
+            case TYPE_ADDR:
+                value = entity_addr_t();
+                break;
+            case TYPE_ADDRVEC:
+                value = entity_addrvec_t();
+                break;
+            case TYPE_UUID:
+                value = uuid_d();
+                break;
+            case TYPE_SIZE:
+                value = size_t {
+                    0};
+                break;
+            case TYPE_SECS:
+                value = std::chrono::seconds {
+                    0};
+                break;
+            case TYPE_MILLISECS:
+                value = std::chrono::milliseconds {
+                    0};
+                break;
+            default:
+                ceph_abort();
         }
     }
 
-    void dump_value(const char *field_name, const value_t & v,
-                    ceph::Formatter * f) const;
+    void dump_value(const char *field_name, const value_t &v,
+                    ceph::Formatter *f) const;
 
     // Validate and potentially modify incoming string value
-    int pre_validate(std::string * new_value, std::string * err) const;
+    int pre_validate(std::string *new_value, std::string *err) const;
 
     // Validate properly typed value against bounds
-    int validate(const Option::value_t & new_value, std::string * err) const;
+    int validate(const Option::value_t &new_value, std::string *err) const;
 
     // const char * must be explicit to avoid it being treated as an int
-    Option & set_value(value_t & v, const char *new_value) {
+    Option &set_value(value_t &v, const char *new_value)
+    {
         v = std::string(new_value);
         return *this;
     }
 
     // bool is an integer, but we don't think so. teach it the hard way.
     template < typename T >
-        using is_not_integer_t =
-        std::enable_if_t < !std::is_integral_v < T > ||std::is_same_v < T,
+    using is_not_integer_t =
+        std::enable_if_t < !std::is_integral_v < T > || std::is_same_v < T,
         bool >, int >;
     template < typename T > using is_integer_t =
         std::enable_if_t < std::is_integral_v < T > &&!std::is_same_v < T,
         bool >, int >;
     template < typename T, typename =
-        is_not_integer_t < T >> Option & set_value(value_t & v,
-                                                   const T & new_value) {
+               is_not_integer_t < T >> Option & set_value(value_t &v,
+                       const T &new_value)
+    {
         v = new_value;
         return *this;
     }
@@ -286,142 +308,163 @@ struct Option {
     // do some casting.  This is necessary to make sure that setting
     // a float option to "0" actually sets the double part of variant.
     template < typename T, typename = is_integer_t < T >>
-        Option & set_value(value_t & v, T new_value) {
+    Option & set_value(value_t &v, T new_value)
+    {
         switch (type) {
-        case TYPE_INT:
-            v = int64_t(new_value);
-            break;
-        case TYPE_UINT:
-            v = uint64_t(new_value);
-            break;
-        case TYPE_FLOAT:
-            v = double (new_value);
-            break;
-        case TYPE_BOOL:
-            v = bool(new_value);
-            break;
-        case TYPE_SIZE:
-            v = size_t {
-            static_cast < std::uint64_t > (new_value)};
-            break;
-        case TYPE_SECS:
-            v = std::chrono::seconds {
-            new_value};
-            break;
-        case TYPE_MILLISECS:
-            v = std::chrono::milliseconds {
-            new_value};
-            break;
-        default:
-            std::cerr << "Bad type in set_value: " << name << ": "
-                << typeid(T).name() << std::endl;
-            ceph_abort();
+            case TYPE_INT:
+                v = int64_t(new_value);
+                break;
+            case TYPE_UINT:
+                v = uint64_t(new_value);
+                break;
+            case TYPE_FLOAT:
+                v = double (new_value);
+                break;
+            case TYPE_BOOL:
+                v = bool(new_value);
+                break;
+            case TYPE_SIZE:
+                v = size_t {
+                    static_cast < std::uint64_t >(new_value)};
+                break;
+            case TYPE_SECS:
+                v = std::chrono::seconds {
+                    new_value};
+                break;
+            case TYPE_MILLISECS:
+                v = std::chrono::milliseconds {
+                    new_value};
+                break;
+            default:
+                std::cerr << "Bad type in set_value: " << name << ": "
+                          << typeid(T).name() << std::endl;
+                ceph_abort();
         }
         return *this;
     }
 
     /// parse and validate a string input
-    int parse_value(const std::string & raw_val,
-                    value_t * out,
-                    std::string * error_message,
-                    std::string * normalized_value = nullptr) const;
+    int parse_value(const std::string &raw_val,
+                    value_t *out,
+                    std::string *error_message,
+                    std::string *normalized_value = nullptr) const;
 
-    template < typename T > Option & set_default(const T & v) {
+    template < typename T > Option &set_default(const T &v)
+    {
         return set_value(value, v);
     }
 
-    template < typename T > Option & set_daemon_default(const T & v) {
+    template < typename T > Option &set_daemon_default(const T &v)
+    {
         return set_value(daemon_value, v);
     }
-    Option & add_tag(const char *tag) {
+    Option &add_tag(const char *tag)
+    {
         tags.push_back(tag);
         return *this;
     }
-    Option & add_tag(const std::initializer_list < const char *>&ts) {
+    Option &add_tag(const std::initializer_list < const char *> &ts)
+    {
         tags.insert(tags.end(), ts);
         return *this;
     }
-    Option & add_service(const char *service) {
+    Option &add_service(const char *service)
+    {
         services.push_back(service);
         return *this;
     }
-    Option & add_service(const std::initializer_list < const char *>&ss) {
+    Option &add_service(const std::initializer_list < const char *> &ss)
+    {
         services.insert(services.end(), ss);
         return *this;
     }
-    Option & add_see_also(const char *t) {
+    Option &add_see_also(const char *t)
+    {
         see_also.push_back(t);
         return *this;
     }
-    Option & add_see_also(const std::initializer_list < const char *>&ts) {
+    Option &add_see_also(const std::initializer_list < const char *> &ts)
+    {
         see_also.insert(see_also.end(), ts);
         return *this;
     }
-    Option & set_description(const char *new_desc) {
+    Option &set_description(const char *new_desc)
+    {
         desc = new_desc;
         return *this;
     }
-    Option & set_long_description(const char *new_desc) {
+    Option &set_long_description(const char *new_desc)
+    {
         long_desc = new_desc;
         return *this;
     }
 
-    template < typename T > Option & set_min(const T & mi) {
+    template < typename T > Option &set_min(const T &mi)
+    {
         set_value(min, mi);
         return *this;
     }
 
-    template < typename T > Option & set_min_max(const T & mi, const T & ma) {
+    template < typename T > Option &set_min_max(const T &mi, const T &ma)
+    {
         set_value(min, mi);
         set_value(max, ma);
         return *this;
     }
 
-    Option & set_enum_allowed(const std::vector < const char *>&allowed) {
+    Option &set_enum_allowed(const std::vector < const char *> &allowed)
+    {
         enum_allowed = allowed;
         return *this;
     }
 
-    Option & set_flag(flag_t f) {
+    Option &set_flag(flag_t f)
+    {
         flags |= f;
         return *this;
     }
-    Option & set_flags(flag_t f) {
+    Option &set_flags(flag_t f)
+    {
         flags |= f;
         return *this;
     }
 
-    Option & set_validator(const validator_fn_t & validator_) {
+    Option &set_validator(const validator_fn_t &validator_)
+    {
         validator = validator_;
         return *this;
     }
 
-    Option & set_subsys(int s) {
+    Option &set_subsys(int s)
+    {
         subsys = s;
         return *this;
     }
 
-    void dump(ceph::Formatter * f) const;
-    void print(std::ostream * out) const;
+    void dump(ceph::Formatter *f) const;
+    void print(std::ostream *out) const;
 
-    bool has_flag(flag_t f) const {
+    bool has_flag(flag_t f) const
+    {
         return flags & f;
     }
-  /**
-   * A crude indicator of whether the value may be
-   * modified safely at runtime -- should be replaced
-   * with proper locking!
-   */ bool can_update_at_runtime() const {
+    /**
+     * A crude indicator of whether the value may be
+     * modified safely at runtime -- should be replaced
+     * with proper locking!
+     */ bool can_update_at_runtime() const
+    {
         return (has_flag(FLAG_RUNTIME)
                 || (!has_flag(FLAG_MGR)
                     && (type == TYPE_BOOL || type == TYPE_INT
                         || type == TYPE_UINT || type == TYPE_FLOAT
                         || type == TYPE_SIZE || type == TYPE_SECS
                         || type == TYPE_MILLISECS)))
-            && !has_flag(FLAG_STARTUP)
-            && !has_flag(FLAG_CLUSTER_CREATE)
-            && !has_flag(FLAG_CREATE);
-}};
+               && !has_flag(FLAG_STARTUP)
+               && !has_flag(FLAG_CLUSTER_CREATE)
+               && !has_flag(FLAG_CREATE);
+    }
+};
 
 constexpr unsigned long long operator "" _min(unsigned long long min)
 {

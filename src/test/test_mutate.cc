@@ -53,16 +53,13 @@ int main(int argc, const char **argv)
          i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--oid", "-o", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--oid", "-o", (char *)NULL)) {
             oid = val;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--pool", "-p", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--pool", "-p", (char *)NULL)) {
             pool_name = val;
-        }
-        else {
+        } else {
             cerr << "unknown command line option: " << *i << std::endl;
             cerr << std::endl;
             usage();
@@ -91,14 +88,14 @@ int main(int argc, const char **argv)
         ret = rados.pool_create(pool_name.c_str());
         if (ret) {
             cerr << "failed to create pool named '" << pool_name
-                << "': error " << ret << std::endl;
+                 << "': error " << ret << std::endl;
             return 1;
         }
     }
     ret = rados.ioctx_create(pool_name.c_str(), ioctx);
     if (ret) {
         cerr << "failed to create ioctx for pool '" << pool_name
-            << "': error " << ret << std::endl;
+             << "': error " << ret << std::endl;
         return 1;
     }
     ioctx.application_enable("rados", true);

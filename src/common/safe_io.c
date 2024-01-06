@@ -34,8 +34,9 @@ ssize_t safe_read(int fd, void *buf, size_t count)
                 // EOF
                 return cnt;
             }
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
+            }
             return -errno;
         }
         cnt += r;
@@ -80,20 +81,24 @@ ssize_t safe_recv(int fd, void *buf, size_t count)
 ssize_t safe_read_exact(int fd, void *buf, size_t count)
 {
     ssize_t ret = safe_read(fd, buf, count);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
-    if ((size_t) ret != count)
+    }
+    if ((size_t) ret != count) {
         return -EDOM;
+    }
     return 0;
 }
 
 ssize_t safe_recv_exact(int fd, void *buf, size_t count)
 {
     ssize_t ret = safe_recv(fd, buf, count);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
-    if ((size_t) ret != count)
+    }
+    if ((size_t) ret != count) {
         return -EDOM;
+    }
     return 0;
 }
 
@@ -102,8 +107,9 @@ ssize_t safe_write(int fd, const void *buf, size_t count)
     while (count > 0) {
         ssize_t r = write(fd, buf, count);
         if (r < 0) {
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
+            }
             return -errno;
         }
         count -= r;
@@ -148,8 +154,9 @@ ssize_t safe_pread(int fd, void *buf, size_t count, off_t offset)
                 // EOF
                 return cnt;
             }
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
+            }
             return -errno;
         }
 
@@ -161,10 +168,12 @@ ssize_t safe_pread(int fd, void *buf, size_t count, off_t offset)
 ssize_t safe_pread_exact(int fd, void *buf, size_t count, off_t offset)
 {
     ssize_t ret = safe_pread(fd, buf, count, offset);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
-    if ((size_t) ret != count)
+    }
+    if ((size_t) ret != count) {
         return -EDOM;
+    }
     return 0;
 }
 
@@ -173,8 +182,9 @@ ssize_t safe_pwrite(int fd, const void *buf, size_t count, off_t offset)
     while (count > 0) {
         ssize_t r = pwrite(fd, buf, count, offset);
         if (r < 0) {
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
+            }
             return -errno;
         }
         count -= r;
@@ -185,7 +195,7 @@ ssize_t safe_pwrite(int fd, const void *buf, size_t count, off_t offset)
 }
 
 #ifdef CEPH_HAVE_SPLICE
-ssize_t safe_splice(int fd_in, off_t * off_in, int fd_out, off_t * off_out,
+ssize_t safe_splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out,
                     size_t len, unsigned int flags)
 {
     size_t cnt = 0;
@@ -197,10 +207,12 @@ ssize_t safe_splice(int fd_in, off_t * off_in, int fd_out, off_t * off_out,
                 // EOF
                 return cnt;
             }
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
-            if (errno == EAGAIN)
+            }
+            if (errno == EAGAIN) {
                 break;
+            }
             return -errno;
         }
         cnt += r;
@@ -208,14 +220,16 @@ ssize_t safe_splice(int fd_in, off_t * off_in, int fd_out, off_t * off_out,
     return cnt;
 }
 
-ssize_t safe_splice_exact(int fd_in, off_t * off_in, int fd_out,
-                          off_t * off_out, size_t len, unsigned int flags)
+ssize_t safe_splice_exact(int fd_in, off_t *off_in, int fd_out,
+                          off_t *off_out, size_t len, unsigned int flags)
 {
     ssize_t ret = safe_splice(fd_in, off_in, fd_out, off_out, len, flags);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
-    if ((size_t) ret != len)
+    }
+    if ((size_t) ret != len) {
         return -EDOM;
+    }
     return 0;
 }
 #endif
@@ -231,8 +245,9 @@ int safe_write_file(const char *base, const char *file,
     // does the file already have correct content?
     char oldval[80];
     ret = safe_read_file(base, file, oldval, sizeof(oldval));
-    if (ret == (int)vallen && memcmp(oldval, val, vallen) == 0)
-        return 0;               // yes.
+    if (ret == (int)vallen && memcmp(oldval, val, vallen) == 0) {
+        return 0;    // yes.
+    }
 
     snprintf(fn, sizeof(fn), "%s/%s", base, file);
     snprintf(tmp, sizeof(tmp), "%s/%s.tmp", base, file);
@@ -248,8 +263,9 @@ int safe_write_file(const char *base, const char *file,
     }
 
     ret = fsync(fd);
-    if (ret < 0)
+    if (ret < 0) {
         ret = -errno;
+    }
     VOID_TEMP_FAILURE_RETRY(close(fd));
     if (ret < 0) {
         unlink(tmp);
@@ -268,8 +284,9 @@ int safe_write_file(const char *base, const char *file,
         return ret;
     }
     ret = fsync(fd);
-    if (ret < 0)
+    if (ret < 0) {
         ret = -errno;
+    }
     VOID_TEMP_FAILURE_RETRY(close(fd));
 
     return ret;

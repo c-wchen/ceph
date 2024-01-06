@@ -12,7 +12,7 @@
 #include "objclass/objclass.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(crypto)
+CLS_NAME(crypto)
 
 int md5_method(cls_method_context_t ctx, char *indata, int datalen,
                char **outdata, int *outdatalen)
@@ -24,8 +24,9 @@ int md5_method(cls_method_context_t ctx, char *indata, int datalen,
     cls_log("indata=%.*s data_len=%d", datalen, indata, datalen);
 
     md = (unsigned char *)cls_alloc(MD5_DIGEST_LENGTH);
-    if (!md)
+    if (!md) {
         return -ENOMEM;
+    }
 
     MD5_Init(&c);
     MD5_Update(&c, indata, (unsigned long)datalen);
@@ -47,8 +48,9 @@ int sha1_method(cls_method_context_t ctx, char *indata, int datalen,
     cls_log("indata=%.*s data_len=%d", datalen, indata, datalen);
 
     md = (unsigned char *)cls_alloc(SHA_DIGEST_LENGTH);
-    if (!md)
+    if (!md) {
         return -ENOMEM;
+    }
 
     SHA1_Init(&c);
     SHA1_Update(&c, indata, (unsigned long)datalen);

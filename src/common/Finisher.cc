@@ -63,11 +63,11 @@ void *Finisher::finisher_thread_entry()
             }
 
             // Now actually process the contexts.
-          for (auto p:in_progress_queue) {
+            for (auto p : in_progress_queue) {
                 p.first->complete(p.second);
             }
             ldout(cct, 10) << "finisher_thread done with " << in_progress_queue
-                << dendl;
+                           << dendl;
             in_progress_queue.clear();
             if (logger) {
                 logger->dec(l_finisher_queue_len, count);
@@ -78,10 +78,12 @@ void *Finisher::finisher_thread_entry()
             finisher_running = false;
         }
         ldout(cct, 10) << "finisher_thread empty" << dendl;
-        if (unlikely(finisher_empty_wait))
+        if (unlikely(finisher_empty_wait)) {
             finisher_empty_cond.notify_all();
-        if (finisher_stop)
+        }
+        if (finisher_stop) {
             break;
+        }
 
         ldout(cct, 10) << "finisher_thread sleeping" << dendl;
         finisher_cond.wait(ul);

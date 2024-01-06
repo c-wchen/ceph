@@ -17,106 +17,122 @@
 #include <iostream>
 #include <mutex>
 
-namespace rgw {
+namespace rgw
+{
 
 #if defined(HAVE_OPENLDAP)
 
-    class LDAPHelper {
-        std::string uri;
-        std::string binddn;
-        std::string bindpw;
-        std::string searchdn;
-        std::string searchfilter;
-        std::string dnattr;
-        LDAP *ldap;
-        bool msad = false;      /* TODO: possible future specialization */
-         std::mutex mtx;
+class LDAPHelper
+{
+    std::string uri;
+    std::string binddn;
+    std::string bindpw;
+    std::string searchdn;
+    std::string searchfilter;
+    std::string dnattr;
+    LDAP *ldap;
+    bool msad = false;      /* TODO: possible future specialization */
+    std::mutex mtx;
 
-      public:
-         using lock_guard = std::lock_guard < std::mutex >;
+public:
+    using lock_guard = std::lock_guard < std::mutex >;
 
-         LDAPHelper(std::string _uri, std::string _binddn, std::string _bindpw,
-                    const std::string & _searchdn,
-                    const std::string & _searchfilter,
-                    const std::string & _dnattr)
-        :uri(std::move(_uri)), binddn(std::move(_binddn)),
-            bindpw(std::move(_bindpw)), searchdn(_searchdn),
-            searchfilter(_searchfilter), dnattr(_dnattr), ldap(nullptr) {
-            // nothing
-        } int init() {
-            int ret;
-             ret = ldap_initialize(&ldap, uri.c_str());
+    LDAPHelper(std::string _uri, std::string _binddn, std::string _bindpw,
+               const std::string &_searchdn,
+               const std::string &_searchfilter,
+               const std::string &_dnattr)
+        : uri(std::move(_uri)), binddn(std::move(_binddn)),
+          bindpw(std::move(_bindpw)), searchdn(_searchdn),
+          searchfilter(_searchfilter), dnattr(_dnattr), ldap(nullptr)
+    {
+        // nothing
+    } int init()
+    {
+        int ret;
+        ret = ldap_initialize(&ldap, uri.c_str());
+        if (ret == LDAP_SUCCESS) {
+            unsigned long ldap_ver = LDAP_VERSION3;
+            ret = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION,
+                                  (void *)&ldap_ver);
+        }
+        if (ret == LDAP_SUCCESS) {
+            ret = ldap_set_option(ldap, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
+        }
+        return (ret == LDAP_SUCCESS) ? ret : -EINVAL;
+    }
+
+    int bind()
+    {
+        int ret;
+        ret = ldap_simple_bind_s(ldap, binddn.c_str(), bindpw.c_str());
+        return (ret == LDAP_SUCCESS) ? ret : -EINVAL;
+    }
+
+    int rebind()
+    {
+        if (ldap) {
+            (void)ldap_unbind(ldap);
+            (void)init();
+            return bind();
+        }
+        return -EINVAL;
+    }
+
+    int simple_bind(const char *dn, const std::string &pwd)
+    {
+        LDAP *tldap;
+        int ret = ldap_initialize(&tldap, uri.c_str());
+        if (ret == LDAP_SUCCESS) {
+            unsigned long ldap_ver = LDAP_VERSION3;
+            ret = ldap_set_option(tldap, LDAP_OPT_PROTOCOL_VERSION,
+                                  (void *)&ldap_ver);
             if (ret == LDAP_SUCCESS) {
-                unsigned long ldap_ver = LDAP_VERSION3;
-                 ret = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION,
-                                       (void *)&ldap_ver);
-            } if (ret == LDAP_SUCCESS) {
-                ret = ldap_set_option(ldap, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
+                ret = ldap_simple_bind_s(tldap, dn, pwd.c_str());
             }
-            return (ret == LDAP_SUCCESS) ? ret : -EINVAL;
+            (void)ldap_unbind(tldap);
         }
+        return ret;         // OpenLDAP client error space
+    }
 
-        int bind() {
-            int ret;
-            ret = ldap_simple_bind_s(ldap, binddn.c_str(), bindpw.c_str());
-            return (ret == LDAP_SUCCESS) ? ret : -EINVAL;
+    int auth(const std::string &uid, const std::string &pwd);
+
+    ~LDAPHelper()
+    {
+        if (ldap) {
+            (void)ldap_unbind(ldap);
         }
+    }
 
-        int rebind() {
-            if (ldap) {
-                (void)ldap_unbind(ldap);
-                (void)init();
-                return bind();
-            }
-            return -EINVAL;
-        }
-
-        int simple_bind(const char *dn, const std::string & pwd) {
-            LDAP *tldap;
-            int ret = ldap_initialize(&tldap, uri.c_str());
-            if (ret == LDAP_SUCCESS) {
-                unsigned long ldap_ver = LDAP_VERSION3;
-                ret = ldap_set_option(tldap, LDAP_OPT_PROTOCOL_VERSION,
-                                      (void *)&ldap_ver);
-                if (ret == LDAP_SUCCESS) {
-                    ret = ldap_simple_bind_s(tldap, dn, pwd.c_str());
-                }
-                (void)ldap_unbind(tldap);
-            }
-            return ret;         // OpenLDAP client error space
-        }
-
-        int auth(const std::string & uid, const std::string & pwd);
-
-        ~LDAPHelper() {
-            if (ldap)
-                (void)ldap_unbind(ldap);
-        }
-
-    };                          /* LDAPHelper */
+};                          /* LDAPHelper */
 
 #else
 
-    class LDAPHelper {
-      public:
-        LDAPHelper(const std::string & _uri, const std::string & _binddn,
-                   const std::string & _bindpw, const std::string & _searchdn,
-                   const std::string & _searchfilter,
-                   const std::string & _dnattr) {
-        } int init() {
-            return -ENOTSUP;
-        } int bind() {
-            return -ENOTSUP;
-        }
+class LDAPHelper
+{
+public:
+    LDAPHelper(const std::string &_uri, const std::string &_binddn,
+               const std::string &_bindpw, const std::string &_searchdn,
+               const std::string &_searchfilter,
+               const std::string &_dnattr)
+    {
+    } int init()
+    {
+        return -ENOTSUP;
+    } int bind()
+    {
+        return -ENOTSUP;
+    }
 
-        int auth(const std::string & uid, const std::string & pwd) {
-            return -EACCES;
-        }
+    int auth(const std::string &uid, const std::string &pwd)
+    {
+        return -EACCES;
+    }
 
-        ~LDAPHelper() {
-        }
+    ~LDAPHelper()
+    {
+    }
 
-    };                          /* LDAPHelper */
+};                          /* LDAPHelper */
 
 #endif /* HAVE_OPENLDAP */
 
@@ -130,4 +146,4 @@ namespace rgw {
 
 #include "include/ceph_assert.h"
 
-std::string parse_rgw_ldap_bindpw(CephContext * ctx);
+std::string parse_rgw_ldap_bindpw(CephContext *ctx);

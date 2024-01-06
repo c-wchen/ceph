@@ -25,9 +25,9 @@ extern "C" {
 #define LIBRGW_VERSION(maj, min, extra) ((maj << 16) + (min << 8) + extra)
 #define LIBRGW_VERSION_CODE LIBRGW_VERSION(LIBRGW_VER_MAJOR, LIBRGW_VER_MINOR, LIBRGW_VER_EXTRA)
 
-    typedef void *librgw_t;
-    int librgw_create(librgw_t * rgw, int argc, char **argv);
-    void librgw_shutdown(librgw_t rgw);
+typedef void *librgw_t;
+int librgw_create(librgw_t *rgw, int argc, char **argv);
+void librgw_shutdown(librgw_t rgw);
 
 #ifdef __cplusplus
 }

@@ -45,15 +45,19 @@ struct StopWatch {
     utime_t begin_time;
     utime_t end_time;
 
-    void start_time() {
+    void start_time()
+    {
         begin_time = ceph_clock_now();
-    } void stop_time() {
+    } void stop_time()
+    {
         end_time = ceph_clock_now();
     }
-    double get_time() {
+    double get_time()
+    {
         return (end_time - begin_time) * 1000;
     }
-    void clear() {
+    void clear()
+    {
         begin_time = end_time = utime_t();
     }
 };
@@ -65,25 +69,28 @@ struct timed_args {
     StopWatch sw;
     //kv_bench_data data;
     KvStoreBench *kvsb;
-     ceph::buffer::list val;
+    ceph::buffer::list val;
     int err;
     char op;
 
-     timed_args()
-    :kvsb(NULL), err(0), op(' ') {
+    timed_args()
+        : kvsb(NULL), err(0), op(' ')
+    {
     };
 
-    timed_args(KvStoreBench * k)
-  :    kvsb(k), err(0), op(' ') {
+    timed_args(KvStoreBench *k)
+        :    kvsb(k), err(0), op(' ')
+    {
     }
 };
 
 typedef std::pair < std::string,
-    ceph::buffer::list > (KvStoreBench::*next_gen_t) (bool new_elem);
+        ceph::buffer::list > (KvStoreBench::*next_gen_t)(bool new_elem);
 
-class KvStoreBench {
+class KvStoreBench
+{
 
-  protected:
+protected:
 
     //test setup variables set from command line
     int entries;                //the number of entries to write initially
@@ -121,68 +128,68 @@ class KvStoreBench {
     bool io_ctx_ready;
     librados::IoCtx io_ctx;
 
-  /**
-   * Prints JSON-formatted throughput and latency data.
-   *
-   * Throughput data is {'char representing the operation type':time the op
-   * completed to the nearest second}
-   * Latency is {'char representing the operation type':time taken by the op}
-   */
+    /**
+     * Prints JSON-formatted throughput and latency data.
+     *
+     * Throughput data is {'char representing the operation type':time the op
+     * completed to the nearest second}
+     * Latency is {'char representing the operation type':time taken by the op}
+     */
     void print_time_data();
 
-  public:
+public:
 
     KvStoreBench();
 
     //after this is called, objects created by the KeyValueStructure remain.
     ~KvStoreBench();
 
-  /**
-   * parses command line arguments, sets up this rados instance, clears the
-   * pool if clear_first is true and calls kvs->setup.
-   */
+    /**
+     * parses command line arguments, sets up this rados instance, clears the
+     * pool if clear_first is true and calls kvs->setup.
+     */
     int setup(int argc, const char **argv);
 
-  /**
-   * Returns a string of random characters of length len
-   */
+    /**
+     * Returns a string of random characters of length len
+     */
     std::string random_string(int len);
 
-  /**
-   * Inserts entries random keys and values asynchronously.
-   */
+    /**
+     * Inserts entries random keys and values asynchronously.
+     */
     int test_random_insertions();
 
-  /**
-   * calls test_random_insertions, then does ops randomly chosen operations
-   * asynchronously, with max_ops_in_flight operations at a time.
-   */
+    /**
+     * calls test_random_insertions, then does ops randomly chosen operations
+     * asynchronously, with max_ops_in_flight operations at a time.
+     */
     int test_teuthology_aio(next_gen_t distr, const std::map < int,
-                            char >&probs);
+                            char > &probs);
 
-  /**
-   * calls test_random_insertions, then does ops randomly chosen operations
-   * synchronously.
-   */
+    /**
+     * calls test_random_insertions, then does ops randomly chosen operations
+     * synchronously.
+     */
     int test_teuthology_sync(next_gen_t distr, const std::map < int,
-                             char >&probs);
+                             char > &probs);
 
-  /**
-   * returns a key-value pair. If new_elem is true, the key is randomly
-   * generated. If it is false, the key is selected from the keys currently in
-   * the key set.
-   */
+    /**
+     * returns a key-value pair. If new_elem is true, the key is randomly
+     * generated. If it is false, the key is selected from the keys currently in
+     * the key set.
+     */
     std::pair < std::string, ceph::buffer::list > rand_distr(bool new_elem);
 
-  /**
-   * Called when aio operations complete. Updates data.
-   */
+    /**
+     * Called when aio operations complete. Updates data.
+     */
     static void aio_callback_timed(int *err, void *arg);
 
-  /**
-   * Calls test_ methods. Change to call, for example, multiple runs of a test
-   * with different settings. Currently just calls test_teuthology_aio.
-   */
+    /**
+     * Calls test_ methods. Change to call, for example, multiple runs of a test
+     * with different settings. Currently just calls test_teuthology_aio.
+     */
     int teuthology_tests();
 
 };

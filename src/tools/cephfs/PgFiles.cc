@@ -32,10 +32,10 @@ int PgFiles::init()
     return ceph_init(cmount);
 }
 
-PgFiles::PgFiles(Objecter * o, const std::set < pg_t > &pgs_)
-:  objecter(o), pgs(pgs_)
+PgFiles::PgFiles(Objecter *o, const std::set < pg_t > &pgs_)
+    :  objecter(o), pgs(pgs_)
 {
-  for (const auto & i:pgs) {
+    for (const auto &i : pgs) {
         pools.insert(i.m_pool);
     }
 }
@@ -60,7 +60,7 @@ void PgFiles::hit_dir(std::string const &path)
     while ((r = ceph_readdir_r(cmount, dr, &de)) != 0) {
         if (r < 0) {
             derr << "Error reading path " << path << ": " << cpp_strerror(r)
-                << dendl;
+                 << dendl;
             ceph_closedir(cmount, dr);  // best effort, ignore r
             return;
         }
@@ -75,18 +75,16 @@ void PgFiles::hit_dir(std::string const &path)
                        CEPH_STATX_INO | CEPH_STATX_SIZE, 0);
         if (r != 0) {
             derr << "Failed to stat path " << de_path << ": "
-                << cpp_strerror(r) << dendl;
+                 << cpp_strerror(r) << dendl;
             // Don't hold up the whole process for one bad inode
             continue;
         }
 
         if (S_ISREG(stx.stx_mode)) {
             hit_file(de_path, stx);
-        }
-        else if (S_ISDIR(stx.stx_mode)) {
+        } else if (S_ISDIR(stx.stx_mode)) {
             hit_dir(de_path);
-        }
-        else {
+        } else {
             dout(20) << "Skipping non reg/dir file: " << de_path << dendl;
         }
     }
@@ -94,7 +92,7 @@ void PgFiles::hit_dir(std::string const &path)
     r = ceph_closedir(cmount, dr);
     if (r != 0) {
         derr << "Error closing path " << path << ": " << cpp_strerror(r) <<
-            dendl;
+             dendl;
         return;
     }
 }
@@ -114,7 +112,7 @@ void PgFiles::hit_file(std::string const &path, const struct ceph_statx &stx)
                                  &l_pool_id);
     if (r != 0) {
         derr << "Error reading layout on " << path << ": " << cpp_strerror(r)
-            << dendl;
+             << dendl;
         return;
     }
 
@@ -127,7 +125,7 @@ void PgFiles::hit_file(std::string const &path, const struct ceph_statx &stx)
     // Avoid calculating PG if the layout targeted a completely different pool
     if (pools.count(layout.pool_id) == 0) {
         dout(20) << "Fast check missed: pool " << layout.pool_id << " not in "
-            "target set" << dendl;
+                 "target set" << dendl;
         return;
     }
 
@@ -150,15 +148,16 @@ void PgFiles::hit_file(std::string const &path, const struct ceph_statx &stx)
 
         int r = 0;
         objecter->with_osdmap([&r, oid, loc, &target, &pg_num_mask, &pg_num]
-                              (const OSDMap & osd_map) {
-                              r =
-                              osd_map.object_locator_to_pg(oid, loc, target);
-                              if (r == 0) {
-                              auto pool = osd_map.get_pg_pool(loc.pool);
-                              pg_num_mask = pool->get_pg_num_mask();
-                              pg_num = pool->get_pg_num();}
-                              }
-        ) ;
+        (const OSDMap & osd_map) {
+            r =
+                osd_map.object_locator_to_pg(oid, loc, target);
+            if (r == 0) {
+                auto pool = osd_map.get_pg_pool(loc.pool);
+                pg_num_mask = pool->get_pg_num_mask();
+                pg_num = pool->get_pg_num();
+            }
+        }
+                             ) ;
         if (r != 0) {
             // Can happen if layout pointed to pool not in osdmap, for example
             continue;

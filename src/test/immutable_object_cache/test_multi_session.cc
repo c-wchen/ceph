@@ -15,41 +15,49 @@
 using namespace std;
 using namespace ceph::immutable_obj_cache;
 
-class TestMultiSession:public::testing::Test {
-  public:
+class TestMultiSession: public::testing::Test
+{
+public:
     std::string m_local_path;
     CacheServer *m_cache_server;
-    std::thread * m_cache_server_thread;
+    std::thread *m_cache_server_thread;
     std::vector < CacheClient * >m_cache_client_vec;
     WaitEvent m_wait_event;
     std::atomic < uint64_t > m_send_request_index;
     std::atomic < uint64_t > m_recv_ack_index;
     uint64_t m_session_num = 110;
 
-    TestMultiSession():m_local_path("/tmp/ceph_test_multisession_socket"),
+    TestMultiSession(): m_local_path("/tmp/ceph_test_multisession_socket"),
         m_cache_server_thread(nullptr), m_send_request_index(0),
-        m_recv_ack_index(0) {
+        m_recv_ack_index(0)
+    {
         m_cache_client_vec.resize(m_session_num + 1, nullptr);
-    } ~TestMultiSession() {
+    } ~TestMultiSession()
+    {
     }
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
     }
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         std::remove(m_local_path.c_str());
         m_cache_server = new CacheServer(g_ceph_context, m_local_path,
-                                         [this] (CacheSession * session_id,
-                                                 ObjectCacheRequest * req) {
-                                         server_handle_request(session_id,
-                                                               req);});
+                                         [this](CacheSession * session_id,
+        ObjectCacheRequest * req) {
+            server_handle_request(session_id,
+                                  req);
+        });
         ASSERT_TRUE(m_cache_server != nullptr);
 
-        m_cache_server_thread = new std::thread(([this] () {
-                                                 m_wait_event.signal();
-                                                 m_cache_server->run();}));
+        m_cache_server_thread = new std::thread(([this]() {
+            m_wait_event.signal();
+            m_cache_server->run();
+        }));
 
         // waiting for thread running.
         m_wait_event.wait();
@@ -58,7 +66,8 @@ class TestMultiSession:public::testing::Test {
         usleep(2);
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         for (uint64_t i = 0; i < m_session_num; i++) {
             if (m_cache_client_vec[i] != nullptr) {
                 m_cache_client_vec[i]->close();
@@ -75,7 +84,8 @@ class TestMultiSession:public::testing::Test {
         std::remove(m_local_path.c_str());
     }
 
-    CacheClient *create_session(uint64_t random_index) {
+    CacheClient *create_session(uint64_t random_index)
+    {
         CacheClient *cache_client =
             new CacheClient(m_local_path, g_ceph_context);
         cache_client->run();
@@ -88,18 +98,19 @@ class TestMultiSession:public::testing::Test {
         return cache_client;
     }
 
-    void server_handle_request(CacheSession * session_id,
-                               ObjectCacheRequest * req) {
+    void server_handle_request(CacheSession *session_id,
+                               ObjectCacheRequest *req)
+    {
 
         switch (req->get_request_type()) {
-        case RBDSC_REGISTER:{
+            case RBDSC_REGISTER: {
                 ObjectCacheRequest *reply =
                     new ObjectCacheRegReplyData(RBDSC_REGISTER_REPLY,
                                                 req->seq);
                 session_id->send(reply);
                 break;
             }
-        case RBDSC_READ:{
+            case RBDSC_READ: {
                 ObjectCacheRequest *reply =
                     new ObjectCacheReadReplyData(RBDSC_READ_REPLY,
                                                  req->seq);
@@ -109,11 +120,13 @@ class TestMultiSession:public::testing::Test {
         }
     }
 
-    void test_register_client(uint64_t random_index) {
+    void test_register_client(uint64_t random_index)
+    {
         ASSERT_TRUE(m_cache_client_vec[random_index] == nullptr);
 
-        auto ctx = new LambdaContext([](int ret){
-                                     ASSERT_TRUE(ret == 0);});
+        auto ctx = new LambdaContext([](int ret) {
+            ASSERT_TRUE(ret == 0);
+        });
         auto session = create_session(random_index);
         session->register_client(ctx);
 
@@ -122,18 +135,20 @@ class TestMultiSession:public::testing::Test {
     }
 
     void test_lookup_object(std::string pool_nspace, uint64_t index,
-                            uint64_t request_num, bool is_last) {
+                            uint64_t request_num, bool is_last)
+    {
 
         for (uint64_t i = 0; i < request_num; i++) {
             auto ctx = make_gen_lambda_context < ObjectCacheRequest *,
-                std::function <
-                void (ObjectCacheRequest *) >>
-                ([this] (ObjectCacheRequest * ack) {
-                 m_recv_ack_index++;});
+                 std::function <
+                 void (ObjectCacheRequest *) >>
+            ([this](ObjectCacheRequest * ack) {
+                m_recv_ack_index++;
+            });
             m_send_request_index++;
             // here just for concurrently testing register + lookup, so fix object id.
             m_cache_client_vec[index]->lookup_object(pool_nspace, 1, 2, 3,
-                                                     "1234", std::move(ctx));
+                    "1234", std::move(ctx));
         }
 
         if (is_last) {
@@ -156,8 +171,7 @@ TEST_F(TestMultiSession, test_multi_session)
         uint64_t random_index = random() % test_session_num;
         if (m_cache_client_vec[random_index] == nullptr) {
             test_register_client(random_index);
-        }
-        else {
+        } else {
             test_lookup_object(string("test_nspace") +
                                std::to_string(random_index), random_index, 4,
                                i == test_times ? true : false);

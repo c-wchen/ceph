@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,20 +7,23 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 #include "include/Context.h"
 #include "gtest/gtest.h"
 
-class C_Checker:public Context {
-  public:
-    bool * finish_called;
+class C_Checker: public Context
+{
+public:
+    bool *finish_called;
     int *result;
-     C_Checker(bool * _finish_called, int *r):finish_called(_finish_called),
-        result(r) {
-    } void finish(int r) override {
+    C_Checker(bool *_finish_called, int *r): finish_called(_finish_called),
+        result(r)
+    {
+    } void finish(int r) override
+    {
         *finish_called = true;
         *result = r;
     }

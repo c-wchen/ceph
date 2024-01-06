@@ -6,21 +6,25 @@
 #include "common/Cond.h"
 #include <map>
 
-class TestJournalMetadata:public RadosTestFixture {
-  public:
-    void TearDown() override {
+class TestJournalMetadata: public RadosTestFixture
+{
+public:
+    void TearDown() override
+    {
         for (MetadataList::iterator it = m_metadata_list.begin();
              it != m_metadata_list.end(); ++it) {
             (*it)->remove_listener(&m_listener);
-        } m_metadata_list.clear();
+        }
+        m_metadata_list.clear();
 
         RadosTestFixture::TearDown();
     }
 
-    auto create_metadata(const std::string & oid,
-                         const std::string & client_id,
+    auto create_metadata(const std::string &oid,
+                         const std::string &client_id,
                          double commit_interval = 0.1,
-                         int max_concurrent_object_sets = 0) {
+                         int max_concurrent_object_sets = 0)
+    {
         auto metadata =
             RadosTestFixture::create_metadata(oid, client_id, commit_interval,
                                               max_concurrent_object_sets);
@@ -80,28 +84,28 @@ TEST_F(TestJournalMetadata, Committed)
     uint64_t commit_tid4 = metadata1->allocate_commit_tid(0, 0, 2);
 
     // cannot commit until tid1 + 2 committed
-    metadata1->committed(commit_tid2,[]() {
-                         return nullptr;
-                         }
-    );
-    metadata1->committed(commit_tid3,[]() {
-                         return nullptr;
-                         }
-    );
+    metadata1->committed(commit_tid2, []() {
+        return nullptr;
+    }
+                        );
+    metadata1->committed(commit_tid3, []() {
+        return nullptr;
+    }
+                        );
 
     C_SaferCond cond1;
-    metadata1->committed(commit_tid1,[&cond1] () {
-                         return &cond1;
-                         }
-    );
+    metadata1->committed(commit_tid1, [&cond1]() {
+        return &cond1;
+    }
+                        );
 
     // given our 10 minute commit internal, this should override the
     // in-flight commit
     C_SaferCond cond2;
-    metadata1->committed(commit_tid4,[&cond2] () {
-                         return &cond2;
-                         }
-    );
+    metadata1->committed(commit_tid4, [&cond2]() {
+        return &cond2;
+    }
+                        );
 
     ASSERT_EQ(-ESTALE, cond1.wait());
     metadata1->flush_commit_position();
@@ -110,10 +114,12 @@ TEST_F(TestJournalMetadata, Committed)
     ASSERT_TRUE(wait_for_update(metadata2));
     metadata2->get_commit_position(&read_commit_position);
     expect_commit_position = { { {
-    0, 0, 2}
-    , {
-    1, 0, 1}
-    }
+                0, 0, 2
+            }
+            , {
+                1, 0, 1
+            }
+        }
     };
     ASSERT_EQ(expect_commit_position, read_commit_position);
 }
@@ -155,16 +161,16 @@ TEST_F(TestJournalMetadata, DisconnectLaggyClient)
 
     journal::JournalMetadata::RegisteredClients clients;
 
-#define ASSERT_CLIENT_STATES(s1, s2)	\
-  ASSERT_EQ(2U, clients.size());	\
-  for (auto &c : clients) {		\
-    if (c.id == "client1") {		\
-      ASSERT_EQ(c.state, s1);		\
-    } else if (c.id == "client2") {	\
-      ASSERT_EQ(c.state, s2);		\
-    } else {				\
-      ASSERT_TRUE(false);		\
-    }					\
+#define ASSERT_CLIENT_STATES(s1, s2)    \
+  ASSERT_EQ(2U, clients.size());    \
+  for (auto &c : clients) {     \
+    if (c.id == "client1") {        \
+      ASSERT_EQ(c.state, s1);       \
+    } else if (c.id == "client2") { \
+      ASSERT_EQ(c.state, s2);       \
+    } else {                \
+      ASSERT_TRUE(false);       \
+    }                   \
   }
 
     metadata->get_registered_clients(&clients);
@@ -176,10 +182,10 @@ TEST_F(TestJournalMetadata, DisconnectLaggyClient)
     ASSERT_TRUE(wait_for_update(metadata));
     uint64_t commit_tid = metadata->allocate_commit_tid(0, 0, 0);
     C_SaferCond cond1;
-    metadata->committed(commit_tid,[&cond1] () {
-                        return &cond1;
-                        }
-    );
+    metadata->committed(commit_tid, [&cond1]() {
+        return &cond1;
+    }
+                       );
     ASSERT_EQ(0, cond1.wait());
     metadata->flush_commit_position();
     ASSERT_TRUE(wait_for_update(metadata));
@@ -194,10 +200,10 @@ TEST_F(TestJournalMetadata, DisconnectLaggyClient)
     ASSERT_TRUE(wait_for_update(metadata));
     commit_tid = metadata->allocate_commit_tid(0, 0, 1);
     C_SaferCond cond2;
-    metadata->committed(commit_tid,[&cond2] () {
-                        return &cond2;
-                        }
-    );
+    metadata->committed(commit_tid, [&cond2]() {
+        return &cond2;
+    }
+                       );
     ASSERT_EQ(0, cond2.wait());
     metadata->flush_commit_position();
     ASSERT_TRUE(wait_for_update(metadata));
@@ -222,8 +228,8 @@ TEST_F(TestJournalMetadata, AssertActiveTag)
     C_SaferCond ctx1;
     cls::journal::Tag tag1;
     metadata->allocate_tag(cls::journal::Tag::TAG_CLASS_NEW, {
-                           }
-                           , &tag1, &ctx1);
+    }
+    , &tag1, &ctx1);
     ASSERT_EQ(0, ctx1.wait());
 
     C_SaferCond ctx2;
@@ -233,8 +239,8 @@ TEST_F(TestJournalMetadata, AssertActiveTag)
     C_SaferCond ctx3;
     cls::journal::Tag tag2;
     metadata->allocate_tag(tag1.tag_class, {
-                           }
-                           , &tag2, &ctx3);
+    }
+    , &tag2, &ctx3);
     ASSERT_EQ(0, ctx3.wait());
 
     C_SaferCond ctx4;

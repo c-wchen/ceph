@@ -18,22 +18,28 @@ std::string generate_file_name(uint64_t index)
     return pre_name + oss.str();
 }
 
-class TestSimplePolicy:public::testing::Test {
-  public:
-    SimplePolicy * m_simple_policy;
+class TestSimplePolicy: public::testing::Test
+{
+public:
+    SimplePolicy *m_simple_policy;
     const uint64_t m_cache_size;
     uint64_t m_entry_index;
     std::vector < std::string > m_promoted_lru;
     std::vector < std::string > m_promoting_lru;
 
-    TestSimplePolicy():m_cache_size(100), m_entry_index(0) {
-    } ~TestSimplePolicy() {
+    TestSimplePolicy(): m_cache_size(100), m_entry_index(0)
+    {
+    } ~TestSimplePolicy()
+    {
     }
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
     }
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
     }
-    void SetUp() override {
+    void SetUp() override
+    {
         m_simple_policy =
             new SimplePolicy(g_ceph_context, m_cache_size, 128, 0.9);
         // populate 50 entries
@@ -41,7 +47,8 @@ class TestSimplePolicy:public::testing::Test {
             insert_entry_into_promoted_lru(generate_file_name(m_entry_index));
         }
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         while (m_promoted_lru.size()) {
             ASSERT_TRUE(m_simple_policy->get_evict_entry() ==
                         m_promoted_lru.front());
@@ -51,7 +58,8 @@ class TestSimplePolicy:public::testing::Test {
         delete m_simple_policy;
     }
 
-    void insert_entry_into_promoted_lru(std::string cache_file_name) {
+    void insert_entry_into_promoted_lru(std::string cache_file_name)
+    {
         ASSERT_EQ(m_cache_size - m_promoted_lru.size(),
                   m_simple_policy->get_free_size());
         ASSERT_EQ(m_promoting_lru.size(),
@@ -82,7 +90,8 @@ class TestSimplePolicy:public::testing::Test {
                   m_simple_policy->get_promoted_entry_num());
     }
 
-    void insert_entry_into_promoting_lru(std::string cache_file_name) {
+    void insert_entry_into_promoting_lru(std::string cache_file_name)
+    {
         ASSERT_EQ(m_cache_size - m_promoted_lru.size(),
                   m_simple_policy->get_free_size());
         ASSERT_EQ(m_promoting_lru.size(),

@@ -41,8 +41,8 @@ using ceph::ref_t;
 #undef dout_prefix
 #define dout_prefix *_dout << "mgrc " << __func__ << " "
 
-MgrClient::MgrClient(CephContext * cct_, Messenger * msgr_, MonMap * monmap_)
-:  Dispatcher(cct_), cct(cct_), msgr(msgr_), monmap(monmap_), timer(cct_, lock)
+MgrClient::MgrClient(CephContext *cct_, Messenger *msgr_, MonMap *monmap_)
+    :  Dispatcher(cct_), cct(cct_), msgr(msgr_), monmap(monmap_), timer(cct_, lock)
 {
     ceph_assert(cct != nullptr);
 }
@@ -99,33 +99,31 @@ bool MgrClient::ms_dispatch2(const ref_t < Message > &m)
     std::lock_guard l(lock);
 
     switch (m->get_type()) {
-    case MSG_MGR_MAP:
-        return handle_mgr_map(ref_cast < MMgrMap > (m));
-    case MSG_MGR_CONFIGURE:
-        return handle_mgr_configure(ref_cast < MMgrConfigure > (m));
-    case MSG_MGR_CLOSE:
-        return handle_mgr_close(ref_cast < MMgrClose > (m));
-    case MSG_COMMAND_REPLY:
-        if (m->get_source().type() == CEPH_ENTITY_TYPE_MGR) {
-            MCommandReply *c = static_cast < MCommandReply * >(m.get());
-            handle_command_reply(c->get_tid(), c->get_data(), c->rs, c->r);
-            return true;
-        }
-        else {
+        case MSG_MGR_MAP:
+            return handle_mgr_map(ref_cast < MMgrMap > (m));
+        case MSG_MGR_CONFIGURE:
+            return handle_mgr_configure(ref_cast < MMgrConfigure > (m));
+        case MSG_MGR_CLOSE:
+            return handle_mgr_close(ref_cast < MMgrClose > (m));
+        case MSG_COMMAND_REPLY:
+            if (m->get_source().type() == CEPH_ENTITY_TYPE_MGR) {
+                MCommandReply *c = static_cast < MCommandReply * >(m.get());
+                handle_command_reply(c->get_tid(), c->get_data(), c->rs, c->r);
+                return true;
+            } else {
+                return false;
+            }
+        case MSG_MGR_COMMAND_REPLY:
+            if (m->get_source().type() == CEPH_ENTITY_TYPE_MGR) {
+                MMgrCommandReply *c = static_cast < MMgrCommandReply * >(m.get());
+                handle_command_reply(c->get_tid(), c->get_data(), c->rs, c->r);
+                return true;
+            } else {
+                return false;
+            }
+        default:
+            ldout(cct, 30) << "Not handling " << *m << dendl;
             return false;
-        }
-    case MSG_MGR_COMMAND_REPLY:
-        if (m->get_source().type() == CEPH_ENTITY_TYPE_MGR) {
-            MMgrCommandReply *c = static_cast < MMgrCommandReply * >(m.get());
-            handle_command_reply(c->get_tid(), c->get_data(), c->rs, c->r);
-            return true;
-        }
-        else {
-            return false;
-        }
-    default:
-        ldout(cct, 30) << "Not handling " << *m << dendl;
-        return false;
     }
 }
 
@@ -135,7 +133,7 @@ void MgrClient::reconnect()
 
     if (session) {
         ldout(cct, 4) << "Terminating session with "
-            << session->con->get_peer_addr() << dendl;
+                      << session->con->get_peer_addr() << dendl;
         session->con->mark_down();
         session.reset();
         stats_period = 0;
@@ -153,20 +151,21 @@ void MgrClient::reconnect()
     if (!clock_t::is_zero(last_connect_attempt)) {
         auto now = clock_t::now();
         auto when = last_connect_attempt +
-            ceph::make_timespan(cct->_conf.get_val <
-                                double >("mgr_connect_retry_interval"));
+                    ceph::make_timespan(cct->_conf.get_val <
+                                        double > ("mgr_connect_retry_interval"));
         if (now < when) {
             if (!connect_retry_callback) {
                 connect_retry_callback = timer.add_event_at(when,
-                                                            new
-                                                            LambdaContext([this]
-                                                                          (int
-                                                                           r) {
-                                                                          connect_retry_callback
-                                                                          =
-                                                                          nullptr;
-                                                                          reconnect
-                                                                          ();}));
+                                         new
+                                         LambdaContext([this]
+                                                       (int
+                r) {
+                    connect_retry_callback
+                        =
+                            nullptr;
+                    reconnect
+                    ();
+                }));
             }
             ldout(cct, 4) << "waiting to retry connect until " << when << dendl;
             return;
@@ -179,7 +178,7 @@ void MgrClient::reconnect()
     }
 
     ldout(cct, 4) << "Starting new session with " << map.get_active_addrs()
-        << dendl;
+                  << dendl;
     last_connect_attempt = clock_t::now();
 
     session.reset(new MgrSessionState());
@@ -201,17 +200,17 @@ void MgrClient::reconnect()
     auto p = command_table.get_commands().begin();
     while (p != command_table.get_commands().end()) {
         auto tid = p->first;
-        auto & op = p->second;
+        auto &op = p->second;
         ldout(cct,
               10) << "resending " << tid << (op.
                                              tell ? " (tell)" : " (cli)") <<
-            dendl;
+                  dendl;
         MessageRef m;
         if (op.tell) {
             if (op.name.size() && op.name != map.active_name) {
                 ldout(cct,
                       10) << "active mgr " << map.
-                    active_name << " != target " << op.name << dendl;
+                          active_name << " != target " << op.name << dendl;
                 if (op.on_finish) {
                     op.on_finish->complete(-ENXIO);
                 }
@@ -222,13 +221,12 @@ void MgrClient::reconnect()
             // Set fsid argument to signal that this is really a tell message (and
             // we are not a legacy client sending a non-tell command via MCommand).
             m = op.get_message(monmap->fsid, false);
-        }
-        else {
-            m = op.get_message( {
-                               }
-                               ,
-                               HAVE_FEATURE(map.active_mgr_features,
-                                            SERVER_OCTOPUS));
+        } else {
+            m = op.get_message({
+            }
+            ,
+            HAVE_FEATURE(map.active_mgr_features,
+                         SERVER_OCTOPUS));
         }
         ceph_assert(session);
         ceph_assert(session->con);
@@ -244,8 +242,7 @@ void MgrClient::_send_open()
         if (!service_name.empty()) {
             open->service_name = service_name;
             open->daemon_name = daemon_name;
-        }
-        else {
+        } else {
             open->daemon_name = cct->_conf->name.get_id();
         }
         if (service_daemon) {
@@ -265,8 +262,7 @@ void MgrClient::_send_update()
         if (!service_name.empty()) {
             update->service_name = service_name;
             update->daemon_name = daemon_name;
-        }
-        else {
+        } else {
             update->daemon_name = cct->_conf->name.get_id();
         }
         if (need_metadata_update) {
@@ -296,7 +292,7 @@ bool MgrClient::handle_mgr_map(ref_t < MMgrMap > m)
     return true;
 }
 
-bool MgrClient::ms_handle_reset(Connection * con)
+bool MgrClient::ms_handle_reset(Connection *con)
 {
     std::lock_guard l(lock);
     if (session && con == session->con) {
@@ -307,7 +303,7 @@ bool MgrClient::ms_handle_reset(Connection * con)
     return false;
 }
 
-bool MgrClient::ms_handle_refused(Connection * con)
+bool MgrClient::ms_handle_refused(Connection *con)
 {
     // do nothing for now
     return false;
@@ -319,9 +315,10 @@ void MgrClient::_send_stats()
     _send_pgstats();
     if (stats_period != 0) {
         report_callback = timer.add_event_after(stats_period,
-                                                new LambdaContext([this] (int) {
-                                                                  _send_stats
-                                                                  ();}));
+        new LambdaContext([this](int) {
+            _send_stats
+            ();
+        }));
     }
 }
 
@@ -335,77 +332,88 @@ void MgrClient::_send_report()
     auto pcc = cct->get_perfcounters_collection();
 
     pcc->
-        with_counters([this,
-                       report] (const PerfCountersCollectionImpl::
-                                CounterMap & by_path) {
-                      // Helper for checking whether a counter should be included
-                      auto include_counter =
-                      [this] (const PerfCounters::perf_counter_data_any_d & ctr,
-                              const PerfCounters & perf_counters) {
-                      return perf_counters.get_adjusted_priority(ctr.prio) >=
-                      (int)stats_threshold;};
-                      // Helper for cases where we want to forget a counter
-                      auto undeclare =[report, this] (const std::string & path) {
-                      report->undeclare_types.push_back(path);
-                      ldout(cct, 20) << " undeclare " << path << dendl;
-                      session->declared.erase(path);};
-                      ENCODE_START(1, 1, report->packed);
-                      // Find counters that no longer exist, and undeclare them
-                      for (auto p = session->declared.begin();
-                           p != session->declared.end();) {
-                      const auto & path = *(p++); if (by_path.count(path) == 0) {
-                      undeclare(path);}
-                      }
+    with_counters([this,
+                   report](const PerfCountersCollectionImpl::
+    CounterMap & by_path) {
+        // Helper for checking whether a counter should be included
+        auto include_counter =
+            [this](const PerfCounters::perf_counter_data_any_d & ctr,
+        const PerfCounters & perf_counters) {
+            return perf_counters.get_adjusted_priority(ctr.prio) >=
+                   (int)stats_threshold;
+        };
+        // Helper for cases where we want to forget a counter
+        auto undeclare = [report, this](const std::string & path) {
+            report->undeclare_types.push_back(path);
+            ldout(cct, 20) << " undeclare " << path << dendl;
+            session->declared.erase(path);
+        };
+        ENCODE_START(1, 1, report->packed);
+        // Find counters that no longer exist, and undeclare them
+        for (auto p = session->declared.begin();
+             p != session->declared.end();) {
+            const auto &path = *(p++);
+            if (by_path.count(path) == 0) {
+                undeclare(path);
+            }
+        }
 
-      for (const auto & i:by_path) {
-                      auto & path = i.first;
-                      auto & data = *(i.second.data);
-                      auto & perf_counters = *(i.second.perf_counters);
-                      // Find counters that still exist, but are no longer permitted by
-                      // stats_threshold
-                      if (!include_counter(data, perf_counters)) {
-                      if (session->declared.count(path)) {
-                      undeclare(path);}
-                      continue;}
+        for (const auto &i : by_path) {
+            auto &path = i.first;
+            auto &data = *(i.second.data);
+            auto &perf_counters = *(i.second.perf_counters);
+            // Find counters that still exist, but are no longer permitted by
+            // stats_threshold
+            if (!include_counter(data, perf_counters)) {
+                if (session->declared.count(path)) {
+                    undeclare(path);
+                }
+                continue;
+            }
 
-                      if (session->declared.count(path) == 0) {
-                      ldout(cct, 20) << " declare " << path << dendl;
-                      PerfCounterType type;
-                      type.path = path; if (data.description) {
-                      type.description = data.description;}
-                      if (data.nick) {
-                      type.nick = data.nick;}
-                      type.type = data.type;
-                      type.priority =
-                      perf_counters.get_adjusted_priority(data.prio);
-                      type.unit = data.unit;
-                      report->declare_types.push_back(std::move(type));
-                      session->declared.insert(path);}
+            if (session->declared.count(path) == 0) {
+                ldout(cct, 20) << " declare " << path << dendl;
+                PerfCounterType type;
+                type.path = path;
+                if (data.description) {
+                    type.description = data.description;
+                }
+                if (data.nick) {
+                    type.nick = data.nick;
+                }
+                type.type = data.type;
+                type.priority =
+                    perf_counters.get_adjusted_priority(data.prio);
+                type.unit = data.unit;
+                report->declare_types.push_back(std::move(type));
+                session->declared.insert(path);
+            }
 
-                      encode(static_cast < uint64_t > (data.u64),
-                             report->packed);
-                      if (data.type & PERFCOUNTER_LONGRUNAVG) {
-                      encode(static_cast < uint64_t > (data.avgcount),
-                             report->packed);
-                      encode(static_cast < uint64_t > (data.avgcount2),
-                             report->packed);}
-                      }
-                      ENCODE_FINISH(report->packed);
-                      ldout(cct,
-                            20) << "sending " << session->declared.
-                      size() << " counters (" "of possible " << by_path.
-                      size() << "), " << report->declare_types.
-                      size() << " new, " << report->undeclare_types.
-                      size() << " removed" << dendl;}
-    ) ;
+            encode(static_cast < uint64_t >(data.u64),
+                   report->packed);
+            if (data.type & PERFCOUNTER_LONGRUNAVG) {
+                encode(static_cast < uint64_t >(data.avgcount),
+                       report->packed);
+                encode(static_cast < uint64_t >(data.avgcount2),
+                       report->packed);
+            }
+        }
+        ENCODE_FINISH(report->packed);
+        ldout(cct,
+              20) << "sending " << session->declared.
+                  size() << " counters (" "of possible " << by_path.
+                  size() << "), " << report->declare_types.
+                  size() << " new, " << report->undeclare_types.
+                  size() << " removed" << dendl;
+    }
+                 ) ;
 
     ldout(cct,
           20) << "encoded " << report->packed.length() << " bytes" << dendl;
 
     if (daemon_name.size()) {
         report->daemon_name = daemon_name;
-    }
-    else {
+    } else {
         report->daemon_name = cct->_conf->name.get_id();
     }
     report->service_name = service_name;
@@ -467,9 +475,8 @@ bool MgrClient::handle_mgr_configure(ref_t < MMgrConfigure > m)
 
     if (!m->osd_perf_metric_queries.empty()) {
         handle_config_payload(m->osd_perf_metric_queries);
-    }
-    else if (m->metric_config_message) {
-        const MetricConfigMessage & message = *m->metric_config_message;
+    } else if (m->metric_config_message) {
+        const MetricConfigMessage &message = *m->metric_config_message;
         boost::apply_visitor(HandlePayloadVisitor(this), message.payload);
     }
 
@@ -490,8 +497,8 @@ bool MgrClient::handle_mgr_close(ref_t < MMgrClose > m)
 }
 
 int MgrClient::start_command(const vector < string > &cmd,
-                             const bufferlist & inbl, bufferlist * outbl,
-                             string * outs, Context * onfinish)
+                             const bufferlist &inbl, bufferlist *outbl,
+                             string *outs, Context *onfinish)
 {
     std::lock_guard l(lock);
 
@@ -502,7 +509,7 @@ int MgrClient::start_command(const vector < string > &cmd,
         return -EACCES;
     }
 
-    auto & op = command_table.start_command();
+    auto &op = command_table.start_command();
     op.cmd = cmd;
     op.inbl = inbl;
     op.outbl = outbl;
@@ -517,18 +524,17 @@ int MgrClient::start_command(const vector < string > &cmd,
                                 HAVE_FEATURE(map.active_mgr_features,
                                              SERVER_OCTOPUS));
         session->con->send_message2(std::move(m));
-    }
-    else {
+    } else {
         ldout(cct,
               5) << "no mgr session (no running mgr daemon?), waiting" << dendl;
     }
     return 0;
 }
 
-int MgrClient::start_tell_command(const string & name,
+int MgrClient::start_tell_command(const string &name,
                                   const vector < string > &cmd,
-                                  const bufferlist & inbl, bufferlist * outbl,
-                                  string * outs, Context * onfinish)
+                                  const bufferlist &inbl, bufferlist *outbl,
+                                  string *outs, Context *onfinish)
 {
     std::lock_guard l(lock);
 
@@ -539,7 +545,7 @@ int MgrClient::start_tell_command(const string & name,
         return -EACCES;
     }
 
-    auto & op = command_table.start_command();
+    auto &op = command_table.start_command();
     op.tell = true;
     op.name = name;
     op.cmd = cmd;
@@ -554,17 +560,16 @@ int MgrClient::start_tell_command(const string & name,
         // we are not a legacy client sending a non-tell command via MCommand).
         auto m = op.get_message(monmap->fsid, false);
         session->con->send_message2(std::move(m));
-    }
-    else {
+    } else {
         ldout(cct, 5) << "no mgr session (no running mgr daemon?), or "
-            << name << " not active mgr, waiting" << dendl;
+                      << name << " not active mgr, waiting" << dendl;
     }
     return 0;
 }
 
 bool MgrClient::handle_command_reply(uint64_t tid,
-                                     bufferlist & data,
-                                     const std::string & rs, int r)
+                                     bufferlist &data,
+                                     const std::string &rs, int r)
 {
     ceph_assert(ceph_mutex_is_locked_by_me(lock));
 
@@ -572,11 +577,11 @@ bool MgrClient::handle_command_reply(uint64_t tid,
 
     if (!command_table.exists(tid)) {
         ldout(cct, 4) << "handle_command_reply tid " << tid
-            << " not found" << dendl;
+                      << " not found" << dendl;
         return true;
     }
 
-    auto & op = command_table.get_command(tid);
+    auto &op = command_table.get_command(tid);
     if (op.outbl) {
         *op.outbl = std::move(data);
     }
@@ -593,8 +598,8 @@ bool MgrClient::handle_command_reply(uint64_t tid,
     return true;
 }
 
-int MgrClient::update_daemon_metadata(const std::string & service,
-                                      const std::string & name,
+int MgrClient::update_daemon_metadata(const std::string &service,
+                                      const std::string &name,
                                       const std::map < std::string,
                                       std::string > &metadata)
 {
@@ -617,8 +622,8 @@ int MgrClient::update_daemon_metadata(const std::string & service,
     return 0;
 }
 
-int MgrClient::service_daemon_register(const std::string & service,
-                                       const std::string & name,
+int MgrClient::service_daemon_register(const std::string &service,
+                                       const std::string &name,
                                        const std::map < std::string,
                                        std::string > &metadata)
 {
@@ -644,7 +649,7 @@ int MgrClient::service_daemon_register(const std::string & service,
 }
 
 int MgrClient::service_daemon_update_status(std::map < std::string,
-                                            std::string > &&status)
+        std::string > &&status)
 {
     std::lock_guard l(lock);
     ldout(cct, 10) << status << dendl;
@@ -654,7 +659,7 @@ int MgrClient::service_daemon_update_status(std::map < std::string,
 }
 
 int MgrClient::service_daemon_update_task_status(std::map < std::string,
-                                                 std::string > &&status)
+        std::string > &&status)
 {
     std::lock_guard l(lock);
     ldout(cct, 10) << status << dendl;

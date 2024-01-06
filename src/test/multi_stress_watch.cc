@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 #include "include/rados/librados.h"
 #include "include/rados/librados.hpp"
 #include "test/librados/test_cxx.h"
@@ -18,31 +18,34 @@ using namespace librados;
 using std::map;
 using std::string;
 
-class WatchNotifyTestCtx:public WatchCtx {
-  public:
-    WatchNotifyTestCtx(std::mutex & lock)
-    :lock {
-    lock}
+class WatchNotifyTestCtx: public WatchCtx
+{
+public:
+    WatchNotifyTestCtx(std::mutex &lock)
+        : lock {
+        lock}
     {
     }
-    void notify(uint8_t opcode, uint64_t ver, bufferlist & bl) override {
+    void notify(uint8_t opcode, uint64_t ver, bufferlist &bl) override
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         notified = true;
         cond.notify_one();
     }
-    bool wait() {
+    bool wait()
+    {
         std::unique_lock locker {
-        lock};
-        return cond.wait_for(locker, std::chrono::seconds(1200),[this] {
-                             return notified;
-                             }
-        );
+            lock};
+        return cond.wait_for(locker, std::chrono::seconds(1200), [this] {
+            return notified;
+        }
+                            );
     }
 
-  private:
+private:
     bool notified = false;
-    std::mutex & lock;
+    std::mutex &lock;
     std::condition_variable cond;
 };
 
@@ -50,15 +53,15 @@ class WatchNotifyTestCtx:public WatchCtx {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-void test_loop(Rados & cluster, std::string pool_name, std::string obj_name)
+void test_loop(Rados &cluster, std::string pool_name, std::string obj_name)
 {
     int ret;
     IoCtx ioctx;
     ret = cluster.ioctx_create(pool_name.c_str(), ioctx);
     if (ret < 0) {
         std::
-            cerr << "ioctx_create " << pool_name << " failed with " << ret <<
-            std::endl;
+        cerr << "ioctx_create " << pool_name << " failed with " << ret <<
+             std::endl;
         exit(1);
     }
     ioctx.application_enable("rados", true);
@@ -75,7 +78,7 @@ void test_loop(Rados & cluster, std::string pool_name, std::string obj_name)
         std::cout << "Iteration " << i << std::endl;
         uint64_t handle;
         WatchNotifyTestCtx ctx {
-        lock};
+            lock};
         ret = ioctx.watch(obj_name, 0, &handle, &ctx);
         ceph_assert(!ret);
         bufferlist bl2;
@@ -95,9 +98,8 @@ void test_loop(Rados & cluster, std::string pool_name, std::string obj_name)
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic warning "-Wpragmas"
 
-void
-test_replicated(Rados & cluster, std::string pool_name,
-                const std::string & obj_name)
+void test_replicated(Rados &cluster, std::string pool_name,
+                     const std::string &obj_name)
 {
     // May already exist
     cluster.pool_create(pool_name.c_str());
@@ -105,9 +107,8 @@ test_replicated(Rados & cluster, std::string pool_name,
     test_loop(cluster, pool_name, obj_name);
 }
 
-void
-test_erasure(Rados & cluster, const std::string & pool_name,
-             const std::string & obj_name)
+void test_erasure(Rados &cluster, const std::string &pool_name,
+                  const std::string &obj_name)
 {
     string outs;
     bufferlist inbl;
@@ -119,8 +120,8 @@ test_erasure(Rados & cluster, const std::string & pool_name,
          inbl, NULL, &outs);
     if (ret < 0) {
         std::
-            cerr << "mon_command erasure-code-profile set failed with " << ret
-            << std::endl;
+        cerr << "mon_command erasure-code-profile set failed with " << ret
+             << std::endl;
         exit(1);
     }
     //std::cout << outs << std::endl;
@@ -147,8 +148,8 @@ int main(int args, char **argv)
 {
     if (args != 3 && args != 4) {
         std::
-            cerr << "Error: " << argv[0] << " [ec|rep] pool_name obj_name" <<
-            std::endl;
+        cerr << "Error: " << argv[0] << " [ec|rep] pool_name obj_name" <<
+             std::endl;
         return 1;
     }
 
@@ -158,21 +159,20 @@ int main(int args, char **argv)
         type = "rep";
         pool_name = argv[1];
         obj_name = argv[2];
-    }
-    else {
+    } else {
         type = argv[1];
         pool_name = argv[2];
         obj_name = argv[3];
     }
     std::cout << "Test type " << type << std::endl;
     std::
-        cout << "pool_name, obj_name are " << pool_name << ", " << obj_name <<
-        std::endl;
+    cout << "pool_name, obj_name are " << pool_name << ", " << obj_name <<
+         std::endl;
 
     if (type != "ec" && type != "rep") {
         std::
-            cerr << "Error: " << argv[0] <<
-            " Invalid arg must be 'ec' or 'rep' saw " << type << std::endl;
+        cerr << "Error: " << argv[0] <<
+             " Invalid arg must be 'ec' or 'rep' saw " << type << std::endl;
         return 1;
     }
 
@@ -183,10 +183,11 @@ int main(int args, char **argv)
         return 1;
     }
 
-    if (type == "rep")
+    if (type == "rep") {
         test_replicated(cluster, pool_name, obj_name);
-    else if (type == "ec")
+    } else if (type == "ec") {
         test_erasure(cluster, pool_name, obj_name);
+    }
 
     return 0;
 }

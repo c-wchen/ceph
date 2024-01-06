@@ -17,15 +17,18 @@ class RGWSI_Zone;
 class RGWSI_OTP;
 class RGWSI_MetaBackend;
 
-class RGWOTPMetadataHandlerBase:public RGWMetadataHandler_GenericMetaBE {
-  public:
-    virtual ~ RGWOTPMetadataHandlerBase() {
-    } virtual int init(RGWSI_Zone * zone,
-                       RGWSI_MetaBackend * _meta_be, RGWSI_OTP * _otp) = 0;
+class RGWOTPMetadataHandlerBase: public RGWMetadataHandler_GenericMetaBE
+{
+public:
+    virtual ~ RGWOTPMetadataHandlerBase()
+    {
+    } virtual int init(RGWSI_Zone *zone,
+                       RGWSI_MetaBackend *_meta_be, RGWSI_OTP *_otp) = 0;
 };
 
-class RGWOTPMetaHandlerAllocator {
-  public:
+class RGWOTPMetaHandlerAllocator
+{
+public:
     static RGWMetadataHandler *alloc();
 };
 
@@ -34,35 +37,39 @@ struct RGWOTPInfo {
     otp_devices_list_t devices;
 };
 
-class RGWOTPCtl {
+class RGWOTPCtl
+{
     struct Svc {
         RGWSI_Zone *zone {
-        nullptr};
+            nullptr};
         RGWSI_OTP *otp {
-        nullptr};
+            nullptr};
     } svc;
 
     RGWOTPMetadataHandler *meta_handler;
     RGWSI_MetaBackend_Handler *be_handler;
 
-  public:
-     RGWOTPCtl(RGWSI_Zone * zone_svc, RGWSI_OTP * otp_svc);
+public:
+    RGWOTPCtl(RGWSI_Zone *zone_svc, RGWSI_OTP *otp_svc);
 
-    void init(RGWOTPMetadataHandler * _meta_handler);
+    void init(RGWOTPMetadataHandler *_meta_handler);
 
     struct GetParams {
         RGWObjVersionTracker *objv_tracker {
-        nullptr};
-         ceph::real_time * mtime {
-        nullptr};
+            nullptr};
+        ceph::real_time *mtime {
+            nullptr};
 
-         GetParams() {
-        } GetParams & set_objv_tracker(RGWObjVersionTracker * _objv_tracker) {
+        GetParams()
+        {
+        } GetParams &set_objv_tracker(RGWObjVersionTracker *_objv_tracker)
+        {
             objv_tracker = _objv_tracker;
             return *this;
         }
 
-        GetParams & set_mtime(ceph::real_time * _mtime) {
+        GetParams &set_mtime(ceph::real_time *_mtime)
+        {
             mtime = _mtime;
             return *this;
         }
@@ -70,16 +77,19 @@ class RGWOTPCtl {
 
     struct PutParams {
         RGWObjVersionTracker *objv_tracker {
-        nullptr};
-         ceph::real_time mtime;
+            nullptr};
+        ceph::real_time mtime;
 
-         PutParams() {
-        } PutParams & set_objv_tracker(RGWObjVersionTracker * _objv_tracker) {
+        PutParams()
+        {
+        } PutParams &set_objv_tracker(RGWObjVersionTracker *_objv_tracker)
+        {
             objv_tracker = _objv_tracker;
             return *this;
         }
 
-        PutParams & set_mtime(const ceph::real_time & _mtime) {
+        PutParams &set_mtime(const ceph::real_time &_mtime)
+        {
             mtime = _mtime;
             return *this;
         }
@@ -87,24 +97,26 @@ class RGWOTPCtl {
 
     struct RemoveParams {
         RGWObjVersionTracker *objv_tracker {
-        nullptr};
+            nullptr};
 
-         RemoveParams() {
-        } RemoveParams & set_objv_tracker(RGWObjVersionTracker * _objv_tracker) {
+        RemoveParams()
+        {
+        } RemoveParams &set_objv_tracker(RGWObjVersionTracker *_objv_tracker)
+        {
             objv_tracker = _objv_tracker;
             return *this;
         }
     };
 
-    int read_all(const rgw_user & uid, RGWOTPInfo * info, optional_yield y,
-                 const DoutPrefixProvider * dpp, const GetParams & params = {
-                 });
-    int store_all(const DoutPrefixProvider * dpp,
-                  const RGWOTPInfo & info, optional_yield y,
-                  const PutParams & params = {
-                  });
-    int remove_all(const DoutPrefixProvider * dpp,
-                   const rgw_user & user, optional_yield y,
-                   const RemoveParams & params = {
-                   });
+    int read_all(const rgw_user &uid, RGWOTPInfo *info, optional_yield y,
+    const DoutPrefixProvider *dpp, const GetParams &params = {
+    });
+    int store_all(const DoutPrefixProvider *dpp,
+                  const RGWOTPInfo &info, optional_yield y,
+    const PutParams &params = {
+    });
+    int remove_all(const DoutPrefixProvider *dpp,
+                   const rgw_user &user, optional_yield y,
+    const RemoveParams &params = {
+    });
 };

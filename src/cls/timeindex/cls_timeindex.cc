@@ -22,7 +22,7 @@ static const size_t MAX_TRIM_ENTRIES = 1000;
 
 static const string TIMEINDEX_PREFIX = "1_";
 
-static void get_index_time_prefix(const utime_t & ts, string & index)
+static void get_index_time_prefix(const utime_t &ts, string &index)
 {
     char buf[32];
 
@@ -34,14 +34,14 @@ static void get_index_time_prefix(const utime_t & ts, string & index)
 }
 
 static void get_index(cls_method_context_t hctx,
-                      const utime_t & key_ts,
-                      const string & key_ext, string & index)
+                      const utime_t &key_ts,
+                      const string &key_ext, string &index)
 {
     get_index_time_prefix(key_ts, index);
     index.append(key_ext);
 }
 
-static int parse_index(const string & index, utime_t & key_ts, string & key_ext)
+static int parse_index(const string &index, utime_t &key_ts, string &key_ext)
 {
     int sec, usec;
     char keyext[256];
@@ -54,20 +54,20 @@ static int parse_index(const string & index, utime_t & key_ts, string & key_ext)
 }
 
 static int cls_timeindex_add(cls_method_context_t hctx,
-                             bufferlist * const in, bufferlist * const out)
+                             bufferlist *const in, bufferlist *const out)
 {
     auto in_iter = in->cbegin();
 
     cls_timeindex_add_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_timeindex_add_op(): failed to decode op");
         return -EINVAL;
     }
 
     for (auto iter = op.entries.begin(); iter != op.entries.end(); ++iter) {
-        cls_timeindex_entry & entry = *iter;
+        cls_timeindex_entry &entry = *iter;
 
         string index;
         get_index(hctx, entry.key_ts, entry.key_ext, index);
@@ -84,14 +84,14 @@ static int cls_timeindex_add(cls_method_context_t hctx,
 }
 
 static int cls_timeindex_list(cls_method_context_t hctx,
-                              bufferlist * const in, bufferlist * const out)
+                              bufferlist *const in, bufferlist *const out)
 {
     auto in_iter = in->cbegin();
 
     cls_timeindex_list_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_timeindex_list_op(): failed to decode op");
         return -EINVAL;
     }
@@ -103,8 +103,7 @@ static int cls_timeindex_list(cls_method_context_t hctx,
 
     if (op.marker.empty()) {
         get_index_time_prefix(op.from_time, from_index);
-    }
-    else {
+    } else {
         from_index = op.marker;
     }
     const bool use_time_boundary = (op.to_time >= op.from_time);
@@ -126,14 +125,14 @@ static int cls_timeindex_list(cls_method_context_t hctx,
         return rc;
     }
 
-    auto & entries = ret.entries;
+    auto &entries = ret.entries;
     auto iter = keys.begin();
 
     string marker;
 
     for (; iter != keys.end(); ++iter) {
-        const string & index = iter->first;
-        bufferlist & bl = iter->second;
+        const string &index = iter->first;
+        bufferlist &bl = iter->second;
 
         if (use_time_boundary
             && index.compare(0, to_index.size(), to_index) >= 0) {
@@ -148,8 +147,7 @@ static int cls_timeindex_list(cls_method_context_t hctx,
         if (parse_index(index, e.key_ts, e.key_ext) < 0) {
             CLS_LOG(0, "ERROR: cls_timeindex_list: could not parse index=%s",
                     index.c_str());
-        }
-        else {
+        } else {
             CLS_LOG(20,
                     "DEBUG: cls_timeindex_list: index=%s, key_ext=%s, bl.len = %d",
                     index.c_str(), e.key_ext.c_str(), bl.length());
@@ -167,14 +165,14 @@ static int cls_timeindex_list(cls_method_context_t hctx,
 }
 
 static int cls_timeindex_trim(cls_method_context_t hctx,
-                              bufferlist * const in, bufferlist * const out)
+                              bufferlist *const in, bufferlist *const out)
 {
     auto in_iter = in->cbegin();
 
     cls_timeindex_trim_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_timeindex_trim: failed to decode entry");
         return -EINVAL;
     }
@@ -186,15 +184,13 @@ static int cls_timeindex_trim(cls_method_context_t hctx,
 
     if (op.from_marker.empty()) {
         get_index_time_prefix(op.from_time, from_index);
-    }
-    else {
+    } else {
         from_index = op.from_marker;
     }
 
     if (op.to_marker.empty()) {
         get_index_time_prefix(op.to_time, to_index);
-    }
-    else {
+    } else {
         to_index = op.to_marker;
     }
 
@@ -210,7 +206,7 @@ static int cls_timeindex_trim(cls_method_context_t hctx,
 
     bool removed = false;
     for (; iter != keys.end(); ++iter) {
-        const string & index = iter->first;
+        const string &index = iter->first;
 
         CLS_LOG(20, "index=%s to_index=%s", index.c_str(), to_index.c_str());
 

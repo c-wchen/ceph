@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -24,24 +24,24 @@
 #undef dout_prefix
 #define dout_prefix *_dout << " RDMAServerSocketImpl "
 
-RDMAServerSocketImpl::RDMAServerSocketImpl(CephContext * cct,
-                                           std::shared_ptr < Infiniband > &ib,
-                                           std::shared_ptr < RDMADispatcher >
-                                           &rdma_dispatcher, RDMAWorker * w,
-                                           entity_addr_t & a, unsigned slot)
-:ServerSocketImpl(a.get_type(), slot), cct(cct), net(cct),
-server_setup_socket(-1), ib(ib), dispatcher(rdma_dispatcher), worker(w), sa(a)
+RDMAServerSocketImpl::RDMAServerSocketImpl(CephContext *cct,
+        std::shared_ptr < Infiniband > &ib,
+        std::shared_ptr < RDMADispatcher >
+        &rdma_dispatcher, RDMAWorker *w,
+        entity_addr_t &a, unsigned slot)
+    : ServerSocketImpl(a.get_type(), slot), cct(cct), net(cct),
+      server_setup_socket(-1), ib(ib), dispatcher(rdma_dispatcher), worker(w), sa(a)
 {
 }
 
-int RDMAServerSocketImpl::listen(entity_addr_t & sa, const SocketOptions & opt)
+int RDMAServerSocketImpl::listen(entity_addr_t &sa, const SocketOptions &opt)
 {
     int rc = 0;
     server_setup_socket = net.create_socket(sa.get_family(), true);
     if (server_setup_socket < 0) {
         rc = -errno;
         lderr(cct) << __func__ << " failed to create server socket: "
-            << cpp_strerror(errno) << dendl;
+                   << cpp_strerror(errno) << dendl;
         return rc;
     }
 
@@ -60,8 +60,8 @@ int RDMAServerSocketImpl::listen(entity_addr_t & sa, const SocketOptions & opt)
     if (rc < 0) {
         rc = -errno;
         ldout(cct, 10) << __func__ << " unable to bind to " << sa.get_sockaddr()
-            << " on port " << sa.
-            get_port() << ": " << cpp_strerror(errno) << dendl;
+                       << " on port " << sa.
+                       get_port() << ": " << cpp_strerror(errno) << dendl;
         goto err;
     }
 
@@ -69,24 +69,24 @@ int RDMAServerSocketImpl::listen(entity_addr_t & sa, const SocketOptions & opt)
     if (rc < 0) {
         rc = -errno;
         lderr(cct) << __func__ << " unable to listen on " << sa << ": " <<
-            cpp_strerror(errno) << dendl;
+                   cpp_strerror(errno) << dendl;
         goto err;
     }
 
     ldout(cct,
           20) << __func__ << " bind to " << sa.
-        get_sockaddr() << " on port " << sa.get_port() << dendl;
+              get_sockaddr() << " on port " << sa.get_port() << dendl;
     return 0;
 
-  err:
+err:
     ::close(server_setup_socket);
     server_setup_socket = -1;
     return rc;
 }
 
-int RDMAServerSocketImpl::accept(ConnectedSocket * sock,
-                                 const SocketOptions & opt, entity_addr_t * out,
-                                 Worker * w)
+int RDMAServerSocketImpl::accept(ConnectedSocket *sock,
+                                 const SocketOptions &opt, entity_addr_t *out,
+                                 Worker *w)
 {
     ldout(cct, 15) << __func__ << dendl;
 
@@ -139,6 +139,7 @@ int RDMAServerSocketImpl::accept(ConnectedSocket * sock,
 
 void RDMAServerSocketImpl::abort_accept()
 {
-    if (server_setup_socket >= 0)
+    if (server_setup_socket >= 0) {
         ::close(server_setup_socket);
+    }
 }

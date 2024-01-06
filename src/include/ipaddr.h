@@ -27,7 +27,7 @@ bool matches_ipv6_in_subnet(const struct ifaddrs &addrs,
 bool parse_network(const char *s,
                    struct sockaddr_storage *network, unsigned int *prefix_len);
 bool parse_network(const char *s,
-                   entity_addr_t * network, unsigned int *prefix_len);
+                   entity_addr_t *network, unsigned int *prefix_len);
 
 void netmask_ipv6(const struct in6_addr *addr,
                   unsigned int prefix_len, struct in6_addr *out);

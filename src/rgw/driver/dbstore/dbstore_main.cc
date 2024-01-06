@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     // format: ./dbstore-bin logfile loglevel
     if (argc == 3) {
         logfile = argv[1];
-        loglevel = (atoi) (argv[2]);
+        loglevel = (atoi)(argv[2]);
         cout << "loglevel set to " << loglevel << "\n";
     }
 
@@ -188,13 +188,12 @@ int main(int argc, char *argv[])
         rc = pthread_join(threads[tnum], &res);
         if (rc != 0) {
             cout << "error in pthread_join \n";
-        }
-        else {
+        } else {
             cout << "Joined with thread " << tnum << "\n";
         }
     }
 
-  out:
+out:
     dbsm->destroyAllHandles();
 
     return 0;

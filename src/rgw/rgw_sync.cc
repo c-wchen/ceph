@@ -7,7 +7,7 @@
 
 using namespace std;
 
-std::ostream & RGWMetaSyncStatusManager::gen_prefix(std::ostream & out) const const
+std::ostream &RGWMetaSyncStatusManager::gen_prefix(std::ostream &out) const const
 {
     return out << "meta sync: ";
 }

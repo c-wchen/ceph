@@ -20,8 +20,9 @@
  * Command line tool for debugging the backing store of
  * MDSTable instances.
  */
-class TableTool:public MDSUtility {
-  private:
+class TableTool: public MDSUtility
+{
+private:
     MDSRoleSelector role_selector;
 
     // I/O handles
@@ -29,10 +30,10 @@ class TableTool:public MDSUtility {
     librados::IoCtx io;
 
     int apply_role_fn(std::function < int (mds_role_t, Formatter *) > fptr,
-                      Formatter * f);
+                      Formatter *f);
 
-  public:
+public:
     static void usage();
-    int main(std::vector < const char *>&argv);
+    int main(std::vector < const char *> &argv);
 
 };

@@ -39,9 +39,9 @@ string KeyValueHistogram::get_value_slab_to_range(int slab)
 }
 
 void KeyValueHistogram::update_hist_entry(map < string, map < int,
-                                          struct key_dist > >&key_hist,
-                                          const string & prefix,
-                                          size_t key_size, size_t value_size)
+        struct key_dist > > &key_hist,
+        const string &prefix,
+        size_t key_size, size_t value_size)
 {
     uint32_t key_slab = get_key_slab(key_size);
     uint32_t value_slab = get_value_slab(value_size);
@@ -55,24 +55,24 @@ void KeyValueHistogram::update_hist_entry(map < string, map < int,
                              max_len);
 }
 
-void KeyValueHistogram::dump(Formatter * f)
+void KeyValueHistogram::dump(Formatter *f)
 {
     f->open_object_section("rocksdb_value_distribution");
-  for (auto i:value_hist) {
+    for (auto i : value_hist) {
         f->dump_unsigned(get_value_slab_to_range(i.first).data(), i.second);
     }
     f->close_section();
 
     f->open_object_section("rocksdb_key_value_histogram");
-  for (auto i:key_hist) {
+    for (auto i : key_hist) {
         f->dump_string("prefix", i.first);
         f->open_object_section("key_hist");
-      for (auto k:i.second) {
+        for (auto k : i.second) {
             f->dump_unsigned(get_key_slab_to_range(k.first).data(),
                              k.second.count);
             f->dump_unsigned("max_len", k.second.max_len);
             f->open_object_section("value_hist");
-          for (auto j:k.second.val_map) {
+            for (auto j : k.second.val_map) {
                 f->dump_unsigned(get_value_slab_to_range(j.first).data(),
                                  j.second.count);
                 f->dump_unsigned("max_len", j.second.max_len);

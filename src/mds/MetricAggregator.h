@@ -24,32 +24,38 @@
 class MDSRank;
 class MgrClient;
 
-class MetricAggregator:public Dispatcher {
-  public:
-    MetricAggregator(CephContext * cct, MDSRank * mds, MgrClient * mgrc);
+class MetricAggregator: public Dispatcher
+{
+public:
+    MetricAggregator(CephContext *cct, MDSRank *mds, MgrClient *mgrc);
 
     int init();
     void shutdown();
 
-    void notify_mdsmap(const MDSMap & mdsmap);
+    void notify_mdsmap(const MDSMap &mdsmap);
 
-    bool ms_can_fast_dispatch_any() const override {
+    bool ms_can_fast_dispatch_any() const override
+    {
         return true;
     } bool ms_can_fast_dispatch2(const cref_t < Message > &m)const override;
     void ms_fast_dispatch2(const ref_t < Message > &m) override;
     bool ms_dispatch2(const ref_t < Message > &m) override;
 
-    void ms_handle_connect(Connection * c) override {
-    } bool ms_handle_reset(Connection * c) override {
+    void ms_handle_connect(Connection *c) override
+    {
+    } bool ms_handle_reset(Connection *c) override
+    {
         return false;
     }
-    void ms_handle_remote_reset(Connection * c) override {
+    void ms_handle_remote_reset(Connection *c) override
+    {
     }
-    bool ms_handle_refused(Connection * c) override {
+    bool ms_handle_refused(Connection *c) override
+    {
         return false;
     }
 
-  private:
+private:
     // drop this lock when calling ->send_message_mds() else mds might
     // deadlock
     ceph::mutex lock = ceph::make_mutex("MetricAggregator::lock");
@@ -74,16 +80,16 @@ class MetricAggregator:public Dispatcher {
 
     void handle_mds_metrics(const cref_t < MMDSMetrics > &m);
 
-    void refresh_metrics_for_rank(const entity_inst_t & client, mds_rank_t rank,
-                                  const Metrics & metrics);
-    void remove_metrics_for_rank(const entity_inst_t & client, mds_rank_t rank,
+    void refresh_metrics_for_rank(const entity_inst_t &client, mds_rank_t rank,
+                                  const Metrics &metrics);
+    void remove_metrics_for_rank(const entity_inst_t &client, mds_rank_t rank,
                                  bool remove);
 
     void cull_metrics_for_rank(mds_rank_t rank);
 
     void ping_all_active_ranks();
 
-    void set_perf_queries(const ConfigPayload & config_payload);
+    void set_perf_queries(const ConfigPayload &config_payload);
     MetricPayload get_perf_reports();
 };
 

@@ -37,27 +37,27 @@
 
 #define mantle_dendl dendl; } while (0)
 
-static int dout_wrapper(lua_State * L)
+static int dout_wrapper(lua_State *L)
 {
     int level = luaL_checkinteger(L, 1);
     lua_concat(L, lua_gettop(L) - 1);
     mantle_dout(ceph::dout::need_dynamic(level)) << lua_tostring(L, 2)
-        << mantle_dendl;
+            << mantle_dendl;
     return 0;
 }
 
 int Mantle::balance(std::string_view script,
                     mds_rank_t whoami,
                     const std::vector < std::map < std::string,
-                    double >>&metrics, std::map < mds_rank_t,
-                    double >&my_targets)
+                    double >> &metrics, std::map < mds_rank_t,
+                    double > &my_targets)
 {
     lua_settop(L, 0);           /* clear the stack */
 
     /* load the balancer */
     if (luaL_loadstring(L, script.data())) {
         mantle_dout(0) << "WARNING: mantle could not load balancer: "
-            << lua_tostring(L, -1) << mantle_dendl;
+                       << lua_tostring(L, -1) << mantle_dendl;
         return -CEPHFS_EINVAL;
     }
 
@@ -73,7 +73,7 @@ int Mantle::balance(std::string_view script,
         lua_newtable(L);
 
         /* push values into this mds's table; setfield assigns key/pops val */
-      for (const auto & it:metrics[i]) {
+        for (const auto &it : metrics[i]) {
             lua_pushnumber(L, it.second);
             lua_setfield(L, -2, it.first.c_str());
         }
@@ -88,14 +88,14 @@ int Mantle::balance(std::string_view script,
     ceph_assert(lua_gettop(L) == 1);
     if (lua_pcall(L, 0, 1, 0) != LUA_OK) {
         mantle_dout(0) << "WARNING: mantle could not execute script: "
-            << lua_tostring(L, -1) << mantle_dendl;
+                       << lua_tostring(L, -1) << mantle_dendl;
         return -CEPHFS_EINVAL;
     }
 
     /* parse response by iterating over Lua stack */
     if (lua_istable(L, -1) == 0) {
         mantle_dout(0) << "WARNING: mantle script returned a malformed response"
-            << mantle_dendl;
+                       << mantle_dendl;
         return -CEPHFS_EINVAL;
     }
 
@@ -103,8 +103,8 @@ int Mantle::balance(std::string_view script,
     for (lua_pushnil(L); lua_next(L, -2); lua_pop(L, 1)) {
         if (!lua_isinteger(L, -2) || !lua_isnumber(L, -1)) {
             mantle_dout(0) <<
-                "WARNING: mantle script returned a malformed response" <<
-                mantle_dendl;
+                           "WARNING: mantle script returned a malformed response" <<
+                           mantle_dendl;
             return -CEPHFS_EINVAL;
         }
         mds_rank_t rank(lua_tointeger(L, -2));
@@ -120,7 +120,7 @@ Mantle::Mantle(void)
     L = luaL_newstate();
     if (!L) {
         mantle_dout(0) << "WARNING: mantle could not load Lua state" <<
-            mantle_dendl;
+                       mantle_dendl;
         throw std::bad_alloc();
     }
 

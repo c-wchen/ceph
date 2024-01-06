@@ -100,8 +100,8 @@ void unlock_mtab(void)
 /* Where does the link point to? Obvious choices are mtab and mtab~~.
    HJLu points out that the latter leads to races. Right now we use
    mtab~.<pid> instead. Use 20 as upper bound for the length of %d. */
-#define MOUNTLOCK_LINKTARGET		_PATH_MOUNTED_LOCK "%d"
-#define MOUNTLOCK_LINKTARGET_LTH	(sizeof(_PATH_MOUNTED_LOCK)+20)
+#define MOUNTLOCK_LINKTARGET        _PATH_MOUNTED_LOCK "%d"
+#define MOUNTLOCK_LINKTARGET_LTH    (sizeof(_PATH_MOUNTED_LOCK)+20)
 
 /*
  * The original mount locking code has used sleep(1) between attempts and
@@ -119,10 +119,10 @@ void unlock_mtab(void)
  */
 
 /* maximum seconds between first and last attempt */
-#define MOUNTLOCK_MAXTIME		30
+#define MOUNTLOCK_MAXTIME       30
 
 /* sleep time (in microseconds, max=999999) between attempts */
-#define MOUNTLOCK_WAITTIME		5000
+#define MOUNTLOCK_WAITTIME      5000
 
 void lock_mtab(void)
 {
@@ -140,10 +140,11 @@ void lock_mtab(void)
         sigfillset(&sa.sa_mask);
 
         while (sigismember(&sa.sa_mask, ++sig) != -1 && sig != SIGCHLD) {
-            if (sig == SIGALRM)
+            if (sig == SIGALRM) {
                 sa.sa_handler = setlkw_timeout;
-            else
+            } else {
                 sa.sa_handler = handler;
+            }
             sigaction(sig, &sa, (struct sigaction *)0);
         }
         signals_have_been_setup = 1;
@@ -179,8 +180,9 @@ void lock_mtab(void)
         j = link(linktargetfile, _PATH_MOUNTED_LOCK);
         errsv = errno;
 
-        if (j == 0)
+        if (j == 0) {
             we_created_lockfile = 1;
+        }
 
         if (j < 0 && errsv != EEXIST) {
             (void)unlink(linktargetfile);
@@ -216,8 +218,7 @@ void lock_mtab(void)
                 /* proceed, since it was us who created the lockfile anyway */
             }
             (void)unlink(linktargetfile);
-        }
-        else {
+        } else {
             /* Someone else made the link. Wait. */
             gettimeofday(&now, NULL);
             if (now.tv_sec < maxtime.tv_sec) {
@@ -232,8 +233,7 @@ void lock_mtab(void)
                 alarm(0);
 
                 nanosleep(&waittime, NULL);
-            }
-            else {
+            } else {
                 (void)unlink(linktargetfile);
                 die(EX_FILEIO, "Cannot create link %s\n"
                     "Perhaps there is a stale lock file?\n",
@@ -244,9 +244,8 @@ void lock_mtab(void)
     }
 }
 
-static void
-update_mtab_entry(const char *spec, const char *node, const char *type,
-                  const char *opts, int flags, int freq, int pass)
+static void update_mtab_entry(const char *spec, const char *node, const char *type,
+                              const char *opts, int flags, int freq, int pass)
 {
     struct statfs buf;
     int err = statfs(_PATH_MOUNTED, &buf);
@@ -255,11 +254,13 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
         return;
     }
     /* /etc/mtab is symbol link to /proc/self/mounts? */
-    if (buf.f_type == PROC_SUPER_MAGIC)
+    if (buf.f_type == PROC_SUPER_MAGIC) {
         return;
+    }
 
-    if (!opts)
+    if (!opts) {
         opts = "rw";
+    }
 
     struct mntent mnt;
     mnt.mnt_fsname = strdup(spec);
@@ -276,8 +277,7 @@ update_mtab_entry(const char *spec, const char *node, const char *type,
     if (fp == NULL) {
         int errsv = errno;
         printf("mount: can't open %s: %s", _PATH_MOUNTED, strerror(errsv));
-    }
-    else {
+    } else {
         if ((addmntent(fp, &mnt)) == 1) {
             int errsv = errno;
             printf("mount: error writing %s: %s",

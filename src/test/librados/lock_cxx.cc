@@ -44,7 +44,7 @@ TEST_F(LibRadosLockPP, LockExclusiveDurPP)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_exclusive =[this] (timeval * tv) {
+    auto lock_exclusive = [this](timeval * tv) {
         return ioctx.lock_exclusive("foo", "TestLockPP3", "Cookie", "", tv, 0);
     };
     constexpr int expected = 0;
@@ -58,7 +58,7 @@ TEST_F(LibRadosLockPP, LockSharedDurPP)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_shared =[this] (timeval * tv) {
+    auto lock_shared = [this](timeval * tv) {
         return ioctx.lock_shared("foo", "TestLockPP4", "Cookie", "Tag", "", tv,
                                  0);
     };
@@ -176,7 +176,7 @@ TEST_F(LibRadosLockECPP, LockExclusiveDurPP)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_exclusive =[this] (timeval * tv) {
+    auto lock_exclusive = [this](timeval * tv) {
         return ioctx.lock_exclusive("foo", "TestLockECPP3", "Cookie", "", tv,
                                     0);
     };
@@ -192,7 +192,7 @@ TEST_F(LibRadosLockECPP, LockSharedDurPP)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_shared =[this] (timeval * tv) {
+    auto lock_shared = [this](timeval * tv) {
         return ioctx.lock_shared("foo", "TestLockECPP4", "Cookie", "Tag", "",
                                  tv, 0);
     };

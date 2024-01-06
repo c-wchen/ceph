@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "Elector.h"
@@ -52,25 +52,25 @@ using ceph::JSONFormatter;
 using ceph::mono_clock;
 using ceph::mono_time;
 using ceph::timespan_str;
-static ostream & _prefix(std::ostream * _dout, Monitor * mon, epoch_t epoch)
+static ostream &_prefix(std::ostream *_dout, Monitor *mon, epoch_t epoch)
 {
     return *_dout << "mon." << mon->name << "@" << mon->rank
-        << "(" << mon->get_state_name()
-        << ").elector(" << epoch << ") ";
+           << "(" << mon->get_state_name()
+           << ").elector(" << epoch << ") ";
 }
 
-Elector::Elector(Monitor * m, int strategy):logic(this, static_cast < ElectionLogic::election_strategy > (strategy),
-      &peer_tracker,
-      m->cct->_conf.get_val < double >("mon_elector_ignore_propose_margin"),
-      m->cct),
-peer_tracker(this, m->rank,
-             m->cct->_conf.get_val < uint64_t >
-             ("mon_con_tracker_score_halflife"),
-             m->cct->_conf.get_val < uint64_t >
-             ("mon_con_tracker_persist_interval"), m->cct),
-ping_timeout(m->cct->_conf.get_val < double >("mon_elector_ping_timeout")),
-PING_DIVISOR(m->cct->_conf.get_val < uint64_t > ("mon_elector_ping_divisor")),
-mon(m), elector(this)
+Elector::Elector(Monitor *m, int strategy): logic(this, static_cast < ElectionLogic::election_strategy >(strategy),
+            &peer_tracker,
+            m->cct->_conf.get_val < double >("mon_elector_ignore_propose_margin"),
+            m->cct),
+    peer_tracker(this, m->rank,
+                 m->cct->_conf.get_val < uint64_t >
+                 ("mon_con_tracker_score_halflife"),
+                 m->cct->_conf.get_val < uint64_t >
+                 ("mon_con_tracker_persist_interval"), m->cct),
+    ping_timeout(m->cct->_conf.get_val < double >("mon_elector_ping_timeout")),
+    PING_DIVISOR(m->cct->_conf.get_val < uint64_t > ("mon_elector_ping_divisor")),
+    mon(m), elector(this)
 {
     bufferlist bl;
     mon->store->get(Monitor::MONITOR_NAME, "connectivity_scores", bl);
@@ -151,12 +151,13 @@ void Elector::notify_bump_epoch()
     mon->join_election();
 }
 
-void Elector::propose_to_peers(epoch_t e, bufferlist & logic_bl)
+void Elector::propose_to_peers(epoch_t e, bufferlist &logic_bl)
 {
     // bcast to everyone else
     for (unsigned i = 0; i < mon->monmap->size(); ++i) {
-        if ((int)i == mon->rank)
+        if ((int)i == mon->rank) {
             continue;
+        }
         MMonElection *m = new MMonElection(MMonElection::OP_PROPOSE, e,
                                            peer_tracker.get_encoded_bl(),
                                            logic.strategy, mon->monmap);
@@ -196,24 +197,26 @@ void Elector::reset_timer(double plus)
 {
     // set the timer
     cancel_timer();
-  /**
-   * This class is used as the callback when the expire_event timer fires up.
-   *
-   * If the expire_event is fired, then it means that we had an election going,
-   * either started by us or by some other participant, but it took too long,
-   * thus expiring.
-   *
-   * When the election expires, we will check if we were the ones who won, and
-   * if so we will declare victory. If that is not the case, then we assume
-   * that the one we defered to didn't declare victory quickly enough (in fact,
-   * as far as we know, we may even be dead); so, just propose ourselves as the
-   * Leader.
-   */
+    /**
+     * This class is used as the callback when the expire_event timer fires up.
+     *
+     * If the expire_event is fired, then it means that we had an election going,
+     * either started by us or by some other participant, but it took too long,
+     * thus expiring.
+     *
+     * When the election expires, we will check if we were the ones who won, and
+     * if so we will declare victory. If that is not the case, then we assume
+     * that the one we defered to didn't declare victory quickly enough (in fact,
+     * as far as we know, we may even be dead); so, just propose ourselves as the
+     * Leader.
+     */
     expire_event =
         mon->timer.add_event_after(g_conf()->mon_election_timeout + plus,
-                                   new C_MonContext {
-                                   mon,[this] (int) {
-                                   logic.end_election_period();}});
+    new C_MonContext {
+        mon, [this](int)
+        {
+            logic.end_election_period();
+        }});
 }
 
 void Elector::cancel_timer()
@@ -224,24 +227,24 @@ void Elector::cancel_timer()
     }
 }
 
-void Elector::assimilate_connection_reports(const bufferlist & tbl)
+void Elector::assimilate_connection_reports(const bufferlist &tbl)
 {
     dout(10) << __func__ << dendl;
     ConnectionTracker pct(tbl, mon->cct);
     peer_tracker.receive_peer_report(pct);
 }
 
-void Elector::message_victory(const std::set < int >&quorum)
+void Elector::message_victory(const std::set < int > &quorum)
 {
     uint64_t cluster_features = CEPH_FEATURES_ALL;
     mon_feature_t mon_features = ceph::features::mon::get_supported();
     map < int, Metadata > metadata;
     ceph_release_t min_mon_release {
-    ceph_release_t::unknown};
-  for (auto id:quorum) {
+        ceph_release_t::unknown};
+    for (auto id : quorum) {
         auto i = peer_info.find(id);
         ceph_assert(i != peer_info.end());
-        auto & info = i->second;
+        auto &info = i->second;
         cluster_features &= info.cluster_features;
         mon_features &= info.mon_features;
         metadata[id] = info.metadata;
@@ -255,8 +258,9 @@ void Elector::message_victory(const std::set < int >&quorum)
 
     // tell everyone!
     for (set < int >::iterator p = quorum.begin(); p != quorum.end(); ++p) {
-        if (*p == mon->rank)
+        if (*p == mon->rank) {
             continue;
+        }
         MMonElection *m =
             new MMonElection(MMonElection::OP_VICTORY, get_epoch(),
                              peer_tracker.get_encoded_bl(),
@@ -287,30 +291,28 @@ void Elector::handle_propose(MonOpRequestRef op)
     mon_feature_t required_mon_features = mon->get_required_mon_features();
 
     dout(10) << __func__ << " required features " << required_features
-        << " " << required_mon_features
-        << ", peer features " << m->get_connection()->get_features()
-        << " " << m->mon_features << dendl;
+             << " " << required_mon_features
+             << ", peer features " << m->get_connection()->get_features()
+             << " " << m->mon_features << dendl;
 
     if ((required_features ^ m->get_connection()->get_features()) &
         required_features) {
         dout(5) << " ignoring propose from mon" << from
-            << " without required features" << dendl;
+                << " without required features" << dendl;
         nak_old_peer(op);
         return;
-    }
-    else if (mon->monmap->min_mon_release > m->mon_release) {
+    } else if (mon->monmap->min_mon_release > m->mon_release) {
         dout(5) << " ignoring propose from mon" << from
-            << " release " << (int)m->mon_release
-            << " < min_mon_release " << (int)mon->monmap->min_mon_release
-            << dendl;
+                << " release " << (int)m->mon_release
+                << " < min_mon_release " << (int)mon->monmap->min_mon_release
+                << dendl;
         nak_old_peer(op);
         return;
-    }
-    else if (!m->mon_features.contains_all(required_mon_features)) {
+    } else if (!m->mon_features.contains_all(required_mon_features)) {
         // all the features in 'required_mon_features' not in 'm->mon_features'
         mon_feature_t missing = required_mon_features.diff(m->mon_features);
         dout(5) << " ignoring propose from mon." << from
-            << " without required mon_features " << missing << dendl;
+                << " without required mon_features " << missing << dendl;
         nak_old_peer(op);
     }
     ConnectionTracker *oct = NULL;
@@ -333,7 +335,7 @@ void Elector::handle_ack(MonOpRequestRef op)
     if ((required_features ^ m->get_connection()->get_features()) &
         required_features) {
         dout(5) << " ignoring ack from mon" << from
-            << " without required features" << dendl;
+                << " without required features" << dendl;
         return;
     }
 
@@ -341,7 +343,7 @@ void Elector::handle_ack(MonOpRequestRef op)
     if (!m->mon_features.contains_all(required_mon_features)) {
         mon_feature_t missing = required_mon_features.diff(m->mon_features);
         dout(5) << " ignoring ack from mon." << from
-            << " without required mon_features " << missing << dendl;
+                << " without required mon_features " << missing << dendl;
         return;
     }
 
@@ -355,11 +357,12 @@ void Elector::handle_ack(MonOpRequestRef op)
         for (auto q = logic.acked_me.begin(); q != logic.acked_me.end(); ++q) {
             auto p = peer_info.find(*q);
             ceph_assert(p != peer_info.end());
-            if (q != logic.acked_me.begin())
+            if (q != logic.acked_me.begin()) {
                 *_dout << ",";
+            }
             *_dout << " mon." << p->first << ":"
-                << " features " << p->second.cluster_features
-                << " " << p->second.mon_features;
+                   << " features " << p->second.cluster_features
+                   << " " << p->second.mon_features;
         }
         *_dout << " }" << dendl;
     }
@@ -372,8 +375,8 @@ void Elector::handle_victory(MonOpRequestRef op)
     op->mark_event("elector:handle_victory");
     auto m = op->get_req < MMonElection > ();
     dout(5) << "handle_victory from " << m->get_source()
-        << " quorum_features " << m->quorum_features
-        << " " << m->mon_features << dendl;
+            << " quorum_features " << m->quorum_features
+            << " " << m->mon_features << dendl;
     int from = m->get_source().num();
 
     bool accept_victory = logic.receive_victory_claim(from, m->epoch);
@@ -404,10 +407,10 @@ void Elector::nak_old_peer(MonOpRequestRef op)
     uint64_t required_features = mon->get_required_features();
     mon_feature_t required_mon_features = mon->get_required_mon_features();
     dout(10) << "sending nak to peer " << m->get_source()
-        << " supports " << supported_features << " " << m->mon_features
-        << ", required " << required_features << " " << required_mon_features
-        << ", release " << (int)m->mon_release
-        << " vs required " << (int)mon->monmap->min_mon_release << dendl;
+             << " supports " << supported_features << " " << m->mon_features
+             << ", required " << required_features << " " << required_mon_features
+             << ", release " << (int)m->mon_release
+             << " vs required " << (int)mon->monmap->min_mon_release << dendl;
     MMonElection *reply = new MMonElection(MMonElection::OP_NAK, m->epoch,
                                            peer_tracker.get_encoded_bl(),
                                            logic.strategy, mon->monmap);
@@ -423,15 +426,14 @@ void Elector::handle_nak(MonOpRequestRef op)
     op->mark_event("elector:handle_nak");
     auto m = op->get_req < MMonElection > ();
     dout(1) << "handle_nak from " << m->get_source()
-        << " quorum_features " << m->quorum_features
-        << " " << m->mon_features
-        << " min_mon_release " << (int)m->mon_release << dendl;
+            << " quorum_features " << m->quorum_features
+            << " " << m->mon_features
+            << " min_mon_release " << (int)m->mon_release << dendl;
 
     if (m->mon_release > ceph_release()) {
         derr << "Shutting down because I am release " << (int)ceph_release()
-            << " < min_mon_release " << (int)m->mon_release << dendl;
-    }
-    else {
+             << " < min_mon_release " << (int)m->mon_release << dendl;
+    } else {
         CompatSet other;
         auto bi = m->sharing_bl.cbegin();
         other.decode(bi);
@@ -442,7 +444,7 @@ void Elector::handle_nak(MonOpRequestRef op)
         mon_feature_t mon_diff = m->mon_features.diff(mon_supported);
 
         derr << "Shutting down because I lack required monitor features: { "
-            << diff << " } " << mon_diff << dendl;
+             << diff << " } " << mon_diff << dendl;
     }
     exit(0);
     // the end!
@@ -465,14 +467,17 @@ void Elector::begin_peer_ping(int peer)
     live_pinging.insert(peer);
     dead_pinging.erase(peer);
     peer_acked_ping[peer] = ceph_clock_now();
-    if (!send_peer_ping(peer))
+    if (!send_peer_ping(peer)) {
         return;
+    }
     mon->timer.add_event_after(ping_timeout / PING_DIVISOR, new C_MonContext {
-                               mon,[this, peer] (int) {
-                               ping_check(peer);}});
+        mon, [this, peer](int)
+        {
+            ping_check(peer);
+        }});
 }
 
-bool Elector::send_peer_ping(int peer, const utime_t * n)
+bool Elector::send_peer_ping(int peer, const utime_t *n)
 {
     dout(10) << __func__ << " to peer " << peer << dendl;
     if (peer >= ssize(mon->monmap->ranks)) {
@@ -480,16 +485,15 @@ bool Elector::send_peer_ping(int peer, const utime_t * n)
         // therefore, we shouldn't ping this monitor
         // since we cannot lookup the address!
         dout(5) << "peer: " << peer << " >= ranks_size: "
-            << ssize(mon->monmap->ranks) << " ... dropping to prevent "
-            << "https://tracker.ceph.com/issues/50089" << dendl;
+                << ssize(mon->monmap->ranks) << " ... dropping to prevent "
+                << "https://tracker.ceph.com/issues/50089" << dendl;
         live_pinging.erase(peer);
         return false;
     }
     utime_t now;
     if (n != NULL) {
         now = *n;
-    }
-    else {
+    } else {
         now = ceph_clock_now();
     }
     MMonPing *ping =
@@ -505,12 +509,12 @@ void Elector::ping_check(int peer)
 
     if (!live_pinging.count(peer) && !dead_pinging.count(peer)) {
         dout(20) << __func__ << peer << " is no longer marked for pinging" <<
-            dendl;
+                 dendl;
         return;
     }
     utime_t now = ceph_clock_now();
-    utime_t & acked_ping = peer_acked_ping[peer];
-    utime_t & newest_ping = peer_sent_ping[peer];
+    utime_t &acked_ping = peer_acked_ping[peer];
+    utime_t &newest_ping = peer_sent_ping[peer];
     if (!acked_ping.is_zero() && acked_ping < now - ping_timeout) {
         peer_tracker.report_dead_connection(peer, now - acked_ping);
         acked_ping = now;
@@ -519,13 +523,16 @@ void Elector::ping_check(int peer)
     }
 
     if (acked_ping == newest_ping) {
-        if (!send_peer_ping(peer, &now))
+        if (!send_peer_ping(peer, &now)) {
             return;
+        }
     }
 
     mon->timer.add_event_after(ping_timeout / PING_DIVISOR, new C_MonContext {
-                               mon,[this, peer] (int) {
-                               ping_check(peer);}});
+        mon, [this, peer](int)
+        {
+            ping_check(peer);
+        }});
 }
 
 void Elector::begin_dead_ping(int peer)
@@ -538,8 +545,10 @@ void Elector::begin_dead_ping(int peer)
     live_pinging.erase(peer);
     dead_pinging.insert(peer);
     mon->timer.add_event_after(ping_timeout, new C_MonContext {
-                               mon,[this, peer] (int) {
-                               dead_ping(peer);}});
+        mon, [this, peer](int)
+        {
+            dead_ping(peer);
+        }});
 }
 
 void Elector::dead_ping(int peer)
@@ -547,19 +556,21 @@ void Elector::dead_ping(int peer)
     dout(20) << __func__ << " to peer " << peer << dendl;
     if (!dead_pinging.count(peer)) {
         dout(20) << __func__ << peer << " is no longer marked for dead pinging"
-            << dendl;
+                 << dendl;
         return;
     }
     ceph_assert(!live_pinging.count(peer));
 
     utime_t now = ceph_clock_now();
-    utime_t & acked_ping = peer_acked_ping[peer];
+    utime_t &acked_ping = peer_acked_ping[peer];
 
     peer_tracker.report_dead_connection(peer, now - acked_ping);
     acked_ping = now;
     mon->timer.add_event_after(ping_timeout, new C_MonContext {
-                               mon,[this, peer] (int) {
-                               dead_ping(peer);}});
+        mon, [this, peer](int)
+        {
+            dead_ping(peer);
+        }});
 }
 
 void Elector::handle_ping(MonOpRequestRef op)
@@ -570,8 +581,7 @@ void Elector::handle_ping(MonOpRequestRef op)
     begin_peer_ping(prank);
     assimilate_connection_reports(m->tracker_bl);
     switch (m->op) {
-    case MMonPing::PING:
-        {
+        case MMonPing::PING: {
             MMonPing *reply =
                 new MMonPing(MMonPing::PING_REPLY, m->stamp,
                              peer_tracker.get_encoded_bl());
@@ -579,37 +589,37 @@ void Elector::handle_ping(MonOpRequestRef op)
         }
         break;
 
-    case MMonPing::PING_REPLY:
+        case MMonPing::PING_REPLY:
 
-        const utime_t & previous_acked = peer_acked_ping[prank];
-        const utime_t & newest = peer_sent_ping[prank];
+            const utime_t &previous_acked = peer_acked_ping[prank];
+            const utime_t &newest = peer_sent_ping[prank];
 
-        if (m->stamp > newest && !newest.is_zero()) {
-            derr << "dropping PING_REPLY stamp " << m->stamp
-                << " as it is newer than newest sent " << newest << dendl;
-            return;
-        }
-
-        if (m->stamp > previous_acked) {
-            dout(20) << "m->stamp > previous_acked" << dendl;
-            peer_tracker.report_live_connection(prank,
-                                                m->stamp - previous_acked);
-            peer_acked_ping[prank] = m->stamp;
-        }
-        else {
-            dout(20) <<
-                "m->stamp <= previous_acked .. we don't report_live_connection"
-                << dendl;
-        }
-        utime_t now = ceph_clock_now();
-        dout(30) << "now: " << now << " m->stamp: " << m->
-            stamp << " ping_timeout: " << ping_timeout << " PING_DIVISOR: " <<
-            PING_DIVISOR << dendl;
-        if (now - m->stamp > ping_timeout / PING_DIVISOR) {
-            if (!send_peer_ping(prank, &now))
+            if (m->stamp > newest && !newest.is_zero()) {
+                derr << "dropping PING_REPLY stamp " << m->stamp
+                     << " as it is newer than newest sent " << newest << dendl;
                 return;
-        }
-        break;
+            }
+
+            if (m->stamp > previous_acked) {
+                dout(20) << "m->stamp > previous_acked" << dendl;
+                peer_tracker.report_live_connection(prank,
+                                                    m->stamp - previous_acked);
+                peer_acked_ping[prank] = m->stamp;
+            } else {
+                dout(20) <<
+                         "m->stamp <= previous_acked .. we don't report_live_connection"
+                         << dendl;
+            }
+            utime_t now = ceph_clock_now();
+            dout(30) << "now: " << now << " m->stamp: " << m->
+                     stamp << " ping_timeout: " << ping_timeout << " PING_DIVISOR: " <<
+                     PING_DIVISOR << dendl;
+            if (now - m->stamp > ping_timeout / PING_DIVISOR) {
+                if (!send_peer_ping(prank, &now)) {
+                    return;
+                }
+            }
+            break;
     }
 }
 
@@ -620,33 +630,32 @@ void Elector::dispatch(MonOpRequestRef op)
 
     switch (op->get_req()->get_type()) {
 
-    case MSG_MON_ELECTION:
-        {
+        case MSG_MON_ELECTION: {
             if (!logic.participating) {
                 return;
             }
             if (op->get_req()->get_source().num() >= mon->monmap->size()) {
                 dout(5) << " ignoring bogus election message with bad mon rank "
-                    << op->get_req()->get_source() << dendl;
+                        << op->get_req()->get_source() << dendl;
                 return;
             }
 
             auto em = op->get_req < MMonElection > ();
             dout(20) << __func__ << " from: " << mon->monmap->get_rank(em->
-                                                                       get_source_addr
-                                                                       ()) <<
-                dendl;
+                     get_source_addr
+                     ()) <<
+                     dendl;
             // assume an old message encoding would have matched
             if (em->fsid != mon->monmap->fsid) {
                 dout(0) << " ignoring election msg fsid "
-                    << em->fsid << " != " << mon->monmap->fsid << dendl;
+                        << em->fsid << " != " << mon->monmap->fsid << dendl;
                 return;
             }
 
             if (!mon->monmap->contains(em->get_source_addr())) {
                 dout(1) << "discarding election message: " << em->
-                    get_source_addr()
-                    << " not in my monmap " << *mon->monmap << dendl;
+                        get_source_addr()
+                        << " not in my monmap " << *mon->monmap << dendl;
                 return;
             }
 
@@ -654,9 +663,9 @@ void Elector::dispatch(MonOpRequestRef op)
             peermap.decode(em->monmap_bl);
             if (peermap.epoch > mon->monmap->epoch) {
                 dout(0) << em->
-                    get_source_inst() << " has newer monmap epoch " << peermap.
-                    epoch << " > my epoch " << mon->monmap->
-                    epoch << ", taking it" << dendl;
+                        get_source_inst() << " has newer monmap epoch " << peermap.
+                        epoch << " > my epoch " << mon->monmap->
+                        epoch << ", taking it" << dendl;
                 mon->monmap->decode(em->monmap_bl);
                 auto t(std::make_shared < MonitorDBStore::Transaction > ());
                 t->put("monmap", mon->monmap->epoch, em->monmap_bl);
@@ -670,16 +679,16 @@ void Elector::dispatch(MonOpRequestRef op)
             }
             if (peermap.epoch < mon->monmap->epoch) {
                 dout(0) << em->
-                    get_source_inst() << " has older monmap epoch " << peermap.
-                    epoch << " < my epoch " << mon->monmap->epoch << dendl;
+                        get_source_inst() << " has older monmap epoch " << peermap.
+                        epoch << " < my epoch " << mon->monmap->epoch << dendl;
             }
 
             if (em->strategy != logic.strategy) {
                 dout(5) << __func__ <<
-                    " somehow got an Election message with different strategy "
-                    << em->strategy << " from local " << logic.
-                    strategy << "; dropping for now to let race resolve" <<
-                    dendl;
+                        " somehow got an Election message with different strategy "
+                        << em->strategy << " from local " << logic.
+                        strategy << "; dropping for now to let race resolve" <<
+                        dendl;
                 return;
             }
 
@@ -689,9 +698,9 @@ void Elector::dispatch(MonOpRequestRef op)
 
             begin_peer_ping(mon->monmap->get_rank(em->get_source_addr()));
             switch (em->op) {
-            case MMonElection::OP_PROPOSE:
-                handle_propose(op);
-                return;
+                case MMonElection::OP_PROPOSE:
+                    handle_propose(op);
+                    return;
             }
 
             if (em->epoch < get_epoch()) {
@@ -700,27 +709,27 @@ void Elector::dispatch(MonOpRequestRef op)
             }
 
             switch (em->op) {
-            case MMonElection::OP_ACK:
-                handle_ack(op);
-                return;
-            case MMonElection::OP_VICTORY:
-                handle_victory(op);
-                return;
-            case MMonElection::OP_NAK:
-                handle_nak(op);
-                return;
-            default:
-                ceph_abort();
+                case MMonElection::OP_ACK:
+                    handle_ack(op);
+                    return;
+                case MMonElection::OP_VICTORY:
+                    handle_victory(op);
+                    return;
+                case MMonElection::OP_NAK:
+                    handle_nak(op);
+                    return;
+                default:
+                    ceph_abort();
             }
         }
         break;
 
-    case MSG_MON_PING:
-        handle_ping(op);
-        break;
+        case MSG_MON_PING:
+            handle_ping(op);
+            break;
 
-    default:
-        ceph_abort();
+        default:
+            ceph_abort();
     }
 }
 
@@ -784,8 +793,7 @@ void Elector::notify_rank_removed(unsigned rank_removed, unsigned new_rank)
                 if (!live_pinging.count(i + 1)) {
                     live_pinging.erase(i);
                 }
-            }
-            else if (dead_pinging.count(i)) {
+            } else if (dead_pinging.count(i)) {
                 live_pinging.erase(i - 1);
                 if (!dead_pinging.count(i - 1)) {
                     begin_dead_ping(i - 1);
@@ -793,8 +801,7 @@ void Elector::notify_rank_removed(unsigned rank_removed, unsigned new_rank)
                 if (!dead_pinging.count(i + 1)) {
                     dead_pinging.erase(i);
                 }
-            }
-            else {
+            } else {
                 // we aren't pinging rank i at all
                 if (i - 1 == (unsigned)rank_removed) {
                     // so we special case to make sure we
@@ -804,8 +811,7 @@ void Elector::notify_rank_removed(unsigned rank_removed, unsigned new_rank)
                 }
             }
         }
-    }
-    else {
+    } else {
         if (live_pinging.count(rank_removed)) {
             live_pinging.erase(rank_removed);
         }

@@ -18,16 +18,20 @@ const char *data = "testdata";
 const char *obj = "testobj";
 const size_t len = strlen(data);
 
-class CReadOpsTest:public RadosTest {
-  protected:
-    void write_object() {
+class CReadOpsTest: public RadosTest
+{
+protected:
+    void write_object()
+    {
         // Create an object and write to it
         ASSERT_EQ(0, rados_write(ioctx, obj, data, len, 0));
-    } void remove_object() {
+    } void remove_object()
+    {
         ASSERT_EQ(0, rados_remove(ioctx, obj));
     }
     int cmp_xattr(const char *xattr, const char *value, size_t value_len,
-                  uint8_t cmp_op) {
+                  uint8_t cmp_op)
+    {
         rados_read_op_t op = rados_create_read_op();
         rados_read_op_cmpxattr(op, xattr, cmp_op, value, value_len);
         int r = rados_read_op_operate(op, ioctx, obj, 0);
@@ -37,7 +41,8 @@ class CReadOpsTest:public RadosTest {
 
     void fetch_and_verify_omap_vals(char const *const *keys,
                                     char const *const *vals,
-                                    const size_t * lens, size_t len) {
+                                    const size_t *lens, size_t len)
+    {
         rados_omap_iter_t iter_vals, iter_keys, iter_vals_by_key;
         int r_vals, r_keys, r_vals_by_key;
         rados_read_op_t op = rados_create_read_op();
@@ -63,8 +68,9 @@ class CReadOpsTest:public RadosTest {
 
     void compare_omap_vals(char const *const *keys,
                            char const *const *vals,
-                           const size_t * lens,
-                           size_t len, rados_omap_iter_t iter) {
+                           const size_t *lens,
+                           size_t len, rados_omap_iter_t iter)
+    {
         size_t i = 0;
         char *key = NULL;
         char *val = NULL;
@@ -72,12 +78,14 @@ class CReadOpsTest:public RadosTest {
         ASSERT_EQ(len, rados_omap_iter_size(iter));
         while (i < len) {
             ASSERT_EQ(0, rados_omap_get_next(iter, &key, &val, &val_len));
-            if (val_len == 0 && key == NULL && val == NULL)
+            if (val_len == 0 && key == NULL && val == NULL) {
                 break;
-            if (key)
+            }
+            if (key) {
                 EXPECT_EQ(std::string(keys[i]), std::string(key));
-            else
+            } else {
                 EXPECT_EQ(keys[i], key);
+            }
             ASSERT_EQ(0, memcmp(vals[i], val, val_len));
             ASSERT_EQ(lens[i], val_len);
             ++i;
@@ -93,8 +101,9 @@ class CReadOpsTest:public RadosTest {
     // these two used to test omap funcs that accept length for both keys and vals
     void fetch_and_verify_omap_vals2(char const *const *keys,
                                      char const *const *vals,
-                                     const size_t * keylens,
-                                     const size_t * vallens, size_t len) {
+                                     const size_t *keylens,
+                                     const size_t *vallens, size_t len)
+    {
         rados_omap_iter_t iter_vals_by_key;
         int r_vals_by_key;
         rados_read_op_t op = rados_create_read_op();
@@ -109,9 +118,10 @@ class CReadOpsTest:public RadosTest {
 
     void compare_omap_vals2(char const *const *keys,
                             char const *const *vals,
-                            const size_t * keylens,
-                            const size_t * vallens,
-                            size_t len, rados_omap_iter_t iter) {
+                            const size_t *keylens,
+                            const size_t *vallens,
+                            size_t len, rados_omap_iter_t iter)
+    {
         size_t i = 0;
         char *key = NULL;
         char *val = NULL;
@@ -122,13 +132,15 @@ class CReadOpsTest:public RadosTest {
             ASSERT_EQ(0,
                       rados_omap_get_next2(iter, &key, &val, &key_len,
                                            &val_len));
-            if (key_len == 0 && val_len == 0 && key == NULL && val == NULL)
+            if (key_len == 0 && val_len == 0 && key == NULL && val == NULL) {
                 break;
+            }
             if (key)
                 EXPECT_EQ(std::string(keys[i], keylens[i]),
                           std::string(key, key_len));
-            else
+            else {
                 EXPECT_EQ(keys[i], key);
+            }
             ASSERT_EQ(val_len, vallens[i]);
             ASSERT_EQ(key_len, keylens[i]);
             ASSERT_EQ(0, memcmp(vals[i], val, val_len));
@@ -146,8 +158,9 @@ class CReadOpsTest:public RadosTest {
 
     void compare_xattrs(char const *const *keys,
                         char const *const *vals,
-                        const size_t * lens,
-                        size_t len, rados_xattrs_iter_t iter) {
+                        const size_t *lens,
+                        size_t len, rados_xattrs_iter_t iter)
+    {
         size_t i = 0;
         char *key = NULL;
         char *val = NULL;
@@ -155,8 +168,9 @@ class CReadOpsTest:public RadosTest {
         while (i < len) {
             ASSERT_EQ(0, rados_getxattrs_next(iter, (const char **)&key,
                                               (const char **)&val, &val_len));
-            if (key == NULL)
+            if (key == NULL) {
                 break;
+            }
             EXPECT_EQ(std::string(keys[i]), std::string(key));
             if (val != NULL) {
                 EXPECT_EQ(0, memcmp(vals[i], val, val_len));
@@ -213,8 +227,8 @@ TEST_F(CReadOpsTest, AssertExists)
 
     rados_completion_t completion;
     ASSERT_EQ(0, rados_aio_create_completion(NULL, NULL, NULL, &completion));
-    auto sg = make_scope_guard([&]{ rados_aio_release(completion);
-                               });
+    auto sg = make_scope_guard([&] { rados_aio_release(completion);
+                                   });
     ASSERT_EQ(0, rados_aio_read_op_operate(op, ioctx, completion, obj, 0));
     rados_aio_wait_for_complete(completion);
     ASSERT_EQ(-ENOENT, rados_aio_get_return_value(completion));
@@ -414,7 +428,7 @@ TEST_F(CReadOpsTest, Checksum)
         ASSERT_EQ(1U, crc[0]);
         uint32_t expected_crc =
             ceph_crc32c(-1, reinterpret_cast < const uint8_t * >(data),
-                        static_cast < uint32_t > (len));
+                        static_cast < uint32_t >(len));
         ASSERT_EQ(expected_crc, crc[1]);
         rados_release_read_op(op);
     }
@@ -678,15 +692,15 @@ TEST_F(CReadOpsTest, Stat2)
 TEST_F(CReadOpsTest, Omap)
 {
     char *keys[] = { (char *)"bar",
-        (char *)"foo",
-        (char *)"test1",
-        (char *)"test2"
-    };
+                     (char *)"foo",
+                     (char *)"test1",
+                     (char *)"test2"
+                   };
     char *vals[] = { (char *)"",
-        (char *)"\0",
-        (char *)"abc",
-        (char *)"va\0lue"
-    };
+                     (char *)"\0",
+                     (char *)"abc",
+                     (char *)"va\0lue"
+                   };
     size_t lens[] = { 0, 1, 3, 6 };
 
     // check for -ENOENT before the object exists and when it exists
@@ -733,8 +747,9 @@ TEST_F(CReadOpsTest, Omap)
                                vals[i], lens[i], &rvals[i]);
     EXPECT_EQ(0, rados_read_op_operate(rop, ioctx, obj, 0));
     rados_release_read_op(rop);
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i) {
         EXPECT_EQ(0, rvals[i]);
+    }
 
     // try to remove keys with a guard that should fail
     op = rados_create_write_op();
@@ -773,13 +788,13 @@ TEST_F(CReadOpsTest, Omap)
 TEST_F(CReadOpsTest, OmapNuls)
 {
     char *keys[] = { (char *)"1\0bar",
-        (char *)"2baar\0",
-        (char *)"3baa\0rr"
-    };
+                     (char *)"2baar\0",
+                     (char *)"3baa\0rr"
+                   };
     char *vals[] = { (char *)"_\0var",
-        (char *)"_vaar\0",
-        (char *)"__vaa\0rr"
-    };
+                     (char *)"_vaar\0",
+                     (char *)"__vaa\0rr"
+                   };
     size_t nklens[] = { 5, 6, 7 };
     size_t nvlens[] = { 5, 6, 8 };
     const int paircount = 3;
@@ -813,8 +828,9 @@ TEST_F(CReadOpsTest, OmapNuls)
                                 vals[i], nklens[i], nvlens[i], &rvals[i]);
     EXPECT_EQ(0, rados_read_op_operate(rop, ioctx, obj, 0));
     rados_release_read_op(rop);
-    for (int i = 0; i < paircount; ++i)
+    for (int i = 0; i < paircount; ++i) {
         EXPECT_EQ(0, rvals[i]);
+    }
 
     // try to remove keys with a guard that should fail
     int r_vals = -1;
@@ -853,15 +869,15 @@ TEST_F(CReadOpsTest, GetXattrs)
     write_object();
 
     char *keys[] = { (char *)"bar",
-        (char *)"foo",
-        (char *)"test1",
-        (char *)"test2"
-    };
+                     (char *)"foo",
+                     (char *)"test1",
+                     (char *)"test2"
+                   };
     char *vals[] = { (char *)"",
-        (char *)"\0",
-        (char *)"abc",
-        (char *)"va\0lue"
-    };
+                     (char *)"\0",
+                     (char *)"abc",
+                     (char *)"va\0lue"
+                   };
     size_t lens[] = { 0, 1, 3, 6 };
 
     int rval = 1;
@@ -873,8 +889,9 @@ TEST_F(CReadOpsTest, GetXattrs)
     rados_release_read_op(op);
     compare_xattrs(keys, vals, lens, 0, it);
 
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i) {
         rados_setxattr(ioctx, obj, keys[i], vals[i], lens[i]);
+    }
 
     rval = 1;
     op = rados_create_read_op();

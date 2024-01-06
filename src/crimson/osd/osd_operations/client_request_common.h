@@ -7,14 +7,15 @@
 #include "crimson/common/type_helpers.h"
 #include "crimson/osd/osd_operation.h"
 
-namespace crimson::osd {
+namespace crimson::osd
+{
 
-    struct CommonClientRequest {
-        static InterruptibleOperation::template interruptible_future <>
-            do_recover_missing(Ref < PG > &pg, const hobject_t & soid);
+struct CommonClientRequest {
+    static InterruptibleOperation::template interruptible_future <> do_recover_missing(Ref < PG > &pg,
+            const hobject_t &soid);
 
-        static bool should_abort_request(const crimson::Operation & op,
-                                         std::exception_ptr eptr);
-    };
+    static bool should_abort_request(const crimson::Operation &op,
+                                     std::exception_ptr eptr);
+};
 
 }                               // namespace crimson::osd

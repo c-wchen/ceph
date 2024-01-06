@@ -437,8 +437,9 @@ TEST(LibCephFS, DirLs)
         int len =
             ceph_getdents(cmount, ls_dir, (char *)getdents_entries,
                           getdents_entries_len);
-        if (len == 0)
+        if (len == 0) {
             break;
+        }
         ASSERT_GT(len, 0);
         ASSERT_TRUE((len % sizeof(*getdents_entries)) == 0);
         int n = len / sizeof(*getdents_entries);
@@ -447,8 +448,7 @@ TEST(LibCephFS, DirLs)
             ASSERT_STREQ(getdents_entries[0].d_name, ".");
             ASSERT_STREQ(getdents_entries[1].d_name, "..");
             j = 2;
-        }
-        else {
+        } else {
             j = 0;
         }
         count += n;
@@ -474,8 +474,9 @@ TEST(LibCephFS, DirLs)
     while (true) {
         struct dirent rdent;
         int len = ceph_readdir_r(cmount, ls_dir, &rdent);
-        if (len == 0)
+        if (len == 0) {
             break;
+        }
         ASSERT_EQ(len, 1);
         found.push_back(rdent.d_name);
     }
@@ -497,8 +498,9 @@ TEST(LibCephFS, DirLs)
         struct ceph_statx stx;
         int len = ceph_readdirplus_r(cmount, ls_dir, &rdent, &stx,
                                      CEPH_STATX_SIZE, AT_STATX_DONT_SYNC, NULL);
-        if (len == 0)
+        if (len == 0) {
             break;
+        }
         ASSERT_EQ(len, 1);
         const char *name = rdent.d_name;
         found.push_back(name);
@@ -2281,15 +2283,17 @@ TEST(LibCephFS, ShutdownRace)
     rnew.rlim_cur = rnew.rlim_max;
 
     cout << "Setting RLIMIT_NOFILE from " << rold.rlim_cur <<
-        " to " << rnew.rlim_cur << std::endl;
+         " to " << rnew.rlim_cur << std::endl;
 
     ASSERT_EQ(setrlimit(RLIMIT_NOFILE, &rnew), 0);
 
-    for (int i = 0; i < nthreads; ++i)
+    for (int i = 0; i < nthreads; ++i) {
         threads[i] = std::thread(shutdown_racer_func);
+    }
 
-    for (int i = 0; i < nthreads; ++i)
+    for (int i = 0; i < nthreads; ++i) {
         threads[i].join();
+    }
     /*
      * Let's just ignore restoring the open files limit,
      * the kernel will defer releasing the file descriptors
@@ -2599,8 +2603,9 @@ TEST(LibCephFS, SnapXattrs)
     char *p = xattrlist;
     int found = 0;
     while (len > 0) {
-        if (strcmp(p, "ceph.snap.btime") == 0)
+        if (strcmp(p, "ceph.snap.btime") == 0) {
             found++;
+        }
         len -= strlen(p) + 1;
         p += strlen(p) + 1;
     }
@@ -2706,7 +2711,7 @@ TEST(LibCephFS, SnapInfo)
     ASSERT_EQ(0, ceph_mkdir(cmount, dir_path, 0755));
     // snapshot with custom metadata
     struct snap_metadata snap_meta[] =
-        { {"foo", "bar"}, {"this", "that"}, {"abcdefg", "12345"} };
+    { {"foo", "bar"}, {"this", "that"}, {"abcdefg", "12345"} };
     ASSERT_EQ(0,
               ceph_mksnap(cmount, dir_path, snap_name, 0755, snap_meta,
                           std::size(snap_meta)));
@@ -2716,12 +2721,12 @@ TEST(LibCephFS, SnapInfo)
     ASSERT_GT(info.id, 0);
     ASSERT_EQ(info.nr_snap_metadata, std::size(snap_meta));
     for (size_t i = 0; i < info.nr_snap_metadata; ++i) {
-        auto & k1 = info.snap_metadata[i].key;
-        auto & v1 = info.snap_metadata[i].value;
+        auto &k1 = info.snap_metadata[i].key;
+        auto &v1 = info.snap_metadata[i].value;
         bool found = false;
         for (size_t j = 0; j < info.nr_snap_metadata; ++j) {
-            auto & k2 = snap_meta[j].key;
-            auto & v2 = snap_meta[j].value;
+            auto &k2 = snap_meta[j].key;
+            auto &v2 = snap_meta[j].value;
             if (strncmp(k1, k2, strlen(k1)) == 0
                 && strncmp(v1, v2, strlen(v1)) == 0) {
                 found = true;
@@ -3730,23 +3735,19 @@ TEST(LibCephFS, LookupMdsPrivateInos)
         if (MDS_IS_PRIVATE_INO(ino)) {
             ASSERT_EQ(-CEPHFS_ESTALE,
                       ceph_ll_lookup_inode(cmount, ino, &inode));
-        }
-        else if (ino == CEPH_INO_ROOT || ino == CEPH_INO_GLOBAL_SNAPREALM) {
+        } else if (ino == CEPH_INO_ROOT || ino == CEPH_INO_GLOBAL_SNAPREALM) {
             ASSERT_EQ(0, ceph_ll_lookup_inode(cmount, ino, &inode));
             ceph_ll_put(cmount, inode);
-        }
-        else if (ino == CEPH_INO_LOST_AND_FOUND) {
+        } else if (ino == CEPH_INO_LOST_AND_FOUND) {
             // the ino 3 will only exists after the recovery tool ran, so
             // it may return -CEPHFS_ESTALE with a fresh fs cluster
             int r = ceph_ll_lookup_inode(cmount, ino, &inode);
             if (r == 0) {
                 ceph_ll_put(cmount, inode);
-            }
-            else {
+            } else {
                 ASSERT_TRUE(r == -CEPHFS_ESTALE);
             }
-        }
-        else {
+        } else {
             // currently the ino 0 and 4~99 is not useded yet.
             ASSERT_EQ(-CEPHFS_ESTALE,
                       ceph_ll_lookup_inode(cmount, ino, &inode));

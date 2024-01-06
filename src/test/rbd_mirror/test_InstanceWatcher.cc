@@ -21,19 +21,22 @@ void register_test_instance_watcher()
 {
 }
 
-class TestInstanceWatcher:public::rbd::mirror::TestFixture {
-  public:
+class TestInstanceWatcher: public::rbd::mirror::TestFixture
+{
+public:
     std::string m_instance_id;
     std::string m_oid;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         TestFixture::SetUp();
         m_local_io_ctx.remove(RBD_MIRROR_LEADER);
         EXPECT_EQ(0, m_local_io_ctx.create(RBD_MIRROR_LEADER, true));
 
         m_instance_id = stringify(m_local_io_ctx.get_instance_id());
         m_oid = RBD_MIRROR_INSTANCE_PREFIX + m_instance_id;
-    } void get_instances(std::vector < std::string > *instance_ids) {
+    } void get_instances(std::vector < std::string > *instance_ids)
+    {
         instance_ids->clear();
         C_SaferCond on_get;
         InstanceWatcher <>::get_instances(m_local_io_ctx, instance_ids,

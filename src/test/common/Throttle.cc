@@ -35,18 +35,22 @@
 
 using namespace std;
 
-class ThrottleTest:public::testing::Test {
-  protected:
+class ThrottleTest: public::testing::Test
+{
+protected:
 
-    class Thread_get:public Thread {
-      public:
-        Throttle & throttle;
+    class Thread_get: public Thread
+    {
+    public:
+        Throttle &throttle;
         int64_t count;
         bool waited = false;
 
-        Thread_get(Throttle & _throttle, int64_t _count):throttle(_throttle),
-            count(_count) {
-        } void *entry() override {
+        Thread_get(Throttle &_throttle, int64_t _count): throttle(_throttle),
+            count(_count)
+        {
+        } void *entry() override
+        {
             usleep(5);
             waited = throttle.get(count);
             throttle.put(count);
@@ -111,8 +115,9 @@ TEST_F(ThrottleTest, get)
         ASSERT_EQ(throttle.put(throttle_max), 0);
         t.join();
 
-        if (!(waited = t.waited))
+        if (!(waited = t.waited)) {
             delay *= 2;
+        }
     } while (!waited);
 
     delay = 1;
@@ -135,8 +140,9 @@ TEST_F(ThrottleTest, get)
         t.join();
         u.join();
 
-        if (!(waited = t.waited && u.waited))
+        if (!(waited = t.waited && u.waited)) {
             delay *= 2;
+        }
     } while (!waited);
 
 }
@@ -218,14 +224,14 @@ TEST_F(ThrottleTest, wait)
 
 std::pair < double,
     std::chrono::duration < double >>test_backoff(double low_threshhold,
-                                                  double high_threshhold,
-                                                  double expected_throughput,
-                                                  double high_multiple,
-                                                  double max_multiple,
-                                                  uint64_t max,
-                                                  double put_delay_per_count,
-                                                  unsigned getters,
-                                                  unsigned putters)
+            double high_threshhold,
+            double expected_throughput,
+            double high_multiple,
+            double max_multiple,
+            uint64_t max,
+            double put_delay_per_count,
+            unsigned getters,
+            unsigned putters)
 {
     std::mutex l;
     std::condition_variable c;
@@ -250,7 +256,7 @@ std::pair < double,
                                      0);
     ceph_assert(valid);
 
-    auto getter =[&](){
+    auto getter = [&]() {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution <> dis(0, 10);
@@ -271,7 +277,7 @@ std::pair < double,
         }
     };
 
-    auto putter =[&](){
+    auto putter = [&]() {
         std::unique_lock < std::mutex > g(l);
         while (!stop_putters || !in_queue.empty()) {
             if (in_queue.empty()) {
@@ -288,8 +294,8 @@ std::pair < double,
 
             g.unlock();
             std::this_thread::sleep_for(c * std::chrono::duration <
-                                        double >(put_delay_per_count *
-                                                 putters));
+                                        double > (put_delay_per_count *
+                                                  putters));
             g.lock();
 
             total -= c;
@@ -298,12 +304,14 @@ std::pair < double,
     };
 
     vector < std::thread > gts(getters);
-  for (auto && i:gts)
+    for (auto && i : gts) {
         i = std::thread(getter);
+    }
 
     vector < std::thread > pts(putters);
-  for (auto && i:pts)
+    for (auto && i : pts) {
         i = std::thread(putter);
+    }
 
     std::this_thread::sleep_for(std::chrono::duration < double >(5));
     {
@@ -311,8 +319,9 @@ std::pair < double,
         stop_getters = true;
         c.notify_all();
     }
-  for (auto && i:gts)
+    for (auto && i : gts) {
         i.join();
+    }
     gts.clear();
 
     {
@@ -320,8 +329,9 @@ std::pair < double,
         stop_putters = true;
         c.notify_all();
     }
-  for (auto && i:pts)
+    for (auto && i : pts) {
         i.join();
+    }
     pts.clear();
 
     return make_pair(((double)total_observed_total) /

@@ -76,7 +76,7 @@ static void usage()
     generic_client_usage();
 }
 
-typedef void (*test_fn_t) (void);
+typedef void (*test_fn_t)(void);
 
 int main(int argc, const char **argv)
 {
@@ -100,23 +100,20 @@ int main(int argc, const char **argv)
          i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_flag
-                 (args, i, "--infinite_recursion", (char *)NULL)) {
+        } else if (ceph_argparse_flag
+                   (args, i, "--infinite_recursion", (char *)NULL)) {
             fn = infinite_recursion_test;
-        }
-        else if (ceph_argparse_flag
-                 (args, i, "-s", "--simple_segv", (char *)NULL)) {
+        } else if (ceph_argparse_flag
+                   (args, i, "-s", "--simple_segv", (char *)NULL)) {
             fn = simple_segv_test;
-        }
-        else {
+        } else {
             cerr << "unrecognized argument: " << *i << std::endl;
             exit(1);
         }
     }
     if (!fn) {
         std::cerr << "Please select a test to run. Type -h for help." << std::
-            endl;
+                  endl;
         exit(1);
     }
     fn();

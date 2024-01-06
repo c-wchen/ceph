@@ -18,11 +18,11 @@ TEST(features, release_features)
         const char *name = ceph_release_name(r);
         ASSERT_NE(string("unknown"), name);
         ASSERT_EQ(ceph_release_t {
-                  static_cast < uint8_t > (r)}, ceph_release_from_name(name));
+            static_cast < uint8_t >(r)}, ceph_release_from_name(name));
         uint64_t features = ceph_release_features(r);
         int rr = ceph_release_from_features(features);
         cout << r << " " << name << " features 0x" << std::hex << features
-            << std::dec << " looks like " << ceph_release_name(rr) << std::endl;
+             << std::dec << " looks like " << ceph_release_name(rr) << std::endl;
         EXPECT_LE(rr, r);
     }
 }

@@ -8,59 +8,68 @@
 #include "include/xlist.h"
 #include "include/compat.h"
 
-namespace librbd {
+namespace librbd
+{
 
-    class ImageCtx;
+class ImageCtx;
 
-     template < typename ImageCtxT = ImageCtx > class AsyncRequest {
-      public:
-        AsyncRequest(ImageCtxT & image_ctx, Context * on_finish);
-        virtual ~ AsyncRequest();
+template < typename ImageCtxT = ImageCtx > class AsyncRequest
+{
+public:
+    AsyncRequest(ImageCtxT &image_ctx, Context *on_finish);
+    virtual ~ AsyncRequest();
 
-        void complete(int r) {
-            if (should_complete(r)) {
-                r = filter_return_code(r);
-                finish_and_destroy(r);
-        }} virtual void send() = 0;
-
-        inline bool is_canceled() const {
-            return m_canceled;
-        } inline void cancel() {
-            m_canceled = true;
+    void complete(int r)
+    {
+        if (should_complete(r)) {
+            r = filter_return_code(r);
+            finish_and_destroy(r);
         }
+    } virtual void send() = 0;
 
-      protected:
-        ImageCtxT & m_image_ctx;
+    inline bool is_canceled() const
+    {
+        return m_canceled;
+    } inline void cancel()
+    {
+        m_canceled = true;
+    }
 
-        librados::AioCompletion * create_callback_completion();
-        Context *create_callback_context();
-        Context *create_async_callback_context();
+protected:
+    ImageCtxT &m_image_ctx;
 
-        void async_complete(int r);
+    librados::AioCompletion *create_callback_completion();
+    Context *create_callback_context();
+    Context *create_async_callback_context();
 
-        virtual bool should_complete(int r) = 0;
-        virtual int filter_return_code(int r) const {
-            return r;
-        }
-        // NOTE: temporary until converted to new state machine format
-            virtual void finish_and_destroy(int r) {
-            finish(r);
-            delete this;
-        }
+    void async_complete(int r);
 
-        virtual void finish(int r) {
-            finish_request();
-            m_on_finish->complete(r);
-        }
+    virtual bool should_complete(int r) = 0;
+    virtual int filter_return_code(int r) const
+    {
+        return r;
+    }
+    // NOTE: temporary until converted to new state machine format
+    virtual void finish_and_destroy(int r)
+    {
+        finish(r);
+        delete this;
+    }
 
-      private:
-        Context * m_on_finish;
-        bool m_canceled;
-        typename xlist < AsyncRequest < ImageCtxT > *>::item m_xlist_item;
+    virtual void finish(int r)
+    {
+        finish_request();
+        m_on_finish->complete(r);
+    }
 
-        void start_request();
-        void finish_request();
-    };
+private:
+    Context *m_on_finish;
+    bool m_canceled;
+    typename xlist < AsyncRequest < ImageCtxT > *>::item m_xlist_item;
+
+    void start_request();
+    void finish_request();
+};
 
 }                               // namespace librbd
 

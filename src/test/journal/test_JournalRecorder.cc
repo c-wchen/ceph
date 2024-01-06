@@ -9,21 +9,24 @@
 #include <list>
 #include <memory>
 
-class TestJournalRecorder:public RadosTestFixture {
-  public:
+class TestJournalRecorder: public RadosTestFixture
+{
+public:
     using JournalRecorderPtr = std::unique_ptr < journal::JournalRecorder,
-        std::function < void (journal::JournalRecorder *) >>;
-    JournalRecorderPtr create_recorder(const std::string & oid,
+          std::function < void (journal::JournalRecorder *) >>;
+    JournalRecorderPtr create_recorder(const std::string &oid,
                                        const ceph::ref_t <
-                                       journal::JournalMetadata > &metadata) {
+                                       journal::JournalMetadata > &metadata)
+    {
         JournalRecorderPtr recorder {
             new journal::JournalRecorder(m_ioctx, oid + ".", metadata, 0),
-                [] (journal::JournalRecorder * recorder) {
+            [](journal::JournalRecorder * recorder)
+            {
                 C_SaferCond cond;
-                 recorder->shut_down(&cond);
-                 cond.wait();
+                recorder->shut_down(&cond);
+                cond.wait();
                 delete recorder;
-        }};
+            }};
         recorder->set_append_batch_options(0,
                                            std::numeric_limits <
                                            uint32_t >::max(), 0);

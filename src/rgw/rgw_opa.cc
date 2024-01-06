@@ -9,13 +9,13 @@
 
 using namespace std;
 
-int rgw_opa_authorize(RGWOp * &op, req_state * const s)
+int rgw_opa_authorize(RGWOp*&op, req_state *const s)
 {
 
     ldpp_dout(op, 2) << "authorizing request using OPA" << dendl;
 
     /* get OPA url */
-    const string & opa_url = s->cct->_conf->rgw_opa_url;
+    const string &opa_url = s->cct->_conf->rgw_opa_url;
     if (opa_url == "") {
         ldpp_dout(op, 2) << "OPA_URL not provided" << dendl;
         return -ERR_INVALID_REQUEST;
@@ -23,7 +23,7 @@ int rgw_opa_authorize(RGWOp * &op, req_state * const s)
     ldpp_dout(op, 2) << "OPA URL= " << opa_url.c_str() << dendl;
 
     /* get authentication token for OPA */
-    const string & opa_token = s->cct->_conf->rgw_opa_token;
+    const string &opa_token = s->cct->_conf->rgw_opa_token;
 
     int ret;
     bufferlist bl;

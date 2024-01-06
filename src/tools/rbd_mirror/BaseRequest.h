@@ -6,24 +6,30 @@
 
 #include "include/Context.h"
 
-namespace rbd {
-    namespace mirror {
+namespace rbd
+{
+namespace mirror
+{
 
-        class BaseRequest {
-          public:
-            BaseRequest(Context * on_finish):m_on_finish(on_finish) {
-            } virtual ~ BaseRequest() {
-            } virtual void send() = 0;
+class BaseRequest
+{
+public:
+    BaseRequest(Context *on_finish): m_on_finish(on_finish)
+    {
+    } virtual ~ BaseRequest()
+    {
+    } virtual void send() = 0;
 
-          protected:
-             virtual void finish(int r) {
-                m_on_finish->complete(r);
-                delete this;
-          } private:
-             Context * m_on_finish;
-        };
+protected:
+    virtual void finish(int r)
+    {
+        m_on_finish->complete(r);
+        delete this;
+    } private:
+    Context *m_on_finish;
+};
 
-    }                           // namespace mirror
+}                           // namespace mirror
 }                               // namespace rbd
 
 #endif // CEPH_RBD_MIRROR_BASE_REQUEST_H

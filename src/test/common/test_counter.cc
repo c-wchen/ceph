@@ -13,7 +13,7 @@ TEST(DecayCounter, steady)
 
     DecayCounter d {
         DecayRate {
-    rate}};
+            rate}};
     d.hit(max);
     const auto start = DecayCounter::clock::now();
     double total = 0.0;

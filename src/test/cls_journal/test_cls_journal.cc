@@ -12,8 +12,8 @@
 
 using namespace cls::journal;
 
-static bool is_sparse_read_supported(librados::IoCtx & ioctx,
-                                     const std::string & oid)
+static bool is_sparse_read_supported(librados::IoCtx &ioctx,
+                                     const std::string &oid)
 {
     EXPECT_EQ(0, ioctx.create(oid, true));
     bufferlist inbl;
@@ -28,8 +28,11 @@ static bool is_sparse_read_supported(librados::IoCtx & ioctx,
 
     int expected_r = 2;
     std::map < uint64_t, uint64_t > expected_m = { {
-    1, 1}, {
-    3, 1}};
+            1, 1
+        }, {
+            3, 1
+        }
+    };
     bufferlist expected_outbl;
     expected_outbl.append(std::string(2, 'X'));
 
@@ -37,17 +40,21 @@ static bool is_sparse_read_supported(librados::IoCtx & ioctx,
             outbl.contents_equal(expected_outbl));
 }
 
-class TestClsJournal:public::testing::Test {
-  public:
+class TestClsJournal: public::testing::Test
+{
+public:
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         _pool_name = get_temp_pool_name();
         ASSERT_EQ("", create_one_pool_pp(_pool_name, _rados));
-    } static void TearDownTestCase() {
+    } static void TearDownTestCase()
+    {
         ASSERT_EQ(0, destroy_one_pool_pp(_pool_name, _rados));
     }
 
-    std::string get_temp_image_name() {
+    std::string get_temp_image_name()
+    {
         ++_image_number;
         return "image" + stringify(_image_number);
     }
@@ -256,7 +263,8 @@ TEST_F(TestClsJournal, ClientRegister)
     ASSERT_EQ(0, client::client_list(ioctx, oid, &clients));
 
     std::set < Client > expected_clients = {
-    Client("id1", bufferlist())};
+        Client("id1", bufferlist())
+    };
     ASSERT_EQ(expected_clients, clients);
 }
 
@@ -282,7 +290,7 @@ TEST_F(TestClsJournal, ClientUpdateData)
     ASSERT_EQ(0, client::create(ioctx, oid, 2, 4, ioctx.get_id()));
 
     ASSERT_EQ(-ENOENT, client::client_update_data(ioctx, oid, "id1",
-                                                  bufferlist()));
+              bufferlist()));
 
     ASSERT_EQ(0, client::client_register(ioctx, oid, "id1", bufferlist()));
 
@@ -305,14 +313,14 @@ TEST_F(TestClsJournal, ClientUpdateState)
     ASSERT_EQ(0, client::create(ioctx, oid, 2, 4, ioctx.get_id()));
 
     ASSERT_EQ(-ENOENT, client::client_update_state(ioctx, oid, "id1",
-                                                   CLIENT_STATE_DISCONNECTED));
+              CLIENT_STATE_DISCONNECTED));
 
     ASSERT_EQ(0, client::client_register(ioctx, oid, "id1", bufferlist()));
 
     bufferlist data;
     data.append(std::string(128, '1'));
     ASSERT_EQ(0, client::client_update_state(ioctx, oid, "id1",
-                                             CLIENT_STATE_DISCONNECTED));
+              CLIENT_STATE_DISCONNECTED));
 
     Client client;
     ASSERT_EQ(0, client::get_client(ioctx, oid, "id1", &client));
@@ -369,10 +377,11 @@ TEST_F(TestClsJournal, ClientUnregisterPruneTags)
 
     librados::ObjectWriteOperation op1;
     client::client_commit(&op1, "id1", { { {
-                          1, 32, 120}
-                          }
-                          }
-    );
+                1, 32, 120
+            }
+        }
+    }
+                         );
     ASSERT_EQ(0, ioctx.operate(oid, &op1));
 
     ASSERT_EQ(0, client::client_unregister(ioctx, oid, "id2"));
@@ -380,14 +389,14 @@ TEST_F(TestClsJournal, ClientUnregisterPruneTags)
     std::set < Tag > expected_tags = { {
             0, 0, {
             }
-    }
+        }
     };
     for (uint32_t i = 32; i <= 96; ++i) {
-        expected_tags.insert( {
-                             i, 1, {
-                             }
-                             }
-        );
+        expected_tags.insert({
+            i, 1, {
+            }
+        }
+                            );
     }
     std::set < Tag > tags;
     ASSERT_EQ(0, client::tag_list(ioctx, oid, "id1",
@@ -407,8 +416,9 @@ TEST_F(TestClsJournal, ClientCommit)
 
     cls::journal::ObjectPositions object_positions;
     object_positions = {
-    cls::journal::ObjectPosition(0, 234, 120),
-            cls::journal::ObjectPosition(3, 235, 121)};
+        cls::journal::ObjectPosition(0, 234, 120),
+        cls::journal::ObjectPosition(3, 235, 121)
+    };
     cls::journal::ObjectSetPosition object_set_position(object_positions);
 
     librados::ObjectWriteOperation op2;
@@ -419,7 +429,8 @@ TEST_F(TestClsJournal, ClientCommit)
     ASSERT_EQ(0, client::client_list(ioctx, oid, &clients));
 
     std::set < Client > expected_clients = {
-    Client("id1", bufferlist(), object_set_position)};
+        Client("id1", bufferlist(), object_set_position)
+    };
     ASSERT_EQ(expected_clients, clients);
 }
 
@@ -435,9 +446,10 @@ TEST_F(TestClsJournal, ClientCommitInvalid)
 
     cls::journal::ObjectPositions object_positions;
     object_positions = {
-    cls::journal::ObjectPosition(0, 234, 120),
-            cls::journal::ObjectPosition(4, 234, 121),
-            cls::journal::ObjectPosition(5, 235, 121)};
+        cls::journal::ObjectPosition(0, 234, 120),
+        cls::journal::ObjectPosition(4, 234, 121),
+        cls::journal::ObjectPosition(5, 235, 121)
+    };
     cls::journal::ObjectSetPosition object_set_position(object_positions);
 
     librados::ObjectWriteOperation op2;
@@ -576,10 +588,11 @@ TEST_F(TestClsJournal, TagCreatePrunesTags)
 
     librados::ObjectWriteOperation op1;
     client::client_commit(&op1, "id1", { { {
-                          1, 2, 120}
-                          }
-                          }
-    );
+                1, 2, 120
+            }
+        }
+    }
+                         );
     ASSERT_EQ(0, ioctx.operate(oid, &op1));
 
     ASSERT_EQ(0, client::tag_create(ioctx, oid, 3, 0, bufferlist()));
@@ -644,10 +657,11 @@ TEST_F(TestClsJournal, TagList)
 
     librados::ObjectWriteOperation op1;
     client::client_commit(&op1, "id1", { { {
-                          96, 0, 120}
-                          }
-                          }
-    );
+                96, 0, 120
+            }
+        }
+    }
+                         );
     ASSERT_EQ(0, ioctx.operate(oid, &op1));
 
     ASSERT_EQ(0,
@@ -756,16 +770,18 @@ TEST_F(TestClsJournal, Append)
     uint64_t pad_len = outbl.length();
     outbl.clear();
     std::map < uint64_t, uint64_t > expected_m = { {
-    0, bl.length()}
-    , {
-    pad_len, bl.length()}
+            0, bl.length()
+        }
+        , {
+            pad_len, bl.length()
+        }
     };
     ASSERT_EQ(expected_m.size(),
               ioctx.sparse_read(oid, m, outbl, 2 * pad_len, 0));
     ASSERT_EQ(m, expected_m);
 
     uint64_t buffer_offset = 0;
-  for (auto & it:m) {
+    for (auto &it : m) {
         tmpbl.clear();
         tmpbl.substr_of(outbl, buffer_offset, it.second);
         ASSERT_TRUE(bl.contents_equal(tmpbl));

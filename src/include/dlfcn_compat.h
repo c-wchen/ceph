@@ -24,8 +24,8 @@
 
 using dl_errmsg_t = std::string;
 
-  // The load mode flags will be ignored on Windows. We keep the same
-  // values for debugging purposes though.
+// The load mode flags will be ignored on Windows. We keep the same
+// values for debugging purposes though.
 #define RTLD_LAZY       0x00001
 #define RTLD_NOW        0x00002
 #define RTLD_BINDING_MASK   0x3

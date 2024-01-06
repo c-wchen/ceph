@@ -26,17 +26,22 @@
 
 using namespace std;
 
-class AdminSocketTest {
-  public:
-    explicit AdminSocketTest(AdminSocket * asokc)
-    :m_asokc(asokc) {
-    } bool init(const std::string & uri) {
+class AdminSocketTest
+{
+public:
+    explicit AdminSocketTest(AdminSocket *asokc)
+        : m_asokc(asokc)
+    {
+    } bool init(const std::string &uri)
+    {
         return m_asokc->init(uri);
     }
-    string bind_and_listen(const std::string & sock_path, int *fd) {
+    string bind_and_listen(const std::string &sock_path, int *fd)
+    {
         return m_asokc->bind_and_listen(sock_path, fd);
     }
-    bool shutdown() {
+    bool shutdown()
+    {
         m_asokc->shutdown();
         return true;
     }
@@ -122,10 +127,12 @@ TEST(AdminSocket, SendTooLongRequest)
     ASSERT_EQ(true, asoct.shutdown());
 }
 
-class MyTest:public AdminSocketHook {
-    int call(std::string_view command, const cmdmap_t & cmdmap,
+class MyTest: public AdminSocketHook
+{
+    int call(std::string_view command, const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & ss, bufferlist & result) override {
+             Formatter *f, std::ostream &ss, bufferlist &result) override
+    {
         std::vector < std::string > args;
         TOPNSPC::common::cmd_getval(cmdmap, "args", args);
         result.append(command);
@@ -133,10 +140,12 @@ class MyTest:public AdminSocketHook {
         string resultstr;
         for (std::vector < std::string >::iterator it = args.begin();
              it != args.end(); ++it) {
-            if (it != args.begin())
+            if (it != args.begin()) {
                 resultstr += ' ';
+            }
             resultstr += *it;
-        } result.append(resultstr);
+        }
+        result.append(resultstr);
         return 0;
     }
 };
@@ -159,10 +168,12 @@ TEST(AdminSocket, RegisterCommand)
     ASSERT_EQ(true, asoct.shutdown());
 }
 
-class MyTest2:public AdminSocketHook {
-    int call(std::string_view command, const cmdmap_t & cmdmap,
+class MyTest2: public AdminSocketHook
+{
+    int call(std::string_view command, const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & ss, bufferlist & result) override {
+             Formatter *f, std::ostream &ss, bufferlist &result) override
+    {
         std::vector < std::string > args;
         TOPNSPC::common::cmd_getval(cmdmap, "args", args);
         result.append(command);
@@ -170,10 +181,12 @@ class MyTest2:public AdminSocketHook {
         string resultstr;
         for (std::vector < std::string >::iterator it = args.begin();
              it != args.end(); ++it) {
-            if (it != args.begin())
+            if (it != args.begin()) {
                 resultstr += ' ';
+            }
             resultstr += *it;
-        } result.append(resultstr);
+        }
+        result.append(resultstr);
         ss << "error stream";
         return 0;
     }
@@ -233,18 +246,20 @@ TEST(AdminSocket, RegisterCommandPrefixes)
     ASSERT_EQ(true, asoct.shutdown());
 }
 
-class BlockingHook:public AdminSocketHook {
-  public:
+class BlockingHook: public AdminSocketHook
+{
+public:
     ceph::mutex _lock = ceph::make_mutex("BlockingHook::_lock");
     ceph::condition_variable _cond;
 
     BlockingHook() = default;
 
-    int call(std::string_view command, const cmdmap_t & cmdmap,
+    int call(std::string_view command, const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & ss, bufferlist & result) override {
+             Formatter *f, std::ostream &ss, bufferlist &result) override
+    {
         std::unique_lock l {
-        _lock};
+            _lock};
         _cond.wait(l);
         return 0;
     }
@@ -310,7 +325,7 @@ TEST(AdminSocketClient, Ping)
         ASSERT_FALSE(ok);
         {
             std::lock_guard l {
-            blocking->_lock};
+                blocking->_lock};
             blocking->_cond.notify_all();
         }
         ASSERT_TRUE(asoct.shutdown());
@@ -332,8 +347,8 @@ TEST(AdminSocket, bind_and_listen)
         message = asoct.bind_and_listen(path, &fd);
         ASSERT_NE(0, fd);
         ASSERT_EQ("", message);
-        ASSERT_EQ(0,::compat_closesocket(fd));
-        ASSERT_EQ(0,::unlink(path.c_str()));
+        ASSERT_EQ(0, ::compat_closesocket(fd));
+        ASSERT_EQ(0, ::unlink(path.c_str()));
     }
     // silently discard an existing file
     {
@@ -347,8 +362,8 @@ TEST(AdminSocket, bind_and_listen)
         message = asoct.bind_and_listen(path, &fd);
         ASSERT_NE(0, fd);
         ASSERT_EQ("", message);
-        ASSERT_EQ(0,::compat_closesocket(fd));
-        ASSERT_EQ(0,::unlink(path.c_str()));
+        ASSERT_EQ(0, ::compat_closesocket(fd));
+        ASSERT_EQ(0, ::unlink(path.c_str()));
     }
     // do not take over a live socket
     {

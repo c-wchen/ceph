@@ -47,8 +47,8 @@ TEST(LibCephConfig, ArgV)
     ASSERT_EQ(ret, 0);
 
     const char *argv[] = { "foo", "--leveldb-max-open-files", "2",
-        "--key", "my-key", NULL
-    };
+                           "--key", "my-key", NULL
+                         };
     size_t argc = (sizeof(argv) / sizeof(argv[0])) - 1;
     ceph_conf_parse_argv(cmount, argc, argv);
 

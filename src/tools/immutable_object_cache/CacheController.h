@@ -9,32 +9,35 @@
 #include "CacheServer.h"
 #include "ObjectCacheStore.h"
 
-namespace ceph {
-    namespace immutable_obj_cache {
+namespace ceph
+{
+namespace immutable_obj_cache
+{
 
-        class CacheController {
-          public:
-            CacheController(CephContext * cct,
-                            const std::vector < const char *>&args);
-            ~CacheController();
+class CacheController
+{
+public:
+    CacheController(CephContext *cct,
+                    const std::vector < const char *> &args);
+    ~CacheController();
 
-            int init();
+    int init();
 
-            int shutdown();
+    int shutdown();
 
-            void handle_signal(int sinnum);
+    void handle_signal(int sinnum);
 
-            int run();
+    int run();
 
-            void handle_request(CacheSession * session,
-                                ObjectCacheRequest * msg);
+    void handle_request(CacheSession *session,
+                        ObjectCacheRequest *msg);
 
-          private:
-             CacheServer * m_cache_server = nullptr;
-             std::vector < const char *>m_args;
-            CephContext *m_cct;
-            ObjectCacheStore *m_object_cache_store = nullptr;
-        };
+private:
+    CacheServer *m_cache_server = nullptr;
+    std::vector < const char *>m_args;
+    CephContext *m_cct;
+    ObjectCacheStore *m_object_cache_store = nullptr;
+};
 
 } // namespace immutable_obj_cache }    // namespace ceph
 #endif                          // CEPH_CACHE_CACHE_CONTROLLER_H

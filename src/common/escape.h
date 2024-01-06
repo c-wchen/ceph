@@ -51,14 +51,18 @@ void escape_json_attr(const char *buf, size_t src_len, char *out);
 
 struct xml_stream_escaper {
     std::string_view str;
-    xml_stream_escaper(std::string_view str):str(str.data(), str.size()) {
-}};
-std::ostream & operator<<(std::ostream & out, const xml_stream_escaper & e);
+    xml_stream_escaper(std::string_view str): str(str.data(), str.size())
+    {
+    }
+};
+std::ostream &operator<<(std::ostream &out, const xml_stream_escaper &e);
 
 struct json_stream_escaper {
     std::string_view str;
-    json_stream_escaper(std::string_view str):str(str.data(), str.size()) {
-}};
-std::ostream & operator<<(std::ostream & out, const json_stream_escaper & e);
+    json_stream_escaper(std::string_view str): str(str.data(), str.size())
+    {
+    }
+};
+std::ostream &operator<<(std::ostream &out, const json_stream_escaper &e);
 
 #endif

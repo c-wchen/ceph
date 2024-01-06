@@ -67,21 +67,23 @@ static int bucket_perm_choose(const struct crush_bucket *bucket,
             goto out;
         }
 
-        for (i = 0; i < bucket->size; i++)
+        for (i = 0; i < bucket->size; i++) {
             work->perm[i] = i;
+        }
         work->perm_n = 0;
-    }
-    else if (work->perm_n == 0xffff) {
+    } else if (work->perm_n == 0xffff) {
         /* clean up after the r=0 case above */
-        for (i = 1; i < bucket->size; i++)
+        for (i = 1; i < bucket->size; i++) {
             work->perm[i] = i;
+        }
         work->perm[work->perm[0]] = 0;
         work->perm_n = 1;
     }
 
     /* calculate permutation up to pr */
-    for (i = 0; i < work->perm_n; i++)
+    for (i = 0; i < work->perm_n; i++) {
         dprintk(" perm_choose have %d: %d\n", i, work->perm[i]);
+    }
     while (work->perm_n <= pr) {
         unsigned int p = work->perm_n;
         /* no point in swapping the final entry */
@@ -97,11 +99,12 @@ static int bucket_perm_choose(const struct crush_bucket *bucket,
         }
         work->perm_n++;
     }
-    for (i = 0; i < bucket->size; i++)
+    for (i = 0; i < bucket->size; i++) {
         dprintk(" perm_choose  %d: %d\n", i, work->perm[i]);
+    }
 
     s = work->perm[pr];
-  out:
+out:
     dprintk(" perm_choose %d sz=%d x=%d r=%d (%d) s=%d\n", bucket->id,
             bucket->size, x, r, pr, s);
     return bucket->items[s];
@@ -188,10 +191,11 @@ static int bucket_tree_choose(const struct crush_bucket_tree *bucket,
 
         /* descend to the left or right? */
         l = left(n);
-        if (t < bucket->node_weights[l])
+        if (t < bucket->node_weights[l]) {
             n = l;
-        else
+        } else {
             n = right(n);
+        }
     }
 
     return bucket->h.items[n >> 1];
@@ -246,7 +250,7 @@ static __u64 crush_ln(unsigned int xin)
     LH = __RH_LH_tbl[index1 + 1 - 256];
 
     /* RH*x ~ 2^48 * (2^15 + xf), xf<2^8 */
-    xl64 = (__s64) x *RH;
+    xl64 = (__s64) x * RH;
     xl64 >>= 48;
 
     result = iexpon;
@@ -268,9 +272,9 @@ static __u64 crush_ln(unsigned int xin)
  * straw2
  *
  * Suppose we have two osds: osd.0 and osd.1, with weight 8 and 4 respectively, It means:
- *   a). For osd.0, the time interval between each io request apply to exponential distribution 
+ *   a). For osd.0, the time interval between each io request apply to exponential distribution
  *       with lamba equals 8
- *   b). For osd.1, the time interval between each io request apply to exponential distribution 
+ *   b). For osd.1, the time interval between each io request apply to exponential distribution
  *       with lamba equals 4
  *   c). If we apply to each osd's exponential random variable, then the total pgs on each osd
  *       is proportional to its weight.
@@ -281,14 +285,16 @@ static __u64 crush_ln(unsigned int xin)
  */
 
 static inline __u32 *get_choose_arg_weights(const struct crush_bucket_straw2
-                                            *bucket,
-                                            const struct crush_choose_arg *arg,
-                                            int position)
+        *bucket,
+        const struct crush_choose_arg *arg,
+        int position)
 {
-    if ((arg == NULL) || (arg->weight_set == NULL))
+    if ((arg == NULL) || (arg->weight_set == NULL)) {
         return bucket->item_weights;
-    if (position >= arg->weight_set_positions)
+    }
+    if (position >= arg->weight_set_positions) {
         position = arg->weight_set_positions - 1;
+    }
     return arg->weight_set[position].weights;
 }
 
@@ -296,19 +302,20 @@ static inline __s32 *get_choose_arg_ids(const struct crush_bucket_straw2
                                         *bucket,
                                         const struct crush_choose_arg *arg)
 {
-    if ((arg == NULL) || (arg->ids == NULL))
+    if ((arg == NULL) || (arg->ids == NULL)) {
         return bucket->h.items;
+    }
     return arg->ids;
 }
 
 /*
  * Compute exponential random variable using inversion method.
  *
- * for reference, see the exponential distribution example at:  
+ * for reference, see the exponential distribution example at:
  * https://en.wikipedia.org/wiki/Inverse_transform_sampling#Examples
  */
 static inline __s64 generate_exponential_distribution(int type, int x, int y,
-                                                      int z, int weight)
+        int z, int weight)
 {
     unsigned int u = crush_hash32_3(type, x, y, z);
     u &= 0xffff;
@@ -349,8 +356,7 @@ static int bucket_straw2_choose(const struct crush_bucket_straw2 *bucket,
             draw =
                 generate_exponential_distribution(bucket->h.hash, x, ids[i], r,
                                                   weights[i]);
-        }
-        else {
+        } else {
             draw = S64_MIN;
         }
 
@@ -371,21 +377,21 @@ static int crush_bucket_choose(const struct crush_bucket *in,
     dprintk(" crush_bucket_choose %d x=%d r=%d\n", in->id, x, r);
     BUG_ON(in->size == 0);
     switch (in->alg) {
-    case CRUSH_BUCKET_UNIFORM:
-        return bucket_uniform_choose((const struct crush_bucket_uniform *)in,
-                                     work, x, r);
-    case CRUSH_BUCKET_LIST:
-        return bucket_list_choose((const struct crush_bucket_list *)in, x, r);
-    case CRUSH_BUCKET_TREE:
-        return bucket_tree_choose((const struct crush_bucket_tree *)in, x, r);
-    case CRUSH_BUCKET_STRAW:
-        return bucket_straw_choose((const struct crush_bucket_straw *)in, x, r);
-    case CRUSH_BUCKET_STRAW2:
-        return bucket_straw2_choose((const struct crush_bucket_straw2 *)in,
-                                    x, r, arg, position);
-    default:
-        dprintk("unknown bucket %d alg %d\n", in->id, in->alg);
-        return in->items[0];
+        case CRUSH_BUCKET_UNIFORM:
+            return bucket_uniform_choose((const struct crush_bucket_uniform *)in,
+                                         work, x, r);
+        case CRUSH_BUCKET_LIST:
+            return bucket_list_choose((const struct crush_bucket_list *)in, x, r);
+        case CRUSH_BUCKET_TREE:
+            return bucket_tree_choose((const struct crush_bucket_tree *)in, x, r);
+        case CRUSH_BUCKET_STRAW:
+            return bucket_straw_choose((const struct crush_bucket_straw *)in, x, r);
+        case CRUSH_BUCKET_STRAW2:
+            return bucket_straw2_choose((const struct crush_bucket_straw2 *)in,
+                                        x, r, arg, position);
+        default:
+            dprintk("unknown bucket %d alg %d\n", in->id, in->alg);
+            return in->items[0];
     }
 }
 
@@ -394,17 +400,21 @@ static int crush_bucket_choose(const struct crush_bucket *in,
  * of the cluster
  */
 static int is_out(const struct crush_map *map,
-                  const __u32 * weight, int weight_max, int item, int x)
+                  const __u32 *weight, int weight_max, int item, int x)
 {
-    if (item >= weight_max)
+    if (item >= weight_max) {
         return 1;
-    if (weight[item] >= 0x10000)
+    }
+    if (weight[item] >= 0x10000) {
         return 0;
-    if (weight[item] == 0)
+    }
+    if (weight[item] == 0) {
         return 1;
+    }
     if ((crush_hash32_2(CRUSH_HASH_RJENKINS1, x, item) & 0xffff)
-        < weight[item])
+        < weight[item]) {
         return 0;
+    }
     return 1;
 }
 
@@ -431,7 +441,7 @@ static int is_out(const struct crush_map *map,
 static int crush_choose_firstn(const struct crush_map *map,
                                struct crush_work *work,
                                const struct crush_bucket *bucket,
-                               const __u32 * weight, int weight_max,
+                               const __u32 *weight, int weight_max,
                                int x, int numrep, int type,
                                int *out, int outpos,
                                int out_size,
@@ -459,7 +469,8 @@ static int crush_choose_firstn(const struct crush_map *map,
 
     dprintk("CHOOSE%s bucket %d x %d outpos %d numrep %d tries %d \
 recurse_tries %d local_retries %d local_fallback_retries %d \
-parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos, numrep, tries, recurse_tries, local_retries, local_fallback_retries, parent_r, stable);
+parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos, numrep, tries, recurse_tries,
+            local_retries, local_fallback_retries, parent_r, stable);
 
     for (rep = stable ? 0 : outpos; rep < numrep && count > 0; rep++) {
         /* keep trying until we get a non-out, non-colliding item */
@@ -501,10 +512,11 @@ parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos,
                 }
 
                 /* desired type? */
-                if (item < 0)
+                if (item < 0) {
                     itemtype = map->buckets[-1 - item]->type;
-                else
+                } else {
                     itemtype = 0;
+                }
                 dprintk("  item %d type %d\n", item, itemtype);
 
                 /* keep going? */
@@ -531,10 +543,11 @@ parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos,
                 if (!collide && recurse_to_leaf) {
                     if (item < 0) {
                         int sub_r;
-                        if (vary_r)
+                        if (vary_r) {
                             sub_r = r >> (vary_r - 1);
-                        else
+                        } else {
                             sub_r = 0;
+                        }
                         if (crush_choose_firstn(map,
                                                 work,
                                                 map->buckets[-1 - item],
@@ -550,9 +563,10 @@ parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos,
                                                 NULL,
                                                 sub_r, choose_args) <= outpos)
                             /* didn't get leaf */
+                        {
                             reject = 1;
-                    }
-                    else {
+                        }
+                    } else {
                         /* we already have a leaf! */
                         out2[outpos] = item;
                     }
@@ -560,28 +574,34 @@ parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos,
 
                 if (!reject && !collide) {
                     /* out? */
-                    if (itemtype == 0)
+                    if (itemtype == 0) {
                         reject = is_out(map, weight, weight_max, item, x);
+                    }
                 }
 
-              reject:
+reject:
                 if (reject || collide) {
                     ftotal++;
                     flocal++;
 
                     if (collide && flocal <= local_retries)
                         /* retry locally a few times */
+                    {
                         retry_bucket = 1;
-                    else if (local_fallback_retries > 0 &&
-                             flocal <= in->size + local_fallback_retries)
+                    } else if (local_fallback_retries > 0 &&
+                               flocal <= in->size + local_fallback_retries)
                         /* exhaustive bucket search */
+                    {
                         retry_bucket = 1;
-                    else if (ftotal < tries)
+                    } else if (ftotal < tries)
                         /* then retry descent */
+                    {
                         retry_descent = 1;
-                    else
+                    } else
                         /* else give up */
+                    {
                         skip_rep = 1;
+                    }
                     dprintk("  reject %d  collide %d  "
                             "ftotal %u  flocal %u\n",
                             reject, collide, ftotal, flocal);
@@ -599,8 +619,9 @@ parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos,
         outpos++;
         count--;
 #ifndef __KERNEL__
-        if (map->choose_tries && ftotal <= map->choose_total_tries)
+        if (map->choose_tries && ftotal <= map->choose_total_tries) {
             map->choose_tries[ftotal]++;
+        }
 #endif
     }
 
@@ -615,7 +636,7 @@ parent_r %d stable %d\n", recurse_to_leaf ? "_LEAF" : "", bucket->id, x, outpos,
 static void crush_choose_indep(const struct crush_map *map,
                                struct crush_work *work,
                                const struct crush_bucket *bucket,
-                               const __u32 * weight, int weight_max,
+                               const __u32 *weight, int weight_max,
                                int x, int left, int numrep, int type,
                                int *out, int outpos,
                                unsigned int tries,
@@ -641,8 +662,9 @@ static void crush_choose_indep(const struct crush_map *map,
     /* initially my result is undefined */
     for (rep = outpos; rep < endpos; rep++) {
         out[rep] = CRUSH_ITEM_UNDEF;
-        if (out2)
+        if (out2) {
             out2[rep] = CRUSH_ITEM_UNDEF;
+        }
     }
 
     for (ftotal = 0; left > 0 && ftotal < tries; ftotal++) {
@@ -661,8 +683,9 @@ static void crush_choose_indep(const struct crush_map *map,
         }
 #endif
         for (rep = outpos; rep < endpos; rep++) {
-            if (out[rep] != CRUSH_ITEM_UNDEF)
+            if (out[rep] != CRUSH_ITEM_UNDEF) {
                 continue;
+            }
 
             in = bucket;        /* initial bucket */
 
@@ -681,10 +704,13 @@ static void crush_choose_indep(const struct crush_map *map,
                 /* be careful */
                 if (in->alg == CRUSH_BUCKET_UNIFORM && in->size % numrep == 0)
                     /* r'=r+(n+1)*f_total */
+                {
                     r += (numrep + 1) * ftotal;
-                else
+                } else
                     /* r' = r + n*f_total */
+                {
                     r += numrep * ftotal;
+                }
 
                 /* bucket choose */
                 if (in->size == 0) {
@@ -700,17 +726,19 @@ static void crush_choose_indep(const struct crush_map *map,
                 if (item >= map->max_devices) {
                     dprintk("   bad item %d\n", item);
                     out[rep] = CRUSH_ITEM_NONE;
-                    if (out2)
+                    if (out2) {
                         out2[rep] = CRUSH_ITEM_NONE;
+                    }
                     left--;
                     break;
                 }
 
                 /* desired type? */
-                if (item < 0)
+                if (item < 0) {
                     itemtype = map->buckets[-1 - item]->type;
-                else
+                } else {
                     itemtype = 0;
+                }
                 dprintk("  item %d type %d\n", item, itemtype);
 
                 /* keep going? */
@@ -718,8 +746,9 @@ static void crush_choose_indep(const struct crush_map *map,
                     if (item >= 0 || (-1 - item) >= map->max_buckets) {
                         dprintk("   bad item type %d\n", type);
                         out[rep] = CRUSH_ITEM_NONE;
-                        if (out2)
+                        if (out2) {
                             out2[rep] = CRUSH_ITEM_NONE;
+                        }
                         left--;
                         break;
                     }
@@ -735,8 +764,9 @@ static void crush_choose_indep(const struct crush_map *map,
                         break;
                     }
                 }
-                if (collide)
+                if (collide) {
                     break;
+                }
 
                 if (recurse_to_leaf) {
                     if (item < 0) {
@@ -752,16 +782,16 @@ static void crush_choose_indep(const struct crush_map *map,
                             /* placed nothing; no leaf */
                             break;
                         }
-                    }
-                    else if (out2) {
+                    } else if (out2) {
                         /* we already have a leaf! */
                         out2[rep] = item;
                     }
                 }
 
                 /* out? */
-                if (itemtype == 0 && is_out(map, weight, weight_max, item, x))
+                if (itemtype == 0 && is_out(map, weight, weight_max, item, x)) {
                     break;
+                }
 
                 /* yay! */
                 out[rep] = item;
@@ -779,8 +809,9 @@ static void crush_choose_indep(const struct crush_map *map,
         }
     }
 #ifndef __KERNEL__
-    if (map->choose_tries && ftotal <= map->choose_total_tries)
+    if (map->choose_tries && ftotal <= map->choose_total_tries) {
         map->choose_tries[ftotal]++;
+    }
 #endif
 #ifdef DEBUG_INDEP
     if (out2) {
@@ -825,14 +856,15 @@ void crush_init_workspace(const struct crush_map *m, void *v)
     w->work = (struct crush_work_bucket **)point;
     point += m->max_buckets * sizeof(struct crush_work_bucket *);
     for (b = 0; b < m->max_buckets; ++b) {
-        if (m->buckets[b] == 0)
+        if (m->buckets[b] == 0) {
             continue;
+        }
 
         w->work[b] = (struct crush_work_bucket *)point;
         switch (m->buckets[b]->alg) {
-        default:
-            point += sizeof(struct crush_work_bucket);
-            break;
+            default:
+                point += sizeof(struct crush_work_bucket);
+                break;
         }
         w->work[b]->perm_x = 0;
         w->work[b]->perm_n = 0;
@@ -855,7 +887,7 @@ void crush_init_workspace(const struct crush_map *m, void *v)
  */
 int crush_do_rule(const struct crush_map *map,
                   int ruleno, int x, int *result, int result_max,
-                  const __u32 * weight, int weight_max,
+                  const __u32 *weight, int weight_max,
                   void *cwin, const struct crush_choose_arg *choose_args)
 {
     int result_len;
@@ -903,149 +935,158 @@ int crush_do_rule(const struct crush_map *map,
         const struct crush_rule_step *curstep = &rule->steps[step];
 
         switch (curstep->op) {
-        case CRUSH_RULE_TAKE:
-            if ((curstep->arg1 >= 0 &&
-                 curstep->arg1 < map->max_devices) ||
-                (-1 - curstep->arg1 >= 0 &&
-                 -1 - curstep->arg1 < map->max_buckets &&
-                 map->buckets[-1 - curstep->arg1])) {
-                w[0] = curstep->arg1;
-                wsize = 1;
-            }
-            else {
-                dprintk(" bad take value %d\n", curstep->arg1);
-            }
-            break;
-
-        case CRUSH_RULE_SET_CHOOSE_TRIES:
-            if (curstep->arg1 > 0)
-                choose_tries = curstep->arg1;
-            break;
-
-        case CRUSH_RULE_SET_CHOOSELEAF_TRIES:
-            if (curstep->arg1 > 0)
-                choose_leaf_tries = curstep->arg1;
-            break;
-
-        case CRUSH_RULE_SET_CHOOSE_LOCAL_TRIES:
-            if (curstep->arg1 >= 0)
-                choose_local_retries = curstep->arg1;
-            break;
-
-        case CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES:
-            if (curstep->arg1 >= 0)
-                choose_local_fallback_retries = curstep->arg1;
-            break;
-
-        case CRUSH_RULE_SET_CHOOSELEAF_VARY_R:
-            if (curstep->arg1 >= 0)
-                vary_r = curstep->arg1;
-            break;
-
-        case CRUSH_RULE_SET_CHOOSELEAF_STABLE:
-            if (curstep->arg1 >= 0)
-                stable = curstep->arg1;
-            break;
-
-        case CRUSH_RULE_CHOOSELEAF_FIRSTN:
-        case CRUSH_RULE_CHOOSE_FIRSTN:
-            firstn = 1;
-            /* fall through */
-        case CRUSH_RULE_CHOOSELEAF_INDEP:
-        case CRUSH_RULE_CHOOSE_INDEP:
-            if (wsize == 0)
+            case CRUSH_RULE_TAKE:
+                if ((curstep->arg1 >= 0 &&
+                     curstep->arg1 < map->max_devices) ||
+                    (-1 - curstep->arg1 >= 0 &&
+                     -1 - curstep->arg1 < map->max_buckets &&
+                     map->buckets[-1 - curstep->arg1])) {
+                    w[0] = curstep->arg1;
+                    wsize = 1;
+                } else {
+                    dprintk(" bad take value %d\n", curstep->arg1);
+                }
                 break;
 
-            recurse_to_leaf =
-                curstep->op ==
-                CRUSH_RULE_CHOOSELEAF_FIRSTN ||
-                curstep->op == CRUSH_RULE_CHOOSELEAF_INDEP;
+            case CRUSH_RULE_SET_CHOOSE_TRIES:
+                if (curstep->arg1 > 0) {
+                    choose_tries = curstep->arg1;
+                }
+                break;
 
-            /* reset output */
-            osize = 0;
+            case CRUSH_RULE_SET_CHOOSELEAF_TRIES:
+                if (curstep->arg1 > 0) {
+                    choose_leaf_tries = curstep->arg1;
+                }
+                break;
 
-            for (i = 0; i < wsize; i++) {
-                int bno;
-                numrep = curstep->arg1;
-                if (numrep <= 0) {
-                    numrep += result_max;
-                    if (numrep <= 0)
+            case CRUSH_RULE_SET_CHOOSE_LOCAL_TRIES:
+                if (curstep->arg1 >= 0) {
+                    choose_local_retries = curstep->arg1;
+                }
+                break;
+
+            case CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES:
+                if (curstep->arg1 >= 0) {
+                    choose_local_fallback_retries = curstep->arg1;
+                }
+                break;
+
+            case CRUSH_RULE_SET_CHOOSELEAF_VARY_R:
+                if (curstep->arg1 >= 0) {
+                    vary_r = curstep->arg1;
+                }
+                break;
+
+            case CRUSH_RULE_SET_CHOOSELEAF_STABLE:
+                if (curstep->arg1 >= 0) {
+                    stable = curstep->arg1;
+                }
+                break;
+
+            case CRUSH_RULE_CHOOSELEAF_FIRSTN:
+            case CRUSH_RULE_CHOOSE_FIRSTN:
+                firstn = 1;
+            /* fall through */
+            case CRUSH_RULE_CHOOSELEAF_INDEP:
+            case CRUSH_RULE_CHOOSE_INDEP:
+                if (wsize == 0) {
+                    break;
+                }
+
+                recurse_to_leaf =
+                    curstep->op ==
+                    CRUSH_RULE_CHOOSELEAF_FIRSTN ||
+                    curstep->op == CRUSH_RULE_CHOOSELEAF_INDEP;
+
+                /* reset output */
+                osize = 0;
+
+                for (i = 0; i < wsize; i++) {
+                    int bno;
+                    numrep = curstep->arg1;
+                    if (numrep <= 0) {
+                        numrep += result_max;
+                        if (numrep <= 0) {
+                            continue;
+                        }
+                    }
+                    j = 0;
+                    /* make sure bucket id is valid */
+                    bno = -1 - w[i];
+                    if (bno < 0 || bno >= map->max_buckets) {
+                        // w[i] is probably CRUSH_ITEM_NONE
+                        dprintk("  bad w[i] %d\n", w[i]);
                         continue;
+                    }
+                    if (firstn) {
+                        int recurse_tries;
+                        if (choose_leaf_tries) {
+                            recurse_tries = choose_leaf_tries;
+                        } else if (map->chooseleaf_descend_once) {
+                            recurse_tries = 1;
+                        } else {
+                            recurse_tries = choose_tries;
+                        }
+                        osize += crush_choose_firstn(map,
+                                                     cw,
+                                                     map->buckets[bno],
+                                                     weight, weight_max,
+                                                     x, numrep,
+                                                     curstep->arg2,
+                                                     o + osize, j,
+                                                     result_max - osize,
+                                                     choose_tries,
+                                                     recurse_tries,
+                                                     choose_local_retries,
+                                                     choose_local_fallback_retries,
+                                                     recurse_to_leaf,
+                                                     vary_r,
+                                                     stable,
+                                                     c + osize, 0, choose_args);
+                    } else {
+                        out_size = ((numrep < (result_max - osize)) ?
+                                    numrep : (result_max - osize));
+                        crush_choose_indep(map,
+                                           cw,
+                                           map->buckets[bno],
+                                           weight, weight_max,
+                                           x, out_size, numrep,
+                                           curstep->arg2,
+                                           o + osize, j,
+                                           choose_tries,
+                                           choose_leaf_tries ?
+                                           choose_leaf_tries : 1,
+                                           recurse_to_leaf,
+                                           c + osize, 0, choose_args);
+                        osize += out_size;
+                    }
                 }
-                j = 0;
-                /* make sure bucket id is valid */
-                bno = -1 - w[i];
-                if (bno < 0 || bno >= map->max_buckets) {
-                    // w[i] is probably CRUSH_ITEM_NONE
-                    dprintk("  bad w[i] %d\n", w[i]);
-                    continue;
+
+                if (recurse_to_leaf)
+                    /* copy final _leaf_ values to output set */
+                {
+                    memcpy(o, c, osize * sizeof(*o));
                 }
-                if (firstn) {
-                    int recurse_tries;
-                    if (choose_leaf_tries)
-                        recurse_tries = choose_leaf_tries;
-                    else if (map->chooseleaf_descend_once)
-                        recurse_tries = 1;
-                    else
-                        recurse_tries = choose_tries;
-                    osize += crush_choose_firstn(map,
-                                                 cw,
-                                                 map->buckets[bno],
-                                                 weight, weight_max,
-                                                 x, numrep,
-                                                 curstep->arg2,
-                                                 o + osize, j,
-                                                 result_max - osize,
-                                                 choose_tries,
-                                                 recurse_tries,
-                                                 choose_local_retries,
-                                                 choose_local_fallback_retries,
-                                                 recurse_to_leaf,
-                                                 vary_r,
-                                                 stable,
-                                                 c + osize, 0, choose_args);
+
+                /* swap o and w arrays */
+                tmp = o;
+                o = w;
+                w = tmp;
+                wsize = osize;
+                break;
+
+            case CRUSH_RULE_EMIT:
+                for (i = 0; i < wsize && result_len < result_max; i++) {
+                    result[result_len] = w[i];
+                    result_len++;
                 }
-                else {
-                    out_size = ((numrep < (result_max - osize)) ?
-                                numrep : (result_max - osize));
-                    crush_choose_indep(map,
-                                       cw,
-                                       map->buckets[bno],
-                                       weight, weight_max,
-                                       x, out_size, numrep,
-                                       curstep->arg2,
-                                       o + osize, j,
-                                       choose_tries,
-                                       choose_leaf_tries ?
-                                       choose_leaf_tries : 1,
-                                       recurse_to_leaf,
-                                       c + osize, 0, choose_args);
-                    osize += out_size;
-                }
-            }
+                wsize = 0;
+                break;
 
-            if (recurse_to_leaf)
-                /* copy final _leaf_ values to output set */
-                memcpy(o, c, osize * sizeof(*o));
-
-            /* swap o and w arrays */
-            tmp = o;
-            o = w;
-            w = tmp;
-            wsize = osize;
-            break;
-
-        case CRUSH_RULE_EMIT:
-            for (i = 0; i < wsize && result_len < result_max; i++) {
-                result[result_len] = w[i];
-                result_len++;
-            }
-            wsize = 0;
-            break;
-
-        default:
-            dprintk(" unknown op %d at step %d\n", curstep->op, step);
-            break;
+            default:
+                dprintk(" unknown op %d at step %d\n", curstep->op, step);
+                break;
         }
     }
 

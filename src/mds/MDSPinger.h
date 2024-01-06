@@ -17,13 +17,14 @@
 
 class MDSRank;
 
-class MDSPinger {
-  public:
-    MDSPinger(MDSRank * mds);
+class MDSPinger
+{
+public:
+    MDSPinger(MDSRank *mds);
 
     // send a ping message to an mds rank. initialize ping state if
     // required.
-    void send_ping(mds_rank_t rank, const entity_addrvec_t & addr);
+    void send_ping(mds_rank_t rank, const entity_addrvec_t &addr);
 
     // check if a pong response is valid. a pong reponse from an
     // mds is valid if at least one ping message was sent to the
@@ -37,8 +38,8 @@ class MDSPinger {
     // to a ping message.
     bool is_rank_lagging(mds_rank_t rank);
 
-  private:
-     using clock = ceph::coarse_mono_clock;
+private:
+    using clock = ceph::coarse_mono_clock;
     using time = ceph::coarse_mono_time;
 
     // Initial Sequence Number (ISN) of the first ping message sent
@@ -47,15 +48,15 @@ class MDSPinger {
 
     struct PingState {
         version_t last_seq = MDS_PINGER_ISN;
-         std::map < version_t, time > seq_time_map;
+        std::map < version_t, time > seq_time_map;
         time last_acked_time = clock::now();
     };
 
     MDSRank *mds;
     // drop this lock when calling ->send_message_mds() else mds might
     // deadlock
-     ceph::mutex lock = ceph::make_mutex("MDSPinger::lock");
-     std::map < mds_rank_t, PingState > ping_state_by_rank;
+    ceph::mutex lock = ceph::make_mutex("MDSPinger::lock");
+    std::map < mds_rank_t, PingState > ping_state_by_rank;
 };
 
 #endif // CEPH_MDS_PINGER_H

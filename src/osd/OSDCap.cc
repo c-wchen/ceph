@@ -27,31 +27,36 @@ using std::ostream;
 using std::string;
 using std::vector;
 
-ostream & operator<<(ostream & out, const osd_rwxa_t & p)
+ostream &operator<<(ostream &out, const osd_rwxa_t &p)
 {
-    if (p == OSD_CAP_ANY)
+    if (p == OSD_CAP_ANY) {
         return out << "*";
+    }
 
-    if (p & OSD_CAP_R)
+    if (p & OSD_CAP_R) {
         out << "r";
-    if (p & OSD_CAP_W)
+    }
+    if (p & OSD_CAP_W) {
         out << "w";
+    }
     if ((p & OSD_CAP_X) == OSD_CAP_X) {
         out << "x";
-    }
-    else {
-        if (p & OSD_CAP_CLS_R)
+    } else {
+        if (p & OSD_CAP_CLS_R) {
             out << " class-read";
-        if (p & OSD_CAP_CLS_W)
+        }
+        if (p & OSD_CAP_CLS_W) {
             out << " class-write";
+        }
     }
     return out;
 }
 
-ostream & operator<<(ostream & out, const OSDCapSpec & s)
+ostream &operator<<(ostream &out, const OSDCapSpec &s)
 {
-    if (s.allow)
+    if (s.allow) {
         return out << s.allow;
+    }
     if (s.class_name.length()) {
         out << "class '" << s.class_name << "'";
         if (!s.method_name.empty()) {
@@ -61,7 +66,7 @@ ostream & operator<<(ostream & out, const OSDCapSpec & s)
     return out;
 }
 
-ostream & operator<<(ostream & out, const OSDCapPoolNamespace & pns)
+ostream &operator<<(ostream &out, const OSDCapPoolNamespace &pns)
 {
     if (!pns.pool_name.empty()) {
         out << "pool " << pns.pool_name << " ";
@@ -70,8 +75,7 @@ ostream & operator<<(ostream & out, const OSDCapPoolNamespace & pns)
         out << "namespace ";
         if (pns.nspace->empty()) {
             out << "\"\"";
-        }
-        else {
+        } else {
             out << *pns.nspace;
         }
         out << " ";
@@ -79,14 +83,14 @@ ostream & operator<<(ostream & out, const OSDCapPoolNamespace & pns)
     return out;
 }
 
-ostream & operator<<(ostream & out, const OSDCapPoolTag & pt)
+ostream &operator<<(ostream &out, const OSDCapPoolTag &pt)
 {
     out << "app " << pt.application << " key " << pt.key << " val " << pt.value
         << " ";
     return out;
 }
 
-ostream & operator<<(ostream & out, const OSDCapMatch & m)
+ostream &operator<<(ostream &out, const OSDCapMatch &m)
 {
     if (!m.pool_namespace.pool_name.empty() || m.pool_namespace.nspace) {
         out << m.pool_namespace;
@@ -102,22 +106,23 @@ ostream & operator<<(ostream & out, const OSDCapMatch & m)
     return out;
 }
 
-ostream & operator<<(ostream & out, const OSDCapProfile & m)
+ostream &operator<<(ostream &out, const OSDCapProfile &m)
 {
     out << "profile " << m.name;
     out << m.pool_namespace;
     return out;
 }
 
-bool OSDCapPoolNamespace::is_match(const std::string & pn,
-                                   const std::string & ns) constconst
-{
-    if (!pool_name.empty()) {
+bool OSDCapPoolNamespace::is_match(const std::string &pn,
+                                   const std::string &ns) constconst {
+    if (!pool_name.empty())
+    {
         if (pool_name != pn) {
             return false;
         }
     }
-    if (nspace) {
+    if (nspace)
+    {
         if (!nspace->empty() && nspace->back() == '*' &&
             boost::starts_with(ns, nspace->substr(0, nspace->length() - 1))) {
             return true;
@@ -132,27 +137,32 @@ bool OSDCapPoolNamespace::is_match(const std::string & pn,
 
 bool OSDCapPoolNamespace::is_match_all() const const
 {
-    if (!pool_name.empty())
+    if (!pool_name.empty()) {
         return false;
-    if (nspace)
+    }
+    if (nspace) {
         return false;
+    }
     return true;
 }
 
-bool OSDCapPoolTag::is_match(const app_map_t & app_map) constconst
-{
-    if (application.empty()) {
+bool OSDCapPoolTag::is_match(const app_map_t &app_map) constconst {
+    if (application.empty())
+    {
         return true;
     }
     auto kv_map = app_map.find(application);
-    if (kv_map == app_map.end()) {
+    if (kv_map == app_map.end())
+    {
         return false;
     }
-    if (!key.compare("*") && !value.compare("*")) {
+    if (!key.compare("*") && !value.compare("*"))
+    {
         return true;
     }
-    if (!key.compare("*")) {
-      for (auto it:kv_map->second) {
+    if (!key.compare("*"))
+    {
+        for (auto it : kv_map->second) {
             if (it.second == value) {
                 return true;
             }
@@ -160,10 +170,12 @@ bool OSDCapPoolTag::is_match(const app_map_t & app_map) constconst
         return false;
     }
     auto kv_val = kv_map->second.find(key);
-    if (kv_val == kv_map->second.end()) {
+    if (kv_val == kv_map->second.end())
+    {
         return false;
     }
-    if (!value.compare("*")) {
+    if (!value.compare("*"))
+    {
         return true;
     }
     return kv_val->second == value;
@@ -174,20 +186,22 @@ bool OSDCapPoolTag::is_match_all() const const
     return application.empty();
 }
 
-bool OSDCapMatch::is_match(const string & pn, const string & ns,
-                           const OSDCapPoolTag::app_map_t & app_map,
-                           const string & object) constconst
-{
-    if (!pool_namespace.is_match(pn, ns)) {
+bool OSDCapMatch::is_match(const string &pn, const string &ns,
+                           const OSDCapPoolTag::app_map_t &app_map,
+                           const string &object) constconst {
+    if (!pool_namespace.is_match(pn, ns))
+    {
         return false;
-    }
-    else if (!pool_tag.is_match(app_map)) {
+    } else if (!pool_tag.is_match(app_map))
+    {
         return false;
     }
 
-    if (object_prefix.length()) {
-        if (object.find(object_prefix) != 0)
+    if (object_prefix.length())
+    {
+        if (object.find(object_prefix) != 0) {
             return false;
+        }
     }
     return true;
 }
@@ -196,8 +210,7 @@ bool OSDCapMatch::is_match_all() const const
 {
     if (!pool_namespace.is_match_all()) {
         return false;
-    }
-    else if (!pool_tag.is_match_all()) {
+    } else if (!pool_tag.is_match_all()) {
         return false;
     }
 
@@ -207,7 +220,7 @@ bool OSDCapMatch::is_match_all() const const
     return true;
 }
 
-ostream & operator<<(ostream & out, const OSDCapGrant & g)
+ostream &operator<<(ostream &out, const OSDCapGrant &g)
 {
     out << "grant(";
     if (g.profile.is_valid()) {
@@ -220,8 +233,7 @@ ostream & operator<<(ostream & out, const OSDCapGrant & g)
             out << *it;
         }
         out << "]";
-    }
-    else {
+    } else {
         out << g.match << g.spec;
     }
     if (g.network.size()) {
@@ -231,7 +243,7 @@ ostream & operator<<(ostream & out, const OSDCapGrant & g)
     return out;
 }
 
-void OSDCapGrant::set_network(const string & n)
+void OSDCapGrant::set_network(const string &n)
 {
     network = n;
     network_valid =::parse_network(n.c_str(), &network_parsed, &network_prefix);
@@ -241,43 +253,46 @@ bool OSDCapGrant::allow_all() const const
 {
     if (profile.is_valid()) {
         return std::any_of(profile_grants.cbegin(), profile_grants.cend(),
-                           [](const OSDCapGrant & grant) {
-                           return grant.allow_all();}
-        );
+        [](const OSDCapGrant & grant) {
+            return grant.allow_all();
+        }
+                          );
     }
 
     return (match.is_match_all() && spec.allow_all());
 }
 
-bool OSDCapGrant::is_capable(const string & pool_name,
-                             const string & ns,
+bool OSDCapGrant::is_capable(const string &pool_name,
+                             const string &ns,
                              const OSDCapPoolTag::
-                             app_map_t & application_metadata,
-                             const string & object, bool op_may_read,
+                             app_map_t &application_metadata,
+                             const string &object, bool op_may_read,
                              bool op_may_write,
                              const std::vector < OpInfo::ClassInfo > &classes,
-                             const entity_addr_t & addr,
-                             std::vector < bool > *class_allowed) constconst
-{
+                             const entity_addr_t &addr,
+                             std::vector < bool > *class_allowed) constconst {
     osd_rwxa_t allow = 0;
 
     if (network.size() &&
         (!network_valid ||
-         !network_contains(network_parsed, network_prefix, addr))) {
+         !network_contains(network_parsed, network_prefix, addr)))
+    {
         return false;
     }
 
-    if (profile.is_valid()) {
+    if (profile.is_valid())
+    {
         return std::any_of(profile_grants.cbegin(), profile_grants.cend(),
-                           [&](const OSDCapGrant & grant) {
-                           return grant.is_capable(pool_name, ns,
-                                                   application_metadata,
-                                                   object, op_may_read,
-                                                   op_may_write, classes, addr,
-                                                   class_allowed);}
-        );
-    }
-    else {
+        [&](const OSDCapGrant & grant) {
+            return grant.is_capable(pool_name, ns,
+                                    application_metadata,
+                                    object, op_may_read,
+                                    op_may_write, classes, addr,
+                                    class_allowed);
+        }
+                          );
+    } else
+    {
         if (match.is_match(pool_name, ns, application_metadata, object)) {
             allow = allow | spec.allow;
             if ((op_may_read && !(allow & OSD_CAP_R)) ||
@@ -311,9 +326,10 @@ bool OSDCapGrant::is_capable(const string & pool_name,
                     (*class_allowed)[i] = true;
                 }
                 if (!std::all_of(class_allowed->cbegin(), class_allowed->cend(),
-                                 [](bool v) {
-                                 return v;}
-                    )) {
+                [](bool v) {
+                return v;
+            }
+                            )) {
                     return false;
                 }
             }
@@ -347,9 +363,9 @@ void OSDCapGrant::expand_profile()
         profile_grants.emplace_back(OSDCapMatch(string(), "rbd_mirroring"),
                                     OSDCapSpec(osd_rwxa_t(OSD_CAP_CLS_R)));
         profile_grants.
-            emplace_back(OSDCapMatch
-                         (profile.pool_namespace.pool_name, "", "rbd_info"),
-                         OSDCapSpec("rbd", "metadata_list"));
+        emplace_back(OSDCapMatch
+                     (profile.pool_namespace.pool_name, "", "rbd_info"),
+                     OSDCapSpec("rbd", "metadata_list"));
         profile_grants.emplace_back(OSDCapMatch(profile.pool_namespace),
                                     OSDCapSpec(osd_rwxa_t
                                                (OSD_CAP_R | OSD_CAP_W |
@@ -358,24 +374,24 @@ void OSDCapGrant::expand_profile()
     if (profile.name == "rbd-read-only") {
         // RBD read-only grant
         profile_grants.
-            emplace_back(OSDCapMatch
-                         (profile.pool_namespace.pool_name, "", "rbd_info"),
-                         OSDCapSpec("rbd", "metadata_list"));
+        emplace_back(OSDCapMatch
+                     (profile.pool_namespace.pool_name, "", "rbd_info"),
+                     OSDCapSpec("rbd", "metadata_list"));
         profile_grants.emplace_back(OSDCapMatch(profile.pool_namespace),
                                     OSDCapSpec(osd_rwxa_t
                                                (OSD_CAP_R | OSD_CAP_CLS_R)));
         profile_grants.
-            emplace_back(OSDCapMatch(profile.pool_namespace, "rbd_header."),
-                         OSDCapSpec("rbd", "child_attach"));
+        emplace_back(OSDCapMatch(profile.pool_namespace, "rbd_header."),
+                     OSDCapSpec("rbd", "child_attach"));
         profile_grants.
-            emplace_back(OSDCapMatch(profile.pool_namespace, "rbd_header."),
-                         OSDCapSpec("rbd", "child_detach"));
+        emplace_back(OSDCapMatch(profile.pool_namespace, "rbd_header."),
+                     OSDCapSpec("rbd", "child_detach"));
     }
 }
 
 bool OSDCap::allow_all() const const
 {
-  for (auto & grant:grants) {
+    for (auto &grant : grants) {
         if (grant.allow_all()) {
             return true;
         }
@@ -389,15 +405,15 @@ void OSDCap::set_allow_all()
     grants.push_back(OSDCapGrant(OSDCapMatch(), OSDCapSpec(OSD_CAP_ANY)));
 }
 
-bool OSDCap::is_capable(const string & pool_name, const string & ns,
-                        const OSDCapPoolTag::app_map_t & application_metadata,
-                        const string & object,
+bool OSDCap::is_capable(const string &pool_name, const string &ns,
+                        const OSDCapPoolTag::app_map_t &application_metadata,
+                        const string &object,
                         bool op_may_read, bool op_may_write,
                         const std::vector < OpInfo::ClassInfo > &classes,
-                        const entity_addr_t & addr) const const
+                        const entity_addr_t &addr) const const
 {
     std::vector < bool > class_allowed(classes.size(), false);
-  for (auto & grant:grants) {
+    for (auto &grant : grants) {
         if (grant.is_capable(pool_name, ns, application_metadata,
                              object, op_may_read, op_may_write, classes, addr,
                              &class_allowed)) {
@@ -413,9 +429,9 @@ namespace ascii = boost::spirit::ascii;
 namespace phoenix = boost::phoenix;
 
 template < typename Iterator >
-    struct OSDCapParser:qi::grammar < Iterator, OSDCap() >
-{
-  OSDCapParser():OSDCapParser::base_type(osdcap) {
+struct OSDCapParser: qi::grammar < Iterator, OSDCap() > {
+    OSDCapParser(): OSDCapParser::base_type(osdcap)
+    {
         using qi::char_;
         using qi::int_;
         using qi::lexeme;
@@ -456,16 +472,16 @@ template < typename Iterator >
 
         match = (pooltag[_val = phoenix::construct < OSDCapMatch > (_1)] |
                  (nspace >> pooltag)[_val =
-                                     phoenix::construct < OSDCapMatch > (_1,
-                                                                         _2)] |
+                                         phoenix::construct < OSDCapMatch > (_1,
+                                             _2)] |
                  (pool_name >> nspace >> object_prefix)[_val =
-                                                        phoenix::construct <
-                                                        OSDCapMatch > (_1, _2,
-                                                                       _3)] |
+                         phoenix::construct <
+                         OSDCapMatch > (_1, _2,
+                                        _3)] |
                  (pool_name >> object_prefix)[_val =
-                                              phoenix::construct < OSDCapMatch >
-                                              (_1, _2)]
-            );
+                         phoenix::construct < OSDCapMatch >
+                         (_1, _2)]
+                );
 
         // rwxa := * | [r][w][x] [class-read] [class-write]
         rwxa =
@@ -483,19 +499,19 @@ template < typename Iterator >
         method_name %= -(spaces >> str);
         capspec = ((rwxa)[_val = phoenix::construct < OSDCapSpec > (_1)] |
                    (class_name >> method_name)[_val =
-                                               phoenix::construct < OSDCapSpec >
-                                               (_1, _2)]);
+                           phoenix::construct < OSDCapSpec >
+                           (_1, _2)]);
 
         // profile := profile <name> [pool[=]<pool> [namespace[=]<namespace>]]
         profile_name %= (lit("profile") >> (lit('=') | spaces) >> str);
         profile = ((profile_name >> pool_name >> nspace)[_val =
-                                                         phoenix::construct <
-                                                         OSDCapProfile > (_1,
-                                                                          _2,
-                                                                          _3)] |
+                       phoenix::construct <
+                       OSDCapProfile > (_1,
+                                        _2,
+                                        _3)] |
                    (profile_name >> pool_name)[_val =
-                                               phoenix::construct <
-                                               OSDCapProfile > (_1, _2)]);
+                           phoenix::construct <
+                           OSDCapProfile > (_1, _2)]);
 
         // grant := allow match capspec
         grant = (*ascii::blank >>
@@ -514,7 +530,7 @@ template < typename Iterator >
         osdcap = grants[_val = phoenix::construct < OSDCap > (_1)];
     }
     qi::rule < Iterator > spaces;
-    qi::rule < Iterator, unsigned () > rwxa;
+    qi::rule < Iterator, unsigned() > rwxa;
     qi::rule < Iterator, string() > quoted_string, equoted_string;
     qi::rule < Iterator, string() > unquoted_word;
     qi::rule < Iterator, string() > str, estr, network_str;
@@ -534,23 +550,24 @@ template < typename Iterator >
     qi::rule < Iterator, OSDCap() > osdcap;
 };
 
-bool OSDCap::parse(const string & str, ostream * err)
+bool OSDCap::parse(const string &str, ostream *err)
 {
     OSDCapParser < string::const_iterator > g;
     string::const_iterator iter = str.begin();
     string::const_iterator end = str.end();
 
     bool r = qi::phrase_parse(iter, end, g, ascii::space, *this);
-    if (r && iter == end)
+    if (r && iter == end) {
         return true;
+    }
 
     // Make sure no grants are kept after parsing failed!
     grants.clear();
 
     if (err)
         *err << "osd capability parse failed, stopped at '" << std::string(iter,
-                                                                           end)
-            << "' of '" << str << "'";
+                end)
+             << "' of '" << str << "'";
 
     return false;
 }

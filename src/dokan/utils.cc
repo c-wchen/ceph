@@ -20,11 +20,11 @@ void to_filetime(time_t t, LPFILETIME pft)
     pft->dwHighDateTime = ll >> 32;
 }
 
-void to_unix_time(FILETIME ft, time_t * t)
+void to_unix_time(FILETIME ft, time_t *t)
 {
     ULARGE_INTEGER ui;
     ui.LowPart = ft.dwLowDateTime;
     ui.HighPart = ft.dwHighDateTime;
 
-    *t = (LONGLONG) (ui.QuadPart / 10000000ULL - 11644473600ULL);
+    *t = (LONGLONG)(ui.QuadPart / 10000000ULL - 11644473600ULL);
 }

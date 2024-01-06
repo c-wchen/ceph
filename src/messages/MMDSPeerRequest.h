@@ -18,10 +18,11 @@
 #include "mds/mdstypes.h"
 #include "messages/MMDSOp.h"
 
-class MMDSPeerRequest final:public MMDSOp {
+class MMDSPeerRequest final: public MMDSOp
+{
     static constexpr int HEAD_VERSION = 1;
     static constexpr int COMPAT_VERSION = 1;
-  public:
+public:
     static constexpr int OP_XLOCK = 1;
     static constexpr int OP_XLOCKACK = -1;
     static constexpr int OP_UNXLOCK = 2;
@@ -53,44 +54,67 @@ class MMDSPeerRequest final:public MMDSOp {
     static constexpr int OP_ABORT = 20; // used for recovery only
     //static constexpr int OP_COMMIT = 21;  // used for recovery only
 
-    static const char *get_opname(int o) {
+    static const char *get_opname(int o)
+    {
         switch (o) {
-        case OP_XLOCK:
-            return "xlock";
-            case OP_XLOCKACK:return "xlock_ack";
-            case OP_UNXLOCK:return "unxlock";
-            case OP_AUTHPIN:return "authpin";
-            case OP_AUTHPINACK:return "authpin_ack";
+            case OP_XLOCK:
+                return "xlock";
+            case OP_XLOCKACK:
+                return "xlock_ack";
+            case OP_UNXLOCK:
+                return "unxlock";
+            case OP_AUTHPIN:
+                return "authpin";
+            case OP_AUTHPINACK:
+                return "authpin_ack";
 
-            case OP_LINKPREP:return "link_prep";
-            case OP_LINKPREPACK:return "link_prep_ack";
-            case OP_UNLINKPREP:return "unlink_prep";
+            case OP_LINKPREP:
+                return "link_prep";
+            case OP_LINKPREPACK:
+                return "link_prep_ack";
+            case OP_UNLINKPREP:
+                return "unlink_prep";
 
-            case OP_RENAMEPREP:return "rename_prep";
-            case OP_RENAMEPREPACK:return "rename_prep_ack";
+            case OP_RENAMEPREP:
+                return "rename_prep";
+            case OP_RENAMEPREPACK:
+                return "rename_prep_ack";
 
-            case OP_FINISH:return "finish"; // commit
-            case OP_COMMITTED:return "committed";
+            case OP_FINISH:
+                return "finish"; // commit
+            case OP_COMMITTED:
+                return "committed";
 
-            case OP_WRLOCK:return "wrlock";
-            case OP_WRLOCKACK:return "wrlock_ack";
-            case OP_UNWRLOCK:return "unwrlock";
+            case OP_WRLOCK:
+                return "wrlock";
+            case OP_WRLOCKACK:
+                return "wrlock_ack";
+            case OP_UNWRLOCK:
+                return "unwrlock";
 
-            case OP_RMDIRPREP:return "rmdir_prep";
-            case OP_RMDIRPREPACK:return "rmdir_prep_ack";
+            case OP_RMDIRPREP:
+                return "rmdir_prep";
+            case OP_RMDIRPREPACK:
+                return "rmdir_prep_ack";
 
-            case OP_DROPLOCKS:return "drop_locks";
+            case OP_DROPLOCKS:
+                return "drop_locks";
 
-            case OP_RENAMENOTIFY:return "rename_notify";
-            case OP_RENAMENOTIFYACK:return "rename_notify_ack";
+            case OP_RENAMENOTIFY:
+                return "rename_notify";
+            case OP_RENAMENOTIFYACK:
+                return "rename_notify_ack";
 
-            case OP_ABORT:return "abort";
+            case OP_ABORT:
+                return "abort";
             //case OP_COMMIT: return "commit";
 
-            default:ceph_abort();
-            return 0;
-  }} private:
-     metareqid_t reqid;
+            default:
+                ceph_abort();
+                return 0;
+        }
+    } private:
+    metareqid_t reqid;
     __u32 attempt;
     __s16 op;
     mutable __u16 flags;        /* XXX HACK for mark_interrupted */
@@ -111,7 +135,7 @@ class MMDSPeerRequest final:public MMDSOp {
     // for authpins
     std::vector < MDSCacheObjectInfo > authpins;
 
-  public:
+public:
     // for rename prep
     filepath srcdnpath;
     filepath destdnpath;
@@ -126,100 +150,134 @@ class MMDSPeerRequest final:public MMDSOp {
     ceph::buffer::list srci_snapbl;
     ceph::buffer::list desti_snapbl;
 
-  public:
-    metareqid_t get_reqid()const {
+public:
+    metareqid_t get_reqid()const
+    {
         return reqid;
-    } __u32 get_attempt() const {
+    } __u32 get_attempt() const
+    {
         return attempt;
-    } int get_op() const {
+    } int get_op() const
+    {
         return op;
-    } bool is_reply() const {
+    } bool is_reply() const
+    {
         return op < 0;
-    } int get_lock_type() const {
+    } int get_lock_type() const
+    {
         return lock_type;
-    } const MDSCacheObjectInfo & get_object_info() const {
+    } const MDSCacheObjectInfo &get_object_info() const
+    {
         return object_info;
-    } MDSCacheObjectInfo & get_object_info() {
+    } MDSCacheObjectInfo &get_object_info()
+    {
         return object_info;
     }
-    const MDSCacheObjectInfo & get_authpin_freeze() const {
+    const MDSCacheObjectInfo &get_authpin_freeze() const
+    {
         return object_info;
-    } MDSCacheObjectInfo & get_authpin_freeze() {
+    } MDSCacheObjectInfo &get_authpin_freeze()
+    {
         return object_info;
     }
 
-    const std::vector < MDSCacheObjectInfo > &get_authpins() const {
+    const std::vector < MDSCacheObjectInfo > &get_authpins() const
+    {
         return authpins;
-    } std::vector < MDSCacheObjectInfo > &get_authpins() {
+    } std::vector < MDSCacheObjectInfo > &get_authpins()
+    {
         return authpins;
     }
-    void mark_nonblocking() {
+    void mark_nonblocking()
+    {
         flags |= FLAG_NONBLOCKING;
     }
-    bool is_nonblocking() const {
+    bool is_nonblocking() const
+    {
         return (flags & FLAG_NONBLOCKING);
-    } void mark_error_wouldblock() {
+    } void mark_error_wouldblock()
+    {
         flags |= FLAG_WOULDBLOCK;
     }
-    bool is_error_wouldblock() const {
+    bool is_error_wouldblock() const
+    {
         return (flags & FLAG_WOULDBLOCK);
-    } void mark_not_journaled() {
+    } void mark_not_journaled()
+    {
         flags |= FLAG_NOTJOURNALED;
     }
-    bool is_not_journaled() const {
+    bool is_not_journaled() const
+    {
         return (flags & FLAG_NOTJOURNALED);
-    } void mark_error_rofs() {
+    } void mark_error_rofs()
+    {
         flags |= FLAG_EROFS;
     }
-    bool is_error_rofs() const {
+    bool is_error_rofs() const
+    {
         return (flags & FLAG_EROFS);
-    } bool is_abort() const {
+    } bool is_abort() const
+    {
         return (flags & FLAG_ABORT);
-    } void mark_abort() {
+    } void mark_abort()
+    {
         flags |= FLAG_ABORT;
     }
-    bool is_interrupted() const {
+    bool is_interrupted() const
+    {
         return (flags & FLAG_INTERRUPTED);
-    } void mark_interrupted() const {
+    } void mark_interrupted() const
+    {
         flags |= FLAG_INTERRUPTED;
-    } bool should_notify_blocking() const {
+    } bool should_notify_blocking() const
+    {
         return (flags & FLAG_NOTIFYBLOCKING);
-    } void mark_notify_blocking() {
+    } void mark_notify_blocking()
+    {
         flags |= FLAG_NOTIFYBLOCKING;
     }
-    void clear_notify_blocking() const {
+    void clear_notify_blocking() const
+    {
         flags &= ~FLAG_NOTIFYBLOCKING;
-    } bool is_req_blocked() const {
+    } bool is_req_blocked() const
+    {
         return (flags & FLAG_REQBLOCKED);
-    } void mark_req_blocked() {
+    } void mark_req_blocked()
+    {
         flags |= FLAG_REQBLOCKED;
     }
 
-    void set_lock_type(int t) {
+    void set_lock_type(int t)
+    {
         lock_type = t;
     }
-    const ceph::buffer::list & get_lock_data() const {
+    const ceph::buffer::list &get_lock_data() const
+    {
         return inode_export;
-    } ceph::buffer::list & get_lock_data() {
+    } ceph::buffer::list &get_lock_data()
+    {
         return inode_export;
     }
 
-  protected:
-  MMDSPeerRequest():MMDSOp {
-    MSG_MDS_PEER_REQUEST, HEAD_VERSION, COMPAT_VERSION}
+protected:
+    MMDSPeerRequest(): MMDSOp {
+        MSG_MDS_PEER_REQUEST, HEAD_VERSION, COMPAT_VERSION}
     {
     }
-  MMDSPeerRequest(metareqid_t ri, __u32 att, int o):
-    MMDSOp {
-    MSG_MDS_PEER_REQUEST, HEAD_VERSION, COMPAT_VERSION},
-        reqid(ri), attempt(att), op(o), flags(0), lock_type(0),
-        inode_export_v(0), srcdn_auth(MDS_RANK_NONE) {
+    MMDSPeerRequest(metareqid_t ri, __u32 att, int o):
+        MMDSOp {
+        MSG_MDS_PEER_REQUEST, HEAD_VERSION, COMPAT_VERSION},
+    reqid(ri), attempt(att), op(o), flags(0), lock_type(0),
+          inode_export_v(0), srcdn_auth(MDS_RANK_NONE)
+    {
     }
-    ~MMDSPeerRequest()final {
+    ~MMDSPeerRequest()final
+    {
     }
 
-  public:
-    void encode_payload(uint64_t features) override {
+public:
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(reqid, payload);
         encode(attempt, payload);
@@ -240,7 +298,8 @@ class MMDSPeerRequest final:public MMDSOp {
         encode(desti_snapbl, payload);
         encode(alternate_name, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(reqid, p);
@@ -263,17 +322,19 @@ class MMDSPeerRequest final:public MMDSOp {
         decode(alternate_name, p);
     }
 
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "peer_request";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "peer_request(" << reqid
             << "." << attempt << " " << get_opname(op)
-        << ")";
-  } private:
-     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+            << ")";
+    } private:
     template < class T, typename ... Args >
-        friend MURef < T > crimson::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    template < class T, typename ... Args >
+    friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

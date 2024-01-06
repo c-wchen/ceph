@@ -20,26 +20,30 @@
 
 #include "../LogEvent.h"
 
-class EPurged:public LogEvent {
-  public:
-    EPurged():LogEvent(EVENT_PURGED) {
+class EPurged: public LogEvent
+{
+public:
+    EPurged(): LogEvent(EVENT_PURGED)
+    {
     } EPurged(const interval_set < inodeno_t > &_inos, LogSegment::seq_t _seq,
               version_t iv)
-    :LogEvent(EVENT_PURGED), inos(_inos), seq(_seq), inotablev(iv) {
+        : LogEvent(EVENT_PURGED), inos(_inos), seq(_seq), inotablev(iv)
+    {
     }
-    void encode(bufferlist & bl, uint64_t features) const override;
-    void decode(bufferlist::const_iterator & bl) override;
-    void dump(Formatter * f) const override;
-    void print(std::ostream & out) const override {
+    void encode(bufferlist &bl, uint64_t features) const override;
+    void decode(bufferlist::const_iterator &bl) override;
+    void dump(Formatter *f) const override;
+    void print(std::ostream &out) const override
+    {
         out << "Eurged " << inos.size() << " inos, inotable v" << inotablev;
     } void update_segment() override;
-    void replay(MDSRank * mds) override;
+    void replay(MDSRank *mds) override;
 
-  protected:
+protected:
     interval_set < inodeno_t > inos;
     LogSegment::seq_t seq;
     version_t inotablev {
-    0};
+        0};
 };
 
 WRITE_CLASS_ENCODER_FEATURES(EPurged)

@@ -14,60 +14,66 @@
 #include <list>
 #include <string>
 
-namespace ceph {
+namespace ceph
+{
 
-    class Formatter;
+class Formatter;
 
-    struct BackTrace {
-        virtual ~ BackTrace() {
-        } virtual void print(std::ostream & out) const = 0;
-        virtual void dump(Formatter * f) const = 0;
+struct BackTrace {
+    virtual ~ BackTrace()
+    {
+    } virtual void print(std::ostream &out) const = 0;
+    virtual void dump(Formatter *f) const = 0;
+};
+
+inline std::ostream &operator<<(std::ostream &out, const BackTrace &bt)
+{
+    bt.print(out);
+    return out;
+}
+
+struct ClibBackTrace: public BackTrace {
+    const static int max = 32;
+
+    int skip;
+    void *array[max] {
     };
+    size_t size;
+    char **strings;
 
-    inline std::ostream & operator<<(std::ostream & out, const BackTrace & bt) {
-        bt.print(out);
-        return out;
+    explicit ClibBackTrace(int s)
+    {
+#ifdef HAVE_EXECINFO_H
+        skip = s;
+        size = backtrace(array, max);
+        strings = backtrace_symbols(array, size);
+#else
+        skip = 0;
+        size = 0;
+        strings = nullptr;
+#endif
+    } ~ClibBackTrace()
+    {
+        free(strings);
     }
 
-    struct ClibBackTrace:public BackTrace {
-        const static int max = 32;
+    ClibBackTrace(const ClibBackTrace &other);
+    const ClibBackTrace &operator=(const ClibBackTrace &other);
 
-        int skip;
-        void *array[max] {
-        };
-        size_t size;
-        char **strings;
+    void print(std::ostream &out) const override;
+    void dump(Formatter *f) const override;
 
-        explicit ClibBackTrace(int s) {
-#ifdef HAVE_EXECINFO_H
-            skip = s;
-            size = backtrace(array, max);
-            strings = backtrace_symbols(array, size);
-#else
-            skip = 0;
-            size = 0;
-            strings = nullptr;
-#endif
-        } ~ClibBackTrace() {
-            free(strings);
-        }
+    static std::string demangle(const char *name);
+};
 
-        ClibBackTrace(const ClibBackTrace & other);
-        const ClibBackTrace & operator=(const ClibBackTrace & other);
+struct PyBackTrace: public BackTrace {
+    std::list < std::string > strings;
 
-        void print(std::ostream & out) const override;
-        void dump(Formatter * f) const override;
-
-        static std::string demangle(const char *name);
-    };
-
-    struct PyBackTrace:public BackTrace {
-        std::list < std::string > strings;
-
-        explicit PyBackTrace(std::list < std::string > &s):strings(s) {
-        } void dump(Formatter * f) const override;
-        void print(std::ostream & out) const override;
-    };
+    explicit PyBackTrace(std::list < std::string > &s): strings(s)
+    {
+    } void dump(Formatter *f) const override;
+    void print(std::ostream &out) const override;
+};
 
 }
 

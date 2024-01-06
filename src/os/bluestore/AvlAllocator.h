@@ -15,87 +15,96 @@ struct range_seg_t {
     uint64_t start;             ///< starting offset of this segment
     uint64_t end;               ///< ending offset (non-inclusive)
 
-     range_seg_t(uint64_t start, uint64_t end)
-    :start {
-    start}, end {
-    end}
+    range_seg_t(uint64_t start, uint64_t end)
+        : start {
+        start}, end {
+        end}
     {
     }
     // Tree is sorted by offset, greater offsets at the end of the tree.
     struct before_t {
         template < typename KeyLeft, typename KeyRight >
-            bool operator() (const KeyLeft & lhs, const KeyRight & rhs)const {
+        bool operator()(const KeyLeft &lhs, const KeyRight &rhs)const
+        {
             return lhs.end <= rhs.start;
-    }};
+        }
+    };
     boost::intrusive::avl_set_member_hook <> offset_hook;
 
     // Tree is sorted by size, larger sizes at the end of the tree.
     struct shorter_t {
         template < typename KeyType >
-            bool operator() (const range_seg_t & lhs,
-                             const KeyType & rhs)const {
+        bool operator()(const range_seg_t &lhs,
+                        const KeyType &rhs)const
+        {
             auto lhs_size = lhs.end - lhs.start;
             auto rhs_size = rhs.end - rhs.start;
             if (lhs_size < rhs_size) {
                 return true;
-            }
-            else if (lhs_size > rhs_size) {
+            } else if (lhs_size > rhs_size) {
                 return false;
-            }
-            else {
+            } else {
                 return lhs.start < rhs.start;
             }
         }
     };
-    inline uint64_t length() const {
+    inline uint64_t length() const
+    {
         return end - start;
     } boost::intrusive::avl_set_member_hook <> size_hook;
 };
 
-class AvlAllocator:public Allocator {
+class AvlAllocator: public Allocator
+{
     struct dispose_rs {
-        void operator() (range_seg_t * p) {
+        void operator()(range_seg_t *p)
+        {
             delete p;
-    }};
+        }
+    };
 
-  protected:
+protected:
     /*
      * ctor intended for the usage from descendant class(es) which
      * provides handling for spilled over entries
      * (when entry count >= max_entries)
      */
-    AvlAllocator(CephContext * cct, int64_t device_size, int64_t block_size,
+    AvlAllocator(CephContext *cct, int64_t device_size, int64_t block_size,
                  uint64_t max_mem, std::string_view name);
 
-  public:
-    AvlAllocator(CephContext * cct, int64_t device_size, int64_t block_size,
+public:
+    AvlAllocator(CephContext *cct, int64_t device_size, int64_t block_size,
                  std::string_view name);
     ~AvlAllocator();
-    const char *get_type() const override {
+    const char *get_type() const override
+    {
         return "avl";
     } int64_t allocate(uint64_t want,
                        uint64_t unit,
                        uint64_t max_alloc_size,
-                       int64_t hint, PExtentVector * extents) override;
+                       int64_t hint, PExtentVector *extents) override;
     void release(const interval_set < uint64_t > &release_set) override;
     uint64_t get_free() override;
     double get_fragmentation() override;
 
     void dump() override;
-    void foreach(std::function < void (uint64_t offset, uint64_t length) >
-                 notify) override;
+    void foreach (std::function < void (uint64_t offset, uint64_t length) >
+                  notify)
+    {
+        override;
+    }
     void init_add_free(uint64_t offset, uint64_t length) override;
     void init_rm_free(uint64_t offset, uint64_t length) override;
     void shutdown() override;
 
-  private:
+private:
     // pick a range by search from cursor forward
-    uint64_t _pick_block_after(uint64_t * cursor,
+    uint64_t _pick_block_after(uint64_t *cursor,
                                uint64_t size, uint64_t align);
     // pick a range with exactly the same size or larger
     uint64_t _pick_block_fits(uint64_t size, uint64_t align);
     int _allocate(uint64_t size,
-                  uint64_t unit, uint64_t * offset, uint64_t * length);
+                  uint64_t unit, uint64_t *offset, uint64_t *length);
 
     using range_tree_t =
         boost::intrusive::avl_set <
@@ -164,26 +173,28 @@ class AvlAllocator:public Allocator {
      */
     uint64_t range_count_cap = 0;
 
-    void _range_size_tree_rm(range_seg_t & r) {
+    void _range_size_tree_rm(range_seg_t &r)
+    {
         ceph_assert(num_free >= r.length());
         num_free -= r.length();
         range_size_tree.erase(r);
 
     }
-    void _range_size_tree_try_insert(range_seg_t & r) {
+    void _range_size_tree_try_insert(range_seg_t &r)
+    {
         if (_try_insert_range(r.start, r.end)) {
             range_size_tree.insert(r);
             num_free += r.length();
-        }
-        else {
+        } else {
             range_tree.erase_and_dispose(r, dispose_rs {
-                                         }
-            );
+            }
+                                        );
         }
     }
     bool _try_insert_range(uint64_t start,
                            uint64_t end,
-                           range_tree_t::iterator * insert_pos = nullptr) {
+                           range_tree_t::iterator *insert_pos = nullptr)
+    {
         bool res = !range_count_cap || range_size_tree.size() < range_count_cap;
         bool remove_lowest = false;
         if (!res) {
@@ -194,8 +205,7 @@ class AvlAllocator:public Allocator {
         }
         if (!res) {
             _spillover_range(start, end);
-        }
-        else {
+        } else {
             // NB:  we should do insertion before the following removal
             // to avoid potential iterator disposal insertion might depend on.
             if (insert_pos) {
@@ -209,59 +219,65 @@ class AvlAllocator:public Allocator {
                 _range_size_tree_rm(*r);
                 _spillover_range(r->start, r->end);
                 range_tree.erase_and_dispose(*r, dispose_rs {
-                                             }
-                );
+                }
+                                            );
             }
         }
         return res;
     }
-    virtual void _spillover_range(uint64_t start, uint64_t end) {
+    virtual void _spillover_range(uint64_t start, uint64_t end)
+    {
         // this should be overriden when range count cap is present,
         // i.e. (range_count_cap > 0)
         ceph_assert(false);
     }
-  protected:
+protected:
     // called when extent to be released/marked free
     virtual void _add_to_tree(uint64_t start, uint64_t size);
 
-  protected:
-    CephContext * cct;
+protected:
+    CephContext *cct;
     std::mutex lock;
 
-    double _get_fragmentation() const {
+    double _get_fragmentation() const
+    {
         auto free_blocks =
             p2align(num_free, (uint64_t) block_size) / block_size;
         if (free_blocks <= 1) {
             return .0;
-        } return (static_cast <
-                  double >(range_tree.size() - 1) / (free_blocks - 1));
+        }
+        return (static_cast <
+                double >(range_tree.size() - 1) / (free_blocks - 1));
     }
     void _dump() const;
     void _foreach(std::function <
                   void (uint64_t offset, uint64_t length) >) const;
 
-    uint64_t _lowest_size_available() {
+    uint64_t _lowest_size_available()
+    {
         auto rs = range_size_tree.begin();
-        return rs != range_size_tree.end()? rs->length() : 0;
+        return rs != range_size_tree.end() ? rs->length() : 0;
     }
 
     int64_t _allocate(uint64_t want,
                       uint64_t unit,
                       uint64_t max_alloc_size,
-                      int64_t hint, PExtentVector * extents);
+                      int64_t hint, PExtentVector *extents);
 
     void _release(const interval_set < uint64_t > &release_set);
-    void _release(const PExtentVector & release_set);
+    void _release(const PExtentVector &release_set);
     void _shutdown();
 
     void _process_range_removal(uint64_t start, uint64_t end,
-                                range_tree_t::iterator & rs);
+                                range_tree_t::iterator &rs);
     void _remove_from_tree(uint64_t start, uint64_t size);
     void _try_remove_from_tree(uint64_t start, uint64_t size,
                                std::function < void (uint64_t offset,
-                                                     uint64_t length,
-                                                     bool found) > cb);
+                                       uint64_t length,
+                                       bool found) > cb);
 
-    uint64_t _get_free() const {
+    uint64_t _get_free() const
+    {
         return num_free;
-}};
+    }
+};

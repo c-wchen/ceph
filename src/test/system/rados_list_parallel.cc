@@ -43,15 +43,19 @@ static int g_num_objects = 50;
 static CrossProcessSem *pool_setup_sem = NULL;
 static CrossProcessSem *modify_sem = NULL;
 
-class RadosDeleteObjectsR:public SysTestRunnable {
-  public:
+class RadosDeleteObjectsR: public SysTestRunnable
+{
+public:
     RadosDeleteObjectsR(int argc, const char **argv,
-                        const std::string & pool_name)
-    :SysTestRunnable(argc, argv), m_pool_name(pool_name) {
-    } ~RadosDeleteObjectsR() override {
+                        const std::string &pool_name)
+        : SysTestRunnable(argc, argv), m_pool_name(pool_name)
+    {
+    } ~RadosDeleteObjectsR() override
+    {
     }
 
-    int run(void) override {
+    int run(void) override
+    {
         int ret_val = 0;
         rados_t cl;
         RETURN1_IF_NONZERO(rados_create(&cl, NULL));
@@ -60,8 +64,9 @@ class RadosDeleteObjectsR:public SysTestRunnable {
         rados_conf_parse_env(cl, NULL);
         std::string log_name =
             SysTestSettings::inst().get_log_name(get_id_str());
-        if (!log_name.empty())
+        if (!log_name.empty()) {
             rados_conf_set(cl, "log_file", log_name.c_str());
+        }
         RETURN1_IF_NONZERO(rados_connect(cl));
         pool_setup_sem->wait();
         pool_setup_sem->post();
@@ -80,12 +85,14 @@ class RadosDeleteObjectsR:public SysTestRunnable {
 
         int removed = 0;
         while (true) {
-            if (to_delete.empty())
+            if (to_delete.empty()) {
                 break;
+            }
             int r = rand() % to_delete.size();
             std::map < int, std::string >::iterator d = to_delete.begin();
-            for (int i = 0; i < r; ++i)
+            for (int i = 0; i < r; ++i) {
                 ++d;
+            }
             if (d == to_delete.end()) {
                 ret_val = -EDOM;
                 goto out;
@@ -111,25 +118,29 @@ class RadosDeleteObjectsR:public SysTestRunnable {
 
         printf("%s: removed %d objects\n", get_id_str(), removed);
 
-      out:
+out:
         rados_ioctx_destroy(io_ctx);
         rados_shutdown(cl);
 
         return ret_val;
     }
-  private:
+private:
     std::string m_pool_name;
 };
 
-class RadosAddObjectsR:public SysTestRunnable {
-  public:
+class RadosAddObjectsR: public SysTestRunnable
+{
+public:
     RadosAddObjectsR(int argc, const char **argv,
-                     const std::string & pool_name, const std::string & suffix)
-    :SysTestRunnable(argc, argv), m_pool_name(pool_name), m_suffix(suffix) {
-    } ~RadosAddObjectsR() override {
+                     const std::string &pool_name, const std::string &suffix)
+        : SysTestRunnable(argc, argv), m_pool_name(pool_name), m_suffix(suffix)
+    {
+    } ~RadosAddObjectsR() override
+    {
     }
 
-    int run(void) override {
+    int run(void) override
+    {
         int ret_val = 0;
         rados_t cl;
         RETURN1_IF_NONZERO(rados_create(&cl, NULL));
@@ -138,8 +149,9 @@ class RadosAddObjectsR:public SysTestRunnable {
         rados_conf_parse_env(cl, NULL);
         std::string log_name =
             SysTestSettings::inst().get_log_name(get_id_str());
-        if (!log_name.empty())
+        if (!log_name.empty()) {
             rados_conf_set(cl, "log_file", log_name.c_str());
+        }
         RETURN1_IF_NONZERO(rados_connect(cl));
         pool_setup_sem->wait();
         pool_setup_sem->post();
@@ -158,12 +170,14 @@ class RadosAddObjectsR:public SysTestRunnable {
 
         int added = 0;
         while (true) {
-            if (to_add.empty())
+            if (to_add.empty()) {
                 break;
+            }
             int r = rand() % to_add.size();
             std::map < int, std::string >::iterator d = to_add.begin();
-            for (int i = 0; i < r; ++i)
+            for (int i = 0; i < r; ++i) {
                 ++d;
+            }
             if (d == to_add.end()) {
                 ret_val = -EDOM;
                 goto out;
@@ -192,13 +206,13 @@ class RadosAddObjectsR:public SysTestRunnable {
 
         printf("%s: added %d objects\n", get_id_str(), added);
 
-      out:
+out:
         rados_ioctx_destroy(io_ctx);
         rados_shutdown(cl);
 
         return ret_val;
     }
-  private:
+private:
     std::string m_pool_name;
     std::string m_suffix;
 };
@@ -214,8 +228,9 @@ int main(int argc, const char **argv)
     const std::string pool = get_temp_pool_name(argv[0]);
     if (num_objects) {
         g_num_objects = atoi(num_objects);
-        if (g_num_objects == 0)
+        if (g_num_objects == 0) {
             return 100;
+        }
     }
 
     RETURN1_IF_NONZERO(CrossProcessSem::create(0, &pool_setup_sem));

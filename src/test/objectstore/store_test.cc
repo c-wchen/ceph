@@ -56,32 +56,35 @@ const uint64_t DEF_STORE_TEST_BLOCKDEV_SIZE = 10240000000;
 
 bool smr = false;
 
-static bool bl_eq(bufferlist & expected, bufferlist & actual)
+static bool bl_eq(bufferlist &expected, bufferlist &actual)
 {
-    if (expected.contents_equal(actual))
+    if (expected.contents_equal(actual)) {
         return true;
+    }
 
     unsigned first = 0;
     if (expected.length() != actual.length()) {
         cout << "--- buffer lengths mismatch " << std::hex
-            << "expected 0x" << expected.length() << " != actual 0x"
-            << actual.length() << std::dec << std::endl;
+             << "expected 0x" << expected.length() << " != actual 0x"
+             << actual.length() << std::dec << std::endl;
         derr << "--- buffer lengths mismatch " << std::hex
-            << "expected 0x" << expected.length() << " != actual 0x"
-            << actual.length() << std::dec << dendl;
+             << "expected 0x" << expected.length() << " != actual 0x"
+             << actual.length() << std::dec << dendl;
     }
     auto len = std::min(expected.length(), actual.length());
-    while (first < len && expected[first] == actual[first])
+    while (first < len && expected[first] == actual[first]) {
         ++first;
+    }
     unsigned last = len;
-    while (last > 0 && expected[last - 1] == actual[last - 1])
+    while (last > 0 && expected[last - 1] == actual[last - 1]) {
         --last;
+    }
     if (len > 0) {
         cout << "--- buffer mismatch between offset 0x" << std::hex << first
-            << " and 0x" << last << ", total 0x" << len << std::dec
-            << std::endl;
+             << " and 0x" << last << ", total 0x" << len << std::dec
+             << std::endl;
         derr << "--- buffer mismatch between offset 0x" << std::hex << first
-            << " and 0x" << last << ", total 0x" << len << std::dec << dendl;
+             << " and 0x" << last << ", total 0x" << len << std::dec << dendl;
         cout << "--- expected:\n";
         expected.hexdump(cout);
         cout << "--- actual:\n";
@@ -91,30 +94,28 @@ static bool bl_eq(bufferlist & expected, bufferlist & actual)
 }
 
 template < typename T >
-    int queue_transaction(T & store,
-                          ObjectStore::CollectionHandle ch,
-                          ObjectStore::Transaction && t)
+int queue_transaction(T &store,
+                      ObjectStore::CollectionHandle ch,
+                      ObjectStore::Transaction && t)
 {
     if (rand() % 2) {
         ObjectStore::Transaction t2;
         t2.append(t);
         return store->queue_transaction(ch, std::move(t2));
-    }
-    else {
+    } else {
         return store->queue_transaction(ch, std::move(t));
     }
 }
 
 template < typename T >
-    int collection_list(T & store, ObjectStore::CollectionHandle & c,
-                        const ghobject_t & start, const ghobject_t & end,
-                        int max, vector < ghobject_t > *ls, ghobject_t * pnext,
-                        bool disable_legacy = false)
+int collection_list(T &store, ObjectStore::CollectionHandle &c,
+                    const ghobject_t &start, const ghobject_t &end,
+                    int max, vector < ghobject_t > *ls, ghobject_t *pnext,
+                    bool disable_legacy = false)
 {
     if (disable_legacy || rand() % 2) {
         return store->collection_list(c, start, end, max, ls, pnext);
-    }
-    else {
+    } else {
         return store->collection_list_legacy(c, start, end, max, ls, pnext);
     }
 }
@@ -133,60 +134,64 @@ bool sorted(const vector < ghobject_t > &in)
     return true;
 }
 
-class StoreTest:public StoreTestFixture, public::testing::WithParamInterface < const char *> {
-  public:
+class StoreTest: public StoreTestFixture, public::testing::WithParamInterface < const char *>
+{
+public:
     StoreTest()
-    :StoreTestFixture(GetParam()) {
+        : StoreTestFixture(GetParam())
+    {
     } void doCompressionTest();
     void doSyntheticTest(int num_ops,
                          uint64_t max_obj, uint64_t max_wr, uint64_t align);
 };
 
-class StoreTestDeferredSetup:public StoreTest {
-    void SetUp() override {
+class StoreTestDeferredSetup: public StoreTest
+{
+    void SetUp() override
+    {
         //do nothing
-  } protected:
-    void DeferredSetup() {
+    } protected:
+    void DeferredSetup()
+    {
         StoreTest::SetUp();
     }
 
-  public:
+public:
 };
 
-class StoreTestSpecificAUSize:public StoreTestDeferredSetup {
+class StoreTestSpecificAUSize: public StoreTestDeferredSetup
+{
 
-  public:
+public:
     typedef
-        std::function < void (uint64_t num_ops,
-                              uint64_t max_obj,
-                              uint64_t max_wr, uint64_t align) > MatrixTest;
+    std::function < void (uint64_t num_ops,
+                          uint64_t max_obj,
+                          uint64_t max_wr, uint64_t align) > MatrixTest;
 
-    void StartDeferred(size_t min_alloc_size) {
+    void StartDeferred(size_t min_alloc_size)
+    {
         SetVal(g_conf(), "bluestore_min_alloc_size",
                stringify(min_alloc_size).c_str());
         DeferredSetup();
-  } private:
+    } private:
     // bluestore matrix testing
     uint64_t max_write = 40 * 1024;
     uint64_t max_size = 400 * 1024;
     uint64_t alignment = 0;
     uint64_t num_ops = 10000;
 
-  protected:
-    string matrix_get(const char *k) {
+protected:
+    string matrix_get(const char *k)
+    {
         if (string(k) == "max_write") {
             return stringify(max_write);
-        }
-        else if (string(k) == "max_size") {
+        } else if (string(k) == "max_size") {
             return stringify(max_size);
-        }
-        else if (string(k) == "alignment") {
+        } else if (string(k) == "alignment") {
             return stringify(alignment);
-        }
-        else if (string(k) == "num_ops") {
+        } else if (string(k) == "num_ops") {
             return stringify(num_ops);
-        }
-        else {
+        } else {
             char *buf;
             g_conf().get_val(k, &buf, -1);
             string v = buf;
@@ -195,26 +200,24 @@ class StoreTestSpecificAUSize:public StoreTestDeferredSetup {
         }
     }
 
-    void matrix_set(const char *k, const char *v) {
+    void matrix_set(const char *k, const char *v)
+    {
         if (string(k) == "max_write") {
             max_write = atoll(v);
-        }
-        else if (string(k) == "max_size") {
+        } else if (string(k) == "max_size") {
             max_size = atoll(v);
-        }
-        else if (string(k) == "alignment") {
+        } else if (string(k) == "alignment") {
             alignment = atoll(v);
-        }
-        else if (string(k) == "num_ops") {
+        } else if (string(k) == "num_ops") {
             num_ops = atoll(v);
-        }
-        else {
+        } else {
             SetVal(g_conf(), k, v);
         }
     }
 
     void do_matrix_choose(const char *matrix[][10],
-                          int i, int pos, int num, MatrixTest fn) {
+                          int i, int pos, int num, MatrixTest fn)
+    {
         if (matrix[i][0]) {
             int count;
             for (count = 0; matrix[i][count + 1]; ++count) ;
@@ -223,21 +226,21 @@ class StoreTestSpecificAUSize:public StoreTestDeferredSetup {
                 do_matrix_choose(matrix,
                                  i + 1, pos * count + j - 1, num * count, fn);
             }
-        }
-        else {
+        } else {
             cout << "---------------------- " << (pos + 1) << " / " << num
-                << " ----------------------" << std::endl;
+                 << " ----------------------" << std::endl;
             for (unsigned k = 0; matrix[k][0]; ++k) {
                 cout << "  " << matrix[k][0] << " = " <<
-                    matrix_get(matrix[k][0])
-                    << std::endl;
+                     matrix_get(matrix[k][0])
+                     << std::endl;
             }
             g_ceph_context->_conf.apply_changes(nullptr);
             fn(num_ops, max_size, max_write, alignment);
         }
     }
 
-    void do_matrix(const char *matrix[][10], MatrixTest fn) {
+    void do_matrix(const char *matrix[][10], MatrixTest fn)
+    {
 
         if (strcmp(matrix[0][0], "bluestore_min_alloc_size") == 0) {
             int count;
@@ -249,8 +252,7 @@ class StoreTestSpecificAUSize:public StoreTestDeferredSetup {
                 StartDeferred(strtoll(matrix[0][j], NULL, 10));
                 do_matrix_choose(matrix, 1, j - 1, count, fn);
             }
-        }
-        else {
+        } else {
             StartDeferred(0);
             do_matrix_choose(matrix, 0, 0, 1, fn);
         }
@@ -258,24 +260,29 @@ class StoreTestSpecificAUSize:public StoreTestDeferredSetup {
 
 };
 
-class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
-  protected:
-    void StartDeferred() {
+class StoreTestOmapUpgrade: public StoreTestDeferredSetup
+{
+protected:
+    void StartDeferred()
+    {
         DeferredSetup();
-  } public:
+    } public:
     struct generator {
         double r = 3.6;
         double x = 0.5;
-        double operator() () {
+        double operator()()
+        {
             double v = x;
             x = r * x * (1 - x);
             return v;
-    }};
+        }
+    };
 
     std::string generate_monotonic_name(uint32_t SUM, uint32_t i, double r,
-                                        double x) {
+                                        double x)
+    {
         generator gen {
-        r, x};
+            r, x};
         //std::cout << "r=" << r << " x=" << x << std::endl;
         std::string s;
         while (SUM > 1) {
@@ -293,8 +300,7 @@ class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
                 if (i < mid_val) {
                     hi = mid - 1;
                     SUM = mid_val;
-                }
-                else {
+                } else {
                     lo = mid;
                     SUM = SUM - mid_val;
                     i = i - mid_val;
@@ -313,7 +319,8 @@ class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
         return s;
     }
 
-    std::string gen_string(size_t size, generator & gen) {
+    std::string gen_string(size_t size, generator &gen)
+    {
         std::string s;
         for (size_t i = 0; i < size; i++) {
             s.push_back('a' + ('z' - 'a' + 1) * gen());
@@ -321,7 +328,8 @@ class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
         return s;
     }
 
-    void make_omap_data(size_t object_count, int64_t poolid, coll_t cid) {
+    void make_omap_data(size_t object_count, int64_t poolid, coll_t cid)
+    {
         int r;
         ObjectStore::CollectionHandle ch = store->open_collection(cid);
         for (size_t o = 0; o < object_count; o++) {
@@ -331,7 +339,7 @@ class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
             ghobject_t hoid(hobject_t(oid, "", CEPH_NOSNAP, 0, poolid, ""));
             t.touch(cid, hoid);
             generator gen {
-            3.85 + 0.1 * o / object_count, 1 - double (o) / object_count};
+                3.85 + 0.1 * o / object_count, 1 - double (o) / object_count};
 
             map < string, bufferlist > start_set;
             size_t omap_count = 1 + gen() * 20;
@@ -356,7 +364,8 @@ class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
         }
     }
 
-    void check_omap_data(size_t object_count, int64_t poolid, coll_t cid) {
+    void check_omap_data(size_t object_count, int64_t poolid, coll_t cid)
+    {
         int r;
         ObjectStore::CollectionHandle ch = store->open_collection(cid);
 
@@ -366,7 +375,7 @@ class StoreTestOmapUpgrade:public StoreTestDeferredSetup {
                 generate_monotonic_name(object_count, o, 3.71, 0.5);
             ghobject_t hoid(hobject_t(oid, "", CEPH_NOSNAP, 0, poolid, ""));
             generator gen {
-            3.85 + 0.1 * o / object_count, 1 - double (o) / object_count};
+                3.85 + 0.1 * o / object_count, 1 - double (o) / object_count};
 
             bufferlist omap_header;
             map < string, bufferlist > omap_set;
@@ -420,8 +429,9 @@ TEST_P(StoreTest, TrivialRemount)
 
 TEST_P(StoreTest, TrivialRemountFsck)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     int r = store->umount();
     ASSERT_EQ(0, r);
     r = store->fsck(false);
@@ -504,8 +514,8 @@ TEST_P(StoreTest, IORemount)
         t.create_collection(cid, 0);
         for (int n = 1; n <= 100; ++n) {
             ghobject_t
-                hoid(hobject_t
-                     (sobject_t("Object " + stringify(n), CEPH_NOSNAP)));
+            hoid(hobject_t
+                 (sobject_t("Object " + stringify(n), CEPH_NOSNAP)));
             t.write(cid, hoid, 0, bl.length(), bl);
         }
         r = queue_transaction(store, ch, std::move(t));
@@ -517,8 +527,8 @@ TEST_P(StoreTest, IORemount)
         for (int n = 1; n <= 100; ++n) {
             ObjectStore::Transaction t;
             ghobject_t
-                hoid(hobject_t
-                     (sobject_t("Object " + stringify(n), CEPH_NOSNAP)));
+            hoid(hobject_t
+                 (sobject_t("Object " + stringify(n), CEPH_NOSNAP)));
             t.write(cid, hoid, 1, bl.length(), bl);
             r = queue_transaction(store, ch, std::move(t));
             ASSERT_EQ(r, 0);
@@ -533,8 +543,8 @@ TEST_P(StoreTest, IORemount)
         ObjectStore::Transaction t;
         for (int n = 1; n <= 100; ++n) {
             ghobject_t
-                hoid(hobject_t
-                     (sobject_t("Object " + stringify(n), CEPH_NOSNAP)));
+            hoid(hobject_t
+                 (sobject_t("Object " + stringify(n), CEPH_NOSNAP)));
             t.remove(cid, hoid);
         }
         t.remove_collection(cid);
@@ -626,8 +636,9 @@ TEST_P(StoreTest, FiemapHoles)
         ObjectStore::Transaction t;
         t.create_collection(cid, 0);
         t.touch(cid, oid);
-        for (uint64_t i = 0; i < MAX_EXTENTS; i++)
+        for (uint64_t i = 0; i < MAX_EXTENTS; i++) {
             t.write(cid, oid, SKIP_STEP * i, 3, bl);
+        }
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
     }
@@ -644,8 +655,7 @@ TEST_P(StoreTest, FiemapHoles)
         auto last = m.crbegin();
         if (m.size() == 1) {
             ASSERT_EQ(0u, last->first);
-        }
-        else if (m.size() == MAX_EXTENTS) {
+        } else if (m.size() == MAX_EXTENTS) {
             for (uint64_t i = 0; i < MAX_EXTENTS; i++) {
                 ASSERT_TRUE(m.count(SKIP_STEP * i));
             }
@@ -669,8 +679,7 @@ TEST_P(StoreTest, FiemapHoles)
             auto last = m.crbegin();
             if (m.size() == 1) {
                 ASSERT_EQ(SKIP_STEP, last->first);
-            }
-            else if (m.size() == MAX_EXTENTS - 2) {
+            } else if (m.size() == MAX_EXTENTS - 2) {
                 for (uint64_t i = 1; i < MAX_EXTENTS - 1; i++) {
                     ASSERT_TRUE(m.count(SKIP_STEP * i));
                 }
@@ -1085,8 +1094,9 @@ void StoreTest::doCompressionTest()
     }
     std::string data;
     data.resize(0x10000 * 4);
-    for (size_t i = 0; i < data.size(); i++)
+    for (size_t i = 0; i < data.size(); i++) {
         data[i] = i / 256;
+    }
     {
         ObjectStore::Transaction t;
         bufferlist bl, newdata;
@@ -1132,8 +1142,9 @@ void StoreTest::doCompressionTest()
     }
     std::string data2;
     data2.resize(0x10000 * 4 - 0x9000);
-    for (size_t i = 0; i < data2.size(); i++)
+    for (size_t i = 0; i < data2.size(); i++) {
         data2[i] = (i + 1) / 256;
+    }
     {
         ObjectStore::Transaction t;
         bufferlist bl, newdata;
@@ -1171,16 +1182,17 @@ void StoreTest::doCompressionTest()
         }
     }
     data2.resize(0x3f000);
-    for (size_t i = 0; i < data2.size(); i++)
+    for (size_t i = 0; i < data2.size(); i++) {
         data2[i] = (i + 2) / 256;
+    }
     {
         ObjectStore::Transaction t;
         bufferlist bl, newdata;
         bl.append(data2);
         t.write(cid, hoid, 0, bl.length(), bl);
         cerr <<
-            "CompressibleData partial overwrite, two extents overlapped, single one to be removed"
-            << std::endl;
+             "CompressibleData partial overwrite, two extents overlapped, single one to be removed"
+             << std::endl;
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
 
@@ -1211,16 +1223,17 @@ void StoreTest::doCompressionTest()
         }
     }
     data.resize(0x1001);
-    for (size_t i = 0; i < data.size(); i++)
+    for (size_t i = 0; i < data.size(); i++) {
         data[i] = (i + 3) / 256;
+    }
     {
         ObjectStore::Transaction t;
         bufferlist bl, newdata;
         bl.append(data);
         t.write(cid, hoid, 0x3f000 - 1, bl.length(), bl);
         cerr <<
-            "Small chunk partial overwrite, two extents overlapped, single one to be removed"
-            << std::endl;
+             "Small chunk partial overwrite, two extents overlapped, single one to be removed"
+             << std::endl;
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
 
@@ -1252,8 +1265,9 @@ void StoreTest::doCompressionTest()
     {
         data.resize(0x10000 * 6);
 
-        for (size_t i = 0; i < data.size(); i++)
+        for (size_t i = 0; i < data.size(); i++) {
             data[i] = i / 256;
+        }
         ObjectStore::Transaction t;
         bufferlist bl, newdata;
         bl.append(data);
@@ -1280,8 +1294,9 @@ void StoreTest::doCompressionTest()
 
 TEST_P(StoreTest, CompressionTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "TODO: need to adjust statfs check for smr" << std::endl;
         return;
@@ -1431,7 +1446,7 @@ TEST_P(StoreTest, SimpleObjectTest)
         ObjectStore::Transaction t;
         bufferlist bl;
         bl.append
-            ("abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234");
+        ("abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234");
         t.write(cid, hoid, 0, bl.length(), bl);
         cerr << "larger overwrite" << std::endl;
         r = queue_transaction(store, ch, std::move(t));
@@ -1446,7 +1461,7 @@ TEST_P(StoreTest, SimpleObjectTest)
     {
         bufferlist bl;
         bl.append
-            ("abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234");
+        ("abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234abcde01234012340123401234");
 
         //test: offset=len=0 mean read all data
         bufferlist in;
@@ -1520,8 +1535,9 @@ TEST_P(StoreTest, SimpleObjectTest)
 
 TEST_P(StoreTestSpecificAUSize, ReproBug41901Test)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP (smr)" << std::endl;
         return;
@@ -1618,8 +1634,9 @@ TEST_P(StoreTestSpecificAUSize, ReproBug41901Test)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreStatFSTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "TODO: fix this for smr" << std::endl;
         return;
@@ -1846,7 +1863,7 @@ TEST_P(StoreTestSpecificAUSize, BluestoreStatFSTest)
         t.write(cid, hoid, 0x20000, bl.length(), bl);
         t.write(cid, hoid, 0x30000, bl.length(), bl);
         cerr << "Overwrite compressed extent with 3 uncompressible ones" <<
-            std::endl;
+             std::endl;
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
 
@@ -2147,8 +2164,9 @@ TEST_P(StoreTestSpecificAUSize, BluestoreStatFSTest)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreFragmentedBlobTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "TODO: fix this for smr" << std::endl;
         return;
@@ -2194,14 +2212,15 @@ TEST_P(StoreTestSpecificAUSize, BluestoreFragmentedBlobTest)
     data.resize(0x10000 * 3);
     {
         ObjectStore::Transaction t;
-        for (size_t i = 0; i < data.size(); i++)
+        for (size_t i = 0; i < data.size(); i++) {
             data[i] = i / 256 + 1;
+        }
         bufferlist bl, newdata;
         bl.append(data);
         t.write(cid, hoid, 0, bl.length(), bl);
         t.zero(cid, hoid, 0x10000, 0x10000);
         cerr << "Append 3*0x10000 bytes and punch a hole 0x10000~10000" << std::
-            endl;
+             endl;
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
 
@@ -2312,8 +2331,8 @@ TEST_P(StoreTestSpecificAUSize, BluestoreFragmentedBlobTest)
         t.zero(cid, hoid, 0, 0x10000);
         t.zero(cid, hoid, 0x20000, 0x10000);
         cerr <<
-            "Rewrite an object and create two holes at the beginning and the end"
-            << std::endl;
+             "Rewrite an object and create two holes at the beginning and the end"
+             << std::endl;
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
 
@@ -2430,7 +2449,8 @@ TEST_P(StoreTest, MultiSmallWriteSameBlock)
         u.write(cid, a, 7000, 5, bl, 0);
         t.register_on_commit(&c);
         vector < ObjectStore::Transaction > v = {
-        t, u};
+            t, u
+        };
         store->queue_transactions(ch, v);
     }
     {
@@ -2443,7 +2463,8 @@ TEST_P(StoreTest, MultiSmallWriteSameBlock)
         u.write(cid, a, 11000, 5, bl, 0);
         t.register_on_commit(&d);
         vector < ObjectStore::Transaction > v = {
-        t, u};
+            t, u
+        };
         store->queue_transactions(ch, v);
     }
     c.wait();
@@ -2496,10 +2517,12 @@ TEST_P(StoreTest, SmallSkipFront)
     {
         bufferlist bl;
         ASSERT_EQ(8192, store->read(ch, a, 0, 8192, bl));
-        for (unsigned i = 0; i < 4096; ++i)
+        for (unsigned i = 0; i < 4096; ++i) {
             ASSERT_EQ(0, bl[i]);
-        for (unsigned i = 4096; i < 8192; ++i)
+        }
+        for (unsigned i = 4096; i < 8192; ++i) {
             ASSERT_EQ(1, bl[i]);
+        }
     }
     {
         ObjectStore::Transaction t;
@@ -3080,8 +3103,7 @@ TEST_P(StoreTest, SimpleListTest)
                  p != objects.end(); ++p) {
                 if (saw.count(*p)) {
                     cout << "got DUP " << *p << std::endl;
-                }
-                else {
+                } else {
                     //cout << "got new " << *p << std::endl;
                 }
                 saw.insert(*p);
@@ -3094,8 +3116,9 @@ TEST_P(StoreTest, SimpleListTest)
     }
     {
         ObjectStore::Transaction t;
-        for (set < ghobject_t >::iterator p = all.begin(); p != all.end(); ++p)
+        for (set < ghobject_t >::iterator p = all.begin(); p != all.end(); ++p) {
             t.remove(cid, *p);
+        }
         t.remove_collection(cid);
         cerr << "Cleaning" << std::endl;
         r = queue_transaction(store, ch, std::move(t));
@@ -3140,14 +3163,15 @@ TEST_P(StoreTest, ListEndTest)
         int r =
             collection_list(store, ch, ghobject_t(), end, 500, &objects, &next);
         ASSERT_EQ(r, 0);
-      for (auto & p:objects) {
+        for (auto &p : objects) {
             ASSERT_NE(p, end);
         }
     }
     {
         ObjectStore::Transaction t;
-        for (set < ghobject_t >::iterator p = all.begin(); p != all.end(); ++p)
+        for (set < ghobject_t >::iterator p = all.begin(); p != all.end(); ++p) {
             t.remove(cid, *p);
+        }
         t.remove_collection(cid);
         cerr << "Cleaning" << std::endl;
         r = queue_transaction(store, ch, std::move(t));
@@ -3261,10 +3285,11 @@ TEST_P(StoreTest, MultipoolListTest)
             string name("object_");
             name += stringify(i);
             ghobject_t hoid(hobject_t(sobject_t(name, CEPH_NOSNAP)));
-            if (rand() & 1)
+            if (rand() & 1) {
                 hoid.hobj.pool = -2 - poolid;
-            else
+            } else {
                 hoid.hobj.pool = poolid;
+            }
             all.insert(hoid);
             t.touch(cid, hoid);
             cerr << "Creating object " << hoid << std::endl;
@@ -3292,8 +3317,9 @@ TEST_P(StoreTest, MultipoolListTest)
     }
     {
         ObjectStore::Transaction t;
-        for (set < ghobject_t >::iterator p = all.begin(); p != all.end(); ++p)
+        for (set < ghobject_t >::iterator p = all.begin(); p != all.end(); ++p) {
             t.remove(cid, *p);
+        }
         t.remove_collection(cid);
         cerr << "Cleaning" << std::endl;
         r = queue_transaction(store, ch, std::move(t));
@@ -3816,8 +3842,9 @@ TEST_P(StoreTest, SimpleCloneRangeTest)
 #if defined(WITH_BLUESTORE)
 TEST_P(StoreTest, BlueStoreUnshareBlobTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: non-deterministic behavior with smr" << std::endl;
         return;
@@ -3915,8 +3942,9 @@ TEST_P(StoreTest, BlueStoreUnshareBlobTest)
 
 TEST_P(StoreTest, BlueStoreUnshareBlobBugTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     int r;
     coll_t cid;
     auto ch = store->create_new_collection(cid);
@@ -4019,10 +4047,10 @@ TEST_P(StoreTest, SimpleObjectLongnameTest)
         ASSERT_EQ(r, 0);
     }
     ghobject_t
-        hoid(hobject_t
-             (sobject_t
-              ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaObjectaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1",
-               CEPH_NOSNAP)));
+    hoid(hobject_t
+         (sobject_t
+          ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaObjectaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1",
+           CEPH_NOSNAP)));
     {
         ObjectStore::Transaction t;
         t.touch(cid, hoid);
@@ -4044,8 +4072,9 @@ ghobject_t generate_long_name(unsigned i)
 {
     stringstream name;
     name << "object id " << i << " ";
-    for (unsigned j = 0; j < 500; ++j)
+    for (unsigned j = 0; j < 500; ++j) {
         name << 'a';
+    }
     ghobject_t hoid(hobject_t(sobject_t(name.str(), CEPH_NOSNAP)));
     hoid.hobj.set_hash(i % 2);
     return hoid;
@@ -4108,8 +4137,9 @@ TEST_P(StoreTest, ManyObjectTest)
     int r = 0;
     coll_t cid;
     string base = "";
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         base.append("aaaaa");
+    }
     set < ghobject_t > created;
     auto ch = store->create_new_collection(cid);
     {
@@ -4204,18 +4234,24 @@ TEST_P(StoreTest, ManyObjectTest)
     }
 }
 
-class ObjectGenerator {
-  public:
-    virtual ghobject_t create_object(gen_type * gen) = 0;
-    virtual ~ ObjectGenerator() {
-}};
+class ObjectGenerator
+{
+public:
+    virtual ghobject_t create_object(gen_type *gen) = 0;
+    virtual ~ ObjectGenerator()
+    {
+    }
+};
 
-class MixedGenerator:public ObjectGenerator {
-  public:
+class MixedGenerator: public ObjectGenerator
+{
+public:
     unsigned seq;
     int64_t poolid;
-    explicit MixedGenerator(int64_t p):seq(0), poolid(p) {
-    } ghobject_t create_object(gen_type * gen) override {
+    explicit MixedGenerator(int64_t p): seq(0), poolid(p)
+    {
+    } ghobject_t create_object(gen_type *gen) override
+    {
         char buf[100];
         snprintf(buf, sizeof(buf), "OBJ_%u", seq);
         string name(buf);
@@ -4233,12 +4269,13 @@ class MixedGenerator:public ObjectGenerator {
     }
 };
 
-class SyntheticWorkloadState {
+class SyntheticWorkloadState
+{
     struct Object {
         bufferlist data;
         map < string, bufferlist > attrs;
     };
-  public:
+public:
     static const unsigned max_in_flight = 16;
     static const unsigned max_objects = 3000;
     static const unsigned max_attr_size = 5;
@@ -4262,27 +4299,34 @@ class SyntheticWorkloadState {
 
     struct EnterExit {
         const char *msg;
-        explicit EnterExit(const char *m):msg(m) {
+        explicit EnterExit(const char *m): msg(m)
+        {
             //cout << pthread_self() << " enter " << msg << std::endl;
-        } ~EnterExit() {
+        } ~EnterExit()
+        {
             //cout << pthread_self() << " exit " << msg << std::endl;
-    }};
+        }
+    };
 
-    class C_SyntheticOnReadable:public Context {
-      public:
-        SyntheticWorkloadState * state;
+    class C_SyntheticOnReadable: public Context
+    {
+    public:
+        SyntheticWorkloadState *state;
         ghobject_t hoid;
-        C_SyntheticOnReadable(SyntheticWorkloadState * state, ghobject_t hoid)
-        :state(state), hoid(hoid) {
-        } void finish(int r) override {
+        C_SyntheticOnReadable(SyntheticWorkloadState *state, ghobject_t hoid)
+            : state(state), hoid(hoid)
+        {
+        } void finish(int r) override
+        {
             std::lock_guard locker {
-            state->lock};
+                state->lock};
             EnterExit ee("onreadable finish");
             ASSERT_TRUE(state->in_flight_objects.count(hoid));
             ASSERT_EQ(r, 0);
             state->in_flight_objects.erase(hoid);
-            if (state->contents.count(hoid))
+            if (state->contents.count(hoid)) {
                 state->available_objects.insert(hoid);
+            }
             --(state->in_flight);
             state->cond.notify_all();
 
@@ -4294,23 +4338,27 @@ class SyntheticWorkloadState {
         }
     };
 
-    class C_SyntheticOnStash:public Context {
-      public:
-        SyntheticWorkloadState * state;
+    class C_SyntheticOnStash: public Context
+    {
+    public:
+        SyntheticWorkloadState *state;
         ghobject_t oid, noid;
 
-        C_SyntheticOnStash(SyntheticWorkloadState * state,
+        C_SyntheticOnStash(SyntheticWorkloadState *state,
                            ghobject_t oid, ghobject_t noid)
-        :state(state), oid(oid), noid(noid) {
-        } void finish(int r) override {
+            : state(state), oid(oid), noid(noid)
+        {
+        } void finish(int r) override
+        {
             std::lock_guard locker {
-            state->lock};
+                state->lock};
             EnterExit ee("stash finish");
             ASSERT_TRUE(state->in_flight_objects.count(oid));
             ASSERT_EQ(r, 0);
             state->in_flight_objects.erase(oid);
-            if (state->contents.count(noid))
+            if (state->contents.count(noid)) {
                 state->available_objects.insert(noid);
+            }
             --(state->in_flight);
             bufferlist r2;
             r = state->store->read(state->ch, noid, 0,
@@ -4320,25 +4368,30 @@ class SyntheticWorkloadState {
         }
     };
 
-    class C_SyntheticOnClone:public Context {
-      public:
-        SyntheticWorkloadState * state;
+    class C_SyntheticOnClone: public Context
+    {
+    public:
+        SyntheticWorkloadState *state;
         ghobject_t oid, noid;
 
-        C_SyntheticOnClone(SyntheticWorkloadState * state,
+        C_SyntheticOnClone(SyntheticWorkloadState *state,
                            ghobject_t oid, ghobject_t noid)
-        :state(state), oid(oid), noid(noid) {
-        } void finish(int r) override {
+            : state(state), oid(oid), noid(noid)
+        {
+        } void finish(int r) override
+        {
             std::lock_guard locker {
-            state->lock};
+                state->lock};
             EnterExit ee("clone finish");
             ASSERT_TRUE(state->in_flight_objects.count(oid));
             ASSERT_EQ(r, 0);
             state->in_flight_objects.erase(oid);
-            if (state->contents.count(oid))
+            if (state->contents.count(oid)) {
                 state->available_objects.insert(oid);
-            if (state->contents.count(noid))
+            }
+            if (state->contents.count(noid)) {
                 state->available_objects.insert(noid);
+            }
             --(state->in_flight);
             bufferlist r2;
             r = state->store->read(state->ch, noid, 0,
@@ -4348,9 +4401,10 @@ class SyntheticWorkloadState {
         }
     };
 
-    static void filled_byte_array(bufferlist & bl, size_t size) {
+    static void filled_byte_array(bufferlist &bl, size_t size)
+    {
         static const char alphanum[] = "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz";
+                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz";
         if (!size) {
             return;
         }
@@ -4364,33 +4418,37 @@ class SyntheticWorkloadState {
         bl.append(bp);
     }
 
-    SyntheticWorkloadState(ObjectStore * store,
-                           ObjectGenerator * gen,
-                           gen_type * rng,
+    SyntheticWorkloadState(ObjectStore *store,
+                           ObjectGenerator *gen,
+                           gen_type *rng,
                            coll_t cid,
                            unsigned max_size,
                            unsigned max_write, unsigned alignment)
-    :cid(cid), write_alignment(alignment), max_object_len(max_size),
-        max_write_len(max_write), in_flight(0),
-        next_available_object(available_objects.end()),
-        object_gen(gen), rng(rng), store(store) {
+        : cid(cid), write_alignment(alignment), max_object_len(max_size),
+          max_write_len(max_write), in_flight(0),
+          next_available_object(available_objects.end()),
+          object_gen(gen), rng(rng), store(store)
+    {
     }
 
-    int init() {
+    int init()
+    {
         ObjectStore::Transaction t;
         ch = store->create_new_collection(cid);
         t.create_collection(cid, 0);
         return queue_transaction(store, ch, std::move(t));
     }
-    void shutdown() {
+    void shutdown()
+    {
         ghobject_t next;
         while (1) {
             vector < ghobject_t > objects;
             int r = collection_list(store, ch, next, ghobject_t::get_max(), 10,
                                     &objects, &next);
             ceph_assert(r >= 0);
-            if (objects.size() == 0)
+            if (objects.size() == 0) {
                 break;
+            }
             ObjectStore::Transaction t;
             std::map < std::string, ceph::buffer::list > attrset;
             for (vector < ghobject_t >::iterator p = objects.begin();
@@ -4403,16 +4461,19 @@ class SyntheticWorkloadState {
         t.remove_collection(cid);
         queue_transaction(store, ch, std::move(t));
     }
-    void statfs(store_statfs_t & stat) {
+    void statfs(store_statfs_t &stat)
+    {
         store->statfs(&stat);
     }
 
     ghobject_t get_uniform_random_object(std::unique_lock < ceph::mutex >
-                                         &locker) {
-        cond.wait(locker,[this] {
-                  return in_flight < max_in_flight
-                  && !available_objects.empty();}
-        );
+                                         &locker)
+    {
+        cond.wait(locker, [this] {
+            return in_flight < max_in_flight
+            && !available_objects.empty();
+        }
+                 );
         boost::uniform_int <> choose(0, available_objects.size() - 1);
         int index = choose(*rng);
         set < ghobject_t >::iterator i = available_objects.begin();
@@ -4421,11 +4482,13 @@ class SyntheticWorkloadState {
         return ret;
     }
 
-    ghobject_t get_next_object(std::unique_lock < ceph::mutex > &locker) {
-        cond.wait(locker,[this] {
-                  return in_flight < max_in_flight
-                  && !available_objects.empty();}
-        );
+    ghobject_t get_next_object(std::unique_lock < ceph::mutex > &locker)
+    {
+        cond.wait(locker, [this] {
+            return in_flight < max_in_flight
+            && !available_objects.empty();
+        }
+                 );
 
         if (next_available_object == available_objects.end()) {
             next_available_object = available_objects.begin();
@@ -4436,53 +4499,58 @@ class SyntheticWorkloadState {
         return ret;
     }
 
-    void wait_for_ready(std::unique_lock < ceph::mutex > &locker) {
-        cond.wait(locker,[this] {
-                  return in_flight < max_in_flight;
-                  }
-        );
+    void wait_for_ready(std::unique_lock < ceph::mutex > &locker)
+    {
+        cond.wait(locker, [this] {
+            return in_flight < max_in_flight;
+        }
+                 );
     }
 
-    void wait_for_done() {
+    void wait_for_done()
+    {
         std::unique_lock locker {
-        lock};
-        cond.wait(locker,[this] {
-                  return in_flight == 0;
-                  }
-        );
+            lock};
+        cond.wait(locker, [this] {
+            return in_flight == 0;
+        }
+                 );
     }
 
-    bool can_create() {
+    bool can_create()
+    {
         return (available_objects.size() + in_flight_objects.size()) <
-            max_objects;
+               max_objects;
     }
 
-    bool can_unlink() {
+    bool can_unlink()
+    {
         return (available_objects.size() + in_flight_objects.size()) > 0;
     }
 
-    unsigned get_random_alloc_hints() {
+    unsigned get_random_alloc_hints()
+    {
         unsigned f = 0;
         {
             boost::uniform_int <> u(0, 3);
             switch (u(*rng)) {
-            case 1:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_SEQUENTIAL_WRITE;
-                break;
-            case 2:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_RANDOM_WRITE;
-                break;
+                case 1:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_SEQUENTIAL_WRITE;
+                    break;
+                case 2:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_RANDOM_WRITE;
+                    break;
             }
         }
         {
             boost::uniform_int <> u(0, 3);
             switch (u(*rng)) {
-            case 1:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_SEQUENTIAL_READ;
-                break;
-            case 2:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_RANDOM_READ;
-                break;
+                case 1:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_SEQUENTIAL_READ;
+                    break;
+                case 2:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_RANDOM_READ;
+                    break;
             }
         }
         {
@@ -4493,34 +4561,36 @@ class SyntheticWorkloadState {
         {
             boost::uniform_int <> u(0, 3);
             switch (u(*rng)) {
-            case 1:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_SHORTLIVED;
-                break;
-            case 2:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_LONGLIVED;
-                break;
+                case 1:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_SHORTLIVED;
+                    break;
+                case 2:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_LONGLIVED;
+                    break;
             }
         }
         {
             boost::uniform_int <> u(0, 3);
             switch (u(*rng)) {
-            case 1:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_COMPRESSIBLE;
-                break;
-            case 2:
-                f |= CEPH_OSD_ALLOC_HINT_FLAG_INCOMPRESSIBLE;
-                break;
+                case 1:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_COMPRESSIBLE;
+                    break;
+                case 2:
+                    f |= CEPH_OSD_ALLOC_HINT_FLAG_INCOMPRESSIBLE;
+                    break;
             }
         }
         return f;
     }
 
-    int touch() {
+    int touch()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("touch");
-        if (!can_create())
+        if (!can_create()) {
             return -ENOSPC;
+        }
         wait_for_ready(locker);
         ghobject_t new_obj = object_gen->create_object(rng);
         available_objects.erase(new_obj);
@@ -4533,21 +4603,25 @@ class SyntheticWorkloadState {
                          1ull << v(*rng), get_random_alloc_hints());
         ++in_flight;
         in_flight_objects.insert(new_obj);
-        if (!contents.count(new_obj))
+        if (!contents.count(new_obj)) {
             contents[new_obj] = Object();
+        }
         t.register_on_applied(new C_SyntheticOnReadable(this, new_obj));
         int status = store->queue_transaction(ch, std::move(t));
         return status;
     }
 
-    int stash() {
+    int stash()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("stash");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
-        if (!can_create())
+        }
+        if (!can_create()) {
             return -ENOSPC;
+        }
         wait_for_ready(locker);
 
         ghobject_t old_obj;
@@ -4573,14 +4647,17 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    int clone() {
+    int clone()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("clone");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
-        if (!can_create())
+        }
+        if (!can_create()) {
             return -ENOSPC;
+        }
         wait_for_ready(locker);
 
         ghobject_t old_obj;
@@ -4607,14 +4684,17 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    int clone_range() {
+    int clone_range()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("clone_range");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
-        if (!can_create())
+        }
+        if (!can_create()) {
             return -ENOSPC;
+        }
         wait_for_ready(locker);
 
         ghobject_t old_obj;
@@ -4622,7 +4702,7 @@ class SyntheticWorkloadState {
         do {
             old_obj = get_uniform_random_object(locker);
         } while (--max && !contents[old_obj].data.length());
-        bufferlist & srcdata = contents[old_obj].data;
+        bufferlist &srcdata = contents[old_obj].data;
         if (srcdata.length() == 0) {
             return 0;
         }
@@ -4650,8 +4730,8 @@ class SyntheticWorkloadState {
         }
         if (0)
             cout << __func__ << " from " << srcoff << "~" << len
-                << " (size " << srcdata.length() << ") to "
-                << dstoff << "~" << len << std::endl;
+                 << " (size " << srcdata.length() << ") to "
+                 << dstoff << "~" << len << std::endl;
 
         ObjectStore::Transaction t;
         t.clone_range(cid, old_obj, new_obj, srcoff, len, dstoff);
@@ -4662,20 +4742,18 @@ class SyntheticWorkloadState {
         if (srcoff < srcdata.length()) {
             if (srcoff + len > srcdata.length()) {
                 bl.substr_of(srcdata, srcoff, srcdata.length() - srcoff);
-            }
-            else {
+            } else {
                 bl.substr_of(srcdata, srcoff, len);
             }
         }
 
-        bufferlist & dstdata = contents[new_obj].data;
+        bufferlist &dstdata = contents[new_obj].data;
         if (dstdata.length() <= dstoff) {
             if (bl.length() > 0) {
                 dstdata.append_zero(dstoff - dstdata.length());
                 dstdata.append(bl);
             }
-        }
-        else {
+        } else {
             bufferlist value;
             ceph_assert(dstdata.length() > dstoff);
             dstdata.cbegin().copy(dstoff, value);
@@ -4691,12 +4769,14 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    int write() {
+    int write()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("write");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         wait_for_ready(locker);
 
         ghobject_t new_obj = get_uniform_random_object(locker);
@@ -4715,14 +4795,13 @@ class SyntheticWorkloadState {
 
         filled_byte_array(bl, len);
 
-        bufferlist & data = contents[new_obj].data;
+        bufferlist &data = contents[new_obj].data;
         if (data.length() <= offset) {
             if (len > 0) {
                 data.append_zero(offset - data.length());
                 data.append(bl);
             }
-        }
-        else {
+        } else {
             bufferlist value;
             ceph_assert(data.length() > offset);
             data.cbegin().copy(offset, value);
@@ -4741,12 +4820,14 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    int truncate() {
+    int truncate()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("truncate");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         wait_for_ready(locker);
 
         ghobject_t obj = get_uniform_random_object(locker);
@@ -4762,11 +4843,10 @@ class SyntheticWorkloadState {
         t.truncate(cid, obj, len);
         ++in_flight;
         in_flight_objects.insert(obj);
-        bufferlist & data = contents[obj].data;
+        bufferlist &data = contents[obj].data;
         if (data.length() <= len) {
             data.append_zero(len - data.length());
-        }
-        else {
+        } else {
             bufferlist bl;
             data.cbegin().copy(len, bl);
             bl.swap(data);
@@ -4777,12 +4857,14 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    int zero() {
+    int zero()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("zero");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         wait_for_ready(locker);
 
         ghobject_t new_obj = get_uniform_random_object(locker);
@@ -4799,15 +4881,16 @@ class SyntheticWorkloadState {
         }
 
         if (len > 0) {
-            auto & data = contents[new_obj].data;
+            auto &data = contents[new_obj].data;
             if (data.length() < offset + len) {
                 data.append_zero(offset + len - data.length());
             }
             bufferlist n;
             n.substr_of(data, 0, offset);
             n.append_zero(len);
-            if (data.length() > offset + len)
+            if (data.length() > offset + len) {
                 data.cbegin(offset + len).copy(data.length() - offset - len, n);
+            }
             data.swap(n);
         }
 
@@ -4819,24 +4902,27 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    void read() {
+    void read()
+    {
         EnterExit ee("read");
         boost::uniform_int <> u1(0, max_object_len / 2);
         boost::uniform_int <> u2(0, max_object_len);
         uint64_t offset = u1(*rng);
         uint64_t len = u2(*rng);
-        if (offset > len)
+        if (offset > len) {
             swap(offset, len);
+        }
 
         ghobject_t obj;
         bufferlist expected;
         int r;
         {
             std::unique_lock locker {
-            lock};
+                lock};
             EnterExit ee("read locked");
-            if (!can_unlink())
+            if (!can_unlink()) {
                 return;
+            }
             wait_for_ready(locker);
 
             obj = get_uniform_random_object(locker);
@@ -4845,15 +4931,15 @@ class SyntheticWorkloadState {
         bufferlist bl, result;
         if (0)
             cout << " obj " << obj << " size " << expected.length()
-                << " offset " << offset << " len " << len << std::endl;
+                 << " offset " << offset << " len " << len << std::endl;
         r = store->read(ch, obj, offset, len, result);
         if (offset >= expected.length()) {
             ASSERT_EQ(r, 0);
-        }
-        else {
+        } else {
             size_t max_len = expected.length() - offset;
-            if (len > max_len)
+            if (len > max_len) {
                 len = max_len;
+            }
             ceph_assert(len == result.length());
             ASSERT_EQ(len, result.length());
             expected.cbegin(offset).copy(len, bl);
@@ -4862,12 +4948,14 @@ class SyntheticWorkloadState {
         }
     }
 
-    int setattrs() {
+    int setattrs()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("setattrs");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         wait_for_ready(locker);
 
         ghobject_t obj = get_uniform_random_object(locker);
@@ -4883,8 +4971,9 @@ class SyntheticWorkloadState {
         map < string, bufferlist, less <>> attrs;
         set < string > keys;
         for (map < string, bufferlist >::iterator it =
-             contents[obj].attrs.begin(); it != contents[obj].attrs.end(); ++it)
+                 contents[obj].attrs.begin(); it != contents[obj].attrs.end(); ++it) {
             keys.insert(it->first);
+        }
 
         while (size--) {
             bufferlist name, value;
@@ -4896,8 +4985,7 @@ class SyntheticWorkloadState {
                 attrs[*k] = value;
                 contents[obj].attrs[*k] = value;
                 keys.erase(k);
-            }
-            else {
+            } else {
                 name_len = u1(*rng);
                 filled_byte_array(name, name_len);
                 attrs[name.c_str()] = value;
@@ -4912,12 +5000,14 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    int set_fixed_attrs(size_t entries, size_t key_size, size_t val_size) {
+    int set_fixed_attrs(size_t entries, size_t key_size, size_t val_size)
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("setattrs");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         wait_for_ready(locker);
 
         ghobject_t obj = get_next_object(locker);
@@ -4942,23 +5032,26 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    void getattrs() {
+    void getattrs()
+    {
         EnterExit ee("getattrs");
         ghobject_t obj;
         map < string, bufferlist > expected;
         {
             std::unique_lock locker {
-            lock};
+                lock};
             EnterExit ee("getattrs locked");
-            if (!can_unlink())
+            if (!can_unlink()) {
                 return;
+            }
             wait_for_ready(locker);
 
             int retry = 10;
             do {
                 obj = get_uniform_random_object(locker);
-                if (!--retry)
+                if (!--retry) {
                     return;
+                }
             } while (contents[obj].attrs.empty());
             expected = contents[obj].attrs;
         }
@@ -4972,7 +5065,8 @@ class SyntheticWorkloadState {
         }
     }
 
-    void getattr() {
+    void getattr()
+    {
         EnterExit ee("getattr");
         ghobject_t obj;
         int r;
@@ -4980,17 +5074,19 @@ class SyntheticWorkloadState {
         map < string, bufferlist > expected;
         {
             std::unique_lock locker {
-            lock};
+                lock};
             EnterExit ee("getattr locked");
-            if (!can_unlink())
+            if (!can_unlink()) {
                 return;
+            }
             wait_for_ready(locker);
 
             retry = 10;
             do {
                 obj = get_uniform_random_object(locker);
-                if (!--retry)
+                if (!--retry) {
                     return;
+                }
             } while (contents[obj].attrs.empty());
             expected = contents[obj].attrs;
         }
@@ -5008,20 +5104,23 @@ class SyntheticWorkloadState {
         ASSERT_TRUE(bl_eq(it->second, bl));
     }
 
-    int rmattr() {
+    int rmattr()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("rmattr");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         wait_for_ready(locker);
 
         ghobject_t obj;
         int retry = 10;
         do {
             obj = get_uniform_random_object(locker);
-            if (!--retry)
+            if (!--retry) {
                 return 0;
+            }
         } while (contents[obj].attrs.empty());
 
         boost::uniform_int <> u(0, contents[obj].attrs.size() - 1);
@@ -5044,14 +5143,15 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    void fsck(bool deep) {
+    void fsck(bool deep)
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("fsck");
-        cond.wait(locker,[this] {
-                  return in_flight == 0;
-                  }
-        );
+        cond.wait(locker, [this] {
+            return in_flight == 0;
+        }
+                 );
         ch.reset();
         store->umount();
         int r = store->fsck(deep);
@@ -5060,14 +5160,15 @@ class SyntheticWorkloadState {
         ch = store->open_collection(cid);
     }
 
-    void scan() {
+    void scan()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("scan");
-        cond.wait(locker,[this] {
-                  return in_flight == 0;
-                  }
-        );
+        cond.wait(locker, [this] {
+            return in_flight == 0;
+        }
+                 );
         vector < ghobject_t > objects;
         set < ghobject_t > objects_set, objects_set2;
         ghobject_t next, current;
@@ -5080,8 +5181,9 @@ class SyntheticWorkloadState {
             ASSERT_TRUE(sorted(objects));
             objects_set.insert(objects.begin(), objects.end());
             objects.clear();
-            if (next.is_max())
+            if (next.is_max()) {
                 break;
+            }
             current = next;
         }
         if (objects_set.size() != available_objects.size()) {
@@ -5093,8 +5195,9 @@ class SyntheticWorkloadState {
                 }
             for (set < ghobject_t >::iterator p = available_objects.begin();
                  p != available_objects.end(); ++p)
-                if (objects_set.count(*p) == 0)
+                if (objects_set.count(*p) == 0) {
                     cerr << "- " << *p << std::endl;
+                }
             //cerr << " objects_set: " << objects_set << std::endl;
             //cerr << " available_set: " << available_objects << std::endl;
             ceph_abort_msg("badness");
@@ -5120,16 +5223,18 @@ class SyntheticWorkloadState {
         }
     }
 
-    void stat() {
+    void stat()
+    {
         EnterExit ee("stat");
         ghobject_t hoid;
         uint64_t expected;
         {
             std::unique_lock locker {
-            lock};
+                lock};
             EnterExit ee("stat lock1");
-            if (!can_unlink())
+            if (!can_unlink()) {
                 return;
+            }
             hoid = get_uniform_random_object(locker);
             in_flight_objects.insert(hoid);
             available_objects.erase(hoid);
@@ -5143,7 +5248,7 @@ class SyntheticWorkloadState {
         ASSERT_TRUE((uint64_t) buf.st_size == expected);
         {
             std::lock_guard locker {
-            lock};
+                lock};
             EnterExit ee("stat lock2");
             --in_flight;
             cond.notify_all();
@@ -5152,12 +5257,14 @@ class SyntheticWorkloadState {
         }
     }
 
-    int unlink() {
+    int unlink()
+    {
         std::unique_lock locker {
-        lock};
+            lock};
         EnterExit ee("unlink");
-        if (!can_unlink())
+        if (!can_unlink()) {
             return -ENOENT;
+        }
         ghobject_t to_remove = get_uniform_random_object(locker);
         ObjectStore::Transaction t;
         t.remove(cid, to_remove);
@@ -5170,14 +5277,15 @@ class SyntheticWorkloadState {
         return status;
     }
 
-    void print_internal_state() {
+    void print_internal_state()
+    {
         std::lock_guard locker {
-        lock};
+            lock};
         cerr << "available_objects: " << available_objects.size()
-            << " in_flight_objects: " << in_flight_objects.size()
-            << " total objects: " << in_flight_objects.size() +
-            available_objects.size()
-            << " in_flight " << in_flight << std::endl;
+             << " in_flight_objects: " << in_flight_objects.size()
+             << " total objects: " << in_flight_objects.size() +
+             available_objects.size()
+             << " in_flight " << in_flight << std::endl;
     }
 };
 
@@ -5197,8 +5305,9 @@ void StoreTest::doSyntheticTest(int num_ops,
                                     max_obj, max_wr, align);
     test_obj.init();
     for (int i = 0; i < num_ops / 10; ++i) {
-        if (!(i % 500))
+        if (!(i % 500)) {
             cerr << "seeding object " << i << std::endl;
+        }
         test_obj.touch();
     }
     for (int i = 0; i < num_ops; ++i) {
@@ -5210,38 +5319,27 @@ void StoreTest::doSyntheticTest(int num_ops,
         int val = true_false(rng);
         if (val > 998) {
             test_obj.fsck(true);
-        }
-        else if (val > 997) {
+        } else if (val > 997) {
             test_obj.fsck(false);
-        }
-        else if (val > 970) {
+        } else if (val > 970) {
             test_obj.scan();
-        }
-        else if (val > 950) {
+        } else if (val > 950) {
             test_obj.stat();
-        }
-        else if (val > 850) {
+        } else if (val > 850) {
             test_obj.zero();
-        }
-        else if (val > 800) {
+        } else if (val > 800) {
             test_obj.unlink();
-        }
-        else if (val > 550) {
+        } else if (val > 550) {
             test_obj.write();
-        }
-        else if (val > 500) {
+        } else if (val > 500) {
             test_obj.clone();
-        }
-        else if (val > 450) {
+        } else if (val > 450) {
             test_obj.clone_range();
-        }
-        else if (val > 300) {
+        } else if (val > 300) {
             test_obj.stash();
-        }
-        else if (val > 100) {
+        } else if (val > 100) {
             test_obj.read();
-        }
-        else {
+        } else {
             test_obj.truncate();
         }
     }
@@ -5257,8 +5355,9 @@ TEST_P(StoreTest, Synthetic)
 #if defined(WITH_BLUESTORE)
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixSharding)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "4096", 0},    // must be the first!
@@ -5279,8 +5378,9 @@ TEST_P(StoreTestSpecificAUSize, SyntheticMatrixSharding)
 
 TEST_P(StoreTestSpecificAUSize, ZipperPatternSharded)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     StartDeferred(4096);
 
     int r;
@@ -5323,16 +5423,19 @@ TEST_P(StoreTestSpecificAUSize, ZipperPatternSharded)
 
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCsumAlgorithm)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "65536", 0},   // must be the first!
         {"max_write", "65536", 0},
         {"max_size", "1048576", 0},
         {"alignment", "16", 0},
-        {"bluestore_csum_type", "crc32c", "crc32c_16", "crc32c_8", "xxhash32",
-         "xxhash64", "none", 0},
+        {
+            "bluestore_csum_type", "crc32c", "crc32c_16", "crc32c_8", "xxhash32",
+            "xxhash64", "none", 0
+        },
         {"bluestore_default_buffered_write", "false", 0},
         {0},
     };
@@ -5341,8 +5444,9 @@ TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCsumAlgorithm)
 
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCsumVsCompression)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "4096", "16384", 0},   //to be the first!
@@ -5362,16 +5466,19 @@ TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCsumVsCompression)
 
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCompression)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "4096", "65536", 0},   // to be the first!
         {"max_write", "1048576", 0},
         {"max_size", "4194304", 0},
         {"alignment", "65536", 0},
-        {"bluestore_compression_mode", "force", "aggressive", "passive", "none",
-         0},
+        {
+            "bluestore_compression_mode", "force", "aggressive", "passive", "none",
+            0
+        },
         {"bluestore_default_buffered_write", "false", 0},
         {"bluestore_sync_submit_transaction", "true", 0},
         {0},
@@ -5381,8 +5488,9 @@ TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCompression)
 
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCompressionAlgorithm)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "4096", "65536", 0},   // to be the first!
@@ -5399,8 +5507,9 @@ TEST_P(StoreTestSpecificAUSize, SyntheticMatrixCompressionAlgorithm)
 
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixNoCsum)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "4096", "65536", 0},   // to be the first!
@@ -5420,8 +5529,9 @@ TEST_P(StoreTestSpecificAUSize, SyntheticMatrixNoCsum)
 
 TEST_P(StoreTestSpecificAUSize, SyntheticMatrixPreferDeferred)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     const char *m[][10] = {
         {"bluestore_min_alloc_size", "4096", "65536", 0},   // to be the first!
@@ -5447,8 +5557,9 @@ TEST_P(StoreTest, AttrSynthetic)
                                     4 * 1024, 0);
     test_obj.init();
     for (int i = 0; i < 500; ++i) {
-        if (!(i % 10))
+        if (!(i % 10)) {
             cerr << "seeding object " << i << std::endl;
+        }
         test_obj.touch();
     }
     for (int i = 0; i < 1000; ++i) {
@@ -5460,26 +5571,19 @@ TEST_P(StoreTest, AttrSynthetic)
         int val = true_false(rng);
         if (val > 97) {
             test_obj.scan();
-        }
-        else if (val > 93) {
+        } else if (val > 93) {
             test_obj.stat();
-        }
-        else if (val > 75) {
+        } else if (val > 75) {
             test_obj.rmattr();
-        }
-        else if (val > 47) {
+        } else if (val > 47) {
             test_obj.setattrs();
-        }
-        else if (val > 45) {
+        } else if (val > 45) {
             test_obj.clone();
-        }
-        else if (val > 37) {
+        } else if (val > 37) {
             test_obj.stash();
-        }
-        else if (val > 30) {
+        } else if (val > 30) {
             test_obj.getattrs();
-        }
-        else {
+        } else {
             test_obj.getattr();
         }
     }
@@ -5500,8 +5604,9 @@ TEST_P(StoreTest, HashCollisionTest)
         ASSERT_EQ(r, 0);
     }
     string base = "";
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         base.append("aaaaa");
+    }
     set < ghobject_t > created;
     for (int n = 0; n < 10; ++n) {
         char nbuf[100];
@@ -5513,9 +5618,9 @@ TEST_P(StoreTest, HashCollisionTest)
                 cerr << "Object n" << n << " " << i << std::endl;
             }
             ghobject_t
-                hoid(hobject_t
-                     (string(buf) + base, string(), CEPH_NOSNAP, 0, poolid,
-                      string(nbuf)));
+            hoid(hobject_t
+                 (string(buf) + base, string(), CEPH_NOSNAP, 0, poolid,
+                  string(nbuf)));
             {
                 ObjectStore::Transaction t;
                 t.touch(cid, hoid);
@@ -5531,7 +5636,7 @@ TEST_P(StoreTest, HashCollisionTest)
     ASSERT_EQ(r, 0);
     set < ghobject_t > listed(objects.begin(), objects.end());
     cerr << "listed.size() is " << listed.
-        size() << " and created.size() is " << created.size() << std::endl;
+         size() << " and created.size() is " << created.size() << std::endl;
     ASSERT_TRUE(listed.size() == created.size());
     objects.clear();
     listed.clear();
@@ -5543,8 +5648,9 @@ TEST_P(StoreTest, HashCollisionTest)
         ASSERT_TRUE(sorted(objects));
         for (vector < ghobject_t >::iterator i = objects.begin();
              i != objects.end(); ++i) {
-            if (listed.count(*i))
+            if (listed.count(*i)) {
                 cerr << *i << " repeated" << std::endl;
+            }
             listed.insert(*i);
         }
         if (objects.size() < 50) {
@@ -5593,17 +5699,32 @@ TEST_P(StoreTest, HashCollisionSorting)
     std::map < uint32_t, std::vector < std::string >> object_names = {
         {
             121664318, { {
-            buf121664318_1}, {
-            buf121664318_2}, {
-            buf121664318_3}, {
-            buf121664318_4}, {
-        buf121664318_5}}}, {
+                    buf121664318_1
+                }, {
+                    buf121664318_2
+                }, {
+                    buf121664318_3
+                }, {
+                    buf121664318_4
+                }, {
+                    buf121664318_5
+                }
+            }
+        }, {
             121666222, { {
-            buf121666222_1}, {
-            buf121666222_2}, {
-            buf121666222_3}, {
-            buf121666222_4}, {
-    buf121666222_5}}}};
+                    buf121666222_1
+                }, {
+                    buf121666222_2
+                }, {
+                    buf121666222_3
+                }, {
+                    buf121666222_4
+                }, {
+                    buf121666222_5
+                }
+            }
+        }
+    };
 
     int64_t poolid = 111;
     coll_t cid = coll_t(spg_t(pg_t(0, poolid), shard_id_t::NO_SHARD));
@@ -5616,8 +5737,8 @@ TEST_P(StoreTest, HashCollisionSorting)
     }
 
     std::set < ghobject_t > created;
-  for (auto &[hash, names]:object_names) {
-      for (auto & name:names) {
+    for (auto &[hash, names] : object_names) {
+        for (auto &name : names) {
             ghobject_t hoid(hobject_t(sobject_t(name, CEPH_NOSNAP),
                                       string(), hash, poolid, string()));
             ASSERT_EQ(hash, hoid.hobj.get_hash());
@@ -5635,7 +5756,7 @@ TEST_P(StoreTest, HashCollisionSorting)
     ASSERT_EQ(r, 0);
     ASSERT_EQ(created.size(), objects.size());
     auto it = objects.begin();
-  for (auto & hoid:created) {
+    for (auto &hoid : created) {
         ASSERT_EQ(hoid, *it);
         it++;
     }
@@ -5652,14 +5773,13 @@ TEST_P(StoreTest, HashCollisionSorting)
             ASSERT_EQ(r, 0);
             ASSERT_EQ(created_sub.size(), objects.size());
             it = objects.begin();
-          for (auto & hoid:created_sub) {
+            for (auto &hoid : created_sub) {
                 ASSERT_EQ(hoid, *it);
                 it++;
             }
             if (j == created.end()) {
                 ASSERT_TRUE(next.is_max());
-            }
-            else {
+            } else {
                 ASSERT_EQ(*j, next);
             }
         }
@@ -5676,14 +5796,13 @@ TEST_P(StoreTest, HashCollisionSorting)
             ASSERT_EQ(r, 0);
             ASSERT_EQ(created_sub.size(), objects.size());
             it = objects.begin();
-          for (auto & hoid:created_sub) {
+            for (auto &hoid : created_sub) {
                 ASSERT_EQ(hoid, *it);
                 it++;
             }
             if (j == created.end()) {
                 ASSERT_TRUE(next.is_max());
-            }
-            else {
+            } else {
                 ASSERT_EQ(*j, next);
             }
         }
@@ -5725,17 +5844,17 @@ TEST_P(StoreTest, ScrubTest)
     // Add same hobject_t but different generation
     {
         ghobject_t
-            hoid1(hobject_t
-                  ("same-object", string(), CEPH_NOSNAP, 0, poolid, ""),
-                  ghobject_t::NO_GEN, shard_id_t(1));
+        hoid1(hobject_t
+              ("same-object", string(), CEPH_NOSNAP, 0, poolid, ""),
+              ghobject_t::NO_GEN, shard_id_t(1));
         ghobject_t
-            hoid2(hobject_t
-                  ("same-object", string(), CEPH_NOSNAP, 0, poolid, ""),
-                  (gen_t) 1, shard_id_t(1));
+        hoid2(hobject_t
+              ("same-object", string(), CEPH_NOSNAP, 0, poolid, ""),
+              (gen_t) 1, shard_id_t(1));
         ghobject_t
-            hoid3(hobject_t
-                  ("same-object", string(), CEPH_NOSNAP, 0, poolid, ""),
-                  (gen_t) 2, shard_id_t(1));
+        hoid3(hobject_t
+              ("same-object", string(), CEPH_NOSNAP, 0, poolid, ""),
+              (gen_t) 2, shard_id_t(1));
         ObjectStore::Transaction t;
         t.touch(cid, hoid1);
         t.touch(cid, hoid2);
@@ -5753,7 +5872,7 @@ TEST_P(StoreTest, ScrubTest)
     ASSERT_EQ(r, 0);
     set < ghobject_t > listed(objects.begin(), objects.end());
     cerr << "listed.size() is " << listed.
-        size() << " and created.size() is " << created.size() << std::endl;
+         size() << " and created.size() is " << created.size() << std::endl;
     ASSERT_TRUE(listed.size() == created.size());
     objects.clear();
     listed.clear();
@@ -5765,8 +5884,9 @@ TEST_P(StoreTest, ScrubTest)
         ASSERT_TRUE(sorted(objects));
         for (vector < ghobject_t >::iterator i = objects.begin();
              i != objects.end(); ++i) {
-            if (listed.count(*i))
+            if (listed.count(*i)) {
                 cerr << *i << " repeated" << std::endl;
+            }
             listed.insert(*i);
         }
         if (objects.size() < 50) {
@@ -5832,17 +5952,17 @@ TEST_P(StoreTest, OMapTest)
         for (map < string, bufferlist >::iterator j = attrs.begin();
              j != attrs.end(); ++j) {
             bool correct = cur_attrs.count(j->first)
-                && string(cur_attrs[j->first].c_str()) ==
-                string(j->second.c_str());
+                           && string(cur_attrs[j->first].c_str()) ==
+                           string(j->second.c_str());
             if (!correct) {
                 std::cout << j->
-                    first << " is present in cur_attrs " << cur_attrs.count(j->
-                                                                            first)
-                    << " times " << std::endl;
+                          first << " is present in cur_attrs " << cur_attrs.count(j->
+                                  first)
+                          << " times " << std::endl;
                 if (cur_attrs.count(j->first) > 0) {
                     std::cout << j->second.c_str() << " : " << cur_attrs[j->
-                                                                         first].
-                        c_str() << std::endl;
+                              first].
+                              c_str() << std::endl;
                 }
             }
             ASSERT_EQ(correct, true);
@@ -5875,17 +5995,17 @@ TEST_P(StoreTest, OMapTest)
         for (map < string, bufferlist >::iterator j = attrs.begin();
              j != attrs.end(); ++j) {
             bool correct = cur_attrs.count(j->first)
-                && string(cur_attrs[j->first].c_str()) ==
-                string(j->second.c_str());
+                           && string(cur_attrs[j->first].c_str()) ==
+                           string(j->second.c_str());
             if (!correct) {
                 std::cout << j->
-                    first << " is present in cur_attrs " << cur_attrs.count(j->
-                                                                            first)
-                    << " times " << std::endl;
+                          first << " is present in cur_attrs " << cur_attrs.count(j->
+                                  first)
+                          << " times " << std::endl;
                 if (cur_attrs.count(j->first) > 0) {
                     std::cout << j->second.c_str() << " : " << cur_attrs[j->
-                                                                         first].
-                        c_str() << std::endl;
+                              first].
+                              c_str() << std::endl;
                 }
             }
             ASSERT_EQ(correct, true);
@@ -6031,16 +6151,15 @@ TEST_P(StoreTest, OMapIterator)
             string key = iter->key();
             bufferlist value = iter->value();
             correct = attrs.count(key)
-                && (string(value.c_str()) == string(attrs[key].c_str()));
+                      && (string(value.c_str()) == string(attrs[key].c_str()));
             if (!correct) {
                 if (attrs.count(key) > 0) {
                     std::cout << "key " << key << "in omap , " << value.
-                        c_str() << " : " << attrs[key].c_str() << std::endl;
-                }
-                else
+                              c_str() << " : " << attrs[key].c_str() << std::endl;
+                } else
                     std::
-                        cout << "key " << key << "should not exists in omap" <<
-                        std::endl;
+                    cout << "key " << key << "should not exists in omap" <<
+                         std::endl;
             }
             ASSERT_EQ(correct, true);
         }
@@ -6070,8 +6189,8 @@ TEST_P(StoreTest, OMapIterator)
     correct = bound_key <= iter->key();
     if (!correct) {
         std::
-            cout << "lower bound, bound key is " << bound_key <<
-            " < iter key is " << iter->key() << std::endl;
+        cout << "lower bound, bound key is " << bound_key <<
+             " < iter key is " << iter->key() << std::endl;
     }
     ASSERT_EQ(correct, true);
     //upper bound
@@ -6079,8 +6198,8 @@ TEST_P(StoreTest, OMapIterator)
     correct = iter->key() > bound_key;
     if (!correct) {
         std::
-            cout << "upper bound, bound key is " << bound_key <<
-            " >= iter key is " << iter->key() << std::endl;
+        cout << "upper bound, bound key is " << bound_key <<
+             " >= iter key is " << iter->key() << std::endl;
     }
     ASSERT_EQ(correct, true);
 
@@ -6181,7 +6300,7 @@ TEST_P(StoreTest, XattrTest)
     ASSERT_EQ(r, 0);
 }
 
-void colsplittest(ObjectStore * store,
+void colsplittest(ObjectStore *store,
                   unsigned num_objects,
                   unsigned common_suffix_size, bool clones)
 {
@@ -6325,13 +6444,13 @@ TEST_P(StoreTest, ColSplitTest3)
 }
 #endif
 
-void test_merge_skewed(ObjectStore * store,
+void test_merge_skewed(ObjectStore *store,
                        unsigned base, unsigned bits,
                        unsigned anum, unsigned bnum)
 {
     cout << __func__ << " 0x" << std::hex << base << std::dec
-        << " bits " << bits
-        << " anum " << anum << " bnum " << bnum << std::endl;
+         << " bits " << bits
+         << " anum " << anum << " bnum " << bnum << std::endl;
     /*
        make merge source pgs have radically different # of objects in them,
        which should trigger different splitting in filestore, and verify that
@@ -6417,18 +6536,18 @@ void test_merge_skewed(ObjectStore * store,
         collection_list(store, cha, ghobject_t(), ghobject_t::get_max(),
                         INT_MAX, &got, 0);
         set < ghobject_t > gotset;
-      for (auto & o:got) {
+        for (auto &o : got) {
             ASSERT_TRUE(aobjects.count(o) || bobjects.count(o));
             gotset.insert(o);
         }
         // check both listing and stat-ability (different code paths!)
         struct stat st;
-      for (auto & o:aobjects) {
+        for (auto &o : aobjects) {
             ASSERT_TRUE(gotset.count(o));
             int r = store->stat(cha, o, &st, false);
             ASSERT_EQ(r, 0);
         }
-      for (auto & o:bobjects) {
+        for (auto &o : bobjects) {
             ASSERT_TRUE(gotset.count(o));
             int r = store->stat(cha, o, &st, false);
             ASSERT_EQ(r, 0);
@@ -6438,7 +6557,7 @@ void test_merge_skewed(ObjectStore * store,
     // clean up
     {
         ObjectStore::Transaction t;
-      for (auto & o:aobjects) {
+        for (auto &o : aobjects) {
             t.remove(a, o);
         }
         r = queue_transaction(store, cha, std::move(t));
@@ -6446,7 +6565,7 @@ void test_merge_skewed(ObjectStore * store,
     }
     {
         ObjectStore::Transaction t;
-      for (auto & o:bobjects) {
+        for (auto &o : bobjects) {
             t.remove(a, o);
         }
         t.remove_collection(a);
@@ -6457,8 +6576,9 @@ void test_merge_skewed(ObjectStore * store,
 
 TEST_P(StoreTest, MergeSkewed)
 {
-    if (string(GetParam()) != "filestore")
+    if (string(GetParam()) != "filestore") {
         return;
+    }
 
     // this is sufficient to exercise merges with different hashing levels
     test_merge_skewed(store.get(), 0xf, 4, 10, 10000);
@@ -6690,9 +6810,9 @@ TEST_P(StoreTest, BigRGWObjectName)
 {
     coll_t cid(spg_t(pg_t(0, 12), shard_id_t::NO_SHARD));
     ghobject_t
-        oid(hobject_t
-            ("default.4106.50_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-             "", CEPH_NOSNAP, 0x81920472, 12, ""), 15, shard_id_t::NO_SHARD);
+    oid(hobject_t
+        ("default.4106.50_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         "", CEPH_NOSNAP, 0x81920472, 12, ""), 15, shard_id_t::NO_SHARD);
     ghobject_t oid2(oid);
     oid2.generation = 17;
     ghobject_t oidhead(oid);
@@ -6818,8 +6938,9 @@ TEST_P(StoreTest, TryMoveRename)
 #if defined(WITH_BLUESTORE)
 TEST_P(StoreTest, BluestoreOnOffCSumTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     SetVal(g_conf(), "bluestore_csum_type", "crc32c");
     g_conf().apply_changes(nullptr);
 
@@ -6885,7 +7006,7 @@ TEST_P(StoreTest, BluestoreOnOffCSumTest)
         ASSERT_TRUE(bl_eq(orig, in));
     }
     {
-        //'mixed' non-overlapping writes to the same blob 
+        //'mixed' non-overlapping writes to the same blob
 
         ObjectStore::Transaction t;
         bufferlist bl, orig;
@@ -6998,31 +7119,31 @@ TEST_P(StoreTest, BluestoreOnOffCSumTest)
 }
 #endif
 
-INSTANTIATE_TEST_SUITE_P(ObjectStore, StoreTest,::testing::Values("memstore",
+INSTANTIATE_TEST_SUITE_P(ObjectStore, StoreTest, ::testing::Values("memstore",
 #if defined(WITH_BLUESTORE)
-                                                                  "bluestore",
+                         "bluestore",
 #endif
-                                                                  "kstore"));
+                         "kstore"));
 
 // Note: instantiate all stores to preserve store numbering order only
 INSTANTIATE_TEST_SUITE_P(ObjectStore,
-                         StoreTestSpecificAUSize,::testing::Values("memstore",
+                         StoreTestSpecificAUSize, ::testing::Values("memstore",
 #if defined(WITH_BLUESTORE)
-                                                                   "bluestore",
+                                 "bluestore",
 #endif
-                                                                   "kstore"));
+                                 "kstore"));
 
 // Note: instantiate all stores to preserve store numbering order only
 INSTANTIATE_TEST_SUITE_P(ObjectStore,
-                         StoreTestOmapUpgrade,::testing::Values("memstore",
+                         StoreTestOmapUpgrade, ::testing::Values("memstore",
 #if defined(WITH_BLUESTORE)
-                                                                "bluestore",
+                                 "bluestore",
 #endif
-                                                                "kstore"));
+                                 "kstore"));
 
 #if defined(WITH_BLUESTORE)
 INSTANTIATE_TEST_SUITE_P(ObjectStore,
-                         StoreTestDeferredSetup,::testing::Values("bluestore"));
+                         StoreTestDeferredSetup, ::testing::Values("bluestore"));
 #endif
 
 struct deferred_test_t {
@@ -7032,29 +7153,35 @@ struct deferred_test_t {
     uint32_t prefer_deferred_size;
 };
 
-void PrintTo(const deferred_test_t & t,::std::ostream * os)
+void PrintTo(const deferred_test_t &t, ::std::ostream *os)
 {
     *os << t.bdev_block_size << "/" << t.min_alloc_size << "/"
         << t.max_blob_size << "/" << t.prefer_deferred_size;
 }
 
-class DeferredWriteTest:public StoreTestFixture,
-    public::testing::WithParamInterface < deferred_test_t > {
-  public:
+class DeferredWriteTest: public StoreTestFixture,
+    public::testing::WithParamInterface < deferred_test_t >
+{
+public:
     DeferredWriteTest()
-    :StoreTestFixture("bluestore") {
-    } void SetUp() override {
+        : StoreTestFixture("bluestore")
+    {
+    } void SetUp() override
+    {
         //do nothing
     }
-  protected:
-    void DeferredSetup() {
+protected:
+    void DeferredSetup()
+    {
         StoreTestFixture::SetUp();
     }
-  public:
+public:
     std::vector < uint32_t > offsets = {
-    0, 3000, 4096, 20000, 32768, 65000, 65536, 80000, 128 * 1024};
+        0, 3000, 4096, 20000, 32768, 65000, 65536, 80000, 128 * 1024
+    };
     std::vector < uint32_t > lengths = {
-    1, 1000, 4096, 12000, 32768, 30000, 80000, 128 * 1024};
+        1, 1000, 4096, 12000, 32768, 30000, 80000, 128 * 1024
+    };
 };
 
 TEST_P(DeferredWriteTest, NewData)
@@ -7082,8 +7209,8 @@ TEST_P(DeferredWriteTest, NewData)
         ASSERT_EQ(r, 0);
     }
     {
-      for (auto offset:offsets) {
-          for (auto length:lengths) {
+        for (auto offset : offsets) {
+            for (auto length : lengths) {
                 std::string hname = fmt::format("test-{}-{}", offset, length);
                 ghobject_t hoid(hobject_t(hname, "", CEPH_NOSNAP, 0, -1, ""));
                 {
@@ -7092,8 +7219,9 @@ TEST_P(DeferredWriteTest, NewData)
                     r = queue_transaction(store, ch, std::move(t));
                     ASSERT_EQ(r, 0);
                 }
-                if (print)
+                if (print) {
                     std::cout << hname << std::endl;
+                }
 
                 auto w_new = logger->get(l_bluestore_write_new);
                 auto w_big_deferred =
@@ -7117,8 +7245,7 @@ TEST_P(DeferredWriteTest, NewData)
                 if (write_size < t.prefer_deferred_size) {
                     // expect no direct writes
                     ASSERT_EQ(w_new, logger->get(l_bluestore_write_new));
-                }
-                else {
+                } else {
                     // expect no deferred
                     ASSERT_EQ(w_big_deferred,
                               logger->get(l_bluestore_write_big_deferred));
@@ -7131,76 +7258,71 @@ TEST_P(DeferredWriteTest, NewData)
 }
 
 #if defined(WITH_BLUESTORE)
-INSTANTIATE_TEST_SUITE_P(BlueStore, DeferredWriteTest,::testing::Values(
-                                                                           //              bdev      alloc      blob       deferred
-                                                                           deferred_test_t {
-                                                                           4 *
-                                                                           1024,
-                                                                           4 *
-                                                                           1024,
-                                                                           16 *
-                                                                           1024,
-                                                                           32 *
-                                                                           1024}
-                                                                           ,
-                                                                           deferred_test_t
-                                                                           {
-                                                                           4 *
-                                                                           1024,
-                                                                           16 *
-                                                                           1024,
-                                                                           64 *
-                                                                           1024,
-                                                                           64 *
-                                                                           1024}
-                                                                           ,
-                                                                           deferred_test_t
-                                                                           {
-                                                                           4 *
-                                                                           1024,
-                                                                           64 *
-                                                                           1024,
-                                                                           64 *
-                                                                           1024,
-                                                                           4 *
-                                                                           1024}
-                                                                           ,
-                                                                           deferred_test_t
-                                                                           {
-                                                                           4 *
-                                                                           1024,
-                                                                           4 *
-                                                                           1024,
-                                                                           64 *
-                                                                           1024,
-                                                                           0 *
-                                                                           1024}
-                                                                           ,
-                                                                           deferred_test_t
-                                                                           {
-                                                                           4 *
-                                                                           1024,
-                                                                           16 *
-                                                                           1024,
-                                                                           32 *
-                                                                           1024,
-                                                                           32 *
-                                                                           1024}
-                                                                           ,
-                                                                           deferred_test_t
-                                                                           {
-                                                                           4 *
-                                                                           1024,
-                                                                           16 *
-                                                                           1024,
-                                                                           64 *
-                                                                           1024,
-                                                                           128 *
-                                                                           1024}
+INSTANTIATE_TEST_SUITE_P(BlueStore, DeferredWriteTest, ::testing::Values(
+                             //              bdev      alloc      blob       deferred
+deferred_test_t {
+    4 *
+    1024,
+    4 *
+    1024,
+    16 *
+    1024,
+    32 *
+    1024}
+,
+deferred_test_t {
+    4 *
+    1024,
+    16 *
+    1024,
+    64 *
+    1024,
+    64 *
+    1024}
+,
+deferred_test_t {
+    4 *
+    1024,
+    64 *
+    1024,
+    64 *
+    1024,
+    4 *
+    1024}
+,
+deferred_test_t {
+    4 *
+    1024,
+    4 *
+    1024,
+    64 *
+    1024,
+    0 *
+    1024}
+,
+deferred_test_t {
+    4 *
+    1024,
+    16 *
+    1024,
+    32 *
+    1024,
+    32 *
+    1024}
+,
+deferred_test_t {
+    4 *
+    1024,
+    16 *
+    1024,
+    64 *
+    1024,
+    128 *
+    1024}
                          ));
 #endif
 
-void doMany4KWritesTest(ObjectStore * store,
+void doMany4KWritesTest(ObjectStore *store,
                         unsigned max_objects,
                         unsigned max_ops,
                         unsigned max_object_size,
@@ -7219,8 +7341,9 @@ void doMany4KWritesTest(ObjectStore * store,
                                     max_write_size, write_alignment);
     test_obj.init();
     for (unsigned i = 0; i < max_objects; ++i) {
-        if (!(i % 500))
+        if (!(i % 500)) {
             cerr << "seeding object " << i << std::endl;
+        }
         test_obj.touch();
     }
     for (unsigned i = 0; i < max_ops; ++i) {
@@ -7247,12 +7370,13 @@ void doMany4KWritesTest(ObjectStore * store,
 
 TEST_P(StoreTestSpecificAUSize, Many4KWritesTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout <<
-            "SKIP: no deferred; assertions around res_stat.allocated don't apply"
-            << std::endl;
+             "SKIP: no deferred; assertions around res_stat.allocated don't apply"
+             << std::endl;
         return;
     }
 
@@ -7264,12 +7388,13 @@ TEST_P(StoreTestSpecificAUSize, Many4KWritesTest)
 
 TEST_P(StoreTestSpecificAUSize, Many4KWritesNoCSumTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout <<
-            "SKIP: no deferred; assertions around res_stat.allocated don't apply"
-            << std::endl;
+             "SKIP: no deferred; assertions around res_stat.allocated don't apply"
+             << std::endl;
         return;
     }
     StartDeferred(0x10000);
@@ -7282,12 +7407,13 @@ TEST_P(StoreTestSpecificAUSize, Many4KWritesNoCSumTest)
 
 TEST_P(StoreTestSpecificAUSize, TooManyBlobsTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout <<
-            "SKIP: no deferred; assertions around res_stat.allocated don't apply"
-            << std::endl;
+             "SKIP: no deferred; assertions around res_stat.allocated don't apply"
+             << std::endl;
         return;
     }
     StartDeferred(0x10000);
@@ -7296,7 +7422,7 @@ TEST_P(StoreTestSpecificAUSize, TooManyBlobsTest)
 }
 
 #if defined(WITH_BLUESTORE)
-void get_mempool_stats(uint64_t * total_bytes, uint64_t * total_items)
+void get_mempool_stats(uint64_t *total_bytes, uint64_t *total_items)
 {
     uint64_t meta_allocated = mempool::bluestore_cache_meta::allocated_bytes();
     uint64_t onode_allocated =
@@ -7308,9 +7434,9 @@ void get_mempool_stats(uint64_t * total_bytes, uint64_t * total_items)
     uint64_t onode_items = mempool::bluestore_cache_onode::allocated_items();
     uint64_t other_items = mempool::bluestore_cache_other::allocated_items();
     cout << "meta(" << meta_allocated << "/" << meta_items
-        << ") onode(" << onode_allocated << "/" << onode_items
-        << ") other(" << other_allocated << "/" << other_items
-        << ")" << std::endl;
+         << ") onode(" << onode_allocated << "/" << onode_items
+         << ") other(" << other_allocated << "/" << other_items
+         << ")" << std::endl;
     *total_bytes = meta_allocated + onode_allocated + other_allocated;
     *total_items = onode_items;
 }
@@ -7318,8 +7444,9 @@ void get_mempool_stats(uint64_t * total_bytes, uint64_t * total_items)
 TEST_P(StoreTestSpecificAUSize, OnodeSizeTracking)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     size_t block_size = 4096;
     StartDeferred(block_size);
@@ -7423,8 +7550,9 @@ TEST_P(StoreTestSpecificAUSize, OnodeSizeTracking)
 TEST_P(StoreTestSpecificAUSize, BlobReuseOnOverwrite)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     size_t block_size = 4096;
     StartDeferred(block_size);
@@ -7605,7 +7733,7 @@ TEST_P(StoreTestSpecificAUSize, ZeroBlockDetectionSmallAppend)
     if (string(GetParam()) != "bluestore"
         || !cct->_conf->bluestore_zero_block_detection) {
         GTEST_SKIP() <<
-            "not bluestore or bluestore_zero_block_detection=false, skipping";
+                     "not bluestore or bluestore_zero_block_detection=false, skipping";
     }
 
     size_t block_size = 65536;
@@ -7684,7 +7812,7 @@ TEST_P(StoreTestSpecificAUSize, ZeroBlockDetectionSmallOverwrite)
     if (string(GetParam()) != "bluestore"
         || !cct->_conf->bluestore_zero_block_detection) {
         GTEST_SKIP() <<
-            "not bluestore or bluestore_zero_block_detection=false, skipping";
+                     "not bluestore or bluestore_zero_block_detection=false, skipping";
     }
     if (smr) {
         GTEST_SKIP() << "smr, skipping";
@@ -7788,7 +7916,7 @@ TEST_P(StoreTestSpecificAUSize, ZeroBlockDetectionBigAppend)
     if (string(GetParam()) != "bluestore"
         || !cct->_conf->bluestore_zero_block_detection) {
         GTEST_SKIP() <<
-            "not bluestore or bluestore_zero_block_detection=false, skipping";
+                     "not bluestore or bluestore_zero_block_detection=false, skipping";
     }
 
     size_t block_size = 4096;
@@ -7870,7 +7998,7 @@ TEST_P(StoreTestSpecificAUSize, ZeroBlockDetectionBigOverwrite)
     if (string(GetParam()) != "bluestore"
         || !cct->_conf->bluestore_zero_block_detection) {
         GTEST_SKIP() <<
-            "not bluestore or bluestore_zero_block_detection=false, skipping";
+                     "not bluestore or bluestore_zero_block_detection=false, skipping";
     }
     if (smr) {
         GTEST_SKIP() << "smr, skipping";
@@ -7974,8 +8102,9 @@ TEST_P(StoreTestSpecificAUSize, ZeroBlockDetectionBigOverwrite)
 TEST_P(StoreTestSpecificAUSize, DeferredOnBigOverwrite)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no deferred" << std::endl;
         return;
@@ -8429,8 +8558,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredOnBigOverwrite)
 TEST_P(StoreTestSpecificAUSize, DeferredOnBigOverwrite2)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no deferred" << std::endl;
         return;
@@ -8509,8 +8639,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredOnBigOverwrite2)
 TEST_P(StoreTestSpecificAUSize, DeferredOnBigOverwrite3)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no deferred" << std::endl;
         return;
@@ -8589,8 +8720,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredOnBigOverwrite3)
 TEST_P(StoreTestSpecificAUSize, DeferredDifferentChunks)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no deferred" << std::endl;
         return;
@@ -8623,9 +8755,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredDifferentChunks)
          expected_write_size *= 2) {
         //create object with hint
         ghobject_t
-            hoid(hobject_t
-                 ("test-" + to_string(expected_write_size), "", CEPH_NOSNAP, 0,
-                  -1, ""));
+        hoid(hobject_t
+             ("test-" + to_string(expected_write_size), "", CEPH_NOSNAP, 0,
+              -1, ""));
         {
             ObjectStore::Transaction t;
             t.touch(cid, hoid);
@@ -8660,8 +8792,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredDifferentChunks)
                     bl.length(), bl, CEPH_OSD_OP_FLAG_FADVISE_NOCACHE);
             r = queue_transaction(store, ch, std::move(t));
             ++exp_bluestore_write_big;
-            if (expected_write_size < prefer_deferred_size)
+            if (expected_write_size < prefer_deferred_size) {
                 ++exp_bluestore_write_big_deferred;
+            }
             ASSERT_EQ(r, 0);
         }
         ASSERT_EQ(logger->get(l_bluestore_write_big), exp_bluestore_write_big);
@@ -8675,15 +8808,15 @@ TEST_P(StoreTestSpecificAUSize, DeferredDifferentChunks)
     for (size_t expected_write_size = 1024; expected_write_size <= 65536;
          expected_write_size *= 2) {
         ghobject_t
-            hoid(hobject_t
-                 ("test-" + to_string(expected_write_size), "", CEPH_NOSNAP, 0,
-                  -1, ""));
+        hoid(hobject_t
+             ("test-" + to_string(expected_write_size), "", CEPH_NOSNAP, 0,
+              -1, ""));
         {
             bufferlist bl, expected;
             r = store->read(ch, hoid, 0, large_object_size, bl);
             ASSERT_EQ(r, large_object_size);
             expected.
-                append(string(large_object_size - 2 * alloc_size - 1, 'h'));
+            append(string(large_object_size - 2 * alloc_size - 1, 'h'));
             expected.append(string(alloc_size + 2, 'z'));
             expected.append(string(alloc_size - 1, 'h'));
             ASSERT_TRUE(bl_eq(expected, bl));
@@ -8694,9 +8827,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredDifferentChunks)
         for (size_t expected_write_size = 1024; expected_write_size <= 65536;
              expected_write_size *= 2) {
             ghobject_t
-                hoid(hobject_t
-                     ("test-" + to_string(expected_write_size), "", CEPH_NOSNAP,
-                      0, -1, ""));
+            hoid(hobject_t
+                 ("test-" + to_string(expected_write_size), "", CEPH_NOSNAP,
+                  0, -1, ""));
             t.remove(cid, hoid);
         }
         t.remove_collection(cid);
@@ -8709,8 +8842,9 @@ TEST_P(StoreTestSpecificAUSize, DeferredDifferentChunks)
 TEST_P(StoreTestSpecificAUSize, BlobReuseOnOverwriteReverse)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no overwrite" << std::endl;
         return;
@@ -8894,8 +9028,9 @@ TEST_P(StoreTestSpecificAUSize, BlobReuseOnOverwriteReverse)
 TEST_P(StoreTestSpecificAUSize, BlobReuseOnSmallOverwrite)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no overwrite" << std::endl;
         return;
@@ -8978,8 +9113,9 @@ TEST_P(StoreTestSpecificAUSize, BlobReuseOnSmallOverwrite)
 // by incompletly loaded extent map.
 TEST_P(StoreTestSpecificAUSize, SmallWriteOnShardedExtents)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     size_t block_size = 0x10000;
     StartDeferred(block_size);
@@ -9064,8 +9200,9 @@ TEST_P(StoreTestSpecificAUSize, SmallWriteOnShardedExtents)
 TEST_P(StoreTestSpecificAUSize, ReproBug56488Test)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: no deferred" << std::endl;
         return;
@@ -9160,8 +9297,9 @@ TEST_P(StoreTestSpecificAUSize, ReproBug56488Test)
 
 TEST_P(StoreTest, KVDBHistogramTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     int NUM_OBJS = 200;
     int r = 0;
@@ -9189,7 +9327,7 @@ TEST_P(StoreTest, KVDBHistogramTest)
     }
 
     std::unique_ptr < Formatter >
-        f(Formatter::create("store_test", "json-pretty", "json-pretty"));
+    f(Formatter::create("store_test", "json-pretty", "json-pretty"));
     store->generate_db_histogram(f.get());
     f->flush(cout);
     cout << std::endl;
@@ -9197,8 +9335,9 @@ TEST_P(StoreTest, KVDBHistogramTest)
 
 TEST_P(StoreTest, KVDBStatsTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "rocksdb_perf", "true");
     SetVal(g_conf(), "rocksdb_collect_compaction_stats", "true");
@@ -9235,7 +9374,7 @@ TEST_P(StoreTest, KVDBStatsTest)
     }
 
     std::unique_ptr < Formatter >
-        f(Formatter::create("store_test", "json-pretty", "json-pretty"));
+    f(Formatter::create("store_test", "json-pretty", "json-pretty"));
     store->get_db_statistics(f.get());
     f->flush(cout);
     cout << std::endl;
@@ -9249,11 +9388,12 @@ TEST_P(StoreTestSpecificAUSize, garbageCollection)
     int buf_len = 256 * 1024;
     int overlap_offset = 64 * 1024;
     int write_offset = buf_len;
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: assertions about allocations need to be adjusted" <<
-            std::endl;
+             std::endl;
         return;
     }
 
@@ -9314,8 +9454,9 @@ TEST_P(StoreTestSpecificAUSize, garbageCollection)
         }
         bufferlist bl;
 
-        for (size_t i = 0; i < data.size(); i++)
+        for (size_t i = 0; i < data.size(); i++) {
             data[i] = i % 256;
+        }
 
         bl.append(data);
 
@@ -9413,8 +9554,9 @@ TEST_P(StoreTestSpecificAUSize, garbageCollection)
 
 TEST_P(StoreTestSpecificAUSize, fsckOnUnalignedDevice)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_block_size", stringify(0x280005000).c_str());   //10 Gb + 4K
     SetVal(g_conf(), "bluestore_fsck_on_mount", "false");
@@ -9428,8 +9570,9 @@ TEST_P(StoreTestSpecificAUSize, fsckOnUnalignedDevice)
 
 TEST_P(StoreTestSpecificAUSize, fsckOnUnalignedDevice2)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_block_size", stringify(0x280005000).c_str());   //10 Gb + 20K
     SetVal(g_conf(), "bluestore_fsck_on_mount", "false");
@@ -9440,25 +9583,28 @@ TEST_P(StoreTestSpecificAUSize, fsckOnUnalignedDevice2)
     store->mount();
 }
 
-namespace {
-    ghobject_t make_object(const char *name, int64_t pool) {
-        sobject_t soid {
+namespace
+{
+ghobject_t make_object(const char *name, int64_t pool)
+{
+    sobject_t soid {
         name, CEPH_NOSNAP};
-        uint32_t hash = std::hash < sobject_t > { } (soid);
-        return ghobject_t {
-            hobject_t {
+    uint32_t hash = std::hash < sobject_t > { }(soid);
+    return ghobject_t {
+        hobject_t {
             soid, "", hash, pool, ""}
-        };
-    }
+    };
+}
 }
 
 TEST_P(StoreTestSpecificAUSize, BluestoreRepairTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "TODO: repair mismatched write pointer (+ dead bytes mismatch)"
-            << std::endl;
+             << std::endl;
         return;
     }
     const size_t offs_base = 65536 / 2;
@@ -9568,7 +9714,7 @@ TEST_P(StoreTestSpecificAUSize, BluestoreRepairTest)
                                 (offs_base * repeats) / 2);
     bstore->inject_misreference(cid, hoid, cid, hoid_dup,
                                 offs_base * (repeats - 1));
-    int expected_errors = bstore->has_null_manager()? 3 : 6;
+    int expected_errors = bstore->has_null_manager() ? 3 : 6;
     bstore->umount();
     ASSERT_EQ(bstore->fsck(false), expected_errors);
     ASSERT_EQ(bstore->repair(false), 0);
@@ -9694,8 +9840,9 @@ TEST_P(StoreTestSpecificAUSize, BluestoreRepairTest)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreBrokenZombieRepairTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: smr repair is different" << std::endl;
         return;
@@ -9768,11 +9915,12 @@ TEST_P(StoreTestSpecificAUSize, BluestoreBrokenZombieRepairTest)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreRepairSharedBlobTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "TODO: repair mismatched write pointer (+ dead bytes mismatch)"
-            << std::endl;
+             << std::endl;
         return;
     }
 
@@ -9845,8 +9993,9 @@ TEST_P(StoreTestSpecificAUSize, BluestoreRepairSharedBlobTest)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreBrokenNoSharedBlobRepairTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: smr repair is different" << std::endl;
         return;
@@ -9906,11 +10055,12 @@ TEST_P(StoreTestSpecificAUSize, BluestoreBrokenNoSharedBlobRepairTest)
         bool has_null_manager = bstore->has_null_manager();
         bstore->umount();
         // depending on the allocation map's source we can
-        // either observe or don't observe an additional 
+        // either observe or don't observe an additional
         // extent leak detection. Hence adjusting the expected
         // value
-        size_t expected_error_count = has_null_manager ? 4 :    // 4 sb ref mismatch errors [+ 1 optional statfs, hence ASSERT_GE]
-            7;                  // 4 sb ref mismatch errors + 1 statfs + 1 block leak + 1 non-free
+        size_t expected_error_count = has_null_manager ?
+                                      4 :    // 4 sb ref mismatch errors [+ 1 optional statfs, hence ASSERT_GE]
+                                      7;                  // 4 sb ref mismatch errors + 1 statfs + 1 block leak + 1 non-free
         ASSERT_GE(bstore->fsck(false), expected_error_count);
         // repair might report less errors than fsck above showed
         // as some errors, e.g. statfs mismatch, are implicitly fixed
@@ -9925,15 +10075,16 @@ TEST_P(StoreTestSpecificAUSize, BluestoreBrokenNoSharedBlobRepairTest)
 
 TEST_P(StoreTest, BluestoreRepairGlobalStats)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     const size_t offs_base = 65536 / 2;
 
     BlueStore *bstore = dynamic_cast < BlueStore * >(store.get());
 
     // start with global stats
-    bstore->inject_global_statfs( {
-                                 });
+    bstore->inject_global_statfs({
+    });
     bstore->umount();
     SetVal(g_conf(), "bluestore_fsck_quick_fix_on_mount", "false");
     bstore->mount();
@@ -9989,15 +10140,16 @@ TEST_P(StoreTest, BluestoreRepairGlobalStats)
 
 TEST_P(StoreTest, BluestoreRepairGlobalStatsFixOnMount)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     const size_t offs_base = 65536 / 2;
 
     BlueStore *bstore = dynamic_cast < BlueStore * >(store.get());
 
     // start with global stats
-    bstore->inject_global_statfs( {
-                                 });
+    bstore->inject_global_statfs({
+    });
     bstore->umount();
     SetVal(g_conf(), "bluestore_fsck_quick_fix_on_mount", "false");
     bstore->mount();
@@ -10056,8 +10208,9 @@ TEST_P(StoreTest, BluestoreRepairGlobalStatsFixOnMount)
 
 TEST_P(StoreTest, BluestoreStatistics)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "rocksdb_perf", "true");
     SetVal(g_conf(), "rocksdb_collect_compaction_stats", "true");
@@ -10099,7 +10252,7 @@ TEST_P(StoreTest, BluestoreStatistics)
         ASSERT_TRUE(bl_eq(bl, readback));
     }
     std::unique_ptr < Formatter >
-        f(Formatter::create("store_test", "json-pretty", "json-pretty"));
+    f(Formatter::create("store_test", "json-pretty", "json-pretty"));
     EXPECT_NO_THROW(store->get_db_statistics(f.get()));
     f->flush(cout);
     cout << std::endl;
@@ -10107,8 +10260,9 @@ TEST_P(StoreTest, BluestoreStatistics)
 
 TEST_P(StoreTest, BluestoreStrayOmapDetection)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     BlueStore *bstore = dynamic_cast < BlueStore * >(store.get());
     const uint64_t pool = 555;
@@ -10143,8 +10297,9 @@ TEST_P(StoreTest, BluestoreStrayOmapDetection)
 
 TEST_P(StoreTest, BluestorePerPoolOmapFixOnMount)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     BlueStore *bstore = dynamic_cast < BlueStore * >(store.get());
     const uint64_t pool = 555;
@@ -10230,9 +10385,9 @@ TEST_P(StoreTest, BluestorePerPoolOmapFixOnMount)
 
 class hugepaged_raw;
 
-static bool is_hugepaged(const bufferptr & bp)
+static bool is_hugepaged(const bufferptr &bp)
 {
-    const auto & ibp =
+    const auto &ibp =
         static_cast <
         const ceph::buffer_instrumentation::instrumented_bptr & >(bp);
     return ibp.is_raw_marked < BlockDevice::hugepaged_raw_marker_t > ();
@@ -10247,7 +10402,7 @@ TEST_P(StoreTestDeferredSetup, DISABLED_BluestoreHugeReads)
     }
 
     constexpr static size_t HUGE_BUFFER_SIZE {
-    2 _M};
+        2 _M};
     cout << "Configuring huge page pools" << std::endl;
     {
         SetVal(g_conf(), "bdev_read_preallocated_huge_buffers",
@@ -10267,7 +10422,7 @@ TEST_P(StoreTestDeferredSetup, DISABLED_BluestoreHugeReads)
     bufferlist bl;
     {
         bufferptr bp {
-        HUGE_BUFFER_SIZE};
+            HUGE_BUFFER_SIZE};
         // non-zeros! Otherwise the deduplication will take place.
         ::memset(bp.c_str(), 0x42, HUGE_BUFFER_SIZE);
         bl.push_back(std::move(bp));
@@ -10326,8 +10481,9 @@ TEST_P(StoreTestDeferredSetup, DISABLED_BluestoreHugeReads)
 
 TEST_P(StoreTest, SpuriousReadErrorTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     int r;
     auto logger = store->get_perf_counters();
@@ -10370,15 +10526,15 @@ TEST_P(StoreTest, SpuriousReadErrorTest)
     }
 
     cerr <<
-        "Injecting CRC error with retries, expecting success after several retries"
-        << std::endl;
+         "Injecting CRC error with retries, expecting success after several retries"
+         << std::endl;
     SetVal(g_conf(), "bluestore_retry_disk_reads", "255");
     SetVal(g_conf(), "bluestore_debug_inject_csum_err_probability", "0.8");
-  /**
-   * Probabilistic test: 25 reads, each has a 80% chance of failing with 255 retries
-   * Probability of at least one retried read: 1 - (0.2 ** 25) = 100% - 3e-18
-   * Probability of a random test failure: 1 - ((1 - (0.8 ** 255)) ** 25) ~= 5e-24
-   */
+    /**
+     * Probabilistic test: 25 reads, each has a 80% chance of failing with 255 retries
+     * Probability of at least one retried read: 1 - (0.2 ** 25) = 100% - 3e-18
+     * Probability of a random test failure: 1 - ((1 - (0.8 ** 255)) ** 25) ~= 5e-24
+     */
     g_ceph_context->_conf.apply_changes(nullptr);
     {
         for (int i = 0; i < 25; ++i) {
@@ -10394,8 +10550,9 @@ TEST_P(StoreTest, SpuriousReadErrorTest)
 
 TEST_P(StoreTest, mergeRegionTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_fsck_on_mount", "true");
     SetVal(g_conf(), "bluestore_fsck_on_umount", "true");
@@ -10423,7 +10580,8 @@ TEST_P(StoreTest, mergeRegionTest)
     bufferlist bl5;
     bl5.append("abcde");
     uint64_t offset = 0;
-    {                           // 1. same region
+    {
+        // 1. same region
         ObjectStore::Transaction t;
         t.write(cid, hoid, offset, 5, bl5);
         t.write(cid, hoid, 0xa + offset, 5, bl5);
@@ -10431,7 +10589,8 @@ TEST_P(StoreTest, mergeRegionTest)
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
     }
-    {                           // 2. adjacent regions
+    {
+        // 2. adjacent regions
         ObjectStore::Transaction t;
         offset = chunk_size;
         t.write(cid, hoid, offset, 5, bl5);
@@ -10439,7 +10598,8 @@ TEST_P(StoreTest, mergeRegionTest)
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
     }
-    {                           // 3. front merge
+    {
+        // 3. front merge
         ObjectStore::Transaction t;
         offset = chunk_size * 2;
         t.write(cid, hoid, offset, 5, bl5);
@@ -10447,7 +10607,8 @@ TEST_P(StoreTest, mergeRegionTest)
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
     }
-    {                           // 4. back merge
+    {
+        // 4. back merge
         ObjectStore::Transaction t;
         bufferlist blc2;
         blc2.append_zero(chunk_size + 2);
@@ -10458,7 +10619,8 @@ TEST_P(StoreTest, mergeRegionTest)
         r = queue_transaction(store, ch, std::move(t));
         ASSERT_EQ(r, 0);
     }
-    {                           // 5. overlapping
+    {
+        // 5. overlapping
         ObjectStore::Transaction t;
         uint64_t final_len = 0;
         offset = chunk_size * 10;
@@ -10473,16 +10635,18 @@ TEST_P(StoreTest, mergeRegionTest)
         final_len = (offset + chunk_size * 3 - 3) + (chunk_size * 2);
         bufferlist bl;
         r = store->read(ch, hoid, 0, final_len, bl);
-        ASSERT_EQ(final_len, static_cast < uint64_t > (r));
+        ASSERT_EQ(final_len, static_cast < uint64_t >(r));
     }
 }
 
 TEST_P(StoreTest, FixSMRWritePointer)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
-    if (!smr)
+    }
+    if (!smr) {
         return;
+    }
     int r = store->umount();
     ASSERT_EQ(0, r);
 
@@ -10517,8 +10681,9 @@ TEST_P(StoreTest, FixSMRWritePointer)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreEnforceHWSettingsHdd)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_debug_enforce_settings", "hdd");
     StartDeferred(0x1000);
@@ -10551,8 +10716,9 @@ TEST_P(StoreTestSpecificAUSize, BluestoreEnforceHWSettingsHdd)
 
 TEST_P(StoreTestSpecificAUSize, BluestoreEnforceHWSettingsSsd)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_debug_enforce_settings", "ssd");
     StartDeferred(0x1000);
@@ -10586,11 +10752,12 @@ TEST_P(StoreTestSpecificAUSize, BluestoreEnforceHWSettingsSsd)
 TEST_P(StoreTestSpecificAUSize, ReproNoBlobMultiTest)
 {
 
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP (FIXME): bluestore gc does not seem to do the trick here"
-            << std::endl;
+             << std::endl;
         return;
     }
 
@@ -10664,7 +10831,7 @@ TEST_P(StoreTestSpecificAUSize, ReproNoBlobMultiTest)
     }
 }
 
-void doManySetAttr(ObjectStore * store,
+void doManySetAttr(ObjectStore *store,
                    std::function < void (ObjectStore *) > do_check_fn)
 {
     MixedGenerator gen(447);
@@ -10675,8 +10842,9 @@ void doManySetAttr(ObjectStore * store,
     test_obj.init();
     size_t object_count = 256;
     for (size_t i = 0; i < object_count; ++i) {
-        if (!(i % 10))
+        if (!(i % 10)) {
             cerr << "seeding object " << i << std::endl;
+        }
         test_obj.touch();
     }
     for (size_t i = 0; i < object_count; ++i) {
@@ -10701,8 +10869,7 @@ void doManySetAttr(ObjectStore * store,
                                            in, err, &out);
     if (r != 0) {
         cerr << "failure querying: " << cpp_strerror(r) << std::endl;
-    }
-    else {
+    } else {
         std::cout << std::string(out.c_str(), out.length()) << std::endl;
     }
     test_obj.shutdown();
@@ -10710,8 +10877,9 @@ void doManySetAttr(ObjectStore * store,
 
 TEST_P(StoreTestSpecificAUSize, SpilloverTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: (FIXME?) adjust me for smr at some point?" << std::endl;
         return;
@@ -10732,33 +10900,37 @@ TEST_P(StoreTestSpecificAUSize, SpilloverTest)
     g_conf().apply_changes(nullptr);
 
     StartDeferred(65536);
-    doManySetAttr(store.get(),[&](ObjectStore * _store) {
+    doManySetAttr(store.get(), [&](ObjectStore * _store) {
 
-                  BlueStore * bstore = dynamic_cast < BlueStore * >(_store);
-                  ceph_assert(bstore);
-                  bstore->compact();
-                  const PerfCounters * logger =
-                  bstore->get_bluefs_perf_counters();
-                  //experimentally it was discovered that this case results in 400+MB spillover
-                  //using lower 300MB threshold just to be safe enough
-                  std::cout << "DB used:" << logger->
+        BlueStore *bstore = dynamic_cast < BlueStore * >(_store);
+        ceph_assert(bstore);
+        bstore->compact();
+        const PerfCounters *logger =
+            bstore->get_bluefs_perf_counters();
+        //experimentally it was discovered that this case results in 400+MB spillover
+        //using lower 300MB threshold just to be safe enough
+        std::cout << "DB used:" << logger->
                   get(l_bluefs_db_used_bytes) << std::endl;
-                  std::cout << "SLOW used:" << logger->
+        std::cout << "SLOW used:" << logger->
                   get(l_bluefs_slow_used_bytes) << std::endl;
-                  ASSERT_GE(logger->get(l_bluefs_slow_used_bytes),
-                            16 * 1024 * 1024); struct store_statfs_t statfs;
-                  osd_alert_list_t alerts;
-                  int r = store->statfs(&statfs, &alerts); ASSERT_EQ(r, 0);
-                  ASSERT_EQ(alerts.count("BLUEFS_SPILLOVER"), 1);
-                  std::cout << "spillover_alert:" << alerts.
-                  find("BLUEFS_SPILLOVER")->second << std::endl;}
-    );
+        ASSERT_GE(logger->get(l_bluefs_slow_used_bytes),
+                  16 * 1024 * 1024);
+        struct store_statfs_t statfs;
+        osd_alert_list_t alerts;
+        int r = store->statfs(&statfs, &alerts);
+        ASSERT_EQ(r, 0);
+        ASSERT_EQ(alerts.count("BLUEFS_SPILLOVER"), 1);
+        std::cout << "spillover_alert:" << alerts.
+                  find("BLUEFS_SPILLOVER")->second << std::endl;
+    }
+                 );
 }
 
 TEST_P(StoreTestSpecificAUSize, SpilloverFixedTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: (FIXME?) adjust me for smr at some point?" << std::endl;
         return;
@@ -10772,21 +10944,23 @@ TEST_P(StoreTestSpecificAUSize, SpilloverFixedTest)
     g_conf().apply_changes(nullptr);
 
     StartDeferred(65536);
-    doManySetAttr(store.get(),[&](ObjectStore * _store) {
+    doManySetAttr(store.get(), [&](ObjectStore * _store) {
 
-                  BlueStore * bstore = dynamic_cast < BlueStore * >(_store);
-                  ceph_assert(bstore);
-                  bstore->compact();
-                  const PerfCounters * logger =
-                  bstore->get_bluefs_perf_counters();
-                  ASSERT_EQ(0, logger->get(l_bluefs_slow_used_bytes));}
-    );
+        BlueStore *bstore = dynamic_cast < BlueStore * >(_store);
+        ceph_assert(bstore);
+        bstore->compact();
+        const PerfCounters *logger =
+            bstore->get_bluefs_perf_counters();
+        ASSERT_EQ(0, logger->get(l_bluefs_slow_used_bytes));
+    }
+                 );
 }
 
 TEST_P(StoreTestSpecificAUSize, SpilloverFixed2Test)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: (FIXME?) adjust me for smr at some point?" << std::endl;
         return;
@@ -10802,17 +10976,22 @@ TEST_P(StoreTestSpecificAUSize, SpilloverFixed2Test)
     g_conf().apply_changes(nullptr);
 
     StartDeferred(65536);
-    doManySetAttr(store.get(),[&](ObjectStore * _store) {
+    doManySetAttr(store.get(), [&](ObjectStore * _store) {
 
-                  BlueStore * bstore = dynamic_cast < BlueStore * >(_store); ceph_assert(bstore); bstore->compact(); const PerfCounters * logger = bstore->get_bluefs_perf_counters(); ASSERT_LE(logger->get(l_bluefs_slow_used_bytes), 300 * 1024 * 1024); // see SpilloverTest for 300MB choice rationale
-                  }
-    );
+        BlueStore *bstore = dynamic_cast < BlueStore * >(_store);
+        ceph_assert(bstore);
+        bstore->compact();
+        const PerfCounters *logger = bstore->get_bluefs_perf_counters();
+        ASSERT_LE(logger->get(l_bluefs_slow_used_bytes), 300 * 1024 * 1024); // see SpilloverTest for 300MB choice rationale
+    }
+                 );
 }
 
 TEST_P(StoreTestSpecificAUSize, SpilloverFixed3Test)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         cout << "SKIP: (FIXME?) adjust me for smr at some point?" << std::endl;
         return;
@@ -10825,17 +11004,22 @@ TEST_P(StoreTestSpecificAUSize, SpilloverFixed3Test)
     g_conf().apply_changes(nullptr);
 
     StartDeferred(65536);
-    doManySetAttr(store.get(),[&](ObjectStore * _store) {
+    doManySetAttr(store.get(), [&](ObjectStore * _store) {
 
-                  BlueStore * bstore = dynamic_cast < BlueStore * >(_store); ceph_assert(bstore); bstore->compact(); const PerfCounters * logger = bstore->get_bluefs_perf_counters(); ASSERT_EQ(logger->get(l_bluefs_slow_used_bytes), 0); // reffering to SpilloverFixedTest
-                  }
-    );
+        BlueStore *bstore = dynamic_cast < BlueStore * >(_store);
+        ceph_assert(bstore);
+        bstore->compact();
+        const PerfCounters *logger = bstore->get_bluefs_perf_counters();
+        ASSERT_EQ(logger->get(l_bluefs_slow_used_bytes), 0); // reffering to SpilloverFixedTest
+    }
+                 );
 }
 
 TEST_P(StoreTestSpecificAUSize, Ticket45195Repro)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
     if (smr) {
         return;
     }
@@ -10922,8 +11106,9 @@ TEST_P(StoreTestSpecificAUSize, Ticket45195Repro)
 
 TEST_P(StoreTestOmapUpgrade, WithOmapHeader)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_debug_legacy_omap", "true");
     g_conf().apply_changes(nullptr);
@@ -10994,8 +11179,9 @@ TEST_P(StoreTestOmapUpgrade, WithOmapHeader)
 
 TEST_P(StoreTestSpecificAUSize, BluefsWriteInSingleDiskEnvTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     g_conf().apply_changes(nullptr);
 
@@ -11018,16 +11204,16 @@ TEST_P(StoreTestSpecificAUSize, BluefsWriteInSingleDiskEnvTest)
                                            in, err, &out);
     if (r != 0) {
         cerr << "failure querying: " << cpp_strerror(r) << std::endl;
-    }
-    else {
+    } else {
         std::cout << std::string(out.c_str(), out.length()) << std::endl;
     }
 }
 
 TEST_P(StoreTestSpecificAUSize, BluefsWriteInNoWalDiskEnvTest)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_block_db_path", "db");
     SetVal(g_conf(), "bluestore_block_db_size", stringify(1ull << 31).c_str());
@@ -11054,16 +11240,16 @@ TEST_P(StoreTestSpecificAUSize, BluefsWriteInNoWalDiskEnvTest)
                                            in, err, &out);
     if (r != 0) {
         cerr << "failure querying: " << cpp_strerror(r) << std::endl;
-    }
-    else {
+    } else {
         std::cout << std::string(out.c_str(), out.length()) << std::endl;
     }
 }
 
 TEST_P(StoreTestOmapUpgrade, NoOmapHeader)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_debug_legacy_omap", "true");
     g_conf().apply_changes(nullptr);
@@ -11129,8 +11315,9 @@ TEST_P(StoreTestOmapUpgrade, NoOmapHeader)
 
 TEST_P(StoreTestOmapUpgrade, LargeLegacyToPG)
 {
-    if (string(GetParam()) != "bluestore")
+    if (string(GetParam()) != "bluestore") {
         return;
+    }
 
     SetVal(g_conf(), "bluestore_debug_legacy_omap", "true");
     g_conf().apply_changes(nullptr);
@@ -11197,7 +11384,7 @@ int main(int argc, char **argv)
                            CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
     common_init_finish(g_ceph_context);
 
-  for (auto & i:args) {
+    for (auto &i : args) {
         if (i == "--smr" s) {
 #if defined(HAVE_LIBZBD)
             derr << "Adjusting tests for smr mode." << dendl;
@@ -11231,14 +11418,14 @@ int main(int argc, char **argv)
     g_ceph_context->_conf.set_val_or_die("bluestore_cache_size_hdd", "4000000");
     g_ceph_context->_conf.set_val_or_die("bluestore_cache_size_ssd", "4000000");
     g_ceph_context->_conf.
-        set_val_or_die("bluestore_debug_inject_allocation_from_file_failure",
-                       "0.66");
+    set_val_or_die("bluestore_debug_inject_allocation_from_file_failure",
+                   "0.66");
 
     // very short *_max prealloc so that we fall back to async submits
     g_ceph_context->_conf.set_val_or_die("bluestore_blobid_prealloc", "10");
     g_ceph_context->_conf.set_val_or_die("bluestore_nid_prealloc", "10");
     g_ceph_context->_conf.
-        set_val_or_die("bluestore_debug_randomize_serial_transaction", "10");
+    set_val_or_die("bluestore_debug_randomize_serial_transaction", "10");
 
     g_ceph_context->_conf.set_val_or_die("bdev_debug_aio", "true");
 
@@ -11248,8 +11435,8 @@ int main(int argc, char **argv)
                                          (DEF_STORE_TEST_BLOCKDEV_SIZE));
 
     g_ceph_context->_conf.
-        set_val_or_die
-        ("enable_experimental_unrecoverable_data_corrupting_features", "*");
+    set_val_or_die
+    ("enable_experimental_unrecoverable_data_corrupting_features", "*");
     g_ceph_context->_conf.apply_changes(nullptr);
 
     ::testing::InitGoogleTest(&argc, argv);
@@ -11258,7 +11445,7 @@ int main(int argc, char **argv)
 
 /*
  * Local Variables:
- * compile-command: "cd ../.. ; make ceph_test_objectstore && 
+ * compile-command: "cd ../.. ; make ceph_test_objectstore &&
  *    ./ceph_test_objectstore \
  *        --gtest_filter=*.collect_metadata* --log-to-stderr=true --debug-filestore=20
  *  "

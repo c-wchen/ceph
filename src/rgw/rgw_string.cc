@@ -21,19 +21,23 @@ bool match_wildcards(std::string_view pattern, std::string_view input,
     auto it1 = pattern.begin();
     auto it2 = input.begin();
     while (true) {
-        if (it1 == pattern.end())
+        if (it1 == pattern.end()) {
             return it2 == input.end();
+        }
         if (*it1 == '*') {
-            if (it1 + 1 == pattern.end())
+            if (it1 + 1 == pattern.end()) {
                 return true;
-            if (it2 == input.end() || eq(*(it1 + 1), *it2))
+            }
+            if (it2 == input.end() || eq(*(it1 + 1), *it2)) {
                 ++it1;
-            else
+            } else {
                 ++it2;
+            }
             continue;
         }
-        if (it2 == input.end())
+        if (it2 == input.end()) {
             return false;
+        }
         if (*it1 == '?' || eq(*it1, *it2)) {
             ++it1;
             ++it2;

@@ -44,7 +44,7 @@ enum {
     LOCK_UNDEF = 0,
 
     //                                    auth               rep
-    LOCK_SYNC,                  // AR   R . RD L . / C .   R RD L . / C . 
+    LOCK_SYNC,                  // AR   R . RD L . / C .   R RD L . / C .
     LOCK_LOCK,                  // AR   R . .. . X / . .   . .. . . / . .
 
     LOCK_PREXLOCK,              // A    . . .. . . / . .   (lock)

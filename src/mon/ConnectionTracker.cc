@@ -21,25 +21,25 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout, rank, epoch, version)
 
-static std::ostream & _prefix(std::ostream * _dout, int rank, epoch_t epoch,
-                              uint64_t version)
+static std::ostream &_prefix(std::ostream *_dout, int rank, epoch_t epoch,
+                             uint64_t version)
 {
     return *_dout << "rank: " << rank << " version: " << version <<
-        " ConnectionTracker(" << epoch << ") ";
+           " ConnectionTracker(" << epoch << ") ";
 }
 
-std::ostream & operator<<(std::ostream & o, const ConnectionReport & c)
+std::ostream &operator<<(std::ostream &o, const ConnectionReport &c)
 {
     o << "rank=" << c.rank << ",epoch=" << c.epoch << ",version=" << c.
-        epoch_version << ", current links: " << c.current << ", history: " << c.
-        history;
+      epoch_version << ", current links: " << c.current << ", history: " << c.
+      history;
     return o;
 }
 
-std::ostream & operator<<(std::ostream & o, const ConnectionTracker & c)
+std::ostream &operator<<(std::ostream &o, const ConnectionTracker &c)
 {
     o << "rank=" << c.rank << ", epoch=" << c.epoch << ", version=" << c.version
-        << ", half_life=" << c.half_life << ", reports: " << c.peer_reports;
+      << ", half_life=" << c.half_life << ", reports: " << c.peer_reports;
     return o;
 }
 
@@ -65,14 +65,15 @@ const ConnectionReport *ConnectionTracker::reports(int p) const const
     return &i->second;
 }
 
-void ConnectionTracker::receive_peer_report(const ConnectionTracker & o)
+void ConnectionTracker::receive_peer_report(const ConnectionTracker &o)
 {
     ldout(cct, 30) << __func__ << dendl;
-  for (auto & i:o.peer_reports) {
-        const ConnectionReport & report = i.second;
-        if (i.first == rank)
+    for (auto &i : o.peer_reports) {
+        const ConnectionReport &report = i.second;
+        if (i.first == rank) {
             continue;
-        ConnectionReport & existing = *reports(i.first);
+        }
+        ConnectionReport &existing = *reports(i.first);
         if (report.epoch > existing.epoch ||
             (report.epoch == existing.epoch &&
              report.epoch_version > existing.epoch_version)) {
@@ -113,24 +114,24 @@ void ConnectionTracker::increase_version()
 }
 
 void ConnectionTracker::report_live_connection(int peer_rank,
-                                               double units_alive)
+        double units_alive)
 {
     ldout(cct,
           30) << __func__ << " peer_rank: " << peer_rank << " units_alive: " <<
-        units_alive << dendl;
+              units_alive << dendl;
     ldout(cct, 30) << "my_reports before: " << my_reports << dendl;
     if (peer_rank == rank) {
         lderr(cct) <<
-            "Got a report from my own rank, hopefully this is startup weirdness, dropping"
-            << dendl;
+                   "Got a report from my own rank, hopefully this is startup weirdness, dropping"
+                   << dendl;
         return;
     }
     // we need to "auto-initialize" to 1, do shenanigans
     auto i = my_reports.history.find(peer_rank);
     if (i == my_reports.history.end()) {
         ldout(cct, 30) << "couldn't find: " << peer_rank
-            << " in my_reports.history" << "... inserting: "
-            << "(" << peer_rank << ", 1" << dendl;
+                       << " in my_reports.history" << "... inserting: "
+                       << "(" << peer_rank << ", 1" << dendl;
         auto[j, k] =
             my_reports.history.insert(std::pair < int,
                                       double >(peer_rank, 1.0));
@@ -139,7 +140,7 @@ void ConnectionTracker::report_live_connection(int peer_rank,
     double &pscore = i->second;
     ldout(cct, 30) << "adding new pscore to my_reports" << dendl;
     pscore = pscore * (1 - units_alive / (2 * half_life)) +
-        (units_alive / (2 * half_life));
+             (units_alive / (2 * half_life));
     pscore = std::min(pscore, 1.0);
     my_reports.current[peer_rank] = true;
 
@@ -151,20 +152,20 @@ void ConnectionTracker::report_dead_connection(int peer_rank, double units_dead)
 {
     ldout(cct,
           30) << __func__ << " peer_rank: " << peer_rank << " units_dead: " <<
-        units_dead << dendl;
+              units_dead << dendl;
     ldout(cct, 30) << "my_reports before: " << my_reports << dendl;
     if (peer_rank == rank) {
         lderr(cct) <<
-            "Got a report from my own rank, hopefully this is startup weirdness, dropping"
-            << dendl;
+                   "Got a report from my own rank, hopefully this is startup weirdness, dropping"
+                   << dendl;
         return;
     }
     // we need to "auto-initialize" to 1, do shenanigans
     auto i = my_reports.history.find(peer_rank);
     if (i == my_reports.history.end()) {
         ldout(cct, 30) << "couldn't find: " << peer_rank
-            << " in my_reports.history" << "... inserting: "
-            << "(" << peer_rank << ", 1" << dendl;
+                       << " in my_reports.history" << "... inserting: "
+                       << "(" << peer_rank << ", 1" << dendl;
         auto[j, k] =
             my_reports.history.insert(std::pair < int,
                                       double >(peer_rank, 1.0));
@@ -173,7 +174,7 @@ void ConnectionTracker::report_dead_connection(int peer_rank, double units_dead)
     double &pscore = i->second;
     ldout(cct, 30) << "adding new pscore to my_reports" << dendl;
     pscore = pscore * (1 - units_dead / (2 * half_life)) -
-        (units_dead / (2 * half_life));
+             (units_dead / (2 * half_life));
     pscore = std::max(pscore, 0.0);
     my_reports.current[peer_rank] = false;
 
@@ -182,8 +183,8 @@ void ConnectionTracker::report_dead_connection(int peer_rank, double units_dead)
 }
 
 void ConnectionTracker::get_total_connection_score(int peer_rank,
-                                                   double *rating,
-                                                   int *live_count) const const
+        double *rating,
+        int *live_count) const const
 {
     ldout(cct, 30) << __func__ << dendl;
     *rating = 0;
@@ -191,12 +192,12 @@ void ConnectionTracker::get_total_connection_score(int peer_rank,
     double rate = 0;
     int live = 0;
 
-  for (const auto & i:peer_reports) {
-                                // loop through all the scores
+    for (const auto &i : peer_reports) {
+        // loop through all the scores
         if (i.first == peer_rank) { // ... except the ones it has for itself, of course!
             continue;
         }
-        const auto & report = i.second;
+        const auto &report = i.second;
         auto score_i = report.history.find(peer_rank);
         auto live_i = report.current.find(peer_rank);
         if (score_i != report.history.end()) {
@@ -213,8 +214,9 @@ void ConnectionTracker::get_total_connection_score(int peer_rank,
 void ConnectionTracker::notify_rank_changed(int new_rank)
 {
     ldout(cct, 20) << __func__ << " to " << new_rank << dendl;
-    if (new_rank == rank)
+    if (new_rank == rank) {
         return;
+    }
     ldout(cct, 20) << "peer_reports before: " << peer_reports << dendl;
     peer_reports.erase(rank);
     peer_reports.erase(new_rank);
@@ -229,7 +231,7 @@ void ConnectionTracker::notify_rank_changed(int new_rank)
 void ConnectionTracker::notify_rank_removed(int rank_removed, int new_rank)
 {
     ldout(cct, 20) << __func__ << " " << rank_removed
-        << " new_rank: " << new_rank << dendl;
+                   << " new_rank: " << new_rank << dendl;
     ldout(cct, 20) << "my_reports before: " << my_reports << dendl;
     ldout(cct, 20) << "peer_reports before: " << peer_reports << dendl;
     ldout(cct, 20) << "my rank before: " << rank << dendl;
@@ -287,17 +289,17 @@ bool ConnectionTracker::is_clean(int mon_rank, int monmap_size)
     // to monmap and our rank according to our report.
     if (rank != mon_rank || my_reports.rank != mon_rank) {
         return false;
-    }
-    else if (!peer_reports.empty()) {
+    } else if (!peer_reports.empty()) {
         // if peer_report max rank is greater than monmap max rank
         // then there is a problem.
-        if (peer_reports.rbegin()->first > monmap_size - 1)
+        if (peer_reports.rbegin()->first > monmap_size - 1) {
             return false;
+        }
     }
     return true;
 }
 
-void ConnectionTracker::encode(bufferlist & bl) const const
+void ConnectionTracker::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(rank, bl);
@@ -308,7 +310,7 @@ void ConnectionTracker::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void ConnectionTracker::decode(bufferlist::const_iterator & bl)
+void ConnectionTracker::decode(bufferlist::const_iterator &bl)
 {
     clear_peer_reports();
     encoding.clear();
@@ -320,11 +322,12 @@ void ConnectionTracker::decode(bufferlist::const_iterator & bl)
     decode(half_life, bl);
     decode(peer_reports, bl);
     DECODE_FINISH(bl);
-    if (rank >= 0)
+    if (rank >= 0) {
         my_reports = peer_reports[rank];
+    }
 }
 
-const bufferlist & ConnectionTracker::get_encoded_bl()
+const bufferlist &ConnectionTracker::get_encoded_bl()
 {
     if (!encoding.length()) {
         encode(encoding);
@@ -332,13 +335,13 @@ const bufferlist & ConnectionTracker::get_encoded_bl()
     return encoding;
 }
 
-void ConnectionReport::dump(ceph::Formatter * f) const const
+void ConnectionReport::dump(ceph::Formatter *f) const const
 {
     f->dump_int("rank", rank);
     f->dump_int("epoch", epoch);
     f->dump_int("version", epoch_version);
     f->open_object_section("peer_scores");
-  for (auto i:history) {
+    for (auto i : history) {
         f->open_object_section("peer");
         f->dump_int("peer_rank", i.first);
         f->dump_float("peer_score", i.second);
@@ -349,7 +352,7 @@ void ConnectionReport::dump(ceph::Formatter * f) const const
 }
 
 void ConnectionReport::generate_test_instances(std::list <
-                                               ConnectionReport * >&o)
+        ConnectionReport * > &o)
 {
     o.push_back(new ConnectionReport);
     o.push_back(new ConnectionReport);
@@ -360,7 +363,7 @@ void ConnectionReport::generate_test_instances(std::list <
     o.back()->history[0] = .4;
 }
 
-void ConnectionTracker::dump(ceph::Formatter * f) const const
+void ConnectionTracker::dump(ceph::Formatter *f) const const
 {
     f->dump_int("rank", rank);
     f->dump_int("epoch", epoch);
@@ -368,7 +371,7 @@ void ConnectionTracker::dump(ceph::Formatter * f) const const
     f->dump_float("half_life", half_life);
     f->dump_int("persist_interval", persist_interval);
     f->open_object_section("reports");
-  for (const auto & i:peer_reports) {
+    for (const auto &i : peer_reports) {
         f->open_object_section("report");
         i.second.dump(f);
         f->close_section();
@@ -377,7 +380,7 @@ void ConnectionTracker::dump(ceph::Formatter * f) const const
 }
 
 void ConnectionTracker::generate_test_instances(std::list <
-                                                ConnectionTracker * >&o)
+        ConnectionTracker * > &o)
 {
     o.push_back(new ConnectionTracker);
     o.push_back(new ConnectionTracker);

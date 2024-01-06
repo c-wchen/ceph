@@ -33,19 +33,22 @@
 
 using namespace std;
 
-class CrushWrapperTest:public::testing::Test {
-  public:
-    void SetUp() final {
+class CrushWrapperTest: public::testing::Test
+{
+public:
+    void SetUp() final
+    {
         CephInitParameters params(CEPH_ENTITY_TYPE_CLIENT);
         cct = common_preinit(params, CODE_ENVIRONMENT_UTILITY,
                              CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
         cct->_conf.set_val("debug_crush", "0");
-    } void TearDown() final {
+    } void TearDown() final
+    {
         cct->put();
         cct = nullptr;
     }
-  protected:
-    CephContext * cct = nullptr;
+protected:
+    CephContext *cct = nullptr;
 };
 
 TEST_F(CrushWrapperTest, get_immediate_parent)
@@ -680,7 +683,7 @@ TEST_F(CrushWrapperTest, insert_item)
         EXPECT_EQ(-EEXIST, c->insert_item(cct, another_item, 1.0,
                                           "osd." + stringify(item), loc));
     }
-    // implicit creation of a bucket 
+    // implicit creation of a bucket
     {
         string name = "NAME";
         map < string, string > loc;
@@ -704,7 +707,7 @@ TEST_F(CrushWrapperTest, insert_item)
         EXPECT_EQ(-EINVAL, c->insert_item(cct, item, 1.0,
                                           "osd." + stringify(item), loc));
     }
-    // 
+    //
     //   When there is:
     //
     //   default --> host0 --> item
@@ -714,7 +717,7 @@ TEST_F(CrushWrapperTest, insert_item)
     //
     //   default --> host0 --> item
     //           |
-    //           +-> item 
+    //           +-> item
     //
     {
         item++;
@@ -734,7 +737,7 @@ TEST_F(CrushWrapperTest, insert_item)
                                               "osd." + stringify(item), loc));
         }
     }
-    // 
+    //
     //   When there is:
     //
     //   default --> host0
@@ -767,7 +770,7 @@ TEST_F(CrushWrapperTest, insert_item)
         EXPECT_EQ(-EINVAL, c->insert_item(cct, item, 1.0,
                                           "osd." + stringify(item), loc));
     }
-    // fail when no location 
+    // fail when no location
     {
         map < string, string > loc;
         item++;
@@ -804,10 +807,13 @@ TEST_F(CrushWrapperTest, remove_item)
     const int num_osd = 12;
     {
         map < string, string > loc = { {
-        "root", "root0"}, {
-        "host", "host0"}};
+                "root", "root0"
+            }, {
+                "host", "host0"
+            }
+        };
         string name {
-        "osd."};
+            "osd."};
         for (int item = 0; item < num_osd; item++) {
             ASSERT_EQ(0, c->insert_item(cct, item, 1.0,
                                         name + to_string(item), loc));
@@ -1388,9 +1394,11 @@ TEST_F(CrushWrapperTest, try_remap_rule)
 
         // make sure we cope with dups between underfull and future values in orig
         underfull = {
-        9, 0, 2, 5};
+            9, 0, 2, 5
+        };
         orig = {
-        1, 3, 9};
+            1, 3, 9
+        };
 
         r = c.try_remap_rule(cct, rule, 3,
                              overfull, underfull, more_underfull, orig, &out);
@@ -1403,13 +1411,17 @@ TEST_F(CrushWrapperTest, try_remap_rule)
         //
         // Check that more_underfull is used when underfull runs out
         orig = {
-        0, 3, 9};
+            0, 3, 9
+        };
         overfull = {
-        3, 9};
+            3, 9
+        };
         underfull = {
-        2};
+            2
+        };
         more_underfull = {
-        5, 8, 11};
+            5, 8, 11
+        };
         r = c.try_remap_rule(cct, rule, 3,
                              overfull, underfull, more_underfull, orig, &out);
         cout << orig << " -> r = " << (int)r << " out " << out << std::endl;

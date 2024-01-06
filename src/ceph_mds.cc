@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <sys/types.h>
@@ -61,10 +61,10 @@ using std::vector;
 static void usage()
 {
     cout << "usage: ceph-mds -i <ID> [flags]\n"
-        << "  -m monitorip:port\n"
-        << "        connect to monitor at given address\n"
-        << "  --debug_mds n\n"
-        << "        debug MDS level (e.g. 10)\n" << std::endl;
+         << "  -m monitorip:port\n"
+         << "        connect to monitor at given address\n"
+         << "  --debug_mds n\n"
+         << "        debug MDS level (e.g. 10)\n" << std::endl;
     generic_server_usage();
 }
 
@@ -72,8 +72,9 @@ MDSDaemon *mds = NULL;
 
 static void handle_mds_signal(int signum)
 {
-    if (mds)
+    if (mds) {
         mds->handle_signal(signum);
+    }
 }
 
 int main(int argc, const char **argv)
@@ -102,19 +103,17 @@ int main(int argc, const char **argv)
             get_numa_node_cpu_set(numa_node, &numa_cpu_set_size, &numa_cpu_set);
         if (r < 0) {
             dout(1) << __func__ << " unable to determine mds numa node " <<
-                numa_node << " CPUs" << dendl;
+                    numa_node << " CPUs" << dendl;
             numa_node = -1;
-        }
-        else {
+        } else {
             r = set_cpu_affinity_all_threads(numa_cpu_set_size, &numa_cpu_set);
             if (r < 0) {
                 derr << __func__ << " failed to set numa affinity: " <<
-                    cpp_strerror(r)
-                    << dendl;
+                     cpp_strerror(r)
+                     << dendl;
             }
         }
-    }
-    else {
+    } else {
         dout(1) << __func__ << " not setting numa affinity" << dendl;
     }
     std::string val, action;
@@ -122,12 +121,10 @@ int main(int argc, const char **argv)
          i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--hot-standby", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--hot-standby", (char *)NULL)) {
             dout(0) << "--hot-standby is obsolete and has no effect" << dendl;
-        }
-        else {
+        } else {
             derr << "Error: can't understand argument: " << *i << "\n" << dendl;
             exit(1);
         }
@@ -141,7 +138,7 @@ int main(int argc, const char **argv)
     // Normal startup
     if (g_conf()->name.has_default_id()) {
         derr << "must specify '-i name' with the ceph-mds instance name" <<
-            dendl;
+             dendl;
         exit(1);
     }
 
@@ -149,8 +146,8 @@ int main(int argc, const char **argv)
         (g_conf()->name.get_id()[0] >= '0'
          && g_conf()->name.get_id()[0] <= '9')) {
         derr << "MDS id '" << g_conf()->
-            name << "' is invalid. "
-            "MDS names may not start with a numeric digit." << dendl;
+             name << "' is invalid. "
+             "MDS names may not start with a numeric digit." << dendl;
         exit(1);
     }
 
@@ -173,31 +170,33 @@ int main(int argc, const char **argv)
     global_init_chdir(g_ceph_context);
 
     std::string public_msgr_type =
-        g_conf()->ms_public_type.empty()? g_conf().get_val < std::string >
+        g_conf()->ms_public_type.empty() ? g_conf().get_val < std::string >
         ("ms_type") : g_conf()->ms_public_type;
     Messenger *msgr = Messenger::create(g_ceph_context, public_msgr_type,
                                         entity_name_t::MDS(-1), "mds",
                                         Messenger::get_random_nonce());
-    if (!msgr)
+    if (!msgr) {
         forker.exit(1);
+    }
     msgr->set_cluster_protocol(CEPH_MDS_PROTOCOL);
 
     cout << "starting " << g_conf()->name << " at " << msgr->get_myaddrs()
-        << std::endl;
+         << std::endl;
     uint64_t required = CEPH_FEATURE_OSDREPLYMUX;
 
     msgr->set_default_policy(Messenger::Policy::lossy_client(required));
     msgr->set_policy(entity_name_t::TYPE_MON,
                      Messenger::Policy::lossy_client(CEPH_FEATURE_UID |
-                                                     CEPH_FEATURE_PGID64));
+                             CEPH_FEATURE_PGID64));
     msgr->set_policy(entity_name_t::TYPE_MDS,
                      Messenger::Policy::lossless_peer(CEPH_FEATURE_UID));
     msgr->set_policy(entity_name_t::TYPE_CLIENT,
                      Messenger::Policy::stateful_server(0));
 
     int r = msgr->bindv(addrs);
-    if (r < 0)
+    if (r < 0) {
         forker.exit(1);
+    }
 
     // set up signal handlers, now that we've daemonized/forked.
     init_async_signal_handler();
@@ -206,8 +205,9 @@ int main(int argc, const char **argv)
     // get monmap
     ceph::async::io_context_pool ctxpool(2);
     MonClient mc(g_ceph_context, ctxpool);
-    if (mc.build_initial_monmap() < 0)
+    if (mc.build_initial_monmap() < 0) {
         forker.exit(1);
+    }
     global_init_chdir(g_ceph_context);
 
     msgr->start();
@@ -233,8 +233,9 @@ int main(int argc, const char **argv)
     register_async_signal_handler_oneshot(SIGINT, handle_mds_signal);
     register_async_signal_handler_oneshot(SIGTERM, handle_mds_signal);
 
-    if (g_conf()->inject_early_sigterm)
+    if (g_conf()->inject_early_sigterm) {
         kill(getpid(), SIGTERM);
+    }
 
     msgr->wait();
 
@@ -243,7 +244,7 @@ int main(int argc, const char **argv)
     unregister_async_signal_handler(SIGTERM, handle_mds_signal);
     shutdown_async_signal_handler();
 
-  shutdown:
+shutdown:
     ctxpool.stop();
     // yuck: grab the mds lock, so we can be sure that whoever in *mds
     // called shutdown finishes what they were doing.

@@ -31,37 +31,45 @@ template < typename K, typename V, typename S >
  * commutativity, which doesn't work if we want more recent insertions
  * to overwrite previous ones.
  */
-    class interval_map {
+class interval_map
+{
     S s;
     using map = std::map < K, std::pair < K, V > >;
     using mapiter = typename std::map < K, std::pair < K, V > >::iterator;
     using cmapiter =
         typename std::map < K, std::pair < K, V > >::const_iterator;
     map m;
-    std::pair < mapiter, mapiter > get_range(K off, K len) {
+    std::pair < mapiter, mapiter > get_range(K off, K len)
+    {
         // fst is first iterator with end after off (may be end)
         auto fst = m.upper_bound(off);
-        if (fst != m.begin())
+        if (fst != m.begin()) {
             --fst;
-        if (fst != m.end() && off >= (fst->first + fst->second.first))
+        }
+        if (fst != m.end() && off >= (fst->first + fst->second.first)) {
             ++fst;
+        }
 
         // lst is first iterator with start after off + len (may be end)
         auto lst = m.lower_bound(off + len);
         return std::make_pair(fst, lst);
     }
-    std::pair < cmapiter, cmapiter > get_range(K off, K len) const {
+    std::pair < cmapiter, cmapiter > get_range(K off, K len) const
+    {
         // fst is first iterator with end after off (may be end)
         auto fst = m.upper_bound(off);
-        if (fst != m.begin())
+        if (fst != m.begin()) {
             --fst;
-        if (fst != m.end() && off >= (fst->first + fst->second.first))
+        }
+        if (fst != m.end() && off >= (fst->first + fst->second.first)) {
             ++fst;
+        }
 
         // lst is first iterator with start after off + len (may be end)
         auto lst = m.lower_bound(off + len);
-         return std::make_pair(fst, lst);
-    } void try_merge(mapiter niter) {
+        return std::make_pair(fst, lst);
+    } void try_merge(mapiter niter)
+    {
         if (niter != m.begin()) {
             auto prev = niter;
             prev--;
@@ -75,7 +83,7 @@ template < typename K, typename V, typename S >
                 m.erase(prev, niter);
                 auto p = m.insert(std::make_pair(off,
                                                  std::make_pair(len,
-                                                                std::move(n))));
+                                                     std::move(n))));
                 ceph_assert(p.second);
                 niter = p.first;
             }
@@ -93,19 +101,21 @@ template < typename K, typename V, typename S >
             m.erase(niter, next);
             auto p = m.insert(std::make_pair(off,
                                              std::make_pair(len,
-                                                            std::move(n))));
+                                                 std::move(n))));
             ceph_assert(p.second);
         }
     }
-  public:
+public:
     interval_map() = default;
-    interval_map(std::initializer_list < typename map::value_type > l) {
-      for (auto & v:l) {
+    interval_map(std::initializer_list < typename map::value_type > l)
+    {
+        for (auto &v : l) {
             insert(v.first, v.second.first, v.second.second);
         }
     }
 
-    interval_map intersect(K off, K len) const {
+    interval_map intersect(K off, K len) const
+    {
         interval_map ret;
         auto limits = get_range(off, len);
         for (auto i = limits.first; i != limits.second; ++i) {
@@ -114,10 +124,11 @@ template < typename K, typename V, typename S >
             V v = i->second.second;
             if (o < off) {
                 V p = v;
-                 l -= (off - o);
-                 v = s.split(off - o, l, p);
-                 o = off;
-            } if ((o + l) > (off + len)) {
+                l -= (off - o);
+                v = s.split(off - o, l, p);
+                o = off;
+            }
+            if ((o + l) > (off + len)) {
                 V p = v;
                 l -= (o + l) - (off + len);
                 v = s.split(0, l, p);
@@ -126,47 +137,51 @@ template < typename K, typename V, typename S >
         }
         return ret;
     }
-    void clear() {
+    void clear()
+    {
         m.clear();
     }
-    void erase(K off, K len) {
-        if (len == 0)
+    void erase(K off, K len)
+    {
+        if (len == 0) {
             return;
+        }
         auto range = get_range(off, len);
         std::vector < std::pair < K, std::pair < K, V > >>to_insert;
         for (auto i = range.first; i != range.second; ++i) {
             if (i->first < off) {
                 to_insert.emplace_back(std::make_pair(i->first,
                                                       std::make_pair(off -
-                                                                     i->first,
-                                                                     s.split(0,
-                                                                             off
-                                                                             -
-                                                                             i->
-                                                                             first,
-                                                                             i->
-                                                                             second.
-                                                                             second))));
+                                                          i->first,
+                                                          s.split(0,
+                                                              off
+                                                              -
+                                                              i->
+                                                              first,
+                                                              i->
+                                                              second.
+                                                              second))));
             }
             if ((off + len) < (i->first + i->second.first)) {
                 K nlen = (i->first + i->second.first) - (off + len);
                 to_insert.emplace_back(std::make_pair(off + len,
                                                       std::make_pair(nlen,
-                                                                     s.split(i->
-                                                                             second.
-                                                                             first
-                                                                             -
-                                                                             nlen,
-                                                                             nlen,
-                                                                             i->
-                                                                             second.
-                                                                             second))));
+                                                              s.split(i->
+                                                                      second.
+                                                                      first
+                                                                      -
+                                                                      nlen,
+                                                                      nlen,
+                                                                      i->
+                                                                      second.
+                                                                      second))));
             }
         }
         m.erase(range.first, range.second);
         m.insert(to_insert.begin(), to_insert.end());
     }
-    void insert(K off, K len, V && v) {
+    void insert(K off, K len, V && v)
+    {
         ceph_assert(len > 0);
         ceph_assert(len == s.length(v));
         erase(off, len);
@@ -176,12 +191,14 @@ template < typename K, typename V, typename S >
         ceph_assert(p.second);
         try_merge(p.first);
     }
-    void insert(interval_map && other) {
+    void insert(interval_map && other)
+    {
         for (auto i = other.m.begin(); i != other.m.end(); other.m.erase(i++)) {
             insert(i->first, i->second.first, std::move(i->second.second));
         }
     }
-    void insert(K off, K len, const V & v) {
+    void insert(K off, K len, const V &v)
+    {
         ceph_assert(len > 0);
         ceph_assert(len == s.length(v));
         erase(off, len);
@@ -189,80 +206,102 @@ template < typename K, typename V, typename S >
         ceph_assert(p.second);
         try_merge(p.first);
     }
-    void insert(const interval_map & other) {
-      for (auto && i:other) {
+    void insert(const interval_map &other)
+    {
+        for (auto && i : other) {
             insert(i.get_off(), i.get_len(), i.get_val());
         }
     }
-    bool empty() const {
+    bool empty() const
+    {
         return m.empty();
-    } interval_set < K > get_interval_set() const {
+    } interval_set < K > get_interval_set() const
+    {
         interval_set < K > ret;
-        for (auto && i:*this) {
+        for (auto && i : *this) {
             ret.insert(i.get_off(), i.get_len());
-        } return ret;
+        }
+        return ret;
     }
-    class const_iterator {
+    class const_iterator
+    {
         cmapiter it;
-         const_iterator(cmapiter && it):it(std::move(it)) {
-        } const_iterator(const cmapiter & it):it(it) {
+        const_iterator(cmapiter && it): it(std::move(it))
+        {
+        } const_iterator(const cmapiter &it): it(it)
+        {
         }
 
         friend class interval_map;
-      public:
+    public:
         const_iterator(const const_iterator &) = default;
-        const_iterator & operator=(const const_iterator &) = default;
+        const_iterator &operator=(const const_iterator &) = default;
 
-        const_iterator & operator++() {
+        const_iterator &operator++()
+        {
             ++it;
             return *this;
         }
-        const_iterator operator++(int) {
+        const_iterator operator++(int)
+        {
             return const_iterator(it++);
         }
-        const_iterator & operator--() {
+        const_iterator &operator--()
+        {
             --it;
             return *this;
         }
-        const_iterator operator--(int) {
+        const_iterator operator--(int)
+        {
             return const_iterator(it--);
         }
-        bool operator==(const const_iterator & rhs)const {
+        bool operator==(const const_iterator &rhs)const
+        {
             return it == rhs.it;
-        } bool operator!=(const const_iterator & rhs)const {
+        } bool operator!=(const const_iterator &rhs)const
+        {
             return it != rhs.it;
-        } K get_off() const {
+        } K get_off() const
+        {
             return it->first;
-        } K get_len() const {
+        } K get_len() const
+        {
             return it->second.first;
-        } const V & get_val() const {
+        } const V &get_val() const
+        {
             return it->second.second;
-        } const_iterator & operator*() {
+        } const_iterator &operator*()
+        {
             return *this;
         }
     };
-    const_iterator begin() const {
+    const_iterator begin() const
+    {
         return const_iterator(m.begin());
-    } const_iterator end() const {
+    } const_iterator end() const
+    {
         return const_iterator(m.end());
     } std::pair < const_iterator, const_iterator > get_containing_range(K off,
-                                                                        K len)
-        const {
+            K len)
+    const
+    {
         auto rng = get_range(off, len);
-         return std::make_pair(const_iterator(rng.first),
-                               const_iterator(rng.second));
-    } unsigned ext_count() const {
+        return std::make_pair(const_iterator(rng.first),
+                              const_iterator(rng.second));
+    } unsigned ext_count() const
+    {
         return m.size();
-    } bool operator==(const interval_map & rhs)const {
+    } bool operator==(const interval_map &rhs)const
+    {
         return m == rhs.m;
-    } std::ostream & print(std::ostream & out) const {
+    } std::ostream &print(std::ostream &out) const
+    {
         bool first = true;
-         out << "{";
-        for (auto && i:*this) {
+        out << "{";
+        for (auto && i : *this) {
             if (first) {
                 first = false;
-            }
-            else {
+            } else {
                 out << ",";
             }
             out << i.get_off() << "~" << i.get_len() << "("
@@ -273,8 +312,8 @@ template < typename K, typename V, typename S >
 };
 
 template < typename K, typename V, typename S >
-    std::ostream & operator<<(std::ostream & out, const interval_map < K, V,
-                              S > &m)
+std::ostream &operator<<(std::ostream &out, const interval_map < K, V,
+                         S > &m)
 {
     return m.print(out);
 }

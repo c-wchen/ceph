@@ -27,28 +27,34 @@ namespace ba = boost::asio;
 namespace bs = boost::system;
 namespace ca = ceph::async;
 
-class context_thread {
+class context_thread
+{
     ba::io_context c;
     ba::executor_work_guard < ba::io_context::executor_type > guard;
     std::thread th;
 
-  public:
-    context_thread() noexcept:guard(ba::make_work_guard(c)),
-        th([this] ()noexcept {
-           c.run();
-           }) {
+public:
+    context_thread() noexcept: guard(ba::make_work_guard(c)),
+        th([this]()noexcept
+    {
+        c.run();
+    })
+    {
     }
 
-    ~context_thread() {
+    ~context_thread()
+    {
         guard.reset();
         th.join();
     }
 
-    ba::io_context & io_context()noexcept {
+    ba::io_context &io_context()noexcept
+    {
         return c;
     }
 
-    ba::io_context::executor_type get_executor()noexcept {
+    ba::io_context::executor_type get_executor()noexcept
+    {
         return c.get_executor();
     }
 };
@@ -56,28 +62,30 @@ class context_thread {
 struct move_only {
     move_only() = default;
     move_only(move_only &&) = default;
-    move_only & operator=(move_only &&) = default;
+    move_only &operator=(move_only &&) = default;
     move_only(const move_only &) = delete;
-    move_only & operator=(const move_only &) = delete;
+    move_only &operator=(const move_only &) = delete;
 };
 
 struct defaultless {
     int a;
-    defaultless(int a):a(a) {
-}};
+    defaultless(int a): a(a)
+    {
+    }
+};
 
 template < typename Executor, typename CompletionToken, typename ... Args >
-    auto id(const Executor & executor, CompletionToken && token,
-            Args && ... args)
+auto id(const Executor &executor, CompletionToken && token,
+        Args && ... args)
 {
     ba::async_completion < CompletionToken, void (Args ...) > init(token);
     auto a = ba::get_associated_allocator(init.completion_handler);
     executor.
-        post(ca::
-             forward_handler(ca::
-                             bind_handler(std::move(init.completion_handler),
-                                          std::forward < Args > (args) ...)),
-             a);
+    post(ca::
+         forward_handler(ca::
+                         bind_handler(std::move(init.completion_handler),
+                                      std::forward < Args > (args) ...)),
+         a);
     return init.result.get();
 }
 
@@ -102,19 +110,19 @@ TEST(BlockedCompletion, NoError)
     bs::error_code ec;
 
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                       }
-                    ));
+    }
+                      ));
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       }
-                    ));
+    }
+                      ));
     EXPECT_FALSE(ec);
 
     int i;
     EXPECT_NO_THROW(i = id(t.get_executor(), ca::use_blocked, bs::error_code {
-                           }, 5));
+    }, 5));
     ASSERT_EQ(5, i);
     EXPECT_NO_THROW(i = id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                           }, 7));
+    }, 7));
     EXPECT_FALSE(ec);
     ASSERT_EQ(7, i);
 
@@ -138,21 +146,21 @@ TEST(BlockedCompletion, AnError)
     bs::error_code ec;
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}), bs::system_error);
+        EDOM, bs::system_category()}), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}));
+        EDOM, bs::system_category()}));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}, 5), bs::system_error);
+        EDOM, bs::system_category()}, 5), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}, 5));
+        EDOM, bs::system_category()}, 5));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}, 5, 3), bs::system_error);
+        EDOM, bs::system_category()}, 5, 3), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}, 5, 3));
+        EDOM, bs::system_category()}, 5, 3));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 }
 
@@ -163,39 +171,39 @@ TEST(BlockedCompletion, MoveOnly)
     bs::error_code ec;
 
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                       }, move_only {
-                       }));
+    }, move_only {
+    }));
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       }, move_only {
-                       }));
+    }, move_only {
+    }));
     EXPECT_FALSE(ec);
 
     {
         auto[i, j] = id(t.get_executor(), ca::use_blocked, move_only {
-                        }, 5);
+        }, 5);
         EXPECT_EQ(j, 5);
     }
     {
         auto[i, j] = id(t.get_executor(), ca::use_blocked[ec], move_only {
-                        }, 5);
+        }, 5);
         EXPECT_EQ(j, 5);
     }
     EXPECT_FALSE(ec);
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}, move_only {
-                    }), bs::system_error);
+        EDOM, bs::system_category()}, move_only {
+    }), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}, move_only {
-                       }));
+        EDOM, bs::system_category()}, move_only {
+    }));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}, move_only {
-                    }, 3), bs::system_error);
+        EDOM, bs::system_category()}, move_only {
+    }, 3), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}, move_only {
-                       }, 3));
+        EDOM, bs::system_category()}, move_only {
+    }, 3));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 }
 
@@ -220,31 +228,31 @@ TEST(BlockedCompletion, DefaultLess)
 
     {
         auto[i, j] = id(t.get_executor(), ca::use_blocked, defaultless {
-                        3}, 5);
+            3}, 5);
         EXPECT_EQ(i.a, 3);
         EXPECT_EQ(j, 5);
     }
     {
         auto[i, j] = id(t.get_executor(), ca::use_blocked[ec], defaultless {
-                        3}, 5);
+            3}, 5);
         EXPECT_EQ(i.a, 3);
         EXPECT_EQ(j, 5);
     }
     EXPECT_FALSE(ec);
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}, move_only {
-                    }), bs::system_error);
+        EDOM, bs::system_category()}, move_only {
+    }), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}, move_only {
-                       }));
+        EDOM, bs::system_category()}, move_only {
+    }));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 
     EXPECT_THROW(id(t.get_executor(), ca::use_blocked, bs::error_code {
-                    EDOM, bs::system_category()}, move_only {
-                    }, 3), bs::system_error);
+        EDOM, bs::system_category()}, move_only {
+    }, 3), bs::system_error);
     EXPECT_NO_THROW(id(t.get_executor(), ca::use_blocked[ec], bs::error_code {
-                       EDOM, bs::system_category()}, move_only {
-                       }, 3));
+        EDOM, bs::system_category()}, move_only {
+    }, 3));
     EXPECT_EQ(bs::error_code(EDOM, bs::system_category()), ec);
 }

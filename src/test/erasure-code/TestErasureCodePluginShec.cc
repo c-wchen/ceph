@@ -27,7 +27,7 @@ using namespace std;
 
 TEST(ErasureCodePlugin, factory)
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     map < std::string, std::string > profile;
     {

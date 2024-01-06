@@ -42,25 +42,29 @@
 
 class WnbdHandler;
 
-class WnbdAdminHook:public AdminSocketHook {
+class WnbdAdminHook: public AdminSocketHook
+{
     WnbdHandler *m_handler;
 
-  public:
-     explicit WnbdAdminHook(WnbdHandler * handler):m_handler(handler) {
+public:
+    explicit WnbdAdminHook(WnbdHandler *handler): m_handler(handler)
+    {
         g_ceph_context->get_admin_socket()->register_command("wnbd stats", this,
-                                                             "get WNBD stats");
-    } ~WnbdAdminHook() override {
+                "get WNBD stats");
+    } ~WnbdAdminHook() override
+    {
         g_ceph_context->get_admin_socket()->unregister_commands(this);
     }
 
-    int call(std::string_view command, const cmdmap_t & cmdmap,
+    int call(std::string_view command, const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & errss, bufferlist & out) override;
+             Formatter *f, std::ostream &errss, bufferlist &out) override;
 };
 
-class WnbdHandler {
-  private:
-    librbd::Image & image;
+class WnbdHandler
+{
+private:
+    librbd::Image &image;
     std::string instance_name;
     uint64_t block_count;
     uint32_t block_size;
@@ -69,21 +73,22 @@ class WnbdHandler {
     uint32_t io_req_workers;
     uint32_t io_reply_workers;
     WnbdAdminHook *admin_hook;
-     boost::asio::thread_pool * reply_tpool;
+    boost::asio::thread_pool *reply_tpool;
 
-  public:
-     WnbdHandler(librbd::Image & _image, std::string _instance_name,
-                 uint64_t _block_count, uint32_t _block_size,
-                 bool _readonly, bool _rbd_cache_enabled,
-                 uint32_t _io_req_workers, uint32_t _io_reply_workers)
-    :image(_image)
-    , instance_name(_instance_name)
-    , block_count(_block_count)
-    , block_size(_block_size)
-    , readonly(_readonly)
-    , rbd_cache_enabled(_rbd_cache_enabled)
-    , io_req_workers(_io_req_workers)
-    , io_reply_workers(_io_reply_workers) {
+public:
+    WnbdHandler(librbd::Image &_image, std::string _instance_name,
+                uint64_t _block_count, uint32_t _block_size,
+                bool _readonly, bool _rbd_cache_enabled,
+                uint32_t _io_req_workers, uint32_t _io_reply_workers)
+        : image(_image)
+        , instance_name(_instance_name)
+        , block_count(_block_count)
+        , block_size(_block_size)
+        , readonly(_readonly)
+        , rbd_cache_enabled(_rbd_cache_enabled)
+        , io_req_workers(_io_req_workers)
+        , io_reply_workers(_io_reply_workers)
+    {
         admin_hook = new WnbdAdminHook(this);
         // Instead of relying on librbd's own thread pool, we're going to use a
         // separate one. This allows us to make assumptions on the threads that
@@ -97,7 +102,7 @@ class WnbdHandler {
     int wait();
     void shutdown();
 
-    int dump_stats(Formatter * f);
+    int dump_stats(Formatter *f);
 
     ~WnbdHandler();
 
@@ -106,7 +111,7 @@ class WnbdHandler {
                            const char *FileName,
                            UINT32 Line, const char *FunctionName);
 
-  private:
+private:
     ceph::mutex shutdown_lock =
         ceph::make_mutex("WnbdHandler::DisconnectLocker");
     bool started = false;
@@ -125,16 +130,17 @@ class WnbdHandler {
         bufferlist data;
 
         IOContext()
-      :    item(this) {
+            :    item(this)
+        {
         }
 
         void set_sense(uint8_t sense_key, uint8_t asc, uint64_t info);
         void set_sense(uint8_t sense_key, uint8_t asc);
     };
 
-    friend std::ostream & operator<<(std::ostream & os, const IOContext & ctx);
+    friend std::ostream &operator<<(std::ostream &os, const IOContext &ctx);
 
-    void send_io_response(IOContext * ctx);
+    void send_io_response(IOContext *ctx);
 
     static void aio_callback(librbd::completion_t cb, void *arg);
 
@@ -164,7 +170,7 @@ class WnbdHandler {
     };
 };
 
-std::ostream & operator<<(std::ostream & os,
-                          const WnbdHandler::IOContext & ctx);
+std::ostream &operator<<(std::ostream &os,
+                         const WnbdHandler::IOContext &ctx);
 
 #endif // WNBD_HANDLER_H

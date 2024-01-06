@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 #ifndef CEPH_INLINE_MEMORY_H
 #define CEPH_INLINE_MEMORY_H
@@ -19,7 +19,7 @@
 // optimize for the common case, which is very small copies
 static inline void *maybe_inline_memcpy(void *dest, const void *src, size_t l,
                                         size_t inline_len)
-    __attribute__ ((always_inline));
+__attribute__((always_inline));
 
 void *maybe_inline_memcpy(void *dest, const void *src, size_t l,
                           size_t inline_len)
@@ -28,35 +28,35 @@ void *maybe_inline_memcpy(void *dest, const void *src, size_t l,
         return memcpy(dest, src, l);
     }
     switch (l) {
-    case 8:
-        return __builtin_memcpy(dest, src, 8);
-    case 4:
-        return __builtin_memcpy(dest, src, 4);
-    case 3:
-        return __builtin_memcpy(dest, src, 3);
-    case 2:
-        return __builtin_memcpy(dest, src, 2);
-    case 1:
-        return __builtin_memcpy(dest, src, 1);
-    default:
-        int cursor = 0;
-        while (l >= sizeof(uint64_t)) {
-            __builtin_memcpy((char *)dest + cursor, (char *)src + cursor,
-                             sizeof(uint64_t));
-            cursor += sizeof(uint64_t);
-            l -= sizeof(uint64_t);
-        }
-        while (l >= sizeof(uint32_t)) {
-            __builtin_memcpy((char *)dest + cursor, (char *)src + cursor,
-                             sizeof(uint32_t));
-            cursor += sizeof(uint32_t);
-            l -= sizeof(uint32_t);
-        }
-        while (l > 0) {
-            *((char *)dest + cursor) = *((char *)src + cursor);
-            cursor++;
-            l--;
-        }
+        case 8:
+            return __builtin_memcpy(dest, src, 8);
+        case 4:
+            return __builtin_memcpy(dest, src, 4);
+        case 3:
+            return __builtin_memcpy(dest, src, 3);
+        case 2:
+            return __builtin_memcpy(dest, src, 2);
+        case 1:
+            return __builtin_memcpy(dest, src, 1);
+        default:
+            int cursor = 0;
+            while (l >= sizeof(uint64_t)) {
+                __builtin_memcpy((char *)dest + cursor, (char *)src + cursor,
+                                 sizeof(uint64_t));
+                cursor += sizeof(uint64_t);
+                l -= sizeof(uint64_t);
+            }
+            while (l >= sizeof(uint32_t)) {
+                __builtin_memcpy((char *)dest + cursor, (char *)src + cursor,
+                                 sizeof(uint32_t));
+                cursor += sizeof(uint32_t);
+                l -= sizeof(uint32_t);
+            }
+            while (l > 0) {
+                *((char *)dest + cursor) = *((char *)src + cursor);
+                cursor++;
+                l--;
+            }
     }
     return dest;
 }
@@ -69,12 +69,13 @@ void *maybe_inline_memcpy(void *dest, const void *src, size_t l,
 
 #if defined(__GNUC__) && defined(__x86_64__)
 
-namespace ceph {
-    typedef unsigned uint128_t __attribute__ ((mode(TI)));
+namespace ceph
+{
+typedef unsigned uint128_t __attribute__((mode(TI)));
 } using ceph::uint128_t;
 
 static inline bool mem_is_zero(const char *data, size_t len)
-    __attribute__ ((always_inline));
+__attribute__((always_inline));
 
 bool mem_is_zero(const char *data, size_t len)
 {

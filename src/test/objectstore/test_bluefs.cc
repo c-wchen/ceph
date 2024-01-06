@@ -31,21 +31,25 @@ std::unique_ptr < char[] > gen_buffer(uint64_t size)
     return buffer;
 }
 
-class TempBdev {
-  public:
+class TempBdev
+{
+public:
     TempBdev(uint64_t size)
-    :path {
-    get_temp_bdev(size)} {
+        : path {
+        get_temp_bdev(size)}
+    {
     }
-    ~TempBdev() {
+    ~TempBdev()
+    {
         rm_temp_bdev(path);
     }
     const std::string path;
-  private:
-    static string get_temp_bdev(uint64_t size) {
+private:
+    static string get_temp_bdev(uint64_t size)
+    {
         static int n = 0;
         string fn = "ceph_test_bluefs.tmp.block." + stringify(getpid())
-            + "." + stringify(++n);
+                    + "." + stringify(++n);
         int fd =::open(fn.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
         ceph_assert(fd >= 0);
         int r =::ftruncate(fd, size);
@@ -53,36 +57,42 @@ class TempBdev {
         ::close(fd);
         return fn;
     }
-    static void rm_temp_bdev(string f) {
+    static void rm_temp_bdev(string f)
+    {
         ::unlink(f.c_str());
     }
 };
 
-class ConfSaver {
+class ConfSaver
+{
     std::stack < std::pair < std::string, std::string >> saved_settings;
-    ConfigProxy & conf;
-  public:
-    ConfSaver(ConfigProxy & conf):conf(conf) {
+    ConfigProxy &conf;
+public:
+    ConfSaver(ConfigProxy &conf): conf(conf)
+    {
         conf._clear_safe_to_start_threads();
     };
-    ~ConfSaver() {
+    ~ConfSaver()
+    {
         conf._clear_safe_to_start_threads();
         while (saved_settings.size() > 0) {
-            auto & e = saved_settings.top();
+            auto &e = saved_settings.top();
             conf.set_val_or_die(e.first, e.second);
             saved_settings.pop();
         }
         conf.set_safe_to_start_threads();
         conf.apply_changes(nullptr);
     }
-    void SetVal(const char *key, const char *val) {
+    void SetVal(const char *key, const char *val)
+    {
         std::string skey(key);
         std::string prev_val;
         conf.get_val(skey, &prev_val);
         conf.set_val_or_die(skey, val);
         saved_settings.emplace(skey, prev_val);
     }
-    void ApplyChanges() {
+    void ApplyChanges()
+    {
         conf.set_safe_to_start_threads();
         conf.apply_changes(nullptr);
     }
@@ -92,29 +102,31 @@ TEST(BlueFS, mkfs)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     uuid_d fsid;
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
 }
 
 TEST(BlueFS, mkfs_mount)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     ASSERT_EQ(fs.get_total(BlueFS::BDEV_DB), size - 1048576);
     ASSERT_LT(fs.get_free(BlueFS::BDEV_DB), size - 1048576);
     fs.umount();
@@ -124,18 +136,19 @@ TEST(BlueFS, write_read)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.mkdir("dir"));
         ASSERT_EQ(0, fs.open_for_write("dir", "file", &h, false));
         h->append("foo", 3);
@@ -145,7 +158,7 @@ TEST(BlueFS, write_read)
         fs.close_writer(h);
     }
     {
-        BlueFS::FileReader * h;
+        BlueFS::FileReader *h;
         ASSERT_EQ(0, fs.open_for_read("dir", "file", &h));
         bufferlist bl;
         ASSERT_EQ(9, fs.read(h, 0, 1024, &bl, NULL));
@@ -159,18 +172,19 @@ TEST(BlueFS, small_appends)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.mkdir("dir"));
         ASSERT_EQ(0, fs.open_for_write("dir", "file", &h, false));
         for (unsigned i = 0; i < 10000; ++i) {
@@ -180,7 +194,7 @@ TEST(BlueFS, small_appends)
         fs.close_writer(h);
     }
     {
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.open_for_write("dir", "file_sync", &h, false));
         for (unsigned i = 0; i < 1000; ++i) {
             h->append("abcdeabcdeabcdeabcdeabcdeabc", 23);
@@ -196,7 +210,7 @@ TEST(BlueFS, very_large_write)
     // we'll write a ~5G file, so allocate more than that for the whole fs
     uint64_t size = 1048576 * 1024 * 6ull;
     TempBdev bdev {
-    size};
+        size};
     BlueFS fs(g_ceph_context);
 
     bool old = g_ceph_context->_conf.get_val < bool > ("bluefs_buffered_io");
@@ -207,16 +221,17 @@ TEST(BlueFS, very_large_write)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     char buf[1048571];          // this is biggish, but intentionally not evenly aligned
     for (unsigned i = 0; i < sizeof(buf); ++i) {
         buf[i] = i;
     }
     {
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.mkdir("dir"));
         ASSERT_EQ(0, fs.open_for_write("dir", "bigfile", &h, false));
         for (unsigned i = 0; i < 3 * 1024 * 1048576ull / sizeof(buf); ++i) {
@@ -232,7 +247,7 @@ TEST(BlueFS, very_large_write)
         fs.close_writer(h);
     }
     {
-        BlueFS::FileReader * h;
+        BlueFS::FileReader *h;
         ASSERT_EQ(0, fs.open_for_read("dir", "bigfile", &h));
         bufferlist bl;
         ASSERT_EQ(h->file->fnode.size, total_written);
@@ -242,7 +257,7 @@ TEST(BlueFS, very_large_write)
             int r = memcmp(buf, bl.c_str(), sizeof(buf));
             if (r) {
                 cerr << "read got mismatch at offset " << i *
-                    sizeof(buf) << " r " << r << std::endl;
+                     sizeof(buf) << " r " << r << std::endl;
             }
             ASSERT_EQ(0, r);
         }
@@ -252,7 +267,7 @@ TEST(BlueFS, very_large_write)
             int r = memcmp(buf, bl.c_str(), sizeof(buf));
             if (r) {
                 cerr << "read got mismatch at offset " << i *
-                    sizeof(buf) << " r " << r << std::endl;
+                     sizeof(buf) << " r " << r << std::endl;
             }
             ASSERT_EQ(0, r);
         }
@@ -276,7 +291,7 @@ TEST(BlueFS, very_large_write2)
     uint64_t size_full = 1048576 * 1024 * 6ull;
     uint64_t size = 1048576 * 1024 * 5ull;
     TempBdev bdev {
-    size_full};
+        size_full};
     BlueFS fs(g_ceph_context);
 
     bool old = g_ceph_context->_conf.get_val < bool > ("bluefs_buffered_io");
@@ -287,10 +302,11 @@ TEST(BlueFS, very_large_write2)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
 
     char fill_arr[1 << 20];     // 1M
     for (size_t i = 0; i < sizeof(fill_arr); ++i) {
@@ -302,7 +318,7 @@ TEST(BlueFS, very_large_write2)
         memcpy(buf.get() + i, fill_arr, sizeof(fill_arr));
     }
     {
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.mkdir("dir"));
         ASSERT_EQ(0, fs.open_for_write("dir", "bigfile", &h, false));
         fs.append_try_flush(h, buf.get(), size);
@@ -312,7 +328,7 @@ TEST(BlueFS, very_large_write2)
     }
     memset(buf.get(), 0, size);
     {
-        BlueFS::FileReader * h;
+        BlueFS::FileReader *h;
         ASSERT_EQ(0, fs.open_for_read("dir", "bigfile", &h));
         ASSERT_EQ(h->file->fnode.size, total_written);
         auto l = h->file->fnode.size;
@@ -330,7 +346,7 @@ TEST(BlueFS, very_large_write2)
 
 #define ALLOC_SIZE 4096
 
-void write_data(BlueFS & fs, uint64_t rationed_bytes)
+void write_data(BlueFS &fs, uint64_t rationed_bytes)
 {
     int j = 0, r = 0;
     uint64_t written_bytes = 0;
@@ -345,12 +361,12 @@ void write_data(BlueFS & fs, uint64_t rationed_bytes)
     while (1) {
         string file = "file.";
         file.append(to_string(j));
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
         ASSERT_NE(nullptr, h);
         auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                   }
-        );
+                                            }
+                                  );
         bufferlist bl;
         std::unique_ptr < char[] > buf = gen_buffer(ALLOC_SIZE);
         bufferptr bp = buffer::claim_char(ALLOC_SIZE, buf.get());
@@ -368,9 +384,9 @@ void write_data(BlueFS & fs, uint64_t rationed_bytes)
     }
 }
 
-void create_single_file(BlueFS & fs)
+void create_single_file(BlueFS &fs)
 {
-    BlueFS::FileWriter * h;
+    BlueFS::FileWriter *h;
     stringstream ss;
     string dir = "dir.test";
     ASSERT_EQ(0, fs.mkdir(dir));
@@ -385,7 +401,7 @@ void create_single_file(BlueFS & fs)
     fs.close_writer(h);
 }
 
-void write_single_file(BlueFS & fs, uint64_t rationed_bytes)
+void write_single_file(BlueFS &fs, uint64_t rationed_bytes)
 {
     stringstream ss;
     const string dir = "dir.test";
@@ -393,12 +409,12 @@ void write_single_file(BlueFS & fs, uint64_t rationed_bytes)
     uint64_t written_bytes = 0;
     rationed_bytes -= ALLOC_SIZE;
     while (1) {
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
         ASSERT_NE(nullptr, h);
         auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                   }
-        );
+                                            }
+                                  );
         bufferlist bl;
         std::unique_ptr < char[] > buf = gen_buffer(ALLOC_SIZE);
         bufferptr bp = buffer::claim_char(ALLOC_SIZE, buf.get());
@@ -417,17 +433,18 @@ void write_single_file(BlueFS & fs, uint64_t rationed_bytes)
 
 bool writes_done = false;
 
-void sync_fs(BlueFS & fs)
+void sync_fs(BlueFS &fs)
 {
     while (1) {
-        if (writes_done == true)
+        if (writes_done == true) {
             break;
+        }
         fs.sync_metadata(false);
         sleep(1);
     }
 }
 
-void do_join(std::thread & t)
+void do_join(std::thread &t)
 {
     t.join();
 }
@@ -447,7 +464,7 @@ TEST(BlueFS, test_flush_1)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     g_ceph_context->_conf.set_val("bluefs_alloc_size", "65536");
     g_ceph_context->_conf.apply_changes(nullptr);
 
@@ -456,29 +473,30 @@ TEST(BlueFS, test_flush_1)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         std::vector < std::thread > write_thread_multiple;
         uint64_t effective_size = size - (32 * 1048576);    // leaving the last 32 MB for log compaction
         uint64_t per_thread_bytes =
-            (effective_size /
-             (NUM_MULTIPLE_FILE_WRITERS + NUM_SINGLE_FILE_WRITERS));
+        (effective_size /
+         (NUM_MULTIPLE_FILE_WRITERS + NUM_SINGLE_FILE_WRITERS));
         for (int i = 0; i < NUM_MULTIPLE_FILE_WRITERS; i++) {
             write_thread_multiple.
-                push_back(std::
-                          thread(write_data, std::ref(fs), per_thread_bytes));
+            push_back(std::
+                      thread(write_data, std::ref(fs), per_thread_bytes));
         }
 
         create_single_file(fs);
         std::vector < std::thread > write_thread_single;
         for (int i = 0; i < NUM_SINGLE_FILE_WRITERS; i++) {
             write_thread_single.
-                push_back(std::
-                          thread(write_single_file, std::ref(fs),
-                                 per_thread_bytes));
+            push_back(std::
+                      thread(write_single_file, std::ref(fs),
+                             per_thread_bytes));
         }
 
         join_all(write_thread_single);
@@ -491,7 +509,7 @@ TEST(BlueFS, test_flush_2)
 {
     uint64_t size = 1048576 * 256;
     TempBdev bdev {
-    size};
+        size};
     g_ceph_context->_conf.set_val("bluefs_alloc_size", "65536");
     g_ceph_context->_conf.apply_changes(nullptr);
 
@@ -500,18 +518,19 @@ TEST(BlueFS, test_flush_2)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         uint64_t effective_size = size - (128 * 1048576);   // leaving the last 32 MB for log compaction
         uint64_t per_thread_bytes = (effective_size / (NUM_WRITERS));
         std::vector < std::thread > write_thread_multiple;
         for (int i = 0; i < NUM_WRITERS; i++) {
             write_thread_multiple.
-                push_back(std::
-                          thread(write_data, std::ref(fs), per_thread_bytes));
+            push_back(std::
+                      thread(write_data, std::ref(fs), per_thread_bytes));
         }
 
         join_all(write_thread_multiple);
@@ -523,7 +542,7 @@ TEST(BlueFS, test_flush_3)
 {
     uint64_t size = 1048576 * 256;
     TempBdev bdev {
-    size};
+        size};
     g_ceph_context->_conf.set_val("bluefs_alloc_size", "65536");
     g_ceph_context->_conf.apply_changes(nullptr);
 
@@ -532,18 +551,19 @@ TEST(BlueFS, test_flush_3)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         std::vector < std::thread > write_threads;
         uint64_t effective_size = size - (64 * 1048576);    // leaving the last 11 MB for log compaction
         uint64_t per_thread_bytes = (effective_size / (NUM_WRITERS));
         for (int i = 0; i < NUM_WRITERS; i++) {
             write_threads.
-                push_back(std::
-                          thread(write_data, std::ref(fs), per_thread_bytes));
+            push_back(std::
+                      thread(write_data, std::ref(fs), per_thread_bytes));
         }
 
         std::vector < std::thread > sync_threads;
@@ -563,17 +583,18 @@ TEST(BlueFS, test_simple_compaction_sync)
     g_ceph_context->_conf.set_val("bluefs_compact_log_sync", "true");
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
 
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         for (int i = 0; i < 10; i++) {
             string dir = "dir.";
@@ -582,11 +603,12 @@ TEST(BlueFS, test_simple_compaction_sync)
             for (int j = 0; j < 10; j++) {
                 string file = "file.";
                 file.append(to_string(j));
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
                 ASSERT_NE(nullptr, h);
-                auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                           });
+                auto sg = make_scope_guard([&fs, h] {
+                    fs.close_writer(h);
+                });
                 bufferlist bl;
                 std::unique_ptr < char[] > buf = gen_buffer(4096);
                 bufferptr bp = buffer::claim_char(4096, buf.get());
@@ -619,17 +641,18 @@ TEST(BlueFS, test_simple_compaction_async)
     g_ceph_context->_conf.set_val("bluefs_compact_log_sync", "false");
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
 
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         for (int i = 0; i < 10; i++) {
             string dir = "dir.";
@@ -638,11 +661,12 @@ TEST(BlueFS, test_simple_compaction_async)
             for (int j = 0; j < 10; j++) {
                 string file = "file.";
                 file.append(to_string(j));
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
                 ASSERT_NE(nullptr, h);
-                auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                           });
+                auto sg = make_scope_guard([&fs, h] {
+                    fs.close_writer(h);
+                });
                 bufferlist bl;
                 std::unique_ptr < char[] > buf = gen_buffer(4096);
                 bufferptr bp = buffer::claim_char(4096, buf.get());
@@ -674,7 +698,7 @@ TEST(BlueFS, test_compaction_sync)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     g_ceph_context->_conf.set_val("bluefs_alloc_size", "65536");
     g_ceph_context->_conf.set_val("bluefs_compact_log_sync", "true");
     const char *canary_dir = "dir.after_compact_test";
@@ -686,18 +710,19 @@ TEST(BlueFS, test_compaction_sync)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         std::vector < std::thread > write_threads;
         uint64_t effective_size = size - (32 * 1048576);    // leaving the last 32 MB for log compaction
         uint64_t per_thread_bytes = (effective_size / (NUM_WRITERS));
         for (int i = 0; i < NUM_WRITERS; i++) {
             write_threads.
-                push_back(std::
-                          thread(write_data, std::ref(fs), per_thread_bytes));
+            push_back(std::
+                      thread(write_data, std::ref(fs), per_thread_bytes));
         }
 
         std::vector < std::thread > sync_threads;
@@ -712,11 +737,11 @@ TEST(BlueFS, test_compaction_sync)
 
         {
             ASSERT_EQ(0, fs.mkdir(canary_dir));
-            BlueFS::FileWriter * h;
+            BlueFS::FileWriter *h;
             ASSERT_EQ(0, fs.open_for_write(canary_dir, canary_file, &h, false));
             ASSERT_NE(nullptr, h);
             auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                       });
+                                                });
             h->append(canary_data, strlen(canary_data));
             int r = fs.fsync(h);
             ASSERT_EQ(r, 0);
@@ -726,7 +751,7 @@ TEST(BlueFS, test_compaction_sync)
 
     fs.mount();
     {
-        BlueFS::FileReader * h;
+        BlueFS::FileReader *h;
         ASSERT_EQ(0, fs.open_for_read(canary_dir, canary_file, &h));
         ASSERT_NE(nullptr, h);
         bufferlist bl;
@@ -742,7 +767,7 @@ TEST(BlueFS, test_compaction_async)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     g_ceph_context->_conf.set_val("bluefs_alloc_size", "65536");
     g_ceph_context->_conf.set_val("bluefs_compact_log_sync", "false");
     const char *canary_dir = "dir.after_compact_test";
@@ -754,18 +779,19 @@ TEST(BlueFS, test_compaction_async)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         std::vector < std::thread > write_threads;
         uint64_t effective_size = size - (32 * 1048576);    // leaving the last 32 MB for log compaction
         uint64_t per_thread_bytes = (effective_size / (NUM_WRITERS));
         for (int i = 0; i < NUM_WRITERS; i++) {
             write_threads.
-                push_back(std::
-                          thread(write_data, std::ref(fs), per_thread_bytes));
+            push_back(std::
+                      thread(write_data, std::ref(fs), per_thread_bytes));
         }
 
         std::vector < std::thread > sync_threads;
@@ -780,11 +806,11 @@ TEST(BlueFS, test_compaction_async)
 
         {
             ASSERT_EQ(0, fs.mkdir(canary_dir));
-            BlueFS::FileWriter * h;
+            BlueFS::FileWriter *h;
             ASSERT_EQ(0, fs.open_for_write(canary_dir, canary_file, &h, false));
             ASSERT_NE(nullptr, h);
             auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                       });
+                                                });
             h->append(canary_data, strlen(canary_data));
             int r = fs.fsync(h);
             ASSERT_EQ(r, 0);
@@ -794,7 +820,7 @@ TEST(BlueFS, test_compaction_async)
 
     fs.mount();
     {
-        BlueFS::FileReader * h;
+        BlueFS::FileReader *h;
         ASSERT_EQ(0, fs.open_for_read(canary_dir, canary_file, &h));
         ASSERT_NE(nullptr, h);
         bufferlist bl;
@@ -810,7 +836,7 @@ TEST(BlueFS, test_replay)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     g_ceph_context->_conf.set_val("bluefs_alloc_size", "65536");
     g_ceph_context->_conf.set_val("bluefs_compact_log_sync", "false");
 
@@ -819,18 +845,19 @@ TEST(BlueFS, test_replay)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         std::vector < std::thread > write_threads;
         uint64_t effective_size = size - (32 * 1048576);    // leaving the last 32 MB for log compaction
         uint64_t per_thread_bytes = (effective_size / (NUM_WRITERS));
         for (int i = 0; i < NUM_WRITERS; i++) {
             write_threads.
-                push_back(std::
-                          thread(write_data, std::ref(fs), per_thread_bytes));
+            push_back(std::
+                      thread(write_data, std::ref(fs), per_thread_bytes));
         }
 
         std::vector < std::thread > sync_threads;
@@ -846,8 +873,8 @@ TEST(BlueFS, test_replay)
     fs.umount();
     // remount and check log can replay safe?
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     fs.umount();
 }
 
@@ -855,7 +882,7 @@ TEST(BlueFS, test_replay_growth)
 {
     uint64_t size = 1048576LL * (2 * 1024 + 128);
     TempBdev bdev {
-    size};
+        size};
 
     ConfSaver conf(g_ceph_context->_conf);
     conf.SetVal("bluefs_alloc_size", "4096");
@@ -872,14 +899,15 @@ TEST(BlueFS, test_replay_growth)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     ASSERT_EQ(0, fs.mkdir("dir"));
 
     char data[2000];
-    BlueFS::FileWriter * h;
+    BlueFS::FileWriter *h;
     ASSERT_EQ(0, fs.open_for_write("dir", "file", &h, false));
     for (size_t i = 0; i < 10000; i++) {
         h->append(data, 2000);
@@ -890,9 +918,9 @@ TEST(BlueFS, test_replay_growth)
 
     // remount and check log can replay safe?
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}
-              ));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}
+                                       ));
     fs.umount();
 }
 
@@ -900,13 +928,13 @@ TEST(BlueFS, test_tracker_50965)
 {
     uint64_t size_wal = 1048576 * 64;
     TempBdev bdev_wal {
-    size_wal};
+        size_wal};
     uint64_t size_db = 1048576 * 128;
     TempBdev bdev_db {
-    size_db};
+        size_db};
     uint64_t size_slow = 1048576 * 256;
     TempBdev bdev_slow {
-    size_slow};
+        size_slow};
 
     ConfSaver conf(g_ceph_context->_conf);
     conf.SetVal("bluefs_min_flush_size", "65536");
@@ -920,12 +948,13 @@ TEST(BlueFS, test_tracker_50965)
               fs.add_block_device(BlueFS::BDEV_SLOW, bdev_slow.path, false, 0));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, true, true}
-              ));
+        BlueFS::BDEV_DB, true, true
+    }
+                        ));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, true, true}
-              ));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, true, true}
+                                       ));
 
     string dir_slow = "dir.slow";
     ASSERT_EQ(0, fs.mkdir(dir_slow));
@@ -933,12 +962,12 @@ TEST(BlueFS, test_tracker_50965)
     ASSERT_EQ(0, fs.mkdir(dir_db));
 
     string file_slow = "file";
-    BlueFS::FileWriter * h_slow;
+    BlueFS::FileWriter *h_slow;
     ASSERT_EQ(0, fs.open_for_write(dir_slow, file_slow, &h_slow, false));
     ASSERT_NE(nullptr, h_slow);
 
     string file_db = "file";
-    BlueFS::FileWriter * h_db;
+    BlueFS::FileWriter *h_db;
     ASSERT_EQ(0, fs.open_for_write(dir_db, file_db, &h_db, false));
     ASSERT_NE(nullptr, h_db);
 
@@ -981,13 +1010,13 @@ TEST(BlueFS, test_truncate_stable_53129)
 
     uint64_t size_wal = 1048576 * 64;
     TempBdev bdev_wal {
-    size_wal};
+        size_wal};
     uint64_t size_db = 1048576 * 128;
     TempBdev bdev_db {
-    size_db};
+        size_db};
     uint64_t size_slow = 1048576 * 256;
     TempBdev bdev_slow {
-    size_slow};
+        size_slow};
 
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
@@ -997,10 +1026,11 @@ TEST(BlueFS, test_truncate_stable_53129)
               fs.add_block_device(BlueFS::BDEV_SLOW, bdev_slow.path, false, 0));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, true, true}));
+        BlueFS::BDEV_DB, true, true
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, true, true}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, true, true}));
 
     string dir_slow = "dir.slow";
     ASSERT_EQ(0, fs.mkdir(dir_slow));
@@ -1008,12 +1038,12 @@ TEST(BlueFS, test_truncate_stable_53129)
     ASSERT_EQ(0, fs.mkdir(dir_db));
 
     string file_slow = "file";
-    BlueFS::FileWriter * h_slow;
+    BlueFS::FileWriter *h_slow;
     ASSERT_EQ(0, fs.open_for_write(dir_slow, file_slow, &h_slow, false));
     ASSERT_NE(nullptr, h_slow);
 
     string file_db = "file";
-    BlueFS::FileWriter * h_db;
+    BlueFS::FileWriter *h_db;
     ASSERT_EQ(0, fs.open_for_write(dir_db, file_db, &h_db, false));
     ASSERT_NE(nullptr, h_db);
 
@@ -1053,8 +1083,8 @@ TEST(BlueFS, test_truncate_stable_53129)
     fs.umount();
 
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, true, true}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, true, true}));
 
     uint64_t size;
     utime_t mtime;
@@ -1071,7 +1101,7 @@ TEST(BlueFS, test_update_ino1_delta_after_replay)
 {
     uint64_t size = 1048576LL * (2 * 1024 + 128);
     TempBdev bdev {
-    size};
+        size};
 
     ConfSaver conf(g_ceph_context->_conf);
     conf.SetVal("bluefs_alloc_size", "4096");
@@ -1087,14 +1117,15 @@ TEST(BlueFS, test_update_ino1_delta_after_replay)
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     ASSERT_EQ(0, fs.mkdir("dir"));
 
     char data[2000];
-    BlueFS::FileWriter * h;
+    BlueFS::FileWriter *h;
     ASSERT_EQ(0, fs.open_for_write("dir", "file", &h, false));
     for (size_t i = 0; i < 100; i++) {
         h->append(data, 2000);
@@ -1114,9 +1145,9 @@ TEST(BlueFS, test_update_ino1_delta_after_replay)
 
     // remount and check log can replay safe?
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}
-              ));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}
+                                       ));
     fs.umount();
 }
 
@@ -1124,18 +1155,19 @@ TEST(BlueFS, broken_unlink_fsync_seq)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     BlueFS fs(g_ceph_context);
     ASSERT_EQ(0,
               fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false, 1048576));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}
-              ));
+        BlueFS::BDEV_DB, false, false
+    }
+                        ));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}
-              ));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}
+                                       ));
     {
         /*
          * This reproduces a weird file op sequence (unlink+fsync) that Octopus
@@ -1147,7 +1179,7 @@ TEST(BlueFS, broken_unlink_fsync_seq)
         for (unsigned i = 0; i < sizeof(buf); ++i) {
             buf[i] = i;
         }
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.mkdir("dir"));
         ASSERT_EQ(0, fs.open_for_write("dir", "file", &h, false));
 
@@ -1162,9 +1194,9 @@ TEST(BlueFS, broken_unlink_fsync_seq)
 
     // remount and check log can replay safe?
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}
-              ));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}
+                                       ));
     fs.umount();
 }
 
@@ -1174,7 +1206,7 @@ TEST(BlueFS, truncate_fsync)
     uint64_t block_size = 4096;
     uint64_t reserved = 1048576;
     TempBdev bdev {
-    bdev_size};
+        bdev_size};
     uuid_d fsid;
     const char *DIR_NAME = "dir";
     const char *FILE_NAME = "file1";
@@ -1190,13 +1222,14 @@ TEST(BlueFS, truncate_fsync)
                       fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false,
                                           reserved));
             ASSERT_EQ(0, fs.mkfs(fsid, {
-                                 BlueFS::BDEV_DB, false, false}));
+                BlueFS::BDEV_DB, false, false
+            }));
             ASSERT_EQ(0, fs.mount());
-            ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                                BlueFS::BDEV_DB, false,
-                                                false}));
+            ASSERT_EQ(0, fs.maybe_verify_layout({
+                BlueFS::BDEV_DB, false,
+                false}));
             {
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.mkdir("dir"));
                 ASSERT_EQ(0, fs.open_for_write(DIR_NAME, FILE_NAME, &h, false));
                 h->append(content.c_str(), content.length());
@@ -1204,7 +1237,7 @@ TEST(BlueFS, truncate_fsync)
                 fs.close_writer(h);
             }
             {
-                BlueFS::FileReader * h;
+                BlueFS::FileReader *h;
                 ASSERT_EQ(0, fs.open_for_read(DIR_NAME, FILE_NAME, &h));
                 bufferlist bl;
                 ASSERT_EQ(content.length(),
@@ -1215,7 +1248,7 @@ TEST(BlueFS, truncate_fsync)
                 delete h;
             }
             {
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.open_for_write(DIR_NAME, FILE_NAME, &h, true));
                 fs.truncate(h, 0);
                 fs.fsync(h);
@@ -1229,7 +1262,7 @@ TEST(BlueFS, truncate_fsync)
                       fs.add_block_device(BlueFS::BDEV_DB, bdev.path, false,
                                           reserved));
             ASSERT_EQ(0, fs.mount());
-            BlueFS::FileReader * h;
+            BlueFS::FileReader *h;
             ASSERT_EQ(0, fs.open_for_read(DIR_NAME, FILE_NAME, &h));
             bufferlist bl;
             ASSERT_EQ(0, fs.read(h, 0, read_size, &bl, NULL));
@@ -1243,10 +1276,10 @@ TEST(BlueFS, test_shared_alloc)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev_slow {
-    size};
+        size};
     uint64_t size_db = 1048576 * 8;
     TempBdev bdev_db {
-    size_db};
+        size_db};
 
     ConfSaver conf(g_ceph_context->_conf);
     conf.SetVal("bluefs_shared_alloc_size", "1048576");
@@ -1254,10 +1287,10 @@ TEST(BlueFS, test_shared_alloc)
     bluefs_shared_alloc_context_t shared_alloc;
     uint64_t shared_alloc_unit = 4096;
     shared_alloc.
-        set(Allocator::
-            create(g_ceph_context, g_ceph_context->_conf->bluefs_allocator,
-                   size, shared_alloc_unit, 0, 0, "test shared allocator"),
-            shared_alloc_unit);
+    set(Allocator::
+        create(g_ceph_context, g_ceph_context->_conf->bluefs_allocator,
+               size, shared_alloc_unit, 0, 0, "test shared allocator"),
+        shared_alloc_unit);
     shared_alloc.a->init_add_free(0, size);
 
     BlueFS fs(g_ceph_context);
@@ -1270,10 +1303,11 @@ TEST(BlueFS, test_shared_alloc)
                                   &shared_alloc));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         for (int i = 0; i < 10; i++) {
             string dir = "dir.";
@@ -1282,11 +1316,12 @@ TEST(BlueFS, test_shared_alloc)
             for (int j = 0; j < 10; j++) {
                 string file = "file.";
                 file.append(to_string(j));
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
                 ASSERT_NE(nullptr, h);
-                auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                           });
+                auto sg = make_scope_guard([&fs, h] {
+                    fs.close_writer(h);
+                });
                 bufferlist bl;
                 std::unique_ptr < char[] > buf = gen_buffer(4096);
                 bufferptr bp = buffer::claim_char(4096, buf.get());
@@ -1326,7 +1361,7 @@ TEST(BlueFS, test_shared_alloc_sparse)
     uint64_t main_unit = 4096;
     uint64_t bluefs_alloc_unit = 1048576;
     TempBdev bdev_slow {
-    size};
+        size};
 
     ConfSaver conf(g_ceph_context->_conf);
     conf.SetVal("bluefs_shared_alloc_size",
@@ -1334,9 +1369,9 @@ TEST(BlueFS, test_shared_alloc_sparse)
 
     bluefs_shared_alloc_context_t shared_alloc;
     shared_alloc.
-        set(Allocator::
-            create(g_ceph_context, g_ceph_context->_conf->bluefs_allocator,
-                   size, main_unit, 0, 0, "test shared allocator"), main_unit);
+    set(Allocator::
+        create(g_ceph_context, g_ceph_context->_conf->bluefs_allocator,
+               size, main_unit, 0, 0, "test shared allocator"), main_unit);
     // prepare sparse free space but let's have a continuous chunk at
     // the beginning to fit initial log's fnode into superblock,
     // we don't have any tricks to deal with sparse allocations
@@ -1351,12 +1386,13 @@ TEST(BlueFS, test_shared_alloc_sparse)
                                      &shared_alloc));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}
-              ));
+        BlueFS::BDEV_DB, false, false
+    }
+                        ));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}
-              ));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}
+                                       ));
     {
         for (int i = 0; i < 10; i++) {
             string dir = "dir.";
@@ -1365,11 +1401,11 @@ TEST(BlueFS, test_shared_alloc_sparse)
             for (int j = 0; j < 10; j++) {
                 string file = "file.";
                 file.append(to_string(j));
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
                 ASSERT_NE(nullptr, h);
                 auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                           });
+                                                    });
                 bufferlist bl;
                 std::unique_ptr < char[] > buf = gen_buffer(4096);
                 bufferptr bp = buffer::claim_char(4096, buf.get());
@@ -1410,7 +1446,7 @@ TEST(BlueFS, test_4k_shared_alloc)
     uint64_t main_unit = 4096;
     uint64_t bluefs_alloc_unit = main_unit;
     TempBdev bdev_slow {
-    size};
+        size};
 
     ConfSaver conf(g_ceph_context->_conf);
     conf.SetVal("bluefs_shared_alloc_size",
@@ -1418,9 +1454,9 @@ TEST(BlueFS, test_4k_shared_alloc)
 
     bluefs_shared_alloc_context_t shared_alloc;
     shared_alloc.
-        set(Allocator::
-            create(g_ceph_context, g_ceph_context->_conf->bluefs_allocator,
-                   size, main_unit, 0, 0, "test shared allocator"), main_unit);
+    set(Allocator::
+        create(g_ceph_context, g_ceph_context->_conf->bluefs_allocator,
+               size, main_unit, 0, 0, "test shared allocator"), main_unit);
     shared_alloc.a->init_add_free(bluefs_alloc_unit, size - bluefs_alloc_unit);
 
     BlueFS fs(g_ceph_context);
@@ -1428,10 +1464,11 @@ TEST(BlueFS, test_4k_shared_alloc)
                                      &shared_alloc));
     uuid_d fsid;
     ASSERT_EQ(0, fs.mkfs(fsid, {
-                         BlueFS::BDEV_DB, false, false}));
+        BlueFS::BDEV_DB, false, false
+    }));
     ASSERT_EQ(0, fs.mount());
-    ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                        BlueFS::BDEV_DB, false, false}));
+    ASSERT_EQ(0, fs.maybe_verify_layout({
+        BlueFS::BDEV_DB, false, false}));
     {
         for (int i = 0; i < 10; i++) {
             string dir = "dir.";
@@ -1440,11 +1477,12 @@ TEST(BlueFS, test_4k_shared_alloc)
             for (int j = 0; j < 10; j++) {
                 string file = "file.";
                 file.append(to_string(j));
-                BlueFS::FileWriter * h;
+                BlueFS::FileWriter *h;
                 ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
                 ASSERT_NE(nullptr, h);
-                auto sg = make_scope_guard([&fs, h] { fs.close_writer(h);
-                                           });
+                auto sg = make_scope_guard([&fs, h] {
+                    fs.close_writer(h);
+                });
                 bufferlist bl;
                 std::unique_ptr < char[] > buf = gen_buffer(4096);
                 bufferptr bp = buffer::claim_char(4096, buf.get());
@@ -1480,8 +1518,8 @@ TEST(BlueFS, test_4k_shared_alloc)
     fs.umount();
 }
 
-void create_files(BlueFS & fs,
-                  atomic_bool & stop_creating, atomic_bool & started_creating)
+void create_files(BlueFS &fs,
+                  atomic_bool &stop_creating, atomic_bool &started_creating)
 {
     uint32_t i = 0;
     stringstream ss;
@@ -1494,7 +1532,7 @@ void create_files(BlueFS & fs,
     while (!stop_creating.load()) {
         string file = "file.";
         file.append(to_string(i));
-        BlueFS::FileWriter * h;
+        BlueFS::FileWriter *h;
         ASSERT_EQ(0, fs.open_for_write(dir, file, &h, false));
         ASSERT_NE(nullptr, h);
         fs.close_writer(h);
@@ -1507,7 +1545,7 @@ TEST(BlueFS, test_concurrent_dir_link_and_compact_log_56210)
 {
     uint64_t size = 1048576 * 128;
     TempBdev bdev {
-    size};
+        size};
     ConfSaver conf(g_ceph_context->_conf);
 
     conf.SetVal("bluefs_alloc_size", "65536");
@@ -1524,15 +1562,16 @@ TEST(BlueFS, test_concurrent_dir_link_and_compact_log_56210)
                                       1048576));
         uuid_d fsid;
         ASSERT_EQ(0, fs.mkfs(fsid, {
-                             BlueFS::BDEV_DB, false, false}));
+            BlueFS::BDEV_DB, false, false
+        }));
         ASSERT_EQ(0, fs.mount());
-        ASSERT_EQ(0, fs.maybe_verify_layout( {
-                                            BlueFS::BDEV_DB, false, false}));
+        ASSERT_EQ(0, fs.maybe_verify_layout({
+            BlueFS::BDEV_DB, false, false}));
         {
             atomic_bool stop_creating {
-            false};
+                false};
             atomic_bool started_creating {
-            false};
+                false};
             std::thread create_thread;
             create_thread = std::thread(create_files,
                                         std::ref(fs),
@@ -1540,7 +1579,7 @@ TEST(BlueFS, test_concurrent_dir_link_and_compact_log_56210)
                                         std::ref(started_creating));
             while (!started_creating.load()) {
             }
-            BlueFS::FileWriter * h;
+            BlueFS::FileWriter *h;
             ASSERT_EQ(0, fs.mkdir("foo"));
             ASSERT_EQ(0, fs.open_for_write("foo", "bar", &h, false));
             fs.fsync(h);
@@ -1561,8 +1600,10 @@ int main(int argc, char **argv)
     auto args = argv_to_vec(argc, argv);
     map < string, string > defaults = {
         {
-        "debug_bluefs", "1/20"}, {
-        "debug_bdev", "1/20"}
+            "debug_bluefs", "1/20"
+        }, {
+            "debug_bdev", "1/20"
+        }
     };
 
     auto cct = global_init(&defaults, args, CEPH_ENTITY_TYPE_CLIENT,
@@ -1570,8 +1611,8 @@ int main(int argc, char **argv)
                            CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
     common_init_finish(g_ceph_context);
     g_ceph_context->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "*");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "*");
     g_ceph_context->_conf.apply_changes(nullptr);
 
     ::testing::InitGoogleTest(&argc, argv);

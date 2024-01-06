@@ -54,7 +54,8 @@ int main(int argc, const char **argv)
 
     std::map < std::string, std::string > defaults = {
         {
-        "keyring", "$mgr_data/keyring"}
+            "keyring", "$mgr_data/keyring"
+        }
     };
     auto cct = global_init(&defaults, args, CEPH_ENTITY_TYPE_MGR,
                            CODE_ENVIRONMENT_DAEMON, 0);
@@ -69,7 +70,7 @@ int main(int argc, const char **argv)
     int rc = mgr.init();
     if (rc != 0) {
         std::cerr << "Error in initialization: " << cpp_strerror(rc) << std::
-            endl;
+                  endl;
         return rc;
     }
 

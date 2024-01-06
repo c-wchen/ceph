@@ -36,45 +36,45 @@ static const char *get_remainder(const char *string, const char *prefix)
 static void usage(const char *program)
 {
     cout << "Usage: " << program << " --conf=<config_file> <replay_file>" <<
-        std::endl;
+         std::endl;
     cout << "Options:" << std::endl;
     cout <<
-        "  -p, --pool-name <pool>          Name of the pool to use.  Default: rbd"
-        << std::endl;
+         "  -p, --pool-name <pool>          Name of the pool to use.  Default: rbd"
+         << std::endl;
     cout <<
-        "  --latency-multiplier <float>    Multiplies inter-request latencies.  Default: 1"
-        << std::endl;
+         "  --latency-multiplier <float>    Multiplies inter-request latencies.  Default: 1"
+         << std::endl;
     cout <<
-        "  --read-only                     Only perform non-destructive operations."
-        << std::endl;
+         "  --read-only                     Only perform non-destructive operations."
+         << std::endl;
     cout <<
-        "  --map-image <rule>              Add a rule to map image names in the trace to"
-        << std::endl;
+         "  --map-image <rule>              Add a rule to map image names in the trace to"
+         << std::endl;
     cout <<
-        "                                  image names in the replay cluster."
-        << std::endl;
+         "                                  image names in the replay cluster."
+         << std::endl;
     cout << "  --dump-perf-counters            *Experimental*" << std::endl;
     cout <<
-        "                                  Dump performance counters to standard out before"
-        << std::endl;
+         "                                  Dump performance counters to standard out before"
+         << std::endl;
     cout <<
-        "                                  an image is closed. Performance counters may be dumped"
-        << std::endl;
+         "                                  an image is closed. Performance counters may be dumped"
+         << std::endl;
     cout <<
-        "                                  multiple times if multiple images are closed, or if"
-        << std::endl;
+         "                                  multiple times if multiple images are closed, or if"
+         << std::endl;
     cout <<
-        "                                  the same image is opened and closed multiple times."
-        << std::endl;
+         "                                  the same image is opened and closed multiple times."
+         << std::endl;
     cout <<
-        "                                  Performance counters and their meaning may change between"
-        << std::endl;
+         "                                  Performance counters and their meaning may change between"
+         << std::endl;
     cout << "                                  versions." << std::endl;
     cout << std::endl;
     cout << "Image mapping rules:" << std::endl;
     cout <<
-        "A rule of image1@snap1=image2@snap2 would map snap1 of image1 to snap2 of"
-        << std::endl;
+         "A rule of image1@snap1=image2@snap2 would map snap1 of image1 to snap2 of"
+         << std::endl;
     cout << "image2." << std::endl;
 }
 
@@ -103,43 +103,35 @@ int main(int argc, const char **argv)
     for (i = args.begin(); i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "-p", "--pool", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "-p", "--pool", (char *)NULL)) {
             pool_name = val;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &latency_multiplier, err, "--latency-multiplier",
-                  (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &latency_multiplier, err, "--latency-multiplier",
+                    (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << err.str() << std::endl;
                 return 1;
             }
-        }
-        else if (ceph_argparse_flag(args, i, "--read-only", (char *)NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--read-only", (char *)NULL)) {
             readonly = true;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--map-image", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--map-image", (char *)NULL)) {
             ImageNameMap::Mapping mapping;
             if (image_name_map.parse_mapping(val, &mapping)) {
                 image_name_map.add_mapping(mapping);
-            }
-            else {
+            } else {
                 cerr << "Unable to parse mapping string: '" << val << "'" <<
-                    std::endl;
+                     std::endl;
                 return 1;
             }
-        }
-        else if (ceph_argparse_flag
-                 (args, i, "--dump-perf-counters", (char *)NULL)) {
+        } else if (ceph_argparse_flag
+                   (args, i, "--dump-perf-counters", (char *)NULL)) {
             dump_perf_counters = true;
-        }
-        else if (get_remainder(*i, "-")) {
+        } else if (get_remainder(*i, "-")) {
             cerr << "Unrecognized argument: " << *i << std::endl;
             return 1;
-        }
-        else {
+        } else {
             ++i;
         }
     }

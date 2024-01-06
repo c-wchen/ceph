@@ -17,7 +17,7 @@
 #include "RadosXattrIter.h"
 
 librados::RadosXattrsIter::RadosXattrsIter()
-:val(NULL)
+    : val(NULL)
 {
     i = attrset.end();
 }

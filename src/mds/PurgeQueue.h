@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef PURGE_QUEUE_H_
@@ -26,24 +26,28 @@
  * and layout: all other un-needed inode metadata (times, permissions, etc)
  * has been discarded.
  */
-class PurgeItem {
-  public:
-    enum Action:uint8_t {
+class PurgeItem
+{
+public:
+    enum Action : uint8_t {
         NONE = 0,
         PURGE_FILE = 1,
         TRUNCATE_FILE,
         PURGE_DIR
     };
 
-     PurgeItem() {
-    } void encode(bufferlist & bl) const;
-    void decode(bufferlist::const_iterator & p);
+    PurgeItem()
+    {
+    } void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &p);
 
-    static Action str_to_type(std::string_view str) {
+    static Action str_to_type(std::string_view str)
+    {
         return PurgeItem::actions.at(std::string(str));
     }
 
-    void dump(Formatter * f) const {
+    void dump(Formatter *f) const
+    {
         f->dump_int("action", action);
         f->dump_int("ino", ino);
         f->dump_int("size", size);
@@ -70,7 +74,7 @@ class PurgeItem {
     std::vector < int64_t > old_pools;
     SnapContext snapc;
     fragtree_t fragtree;
-  private:
+private:
     static const std::map < std::string, PurgeItem::Action > actions;
 };
 
@@ -90,19 +94,20 @@ enum {
 };
 
 struct PurgeItemCommitOp {
-  public:
-    enum PurgeType:uint8_t {
+public:
+    enum PurgeType : uint8_t {
         PURGE_OP_RANGE = 0,
         PURGE_OP_REMOVE = 1,
         PURGE_OP_ZERO
     };
 
-     PurgeItemCommitOp(PurgeItem _item, PurgeType _type, int _flags)
-    :item(_item), type(_type), flags(_flags)
-{
-} PurgeItemCommitOp(PurgeItem _item, PurgeType _type, int _flags,
-                    object_t _oid, object_locator_t _oloc)
-    :item(_item), type(_type), flags(_flags), oid(_oid), oloc(_oloc) {
+    PurgeItemCommitOp(PurgeItem _item, PurgeType _type, int _flags)
+        : item(_item), type(_type), flags(_flags)
+    {
+    } PurgeItemCommitOp(PurgeItem _item, PurgeType _type, int _flags,
+                        object_t _oid, object_locator_t _oloc)
+        : item(_item), type(_type), flags(_flags), oid(_oid), oloc(_oloc)
+    {
     }
 
     PurgeItem item;
@@ -120,12 +125,13 @@ struct PurgeItemCommitOp {
  * independent of all the metadata structures and do not need to
  * take mds_lock for anything.
  */
-class PurgeQueue {
-  public:
-    PurgeQueue(CephContext * cct_,
+class PurgeQueue
+{
+public:
+    PurgeQueue(CephContext *cct_,
                mds_rank_t rank_,
                const int64_t metadata_pool_,
-               Objecter * objecter_, Context * on_error);
+               Objecter *objecter_, Context *on_error);
     ~PurgeQueue();
 
     void init();
@@ -135,16 +141,16 @@ class PurgeQueue {
     void create_logger();
 
     // Write an empty queue, use this during MDS rank creation
-    void create(Context * completion);
+    void create(Context *completion);
 
     // Read the Journaler header for an existing queue and start consuming
-    void open(Context * completion);
+    void open(Context *completion);
 
-    void wait_for_recovery(Context * c);
+    void wait_for_recovery(Context *c);
 
     // Submit one entry to the work queue.  Call back when it is persisted
     // to the queue (there is no callback for when it is executed)
-    void push(const PurgeItem & pi, Context * completion);
+    void push(const PurgeItem &pi, Context *completion);
 
     void _commit_ops(int r, const std::vector < PurgeItemCommitOp > &ops_vec,
                      uint64_t expire_to);
@@ -153,47 +159,47 @@ class PurgeQueue {
     // anything.
     bool is_idle() const;
 
-  /**
-   * Signal to the PurgeQueue that you would like it to hurry up and
-   * finish consuming everything in the queue.  Provides progress
-   * feedback.
-   *
-   * @param progress: bytes consumed since we started draining
-   * @param progress_total: max bytes that were outstanding during purge
-   * @param in_flight_count: number of file purges currently in flight
-   *
-   * @returns true if drain is complete
-   */
-    bool drain(uint64_t * progress,
-               uint64_t * progress_total, size_t * in_flight_count);
+    /**
+     * Signal to the PurgeQueue that you would like it to hurry up and
+     * finish consuming everything in the queue.  Provides progress
+     * feedback.
+     *
+     * @param progress: bytes consumed since we started draining
+     * @param progress_total: max bytes that were outstanding during purge
+     * @param in_flight_count: number of file purges currently in flight
+     *
+     * @returns true if drain is complete
+     */
+    bool drain(uint64_t *progress,
+               uint64_t *progress_total, size_t *in_flight_count);
 
-    void update_op_limit(const MDSMap & mds_map);
+    void update_op_limit(const MDSMap &mds_map);
 
     void handle_conf_change(const std::set < std::string > &changed,
-                            const MDSMap & mds_map);
+                            const MDSMap &mds_map);
 
-  private:
-     uint32_t _calculate_ops(const PurgeItem & item) const;
+private:
+    uint32_t _calculate_ops(const PurgeItem &item) const;
 
     bool _can_consume();
 
     // recover the journal write_pos (drop any partial written entry)
     void _recover();
 
-  /**
-   * @return true if we were in a position to try and consume something:
-   *         does not mean we necessarily did.
-   */
+    /**
+     * @return true if we were in a position to try and consume something:
+     *         does not mean we necessarily did.
+     */
     bool _consume();
 
-    void _execute_item(const PurgeItem & item, uint64_t expire_to);
+    void _execute_item(const PurgeItem &item, uint64_t expire_to);
     void _execute_item_complete(uint64_t expire_to);
 
     void _go_readonly(int r);
 
     CephContext *cct;
     const mds_rank_t rank;
-     ceph::mutex lock = ceph::make_mutex("PurgeQueue");
+    ceph::mutex lock = ceph::make_mutex("PurgeQueue");
     bool readonly = false;
 
     int64_t metadata_pool;
@@ -204,16 +210,16 @@ class PurgeQueue {
     SafeTimer timer;
     Filer filer;
     Objecter *objecter;
-     std::unique_ptr < PerfCounters > logger;
+    std::unique_ptr < PerfCounters > logger;
 
     Journaler journaler;
 
     Context *on_error;
 
     // Map of Journaler offset to PurgeItem
-     std::map < uint64_t, PurgeItem > in_flight;
+    std::map < uint64_t, PurgeItem > in_flight;
 
-     std::set < uint64_t > pending_expire;
+    std::set < uint64_t > pending_expire;
 
     // Throttled allowances
     uint64_t ops_in_flight = 0;
@@ -232,7 +238,7 @@ class PurgeQueue {
     Context *delayed_flush = nullptr;
 
     bool recovered = false;
-     std::vector < Context * >waiting_for_recovery;
+    std::vector < Context * >waiting_for_recovery;
 
     size_t purge_item_journal_size;
 

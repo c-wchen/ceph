@@ -8,24 +8,24 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "fbmap_alloc " << this << " "
 
-BitmapAllocator::BitmapAllocator(CephContext * _cct, int64_t capacity, int64_t alloc_unit, std::string_view name):
-Allocator(name, capacity, alloc_unit),
-cct(_cct)
+BitmapAllocator::BitmapAllocator(CephContext *_cct, int64_t capacity, int64_t alloc_unit, std::string_view name):
+    Allocator(name, capacity, alloc_unit),
+    cct(_cct)
 {
     ldout(cct, 10) << __func__ << " 0x" << std::hex << capacity << "/"
-        << alloc_unit << std::dec << dendl;
+                   << alloc_unit << std::dec << dendl;
     _init(capacity, alloc_unit, false);
 }
 
 int64_t BitmapAllocator::allocate(uint64_t want_size, uint64_t alloc_unit,
                                   uint64_t max_alloc_size, int64_t hint,
-                                  PExtentVector * extents)
+                                  PExtentVector *extents)
 {
     uint64_t allocated = 0;
     size_t old_size = extents->size();
     ldout(cct, 10) << __func__ << std::hex << " 0x" << want_size
-        << "/" << alloc_unit << "," << max_alloc_size << "," << hint
-        << std::dec << dendl;
+                   << "/" << alloc_unit << "," << max_alloc_size << "," << hint
+                   << std::dec << dendl;
 
     _allocate_l2(want_size, alloc_unit, max_alloc_size, hint,
                  &allocated, extents);
@@ -34,11 +34,11 @@ int64_t BitmapAllocator::allocate(uint64_t want_size, uint64_t alloc_unit,
     }
     if (cct->_conf->subsys.should_gather < dout_subsys, 10 > ()) {
         for (auto i = old_size; i < extents->size(); ++i) {
-            auto & e = (*extents)[i];
+            auto &e = (*extents)[i];
             ldout(cct, 10) << __func__
-                << " extent: 0x" << std::hex << e.offset << "~" << e.length
-                << "/" << alloc_unit << "," << max_alloc_size << "," << hint
-                << std::dec << dendl;
+                           << " extent: 0x" << std::hex << e.offset << "~" << e.length
+                           << "/" << alloc_unit << "," << max_alloc_size << "," << hint
+                           << std::dec << dendl;
         }
     }
     return int64_t(allocated);
@@ -47,10 +47,10 @@ int64_t BitmapAllocator::allocate(uint64_t want_size, uint64_t alloc_unit,
 void BitmapAllocator::release(const interval_set < uint64_t > &release_set)
 {
     if (cct->_conf->subsys.should_gather < dout_subsys, 10 > ()) {
-      for (auto &[offset, len]:release_set) {
+        for (auto &[offset, len] : release_set) {
             ldout(cct,
                   10) << __func__ << " 0x" << std::
-                hex << offset << "~" << len << std::dec << dendl;
+                      hex << offset << "~" << len << std::dec << dendl;
             ceph_assert(offset + len <= (uint64_t) device_size);
         }
     }
@@ -61,7 +61,7 @@ void BitmapAllocator::release(const interval_set < uint64_t > &release_set)
 void BitmapAllocator::init_add_free(uint64_t offset, uint64_t length)
 {
     ldout(cct, 10) << __func__ << " 0x" << std::hex << offset << "~" << length
-        << std::dec << dendl;
+                   << std::dec << dendl;
 
     auto mas = get_min_alloc_size();
     uint64_t offs = round_up_to(offset, mas);
@@ -75,7 +75,7 @@ void BitmapAllocator::init_add_free(uint64_t offset, uint64_t length)
 void BitmapAllocator::init_rm_free(uint64_t offset, uint64_t length)
 {
     ldout(cct, 10) << __func__ << " 0x" << std::hex << offset << "~" << length
-        << std::dec << dendl;
+                   << std::dec << dendl;
     auto mas = get_min_alloc_size();
     uint64_t offs = round_up_to(offset, mas);
     uint64_t l = p2align(offset + length - offs, mas);
@@ -98,10 +98,10 @@ void BitmapAllocator::dump()
     auto it = bins_overall.begin();
     while (it != bins_overall.end()) {
         ldout(cct, 0) << __func__
-            << " bin " << it->first
-            << "(< " << byte_u_t((1 << (it->first + 1)) *
-                                 get_min_alloc_size()) << ")" << " : " << it->
-            second << " extents" << dendl;
+                      << " bin " << it->first
+                      << "(< " << byte_u_t((1 << (it->first + 1)) *
+                                           get_min_alloc_size()) << ")" << " : " << it->
+                      second << " extents" << dendl;
         ++it;
     }
 }

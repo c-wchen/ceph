@@ -28,15 +28,18 @@ using namespace std;
 
 extern std::string exec(const char *cmd);   // defined in test_hostname.cc
 
-class test_config_proxy:public ConfigProxy, public::testing::Test {
-  public:
+class test_config_proxy: public ConfigProxy, public::testing::Test
+{
+public:
 
     test_config_proxy()
-    :ConfigProxy {
-    true}, Test() {
+        : ConfigProxy {
+        true}, Test()
+    {
     }
 
-    void test_expand_meta() {
+    void test_expand_meta()
+    {
         // successfull meta expansion $run_dir and ${run_dir}
         {
             ostringstream oss;
@@ -138,19 +141,19 @@ TEST(md_config_t, parse_env)
 {
     {
         ConfigProxy conf {
-        false};
+            false};
         setenv("POD_MEMORY_REQUEST", "1", 1);
         conf.parse_env(CEPH_ENTITY_TYPE_OSD);
     }
     {
         ConfigProxy conf {
-        false};
+            false};
         setenv("POD_MEMORY_REQUEST", "0", 1);
         conf.parse_env(CEPH_ENTITY_TYPE_OSD);
     }
     {
         ConfigProxy conf {
-        false};
+            false};
         setenv("CEPH_KEYRING", "", 1);
         conf.parse_env(CEPH_ENTITY_TYPE_OSD);
     }
@@ -160,7 +163,7 @@ TEST(md_config_t, set_val)
 {
     int buf_size = 1024;
     ConfigProxy conf {
-    false};
+        false};
     {
         char *run_dir = (char *)malloc(buf_size);
         EXPECT_EQ(0, conf.get_val("run_dir", &run_dir, buf_size));
@@ -183,7 +186,7 @@ TEST(md_config_t, set_val)
     {
         using namespace std::chrono;
         const string s {
-        "1 days 2 hours 4 minutes"};
+            "1 days 2 hours 4 minutes"};
         using days_t = duration < int, std::ratio < 3600 * 24 >>;
         auto expected = (duration_cast < seconds > (days_t { 1 }) +
                          duration_cast < seconds > (hours { 2 }) +
@@ -209,67 +212,93 @@ TEST(md_config_t, set_val)
     std::vector < testcase > good = {
         {
             "23" s, duration_cast < seconds > (seconds {
-                                               23})}, {
+                23})
+        }, {
             " 23 " s, duration_cast < seconds > (seconds {
-                                                 23})}, {
+                23})
+        }, {
             " 23s " s, duration_cast < seconds > (seconds {
-                                                  23})}, {
+                23})
+        }, {
             " 23 s " s, duration_cast < seconds > (seconds {
-                                                   23})}, {
+                23})
+        }, {
             " 23 sec " s, duration_cast < seconds > (seconds {
-                                                     23})}, {
+                23})
+        }, {
             "23 second " s, duration_cast < seconds > (seconds {
-                                                       23})}, {
+                23})
+        }, {
             "23 seconds" s, duration_cast < seconds > (seconds {
-                                                       23})}, {
+                23})
+        }, {
             "2m5s" s, duration_cast < seconds > (seconds {
-                                                 2 * 60 + 5})}, {
+                2 * 60 + 5})
+        }, {
             "2 m 5 s " s, duration_cast < seconds > (seconds {
-                                                     2 * 60 + 5})}, {
+                2 * 60 + 5})
+        }, {
             "2 m5" s, duration_cast < seconds > (seconds {
-                                                 2 * 60 + 5})}, {
+                2 * 60 + 5})
+        }, {
             "2 min5" s, duration_cast < seconds > (seconds {
-                                                   2 * 60 + 5})}, {
+                2 * 60 + 5})
+        }, {
             "2 minutes  5" s, duration_cast < seconds > (seconds {
-                                                         2 * 60 + 5})}, {
+                2 * 60 + 5})
+        }, {
             "1w" s, duration_cast < seconds > (seconds {
-                                               3600 * 24 * 7})}, {
+                3600 * 24 * 7})
+        }, {
             "1wk" s, duration_cast < seconds > (seconds {
-                                                3600 * 24 * 7})}, {
+                3600 * 24 * 7})
+        }, {
             "1week" s, duration_cast < seconds > (seconds {
-                                                  3600 * 24 * 7})}, {
+                3600 * 24 * 7})
+        }, {
             "1weeks" s, duration_cast < seconds > (seconds {
-                                                   3600 * 24 * 7})}, {
+                3600 * 24 * 7})
+        }, {
             "1month" s, duration_cast < seconds > (seconds {
-                                                   3600 * 24 * 30})}, {
+                3600 * 24 * 30})
+        }, {
             "1months" s, duration_cast < seconds > (seconds {
-                                                    3600 * 24 * 30})}, {
+                3600 * 24 * 30})
+        }, {
             "1mo" s, duration_cast < seconds > (seconds {
-                                                3600 * 24 * 30})}, {
+                3600 * 24 * 30})
+        }, {
             "1y" s, duration_cast < seconds > (seconds {
-                                               3600 * 24 * 365})}, {
+                3600 * 24 * 365})
+        }, {
             "1yr" s, duration_cast < seconds > (seconds {
-                                                3600 * 24 * 365})}, {
+                3600 * 24 * 365})
+        }, {
             "1year" s, duration_cast < seconds > (seconds {
-                                                  3600 * 24 * 365})}, {
+                3600 * 24 * 365})
+        }, {
             "1years" s, duration_cast < seconds > (seconds {
-                                                   3600 * 24 * 365})}, {
+                3600 * 24 * 365})
+        }, {
             "1d2h3m4s" s, duration_cast < seconds > (days_t {
-                                                     1}) +
-                duration_cast < seconds > (hours {
-                                           2}) +
-                duration_cast < seconds > (minutes {
-                                           3}) +
-                duration_cast < seconds > (seconds {
-                                           4})}, {
+                1}) +
+            duration_cast < seconds > (hours {
+                2}) +
+            duration_cast < seconds > (minutes {
+                3}) +
+            duration_cast < seconds > (seconds {
+                4})
+        }, {
             "1 days 2 hours 4 minutes" s, duration_cast < seconds > (days_t {
-                                                                     1}) +
-                duration_cast < seconds > (hours {
-                                           2}) +
-                duration_cast < seconds > (minutes {
-                                           4})},};
+                1}) +
+            duration_cast < seconds > (hours {
+                2}) +
+            duration_cast < seconds > (minutes {
+                4})
+        },
+    };
 
-  for (auto & i:good) {
+    for (auto &i : good) {
         cout << "good: " << i.s << " -> " << i.r.count() << std::endl;
         EXPECT_EQ(0, conf.set_val("mgr_tick_period", i.s, nullptr));
         EXPECT_EQ(i.r.count(),
@@ -277,8 +306,9 @@ TEST(md_config_t, set_val)
     }
 
     std::vector < std::string > bad = {
-    "12x", "_ 12", "1 2", "21 centuries", "1 y m",};
-  for (auto & i:bad) {
+        "12x", "_ 12", "1 2", "21 centuries", "1 y m",
+    };
+    for (auto &i : bad) {
         std::stringstream err;
         EXPECT_EQ(-EINVAL, conf.set_val("mgr_tick_period", i, &err));
         cout << "bad: " << i << " -> " << err.str() << std::endl;
@@ -289,7 +319,7 @@ TEST(md_config_t, set_val)
         string s = exact_timespan_str(j);
         std::chrono::seconds k = parse_timespan(s);
         cout << "rt: " << j.count() << " -> " << s << " -> " << k.
-            count() << std::endl;
+             count() << std::endl;
         EXPECT_EQ(j.count(), k.count());
     }
 }
@@ -305,8 +335,8 @@ TEST(Option, validation)
     EXPECT_EQ(0, opt_int.validate(Option::value_t(int64_t(7)), &msg));
 
     Option opt_enum("foo", Option::TYPE_STR, Option::LEVEL_BASIC);
-    opt_enum.set_enum_allowed( {
-                              "red", "blue"});
+    opt_enum.set_enum_allowed({
+        "red", "blue"});
     EXPECT_EQ(0, opt_enum.validate(Option::value_t(std::string("red")), &msg));
     EXPECT_EQ(0, opt_enum.validate(Option::value_t(std::string("blue")), &msg));
     EXPECT_EQ(-EINVAL,
@@ -314,16 +344,17 @@ TEST(Option, validation)
 
     Option opt_validator("foo", Option::TYPE_INT, Option::LEVEL_BASIC);
     opt_validator.
-        set_validator([](std::string * value, std::string * error_message) {
-                      if (*value == std::string("one")) {
-                      *value = "1"; return 0;}
-                      else
-                      if (*value == std::string("666")) {
-                      return -EINVAL;}
-                      else {
-                      return 0;}
-                      }
-    ) ;
+    set_validator([](std::string * value, std::string * error_message) {
+        if (*value == std::string("one")) {
+            *value = "1";
+            return 0;
+        } else if (*value == std::string("666")) {
+            return -EINVAL;
+        } else {
+            return 0;
+        }
+    }
+                 ) ;
 
     std::string input = "666";  // An explicitly forbidden value
     EXPECT_EQ(-EINVAL, opt_validator.pre_validate(&input, &msg));

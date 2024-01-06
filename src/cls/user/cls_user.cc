@@ -18,36 +18,38 @@ using ceph::encode;
 CLS_VER(1, 0)
 CLS_NAME(user)
 
-static int write_entry(cls_method_context_t hctx, const string & key,
-                       const cls_user_bucket_entry & entry)
+static int write_entry(cls_method_context_t hctx, const string &key,
+                       const cls_user_bucket_entry &entry)
 {
     bufferlist bl;
     encode(entry, bl);
 
     int ret = cls_cxx_map_set_val(hctx, key, &bl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
-static int remove_entry(cls_method_context_t hctx, const string & key)
+static int remove_entry(cls_method_context_t hctx, const string &key)
 {
     int ret = cls_cxx_map_remove_key(hctx, key);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
-static void get_key_by_bucket_name(const string & bucket_name, string * key)
+static void get_key_by_bucket_name(const string &bucket_name, string *key)
 {
     *key = bucket_name;
 }
 
 static int get_existing_bucket_entry(cls_method_context_t hctx,
-                                     const string & bucket_name,
-                                     cls_user_bucket_entry & entry)
+                                     const string &bucket_name,
+                                     cls_user_bucket_entry &entry)
 {
     if (bucket_name.empty()) {
         return -EINVAL;
@@ -65,8 +67,7 @@ static int get_existing_bucket_entry(cls_method_context_t hctx,
     try {
         auto iter = bl.cbegin();
         decode(entry, iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: failed to decode entry %s", key.c_str());
         return -EIO;
     }
@@ -74,13 +75,14 @@ static int get_existing_bucket_entry(cls_method_context_t hctx,
     return 0;
 }
 
-static int read_header(cls_method_context_t hctx, cls_user_header * header)
+static int read_header(cls_method_context_t hctx, cls_user_header *header)
 {
     bufferlist bl;
 
     int ret = cls_cxx_map_read_header(hctx, &bl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     if (bl.length() == 0) {
         *header = cls_user_header();
@@ -89,8 +91,7 @@ static int read_header(cls_method_context_t hctx, cls_user_header * header)
 
     try {
         decode(*header, bl);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: failed to decode user header");
         return -EIO;
     }
@@ -98,39 +99,39 @@ static int read_header(cls_method_context_t hctx, cls_user_header * header)
     return 0;
 }
 
-static void add_header_stats(cls_user_stats * stats,
-                             cls_user_bucket_entry & entry)
+static void add_header_stats(cls_user_stats *stats,
+                             cls_user_bucket_entry &entry)
 {
     stats->total_entries += entry.count;
     stats->total_bytes += entry.size;
     stats->total_bytes_rounded += entry.size_rounded;
 }
 
-static void dec_header_stats(cls_user_stats * stats,
-                             cls_user_bucket_entry & entry)
+static void dec_header_stats(cls_user_stats *stats,
+                             cls_user_bucket_entry &entry)
 {
     stats->total_bytes -= entry.size;
     stats->total_bytes_rounded -= entry.size_rounded;
     stats->total_entries -= entry.count;
 }
 
-static void apply_entry_stats(const cls_user_bucket_entry & src_entry,
-                              cls_user_bucket_entry * target_entry)
+static void apply_entry_stats(const cls_user_bucket_entry &src_entry,
+                              cls_user_bucket_entry *target_entry)
 {
     target_entry->size = src_entry.size;
     target_entry->size_rounded = src_entry.size_rounded;
     target_entry->count = src_entry.count;
 }
 
-static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist * in,
-                                     bufferlist * out)
+static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist *in,
+                                     bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_user_set_buckets_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_user_add_op(): failed to decode op");
         return -EINVAL;
     }
@@ -143,7 +144,7 @@ static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist * in,
     }
 
     for (auto iter = op.entries.begin(); iter != op.entries.end(); ++iter) {
-        cls_user_bucket_entry & update_entry = *iter;
+        cls_user_bucket_entry &update_entry = *iter;
 
         string key;
 
@@ -153,14 +154,14 @@ static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist * in,
         ret = get_existing_bucket_entry(hctx, key, entry);
 
         if (ret == -ENOENT) {
-            if (!op.add)
-                continue;       /* racing bucket removal */
+            if (!op.add) {
+                continue;    /* racing bucket removal */
+            }
 
             entry = update_entry;
 
             ret = 0;
-        }
-        else if (op.add) {
+        } else if (op.add) {
             // bucket id may have changed (ie reshard)
             entry.bucket.bucket_id = update_entry.bucket.bucket_id;
             // creation date may have changed (ie delete/recreate bucket)
@@ -171,8 +172,7 @@ static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist * in,
             CLS_LOG(0, "ERROR: get_existing_bucket_entry() key=%s returned %d",
                     key.c_str(), ret);
             return ret;
-        }
-        else if (ret >= 0 && entry.user_stats_sync) {
+        } else if (ret >= 0 && entry.user_stats_sync) {
             dec_header_stats(&header.stats, entry);
         }
 
@@ -189,8 +189,9 @@ static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist * in,
         entry.user_stats_sync = true;
 
         ret = write_entry(hctx, key, entry);
-        if (ret < 0)
+        if (ret < 0) {
             return ret;
+        }
 
         add_header_stats(&header.stats, entry);
     }
@@ -201,27 +202,29 @@ static int cls_user_set_buckets_info(cls_method_context_t hctx, bufferlist * in,
             (long long)header.stats.total_bytes,
             (long long)header.stats.total_entries);
 
-    if (header.last_stats_update < op.time)
+    if (header.last_stats_update < op.time) {
         header.last_stats_update = op.time;
+    }
 
     encode(header, bl);
 
     ret = cls_cxx_map_write_header(hctx, &bl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
 static int cls_user_complete_stats_sync(cls_method_context_t hctx,
-                                        bufferlist * in, bufferlist * out)
+                                        bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_user_complete_stats_sync_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_user_add_op(): failed to decode op");
         return -EINVAL;
     }
@@ -233,29 +236,31 @@ static int cls_user_complete_stats_sync(cls_method_context_t hctx,
         return ret;
     }
 
-    if (header.last_stats_sync < op.time)
+    if (header.last_stats_sync < op.time) {
         header.last_stats_sync = op.time;
+    }
 
     bufferlist bl;
 
     encode(header, bl);
 
     ret = cls_cxx_map_write_header(hctx, &bl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
-static int cls_user_remove_bucket(cls_method_context_t hctx, bufferlist * in,
-                                  bufferlist * out)
+static int cls_user_remove_bucket(cls_method_context_t hctx, bufferlist *in,
+                                  bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_user_remove_bucket_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_user_add_op(): failed to decode op");
         return -EINVAL;
     }
@@ -285,8 +290,9 @@ static int cls_user_remove_bucket(cls_method_context_t hctx, bufferlist * in,
     CLS_LOG(20, "removing entry at %s", key.c_str());
 
     ret = remove_entry(hctx, key);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     if (!entry.user_stats_sync) {
         return 0;
@@ -303,29 +309,30 @@ static int cls_user_remove_bucket(cls_method_context_t hctx, bufferlist * in,
     return cls_cxx_map_write_header(hctx, &bl);
 }
 
-static int cls_user_list_buckets(cls_method_context_t hctx, bufferlist * in,
-                                 bufferlist * out)
+static int cls_user_list_buckets(cls_method_context_t hctx, bufferlist *in,
+                                 bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_user_list_buckets_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_user_list_op(): failed to decode op");
         return -EINVAL;
     }
 
     map < string, bufferlist > keys;
 
-    const string & from_index = op.marker;
-    const string & to_index = op.end_marker;
+    const string &from_index = op.marker;
+    const string &to_index = op.end_marker;
     const bool to_index_valid = !to_index.empty();
 
 #define MAX_ENTRIES 1000
     size_t max_entries = op.max_entries;
-    if (max_entries > MAX_ENTRIES)
+    if (max_entries > MAX_ENTRIES) {
         max_entries = MAX_ENTRIES;
+    }
 
     string match_prefix;
     cls_user_list_buckets_ret ret;
@@ -333,19 +340,20 @@ static int cls_user_list_buckets(cls_method_context_t hctx, bufferlist * in,
     int rc =
         cls_cxx_map_get_vals(hctx, from_index, match_prefix, max_entries, &keys,
                              &ret.truncated);
-    if (rc < 0)
+    if (rc < 0) {
         return rc;
+    }
 
     CLS_LOG(20, "from_index=%s to_index=%s match_prefix=%s",
             from_index.c_str(), to_index.c_str(), match_prefix.c_str());
 
-    auto & entries = ret.entries;
+    auto &entries = ret.entries;
     auto iter = keys.begin();
 
     string marker;
 
     for (; iter != keys.end(); ++iter) {
-        const string & index = iter->first;
+        const string &index = iter->first;
         marker = index;
 
         if (to_index_valid && to_index.compare(index) <= 0) {
@@ -353,14 +361,13 @@ static int cls_user_list_buckets(cls_method_context_t hctx, bufferlist * in,
             break;
         }
 
-        bufferlist & bl = iter->second;
+        bufferlist &bl = iter->second;
         auto biter = bl.cbegin();
         try {
             cls_user_bucket_entry e;
             decode(e, biter);
             entries.push_back(e);
-        }
-        catch(ceph::buffer::error & err) {
+        } catch (ceph::buffer::error &err) {
             CLS_LOG(0, "ERROR: cls_user_list: could not decode entry, index=%s",
                     index.c_str());
         }
@@ -375,15 +382,15 @@ static int cls_user_list_buckets(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int cls_user_get_header(cls_method_context_t hctx, bufferlist * in,
-                               bufferlist * out)
+static int cls_user_get_header(cls_method_context_t hctx, bufferlist *in,
+                               bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_user_get_header_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_user_get_header_op(): failed to decode op");
         return -EINVAL;
     }
@@ -391,8 +398,9 @@ static int cls_user_get_header(cls_method_context_t hctx, bufferlist * in,
     cls_user_get_header_ret op_ret;
 
     int ret = read_header(hctx, &op_ret.header);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     encode(op_ret, *out);
 
@@ -404,14 +412,14 @@ static int cls_user_get_header(cls_method_context_t hctx, bufferlist * in,
 /// equivalent to --sync-stats which also re-calculates the stats for
 /// each bucket.
 static int cls_user_reset_stats(cls_method_context_t hctx,
-                                bufferlist * in, bufferlist * out /*ignore */ )
+                                bufferlist *in, bufferlist *out /*ignore */)
 {
     cls_user_reset_stats_op op;
 
     try {
         auto bliter = in->cbegin();
         decode(op, bliter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: %s failed to decode op", __func__);
         return -EINVAL;
     }
@@ -431,13 +439,13 @@ static int cls_user_reset_stats(cls_method_context_t hctx,
         CLS_LOG(20, "%s: read %lu key-values, truncated=%d",
                 __func__, keys.size(), truncated);
 
-      for (const auto & kv:keys) {
+        for (const auto &kv : keys) {
             cls_user_bucket_entry e;
             try {
                 auto bl = kv.second;
                 auto bliter = bl.cbegin();
                 decode(e, bliter);
-            } catch(ceph::buffer::error & err) {
+            } catch (ceph::buffer::error &err) {
                 CLS_LOG(0, "ERROR: %s failed to decode bucket entry for %s",
                         __func__, kv.first.c_str());
                 return -EIO;
@@ -462,21 +470,21 @@ static int cls_user_reset_stats(cls_method_context_t hctx,
 /// equivalent to --sync-stats which also re-calculates the stats for
 /// each bucket.
 static int cls_user_reset_stats2(cls_method_context_t hctx,
-                                 buffer::list * in, buffer::list * out)
+                                 buffer::list *in, buffer::list *out)
 {
     cls_user_reset_stats2_op op;
 
     try {
         auto bliter = in->cbegin();
         decode(op, bliter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: %s failed to decode op", __func__);
         return -EINVAL;
     }
 
     cls_user_header header;
     string from_index {
-    op.marker}
+        op.marker}
     , prefix;
     cls_user_reset_stats2_ret ret;
 
@@ -490,13 +498,13 @@ static int cls_user_reset_stats2(cls_method_context_t hctx,
     CLS_LOG(20, "%s: read %lu key-values, truncated=%d",
             __func__, keys.size(), ret.truncated);
 
-  for (const auto & kv:keys) {
+    for (const auto &kv : keys) {
         cls_user_bucket_entry e;
         try {
-            auto & bl = kv.second;
+            auto &bl = kv.second;
             auto bliter = bl.cbegin();
             decode(e, bliter);
-        } catch(ceph::buffer::error & err) {
+        } catch (ceph::buffer::error &err) {
             CLS_LOG(0, "ERROR: %s failed to decode bucket entry for %s",
                     __func__, kv.first.c_str());
             return -EIO;
@@ -505,8 +513,9 @@ static int cls_user_reset_stats2(cls_method_context_t hctx,
     }
 
     /* try-update marker */
-    if (!keys.empty())
+    if (!keys.empty()) {
         ret.marker = (--keys.cend())->first;
+    }
 
     if (!ret.truncated) {
         buffer::list bl;

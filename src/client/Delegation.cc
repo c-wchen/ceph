@@ -8,18 +8,21 @@
 #include "Fh.h"
 #include "Delegation.h"
 
-class C_Deleg_Timeout:public Context {
+class C_Deleg_Timeout: public Context
+{
     Delegation *deleg;
-  public:
-     explicit C_Deleg_Timeout(Delegation * d):deleg(d) {
-    } void finish(int r) override {
+public:
+    explicit C_Deleg_Timeout(Delegation *d): deleg(d)
+    {
+    } void finish(int r) override
+    {
         Inode *in = deleg->get_fh()->inode.get();
         Client *client = in->client;
 
         lsubdout(client->cct, client, 0) << __func__ <<
-            ": delegation return timeout for inode 0x" <<
-            std::hex << in->ino << ". Forcibly unmounting client. " <<
-            client << std::dec << dendl;
+                                         ": delegation return timeout for inode 0x" <<
+                                         std::hex << in->ino << ". Forcibly unmounting client. " <<
+                                         client << std::dec << dendl;
         client->_unmount(false);
     }
 };
@@ -42,17 +45,17 @@ int ceph_deleg_caps_for_type(unsigned type)
     int caps = CEPH_CAP_PIN;
 
     switch (type) {
-    case CEPH_DELEGATION_WR:
-        caps |= CEPH_CAP_FILE_EXCL | CEPH_CAP_FILE_WR | CEPH_CAP_FILE_BUFFER;
+        case CEPH_DELEGATION_WR:
+            caps |= CEPH_CAP_FILE_EXCL | CEPH_CAP_FILE_WR | CEPH_CAP_FILE_BUFFER;
         /* Fallthrough */
-    case CEPH_DELEGATION_RD:
-        caps |= CEPH_CAP_FILE_SHARED |
-            CEPH_CAP_FILE_RD | CEPH_CAP_FILE_CACHE |
-            CEPH_CAP_XATTR_SHARED | CEPH_CAP_LINK_SHARED | CEPH_CAP_AUTH_SHARED;
-        break;
-    default:
-        // Should never happen
-        ceph_abort();
+        case CEPH_DELEGATION_RD:
+            caps |= CEPH_CAP_FILE_SHARED |
+                    CEPH_CAP_FILE_RD | CEPH_CAP_FILE_CACHE |
+                    CEPH_CAP_XATTR_SHARED | CEPH_CAP_LINK_SHARED | CEPH_CAP_AUTH_SHARED;
+            break;
+        default:
+            // Should never happen
+            ceph_abort();
     }
     return caps;
 }
@@ -61,10 +64,10 @@ int ceph_deleg_caps_for_type(unsigned type)
  * A delegation is a container for holding caps on behalf of a client that
  * wants to be able to rely on them until recalled.
  */
-Delegation::Delegation(Fh * _fh, unsigned _type, ceph_deleg_cb_t _cb,
+Delegation::Delegation(Fh *_fh, unsigned _type, ceph_deleg_cb_t _cb,
                        void *_priv)
-:  fh(_fh), priv(_priv), type(_type), recall_cb(_cb), recall_time(utime_t()),
-timeout_event(nullptr)
+    :  fh(_fh), priv(_priv), type(_type), recall_cb(_cb), recall_time(utime_t()),
+       timeout_event(nullptr)
 {
     Inode *inode = _fh->inode.get();
     inode->client->get_cap_ref(inode, ceph_deleg_caps_for_type(_type));
@@ -97,8 +100,9 @@ void Delegation::arm_timeout()
     Client *client = fh->inode.get()->client;
 
     std::scoped_lock l(client->timer_lock);
-    if (timeout_event)
+    if (timeout_event) {
         return;
+    }
 
     timeout_event = new C_Deleg_Timeout(this);
     client->timer.add_event_after(client->get_deleg_timeout(), timeout_event);
@@ -109,8 +113,9 @@ void Delegation::disarm_timeout()
     Client *client = fh->inode.get()->client;
 
     std::scoped_lock l(client->timer_lock);
-    if (!timeout_event)
+    if (!timeout_event) {
         return;
+    }
 
     client->timer.cancel_event(timeout_event);
     timeout_event = nullptr;
@@ -119,8 +124,9 @@ void Delegation::disarm_timeout()
 void Delegation::recall(bool skip_read)
 {
     /* If skip_read is true, don't break read delegations */
-    if (skip_read && type == CEPH_DELEGATION_RD)
+    if (skip_read && type == CEPH_DELEGATION_RD) {
         return;
+    }
 
     if (!is_recalled()) {
         recall_cb(fh, priv);

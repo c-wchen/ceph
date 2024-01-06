@@ -15,15 +15,15 @@ using namespace std;
 /**
  * calculate intervals/extents that vary between two snapshots
  */
-void calc_snap_set_diff(CephContext * cct,
-                        const librados::snap_set_t & snap_set,
+void calc_snap_set_diff(CephContext *cct,
+                        const librados::snap_set_t &snap_set,
                         librados::snap_t start, librados::snap_t end,
-                        interval_set < uint64_t > *diff, uint64_t * end_size,
-                        bool * end_exists, librados::snap_t * clone_end_snap_id,
-                        bool * whole_object)
+                        interval_set < uint64_t > *diff, uint64_t *end_size,
+                        bool *end_exists, librados::snap_t *clone_end_snap_id,
+                        bool *whole_object)
 {
     ldout(cct, 10) << "calc_snap_set_diff start " << start << " end " << end
-        << ", snap_set seq " << snap_set.seq << dendl;
+                   << ", snap_set seq " << snap_set.seq << dendl;
     bool saw_start = false;
     uint64_t start_size = 0;
     diff->clear();
@@ -33,7 +33,7 @@ void calc_snap_set_diff(CephContext * cct,
     *whole_object = false;
 
     for (vector < librados::clone_info_t >::const_iterator r =
-         snap_set.clones.begin(); r != snap_set.clones.end();) {
+             snap_set.clones.begin(); r != snap_set.clones.end();) {
         // make an interval, and hide the fact that the HEAD doesn't
         // include itself in the snaps list
         librados::snap_t a, b;
@@ -41,23 +41,21 @@ void calc_snap_set_diff(CephContext * cct,
             // head is valid starting from right after the last seen seq
             a = snap_set.seq + 1;
             b = librados::SNAP_HEAD;
-        }
-        else if (r->snaps.empty()) {
+        } else if (r->snaps.empty()) {
             ldout(cct, 1) << "clone " << r->cloneid
-                << ": empty snaps, return whole object" << dendl;
+                          << ": empty snaps, return whole object" << dendl;
             diff->clear();
             *whole_object = true;
             return;
-        }
-        else {
+        } else {
             a = r->snaps[0];
             // note: b might be < r->cloneid if a snap has been trimmed.
             b = r->snaps[r->snaps.size() - 1];
         }
         ldout(cct, 20) << " clone " << r->cloneid << " snaps " << r->snaps
-            << " -> [" << a << "," << b << "]"
-            << " size " << r->size << " overlap to next " << r->
-            overlap << dendl;
+                       << " -> [" << a << "," << b << "]"
+                       << " size " << r->size << " overlap to next " << r->
+                       overlap << dendl;
 
         if (b < start) {
             // this is before start
@@ -69,11 +67,11 @@ void calc_snap_set_diff(CephContext * cct,
             if (start < a) {
                 ldout(cct, 20) << "  start, after " << start << dendl;
                 // this means the object didn't exist at start
-                if (r->size)
+                if (r->size) {
                     diff->insert(0, r->size);
+                }
                 start_size = 0;
-            }
-            else {
+            } else {
                 ldout(cct, 20) << "  start" << dendl;
                 start_size = r->size;
             }
@@ -84,7 +82,7 @@ void calc_snap_set_diff(CephContext * cct,
         if (end < a) {
             ldout(cct,
                   20) << " past end " << end << ", end object does not exist" <<
-                dendl;
+                      dendl;
             *end_exists = false;
             diff->clear();
             if (start_size) {
@@ -101,18 +99,20 @@ void calc_snap_set_diff(CephContext * cct,
 
         // start with the max(this size, next size), and subtract off any
         // overlap
-        const vector < pair < uint64_t, uint64_t > >*overlap = &r->overlap;
+        const vector < pair < uint64_t, uint64_t > > *overlap = &r->overlap;
         interval_set < uint64_t > diff_to_next;
         uint64_t max_size = r->size;
         ++r;
         if (r != snap_set.clones.end()) {
-            if (r->size > max_size)
+            if (r->size > max_size) {
                 max_size = r->size;
+            }
         }
-        if (max_size)
+        if (max_size) {
             diff_to_next.insert(0, max_size);
+        }
         for (vector < pair < uint64_t, uint64_t > >::const_iterator p =
-             overlap->begin(); p != overlap->end(); ++p) {
+                 overlap->begin(); p != overlap->end(); ++p) {
             diff_to_next.erase(p->first, p->second);
         }
         ldout(cct, 20) << "  diff_to_next " << diff_to_next << dendl;

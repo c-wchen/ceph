@@ -27,8 +27,9 @@ TEST(LibRadosPools, PoolList)
         if ((found_pool == false) && (strcmp(buf, pool_name.c_str()) == 0)) {
             found_pool = true;
         }
-        if (!firstlen)
+        if (!firstlen) {
             firstlen = strlen(buf) + 1;
+        }
         buf += strlen(buf) + 1;
     }
     ASSERT_EQ(found_pool, true);
@@ -139,7 +140,7 @@ TEST(LibRadosPools, PoolCreateWithCrushRule)
 
     std::string pool2_name = get_temp_pool_name();
     ASSERT_EQ(0, rados_pool_create_with_crush_rule(cluster,
-                                                   pool2_name.c_str(), 0));
+              pool2_name.c_str(), 0));
     ASSERT_EQ(0, rados_pool_delete(cluster, pool2_name.c_str()));
 
     ASSERT_EQ(0, destroy_one_pool(pool_name, &cluster));
@@ -165,8 +166,8 @@ TEST(LibRadosPools, PoolGetBaseTier)
     EXPECT_EQ(pool_id, base_tier);
 
     std::string cmdstr = "{\"prefix\": \"osd tier add\", \"pool\": \"" +
-        pool_name + "\", \"tierpool\":\"" + tier_pool_name +
-        "\", \"force_nonempty\":\"\"}";
+                         pool_name + "\", \"tierpool\":\"" + tier_pool_name +
+                         "\", \"force_nonempty\":\"\"}";
     char *cmd[1];
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
@@ -174,8 +175,8 @@ TEST(LibRadosPools, PoolGetBaseTier)
                                 NULL, 0));
 
     cmdstr = "{\"prefix\": \"osd tier cache-mode\", \"pool\": \"" +
-        tier_pool_name + "\", \"mode\":\"readonly\"," +
-        " \"yes_i_really_mean_it\": true}";
+             tier_pool_name + "\", \"mode\":\"readonly\"," +
+             " \"yes_i_really_mean_it\": true}";
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
               rados_mon_command(cluster, (const char **)cmd, 1, "", 0, NULL, 0,
@@ -189,13 +190,13 @@ TEST(LibRadosPools, PoolGetBaseTier)
     EXPECT_EQ(0, rados_pool_get_base_tier(cluster, tier_pool_id, &base_tier));
     EXPECT_EQ(pool_id, base_tier);
 
-    int64_t nonexistent_pool_id = (int64_t) ((-1ULL) >> 1);
+    int64_t nonexistent_pool_id = (int64_t)((-1ULL) >> 1);
     EXPECT_EQ(-ENOENT,
               rados_pool_get_base_tier(cluster, nonexistent_pool_id,
                                        &base_tier));
 
     cmdstr = "{\"prefix\": \"osd tier remove\", \"pool\": \"" +
-        pool_name + "\", \"tierpool\":\"" + tier_pool_name + "\"}";
+             pool_name + "\", \"tierpool\":\"" + tier_pool_name + "\"}";
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
               rados_mon_command(cluster, (const char **)cmd, 1, "", 0, NULL, 0,

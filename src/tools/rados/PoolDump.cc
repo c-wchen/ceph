@@ -32,7 +32,7 @@ using std::string;
  *
  * @returns 0 on success, else error code
  */
-int PoolDump::dump(IoCtx * io_ctx)
+int PoolDump::dump(IoCtx *io_ctx)
 {
     ceph_assert(io_ctx != NULL);
 
@@ -105,12 +105,12 @@ int PoolDump::dump(IoCtx * io_ctx)
         r = io_ctx->getxattrs(oid, raw_xattrs);
         if (r < 0) {
             cerr << "error getting xattr set " << oid << ": " << cpp_strerror(r)
-                << std::endl;
+                 << std::endl;
             return r;
         }
         // Prepend "_" to mimic how user keys are represented in a pg export
         for (std::map < std::string, bufferlist >::iterator i =
-             raw_xattrs.begin(); i != raw_xattrs.end(); ++i) {
+                 raw_xattrs.begin(); i != raw_xattrs.end(); ++i) {
             std::pair < std::string,
                 bufferlist >
                 item(std::string("_") + std::string(i->first.c_str()),
@@ -128,7 +128,7 @@ int PoolDump::dump(IoCtx * io_ctx)
         r = io_ctx->omap_get_header(oid, &omap_header);
         if (r < 0) {
             cerr << "error getting omap header " << oid
-                << ": " << cpp_strerror(r) << std::endl;
+                 << ": " << cpp_strerror(r) << std::endl;
             return r;
         }
         r = write_section(TYPE_OMAP_HDR, omap_hdr_section(omap_header),
@@ -145,13 +145,12 @@ int PoolDump::dump(IoCtx * io_ctx)
             r = io_ctx->omap_get_vals(oid, last_read, MAX_READ, &values);
             if (r < 0) {
                 cerr << "error getting omap keys " << oid << ": "
-                    << cpp_strerror(r) << std::endl;
+                     << cpp_strerror(r) << std::endl;
                 return r;
             }
             if (values.size()) {
                 last_read = values.rbegin()->first;
-            }
-            else {
+            } else {
                 break;
             }
 
@@ -172,8 +171,9 @@ int PoolDump::dump(IoCtx * io_ctx)
 
     r = write_simple(TYPE_POOL_END, file_fd);
 #if defined(__linux__)
-    if (file_fd != STDOUT_FILENO)
+    if (file_fd != STDOUT_FILENO) {
         posix_fadvise(file_fd, 0, 0, POSIX_FADV_DONTNEED);
+    }
 #endif
     return r;
 }

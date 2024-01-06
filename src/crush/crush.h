@@ -84,7 +84,7 @@ struct crush_rule {
 };
 
 #define crush_rule_size(len) (sizeof(struct crush_rule) + \
-			      (len)*sizeof(struct crush_rule_step))
+                  (len)*sizeof(struct crush_rule_step))
 
 /*
  * A bucket is a named container of other items (either devices or
@@ -101,11 +101,11 @@ struct crush_rule {
  * The table summarizes how the speed of each option measures up
  * against mapping stability when items are added or removed.
  *
- * 	Bucket Alg     Speed       Additions    Removals
- * 	------------------------------------------------
- * 	uniform         O(1)       poor         poor
- * 	list            O(n)       optimal      poor
- * 	straw2          O(n)       optimal      optimal
+ *  Bucket Alg     Speed       Additions    Removals
+ *  ------------------------------------------------
+ *  uniform         O(1)       poor         poor
+ *  list            O(n)       optimal      poor
+ *  straw2          O(n)       optimal      optimal
  */
 enum crush_algorithm {
     /*!
@@ -182,10 +182,10 @@ extern const char *crush_bucket_alg_name(int alg);
  * although tree was a legacy algorithm, it has been buggy, so
  * exclude it.
  */
-#define CRUSH_LEGACY_ALLOWED_BUCKET_ALGS (	\
-		(1 << CRUSH_BUCKET_UNIFORM) |	\
-		(1 << CRUSH_BUCKET_LIST) |	\
-		(1 << CRUSH_BUCKET_STRAW))
+#define CRUSH_LEGACY_ALLOWED_BUCKET_ALGS (  \
+        (1 << CRUSH_BUCKET_UNIFORM) |   \
+        (1 << CRUSH_BUCKET_LIST) |  \
+        (1 << CRUSH_BUCKET_STRAW))
 
 /** @ingroup API
  *
@@ -493,23 +493,23 @@ static inline int crush_calc_tree_node(int i)
 static inline const char *crush_alg_name(int alg)
 {
     switch (alg) {
-    case CRUSH_BUCKET_UNIFORM:
-        return "uniform";
-    case CRUSH_BUCKET_LIST:
-        return "list";
-    case CRUSH_BUCKET_TREE:
-        return "tree";
-    case CRUSH_BUCKET_STRAW:
-        return "straw";
-    case CRUSH_BUCKET_STRAW2:
-        return "straw2";
-    default:
-        return "unknown";
+        case CRUSH_BUCKET_UNIFORM:
+            return "uniform";
+        case CRUSH_BUCKET_LIST:
+            return "list";
+        case CRUSH_BUCKET_TREE:
+            return "tree";
+        case CRUSH_BUCKET_STRAW:
+            return "straw";
+        case CRUSH_BUCKET_STRAW2:
+            return "straw2";
+        default:
+            return "unknown";
     }
 }
 
 /* ---------------------------------------------------------------------
-			       Private
+                   Private
    --------------------------------------------------------------------- */
 
 /* These data structures are private to the CRUSH implementation. They
@@ -524,7 +524,7 @@ struct crush_work_bucket {
     __u32 perm_x;               /* @x for which *perm is defined */
     __u32 perm_n;               /* num elements of *perm that are permuted/defined */
     __u32 *perm;                /* Permutation of the bucket's items */
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 struct crush_work {
     struct crush_work_bucket **work;    /* Per-bucket working store */

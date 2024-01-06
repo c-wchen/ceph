@@ -24,25 +24,28 @@ class Journaler;
  * To use, create a Resetter, call init(), and then call reset() with the name
  * of the file to dump to.
  */
-class Resetter:public MDSUtility {
-  private:
+class Resetter: public MDSUtility
+{
+private:
     mds_role_t role;
     inodeno_t ino;
     bool is_mdlog;
 
-  protected:
-    int _write_reset_event(Journaler * journaler);
+protected:
+    int _write_reset_event(Journaler *journaler);
 
-  public:
-     Resetter() {
-    } ~Resetter() {
+public:
+    Resetter()
+    {
+    } ~Resetter()
+    {
     }
 
-    int init(mds_role_t role_, const std::string & type, bool hard);
-  /**
-   * For use when no journal header/pointer was present: write one
-   * out from scratch.
-   */
+    int init(mds_role_t role_, const std::string &type, bool hard);
+    /**
+     * For use when no journal header/pointer was present: write one
+     * out from scratch.
+     */
     int reset_hard();
     int reset();
 };

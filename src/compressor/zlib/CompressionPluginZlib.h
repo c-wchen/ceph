@@ -25,12 +25,15 @@
 
 // -----------------------------------------------------------------------------
 
-class CompressionPluginZlib:public ceph::CompressionPlugin {
-  public:
+class CompressionPluginZlib: public ceph::CompressionPlugin
+{
+public:
     bool has_isal = false;
 
-    explicit CompressionPluginZlib(CephContext * cct):CompressionPlugin(cct) {
-    } int factory(CompressorRef * cs, std::ostream * ss) override {
+    explicit CompressionPluginZlib(CephContext *cct): CompressionPlugin(cct)
+    {
+    } int factory(CompressorRef *cs, std::ostream *ss) override
+    {
         bool isal = false;
 #if defined(__i386__) || defined(__x86_64__)
         // other arches or lack of support result in isal = false

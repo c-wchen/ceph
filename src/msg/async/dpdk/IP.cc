@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 /*
  * This file is open source software, licensed to you under the terms
  * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
@@ -47,23 +47,26 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "dpdk "
 
-std::ostream & operator<<(std::ostream & os, const ipv4_address & a)
+std::ostream &operator<<(std::ostream &os, const ipv4_address &a)
 {
     auto ip = a.ip;
     return os << ((ip >> 24) & 0xff) << "." << ((ip >> 16) & 0xff)
-        << "." << ((ip >> 8) & 0xff) << "." << ((ip >> 0) & 0xff);
+           << "." << ((ip >> 8) & 0xff) << "." << ((ip >> 0) & 0xff);
 }
 
 utime_t ipv4::_frag_timeout = utime_t(30, 0);
 constexpr uint32_t ipv4::_frag_low_thresh;
 constexpr uint32_t ipv4::_frag_high_thresh;
 
-class C_handle_frag_timeout:public EventCallback {
+class C_handle_frag_timeout: public EventCallback
+{
     ipv4 *_ipv4;
 
-  public:
-    C_handle_frag_timeout(ipv4 * i):_ipv4(i) {
-    } void do_request(uint64_t fd_or_id) {
+public:
+    C_handle_frag_timeout(ipv4 *i): _ipv4(i)
+    {
+    } void do_request(uint64_t fd_or_id)
+    {
         _ipv4->frag_timeout();
     }
 };
@@ -75,7 +78,7 @@ enum {
 };
 
 struct icmp_hdr {
-    enum class msg_type:uint8_t {
+    enum class msg_type : uint8_t {
         echo_reply = 0,
         echo_request = 8,
     };
@@ -83,36 +86,42 @@ struct icmp_hdr {
     uint8_t code;
     uint16_t csum;
     uint32_t rest;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
-ipv4::ipv4(CephContext * c, EventCenter * cen, interface * netif)
-:  
-cct(c), center(cen), _netif(netif), _global_arp(netif),
-_arp(c, _global_arp, cen),
-_host_address(0), _gw_address(0), _netmask(0),
-_l3(netif, eth_protocol_num::ipv4,[this]
-    {
+ipv4::ipv4(CephContext *c, EventCenter *cen, interface *netif)
+    :
+    cct(c), center(cen), _netif(netif), _global_arp(netif),
+    _arp(c, _global_arp, cen),
+    _host_address(0), _gw_address(0), _netmask(0),
+    _l3(netif, eth_protocol_num::ipv4, [this]
+{
     return get_packet();
+}
+
+   ), _rx_packets(_l3.receive([this](Packet p, ethernet_address ea)
+{
+    return handle_received_packet(std::move(p), ea);
+}
+
+,
+[this](forward_hash &out_hash_data, Packet &p,
+       size_t off)
+{
+    return forward(out_hash_data, p, off);
+}
+
+                             )
+), _tcp(*this, cen), _icmp(c, *this), _l4({ {
+        uint8_t(ip_protocol_num::tcp),
+        &_tcp
     }
+    , {
+        uint8_t(ip_protocol_num::icmp),
+        &_icmp
+    }
+}
 
-), _rx_packets(_l3.receive([this] (Packet p, ethernet_address ea) {
-                           return handle_received_packet(std::move(p), ea);}
-
-                           ,
-                           [this] (forward_hash & out_hash_data, Packet & p,
-                                   size_t off) {
-                           return forward(out_hash_data, p, off);}
-
-               )
-    ), _tcp(*this, cen), _icmp(c, *this), _l4( { {
-                                              uint8_t(ip_protocol_num::tcp),
-                                              &_tcp}
-                                              , {
-                                              uint8_t(ip_protocol_num::icmp),
-                                              &_icmp}
-                                              }
-
-), _packet_filter(nullptr)
+                                                          ), _packet_filter(nullptr)
 {
     PerfCountersBuilder plb(cct, "ipv4", l_dpdk_qp_first, l_dpdk_qp_last);
     plb.add_u64_counter(l_dpdk_total_linearize_operations,
@@ -123,7 +132,7 @@ _l3(netif, eth_protocol_num::ipv4,[this]
     frag_handler = new C_handle_frag_timeout(this);
 }
 
-bool ipv4::forward(forward_hash & out_hash_data, Packet & p, size_t off)
+bool ipv4::forward(forward_hash &out_hash_data, Packet &p, size_t off)
 {
     auto iph = p.get_header < ip_hdr > (off);
 
@@ -165,16 +174,15 @@ int ipv4::handle_received_packet(Packet p, ethernet_address from)
     auto offset = h.offset();
 
     ldout(cct, 10) << __func__ << " get " << std::hex << int (h.ip_proto)
-    << std::dec << " packet from "
-        << h.src_ip << " -> " << h.dst_ip << " id=" << h.id
-        << " ip_len=" << ip_len << " ip_hdr_len=" << ip_hdr_len
-        << " pkt_len=" << pkt_len << " offset=" << offset << dendl;
+                   << std::dec << " packet from "
+                   << h.src_ip << " -> " << h.dst_ip << " id=" << h.id
+                   << " ip_len=" << ip_len << " ip_hdr_len=" << ip_hdr_len
+                   << " pkt_len=" << pkt_len << " offset=" << offset << dendl;
 
     if (pkt_len > ip_len) {
         // Trim extra data in the packet beyond IP total length
         p.trim_back(pkt_len - ip_len);
-    }
-    else if (pkt_len < ip_len) {
+    } else if (pkt_len < ip_len) {
         // Drop if it contains less than IP total length
         return 0;
     }
@@ -187,7 +195,7 @@ int ipv4::handle_received_packet(Packet p, ethernet_address from)
     if (in_my_netmask(h.src_ip) && h.src_ip != _host_address) {
         ldout(cct,
               20) << __func__ << " learn mac " << from << " with " << h.
-            src_ip << dendl;
+                  src_ip << dendl;
         _arp.learn(from, h.src_ip);
     }
 
@@ -209,7 +217,7 @@ int ipv4::handle_received_packet(Packet p, ethernet_address from)
     if (mf == true || offset != 0) {
         frag_limit_mem();
         auto frag_id = ipv4_frag_id { h.src_ip, h.dst_ip, h.id, h.ip_proto };
-        auto & frag = _frags[frag_id];
+        auto &frag = _frags[frag_id];
         if (mf == false) {
             frag.last_frag_received = true;
         }
@@ -223,7 +231,7 @@ int ipv4::handle_received_packet(Packet p, ethernet_address from)
         if (frag.is_complete()) {
             // All the fragments are received
             auto dropped_size = frag.mem_size;
-            auto & ip_data = frag.data.map.begin()->second;
+            auto &ip_data = frag.data.map.begin()->second;
             // Choose a cpu to forward this packet
             auto cpu_id = center->get_id();
             auto l4 = _l4[h.ip_proto];
@@ -241,8 +249,7 @@ int ipv4::handle_received_packet(Packet p, ethernet_address from)
             // No need to forward if the dst cpu is the current cpu
             if (cpu_id == center->get_id()) {
                 l4->received(std::move(ip_data), h.src_ip, h.dst_ip);
-            }
-            else {
+            } else {
                 auto to = _netif->hw_address();
                 auto pkt = frag.get_assembled_packet(from, to);
                 _netif->forward(center, cpu_id, std::move(pkt));
@@ -253,8 +260,7 @@ int ipv4::handle_received_packet(Packet p, ethernet_address from)
             _frags_age.remove(frag_id);
             perf_logger->set(l_dpdk_total_linearize_operations,
                              ipv4_packet_merger::linearizations());
-        }
-        else {
+        } else {
             // Some of the fragments are missing
             if (frag_timefd) {
                 frag_arm();
@@ -279,15 +285,14 @@ void ipv4::wait_l2_dst_address(ipv4_address to, Packet p, resolution_cb cb)
     ipv4_address dst;
     if (in_my_netmask(to)) {
         dst = to;
-    }
-    else {
+    } else {
         dst = _gw_address;
     }
 
     _arp.wait(std::move(dst), std::move(p), std::move(cb));
 }
 
-const hw_features & ipv4::get_hw_features() const const
+const hw_features &ipv4::get_hw_features() const const
 {
     return _netif->get_hw_features();
 }
@@ -298,9 +303,9 @@ void ipv4::send(ipv4_address to, ip_protocol_num proto_num,
     auto needs_frag = this->needs_frag(p, proto_num, get_hw_features());
 
     auto send_pkt =
-        [this, to, proto_num, needs_frag, e_dst] (Packet & pkt,
-                                                  uint16_t remaining,
-                                                  uint16_t offset) mutable {
+        [this, to, proto_num, needs_frag, e_dst](Packet & pkt,
+            uint16_t remaining,
+    uint16_t offset) mutable {
         static uint16_t id = 0;
         auto iph = pkt.prepend_header < ip_hdr > ();
         iph->ihl = sizeof(*iph) / 4;
@@ -315,8 +320,7 @@ void ipv4::send(ipv4_address to, ip_protocol_num proto_num,
             // The fragment offset is measured in units of 8 octets (64 bits)
             auto off = offset / 8;
             iph->frag = (mf << uint8_t(ip_hdr::frag_bits::mf)) | off;
-        }
-        else {
+        } else {
             iph->frag = 0;
         }
         iph->ttl = 64;
@@ -326,23 +330,24 @@ void ipv4::send(ipv4_address to, ip_protocol_num proto_num,
         iph->dst_ip = to;
         ldout(cct,
               20) << " ipv4::send " << " id=" << iph->
-            id << " " << _host_address << " -> " << to << " len " << pkt.
-            len() << dendl;
+                  id << " " << _host_address << " -> " << to << " len " << pkt.
+                  len() << dendl;
         *iph = iph->hton();
 
-        if (get_hw_features().tx_csum_ip_offload) {
+        if (get_hw_features().tx_csum_ip_offload)
+        {
             iph->csum = 0;
             pkt.offload_info_ref().needs_ip_csum = true;
-        }
-        else {
+        } else
+        {
             checksummer csum;
             csum.sum(reinterpret_cast < char *>(iph), sizeof(*iph));
             iph->csum = csum.get();
         }
 
         _packetq.push_back(l3_protocol::l3packet {
-                           eth_protocol_num::ipv4, e_dst, std::move(pkt)}
-        );
+            eth_protocol_num::ipv4, e_dst, std::move(pkt)}
+                          );
     };
 
     if (needs_frag) {
@@ -358,8 +363,7 @@ void ipv4::send(ipv4_address to, ip_protocol_num proto_num,
             send_pkt(pkt, remaining, offset);
             offset += can_send;
         }
-    }
-    else {
+    } else {
         // The whole packet can be send in one shot
         send_pkt(p, 0, 0);
     }
@@ -371,7 +375,7 @@ std::optional < l3_protocol::l3packet > ipv4::get_packet()
     // fragmented packet
     if (_packetq.empty()) {
         for (size_t i = 0; i < _pkt_providers.size(); i++) {
-            auto l4p = _pkt_providers[_pkt_provider_idx++] ();
+            auto l4p = _pkt_providers[_pkt_provider_idx++]();
             if (_pkt_provider_idx == _pkt_providers.size()) {
                 _pkt_provider_idx = 0;
             }
@@ -407,7 +411,7 @@ void ipv4::frag_limit_mem()
         _frags_age.pop_front();
 
         // Drop from _frags as well
-        auto & frag = _frags[frag_id];
+        auto &frag = _frags[frag_id];
         auto dropped_size = frag.mem_size;
         frag_drop(frag_id, dropped_size);
 
@@ -423,28 +427,26 @@ void ipv4::frag_timeout()
     auto now = ceph_clock_now();
     for (auto it = _frags_age.begin(); it != _frags_age.end();) {
         auto frag_id = *it;
-        auto & frag = _frags[frag_id];
+        auto &frag = _frags[frag_id];
         if (now > frag.rx_time + _frag_timeout) {
             auto dropped_size = frag.mem_size;
             // Drop from _frags
             frag_drop(frag_id, dropped_size);
             // Drop from _frags_age
             it = _frags_age.erase(it);
-        }
-        else {
+        } else {
             // The further items can only be younger
             break;
         }
     }
     if (_frags.size() != 0) {
         frag_arm(now);
-    }
-    else {
+    } else {
         _frag_mem = 0;
     }
 }
 
-int32_t ipv4::frag::merge(ip_hdr & h, uint16_t offset, Packet p)
+int32_t ipv4::frag::merge(ip_hdr &h, uint16_t offset, Packet p)
 {
     uint32_t old = mem_size;
     unsigned ip_hdr_len = h.ihl * 4;
@@ -457,7 +459,7 @@ int32_t ipv4::frag::merge(ip_hdr & h, uint16_t offset, Packet p)
     data.merge(offset, std::move(p));
     // Update mem size
     mem_size = header.memory();
-  for (const auto & x:data.map) {
+    for (const auto &x : data.map) {
         mem_size += x.second.memory();
     }
     auto added_size = mem_size - old;
@@ -476,8 +478,8 @@ bool ipv4::frag::is_complete()
 Packet ipv4::frag::get_assembled_packet(ethernet_address from,
                                         ethernet_address to)
 {
-    auto & ip_header = header;
-    auto & ip_data = data.map.begin()->second;
+    auto &ip_header = header;
+    auto &ip_data = data.map.begin()->second;
     // Append a ethernet header, needed for forwarding
     auto eh = ip_header.prepend_header < eth_hdr > ();
     eh->src_mac = from;
@@ -515,13 +517,17 @@ void icmp::received(Packet p, ipaddr from, ipaddr to)
 
     if (_queue_space.get_or_fail(p.len())) {    // drop packets that do not fit the queue
         auto cb =
-            [this, from] (const ethernet_address e_dst, Packet p,
-                          int r)mutable {
+            [this, from](const ethernet_address e_dst, Packet p,
+        int r)mutable {
             if (r == 0) {
-                         _packetq.
-                         emplace_back(ipv4_traits::
-                                      l4packet {from, std::move(p), e_dst,
-                                                ip_protocol_num::icmp}
-                         );}
-                         }; _inet.wait_l2_dst_address(from, std::move(p), cb);}
-                         }
+                _packetq.
+                emplace_back(ipv4_traits::
+                l4packet {
+                    from, std::move(p), e_dst,
+                    ip_protocol_num::icmp}
+                            );
+            }
+        };
+        _inet.wait_l2_dst_address(from, std::move(p), cb);
+    }
+}

@@ -10,8 +10,9 @@
 
 using namespace ceph;
 
-class TestFixture:public::testing::Test {
-  public:
+class TestFixture: public::testing::Test
+{
+public:
 
     TestFixture();
 
@@ -23,22 +24,22 @@ class TestFixture:public::testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-    int open_image(const std::string & image_name, librbd::ImageCtx ** ictx);
-    void close_image(librbd::ImageCtx * ictx);
+    int open_image(const std::string &image_name, librbd::ImageCtx **ictx);
+    void close_image(librbd::ImageCtx *ictx);
 
-    int snap_create(librbd::ImageCtx & ictx, const std::string & snap_name);
-    int snap_protect(librbd::ImageCtx & ictx, const std::string & snap_name);
+    int snap_create(librbd::ImageCtx &ictx, const std::string &snap_name);
+    int snap_protect(librbd::ImageCtx &ictx, const std::string &snap_name);
 
-    int flatten(librbd::ImageCtx & ictx, librbd::ProgressContext & prog_ctx);
-    int resize(librbd::ImageCtx * ictx, uint64_t size);
+    int flatten(librbd::ImageCtx &ictx, librbd::ProgressContext &prog_ctx);
+    int resize(librbd::ImageCtx *ictx, uint64_t size);
 
-    int lock_image(librbd::ImageCtx & ictx, ClsLockType lock_type,
-                   const std::string & cookie);
+    int lock_image(librbd::ImageCtx &ictx, ClsLockType lock_type,
+                   const std::string &cookie);
     int unlock_image();
 
-    int flush_writeback_cache(librbd::ImageCtx * image_ctx);
+    int flush_writeback_cache(librbd::ImageCtx *image_ctx);
 
-    int acquire_exclusive_lock(librbd::ImageCtx & ictx);
+    int acquire_exclusive_lock(librbd::ImageCtx &ictx);
 
     static std::string _pool_name;
     static librados::Rados _rados;

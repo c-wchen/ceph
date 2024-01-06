@@ -9,7 +9,7 @@
 
 using namespace std;
 
-int RGWSI_ZoneUtils::do_start(optional_yield, const DoutPrefixProvider * dpp)
+int RGWSI_ZoneUtils::do_start(optional_yield, const DoutPrefixProvider *dpp)
 {
     init_unique_trans_id_deps();
 
@@ -19,8 +19,8 @@ int RGWSI_ZoneUtils::do_start(optional_yield, const DoutPrefixProvider * dpp)
 string RGWSI_ZoneUtils::gen_host_id()
 {
     /* uint64_t needs 16, two '-' separators and a trailing null */
-    const string & zone_name = zone_svc->get_zone().name;
-    const string & zonegroup_name = zone_svc->get_zonegroup().get_name();
+    const string &zone_name = zone_svc->get_zone().name;
+    const string &zonegroup_name = zone_svc->get_zonegroup().get_name();
     char charbuf[16 + zone_name.size() + zonegroup_name.size() + 2 + 1];
     snprintf(charbuf, sizeof(charbuf), "%llx-%s-%s",
              (unsigned long long)rados_svc->instance_id(), zone_name.c_str(),

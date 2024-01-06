@@ -17,11 +17,11 @@
 #include "common/debug.h"
 
 QueueStrategy::QueueStrategy(int _n_threads)
-:n_threads(_n_threads), stop(false), mqueue(), disp_threads()
+    : n_threads(_n_threads), stop(false), mqueue(), disp_threads()
 {
 }
 
-void QueueStrategy::ds_dispatch(Message * m)
+void QueueStrategy::ds_dispatch(Message *m)
 {
     msgr->ms_fast_preprocess(m);
     if (msgr->ms_can_fast_dispatch(m)) {
@@ -29,7 +29,7 @@ void QueueStrategy::ds_dispatch(Message * m)
         return;
     }
     std::lock_guard l {
-    lock};
+        lock};
     mqueue.push_back(*m);
     if (disp_threads.size()) {
         if (!disp_threads.empty()) {
@@ -40,27 +40,29 @@ void QueueStrategy::ds_dispatch(Message * m)
     }
 }
 
-void QueueStrategy::entry(QSThread * thrd)
+void QueueStrategy::entry(QSThread *thrd)
 {
     for (;;) {
         ceph::ref_t < Message > m;
         std::unique_lock l {
-        lock};
+            lock};
         for (;;) {
             if (!mqueue.empty()) {
                 m = ceph::ref_t < Message > (&mqueue.front(), false);
                 mqueue.pop_front();
                 break;
             }
-            if (stop)
+            if (stop) {
                 break;
+            }
             disp_threads.push_front(*thrd);
             thrd->cond.wait(l);
         }
         l.unlock();
         if (stop) {
-            if (!m)
+            if (!m) {
                 break;
+            }
             continue;
         }
         get_messenger()->ms_deliver_dispatch(m);
@@ -71,7 +73,7 @@ void QueueStrategy::shutdown()
 {
     QSThread *thrd;
     std::lock_guard l {
-    lock};
+        lock};
     stop = true;
     while (disp_threads.size()) {
         thrd = &(disp_threads.front());
@@ -83,9 +85,9 @@ void QueueStrategy::shutdown()
 void QueueStrategy::wait()
 {
     std::unique_lock l {
-    lock};
+        lock};
     ceph_assert(stop);
-  for (auto & thread:threads) {
+    for (auto &thread : threads) {
         l.unlock();
 
         // join outside of lock
@@ -99,7 +101,7 @@ void QueueStrategy::start()
 {
     ceph_assert(!stop);
     std::lock_guard l {
-    lock};
+        lock};
     threads.reserve(n_threads);
     for (int ix = 0; ix < n_threads; ++ix) {
         std::string thread_name = "ms_qs_";

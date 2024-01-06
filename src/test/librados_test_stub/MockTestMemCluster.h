@@ -9,26 +9,31 @@
 #include "test/librados_test_stub/MockTestMemRadosClient.h"
 #include "gmock/gmock.h"
 
-namespace librados {
+namespace librados
+{
 
-    class TestRadosClient;
+class TestRadosClient;
 
-    class MockTestMemCluster:public TestMemCluster {
-      public:
-        MockTestMemCluster() {
-            default_to_dispatch();
-        } MOCK_METHOD1(create_rados_client, TestRadosClient * (CephContext *));
-        MockTestMemRadosClient *do_create_rados_client(CephContext * cct) {
-            return new::testing::NiceMock < MockTestMemRadosClient > (cct,
-                                                                      this);
-        } void default_to_dispatch() {
-            using namespace::testing;
-            ON_CALL(*this,
-                    create_rados_client(_)).WillByDefault(Invoke(this,
-                                                                 &MockTestMemCluster::
-                                                                 do_create_rados_client));
-        }
-    };
+class MockTestMemCluster: public TestMemCluster
+{
+public:
+    MockTestMemCluster()
+    {
+        default_to_dispatch();
+    } MOCK_METHOD1(create_rados_client, TestRadosClient * (CephContext *));
+    MockTestMemRadosClient *do_create_rados_client(CephContext *cct)
+    {
+        return new::testing::NiceMock < MockTestMemRadosClient > (cct,
+                this);
+    } void default_to_dispatch()
+    {
+        using namespace::testing;
+        ON_CALL(*this,
+                create_rados_client(_)).WillByDefault(Invoke(this,
+                        &MockTestMemCluster::
+                        do_create_rados_client));
+    }
+};
 
 }                               // namespace librados
 

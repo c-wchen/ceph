@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MPGSTATS_H
@@ -18,36 +18,43 @@
 #include "osd/osd_types.h"
 #include "messages/PaxosServiceMessage.h"
 
-class MPGStats final:public PaxosServiceMessage {
+class MPGStats final: public PaxosServiceMessage
+{
     static constexpr int HEAD_VERSION = 2;
     static constexpr int COMPAT_VERSION = 1;
 
-  public:
-     uuid_d fsid;
-     std::map < pg_t, pg_stat_t > pg_stat;
+public:
+    uuid_d fsid;
+    std::map < pg_t, pg_stat_t > pg_stat;
     osd_stat_t osd_stat;
-     std::map < int64_t, store_statfs_t > pool_stat;
+    std::map < int64_t, store_statfs_t > pool_stat;
     epoch_t epoch = 0;
 
-     MPGStats():PaxosServiceMessage {
-    MSG_PGSTATS, 0, HEAD_VERSION, COMPAT_VERSION} {
+    MPGStats(): PaxosServiceMessage {
+        MSG_PGSTATS, 0, HEAD_VERSION, COMPAT_VERSION}
+    {
     }
-    MPGStats(const uuid_d & f, epoch_t e)
-    :PaxosServiceMessage {
-    MSG_PGSTATS, 0, HEAD_VERSION, COMPAT_VERSION}, fsid(f), epoch(e) {
-    }
-
-  private:
-    ~MPGStats()final {
+    MPGStats(const uuid_d &f, epoch_t e)
+        : PaxosServiceMessage {
+        MSG_PGSTATS, 0, HEAD_VERSION, COMPAT_VERSION}, fsid(f), epoch(e)
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+private:
+    ~MPGStats()final
+    {
+    }
+
+public:
+    std::string_view get_type_name()const override
+    {
         return "pg_stats";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "pg_stats(" << pg_stat.size() << " pgs seq " << osd_stat.
             seq << " v " << version << ")";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         paxos_encode();
         encode(fsid, payload);
@@ -55,10 +62,11 @@ class MPGStats final:public PaxosServiceMessage {
         encode(pg_stat, payload);
         encode(epoch, payload);
         encode(utime_t {
-               }, payload);
+        }, payload);
         encode(pool_stat, payload, features);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         paxos_decode(p);
@@ -72,8 +80,9 @@ class MPGStats final:public PaxosServiceMessage {
         decode(epoch, p);
         utime_t dummy;
         decode(dummy, p);
-        if (header.version >= 2)
+        if (header.version >= 2) {
             decode(pool_stat, p);
+        }
     }
 };
 

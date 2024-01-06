@@ -18,5 +18,5 @@ struct osd_op_params_t {
     bool user_modify = false;
     ObjectCleanRegions clean_regions;
 
-     osd_op_params_t() = default;
+    osd_op_params_t() = default;
 };

@@ -34,11 +34,12 @@ struct link_rollback {
     utime_t old_dir_rctime;
     bufferlist snapbl;
 
-     link_rollback():ino(0), was_inc(false) {
-    } void encode(bufferlist & bl) const;
-    void decode(bufferlist::const_iterator & bl);
-    void dump(Formatter * f) const;
-    static void generate_test_instances(std::list < link_rollback * >&ls);
+    link_rollback(): ino(0), was_inc(false)
+    {
+    } void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &bl);
+    void dump(Formatter *f) const;
+    static void generate_test_instances(std::list < link_rollback * > &ls);
 };
 
 WRITE_CLASS_ENCODER(link_rollback)
@@ -52,15 +53,15 @@ WRITE_CLASS_ENCODER(link_rollback)
 struct rmdir_rollback {
     metareqid_t reqid;
     dirfrag_t src_dir;
-     std::string src_dname;
+    std::string src_dname;
     dirfrag_t dest_dir;
-     std::string dest_dname;
+    std::string dest_dname;
     bufferlist snapbl;
 
-    void encode(bufferlist & bl) const;
-    void decode(bufferlist::const_iterator & bl);
-    void dump(Formatter * f) const;
-    static void generate_test_instances(std::list < rmdir_rollback * >&ls);
+    void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &bl);
+    void dump(Formatter *f) const;
+    static void generate_test_instances(std::list < rmdir_rollback * > &ls);
 };
 WRITE_CLASS_ENCODER(rmdir_rollback)
 
@@ -70,16 +71,16 @@ struct rename_rollback {
         utime_t dirfrag_old_mtime;
         utime_t dirfrag_old_rctime;
         inodeno_t ino, remote_ino;
-         std::string dname;
+        std::string dname;
         char remote_d_type;
         utime_t old_ctime;
 
-         drec():remote_d_type((char)S_IFREG)
-{
-} void encode(bufferlist & bl) const;
-void decode(bufferlist::const_iterator & bl);
-void dump(Formatter * f) const;
-static void generate_test_instances(std::list < drec * >&ls);
+        drec(): remote_d_type((char)S_IFREG)
+        {
+        } void encode(bufferlist &bl) const;
+        void decode(bufferlist::const_iterator &bl);
+        void dump(Formatter *f) const;
+        static void generate_test_instances(std::list < drec * > &ls);
     };
     WRITE_CLASS_MEMBER_ENCODER(drec)
 
@@ -90,17 +91,18 @@ static void generate_test_instances(std::list < drec * >&ls);
     bufferlist srci_snapbl;
     bufferlist desti_snapbl;
 
-    void encode(bufferlist & bl) const;
-    void decode(bufferlist::const_iterator & bl);
-    void dump(Formatter * f) const;
-    static void generate_test_instances(std::list < rename_rollback * >&ls);
+    void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &bl);
+    void dump(Formatter *f) const;
+    static void generate_test_instances(std::list < rename_rollback * > &ls);
 };
 
 WRITE_CLASS_ENCODER(rename_rollback::drec)
-    WRITE_CLASS_ENCODER(rename_rollback)
+WRITE_CLASS_ENCODER(rename_rollback)
 
-class EPeerUpdate:public LogEvent {
-  public:
+class EPeerUpdate: public LogEvent
+{
+public:
     const static int OP_PREPARE = 1;
     const static int OP_COMMIT = 2;
     const static int OP_ROLLBACK = 3;
@@ -118,40 +120,46 @@ class EPeerUpdate:public LogEvent {
      */
     EMetaBlob commit;
     bufferlist rollback;
-     std::string type;
+    std::string type;
     metareqid_t reqid;
     mds_rank_t leader;
     __u8 op;                    // prepare, commit, abort
     __u8 origop;                // link | rename
 
-     EPeerUpdate():LogEvent(EVENT_PEERUPDATE), leader(0), op(0), origop(0)
-{
-} EPeerUpdate(MDLog * mdlog, std::string_view s, metareqid_t ri, int leadermds,
-              int o, int oo):LogEvent(EVENT_PEERUPDATE), type(s), reqid(ri),
-    leader(leadermds), op(o), origop(oo) {
-}
+    EPeerUpdate(): LogEvent(EVENT_PEERUPDATE), leader(0), op(0), origop(0)
+    {
+    } EPeerUpdate(MDLog *mdlog, std::string_view s, metareqid_t ri, int leadermds,
+                  int o, int oo): LogEvent(EVENT_PEERUPDATE), type(s), reqid(ri),
+        leader(leadermds), op(o), origop(oo)
+    {
+    }
 
-void print(std::ostream & out) const override {
-    if (type.length())
-        out << type << " ";
-    out << " " << (int)op;
-    if (origop == LINK)
-        out << " link";
-    if (origop == RENAME)
-        out << " rename";
-    out << " " << reqid;
-    out << " for mds." << leader;
-    out << commit;
-} EMetaBlob *get_metablob() override {
-    return &commit;
-}
+    void print(std::ostream &out) const override
+    {
+        if (type.length()) {
+            out << type << " ";
+        }
+        out << " " << (int)op;
+        if (origop == LINK) {
+            out << " link";
+        }
+        if (origop == RENAME) {
+            out << " rename";
+        }
+        out << " " << reqid;
+        out << " for mds." << leader;
+        out << commit;
+    } EMetaBlob *get_metablob() override
+    {
+        return &commit;
+    }
 
-void encode(bufferlist & bl, uint64_t features) const override;
-void decode(bufferlist::const_iterator & bl) override;
-void dump(Formatter * f) const override;
-static void generate_test_instances(std::list < EPeerUpdate * >&ls);
+    void encode(bufferlist &bl, uint64_t features) const override;
+    void decode(bufferlist::const_iterator &bl) override;
+    void dump(Formatter *f) const override;
+    static void generate_test_instances(std::list < EPeerUpdate * > &ls);
 
-void replay(MDSRank * mds) override;
+    void replay(MDSRank *mds) override;
 };
 
 WRITE_CLASS_ENCODER_FEATURES(EPeerUpdate)

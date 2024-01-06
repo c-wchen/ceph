@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 
 #include "OpRequest.h"
 #include "common/Formatter.h"
@@ -30,10 +30,10 @@ using std::stringstream;
 
 using ceph::Formatter;
 
-OpRequest::OpRequest(Message * req, OpTracker * tracker)
-:  
-TrackedOp(tracker, req->get_throttle_stamp()),
-request(req), hit_flag_points(0), latest_flag_point(0), hitset_inserted(false)
+OpRequest::OpRequest(Message *req, OpTracker *tracker)
+    :
+    TrackedOp(tracker, req->get_throttle_stamp()),
+    request(req), hit_flag_points(0), latest_flag_point(0), hitset_inserted(false)
 {
     if (req->get_priority() < tracker->cct->_conf->osd_client_op_priority) {
         // don't warn as quickly for low priority ops
@@ -42,17 +42,15 @@ request(req), hit_flag_points(0), latest_flag_point(0), hitset_inserted(false)
     }
     if (req->get_type() == CEPH_MSG_OSD_OP) {
         reqid = static_cast < MOSDOp * >(req)->get_reqid();
-    }
-    else if (req->get_type() == MSG_OSD_REPOP) {
+    } else if (req->get_type() == MSG_OSD_REPOP) {
         reqid = static_cast < MOSDRepOp * >(req)->reqid;
-    }
-    else if (req->get_type() == MSG_OSD_REPOPREPLY) {
+    } else if (req->get_type() == MSG_OSD_REPOPREPLY) {
         reqid = static_cast < MOSDRepOpReply * >(req)->reqid;
     }
     req_src_inst = req->get_source_inst();
 }
 
-void OpRequest::_dump(Formatter * f) const const
+void OpRequest::_dump(Formatter *f) const const
 {
     Message *m = request;
     f->dump_string("flag_point", state_string());
@@ -90,7 +88,7 @@ void OpRequest::_dump(Formatter * f) const const
     }
 }
 
-void OpRequest::_dump_op_descriptor_unlocked(ostream & stream) const const
+void OpRequest::_dump_op_descriptor_unlocked(ostream &stream) const const
 {
     get_req()->print(stream);
 }
@@ -103,10 +101,11 @@ void OpRequest::_unregistered()
     request->set_connection(nullptr);
 }
 
-int OpRequest::maybe_init_op_info(const OSDMap & osdmap)
+int OpRequest::maybe_init_op_info(const OSDMap &osdmap)
 {
-    if (op_info.get_flags())
+    if (op_info.get_flags()) {
         return 0;
+    }
 
     auto m = get_req < MOSDOp > ();
 
@@ -133,7 +132,7 @@ void OpRequest::mark_flag_point(uint8_t flag, const char *s)
                flag, s, old_flags, hit_flag_points);
 }
 
-void OpRequest::mark_flag_point_string(uint8_t flag, const string & s)
+void OpRequest::mark_flag_point_string(uint8_t flag, const string &s)
 {
 #ifdef WITH_LTTNG
     uint8_t old_flags = hit_flag_points;
@@ -155,8 +154,9 @@ bool OpRequest::filter_out(const set < string > &filters)
             addrs.insert(addr);
         }
     }
-    if (addrs.empty())
+    if (addrs.empty()) {
         return true;
+    }
 
     entity_addr_t cmp_addr = req_src_inst.addr;
     if (addrs.count(cmp_addr)) {

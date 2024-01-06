@@ -88,7 +88,7 @@ TEST(MgrCap, ParseGood)
         std::cout << "Testing good input: '" << str << "'" << std::endl;
         ASSERT_TRUE(cap.parse(str, &cout));
         std::cout << "                                         -> " << cap
-            << std::endl;
+                  << std::endl;
     }
 }
 
@@ -209,9 +209,9 @@ TEST(MgrCap, AllowAll)
     ASSERT_TRUE(cap.parse("allow *", nullptr));
     ASSERT_TRUE(cap.is_allow_all());
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "foo", "", "asdf", {
-                               }, true, true, true, {
-                               }));
+    }, "foo", "", "asdf", {
+    }, true, true, true, {
+    }));
 
     MgrCap cap2;
     ASSERT_FALSE(cap2.is_allow_all());
@@ -233,14 +233,14 @@ TEST(MgrCap, Network)
     c.parse("192.167.2.3");
 
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "foo", "", "asdf", {
-                               }, true, true, true, a));
+    }, "foo", "", "asdf", {
+    }, true, true, true, a));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "foo", "", "asdf", {
-                               }, true, true, true, b));
+    }, "foo", "", "asdf", {
+    }, true, true, true, b));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "foo", "", "asdf", {
-                                }, true, true, true, c));
+    }, "foo", "", "asdf", {
+    }, true, true, true, c));
 }
 
 TEST(MgrCap, CommandRegEx)
@@ -253,16 +253,22 @@ TEST(MgrCap, CommandRegEx)
     EntityName name;
     name.from_str("osd.123");
     ASSERT_TRUE(cap.is_capable(nullptr, name, "", "", "abc", { {
-                               "arg", "12345abcde"}}, true, true, true, {
-                               }));
+            "arg", "12345abcde"
+        }
+    }, true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "", "abc", { {
-                                "arg", "~!@#$"}}, true, true, true, {
-                                }));
+            "arg", "~!@#$"
+        }
+    }, true, true, true, {
+    }));
 
     ASSERT_TRUE(cap.parse("allow command abc with arg regex \"[*\"", nullptr));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "", "abc", { {
-                                "arg", ""}}, true, true, true, {
-                                }));
+            "arg", ""
+        }
+    }, true, true, true, {
+    }));
 }
 
 TEST(MgrCap, Module)
@@ -272,21 +278,21 @@ TEST(MgrCap, Module)
     ASSERT_TRUE(cap.parse("allow module abc r, allow module bcd w", nullptr));
 
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "abc", "", {
-                                }, true, true, false, {
-                                }));
+    }, "", "abc", "", {
+    }, true, true, false, {
+    }));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "", "abc", "", {
-                               }, true, false, false, {
-                               }));
+    }, "", "abc", "", {
+    }, true, false, false, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "bcd", "", {
-                                }, true, true, false, {
-                                }));
+    }, "", "bcd", "", {
+    }, true, true, false, {
+    }));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "", "bcd", "", {
-                               }, false, true, false, {
-                               }));
+    }, "", "bcd", "", {
+    }, false, true, false, {
+    }));
 }
 
 TEST(MgrCap, Profile)
@@ -299,45 +305,50 @@ TEST(MgrCap, Profile)
 
     ASSERT_TRUE(cap.parse("profile rbd", nullptr));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "abc", "", {
-                                }, true, false, false, {
-                                }));
+    }, "", "abc", "", {
+    }, true, false, false, {
+    }));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "", "rbd_support", "", {
-                               }, true, true, false, {
-                               }));
+    }, "", "rbd_support", "", {
+    }, true, true, false, {
+    }));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "", "rbd_support", "", {
-                               }, true, false, false, {
-                               }));
+    }, "", "rbd_support", "", {
+    }, true, false, false, {
+    }));
 
     ASSERT_TRUE(cap.
                 parse("profile rbd pool=abc namespace prefix def", nullptr));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "rbd_support", "", {
-                                }, true, true, false, {
-                                }));
+    }, "", "rbd_support", "", {
+    }, true, true, false, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "rbd_support", "", { {
-                                "pool", "abc"}}, true, true, false, {
-                                }));
+    }, "", "rbd_support", "", { {
+            "pool", "abc"
+        }
+    }, true, true, false, {
+    }));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "", "rbd_support", "", { {
-                               "pool", "abc"}, {
-                               "namespace", "defghi"}}, true, true, false, {
-                               }));
+    }, "", "rbd_support", "", { {
+            "pool", "abc"
+        }, {
+            "namespace", "defghi"
+        }
+    }, true, true, false, {
+    }));
 
     ASSERT_TRUE(cap.parse("profile rbd-read-only", nullptr));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "abc", "", {
-                                }, true, false, false, {
-                                }));
+    }, "", "abc", "", {
+    }, true, false, false, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, {
-                                }, "", "rbd_support", "", {
-                                }, true, true, false, {
-                                }));
+    }, "", "rbd_support", "", {
+    }, true, true, false, {
+    }));
     ASSERT_TRUE(cap.is_capable(nullptr, {
-                               }, "", "rbd_support", "", {
-                               }, true, false, false, {
-                               }));
+    }, "", "rbd_support", "", {
+    }, true, false, false, {
+    }));
 }

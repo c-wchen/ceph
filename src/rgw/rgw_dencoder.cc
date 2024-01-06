@@ -19,7 +19,7 @@ using namespace std;
 
 static string shadow_ns = RGW_OBJ_NS_SHADOW;
 
-void obj_version::generate_test_instances(list < obj_version * >&o)
+void obj_version::generate_test_instances(list < obj_version * > &o)
 {
     obj_version *v = new obj_version;
     v->ver = 5;
@@ -30,8 +30,8 @@ void obj_version::generate_test_instances(list < obj_version * >&o)
 }
 
 void RGWBucketEncryptionConfig::generate_test_instances(std::list <
-                                                        RGWBucketEncryptionConfig
-                                                        * >&o)
+        RGWBucketEncryptionConfig
+        * > &o)
 {
     auto *bc = new RGWBucketEncryptionConfig("aws:kms", "some:key", true);
     o.push_back(bc);

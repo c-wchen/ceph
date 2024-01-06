@@ -119,7 +119,8 @@ double atomic_int_inc()
 {
     int count = 1000000;
     std::atomic < int64_t > value = {
-    11};
+        11
+    };
     uint64_t start = Cycles::rdtsc();
     for (int i = 0; i < count; i++) {
         value++;
@@ -134,7 +135,8 @@ double atomic_int_read()
 {
     int count = 1000000;
     std::atomic < int64_t > value = {
-    11};
+        11
+    };
     [[maybe_unused]] int total = 0;
     uint64_t start = Cycles::rdtsc();
     for (int i = 0; i < count; i++) {
@@ -150,7 +152,8 @@ double atomic_int_set()
 {
     int count = 1000000;
     std::atomic < int64_t > value = {
-    11};
+        11
+    };
     uint64_t start = Cycles::rdtsc();
     for (int i = 0; i < count; i++) {
         value = 88;
@@ -191,21 +194,24 @@ double buffer_basic()
 
 struct DummyBlock {
     int a = 1, b = 2, c = 3, d = 4;
-    void encode(bufferlist & bl) const {
+    void encode(bufferlist &bl) const
+    {
         ENCODE_START(1, 1, bl);
         encode(a, bl);
         encode(b, bl);
         encode(c, bl);
         encode(d, bl);
         ENCODE_FINISH(bl);
-    } void decode(bufferlist::const_iterator & bl) {
+    } void decode(bufferlist::const_iterator &bl)
+    {
         DECODE_START(1, bl);
         decode(a, bl);
         decode(b, bl);
         decode(c, bl);
         decode(d, bl);
         DECODE_FINISH(bl);
-}};
+    }
+};
 WRITE_CLASS_ENCODER(DummyBlock)
 // Measure the cost of encoding and decoding a buffer, plus
 // allocating space for one chunk.
@@ -298,9 +304,9 @@ double buffer_iterator()
         while (!it.end()) {
             sum +=
                 (static_cast <
-                 const char *>(it.get_current_ptr().c_str()))[it.
-                                                              get_remaining() -
-                                                              1];
+                 const char * >(it.get_current_ptr().c_str()))[it.
+                     get_remaining() -
+                     1];
             ++it;
         }
     }
@@ -310,28 +316,35 @@ double buffer_iterator()
 }
 
 // Implements the CondPingPong test.
-class CondPingPong {
+class CondPingPong
+{
     ceph::mutex mutex = ceph::make_mutex("CondPingPong::mutex");
     ceph::condition_variable cond;
     int prod = 0;
     int cons = 0;
     const int count = 10000;
 
-    class Consumer:public Thread {
+    class Consumer: public Thread
+    {
         CondPingPong *p;
-      public:
-         explicit Consumer(CondPingPong * p):p(p) {
-        } void *entry() override {
+    public:
+        explicit Consumer(CondPingPong *p): p(p)
+        {
+        } void *entry() override
+        {
             p->consume();
             return 0;
-    }}
+        }
+    }
     consumer;
 
-  public:
-  CondPingPong():consumer(this) {
+public:
+    CondPingPong(): consumer(this)
+    {
     }
 
-    double run() {
+    double run()
+    {
         consumer.create("consumer");
         uint64_t start = Cycles::rdtsc();
         produce();
@@ -340,27 +353,29 @@ class CondPingPong {
         return Cycles::to_seconds(stop - start) / count;
     }
 
-    void produce() {
+    void produce()
+    {
         std::unique_lock l {
-        mutex};
+            mutex};
         while (cons < count) {
-            cond.wait(l,[this] {
-                      return cons >= prod;
-                      }
-            );
+            cond.wait(l, [this] {
+                return cons >= prod;
+            }
+                     );
             ++prod;
             cond.notify_all();
         }
     }
 
-    void consume() {
+    void consume()
+    {
         std::unique_lock l {
-        mutex};
+            mutex};
         while (cons < count) {
-            cond.wait(l,[this] {
-                      return cons != prod;
-                      }
-            );
+            cond.wait(l, [this] {
+                return cons != prod;
+            }
+                     );
             ++cons;
             cond.notify_all();
         }
@@ -402,8 +417,8 @@ double div32()
     uint32_t divisor = 0xaa55aa55U;
     uint32_t result;
     for (int i = 0; i < count; i++) {
-        asm volatile ("udiv %0, %1, %2":"=r" (result):
-                      "r"(numerator), "r"(divisor));
+        asm volatile("udiv %0, %1, %2":"=r"(result):
+                     "r"(numerator), "r"(divisor));
     }
     uint64_t stop = Cycles::rdtsc();
     return Cycles::to_seconds(stop - start) / count;
@@ -468,33 +483,41 @@ double eventcenter_poll()
     return Cycles::to_seconds(stop - start) / count;
 }
 
-class CenterWorker:public Thread {
+class CenterWorker: public Thread
+{
     CephContext *cct;
     bool done;
 
-  public:
-     EventCenter center;
-    explicit CenterWorker(CephContext * c):cct(c), done(false), center(c) {
+public:
+    EventCenter center;
+    explicit CenterWorker(CephContext *c): cct(c), done(false), center(c)
+    {
         center.init(100, 0, "posix");
-    } void stop() {
+    } void stop()
+    {
         done = true;
         center.wakeup();
     }
-    void *entry() override {
+    void *entry() override
+    {
         center.set_owner();
         bind_thread_to_cpu(2);
-        while (!done)
+        while (!done) {
             center.process_events(1000);
+        }
         return 0;
     }
 };
 
-class CountEvent:public EventCallback {
+class CountEvent: public EventCallback
+{
     std::atomic < int64_t > *count;
 
-  public:
-    explicit CountEvent(std::atomic < int64_t > *atomic):count(atomic) {
-    } void do_request(uint64_t id) override {
+public:
+    explicit CountEvent(std::atomic < int64_t > *atomic): count(atomic)
+    {
+    } void do_request(uint64_t id) override
+    {
         (*count)--;
     }
 };
@@ -505,14 +528,16 @@ double eventcenter_dispatch()
 
     CenterWorker worker(g_ceph_context);
     std::atomic < int64_t > flag = {
-    1};
+        1
+    };
     worker.create("evt_center_disp");
     EventCallbackRef count_event(new CountEvent(&flag));
 
     worker.center.dispatch_event_external(count_event);
     // Start a new thread and wait for it to ready.
-    while (flag)
+    while (flag) {
         usleep(100);
+    }
 
     uint64_t start = Cycles::rdtsc();
     for (int i = 0; i < count; i++) {
@@ -564,8 +589,9 @@ template < int key_length > double ceph_str_hash_rjenkins()
     char buf[key_length];
 
     uint64_t start = Cycles::rdtsc();
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < count; i++) {
         ceph_str_hash(CEPH_STR_HASH_RJENKINS, buf, sizeof(buf));
+    }
     uint64_t stop = Cycles::rdtsc();
 
     return Cycles::to_seconds(stop - start) / count;
@@ -627,18 +653,20 @@ double perf_cycles_to_nanoseconds()
  */
 static inline void prefetch(const void *object, uint64_t num_bytes)
 {
-    uint64_t offset = reinterpret_cast < uint64_t > (object) & 0x3fUL;
+    uint64_t offset = reinterpret_cast < uint64_t >(object) & 0x3fUL;
     const char *p = reinterpret_cast < const char *>(object) - offset;
-    for (uint64_t i = 0; i < offset + num_bytes; i += 64)
+    for (uint64_t i = 0; i < offset + num_bytes; i += 64) {
         _mm_prefetch(p + i, _MM_HINT_T0);
+    }
 }
 #elif defined(__aarch64__)
 static inline void prefetch(const void *object, uint64_t num_bytes)
 {
-    uint64_t offset = reinterpret_cast < uint64_t > (object) & 0x3fUL;
+    uint64_t offset = reinterpret_cast < uint64_t >(object) & 0x3fUL;
     const char *ptr = reinterpret_cast < const char *>(object) - offset;
-    for (uint64_t i = 0; i < offset + num_bytes; i += 64, ptr += 64)
-        asm volatile ("prfm pldl1keep, %a0\n"::"p" (ptr));
+    for (uint64_t i = 0; i < offset + num_bytes; i += 64, ptr += 64) {
+        asm volatile("prfm pldl1keep, %a0\n"::"p"(ptr));
+    }
 }
 #endif
 
@@ -682,7 +710,7 @@ double perf_prefetch()
 /**
  * This function is used to seralize machine instructions so that no
  * instructions that appear after it in the current thread can run before any
- * instructions that appear before it. 
+ * instructions that appear before it.
  *
  * It is useful for putting around rdpmc instructions (to pinpoint cache
  * misses) as well as before rdtsc instructions, to prevent time pollution from
@@ -691,8 +719,8 @@ double perf_prefetch()
 static inline void serialize()
 {
     uint32_t eax, ebx, ecx, edx;
-    __asm volatile ("cpuid":"=a" (eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-                    :"a"(1U));
+    __asm volatile("cpuid":"=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                   : "a"(1U));
 }
 #endif
 
@@ -727,7 +755,7 @@ double lfence()
     int count = 1000000;
     uint64_t start = Cycles::rdtsc();
     for (int i = 0; i < count; i++) {
-        asm volatile ("dmb ishld":::"memory");
+        asm volatile("dmb ishld":::"memory");
     }
     uint64_t stop = Cycles::rdtsc();
     return Cycles::to_seconds(stop - start) / count;
@@ -751,7 +779,7 @@ double sfence()
     int count = 1000000;
     uint64_t start = Cycles::rdtsc();
     for (int i = 0; i < count; i++) {
-        asm volatile ("dmb ishst":::"memory");
+        asm volatile("dmb ishst":::"memory");
     }
     uint64_t stop = Cycles::rdtsc();
     return Cycles::to_seconds(stop - start) / count;
@@ -777,10 +805,13 @@ double test_spinlock()
 
 // Helper for spawn_thread. This is the main function that the thread executes
 // (intentionally empty).
-class ThreadHelper:public Thread {
-    void *entry() override {
+class ThreadHelper: public Thread
+{
+    void *entry() override
+    {
         return 0;
-}};
+    }
+};
 
 // Measure the cost of start and joining with a thread.
 double spawn_thread()
@@ -796,10 +827,13 @@ double spawn_thread()
     return Cycles::to_seconds(stop - start) / count;
 }
 
-class FakeContext:public Context {
-  public:
-    void finish(int r) override {
-}};
+class FakeContext: public Context
+{
+public:
+    void finish(int r) override
+    {
+    }
+};
 
 // Measure the cost of starting and stopping a Dispatch::Timer.
 double perf_timer()
@@ -813,7 +847,7 @@ double perf_timer()
     }
     uint64_t start = Cycles::rdtsc();
     std::lock_guard l {
-    lock};
+        lock};
     for (int i = 0; i < count; i++) {
         if (timer.add_event_after(12345, c[i])) {
             timer.cancel_event(c[i]);
@@ -833,7 +867,7 @@ double throw_int()
     for (int i = 0; i < count; i++) {
         try {
             throw 0;
-        } catch(int) {          // NOLINT
+        } catch (int) {         // NOLINT
             // pass
         }
     }
@@ -849,7 +883,7 @@ double throw_int_call()
     for (int i = 0; i < count; i++) {
         try {
             PerfHelper::throw_int();
-        } catch(int) {          // NOLINT
+        } catch (int) {         // NOLINT
             // pass
         }
     }
@@ -866,7 +900,7 @@ double throw_exception()
     for (int i = 0; i < count; i++) {
         try {
             throw buffer::end_of_buffer();
-        } catch(const buffer::end_of_buffer &) {
+        } catch (const buffer::end_of_buffer &) {
             // pass
         }
     }
@@ -882,7 +916,7 @@ double throw_exception_call()
     for (int i = 0; i < count; i++) {
         try {
             PerfHelper::throw_end_of_buffer();
-        } catch(const buffer::end_of_buffer &) {
+        } catch (const buffer::end_of_buffer &) {
             // pass
         }
     }
@@ -933,7 +967,7 @@ struct TestInfo {
     const char *name;           // Name of the performance test; this is
     // what gets typed on the command line to
     // run the test.
-    double (*func) ();          // Function that implements the test;
+    double (*func)();           // Function that implements the test;
     // returns the time (in seconds) for each
     // iteration of that test.
     const char *description;    // Short description of this test (not more
@@ -941,82 +975,158 @@ struct TestInfo {
     // test output fits on a single line).
 };
 TestInfo tests[] = {
-    {"atomic_int_cmp", atomic_int_cmp,
-     "atomic_t::compare_and_swap"},
-    {"atomic_int_inc", atomic_int_inc,
-     "atomic_t::inc"},
-    {"atomic_int_read", atomic_int_read,
-     "atomic_t::read"},
-    {"atomic_int_set", atomic_int_set,
-     "atomic_t::set"},
-    {"mutex_nonblock", mutex_nonblock,
-     "Mutex lock/unlock (no blocking)"},
-    {"buffer_basic", buffer_basic,
-     "buffer create, add one ptr, delete"},
-    {"buffer_encode_decode", buffer_encode_decode,
-     "buffer create, encode/decode object, delete"},
-    {"buffer_basic_copy", buffer_basic_copy,
-     "buffer create, copy small block, delete"},
-    {"buffer_copy", buffer_copy,
-     "copy out 2 small ptrs from buffer"},
-    {"buffer_encode10", buffer_encode,
-     "buffer encoding 10 structures onto existing ptr"},
-    {"buffer_iterator", buffer_iterator,
-     "iterate over buffer with 5 ptrs"},
-    {"cond_ping_pong", cond_ping_pong,
-     "condition variable round-trip"},
-    {"div32", div32,
-     "32-bit integer division instruction"},
-    {"div64", div64,
-     "64-bit integer division instruction"},
-    {"function_call", function_call,
-     "Call a function that has not been inlined"},
-    {"eventcenter_poll", eventcenter_poll,
-     "EventCenter::process_events (no timers or events)"},
-    {"eventcenter_dispatch", eventcenter_dispatch,
-     "EventCenter::dispatch_event_external latency"},
-    {"memcpy100", memcpy100,
-     "Copy 100 bytes with memcpy"},
-    {"memcpy1000", memcpy1000,
-     "Copy 1000 bytes with memcpy"},
-    {"memcpy10000", memcpy10000,
-     "Copy 10000 bytes with memcpy"},
-    {"ceph_str_hash_rjenkins", ceph_str_hash_rjenkins < 16 >,
-     "rjenkins hash on 16 byte of data"},
-    {"ceph_str_hash_rjenkins", ceph_str_hash_rjenkins < 256 >,
-     "rjenkins hash on 256 bytes of data"},
-    {"rdtsc", rdtsc_test,
-     "Read the fine-grain cycle counter"},
-    {"cycles_to_seconds", perf_cycles_to_seconds,
-     "Convert a rdtsc result to (double) seconds"},
-    {"cycles_to_seconds", perf_cycles_to_nanoseconds,
-     "Convert a rdtsc result to (uint64_t) nanoseconds"},
-    {"prefetch", perf_prefetch,
-     "Prefetch instruction"},
-    {"serialize", perf_serialize,
-     "serialize instruction"},
-    {"lfence", lfence,
-     "Lfence instruction"},
-    {"sfence", sfence,
-     "Sfence instruction"},
-    {"spin_lock", test_spinlock,
-     "Acquire/release SpinLock"},
-    {"spawn_thread", spawn_thread,
-     "Start and stop a thread"},
-    {"perf_timer", perf_timer,
-     "Insert and cancel a SafeTimer"},
-    {"throw_int", throw_int,
-     "Throw an int"},
-    {"throw_int_call", throw_int_call,
-     "Throw an int in a function call"},
-    {"throw_exception", throw_exception,
-     "Throw an Exception"},
-    {"throw_exception_call", throw_exception_call,
-     "Throw an Exception in a function call"},
-    {"vector_push_pop", vector_push_pop,
-     "Push and pop a std::vector"},
-    {"ceph_clock_now", perf_ceph_clock_now,
-     "ceph_clock_now function"},
+    {
+        "atomic_int_cmp", atomic_int_cmp,
+        "atomic_t::compare_and_swap"
+    },
+    {
+        "atomic_int_inc", atomic_int_inc,
+        "atomic_t::inc"
+    },
+    {
+        "atomic_int_read", atomic_int_read,
+        "atomic_t::read"
+    },
+    {
+        "atomic_int_set", atomic_int_set,
+        "atomic_t::set"
+    },
+    {
+        "mutex_nonblock", mutex_nonblock,
+        "Mutex lock/unlock (no blocking)"
+    },
+    {
+        "buffer_basic", buffer_basic,
+        "buffer create, add one ptr, delete"
+    },
+    {
+        "buffer_encode_decode", buffer_encode_decode,
+        "buffer create, encode/decode object, delete"
+    },
+    {
+        "buffer_basic_copy", buffer_basic_copy,
+        "buffer create, copy small block, delete"
+    },
+    {
+        "buffer_copy", buffer_copy,
+        "copy out 2 small ptrs from buffer"
+    },
+    {
+        "buffer_encode10", buffer_encode,
+        "buffer encoding 10 structures onto existing ptr"
+    },
+    {
+        "buffer_iterator", buffer_iterator,
+        "iterate over buffer with 5 ptrs"
+    },
+    {
+        "cond_ping_pong", cond_ping_pong,
+        "condition variable round-trip"
+    },
+    {
+        "div32", div32,
+        "32-bit integer division instruction"
+    },
+    {
+        "div64", div64,
+        "64-bit integer division instruction"
+    },
+    {
+        "function_call", function_call,
+        "Call a function that has not been inlined"
+    },
+    {
+        "eventcenter_poll", eventcenter_poll,
+        "EventCenter::process_events (no timers or events)"
+    },
+    {
+        "eventcenter_dispatch", eventcenter_dispatch,
+        "EventCenter::dispatch_event_external latency"
+    },
+    {
+        "memcpy100", memcpy100,
+        "Copy 100 bytes with memcpy"
+    },
+    {
+        "memcpy1000", memcpy1000,
+        "Copy 1000 bytes with memcpy"
+    },
+    {
+        "memcpy10000", memcpy10000,
+        "Copy 10000 bytes with memcpy"
+    },
+    {
+        "ceph_str_hash_rjenkins", ceph_str_hash_rjenkins < 16 >,
+        "rjenkins hash on 16 byte of data"
+    },
+    {
+        "ceph_str_hash_rjenkins", ceph_str_hash_rjenkins < 256 >,
+        "rjenkins hash on 256 bytes of data"
+    },
+    {
+        "rdtsc", rdtsc_test,
+        "Read the fine-grain cycle counter"
+    },
+    {
+        "cycles_to_seconds", perf_cycles_to_seconds,
+        "Convert a rdtsc result to (double) seconds"
+    },
+    {
+        "cycles_to_seconds", perf_cycles_to_nanoseconds,
+        "Convert a rdtsc result to (uint64_t) nanoseconds"
+    },
+    {
+        "prefetch", perf_prefetch,
+        "Prefetch instruction"
+    },
+    {
+        "serialize", perf_serialize,
+        "serialize instruction"
+    },
+    {
+        "lfence", lfence,
+        "Lfence instruction"
+    },
+    {
+        "sfence", sfence,
+        "Sfence instruction"
+    },
+    {
+        "spin_lock", test_spinlock,
+        "Acquire/release SpinLock"
+    },
+    {
+        "spawn_thread", spawn_thread,
+        "Start and stop a thread"
+    },
+    {
+        "perf_timer", perf_timer,
+        "Insert and cancel a SafeTimer"
+    },
+    {
+        "throw_int", throw_int,
+        "Throw an int"
+    },
+    {
+        "throw_int_call", throw_int_call,
+        "Throw an int in a function call"
+    },
+    {
+        "throw_exception", throw_exception,
+        "Throw an Exception"
+    },
+    {
+        "throw_exception_call", throw_exception_call,
+        "Throw an Exception in a function call"
+    },
+    {
+        "vector_push_pop", vector_push_pop,
+        "Push and pop a std::vector"
+    },
+    {
+        "ceph_clock_now", perf_ceph_clock_now,
+        "ceph_clock_now function"
+    },
 };
 
 /**
@@ -1025,23 +1135,19 @@ TestInfo tests[] = {
  * \param info
  *      Describes the test to run.
  */
-void run_test(TestInfo & info)
+void run_test(TestInfo &info)
 {
     double secs = info.func();
     int width = printf("%-24s ", info.name);
     if (secs == -1) {
         width += printf(" architecture nonsupport ");
-    }
-    else if (secs < 1.0e-06) {
+    } else if (secs < 1.0e-06) {
         width += printf("%8.2fns", 1e09 * secs);
-    }
-    else if (secs < 1.0e-03) {
+    } else if (secs < 1.0e-03) {
         width += printf("%8.2fus", 1e06 * secs);
-    }
-    else if (secs < 1.0) {
+    } else if (secs < 1.0) {
         width += printf("%8.2fms", 1e03 * secs);
-    }
-    else {
+    } else {
         width += printf("%8.2fs", secs);
     }
     printf("%*s %s\n", 32 - width, "", info.description);
@@ -1063,8 +1169,7 @@ int main(int argc, char *argv[])
         for (size_t i = 0; i < sizeof(tests) / sizeof(TestInfo); ++i) {
             run_test(tests[i]);
         }
-    }
-    else {
+    } else {
         // Run only the tests that were specified on the command line.
         for (int i = 1; i < argc; i++) {
             bool found_test = false;

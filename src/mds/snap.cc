@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <string_view>
@@ -23,7 +23,7 @@ using namespace std;
  * SnapInfo
  */
 
-void SnapInfo::encode(bufferlist & bl) const const
+void SnapInfo::encode(bufferlist &bl) const const
 {
     ENCODE_START(3, 2, bl);
     encode(snapid, bl);
@@ -34,7 +34,7 @@ void SnapInfo::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void SnapInfo::decode(bufferlist::const_iterator & bl)
+void SnapInfo::decode(bufferlist::const_iterator &bl)
 {
     DECODE_START_LEGACY_COMPAT_LEN(3, 2, 2, bl);
     decode(snapid, bl);
@@ -47,20 +47,20 @@ void SnapInfo::decode(bufferlist::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void SnapInfo::dump(Formatter * f) const const
+void SnapInfo::dump(Formatter *f) const const
 {
     f->dump_unsigned("snapid", snapid);
     f->dump_unsigned("ino", ino);
     f->dump_stream("stamp") << stamp;
     f->dump_string("name", name);
     f->open_object_section("metadata");
-  for (auto &[key, value]:metadata) {
+    for (auto &[key, value] : metadata) {
         f->dump_string(key, value);
     }
     f->close_section();
 }
 
-void SnapInfo::generate_test_instances(std::list < SnapInfo * >&ls)
+void SnapInfo::generate_test_instances(std::list < SnapInfo * > &ls)
 {
     ls.push_back(new SnapInfo);
     ls.push_back(new SnapInfo);
@@ -69,20 +69,22 @@ void SnapInfo::generate_test_instances(std::list < SnapInfo * >&ls)
     ls.back()->stamp = utime_t(3, 4);
     ls.back()->name = "foo";
     ls.back()->metadata = { {
-    "foo", "bar"}};
+            "foo", "bar"
+        }
+    };
 }
 
-ostream & operator<<(ostream & out, const SnapInfo & sn)
+ostream &operator<<(ostream &out, const SnapInfo &sn)
 {
     return out << "snap(" << sn.snapid
-        << " " << sn.ino << " '" << sn.name << "' " << sn.stamp << ")";
+           << " " << sn.ino << " '" << sn.name << "' " << sn.stamp << ")";
 }
 
-std::string_view SnapInfo::get_long_name() constconst
-{
+std::string_view SnapInfo::get_long_name() constconst {
     if (long_name.empty() ||
         long_name.compare(1, name.size(), name) ||
-        long_name.find_last_of("_") != name.size() + 1) {
+        long_name.find_last_of("_") != name.size() + 1)
+    {
         std::ostringstream oss;
         oss << "_" << name << "_" << (unsigned long long)ino;
         long_name = oss.str();
@@ -94,7 +96,7 @@ std::string_view SnapInfo::get_long_name() constconst
  * snaplink_t
  */
 
-void snaplink_t::encode(bufferlist & bl) const const
+void snaplink_t::encode(bufferlist &bl) const const
 {
     ENCODE_START(2, 2, bl);
     encode(ino, bl);
@@ -102,7 +104,7 @@ void snaplink_t::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void snaplink_t::decode(bufferlist::const_iterator & bl)
+void snaplink_t::decode(bufferlist::const_iterator &bl)
 {
     DECODE_START_LEGACY_COMPAT_LEN(2, 2, 2, bl);
     decode(ino, bl);
@@ -110,13 +112,13 @@ void snaplink_t::decode(bufferlist::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void snaplink_t::dump(Formatter * f) const const
+void snaplink_t::dump(Formatter *f) const const
 {
     f->dump_unsigned("ino", ino);
     f->dump_unsigned("first", first);
 }
 
-void snaplink_t::generate_test_instances(std::list < snaplink_t * >&ls)
+void snaplink_t::generate_test_instances(std::list < snaplink_t * > &ls)
 {
     ls.push_back(new snaplink_t);
     ls.push_back(new snaplink_t);
@@ -124,7 +126,7 @@ void snaplink_t::generate_test_instances(std::list < snaplink_t * >&ls)
     ls.back()->first = 123;
 }
 
-ostream & operator<<(ostream & out, const snaplink_t & l)
+ostream &operator<<(ostream &out, const snaplink_t &l)
 {
     return out << l.ino << "@" << l.first;
 }
@@ -133,7 +135,7 @@ ostream & operator<<(ostream & out, const snaplink_t & l)
  * sr_t
  */
 
-void sr_t::encode(bufferlist & bl) const const
+void sr_t::encode(bufferlist &bl) const const
 {
     ENCODE_START(7, 4, bl);
     encode(seq, bl);
@@ -150,7 +152,7 @@ void sr_t::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void sr_t::decode(bufferlist::const_iterator & p)
+void sr_t::decode(bufferlist::const_iterator &p)
 {
     DECODE_START_LEGACY_COMPAT_LEN(6, 4, 4, p);
     if (struct_v == 2) {
@@ -164,12 +166,14 @@ void sr_t::decode(bufferlist::const_iterator & p)
     decode(current_parent_since, p);
     decode(snaps, p);
     decode(past_parents, p);
-    if (struct_v >= 5)
+    if (struct_v >= 5) {
         decode(past_parent_snaps, p);
-    if (struct_v >= 6)
+    }
+    if (struct_v >= 6) {
         decode(flags, p);
-    else
+    } else {
         flags = 0;
+    }
     if (struct_v >= 7) {
         decode(last_modified, p);
         decode(change_attr, p);
@@ -177,7 +181,7 @@ void sr_t::decode(bufferlist::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-void sr_t::dump(Formatter * f) const const
+void sr_t::dump(Formatter *f) const const
 {
     f->dump_unsigned("seq", seq);
     f->dump_unsigned("created", created);
@@ -216,7 +220,7 @@ void sr_t::dump(Formatter * f) const const
     f->close_section();
 }
 
-void sr_t::generate_test_instances(std::list < sr_t * >&ls)
+void sr_t::generate_test_instances(std::list < sr_t * > &ls)
 {
     ls.push_back(new sr_t);
     ls.push_back(new sr_t);

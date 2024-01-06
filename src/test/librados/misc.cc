@@ -52,8 +52,9 @@ TEST(LibRadosMiscConnectFailure, ConnectFailure)
     rados_t cluster;
 
     char *id = getenv("CEPH_CLIENT_ID");
-    if (id)
+    if (id) {
         std::cerr << "Client id is: " << id << std::endl;
+    }
 
     ASSERT_EQ(0, rados_create(&cluster, NULL));
     ASSERT_EQ(0, rados_conf_read_file(cluster, NULL));
@@ -73,8 +74,9 @@ TEST(LibRadosMiscConnectFailure, ConnectFailure)
     for (unsigned i = 0; i < 16; ++i) {
         cout << i << std::endl;
         r = rados_connect(cluster);
-        if (r < 0)
-            break;              // yay, we timed out
+        if (r < 0) {
+            break;    // yay, we timed out
+        }
         // try again
         rados_shutdown(cluster);
         ASSERT_EQ(0, rados_create(&cluster, NULL));
@@ -89,8 +91,9 @@ TEST(LibRadosMiscPool, PoolCreationRace)
     rados_t cluster_a, cluster_b;
 
     char *id = getenv("CEPH_CLIENT_ID");
-    if (id)
+    if (id) {
         std::cerr << "Client id is: " << id << std::endl;
+    }
 
     ASSERT_EQ(0, rados_create(&cluster_a, NULL));
     ASSERT_EQ(0, rados_conf_read_file(cluster_a, NULL));
@@ -137,7 +140,7 @@ TEST(LibRadosMiscPool, PoolCreationRace)
     }
 
     cout << " started " << cls.size() << " aios" << std::endl;
-  for (auto c:cls) {
+    for (auto c : cls) {
         cout << "waiting " << (void *)c << std::endl;
         rados_aio_wait_for_complete_and_cb(c);
         rados_aio_release(c);
@@ -273,28 +276,28 @@ TEST_F(LibRadosMisc, Applications)
     key_len = sizeof(keys);
     val_len = sizeof(vals);
     ASSERT_EQ(-ENOENT, rados_application_metadata_list(ioctx, "dne", keys,
-                                                       &key_len, vals,
-                                                       &val_len));
+              &key_len, vals,
+              &val_len));
     ASSERT_EQ(0,
               rados_application_metadata_list(ioctx, "app1", keys, &key_len,
-                                              vals, &val_len));
+                      vals, &val_len));
     ASSERT_EQ(0U, key_len);
     ASSERT_EQ(0U, val_len);
 
     ASSERT_EQ(-ENOENT, rados_application_metadata_set(ioctx, "dne", "key",
-                                                      "value"));
+              "value"));
     ASSERT_EQ(0,
               rados_application_metadata_set(ioctx, "app1", "key1", "value1"));
     ASSERT_EQ(0,
               rados_application_metadata_set(ioctx, "app1", "key2", "value2"));
 
     ASSERT_EQ(-ERANGE, rados_application_metadata_list(ioctx, "app1", keys,
-                                                       &key_len, vals,
-                                                       &val_len));
+              &key_len, vals,
+              &val_len));
     ASSERT_EQ(10U, key_len);
     ASSERT_EQ(14U, val_len);
     ASSERT_EQ(0, rados_application_metadata_list(ioctx, "app1", keys, &key_len,
-                                                 vals, &val_len));
+              vals, &val_len));
     ASSERT_EQ(10U, key_len);
     ASSERT_EQ(14U, val_len);
     ASSERT_EQ(0, memcmp("key1\0key2\0", keys, key_len));
@@ -302,7 +305,7 @@ TEST_F(LibRadosMisc, Applications)
 
     ASSERT_EQ(0, rados_application_metadata_remove(ioctx, "app1", "key1"));
     ASSERT_EQ(0, rados_application_metadata_list(ioctx, "app1", keys, &key_len,
-                                                 vals, &val_len));
+              vals, &val_len));
     ASSERT_EQ(5U, key_len);
     ASSERT_EQ(7U, val_len);
     ASSERT_EQ(0, memcmp("key2\0", keys, key_len));
@@ -322,8 +325,8 @@ TEST_F(LibRadosMisc, MinCompatClient)
     int8_t min_compat_client;
     int8_t require_min_compat_client;
     ASSERT_EQ(0, rados_get_min_compatible_client(cluster,
-                                                 &min_compat_client,
-                                                 &require_min_compat_client));
+              &min_compat_client,
+              &require_min_compat_client));
     ASSERT_LE(-1, min_compat_client);
     ASSERT_GT(CEPH_RELEASE_MAX, min_compat_client);
 
@@ -341,8 +344,7 @@ static void shutdown_racer_func()
         auto r = connect_cluster(&rad);
         if (getenv("ALLOW_TIMEOUTS")) {
             ASSERT_TRUE(r == "" || r == "rados_connect failed with error -110");
-        }
-        else {
+        } else {
             ASSERT_EQ("", r);
         }
         rados_shutdown(rad);
@@ -363,11 +365,13 @@ TEST_F(LibRadosMisc, ShutdownRace)
     rnew.rlim_cur = rnew.rlim_max;
     ASSERT_EQ(setrlimit(RLIMIT_NOFILE, &rnew), 0);
 
-    for (int i = 0; i < nthreads; ++i)
+    for (int i = 0; i < nthreads; ++i) {
         threads[i] = std::thread(shutdown_racer_func);
+    }
 
-    for (int i = 0; i < nthreads; ++i)
+    for (int i = 0; i < nthreads; ++i) {
         threads[i].join();
+    }
     ASSERT_EQ(setrlimit(RLIMIT_NOFILE, &rold), 0);
 }
 #endif /* _WIN32 */

@@ -54,21 +54,23 @@ CLS_NAME(hello)
  * returns data to the caller, without depending on the local object
  * content.
  */
-static int say_hello(cls_method_context_t hctx, bufferlist * in,
-                     bufferlist * out)
+static int say_hello(cls_method_context_t hctx, bufferlist *in,
+                     bufferlist *out)
 {
     // see if the input data from the client matches what this method
     // expects to receive.  your class can fill this buffer with what it
     // wants.
-    if (in->length() > 100)
+    if (in->length() > 100) {
         return -EINVAL;
+    }
 
     // we generate our reply
     out->append("Hello, ");
-    if (in->length() == 0)
+    if (in->length() == 0) {
         out->append("world");
-    else
+    } else {
         out->append(*in);
+    }
     out->append("!");
 
     // this return value will be returned back to the librados caller
@@ -83,8 +85,8 @@ static int say_hello(cls_method_context_t hctx, bufferlist * in,
  * setxattr) which are accumulated and applied as an atomic
  * transaction.
  */
-static int record_hello(cls_method_context_t hctx, bufferlist * in,
-                        bufferlist * out)
+static int record_hello(cls_method_context_t hctx, bufferlist *in,
+                        bufferlist *out)
 {
     // we can write arbitrary stuff to the ceph-osd debug log.  each log
     // message is accompanied by an integer log level.  smaller is
@@ -97,25 +99,29 @@ static int record_hello(cls_method_context_t hctx, bufferlist * in,
     // see if the input data from the client matches what this method
     // expects to receive.  your class can fill this buffer with what it
     // wants.
-    if (in->length() > 100)
+    if (in->length() > 100) {
         return -EINVAL;
+    }
 
     // only say hello to non-existent objects
-    if (cls_cxx_stat(hctx, NULL, NULL) == 0)
+    if (cls_cxx_stat(hctx, NULL, NULL) == 0) {
         return -EEXIST;
+    }
 
     bufferlist content;
     content.append("Hello, ");
-    if (in->length() == 0)
+    if (in->length() == 0) {
         content.append("world");
-    else
+    } else {
         content.append(*in);
+    }
     content.append("!");
 
     // create/write the object
     int r = cls_cxx_write_full(hctx, &content);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     // also make note of who said it
     entity_inst_t origin;
@@ -125,8 +131,9 @@ static int record_hello(cls_method_context_t hctx, bufferlist * in,
     bufferlist attrbl;
     attrbl.append(ss.str());
     r = cls_cxx_setxattr(hctx, "said_by", &attrbl);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     // For write operations, there are two possible outcomes:
     //
@@ -145,15 +152,16 @@ static int record_hello(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int write_return_data(cls_method_context_t hctx, bufferlist * in,
-                             bufferlist * out)
+static int write_return_data(cls_method_context_t hctx, bufferlist *in,
+                             bufferlist *out)
 {
     // make some change to the object
     bufferlist attrbl;
     attrbl.append("bar");
     int r = cls_cxx_setxattr(hctx, "foo", &attrbl);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     if (in->length() > 0) {
         // note that if we return anything < 0 (an error), this
@@ -173,14 +181,15 @@ static int write_return_data(cls_method_context_t hctx, bufferlist * in,
 }
 
 static int write_too_much_return_data(cls_method_context_t hctx,
-                                      bufferlist * in, bufferlist * out)
+                                      bufferlist *in, bufferlist *out)
 {
     // make some change to the object
     bufferlist attrbl;
     attrbl.append("bar");
     int r = cls_cxx_setxattr(hctx, "foo", &attrbl);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     // try to return too much data.  this should be enough to exceed
     // osd_max_write_op_reply_len, which defaults to a pretty small number.
@@ -197,15 +206,16 @@ static int write_too_much_return_data(cls_method_context_t hctx,
  * This is a read method that will retrieve a previously recorded
  * hello statement.
  */
-static int replay(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
+static int replay(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
     // read contents out of the on-disk object.  our behavior can be a
     // function of either the request alone, or the request and the
     // on-disk state, depending on whether the RD flag is specified when
     // registering the method (see the __cls__init function below).
     int r = cls_cxx_read(hctx, 0, 1100, out);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     // note that our return value need not be the length of the returned
     // data; it can be whatever value we want: positive, zero or
@@ -220,29 +230,32 @@ static int replay(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
  * a read/modify/write operation).  This atomically transitions the
  * object state from the old content to the new content.
  */
-static int turn_it_to_11(cls_method_context_t hctx, bufferlist * in,
-                         bufferlist * out)
+static int turn_it_to_11(cls_method_context_t hctx, bufferlist *in,
+                         bufferlist *out)
 {
     // see if the input data from the client matches what this method
     // expects to receive.  your class can fill this buffer with what it
     // wants.
-    if (in->length() != 0)
+    if (in->length() != 0) {
         return -EINVAL;
+    }
 
     bufferlist previous;
     int r = cls_cxx_read(hctx, 0, 1100, &previous);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     std::string str(previous.c_str(), previous.length());
-    std::transform(str.begin(), str.end(), str.begin(),::toupper);
+    std::transform(str.begin(), str.end(), str.begin(), ::toupper);
     previous.clear();
     previous.append(str);
 
     // replace previous byte data content (write_full == truncate(0) + write)
     r = cls_cxx_write_full(hctx, &previous);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     // record who did it
     entity_inst_t origin;
@@ -252,8 +265,9 @@ static int turn_it_to_11(cls_method_context_t hctx, bufferlist * in,
     bufferlist attrbl;
     attrbl.append(ss.str());
     r = cls_cxx_setxattr(hctx, "amplified_by", &attrbl);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     // return value is 0 for success; out buffer is empty.
     return 0;
@@ -264,8 +278,8 @@ static int turn_it_to_11(cls_method_context_t hctx, bufferlist * in,
  *
  * This method is registered as WR but tries to read
  */
-static int bad_reader(cls_method_context_t hctx, bufferlist * in,
-                      bufferlist * out)
+static int bad_reader(cls_method_context_t hctx, bufferlist *in,
+                      bufferlist *out)
 {
     return cls_cxx_read(hctx, 0, 100, out);
 }
@@ -275,31 +289,36 @@ static int bad_reader(cls_method_context_t hctx, bufferlist * in,
  *
  * This method is registered as RD but tries to write
  */
-static int bad_writer(cls_method_context_t hctx, bufferlist * in,
-                      bufferlist * out)
+static int bad_writer(cls_method_context_t hctx, bufferlist *in,
+                      bufferlist *out)
 {
     return cls_cxx_write_full(hctx, in);
 }
 
-class PGLSHelloFilter:public PGLSFilter {
+class PGLSHelloFilter: public PGLSFilter
+{
     string val;
-  public:
-    int init(bufferlist::const_iterator & params) override {
+public:
+    int init(bufferlist::const_iterator &params) override
+    {
         try {
             decode(xattr, params);
             decode(val, params);
-        } catch(ceph::buffer::error & e) {
+        } catch (ceph::buffer::error &e) {
             return -EINVAL;
         }
         return 0;
     }
 
-    ~PGLSHelloFilter()override {
+    ~PGLSHelloFilter()override
+    {
     }
-    bool filter(const hobject_t & obj,
-                const bufferlist & xattr_data)const override {
+    bool filter(const hobject_t &obj,
+                const bufferlist &xattr_data)const override
+    {
         return xattr_data.contents_equal(val.c_str(), val.size());
-}};
+    }
+};
 
 PGLSFilter *hello_filter()
 {

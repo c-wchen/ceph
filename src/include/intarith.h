@@ -21,22 +21,22 @@
 #include <type_traits>
 
 template < typename T, typename U >
-    constexpr inline std::make_unsigned_t < std::common_type_t < T,
-    U >> div_round_up(T n, U d)
+constexpr inline std::make_unsigned_t < std::common_type_t < T,
+          U >> div_round_up(T n, U d)
 {
     return (n + d - 1) / d;
 }
 
 template < typename T, typename U >
-    constexpr inline std::make_unsigned_t < std::common_type_t < T,
-    U >> round_up_to(T n, U d)
+constexpr inline std::make_unsigned_t < std::common_type_t < T,
+          U >> round_up_to(T n, U d)
 {
     return (n % d ? (n + d - n % d) : n);
 }
 
 template < typename T, typename U >
-    constexpr inline std::make_unsigned_t < std::common_type_t < T,
-    U >> shift_round_up(T x, U y)
+constexpr inline std::make_unsigned_t < std::common_type_t < T,
+          U >> shift_round_up(T x, U y)
 {
     return (x + (1 << y) - 1) >> y;
 }
@@ -93,7 +93,7 @@ template < typename T > constexpr inline T p2roundup(T x, T align)
 template < std::integral T > unsigned cbits(T v)
 {
     return (sizeof(v) * CHAR_BIT) - std::countl_zero(std::make_unsigned_t < T >
-                                                     (v));
+            (v));
 }
 
 #endif

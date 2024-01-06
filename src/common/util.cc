@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef _WIN32
@@ -50,10 +50,11 @@ using ceph::bufferlist;
 using ceph::Formatter;
 
 #ifndef _WIN32
-int get_fs_stats(ceph_data_stats_t & stats, const char *path)
+int get_fs_stats(ceph_data_stats_t &stats, const char *path)
 {
-    if (!path)
+    if (!path) {
         return -EINVAL;
+    }
 
     struct statfs stbuf;
     int err =::statfs(path, &stbuf);
@@ -68,7 +69,7 @@ int get_fs_stats(ceph_data_stats_t & stats, const char *path)
     return 0;
 }
 #else
-int get_fs_stats(ceph_data_stats_t & stats, const char *path)
+int get_fs_stats(ceph_data_stats_t &stats, const char *path)
 {
     ULARGE_INTEGER avail_bytes, total_bytes, total_free_bytes;
 
@@ -88,12 +89,14 @@ int get_fs_stats(ceph_data_stats_t & stats, const char *path)
 
 static char *value_sanitize(char *value)
 {
-    while (isspace(*value) || *value == '"')
+    while (isspace(*value) || *value == '"') {
         value++;
+    }
 
     char *end = value + strlen(value) - 1;
-    while (end > value && (isspace(*end) || *end == '"'))
+    while (end > value && (isspace(*end) || *end == '"')) {
         end--;
+    }
 
     *(end + 1) = '\0';
 
@@ -111,19 +114,20 @@ static bool value_set(char *buf, const char *prefix,
     return true;
 }
 
-static void file_values_parse(const map < string, string > &kvm, FILE * fp,
-                              map < string, string > *m, CephContext * cct)
+static void file_values_parse(const map < string, string > &kvm, FILE *fp,
+                              map < string, string > *m, CephContext *cct)
 {
     char buf[512];
     while (fgets(buf, sizeof(buf) - 1, fp) != NULL) {
-      for (auto & kv:kvm) {
-            if (value_set(buf, kv.second.c_str(), m, kv.first.c_str()))
+        for (auto &kv : kvm) {
+            if (value_set(buf, kv.second.c_str(), m, kv.first.c_str())) {
                 continue;
+            }
         }
     }
 }
 
-static bool os_release_parse(map < string, string > *m, CephContext * cct)
+static bool os_release_parse(map < string, string > *m, CephContext *cct)
 {
 #if defined(__linux__)
     static const map < string, string > kvm = {
@@ -136,7 +140,7 @@ static bool os_release_parse(map < string, string > *m, CephContext * cct)
     if (!fp) {
         int ret = -errno;
         lderr(cct) << "os_release_parse - failed to open /etc/os-release: " <<
-            cpp_strerror(ret) << dendl;
+                   cpp_strerror(ret) << dendl;
         return false;
     }
 
@@ -156,20 +160,22 @@ static bool os_release_parse(map < string, string > *m, CephContext * cct)
     return true;
 }
 
-static void distro_detect(map < string, string > *m, CephContext * cct)
+static void distro_detect(map < string, string > *m, CephContext *cct)
 {
     if (!os_release_parse(m, cct)) {
         lderr(cct) << "distro_detect - /etc/os-release is required" << dendl;
     }
 
-  for (const char *rk:{
-         "distro", "distro_description"}) {
-        if (m->find(rk) == m->end())
+    for (const char *rk : {
+             "distro", "distro_description"
+         }) {
+        if (m->find(rk) == m->end()) {
             lderr(cct) << "distro_detect - can't detect " << rk << dendl;
+        }
     }
 }
 
-int get_cgroup_memory_limit(uint64_t * limit)
+int get_cgroup_memory_limit(uint64_t *limit)
 {
 #if defined(__linux__)
     // /sys/fs/cgroup/memory/memory.limit_in_bytes
@@ -194,11 +200,10 @@ int get_cgroup_memory_limit(uint64_t * limit)
     }
     if (value == 0x7ffffffffffff000) {
         *limit = 0;             // no limit
-    }
-    else {
+    } else {
         *limit = value;
     }
-  out:
+out:
     fclose(f);
     return ret;
 #else
@@ -209,7 +214,7 @@ int get_cgroup_memory_limit(uint64_t * limit)
 #ifdef _WIN32
 int get_windows_version(POSVERSIONINFOEXW ver)
 {
-    using get_version_func_t = DWORD(WINAPI *) (OSVERSIONINFOEXW *);
+    using get_version_func_t = DWORD(WINAPI *)(OSVERSIONINFOEXW *);
 
     // We'll load the library directly to avoid depending on the NTDDK.
     HMODULE ntdll_lib = LoadLibraryW(L"Ntdll.dll");
@@ -232,7 +237,7 @@ int get_windows_version(POSVERSIONINFOEXW ver)
 }
 #endif
 
-void collect_sys_info(map < string, string > *m, CephContext * cct)
+void collect_sys_info(map < string, string > *m, CephContext *cct)
 {
     // version
     (*m)["ceph_version"] = pretty_version_to_str();
@@ -268,18 +273,18 @@ void collect_sys_info(map < string, string > *m, CephContext * cct)
     GetNativeSystemInfo(&sys_info);
 
     switch (sys_info.wProcessorArchitecture) {
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        arch_str = "x86_64";
-        break;
-    case PROCESSOR_ARCHITECTURE_INTEL:
-        arch_str = "x86";
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM:
-        arch_str = "arm";
-        break;
-    default:
-        arch_str = "unknown";
-        break;
+        case PROCESSOR_ARCHITECTURE_AMD64:
+            arch_str = "x86_64";
+            break;
+        case PROCESSOR_ARCHITECTURE_INTEL:
+            arch_str = "x86";
+            break;
+        case PROCESSOR_ARCHITECTURE_ARM:
+            arch_str = "arm";
+            break;
+        default:
+            arch_str = "unknown";
+            break;
     }
 
     (*m)["os"] = "Windows";
@@ -345,8 +350,8 @@ void collect_sys_info(map < string, string > *m, CephContext * cct)
 #elif !defined(_WIN32)
     // memory
     if (std::ifstream f {
-        PROCPREFIX "/proc/meminfo"};
-        !f.fail()) {
+    PROCPREFIX "/proc/meminfo"};
+!f.fail()) {
         for (std::string line; std::getline(f, line);) {
             std::vector < string > parts;
             boost::split(parts, line, boost::is_any_of(":\t "),
@@ -356,8 +361,7 @@ void collect_sys_info(map < string, string > *m, CephContext * cct)
             }
             if (parts[0] == "MemTotal") {
                 (*m)["mem_total_kb"] = parts[1];
-            }
-            else if (parts[0] == "SwapTotal") {
+            } else if (parts[0] == "SwapTotal") {
                 (*m)["mem_swap_kb"] = parts[1];
             }
         }
@@ -369,8 +373,8 @@ void collect_sys_info(map < string, string > *m, CephContext * cct)
 
     // processor
     if (std::ifstream f {
-        PROCPREFIX "/proc/cpuinfo"};
-        !f.fail()) {
+    PROCPREFIX "/proc/cpuinfo"};
+!f.fail()) {
         for (std::string line; std::getline(f, line);) {
             std::vector < string > parts;
             boost::split(parts, line, boost::is_any_of(":"));
@@ -390,7 +394,7 @@ void collect_sys_info(map < string, string > *m, CephContext * cct)
     distro_detect(m, cct);
 }
 
-void dump_services(Formatter * f, const map < string, list < int > >&services,
+void dump_services(Formatter *f, const map < string, list < int > > &services,
                    const char *type)
 {
     ceph_assert(f);
@@ -398,7 +402,7 @@ void dump_services(Formatter * f, const map < string, list < int > >&services,
     f->open_object_section(type);
     for (auto host = services.begin(); host != services.end(); ++host) {
         f->open_array_section(host->first.c_str());
-        const list < int >&hosted = host->second;
+        const list < int > &hosted = host->second;
         for (auto s = hosted.cbegin(); s != hosted.cend(); ++s) {
             f->dump_int(type, *s);
         }
@@ -407,16 +411,16 @@ void dump_services(Formatter * f, const map < string, list < int > >&services,
     f->close_section();
 }
 
-void dump_services(Formatter * f, const map < string,
-                   list < string > >&services, const char *type)
+void dump_services(Formatter *f, const map < string,
+                   list < string > > &services, const char *type)
 {
     ceph_assert(f);
 
     f->open_object_section(type);
-  for (const auto & host:services) {
+    for (const auto &host : services) {
         f->open_array_section(host.first.c_str());
-        const auto & hosted = host.second;
-      for (const auto & s:hosted) {
+        const auto &hosted = host.second;
+        for (const auto &s : hosted) {
             f->dump_string(type, s);
         }
         f->close_section();
@@ -426,12 +430,13 @@ void dump_services(Formatter * f, const map < string,
 
 // If non-printable characters found then convert bufferlist to
 // base64 encoded string indicating whether it did.
-string cleanbin(bufferlist & bl, bool & base64, bool show)
+string cleanbin(bufferlist &bl, bool &base64, bool show)
 {
     bufferlist::iterator it;
     for (it = bl.begin(); it != bl.end(); ++it) {
-        if (iscntrl(*it))
+        if (iscntrl(*it)) {
             break;
+        }
     }
     if (it == bl.end()) {
         base64 = false;
@@ -442,15 +447,16 @@ string cleanbin(bufferlist & bl, bool & base64, bool show)
     bufferlist b64;
     bl.encode_base64(b64);
     string encoded(b64.c_str(), b64.length());
-    if (show)
+    if (show) {
         encoded = "Base64:" + encoded;
+    }
     base64 = true;
     return encoded;
 }
 
 // If non-printable characters found then convert to "Base64:" followed by
 // base64 encoding
-string cleanbin(string & str)
+string cleanbin(string &str)
 {
     bool base64;
     bufferlist bl;

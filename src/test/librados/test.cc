@@ -18,12 +18,13 @@
 #include <iostream>
 #include "gtest/gtest.h"
 
-std::string create_one_pool(const std::string & pool_name, rados_t * cluster,
+std::string create_one_pool(const std::string &pool_name, rados_t *cluster,
                             uint32_t pg_num)
 {
     std::string err_str = connect_cluster(cluster);
-    if (err_str.length())
+    if (err_str.length()) {
         return err_str;
+    }
 
     int ret = rados_pool_create(*cluster, pool_name.c_str());
     if (ret) {
@@ -48,8 +49,8 @@ std::string create_one_pool(const std::string & pool_name, rados_t * cluster,
     return "";
 }
 
-int destroy_ec_profile(rados_t * cluster,
-                       const std::string & pool_name, std::ostream & oss)
+int destroy_ec_profile(rados_t *cluster,
+                       const std::string &pool_name, std::ostream &oss)
 {
     char buf[1000];
     snprintf(buf, sizeof(buf),
@@ -66,8 +67,8 @@ int destroy_ec_profile(rados_t * cluster,
     return ret;
 }
 
-int destroy_rule(rados_t * cluster,
-                 const std::string & rule, std::ostream & oss)
+int destroy_rule(rados_t *cluster,
+                 const std::string &rule, std::ostream &oss)
 {
     char *cmd[2];
     std::string tmp = ("{\"prefix\": \"osd crush rule rm\", \"name\":\"" +
@@ -83,21 +84,23 @@ int destroy_rule(rados_t * cluster,
     return ret;
 }
 
-int destroy_ec_profile_and_rule(rados_t * cluster,
-                                const std::string & rule, std::ostream & oss)
+int destroy_ec_profile_and_rule(rados_t *cluster,
+                                const std::string &rule, std::ostream &oss)
 {
     int ret;
     ret = destroy_ec_profile(cluster, rule, oss);
-    if (ret)
+    if (ret) {
         return ret;
+    }
     return destroy_rule(cluster, rule, oss);
 }
 
-std::string create_one_ec_pool(const std::string & pool_name, rados_t * cluster)
+std::string create_one_ec_pool(const std::string &pool_name, rados_t *cluster)
 {
     std::string err = connect_cluster(cluster);
-    if (err.length())
+    if (err.length()) {
         return err;
+    }
 
     std::ostringstream oss;
     int ret = destroy_ec_profile_and_rule(cluster, pool_name, oss);
@@ -125,9 +128,9 @@ std::string create_one_ec_pool(const std::string & pool_name, rados_t * cluster)
     }
 
     std::string cmdstr = "{\"prefix\": \"osd pool create\", \"pool\": \"" +
-        pool_name +
-        "\", \"pool_type\":\"erasure\", \"pg_num\":8, \"pgp_num\":8, \"erasure_code_profile\":\"testprofile-"
-        + pool_name + "\"}";
+                         pool_name +
+                         "\", \"pool_type\":\"erasure\", \"pg_num\":8, \"pgp_num\":8, \"erasure_code_profile\":\"testprofile-"
+                         + pool_name + "\"}";
     cmd[0] = (char *)cmdstr.c_str();
     ret =
         rados_mon_command(*cluster, (const char **)cmd, 1, "", 0, NULL, 0, NULL,
@@ -143,11 +146,12 @@ std::string create_one_ec_pool(const std::string & pool_name, rados_t * cluster)
     return "";
 }
 
-std::string connect_cluster(rados_t * cluster)
+std::string connect_cluster(rados_t *cluster)
 {
     char *id = getenv("CEPH_CLIENT_ID");
-    if (id)
+    if (id) {
         std::cerr << "Client id is: " << id << std::endl;
+    }
 
     int ret;
     ret = rados_create(cluster, NULL);
@@ -174,7 +178,7 @@ std::string connect_cluster(rados_t * cluster)
     return "";
 }
 
-int destroy_one_pool(const std::string & pool_name, rados_t * cluster)
+int destroy_one_pool(const std::string &pool_name, rados_t *cluster)
 {
     int ret = rados_pool_delete(*cluster, pool_name.c_str());
     if (ret) {
@@ -185,7 +189,7 @@ int destroy_one_pool(const std::string & pool_name, rados_t * cluster)
     return 0;
 }
 
-int destroy_one_ec_pool(const std::string & pool_name, rados_t * cluster)
+int destroy_one_ec_pool(const std::string &pool_name, rados_t *cluster)
 {
     int ret = rados_pool_delete(*cluster, pool_name.c_str());
     if (ret) {

@@ -26,7 +26,8 @@
  * linear with respect to the total number of priorities used
  * over all time.
  */
-template < typename T, typename F > class AsyncReserver {
+template < typename T, typename F > class AsyncReserver
+{
     CephContext *cct;
     F *f;
     unsigned max_allowed;
@@ -38,18 +39,22 @@ template < typename T, typename F > class AsyncReserver {
         unsigned prio = 0;
         Context *grant = 0;
         Context *preempt = 0;
-         Reservation() {
-        } Reservation(T i, unsigned pr, Context * g, Context * p = 0)
-      :    item(i), prio(pr), grant(g), preempt(p) {
+        Reservation()
+        {
+        } Reservation(T i, unsigned pr, Context *g, Context *p = 0)
+            :    item(i), prio(pr), grant(g), preempt(p)
+        {
         }
-        void dump(ceph::Formatter * f) const {
+        void dump(ceph::Formatter *f) const
+        {
             f->dump_stream("item") << item;
             f->dump_unsigned("prio", prio);
             f->dump_bool("can_preempt", ! !preempt);
-        } friend std::ostream & operator<<(std::ostream & out,
-                                           const Reservation & r) {
+        } friend std::ostream &operator<<(std::ostream &out,
+                                          const Reservation &r)
+        {
             return out << r.item << "(prio " << r.prio << " grant " << r.
-                grant << " preempt " << r.preempt << ")";
+                   grant << " preempt " << r.preempt << ")";
         }
     };
 
@@ -59,7 +64,8 @@ template < typename T, typename F > class AsyncReserver {
     std::map < T, Reservation > in_progress;
     std::set < std::pair < unsigned, T >> preempt_by_prio;  ///< in_progress that can be preempted
 
-    void preempt_one() {
+    void preempt_one()
+    {
         ceph_assert(!preempt_by_prio.empty());
         auto q = in_progress.find(preempt_by_prio.begin()->second);
         ceph_assert(q != in_progress.end());
@@ -71,7 +77,8 @@ template < typename T, typename F > class AsyncReserver {
         preempt_by_prio.erase(preempt_by_prio.begin());
     }
 
-    void do_queues() {
+    void do_queues()
+    {
         rdout(20) << __func__ << ":\n";
         ceph::JSONFormatter jf(true);
         jf.open_object_section("queue");
@@ -119,49 +126,54 @@ template < typename T, typename F > class AsyncReserver {
             }
         }
     }
-  public:
-    AsyncReserver(CephContext * cct,
-                  F * f, unsigned max_allowed, unsigned min_priority = 0)
-  :    cct(cct), f(f), max_allowed(max_allowed), min_priority(min_priority) {
+public:
+    AsyncReserver(CephContext *cct,
+                  F *f, unsigned max_allowed, unsigned min_priority = 0)
+        :    cct(cct), f(f), max_allowed(max_allowed), min_priority(min_priority)
+    {
     }
 
-    void set_max(unsigned max) {
+    void set_max(unsigned max)
+    {
         std::lock_guard l(lock);
         max_allowed = max;
         do_queues();
     }
 
-    void set_min_priority(unsigned min) {
+    void set_min_priority(unsigned min)
+    {
         std::lock_guard l(lock);
         min_priority = min;
         do_queues();
     }
 
-  /**
-   * Update the priority of a reservation
-   *
-   * Note, on_reserved may be called following update_priority.  Thus,
-   * the callback must be safe in that case.  Callback will be called
-   * with no locks held.  cancel_reservation must be called to release the
-   * reservation slot.
-   *
-   * Cases
-   * 1. Item is queued, re-queue with new priority
-   * 2. Item is queued, re-queue and preempt if new priority higher than an in progress item
-   * 3. Item is in progress, just adjust priority if no higher priority waiting
-   * 4. Item is in progress, adjust priority if higher priority items waiting preempt item
-   *
-   */
-    void update_priority(T item, unsigned newprio) {
+    /**
+     * Update the priority of a reservation
+     *
+     * Note, on_reserved may be called following update_priority.  Thus,
+     * the callback must be safe in that case.  Callback will be called
+     * with no locks held.  cancel_reservation must be called to release the
+     * reservation slot.
+     *
+     * Cases
+     * 1. Item is queued, re-queue with new priority
+     * 2. Item is queued, re-queue and preempt if new priority higher than an in progress item
+     * 3. Item is in progress, just adjust priority if no higher priority waiting
+     * 4. Item is in progress, adjust priority if higher priority items waiting preempt item
+     *
+     */
+    void update_priority(T item, unsigned newprio)
+    {
         std::lock_guard l(lock);
         auto i = queue_pointers.find(item);
         if (i != queue_pointers.end()) {
             unsigned prio = i->second.first;
-            if (newprio == prio)
+            if (newprio == prio) {
                 return;
+            }
             Reservation r = *i->second.second;
             rdout(10) << __func__ << " update " << r << " (was queued)" <<
-                dendl;
+                      dendl;
             // Like cancel_reservation() without preempting
             queues[prio].erase(i->second.second);
             if (queues[prio].empty()) {
@@ -176,17 +188,17 @@ template < typename T, typename F > class AsyncReserver {
             queues[newprio].push_back(r);
             queue_pointers.insert(std::make_pair(item,
                                                  std::make_pair(newprio,
-                                                                --(queues
-                                                                   [newprio]).
-                                                                end())));
-        }
-        else {
+                                                         --(queues
+                                                                 [newprio]).
+                                                         end())));
+        } else {
             auto p = in_progress.find(item);
             if (p != in_progress.end()) {
-                if (p->second.prio == newprio)
+                if (p->second.prio == newprio) {
                     return;
+                }
                 rdout(10) << __func__ << " update " << p->second
-                    << " (in progress)" << dendl;
+                          << " (in progress)" << dendl;
                 // We want to preempt if priority goes down
                 // and smaller then highest priority waiting
                 if (p->second.preempt) {
@@ -197,43 +209,43 @@ template < typename T, typename F > class AsyncReserver {
                         ceph_assert(!it->second.empty());
                         if (it->first > newprio) {
                             rdout(10) << __func__ << " update " << p->second
-                                <<
-                                " lowered priority let do_queues() preempt it"
-                                << dendl;
+                                      <<
+                                      " lowered priority let do_queues() preempt it"
+                                      << dendl;
                         }
                     }
                     preempt_by_prio.
-                        erase(std::make_pair(p->second.prio, p->second.item));
+                    erase(std::make_pair(p->second.prio, p->second.item));
                     p->second.prio = newprio;
                     preempt_by_prio.
-                        insert(std::make_pair(p->second.prio, p->second.item));
-                }
-                else {
+                    insert(std::make_pair(p->second.prio, p->second.item));
+                } else {
                     p->second.prio = newprio;
                 }
-            }
-            else {
+            } else {
                 rdout(10) << __func__ << " update " << item << " (not found)" <<
-                    dendl;
+                          dendl;
             }
         }
         do_queues();
         return;
     }
 
-    void dump(ceph::Formatter * f) {
+    void dump(ceph::Formatter *f)
+    {
         std::lock_guard l(lock);
         _dump(f);
     }
-    void _dump(ceph::Formatter * f) {
+    void _dump(ceph::Formatter *f)
+    {
         f->dump_unsigned("max_allowed", max_allowed);
         f->dump_unsigned("min_priority", min_priority);
         f->open_array_section("queues");
-      for (auto & p:queues) {
+        for (auto &p : queues) {
             f->open_object_section("queue");
             f->dump_unsigned("priority", p.first);
             f->open_array_section("items");
-          for (auto & q:p.second) {
+            for (auto &q : p.second) {
                 f->dump_object("item", q);
             }
             f->close_section();
@@ -241,25 +253,26 @@ template < typename T, typename F > class AsyncReserver {
         }
         f->close_section();
         f->open_array_section("in_progress");
-      for (auto & p:in_progress) {
+        for (auto &p : in_progress) {
             f->dump_object("item", p.second);
         }
         f->close_section();
     }
 
-  /**
-   * Requests a reservation
-   *
-   * Note, on_reserved may be called following cancel_reservation.  Thus,
-   * the callback must be safe in that case.  Callback will be called
-   * with no locks held.  cancel_reservation must be called to release the
-   * reservation slot.
-   */
+    /**
+     * Requests a reservation
+     *
+     * Note, on_reserved may be called following cancel_reservation.  Thus,
+     * the callback must be safe in that case.  Callback will be called
+     * with no locks held.  cancel_reservation must be called to release the
+     * reservation slot.
+     */
     void request_reservation(T item,    ///< [in] reservation key
-                             Context * on_reserved, ///< [in] callback to be called on reservation
+                             Context *on_reserved,  ///< [in] callback to be called on reservation
                              unsigned prio, ///< [in] priority
-                             Context * on_preempt = 0   ///< [in] callback to be called if we are preempted (optional)
-        ) {
+                             Context *on_preempt = 0    ///< [in] callback to be called if we are preempted (optional)
+                            )
+    {
         std::lock_guard l(lock);
         Reservation r(item, prio, on_reserved, on_preempt);
         rdout(10) << __func__ << " queue " << r << dendl;
@@ -267,27 +280,28 @@ template < typename T, typename F > class AsyncReserver {
         queues[prio].push_back(r);
         queue_pointers.insert(std::make_pair(item,
                                              std::make_pair(prio,
-                                                            --(queues[prio]).
-                                                            end())));
+                                                     --(queues[prio]).
+                                                     end())));
         do_queues();
     }
 
-  /**
-   * Cancels reservation
-   *
-   * Frees the reservation under key for use.
-   * Note, after cancel_reservation, the reservation_callback may or
-   * may not still be called. 
-   */
+    /**
+     * Cancels reservation
+     *
+     * Frees the reservation under key for use.
+     * Note, after cancel_reservation, the reservation_callback may or
+     * may not still be called.
+     */
     void cancel_reservation(T item  ///< [in] key for reservation to cancel
-        ) {
+                           )
+    {
         std::lock_guard l(lock);
         auto i = queue_pointers.find(item);
         if (i != queue_pointers.end()) {
             unsigned prio = i->second.first;
-            const Reservation & r = *i->second.second;
+            const Reservation &r = *i->second.second;
             rdout(10) << __func__ << " cancel " << r << " (was queued)" <<
-                dendl;
+                      dendl;
             delete r.grant;
             delete r.preempt;
             queues[prio].erase(i->second.second);
@@ -295,37 +309,36 @@ template < typename T, typename F > class AsyncReserver {
                 queues.erase(prio);
             }
             queue_pointers.erase(i);
-        }
-        else {
+        } else {
             auto p = in_progress.find(item);
             if (p != in_progress.end()) {
                 rdout(10) << __func__ << " cancel " << p->second
-                    << " (was in progress)" << dendl;
+                          << " (was in progress)" << dendl;
                 if (p->second.preempt) {
                     preempt_by_prio.
-                        erase(std::make_pair(p->second.prio, p->second.item));
+                    erase(std::make_pair(p->second.prio, p->second.item));
                     delete p->second.preempt;
                 }
                 in_progress.erase(p);
-            }
-            else {
+            } else {
                 rdout(10) << __func__ << " cancel " << item << " (not found)" <<
-                    dendl;
+                          dendl;
             }
         }
         do_queues();
     }
 
-  /**
-   * Has reservations
-   *
-   * Return true if there are reservations in progress
-   */
-    bool has_reservation() {
+    /**
+     * Has reservations
+     *
+     * Return true if there are reservations in progress
+     */
+    bool has_reservation()
+    {
         std::lock_guard l(lock);
         return !in_progress.empty();
     }
-    static const unsigned MAX_PRIORITY = (unsigned)-1;
+    static const unsigned MAX_PRIORITY = (unsigned) - 1;
 };
 
 #undef rdout

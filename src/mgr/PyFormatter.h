@@ -30,24 +30,26 @@
 #include "common/Formatter.h"
 #include "include/ceph_assert.h"
 
-class PyFormatter:public ceph::Formatter {
-  public:
+class PyFormatter: public ceph::Formatter
+{
+public:
     PyFormatter(const PyFormatter &) = delete;
-    PyFormatter & operator=(const PyFormatter &) = delete;
-    PyFormatter(bool pretty = false, bool array = false) {
+    PyFormatter &operator=(const PyFormatter &) = delete;
+    PyFormatter(bool pretty = false, bool array = false)
+    {
         // It is forbidden to instantiate me outside of the GIL,
         // because I construct python objects right away
 
         // Initialise cursor to an empty dict
         if (!array) {
             root = cursor = PyDict_New();
-        }
-        else {
+        } else {
             root = cursor = PyList_New(0);
         }
     }
 
-    ~PyFormatter()override {
+    ~PyFormatter()override
+    {
         cursor = NULL;
         Py_DECREF(root);
         root = NULL;
@@ -55,37 +57,44 @@ class PyFormatter:public ceph::Formatter {
 
     // Obscure, don't care.
     void open_array_section_in_ns(std::string_view name,
-                                  const char *ns) override {
+                                  const char *ns) override
+    {
         ceph_abort();
     }
     void open_object_section_in_ns(std::string_view name,
-                                   const char *ns) override {
+                                   const char *ns) override
+    {
         ceph_abort();
     }
 
-    void reset() override {
+    void reset() override
+    {
         const bool array = PyList_Check(root);
         Py_DECREF(root);
         if (array) {
             root = cursor = PyList_New(0);
-        }
-        else {
+        } else {
             root = cursor = PyDict_New();
         }
     }
 
-    void set_status(int status, const char *status_name) override {
+    void set_status(int status, const char *status_name) override
+    {
     }
-    void output_header() override {
+    void output_header() override
+    {
     };
-    void output_footer() override {
+    void output_footer() override
+    {
     };
-    void enable_line_break() override {
+    void enable_line_break() override
+    {
     };
 
     void open_array_section(std::string_view name) override;
     void open_object_section(std::string_view name) override;
-    void close_section() override {
+    void close_section() override
+    {
         ceph_assert(cursor != root);
         ceph_assert(!stack.empty());
         cursor = stack.top();
@@ -96,25 +105,29 @@ class PyFormatter:public ceph::Formatter {
     void dump_int(std::string_view name, int64_t u) override;
     void dump_float(std::string_view name, double d) override;
     void dump_string(std::string_view name, std::string_view s) override;
-    std::ostream & dump_stream(std::string_view name) override;
+    std::ostream &dump_stream(std::string_view name) override;
     void dump_format_va(std::string_view name, const char *ns, bool quoted,
                         const char *fmt, va_list ap) override;
 
-    void flush(std::ostream & os) override {
+    void flush(std::ostream &os) override
+    {
         // This class is not a serializer: this doesn't make sense
         ceph_abort();
     }
 
-    int get_len() const override {
+    int get_len() const override
+    {
         // This class is not a serializer: this doesn't make sense
         ceph_abort();
         return 0;
-    } void write_raw_data(const char *data) override {
+    } void write_raw_data(const char *data) override
+    {
         // This class is not a serializer: this doesn't make sense
         ceph_abort();
     }
 
-    PyObject *get() {
+    PyObject *get()
+    {
         finish_pending_streams();
 
         Py_INCREF(root);
@@ -123,16 +136,17 @@ class PyFormatter:public ceph::Formatter {
 
     void finish_pending_streams();
 
-  private:
-    PyObject * root;
+private:
+    PyObject *root;
     PyObject *cursor;
     std::stack < PyObject * >stack;
 
-    void dump_pyobject(std::string_view name, PyObject * p);
+    void dump_pyobject(std::string_view name, PyObject *p);
 
-    class PendingStream {
-      public:
-        PyObject * cursor;
+    class PendingStream
+    {
+    public:
+        PyObject *cursor;
         std::string name;
         std::stringstream stream;
     };
@@ -141,21 +155,21 @@ class PyFormatter:public ceph::Formatter {
 
 };
 
-class PyJSONFormatter:public JSONFormatter {
-  public:
-    PyObject * get();
+class PyJSONFormatter: public JSONFormatter
+{
+public:
+    PyObject *get();
     PyJSONFormatter(const PyJSONFormatter &) = default;
-  PyJSONFormatter(bool pretty = false, bool is_array = false):JSONFormatter(pretty)
+    PyJSONFormatter(bool pretty = false, bool is_array = false): JSONFormatter(pretty)
     {
         if (is_array) {
             open_array_section("");
-        }
-        else {
+        } else {
             open_object_section("");
         }
     }
 
-  private:
+private:
     using json_formatter = JSONFormatter;
     template < class T > void add_value(std::string_view name, T val);
     void add_value(std::string_view name, std::string_view val, bool quoted);

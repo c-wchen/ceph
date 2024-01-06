@@ -44,7 +44,7 @@
 #if defined(__FreeBSD__)
 
 // FreeBSD supports Linux procfs with its compatibility module
-// And all compatibility stuff is standard mounted on this 
+// And all compatibility stuff is standard mounted on this
 #define PROCPREFIX "/compat/linux"
 
 #ifndef MSG_MORE
@@ -61,7 +61,7 @@
 #include <sys/param.h>
 #include <sys/cpuset.h>
 #define cpu_set_t cpuset_t
-int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t * mask);
+int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
 
 #endif /* __FreeBSD__ */
 
@@ -189,12 +189,12 @@ struct cpu_set_t;
 #define ceph_pthread_setname pthread_setname_np
 #endif
 #elif defined(HAVE_PTHREAD_SET_NAME_NP)
-  /* Fix a small name diff and return 0 */
+/* Fix a small name diff and return 0 */
 #define ceph_pthread_setname(thread, name) ({ \
     pthread_set_name_np(thread, name);          \
     0; })
 #else
-  /* compiler warning free success noop */
+/* compiler warning free success noop */
 #define ceph_pthread_setname(thread, name) ({ \
     int __i = 0;                              \
     __i; })
@@ -207,7 +207,7 @@ struct cpu_set_t;
     pthread_get_name_np(thread, name, len);          \
     0; })
 #else
-  /* compiler warning free success noop */
+/* compiler warning free success noop */
 #define ceph_pthread_getname(thread, name, len) ({ \
     if (name != NULL)                              \
       *name = '\0';                                \
@@ -220,14 +220,14 @@ int ceph_posix_fallocate(int fd, off_t offset, off_t len);
 extern "C" {
 #endif
 
-    int pipe_cloexec(int pipefd[2], int flags);
-    char *ceph_strerror_r(int errnum, char *buf, size_t buflen);
-    unsigned get_page_size();
+int pipe_cloexec(int pipefd[2], int flags);
+char *ceph_strerror_r(int errnum, char *buf, size_t buflen);
+unsigned get_page_size();
 // On success, returns the number of bytes written to the buffer. On
 // failure, returns -1.
-    ssize_t get_self_exe_path(char *path, int buff_length);
+ssize_t get_self_exe_path(char *path, int buff_length);
 
-    int ceph_memzero_s(void *dest, size_t destsz, size_t count);
+int ceph_memzero_s(void *dest, size_t destsz, size_t count);
 
 #ifdef __cplusplus
 }
@@ -287,39 +287,39 @@ struct iovec {
 extern "C" {
 #endif
 
-    ssize_t readv(int fd, const struct iovec *iov, int iov_cnt);
-    ssize_t writev(int fd, const struct iovec *iov, int iov_cnt);
+ssize_t readv(int fd, const struct iovec *iov, int iov_cnt);
+ssize_t writev(int fd, const struct iovec *iov, int iov_cnt);
 
-    int fsync(int fd);
-    ssize_t pread(int fd, void *buf, size_t count, off_t offset);
-    ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+int fsync(int fd);
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 
-    long int lrand48(void);
-    int random();
+long int lrand48(void);
+int random();
 
-    int pipe(int pipefd[2]);
+int pipe(int pipefd[2]);
 
-    int posix_memalign(void **memptr, size_t alignment, size_t size);
+int posix_memalign(void **memptr, size_t alignment, size_t size);
 
-    char *strptime(const char *s, const char *format, struct tm *tm);
+char *strptime(const char *s, const char *format, struct tm *tm);
 
-    int chown(const char *path, uid_t owner, gid_t group);
-    int fchown(int fd, uid_t owner, gid_t group);
-    int lchown(const char *path, uid_t owner, gid_t group);
-    int setenv(const char *name, const char *value, int overwrite);
+int chown(const char *path, uid_t owner, gid_t group);
+int fchown(int fd, uid_t owner, gid_t group);
+int lchown(const char *path, uid_t owner, gid_t group);
+int setenv(const char *name, const char *value, int overwrite);
 
-    int geteuid();
-    int getegid();
-    int getuid();
-    int getgid();
+int geteuid();
+int getegid();
+int getuid();
+int getgid();
 
 #define unsetenv(name) _putenv_s(name, "")
 
-    int win_socketpair(int socks[2]);
+int win_socketpair(int socks[2]);
 
 #ifdef __MINGW32__
-    extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,
-                                             const char *_Value);
+extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,
+        const char *_Value);
 
 #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #define htobe16(x) __builtin_bswap16(x)
@@ -345,7 +345,7 @@ extern "C" {
 #endif
 #define compat_closesocket closesocket
 // Use "aligned_free" when freeing memory allocated using posix_memalign or// _aligned_malloc. Using "free" will crash.
-    static inline void aligned_free(void *ptr)
+static inline void aligned_free(void *ptr)
 {
     _aligned_free(ptr);
 }

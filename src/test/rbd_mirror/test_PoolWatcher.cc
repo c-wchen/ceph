@@ -45,14 +45,17 @@ void register_test_pool_watcher()
 {
 }
 
-class TestPoolWatcher:public::rbd::mirror::TestFixture {
-  public:
+class TestPoolWatcher: public::rbd::mirror::TestFixture
+{
+public:
 
     TestPoolWatcher()
-    :m_pool_watcher_listener(this), m_image_number(0), m_snap_number(0) {
+        : m_pool_watcher_listener(this), m_image_number(0), m_snap_number(0)
+    {
         m_cluster = std::make_shared < librados::Rados > ();
         EXPECT_EQ("", connect_cluster_pp(*m_cluster));
-    } void TearDown() override {
+    } void TearDown() override
+    {
         if (m_pool_watcher) {
             C_SaferCond ctx;
             m_pool_watcher->shut_down(&ctx);
@@ -60,25 +63,27 @@ class TestPoolWatcher:public::rbd::mirror::TestFixture {
         }
 
         m_cluster->wait_for_latest_osdmap();
-      for (auto & pool:m_pools) {
+        for (auto &pool : m_pools) {
             EXPECT_EQ(0, m_cluster->pool_delete(pool.c_str()));
         }
 
         TestFixture::TearDown();
     }
 
-    struct PoolWatcherListener:public rbd::mirror::pool_watcher::Listener {
+    struct PoolWatcherListener: public rbd::mirror::pool_watcher::Listener {
         TestPoolWatcher *test;
         ceph::condition_variable cond;
         ImageIds image_ids;
 
-        explicit PoolWatcherListener(TestPoolWatcher * test):test(test) {
-        } void handle_update(const std::string & mirror_uuid,
+        explicit PoolWatcherListener(TestPoolWatcher *test): test(test)
+        {
+        } void handle_update(const std::string &mirror_uuid,
                              ImageIds && added_image_ids,
-                             ImageIds && removed_image_ids) override {
+                             ImageIds && removed_image_ids) override
+        {
             std::lock_guard locker {
-            test->m_lock};
-          for (auto & image_id:removed_image_ids) {
+                test->m_lock};
+            for (auto &image_id : removed_image_ids) {
                 image_ids.erase(image_id);
             }
             image_ids.insert(added_image_ids.begin(), added_image_ids.end());
@@ -86,8 +91,9 @@ class TestPoolWatcher:public::rbd::mirror::TestFixture {
         }
     };
 
-    void create_pool(bool enable_mirroring, const PeerSpec & peer,
-                     string * name = nullptr) {
+    void create_pool(bool enable_mirroring, const PeerSpec &peer,
+                     string *name = nullptr)
+    {
         string pool_name = get_temp_pool_name("test-rbd-mirror-");
         ASSERT_EQ(0, m_cluster->pool_create(pool_name.c_str()));
 
@@ -100,18 +106,18 @@ class TestPoolWatcher:public::rbd::mirror::TestFixture {
         ioctx.application_enable("rbd", true);
 
         m_pool_watcher.
-            reset(new PoolWatcher <>
-                  (m_threads, ioctx, "mirror uuid", m_pool_watcher_listener));
+        reset(new PoolWatcher <>
+              (m_threads, ioctx, "mirror uuid", m_pool_watcher_listener));
 
         if (enable_mirroring) {
             ASSERT_EQ(0, librbd::api::Mirror <>::mode_set(ioctx,
-                                                          RBD_MIRROR_MODE_POOL));
+                      RBD_MIRROR_MODE_POOL));
             std::string uuid;
             ASSERT_EQ(0,
                       librbd::api::Mirror <>::peer_site_add(ioctx, &uuid,
-                                                            RBD_MIRROR_PEER_DIRECTION_RX_TX,
-                                                            peer.cluster_name,
-                                                            peer.client_name));
+                              RBD_MIRROR_PEER_DIRECTION_RX_TX,
+                              peer.cluster_name,
+                              peer.client_name));
         }
         if (name != nullptr) {
             *name = pool_name;
@@ -120,15 +126,17 @@ class TestPoolWatcher:public::rbd::mirror::TestFixture {
         m_pool_watcher->init();
     }
 
-    string get_image_id(librados::IoCtx * ioctx, const string & image_name) {
+    string get_image_id(librados::IoCtx *ioctx, const string &image_name)
+    {
         string obj = librbd::util::id_obj_name(image_name);
         string id;
         EXPECT_EQ(0, librbd::cls_client::get_id(ioctx, obj, &id));
         return id;
     }
 
-    void create_image(const string & pool_name, bool mirrored = true,
-                      string * image_name = nullptr) {
+    void create_image(const string &pool_name, bool mirrored = true,
+                      string *image_name = nullptr)
+    {
         uint64_t features =
             librbd::util::get_rbd_default_features(g_ceph_context);
         string name = "image" + stringify(++m_image_number);
@@ -149,30 +157,32 @@ class TestPoolWatcher:public::rbd::mirror::TestFixture {
 
             librbd::mirror_image_info_t mirror_image_info;
             ASSERT_EQ(0, image.mirror_image_get_info(&mirror_image_info,
-                                                     sizeof
-                                                     (mirror_image_info)));
+                      sizeof
+                      (mirror_image_info)));
             image.close();
 
             m_mirrored_images.
-                insert(ImageId
-                       (mirror_image_info.global_id,
-                        get_image_id(&ioctx, name)));
+            insert(ImageId
+                   (mirror_image_info.global_id,
+                    get_image_id(&ioctx, name)));
         }
-        if (image_name != nullptr)
+        if (image_name != nullptr) {
             *image_name = name;
+        }
     }
 
-    void clone_image(const string & parent_pool_name,
-                     const string & parent_image_name,
-                     const string & clone_pool_name,
-                     bool mirrored = true, string * image_name = nullptr) {
+    void clone_image(const string &parent_pool_name,
+                     const string &parent_image_name,
+                     const string &clone_pool_name,
+                     bool mirrored = true, string *image_name = nullptr)
+    {
         librados::IoCtx pioctx, cioctx;
         ASSERT_EQ(0, m_cluster->ioctx_create(parent_pool_name.c_str(), pioctx));
         ASSERT_EQ(0, m_cluster->ioctx_create(clone_pool_name.c_str(), cioctx));
 
         string snap_name = "snap" + stringify(++m_snap_number);
         {
-            librbd::ImageCtx * ictx =
+            librbd::ImageCtx *ictx =
                 new librbd::ImageCtx(parent_image_name.c_str(), "", "", pioctx,
                                      false);
             ictx->state->open(0);
@@ -205,22 +215,24 @@ class TestPoolWatcher:public::rbd::mirror::TestFixture {
 
             librbd::mirror_image_info_t mirror_image_info;
             ASSERT_EQ(0, image.mirror_image_get_info(&mirror_image_info,
-                                                     sizeof
-                                                     (mirror_image_info)));
+                      sizeof
+                      (mirror_image_info)));
             image.close();
 
             m_mirrored_images.
-                insert(ImageId
-                       (mirror_image_info.global_id,
-                        get_image_id(&cioctx, name)));
+            insert(ImageId
+                   (mirror_image_info.global_id,
+                    get_image_id(&cioctx, name)));
         }
-        if (image_name != nullptr)
+        if (image_name != nullptr) {
             *image_name = name;
+        }
     }
 
-    void check_images() {
+    void check_images()
+    {
         std::unique_lock l {
-        m_lock};
+            m_lock};
         while (m_mirrored_images != m_pool_watcher_listener.image_ids) {
             if (m_pool_watcher_listener.cond.wait_for(l, 10 s) ==
                 std::cv_status::timeout) {

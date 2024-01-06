@@ -12,29 +12,29 @@
 
 using namespace rgw::asio;
 
-ClientIO::ClientIO(parser_type & parser, bool is_ssl,
-                   const endpoint_type & local_endpoint,
-                   const endpoint_type & remote_endpoint)
-:parser(parser), is_ssl(is_ssl),
-local_endpoint(local_endpoint), remote_endpoint(remote_endpoint), txbuf(*this)
+ClientIO::ClientIO(parser_type &parser, bool is_ssl,
+                   const endpoint_type &local_endpoint,
+                   const endpoint_type &remote_endpoint)
+    : parser(parser), is_ssl(is_ssl),
+      local_endpoint(local_endpoint), remote_endpoint(remote_endpoint), txbuf(*this)
 {
 }
 
 ClientIO::~ClientIO() = default;
 
-int ClientIO::init_env(CephContext * cct)
+int ClientIO::init_env(CephContext *cct)
 {
     env.init(cct);
 
     perfcounter->inc(l_rgw_qlen);
     perfcounter->inc(l_rgw_qactive);
 
-    const auto & request = parser.get();
-    const auto & headers = request;
+    const auto &request = parser.get();
+    const auto &headers = request;
     for (auto header = headers.begin(); header != headers.end(); ++header) {
-        const auto & field = header->name();    // enum type for known headers
-        const auto & name = header->name_string();
-        const auto & value = header->value();
+        const auto &field = header->name();     // enum type for known headers
+        const auto &name = header->name_string();
+        const auto &value = header->value();
 
         if (field == beast::http::field::content_length) {
             env.set("CONTENT_LENGTH", value.to_string());
@@ -46,18 +46,16 @@ int ClientIO::init_env(CephContext * cct)
         }
 
         static const std::string_view HTTP_ {
-        "HTTP_"};
+            "HTTP_"};
 
         char buf[name.size() + HTTP_.size() + 1];
         auto dest = std::copy(std::begin(HTTP_), std::end(HTTP_), buf);
         for (auto src = name.begin(); src != name.end(); ++src, ++dest) {
             if (*src == '-') {
                 *dest = '_';
-            }
-            else if (*src == '_') {
+            } else if (*src == '_') {
                 *dest = '-';
-            }
-            else {
+            } else {
                 *dest = std::toupper(*src);
             }
         }
@@ -154,8 +152,7 @@ size_t ClientIO::complete_header()
     if (parser.keep_alive()) {
         constexpr char CONN_KEEP_ALIVE[] = "Connection: Keep-Alive\r\n";
         sent += txbuf.sputn(CONN_KEEP_ALIVE, sizeof(CONN_KEEP_ALIVE) - 1);
-    }
-    else {
+    } else {
         constexpr char CONN_KEEP_CLOSE[] = "Connection: close\r\n";
         sent += txbuf.sputn(CONN_KEEP_CLOSE, sizeof(CONN_KEEP_CLOSE) - 1);
     }
@@ -167,8 +164,8 @@ size_t ClientIO::complete_header()
     return sent;
 }
 
-size_t ClientIO::send_header(const std::string_view & name,
-                             const std::string_view & value)
+size_t ClientIO::send_header(const std::string_view &name,
+                             const std::string_view &value)
 {
     static constexpr char HEADER_SEP[] = ": ";
     static constexpr char HEADER_END[] = "\r\n";

@@ -8,8 +8,8 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "CompressorRegistry(" << this << ") "
 
-CompressorRegistry::CompressorRegistry(CephContext * cct)
-:  cct(cct)
+CompressorRegistry::CompressorRegistry(CephContext *cct)
+    :  cct(cct)
 {
     cct->_conf.add_observer(this);
 }
@@ -31,31 +31,31 @@ const char **CompressorRegistry::get_tracked_conf_keys() const const
     return keys;
 }
 
-void CompressorRegistry::handle_conf_change(const ConfigProxy & conf,
-                                            const std::set < std::string >
-                                            &changed)
+void CompressorRegistry::handle_conf_change(const ConfigProxy &conf,
+        const std::set < std::string >
+        &changed)
 {
     std::scoped_lock l(lock);
     _refresh_config();
 }
 
-std::vector < uint32_t >
-    CompressorRegistry::_parse_method_list(const std::string & s)
+std::vector < uint32_t > CompressorRegistry::_parse_method_list(const std::string &s)
 {
     std::vector < uint32_t > methods;
 
-    for_each_substr(s, ";,= \t",[&](auto method) {
-                    ldout(cct,
-                          20) << "adding algorithm method: " << method << dendl;
-                    auto alg_type = Compressor::get_comp_alg_type(method);
-                    if (alg_type) {
-                    methods.push_back(*alg_type);}
-                    else {
-                    ldout(cct,
-                          5) << "WARNING: unknown algorithm method " << method
-                    << dendl;}
-                    }
-    ) ;
+    for_each_substr(s, ";,= \t", [&](auto method) {
+        ldout(cct,
+              20) << "adding algorithm method: " << method << dendl;
+        auto alg_type = Compressor::get_comp_alg_type(method);
+        if (alg_type) {
+            methods.push_back(*alg_type);
+        } else {
+            ldout(cct,
+                  5) << "WARNING: unknown algorithm method " << method
+                     << dendl;
+        }
+    }
+                   ) ;
 
     if (methods.empty()) {
         methods.push_back(Compressor::COMP_ALG_NONE);
@@ -73,10 +73,9 @@ void CompressorRegistry::_refresh_config()
 
     if (c_mode) {
         ms_osd_compress_mode = *c_mode;
-    }
-    else {
+    } else {
         ldout(cct, 1) << __func__ << " failed to identify ms_osd_compress_mode "
-            << ms_osd_compress_mode << dendl;
+                      << ms_osd_compress_mode << dendl;
 
         ms_osd_compress_mode = Compressor::COMP_NONE;
     }
@@ -91,15 +90,14 @@ void CompressorRegistry::_refresh_config()
 
     ldout(cct,
           10) << __func__ << " ms_osd_compression_mode " << ms_osd_compress_mode
-        << " ms_osd_compression_methods " << ms_osd_compression_methods <<
-        " ms_osd_compress_above_min_size " << ms_osd_compress_min_size <<
-        " ms_compress_secure " << ms_compress_secure << dendl;
+              << " ms_osd_compression_methods " << ms_osd_compression_methods <<
+              " ms_osd_compress_above_min_size " << ms_osd_compress_min_size <<
+              " ms_compress_secure " << ms_compress_secure << dendl;
 }
 
-Compressor::CompressionAlgorithm
-    CompressorRegistry::pick_method(uint32_t peer_type,
-                                    const std::vector < uint32_t >
-                                    &preferred_methods)
+Compressor::CompressionAlgorithm CompressorRegistry::pick_method(uint32_t peer_type,
+        const std::vector < uint32_t >
+        &preferred_methods)
 {
     std::vector < uint32_t > allowed_methods = get_methods(peer_type);
     auto preferred = std::find_first_of(preferred_methods.begin(),
@@ -108,30 +106,28 @@ Compressor::CompressionAlgorithm
                                         allowed_methods.end());
     if (preferred == preferred_methods.end()) {
         ldout(cct, 1) << "failed to pick compression method from client's "
-            << preferred_methods << " and our " << allowed_methods << dendl;
+                      << preferred_methods << " and our " << allowed_methods << dendl;
         return Compressor::COMP_ALG_NONE;
-    }
-    else {
-        return static_cast < Compressor::CompressionAlgorithm > (*preferred);
+    } else {
+        return static_cast < Compressor::CompressionAlgorithm >(*preferred);
     }
 }
 
-Compressor::CompressionMode
-    CompressorRegistry::get_mode(uint32_t peer_type, bool is_secure)
+Compressor::CompressionMode CompressorRegistry::get_mode(uint32_t peer_type, bool is_secure)
 {
     std::scoped_lock l(lock);
     ldout(cct, 20) << __func__ << " peer_type " << peer_type
-        << " is_secure " << is_secure << dendl;
+                   << " is_secure " << is_secure << dendl;
 
     if (is_secure && !ms_compress_secure) {
         return Compressor::COMP_NONE;
     }
 
     switch (peer_type) {
-    case CEPH_ENTITY_TYPE_OSD:
-        return static_cast < Compressor::CompressionMode >
-            (ms_osd_compress_mode);
-    default:
-        return Compressor::COMP_NONE;
+        case CEPH_ENTITY_TYPE_OSD:
+            return static_cast < Compressor::CompressionMode >
+                   (ms_osd_compress_mode);
+        default:
+            return Compressor::COMP_NONE;
     }
 }

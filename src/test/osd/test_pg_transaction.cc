@@ -27,11 +27,13 @@ TEST(pgtransaction, simple)
     unsigned num = 0;
     t.safe_create_traverse([&]
                            (const pair < const hobject_t,
-                            PGTransaction::ObjectOperation > &p) {
-                           ASSERT_EQ(p.first, h);
-                           using T = PGTransaction::ObjectOperation::Init;
-                           ASSERT_TRUE(boost::get < T::None >
-                                       (&p.second.init_type)); ++num;});
+    PGTransaction::ObjectOperation > &p) {
+        ASSERT_EQ(p.first, h);
+        using T = PGTransaction::ObjectOperation::Init;
+        ASSERT_TRUE(boost::get < T::None >
+                    (&p.second.init_type));
+        ++num;
+    });
     ASSERT_EQ(num, 1u);
 }
 
@@ -47,23 +49,24 @@ TEST(pgtransaction, clone_safe_create_traverse)
     unsigned num = 0;
     t.safe_create_traverse([&]
                            (const pair < const hobject_t,
-                            PGTransaction::ObjectOperation > &p) {
-                           using T = PGTransaction::ObjectOperation::Init;
-                           if (num == 0) {
-                           ASSERT_EQ(p.first, h);
-                           ASSERT_TRUE(boost::get < T::Clone >
-                                       (&p.second.init_type));
-                           ASSERT_EQ(boost::get < T::Clone >
-                                     (&p.second.init_type)->source, h2);}
-                           else
-                           if (num == 1) {
-                           ASSERT_EQ(p.first, h2);
-                           ASSERT_TRUE(boost::get < T::None >
-                                       (&p.second.init_type));}
-                           else {
-                           ASSERT_LT(num, 2u);}
-                           ++num;}
-    ) ;
+    PGTransaction::ObjectOperation > &p) {
+        using T = PGTransaction::ObjectOperation::Init;
+        if (num == 0) {
+            ASSERT_EQ(p.first, h);
+            ASSERT_TRUE(boost::get < T::Clone >
+                        (&p.second.init_type));
+            ASSERT_EQ(boost::get < T::Clone >
+                      (&p.second.init_type)->source, h2);
+        } else if (num == 1) {
+            ASSERT_EQ(p.first, h2);
+            ASSERT_TRUE(boost::get < T::None >
+                        (&p.second.init_type));
+        } else {
+            ASSERT_LT(num, 2u);
+        }
+        ++num;
+    }
+                          ) ;
 }
 
 TEST(pgtransaction, clone_safe_create_traverse2)
@@ -82,30 +85,30 @@ TEST(pgtransaction, clone_safe_create_traverse2)
     unsigned num = 0;
     t.safe_create_traverse([&]
                            (const pair < const hobject_t,
-                            PGTransaction::ObjectOperation > &p) {
-                           using T = PGTransaction::ObjectOperation::Init;
-                           if (num == 0) {
-                           ASSERT_EQ(p.first, h);
-                           ASSERT_TRUE(boost::get < T::Clone >
-                                       (&p.second.init_type));
-                           ASSERT_EQ(boost::get < T::Clone >
-                                     (&p.second.init_type)->source, h2);}
-                           else
-                           if (num == 1) {
-                           ASSERT_EQ(p.first, h2);
-                           ASSERT_TRUE(boost::get < T::Clone >
-                                       (&p.second.init_type));
-                           ASSERT_EQ(boost::get < T::Clone >
-                                     (&p.second.init_type)->source, h3);}
-                           else
-                           if (num == 2) {
-                           ASSERT_EQ(p.first, h3);
-                           ASSERT_TRUE(boost::get < T::None >
-                                       (&p.second.init_type));}
-                           else {
-                           ASSERT_LT(num, 3u);}
-                           ++num;}
-    ) ;
+    PGTransaction::ObjectOperation > &p) {
+        using T = PGTransaction::ObjectOperation::Init;
+        if (num == 0) {
+            ASSERT_EQ(p.first, h);
+            ASSERT_TRUE(boost::get < T::Clone >
+                        (&p.second.init_type));
+            ASSERT_EQ(boost::get < T::Clone >
+                      (&p.second.init_type)->source, h2);
+        } else if (num == 1) {
+            ASSERT_EQ(p.first, h2);
+            ASSERT_TRUE(boost::get < T::Clone >
+                        (&p.second.init_type));
+            ASSERT_EQ(boost::get < T::Clone >
+                      (&p.second.init_type)->source, h3);
+        } else if (num == 2) {
+            ASSERT_EQ(p.first, h3);
+            ASSERT_TRUE(boost::get < T::None >
+                        (&p.second.init_type));
+        } else {
+            ASSERT_LT(num, 3u);
+        }
+        ++num;
+    }
+                          ) ;
 }
 
 TEST(pgtransaction, clone_safe_create_traverse3)
@@ -121,16 +124,18 @@ TEST(pgtransaction, clone_safe_create_traverse3)
     unsigned num = 0;
     t.safe_create_traverse([&]
                            (const pair < const hobject_t,
-                            PGTransaction::ObjectOperation > &p) {
-                           using T = PGTransaction::ObjectOperation::Init;
-                           if (p.first == h) {
-                           ASSERT_TRUE(p.second.is_delete());}
-                           else
-                           if (p.first == h2) {
-                           ASSERT_TRUE(boost::get < T::Clone >
-                                       (&p.second.init_type));
-                           ASSERT_EQ(boost::get < T::Clone >
-                                     (&p.second.init_type)->source, h3);}
-                           ASSERT_LT(num, 2u); ++num;}
-    ) ;
+    PGTransaction::ObjectOperation > &p) {
+        using T = PGTransaction::ObjectOperation::Init;
+        if (p.first == h) {
+            ASSERT_TRUE(p.second.is_delete());
+        } else if (p.first == h2) {
+            ASSERT_TRUE(boost::get < T::Clone >
+                        (&p.second.init_type));
+            ASSERT_EQ(boost::get < T::Clone >
+                      (&p.second.init_type)->source, h3);
+        }
+        ASSERT_LT(num, 2u);
+        ++num;
+    }
+                          ) ;
 }

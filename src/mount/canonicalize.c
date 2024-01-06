@@ -44,21 +44,23 @@ static char *myrealpath(const char *path, char *resolved_path, int maxreslth)
 
     /* If it's a relative pathname use getcwd for starters. */
     if (*path != '/') {
-        if (!getcwd(npath, maxreslth - 2))
+        if (!getcwd(npath, maxreslth - 2)) {
             return NULL;
+        }
         npath += strlen(npath);
-        if (npath[-1] != '/')
+        if (npath[-1] != '/') {
             *npath++ = '/';
-    }
-    else {
+        }
+    } else {
         *npath++ = '/';
         path++;
     }
 
     /* Expand each slash-separated pathname component. */
     link_path = malloc(PATH_MAX + 1);
-    if (!link_path)
+    if (!link_path) {
         return NULL;
+    }
     while (*path != '\0') {
         /* Ignore stray "/" */
         if (*path == '/') {
@@ -98,10 +100,10 @@ static char *myrealpath(const char *path, char *resolved_path, int maxreslth)
         n = readlink(resolved_path, link_path, PATH_MAX);
         if (n < 0) {
             /* EINVAL means the file exists but isn't a symlink. */
-            if (errno != EINVAL)
+            if (errno != EINVAL) {
                 goto err;
-        }
-        else {
+            }
+        } else {
             int m;
             char *newbuf;
 
@@ -109,16 +111,18 @@ static char *myrealpath(const char *path, char *resolved_path, int maxreslth)
             link_path[n] = '\0';
             if (*link_path == '/')
                 /* Start over for an absolute symlink. */
+            {
                 npath = resolved_path;
-            else
+            } else
                 /* Otherwise back up over this component. */
                 while (*(--npath) != '/') ;
 
             /* Insert symlink contents into path. */
             m = strlen(path);
             newbuf = malloc(m + n + 1);
-            if (!newbuf)
+            if (!newbuf) {
                 goto err;
+            }
             memcpy(newbuf, link_path, n);
             memcpy(newbuf + n, path, m + 1);
             free(buf);
@@ -127,8 +131,9 @@ static char *myrealpath(const char *path, char *resolved_path, int maxreslth)
         *npath++ = '/';
     }
     /* Delete trailing slash but don't whomp a lone slash. */
-    if (npath != resolved_path + 1 && npath[-1] == '/')
+    if (npath != resolved_path + 1 && npath[-1] == '/') {
         npath--;
+    }
     /* Make sure it's null terminated. */
     *npath = '\0';
 
@@ -136,7 +141,7 @@ static char *myrealpath(const char *path, char *resolved_path, int maxreslth)
     free(buf);
     return resolved_path;
 
-  err:
+err:
     free(link_path);
     free(buf);
     return NULL;
@@ -155,8 +160,9 @@ char *canonicalize_dm_name(const char *ptname)
     char path[268], name[256], *res = NULL;
 
     snprintf(path, sizeof(path), "/sys/block/%s/dm/name", ptname);
-    if (!(f = fopen(path, "r")))
+    if (!(f = fopen(path, "r"))) {
         return NULL;
+    }
 
     /* read "<name>\n" from sysfs */
     if (fgets(name, sizeof(name), f) && (sz = strlen(name)) > 1) {
@@ -173,12 +179,14 @@ char *canonicalize_path(const char *path)
     char *canonical;
     char *p;
 
-    if (path == NULL)
+    if (path == NULL) {
         return NULL;
+    }
 
     canonical = malloc(PATH_MAX + 2);
-    if (!canonical)
+    if (!canonical) {
         return NULL;
+    }
     if (!myrealpath(path, canonical, PATH_MAX + 1)) {
         free(canonical);
         return strdup(path);

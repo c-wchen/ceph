@@ -12,18 +12,23 @@
 
 using namespace std;
 
-class RGWOp_Usage_Get:public RGWRESTOp {
+class RGWOp_Usage_Get: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Usage_Get() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Usage_Get()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("usage", RGW_CAP_READ);
     }
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_usage";
-}};
+    }
+};
 
 void RGWOp_Usage_Get::execute(optional_yield y)
 {
@@ -68,18 +73,23 @@ void RGWOp_Usage_Get::execute(optional_yield y)
                        show_entries, show_summary, &categories, flusher);
 }
 
-class RGWOp_Usage_Delete:public RGWRESTOp {
+class RGWOp_Usage_Delete: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Usage_Delete() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Usage_Delete()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("usage", RGW_CAP_WRITE);
     }
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "trim_usage";
-}};
+    }
+};
 
 void RGWOp_Usage_Delete::execute(optional_yield y)
 {

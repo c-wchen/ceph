@@ -9,7 +9,7 @@ RGWSI_ConfigKey_RADOS::~RGWSI_ConfigKey_RADOS()
 }
 
 int RGWSI_ConfigKey_RADOS::do_start(optional_yield,
-                                    const DoutPrefixProvider * dpp)
+                                    const DoutPrefixProvider *dpp)
 {
     maybe_insecure_mon_conn = !svc.rados->check_secure_mon_conn(dpp);
 
@@ -30,8 +30,8 @@ void RGWSI_ConfigKey_RADOS::warn_if_insecure()
     lderr(ctx()) << __func__ << "(): WARNING: " << s << dendl;
 }
 
-int RGWSI_ConfigKey_RADOS::get(const string & key, bool secure,
-                               bufferlist * result)
+int RGWSI_ConfigKey_RADOS::get(const string &key, bool secure,
+                               bufferlist *result)
 {
     string cmd =
         "{" "\"prefix\": \"config-key get\", " "\"key\": \"" + key + "\"" "}";

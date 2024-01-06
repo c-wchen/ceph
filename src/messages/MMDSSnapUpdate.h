@@ -17,54 +17,63 @@
 
 #include "messages/MMDSOp.h"
 
-class MMDSSnapUpdate final:public MMDSOp {
-  private:
+class MMDSSnapUpdate final: public MMDSOp
+{
+private:
     inodeno_t ino;
     __s16 snap_op;
 
-  public:
-     inodeno_t get_ino() const {
+public:
+    inodeno_t get_ino() const
+    {
         return ino;
-    } int get_snap_op() const {
+    } int get_snap_op() const
+    {
         return snap_op;
     } ceph::buffer::list snap_blob;
 
-  protected:
-     MMDSSnapUpdate():MMDSOp {
-    MSG_MDS_SNAPUPDATE}
+protected:
+    MMDSSnapUpdate(): MMDSOp {
+        MSG_MDS_SNAPUPDATE}
     {
     }
-  MMDSSnapUpdate(inodeno_t i, version_t tid, int op):
-    MMDSOp {
-    MSG_MDS_SNAPUPDATE}, ino(i), snap_op(op) {
+    MMDSSnapUpdate(inodeno_t i, version_t tid, int op):
+        MMDSOp {
+        MSG_MDS_SNAPUPDATE}, ino(i), snap_op(op)
+    {
         set_tid(tid);
     }
-    ~MMDSSnapUpdate()final {
+    ~MMDSSnapUpdate()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "snap_update";
-    } void print(std::ostream & o) const override {
+    } void print(std::ostream &o) const override
+    {
         o << "snap_update(" << ino << " table_tid " << get_tid() << ")";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(ino, payload);
         encode(snap_op, payload);
         encode(snap_blob, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(ino, p);
         decode(snap_op, p);
         decode(snap_blob, p);
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
     template < class T, typename ... Args >
-        friend MURef < T > crimson::make_message(Args && ... args);
+    friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

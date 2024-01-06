@@ -6,7 +6,7 @@
 #include "objclass/objclass.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(bar)
+CLS_NAME(bar)
 
 cls_handle_t h_class;
 
@@ -24,8 +24,7 @@ int foo_method(cls_method_context_t ctx, char *indata, int datalen,
     for (i = 0; i < strlen(indata) + 1; i++) {
         if (indata[i] == '0') {
             (*outdata)[i] = '*';
-        }
-        else {
+        } else {
             (*outdata)[i] = indata[i];
         }
     }

@@ -23,10 +23,11 @@ int main(int argc, char *argv[])
 
     pid_t pid = fork();
     assert(pid >= 0);
-    if (pid == 0)
+    if (pid == 0) {
         close(pipefd[1]);
-    else
+    } else {
         close(pipefd[0]);
+    }
 
     struct ceph_mount_info *cmount = NULL;
 
@@ -48,8 +49,7 @@ int main(int argc, char *argv[])
 
         ceph_unmount(cmount);
         printf("child exits\n");
-    }
-    else {
+    } else {
         ret = ceph_mkdirs(cmount, "1/2", 0755);
         assert(ret >= 0);
 

@@ -40,22 +40,26 @@ class MLog;
 class Messenger;
 class AioCompletionImpl;
 
-namespace neorados {
-    namespace detail {
-        class RadosClient;
-}} class librados::RadosClient:public Dispatcher, public md_config_obs_t {
+namespace neorados
+{
+namespace detail
+{
+class RadosClient;
+}
+} class librados::RadosClient: public Dispatcher, public md_config_obs_t
+{
     friend neorados::detail::RadosClient;
-  public:
+public:
     using Dispatcher::cct;
-  private:
+private:
     std::unique_ptr < CephContext,
         std::function < void (CephContext *) >> cct_deleter;
 
-  public:
-    const ConfigProxy & conf {
-    cct->_conf};
+public:
+    const ConfigProxy &conf {
+        cct->_conf};
     ceph::async::io_context_pool poolctx;
-  private:
+private:
     enum {
         DISCONNECTED,
         CONNECTING,
@@ -63,39 +67,39 @@ namespace neorados {
     } state { DISCONNECTED };
 
     MonClient monclient {
-    cct, poolctx};
+        cct, poolctx};
     MgrClient mgrclient {
-    cct, nullptr, &monclient.monmap};
+        cct, nullptr, &monclient.monmap};
     Messenger *messenger {
-    nullptr};
+        nullptr};
 
     uint64_t instance_id {
-    0};
+        0};
 
-    bool _dispatch(Message * m);
-    bool ms_dispatch(Message * m) override;
+    bool _dispatch(Message *m);
+    bool ms_dispatch(Message *m) override;
 
-    void ms_handle_connect(Connection * con) override;
-    bool ms_handle_reset(Connection * con) override;
-    void ms_handle_remote_reset(Connection * con) override;
-    bool ms_handle_refused(Connection * con) override;
+    void ms_handle_connect(Connection *con) override;
+    bool ms_handle_reset(Connection *con) override;
+    void ms_handle_remote_reset(Connection *con) override;
+    bool ms_handle_refused(Connection *con) override;
 
     Objecter *objecter {
-    nullptr};
+        nullptr};
 
     ceph::mutex lock = ceph::make_mutex("librados::RadosClient::lock");
     ceph::condition_variable cond;
     int refcnt {
-    1};
+        1};
 
     version_t log_last_version {
-    0};
+        0};
     rados_log_callback_t log_cb {
-    nullptr};
+        nullptr};
     rados_log_callback2_t log_cb2 {
-    nullptr};
+        nullptr};
     void *log_cb_arg {
-    nullptr};
+        nullptr};
     std::string log_watch;
 
     bool service_daemon = false;
@@ -106,45 +110,45 @@ namespace neorados {
 
     int wait_for_osdmap();
 
-  public:
+public:
     boost::asio::io_context::strand finish_strand {
-    poolctx.get_io_context()};
+        poolctx.get_io_context()};
 
-    explicit RadosClient(CephContext * cct);
+    explicit RadosClient(CephContext *cct);
     ~RadosClient()override;
-    int ping_monitor(std::string mon_id, std::string * result);
+    int ping_monitor(std::string mon_id, std::string *result);
     int connect();
     void shutdown();
 
     int watch_flush();
-    int async_watch_flush(AioCompletionImpl * c);
+    int async_watch_flush(AioCompletionImpl *c);
 
     uint64_t get_instance_id();
 
-    int get_min_compatible_osd(int8_t * require_osd_release);
-    int get_min_compatible_client(int8_t * min_compat_client,
-                                  int8_t * require_min_compat_client);
+    int get_min_compatible_osd(int8_t *require_osd_release);
+    int get_min_compatible_client(int8_t *min_compat_client,
+                                  int8_t *require_min_compat_client);
 
     int wait_for_latest_osdmap();
 
-    int create_ioctx(const char *name, IoCtxImpl ** io);
-    int create_ioctx(int64_t, IoCtxImpl ** io);
+    int create_ioctx(const char *name, IoCtxImpl **io);
+    int create_ioctx(int64_t, IoCtxImpl **io);
 
-    int get_fsid(std::string * s);
+    int get_fsid(std::string *s);
     int64_t lookup_pool(const char *name);
     bool pool_requires_alignment(int64_t pool_id);
-    int pool_requires_alignment2(int64_t pool_id, bool * req);
+    int pool_requires_alignment2(int64_t pool_id, bool *req);
     uint64_t pool_required_alignment(int64_t pool_id);
-    int pool_required_alignment2(int64_t pool_id, uint64_t * alignment);
-    int pool_get_name(uint64_t pool_id, std::string * name,
+    int pool_required_alignment2(int64_t pool_id, uint64_t *alignment);
+    int pool_get_name(uint64_t pool_id, std::string *name,
                       bool wait_latest_map = false);
 
-    int pool_list(std::list < std::pair < int64_t, std::string > >&ls);
+    int pool_list(std::list < std::pair < int64_t, std::string > > &ls);
     int get_pool_stats(std::list < std::string > &ls,
-                       std::map < std::string,::pool_stat_t > *result,
-                       bool * per_pool);
-    int get_fs_stats(ceph_statfs & result);
-    bool get_pool_is_selfmanaged_snaps_mode(const std::string & pool);
+                       std::map < std::string, ::pool_stat_t > *result,
+                       bool *per_pool);
+    int get_fs_stats(ceph_statfs &result);
+    bool get_pool_is_selfmanaged_snaps_mode(const std::string &pool);
 
     /*
        -1 was set as the default value and monitor will pickup the right crush rule with below order:
@@ -152,45 +156,45 @@ namespace neorados {
        b) the first rule
        c) error out if no value find
      */
-    int pool_create(std::string & name, int16_t crush_rule = -1);
-    int pool_create_async(std::string & name, PoolAsyncCompletionImpl * c,
+    int pool_create(std::string &name, int16_t crush_rule = -1);
+    int pool_create_async(std::string &name, PoolAsyncCompletionImpl *c,
                           int16_t crush_rule = -1);
-    int pool_get_base_tier(int64_t pool_id, int64_t * base_tier);
+    int pool_get_base_tier(int64_t pool_id, int64_t *base_tier);
     int pool_delete(const char *name);
 
-    int pool_delete_async(const char *name, PoolAsyncCompletionImpl * c);
+    int pool_delete_async(const char *name, PoolAsyncCompletionImpl *c);
 
-    int blocklist_add(const std::string & client_address,
+    int blocklist_add(const std::string &client_address,
                       uint32_t expire_seconds);
 
     int mon_command(const std::vector < std::string > &cmd,
-                    const bufferlist & inbl, bufferlist * outbl,
-                    std::string * outs);
+                    const bufferlist &inbl, bufferlist *outbl,
+                    std::string *outs);
     void mon_command_async(const std::vector < std::string > &cmd,
-                           const bufferlist & inbl, bufferlist * outbl,
-                           std::string * outs, Context * on_finish);
+                           const bufferlist &inbl, bufferlist *outbl,
+                           std::string *outs, Context *on_finish);
     int mon_command(int rank, const std::vector < std::string > &cmd,
-                    const bufferlist & inbl, bufferlist * outbl,
-                    std::string * outs);
+                    const bufferlist &inbl, bufferlist *outbl,
+                    std::string *outs);
     int mon_command(std::string name, const std::vector < std::string > &cmd,
-                    const bufferlist & inbl, bufferlist * outbl,
-                    std::string * outs);
+                    const bufferlist &inbl, bufferlist *outbl,
+                    std::string *outs);
     int mgr_command(const std::vector < std::string > &cmd,
-                    const bufferlist & inbl, bufferlist * outbl,
-                    std::string * outs);
-    int mgr_command(const std::string & name,
+                    const bufferlist &inbl, bufferlist *outbl,
+                    std::string *outs);
+    int mgr_command(const std::string &name,
                     const std::vector < std::string > &cmd,
-                    const bufferlist & inbl, bufferlist * outbl,
-                    std::string * outs);
+                    const bufferlist &inbl, bufferlist *outbl,
+                    std::string *outs);
     int osd_command(int osd, std::vector < std::string > &cmd,
-                    const bufferlist & inbl, bufferlist * poutbl,
-                    std::string * prs);
+                    const bufferlist &inbl, bufferlist *poutbl,
+                    std::string *prs);
     int pg_command(pg_t pgid, std::vector < std::string > &cmd,
-                   const bufferlist & inbl, bufferlist * poutbl,
-                   std::string * prs);
+                   const bufferlist &inbl, bufferlist *poutbl,
+                   std::string *prs);
 
-    void handle_log(MLog * m);
-    int monitor_log(const std::string & level, rados_log_callback_t cb,
+    void handle_log(MLog *m);
+    int monitor_log(const std::string &level, rados_log_callback_t cb,
                     rados_log_callback2_t cb2, void *arg);
 
     void get();
@@ -199,8 +203,8 @@ namespace neorados {
 
     std::string get_addrs()const;
 
-    int service_daemon_register(const std::string & service,    ///< service name (e.g., 'rgw')
-                                const std::string & name,   ///< daemon name (e.g., 'gwfoo')
+    int service_daemon_register(const std::string &service,     ///< service name (e.g., 'rgw')
+                                const std::string &name,    ///< daemon name (e.g., 'gwfoo')
                                 const std::map < std::string, std::string > &metadata); ///< static metadata about daemon
     int service_daemon_update_status(std::map < std::string,
                                      std::string > &&status);
@@ -209,7 +213,7 @@ namespace neorados {
 
     int get_inconsistent_pgs(int64_t pool_id, std::vector < std::string > *pgs);
     const char **get_tracked_conf_keys() const override;
-    void handle_conf_change(const ConfigProxy & conf,
+    void handle_conf_change(const ConfigProxy &conf,
                             const std::set < std::string > &changed) override;
 };
 

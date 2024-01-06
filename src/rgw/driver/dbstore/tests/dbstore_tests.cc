@@ -13,133 +13,151 @@ using DB = rgw::store::DB;
 
 vector < const char *>args;
 
-namespace gtest {
-    class Environment *env;
+namespace gtest
+{
+class Environment *env;
 
-    class Environment:public::testing::Environment {
-      public:
-        Environment():tenant("default_ns"), db(nullptr),
-            db_type("SQLite"), ret(-1) {
-        } Environment(string tenantname, string db_typename):
-            tenant(tenantname), db(nullptr), db_type(db_typename), ret(-1) {
-        } virtual ~ Environment() {
+class Environment: public::testing::Environment
+{
+public:
+    Environment(): tenant("default_ns"), db(nullptr),
+        db_type("SQLite"), ret(-1)
+    {
+    } Environment(string tenantname, string db_typename):
+        tenant(tenantname), db(nullptr), db_type(db_typename), ret(-1)
+    {
+    } virtual ~ Environment()
+    {
+    }
+
+    void SetUp() override
+    {
+        cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
+                          CODE_ENVIRONMENT_DAEMON,
+                          CINIT_FLAG_NO_DEFAULT_CONFIG_FILE |
+                          CINIT_FLAG_NO_MON_CONFIG |
+                          CINIT_FLAG_NO_DAEMON_ACTIONS);
+        if (!db_type.compare("SQLite")) {
+            db = new SQLiteDB(tenant, cct.get());
+            ASSERT_TRUE(db != nullptr);
+            ret = db->Initialize(logfile, loglevel);
+            ASSERT_GE(ret, 0);
         }
+    }
 
-        void SetUp() override {
-            cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
-                              CODE_ENVIRONMENT_DAEMON,
-                              CINIT_FLAG_NO_DEFAULT_CONFIG_FILE |
-                              CINIT_FLAG_NO_MON_CONFIG |
-                              CINIT_FLAG_NO_DAEMON_ACTIONS);
-            if (!db_type.compare("SQLite")) {
-                db = new SQLiteDB(tenant, cct.get());
-                ASSERT_TRUE(db != nullptr);
-                ret = db->Initialize(logfile, loglevel);
-                ASSERT_GE(ret, 0);
-            }
+    void TearDown() override
+    {
+        if (!db) {
+            return;
         }
+        db->Destroy(db->get_def_dpp());
+        delete db;
+    }
 
-        void TearDown() override {
-            if (!db)
-                return;
-            db->Destroy(db->get_def_dpp());
-            delete db;
-        }
-
-        string tenant;
-        DB *db;
-        string db_type;
-        int ret;
-        string logfile = "rgw_dbstore_tests.log";
-        int loglevel = 30;
-        boost::intrusive_ptr < CephContext > cct;
-    };
+    string tenant;
+    DB *db;
+    string db_type;
+    int ret;
+    string logfile = "rgw_dbstore_tests.log";
+    int loglevel = 30;
+    boost::intrusive_ptr < CephContext > cct;
+};
 }
 
 ceph::real_time bucket_mtime = real_clock::now();
 string marker1;
 
-class DBGetDataCB:public RGWGetDataCB {
-  public:
+class DBGetDataCB: public RGWGetDataCB
+{
+public:
     bufferlist data_bl;
     off_t data_ofs, data_len;
 
-    int handle_data(bufferlist & bl, off_t bl_ofs, off_t bl_len) {
+    int handle_data(bufferlist &bl, off_t bl_ofs, off_t bl_len)
+    {
         data_bl = bl;
         data_ofs = bl_ofs;
         data_len = bl_len;
         return 0;
-}};
+    }
+};
 
-namespace {
+namespace
+{
 
-    class DBStoreTest:public::testing::Test {
-      protected:
-        int ret;
-        DB *db = nullptr;
-        string user1 = "user1";
-        string user_id1 = "user_id1";
-        string bucket1 = "bucket1";
-        string object1 = "object1";
-        string data = "Hello World";
-        DBOpParams GlobalParams = { };
-        const DoutPrefixProvider *dpp;
+class DBStoreTest: public::testing::Test
+{
+protected:
+    int ret;
+    DB *db = nullptr;
+    string user1 = "user1";
+    string user_id1 = "user_id1";
+    string bucket1 = "bucket1";
+    string object1 = "object1";
+    string data = "Hello World";
+    DBOpParams GlobalParams = { };
+    const DoutPrefixProvider *dpp;
 
-        DBStoreTest() {
-        }
-        void SetUp() {
-            db = gtest::env->db;
-            ASSERT_TRUE(db != nullptr);
-            dpp = db->get_def_dpp();
-            ASSERT_TRUE(dpp != nullptr);
+    DBStoreTest()
+    {
+    }
+    void SetUp()
+    {
+        db = gtest::env->db;
+        ASSERT_TRUE(db != nullptr);
+        dpp = db->get_def_dpp();
+        ASSERT_TRUE(dpp != nullptr);
 
-            GlobalParams.op.user.uinfo.display_name = user1;
-            GlobalParams.op.user.uinfo.user_id.id = user_id1;
-            GlobalParams.op.bucket.info.bucket.name = bucket1;
-            GlobalParams.op.obj.state.obj.bucket =
-                GlobalParams.op.bucket.info.bucket;
-            GlobalParams.op.obj.state.obj.key.name = object1;
-            GlobalParams.op.obj.state.obj.key.instance = "inst1";
-            GlobalParams.op.obj.obj_id = "obj_id1";
-            GlobalParams.op.obj_data.part_num = 0;
+        GlobalParams.op.user.uinfo.display_name = user1;
+        GlobalParams.op.user.uinfo.user_id.id = user_id1;
+        GlobalParams.op.bucket.info.bucket.name = bucket1;
+        GlobalParams.op.obj.state.obj.bucket =
+            GlobalParams.op.bucket.info.bucket;
+        GlobalParams.op.obj.state.obj.key.name = object1;
+        GlobalParams.op.obj.state.obj.key.instance = "inst1";
+        GlobalParams.op.obj.obj_id = "obj_id1";
+        GlobalParams.op.obj_data.part_num = 0;
 
-            /* As of now InitializeParams doesnt do anything
-             * special based on fop. Hence its okay to do
-             * global initialization once.
-             */
-            ret = db->InitializeParams(dpp, &GlobalParams);
-            ASSERT_EQ(ret, 0);
-        }
+        /* As of now InitializeParams doesnt do anything
+         * special based on fop. Hence its okay to do
+         * global initialization once.
+         */
+        ret = db->InitializeParams(dpp, &GlobalParams);
+        ASSERT_EQ(ret, 0);
+    }
 
-        void TearDown() {
-        }
+    void TearDown()
+    {
+    }
 
-        int write_object(const DoutPrefixProvider * dpp, DBOpParams params) {
-            DB::Object op_target(db, params.op.bucket.info,
-                                 params.op.obj.state.obj);
-            DB::Object::Write write_op(&op_target);
-            map < string, bufferlist > setattrs;
-            ret = write_op.prepare(dpp);
-            if (ret)
-                return ret;
-
-            write_op.meta.mtime = &bucket_mtime;
-            write_op.meta.category = RGWObjCategory::Main;
-            write_op.meta.owner = params.op.user.uinfo.user_id;
-
-            bufferlist b1 = params.op.obj.head_data;
-            write_op.meta.data = &b1;
-
-            bufferlist b2;
-            encode("ACL", b2);
-            setattrs[RGW_ATTR_ACL] = b2;
-
-            ret =
-                write_op.write_meta(0, params.op.obj.state.size,
-                                    b1.length() + 1, setattrs);
+    int write_object(const DoutPrefixProvider *dpp, DBOpParams params)
+    {
+        DB::Object op_target(db, params.op.bucket.info,
+                             params.op.obj.state.obj);
+        DB::Object::Write write_op(&op_target);
+        map < string, bufferlist > setattrs;
+        ret = write_op.prepare(dpp);
+        if (ret) {
             return ret;
         }
-    };
+
+        write_op.meta.mtime = &bucket_mtime;
+        write_op.meta.category = RGWObjCategory::Main;
+        write_op.meta.owner = params.op.user.uinfo.user_id;
+
+        bufferlist b1 = params.op.obj.head_data;
+        write_op.meta.data = &b1;
+
+        bufferlist b2;
+        encode("ACL", b2);
+        setattrs[RGW_ATTR_ACL] = b2;
+
+        ret =
+            write_op.write_meta(0, params.op.obj.state.size,
+                                b1.length() + 1, setattrs);
+        return ret;
+    }
+};
 }
 
 TEST_F(DBStoreTest, InsertUser)
@@ -578,7 +596,7 @@ TEST_F(DBStoreTest, ListUserBuckets)
 
         cout << "is_truncated :" << is_truncated << "\n";
 
-      for (const auto & ent:ulist.get_buckets()) {
+        for (const auto &ent : ulist.get_buckets()) {
             RGWBucketEnt e = ent.second;
             cout << "###################### \n";
             cout << "ent.bucket.id : " << e.bucket.name << "\n";
@@ -642,7 +660,7 @@ TEST_F(DBStoreTest, ListAllBuckets2)
 
         cout << "is_truncated :" << is_truncated << "\n";
 
-      for (const auto & ent:ulist.get_buckets()) {
+        for (const auto &ent : ulist.get_buckets()) {
             RGWBucketEnt e = ent.second;
             cout << "###################### \n";
             cout << "ent.bucket.id : " << e.bucket.name << "\n";
@@ -883,7 +901,7 @@ TEST_F(DBStoreTest, IterateObject)
     string data;
     decode(data, cb.data_bl);
     cout << "XXXXXXXXXX iterate data is " << data << ", bl_ofs = " << cb.
-        data_ofs << ", bl_len = " << cb.data_len << "\n";
+         data_ofs << ", bl_len = " << cb.data_len << "\n";
     ASSERT_EQ(data, "HELLO WORLD");
     ASSERT_EQ(cb.data_ofs, 0);
     ASSERT_EQ(cb.data_len, 15);
@@ -913,7 +931,7 @@ TEST_F(DBStoreTest, ListBucketObjects)
 
         cout << "is_truncated :" << is_truncated << "\n";
 
-      for (const auto & ent:dir_list) {
+        for (const auto &ent : dir_list) {
             cls_rgw_obj_key key = ent.key;
             cout << "###################### \n";
             cout << "key.name : " << key.name << "\n";
@@ -950,7 +968,8 @@ TEST_F(DBStoreTest, WriteVersionedObject)
     struct DBOpParams params = GlobalParams;
     int ret = -1;
     std::string instances[] = {
-    "inst1", "inst2", "inst3"};
+        "inst1", "inst2", "inst3"
+    };
     bufferlist b1;
 
     params.op.obj.flags |= rgw_bucket_dir_entry::FLAG_CURRENT;
@@ -992,7 +1011,8 @@ TEST_F(DBStoreTest, ListVersionedObject)
     struct DBOpParams params = GlobalParams;
     int ret = -1;
     std::string instances[] = {
-    "inst1", "inst2", "inst3"};
+        "inst1", "inst2", "inst3"
+    };
     int i = 0;
 
     /* list versioned objects */
@@ -1002,7 +1022,7 @@ TEST_F(DBStoreTest, ListVersionedObject)
     ASSERT_EQ(ret, 0);
 
     i = 2;
-  for (auto ent:params.op.obj.list_entries) {
+    for (auto ent : params.op.obj.list_entries) {
 
         ASSERT_EQ(ent.key.instance, instances[i]);
         i--;
@@ -1014,7 +1034,8 @@ TEST_F(DBStoreTest, ReadVersionedObject)
     struct DBOpParams params = GlobalParams;
     int ret = -1;
     std::string instances[] = {
-    "inst1", "inst2", "inst3"};
+        "inst1", "inst2", "inst3"
+    };
     std::string data;
 
     /* read object.. should fetch latest version */
@@ -1048,7 +1069,8 @@ TEST_F(DBStoreTest, DeleteVersionedObject)
     struct DBOpParams params = GlobalParams;
     int ret = -1;
     std::string instances[] = {
-    "inst1", "inst2", "inst3"};
+        "inst1", "inst2", "inst3"
+    };
     std::string data;
     std::string dm_instance;
     int i = 0;
@@ -1069,19 +1091,18 @@ TEST_F(DBStoreTest, DeleteVersionedObject)
     ret = db->ProcessOp(dpp, "ListVersionedObjects", &params);
 
     i = 3;
-  for (auto ent:params.op.obj.list_entries) {
+    for (auto ent : params.op.obj.list_entries) {
         string is_delete_marker =
             (ent.
              flags & rgw_bucket_dir_entry::
              FLAG_DELETE_MARKER) ? "true" : "false";
         cout << "ent.name: " << ent.key.name << ". ent.instance: " << ent.key.
-            instance << " is_delete_marker = " << is_delete_marker << "\n";
+             instance << " is_delete_marker = " << is_delete_marker << "\n";
 
         if (i == 3) {
             ASSERT_EQ(is_delete_marker, "true");
             dm_instance = ent.key.instance;
-        }
-        else {
+        } else {
             ASSERT_EQ(is_delete_marker, "false");
             ASSERT_EQ(ent.key.instance, instances[i]);
         }
@@ -1137,12 +1158,11 @@ TEST_F(DBStoreTest, DeleteVersionedObject)
     ret = db->ProcessOp(dpp, "ListVersionedObjects", &params);
 
     i = 1;
-  for (auto ent:params.op.obj.list_entries) {
+    for (auto ent : params.op.obj.list_entries) {
 
         if (i == 1) {
             dm_instance = ent.key.instance;
-        }
-        else {
+        } else {
             ASSERT_EQ(ent.key.instance, instances[i]);
         }
 
@@ -1333,7 +1353,8 @@ TEST_F(DBStoreTest, LCHead)
     time_t lc_time = ceph_clock_now();
     std::unique_ptr < rgw::sal::Lifecycle::LCHead > head;
     std::string ents[] = {
-    "entry1", "entry2", "entry3"};
+        "entry1", "entry2", "entry3"
+    };
     rgw::sal::StoreLifecycle::StoreLCHead head1(lc_time, 0, ents[0]);
     rgw::sal::StoreLifecycle::StoreLCHead head2(lc_time, 0, ents[1]);
     rgw::sal::StoreLifecycle::StoreLCHead head3(lc_time, 0, ents[2]);
@@ -1369,16 +1390,17 @@ TEST_F(DBStoreTest, LCEntry)
     std::string index2 = "lcindex2";
     typedef enum { lc_uninitial = 1, lc_complete } status;
     std::string ents[] = {
-    "bucket1", "bucket2", "bucket3", "bucket4"};
+        "bucket1", "bucket2", "bucket3", "bucket4"
+    };
     std::unique_ptr < rgw::sal::Lifecycle::LCEntry > entry;
     rgw::sal::StoreLifecycle::StoreLCEntry entry1(ents[0], lc_time,
-                                                  lc_uninitial);
+            lc_uninitial);
     rgw::sal::StoreLifecycle::StoreLCEntry entry2(ents[1], lc_time,
-                                                  lc_uninitial);
+            lc_uninitial);
     rgw::sal::StoreLifecycle::StoreLCEntry entry3(ents[2], lc_time,
-                                                  lc_uninitial);
+            lc_uninitial);
     rgw::sal::StoreLifecycle::StoreLCEntry entry4(ents[3], lc_time,
-                                                  lc_uninitial);
+            lc_uninitial);
 
     vector < std::unique_ptr < rgw::sal::Lifecycle::LCEntry >> lc_entries;
 
@@ -1415,7 +1437,7 @@ TEST_F(DBStoreTest, LCEntry)
     // list entries
     ret = db->list_entries(index1, "", 5, lc_entries);
     ASSERT_EQ(ret, 0);
-  for (const auto & ent:lc_entries) {
+    for (const auto &ent : lc_entries) {
         cout << "###################### \n";
         cout << "lc entry.bucket : " << ent->get_bucket() << "\n";
         cout << "lc entry.status : " << ent->get_status() << "\n";
@@ -1478,9 +1500,9 @@ int main(int argc, char **argv)
     // format: ./dbstore-tests logfile loglevel
     if (argc == 3) {
         c_logfile = argv[1];
-        c_loglevel = (atoi) (argv[2]);
+        c_loglevel = (atoi)(argv[2]);
         cout << "logfile:" << c_logfile << ", loglevel set to " << c_loglevel <<
-            "\n";
+             "\n";
     }
 
     ::testing::InitGoogleTest(&argc, argv);

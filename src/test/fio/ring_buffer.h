@@ -36,8 +36,9 @@ static inline unsigned int upper_power_of_two(unsigned int v)
 static inline int ring_buffer_init(struct ring_buffer *rbuf, unsigned int size)
 {
     /* Must be pow2 */
-    if (((size - 1) & size))
+    if (((size - 1) & size)) {
         size = upper_power_of_two(size);
+    }
 
     size *= sizeof(void *);
     rbuf->data_ptr = malloc(size);
@@ -60,7 +61,7 @@ static inline unsigned int ring_buffer_used_size(const struct ring_buffer *rbuf)
 {
     __sync_synchronize();
     return ((rbuf->write_idx - rbuf->read_idx) & rbuf->high_mask) >>
-        rbuf->bit_shift;
+           rbuf->bit_shift;
 }
 
 static inline void ring_buffer_enqueue(struct ring_buffer *rbuf, void *ptr)

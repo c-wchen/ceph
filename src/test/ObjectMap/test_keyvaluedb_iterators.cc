@@ -26,12 +26,14 @@ using namespace std;
 
 string store_path;
 
-class IteratorTest:public::testing::Test {
-  public:
+class IteratorTest: public::testing::Test
+{
+public:
     boost::scoped_ptr < KeyValueDB > db;
     boost::scoped_ptr < KeyValueDBMemory > mock;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         ceph_assert(!store_path.empty());
 
         KeyValueDB *db_ptr =
@@ -39,33 +41,36 @@ class IteratorTest:public::testing::Test {
         ceph_assert(!db_ptr->create_and_open(std::cerr));
         db.reset(db_ptr);
         mock.reset(new KeyValueDBMemory());
-    } void TearDown() override {
+    } void TearDown() override
+    {
     }
 
-    ::testing::AssertionResult validate_db_clear(KeyValueDB * store) {
+    ::testing::AssertionResult validate_db_clear(KeyValueDB *store)
+    {
         KeyValueDB::WholeSpaceIterator it = store->get_wholespace_iterator();
         it->seek_to_first();
         while (it->valid()) {
             pair < string, string > k = it->raw_key();
             if (mock->db.count(k)) {
                 return::testing::AssertionFailure()
-                    << __func__ << " mock store count " << mock->db.count(k)
-                    << " key(" << k.first << "," << k.second << ")";
+                      << __func__ << " mock store count " << mock->db.count(k)
+                      << " key(" << k.first << "," << k.second << ")";
             }
             it->next();
         }
         return::testing::AssertionSuccess();
     }
 
-    ::testing::AssertionResult validate_db_match() {
+    ::testing::AssertionResult validate_db_match()
+    {
         KeyValueDB::WholeSpaceIterator it = db->get_wholespace_iterator();
         it->seek_to_first();
         while (it->valid()) {
             pair < string, string > k = it->raw_key();
             if (!mock->db.count(k)) {
                 return::testing::AssertionFailure()
-                    << __func__ << " mock db.count() " << mock->db.count(k)
-                    << " key(" << k.first << "," << k.second << ")";
+                      << __func__ << " mock db.count() " << mock->db.count(k)
+                      << " key(" << k.first << "," << k.second << ")";
             }
 
             bufferlist it_bl = it->value();
@@ -76,10 +81,10 @@ class IteratorTest:public::testing::Test {
 
             if (it_val != mock_val) {
                 return::testing::AssertionFailure()
-                    << __func__
-                    << " key(" << k.first << "," << k.second << ")"
-                    << " mismatch db value(" << it_val << ")"
-                    << " mock value(" << mock_val << ")";
+                      << __func__
+                      << " key(" << k.first << "," << k.second << ")"
+                      << " mismatch db value(" << it_val << ")"
+                      << " mock value(" << mock_val << ")";
             }
             it->next();
         }
@@ -87,72 +92,73 @@ class IteratorTest:public::testing::Test {
     }
 
     ::testing::AssertionResult validate_iterator(KeyValueDB::
-                                                 WholeSpaceIterator it,
-                                                 string expected_prefix,
-                                                 const string & expected_key,
-                                                 const string & expected_value)
+            WholeSpaceIterator it,
+            string expected_prefix,
+            const string &expected_key,
+            const string &expected_value)
     {
         if (!it->valid()) {
             return::testing::AssertionFailure()
-                << __func__ << " iterator not valid";
+                  << __func__ << " iterator not valid";
         }
 
         if (!it->raw_key_is_prefixed(expected_prefix)) {
             return::testing::AssertionFailure()
-                << __func__
-                << " expected raw_key_is_prefixed() == TRUE" << " got FALSE";
+                  << __func__
+                  << " expected raw_key_is_prefixed() == TRUE" << " got FALSE";
         }
 
         if (it->raw_key_is_prefixed("??__SomeUnexpectedValue__??")) {
             return::testing::AssertionFailure()
-                << __func__
-                << " expected raw_key_is_prefixed() == FALSE" << " got TRUE";
+                  << __func__
+                  << " expected raw_key_is_prefixed() == FALSE" << " got TRUE";
         }
 
         pair < string, string > key = it->raw_key();
 
         if (expected_prefix != key.first) {
             return::testing::AssertionFailure()
-                << __func__
-                << " expected prefix '" << expected_prefix << "'"
-                << " got prefix '" << key.first << "'";
+                  << __func__
+                  << " expected prefix '" << expected_prefix << "'"
+                  << " got prefix '" << key.first << "'";
         }
 
         if (expected_key != it->key()) {
             return::testing::AssertionFailure()
-                << __func__
-                << " expected key '" << expected_key << "'"
-                << " got key '" << it->key() << "'";
+                  << __func__
+                  << " expected key '" << expected_key << "'"
+                  << " got key '" << it->key() << "'";
         }
 
         if (it->key() != key.second) {
             return::testing::AssertionFailure()
-                << __func__
-                << " key '" << it->key() << "'"
-                << " does not match" << " pair key '" << key.second << "'";
+                  << __func__
+                  << " key '" << it->key() << "'"
+                  << " does not match" << " pair key '" << key.second << "'";
         }
 
         if (_bl_to_str(it->value()) != expected_value) {
             return::testing::AssertionFailure()
-                << __func__
-                << " key '(" << key.first << "," << key.second << ")''"
-                << " expected value '" << expected_value << "'"
-                << " got value '" << _bl_to_str(it->value()) << "'";
+                  << __func__
+                  << " key '(" << key.first << "," << key.second << ")''"
+                  << " expected value '" << expected_value << "'"
+                  << " got value '" << _bl_to_str(it->value()) << "'";
         }
 
         return::testing::AssertionSuccess();
     }
 
-  /**
-   * Checks if each key in the queue can be forward sequentially read from
-   * the iterator iter. All keys must be present and be prefixed with prefix,
-   * otherwise the validation will fail.
-   *
-   * Assumes that each key value must be based on the key name and generated
-   * by _gen_val().
-   */
+    /**
+     * Checks if each key in the queue can be forward sequentially read from
+     * the iterator iter. All keys must be present and be prefixed with prefix,
+     * otherwise the validation will fail.
+     *
+     * Assumes that each key value must be based on the key name and generated
+     * by _gen_val().
+     */
     void validate_prefix(KeyValueDB::WholeSpaceIterator iter,
-                         string & prefix, deque < string > &keys) {
+                         string &prefix, deque < string > &keys)
+    {
 
         while (!keys.empty()) {
             ASSERT_TRUE(iter->valid());
@@ -166,16 +172,17 @@ class IteratorTest:public::testing::Test {
             iter->next();
         }
     }
-  /**
-   * Checks if each key in the queue can be backward sequentially read from
-   * the iterator iter. All keys must be present and be prefixed with prefix,
-   * otherwise the validation will fail.
-   *
-   * Assumes that each key value must be based on the key name and generated
-   * by _gen_val().
-   */
+    /**
+     * Checks if each key in the queue can be backward sequentially read from
+     * the iterator iter. All keys must be present and be prefixed with prefix,
+     * otherwise the validation will fail.
+     *
+     * Assumes that each key value must be based on the key name and generated
+     * by _gen_val().
+     */
     void validate_prefix_backwards(KeyValueDB::WholeSpaceIterator iter,
-                                   string & prefix, deque < string > &keys) {
+                                   string &prefix, deque < string > &keys)
+    {
 
         while (!keys.empty()) {
             ASSERT_TRUE(iter->valid());
@@ -190,7 +197,8 @@ class IteratorTest:public::testing::Test {
         }
     }
 
-    void clear(KeyValueDB * store) {
+    void clear(KeyValueDB *store)
+    {
         KeyValueDB::WholeSpaceIterator it = store->get_wholespace_iterator();
         it->seek_to_first();
         KeyValueDB::Transaction t = store->get_transaction();
@@ -202,27 +210,31 @@ class IteratorTest:public::testing::Test {
         store->submit_transaction_sync(t);
     }
 
-    string _bl_to_str(bufferlist val) {
+    string _bl_to_str(bufferlist val)
+    {
         string str(val.c_str(), val.length());
         return str;
     }
 
-    string _gen_val_str(const string & key) {
+    string _gen_val_str(const string &key)
+    {
         ostringstream ss;
         ss << "##value##" << key << "##";
         return ss.str();
     }
 
-    bufferlist _gen_val(const string & key) {
+    bufferlist _gen_val(const string &key)
+    {
         bufferlist bl;
         bl.append(_gen_val_str(key));
         return bl;
     }
 
-    void print_iterator(KeyValueDB::WholeSpaceIterator iter) {
+    void print_iterator(KeyValueDB::WholeSpaceIterator iter)
+    {
         if (!iter->valid()) {
             std::cerr << __func__ << " iterator is not valid; stop." << std::
-                endl;
+                      endl;
             return;
         }
 
@@ -230,13 +242,14 @@ class IteratorTest:public::testing::Test {
         while (iter->valid()) {
             pair < string, string > k = iter->raw_key();
             std::cerr << __func__ << " pos " << (++i)
-                << " key (" << k.first << "," << k.second << ")"
-                << " value(" << _bl_to_str(iter->value()) << ")" << std::endl;
+                      << " key (" << k.first << "," << k.second << ")"
+                      << " value(" << _bl_to_str(iter->value()) << ")" << std::endl;
             iter->next();
         }
     }
 
-    void print_db(KeyValueDB * store) {
+    void print_db(KeyValueDB *store)
+    {
         KeyValueDB::WholeSpaceIterator it = store->get_wholespace_iterator();
         it->seek_to_first();
         print_iterator(it);
@@ -244,13 +257,15 @@ class IteratorTest:public::testing::Test {
 };
 
 // ------- Remove Keys / Remove Keys By Prefix -------
-class RmKeysTest:public IteratorTest {
-  public:
+class RmKeysTest: public IteratorTest
+{
+public:
     string prefix1;
     string prefix2;
     string prefix3;
 
-    void init(KeyValueDB * db) {
+    void init(KeyValueDB *db)
+    {
         KeyValueDB::Transaction tx = db->get_transaction();
 
         tx->set(prefix1, "11", _gen_val("11"));
@@ -264,7 +279,8 @@ class RmKeysTest:public IteratorTest {
         tx->set(prefix3, "33", _gen_val("33"));
 
         db->submit_transaction_sync(tx);
-    } void SetUp() override {
+    } void SetUp() override
+    {
         IteratorTest::SetUp();
 
         prefix1 = "_PREFIX_1_";
@@ -282,16 +298,18 @@ class RmKeysTest:public IteratorTest {
         ASSERT_TRUE(validate_db_match());
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         IteratorTest::TearDown();
     }
 
-  /**
-   * Test the transaction's rmkeys behavior when we remove a given prefix
-   * from the beginning of the key space, or from the end of the key space,
-   * or even simply in the middle.
-   */
-    void RmKeysByPrefix(KeyValueDB * store) {
+    /**
+     * Test the transaction's rmkeys behavior when we remove a given prefix
+     * from the beginning of the key space, or from the end of the key space,
+     * or even simply in the middle.
+     */
+    void RmKeysByPrefix(KeyValueDB *store)
+    {
         // remove prefix2 ; check if prefix1 remains, and then prefix3
         KeyValueDB::Transaction tx = store->get_transaction();
         // remove the prefix in the middle of the key space
@@ -385,12 +403,13 @@ class RmKeysTest:public IteratorTest {
         ASSERT_FALSE(iter->valid());
     }
 
-  /**
-   * Test how the leveldb's whole-space iterator behaves when we remove
-   * keys from the store while iterating over them.
-   */
-    void RmKeysWhileIteratingSnapshot(KeyValueDB * store,
-                                      KeyValueDB::WholeSpaceIterator iter) {
+    /**
+     * Test how the leveldb's whole-space iterator behaves when we remove
+     * keys from the store while iterating over them.
+     */
+    void RmKeysWhileIteratingSnapshot(KeyValueDB *store,
+                                      KeyValueDB::WholeSpaceIterator iter)
+    {
 
         SCOPED_TRACE("RmKeysWhileIteratingSnapshot");
 
@@ -510,16 +529,18 @@ TEST_F(RmKeysTest, RmKeysWhileIteratingLevelDB)
 TEST_F(RmKeysTest, RmKeysWhileIteratingMockDB)
 {
     std::cout << "There is no safe way to test key removal while iterating\n"
-        << "over the mock store without using snapshots" << std::endl;
+              << "over the mock store without using snapshots" << std::endl;
 }
 
 // ------- Set Keys / Update Values -------
-class SetKeysTest:public IteratorTest {
-  public:
+class SetKeysTest: public IteratorTest
+{
+public:
     string prefix1;
     string prefix2;
 
-    void init(KeyValueDB * db) {
+    void init(KeyValueDB *db)
+    {
         KeyValueDB::Transaction tx = db->get_transaction();
 
         tx->set(prefix1, "aaa", _gen_val("aaa"));
@@ -530,7 +551,8 @@ class SetKeysTest:public IteratorTest {
         tx->set(prefix2, "zzz", _gen_val("zzz"));
 
         db->submit_transaction_sync(tx);
-    } void SetUp() override {
+    } void SetUp() override
+    {
         IteratorTest::SetUp();
 
         prefix1 = "_PREFIX_1_";
@@ -547,24 +569,26 @@ class SetKeysTest:public IteratorTest {
         ASSERT_TRUE(validate_db_match());
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         IteratorTest::TearDown();
     }
 
-  /**
-   * Make sure that the iterator picks on new keys added if it hasn't yet
-   * iterated away from that position.
-   * 
-   * This should only happen for the whole-space iterator when not using
-   * the snapshot version.
-   *
-   * We don't need to test the validity of all elements, but we do test
-   * inserting while moving from the first element to the last, using next()
-   * to move forward, and then we test the same behavior while iterating
-   * from the last element to the first, using prev() to move backwards.
-   */
-    void SetKeysWhileIterating(KeyValueDB * store,
-                               KeyValueDB::WholeSpaceIterator iter) {
+    /**
+     * Make sure that the iterator picks on new keys added if it hasn't yet
+     * iterated away from that position.
+     *
+     * This should only happen for the whole-space iterator when not using
+     * the snapshot version.
+     *
+     * We don't need to test the validity of all elements, but we do test
+     * inserting while moving from the first element to the last, using next()
+     * to move forward, and then we test the same behavior while iterating
+     * from the last element to the first, using prev() to move backwards.
+     */
+    void SetKeysWhileIterating(KeyValueDB *store,
+                               KeyValueDB::WholeSpaceIterator iter)
+    {
         iter->seek_to_first();
         ASSERT_TRUE(iter->valid());
         ASSERT_TRUE(validate_iterator(iter, prefix1, "aaa",
@@ -596,18 +620,19 @@ class SetKeysTest:public IteratorTest {
                                       "yyy", _gen_val_str("yyy")));
     }
 
-  /**
-   * Make sure that the whole-space snapshot iterator does not pick on new keys
-   * added to the store since we created the iterator, thus guaranteeing
-   * read-consistency.
-   *
-   * We don't need to test the validity of all elements, but we do test
-   * inserting while moving from the first element to the last, using next()
-   * to move forward, and then we test the same behavior while iterating
-   * from the last element to the first, using prev() to move backwards.
-   */
-    void SetKeysWhileIteratingSnapshot(KeyValueDB * store,
-                                       KeyValueDB::WholeSpaceIterator iter) {
+    /**
+     * Make sure that the whole-space snapshot iterator does not pick on new keys
+     * added to the store since we created the iterator, thus guaranteeing
+     * read-consistency.
+     *
+     * We don't need to test the validity of all elements, but we do test
+     * inserting while moving from the first element to the last, using next()
+     * to move forward, and then we test the same behavior while iterating
+     * from the last element to the first, using prev() to move backwards.
+     */
+    void SetKeysWhileIteratingSnapshot(KeyValueDB *store,
+                                       KeyValueDB::WholeSpaceIterator iter)
+    {
         iter->seek_to_first();
         ASSERT_TRUE(iter->valid());
         ASSERT_TRUE(validate_iterator(iter, prefix1, "aaa",
@@ -639,15 +664,16 @@ class SetKeysTest:public IteratorTest {
                                       "xxx", _gen_val_str("xxx")));
     }
 
-  /**
-   * Make sure that the whole-space iterator is able to read values changed on
-   * the store, even after we moved to the updated position.
-   *
-   * This should only be possible when not using the whole-space snapshot
-   * version of the iterator.
-   */
-    void UpdateValuesWhileIterating(KeyValueDB * store,
-                                    KeyValueDB::WholeSpaceIterator iter) {
+    /**
+     * Make sure that the whole-space iterator is able to read values changed on
+     * the store, even after we moved to the updated position.
+     *
+     * This should only be possible when not using the whole-space snapshot
+     * version of the iterator.
+     */
+    void UpdateValuesWhileIterating(KeyValueDB *store,
+                                    KeyValueDB::WholeSpaceIterator iter)
+    {
         iter->seek_to_first();
         ASSERT_TRUE(iter->valid());
         ASSERT_TRUE(validate_iterator(iter, prefix1,
@@ -673,16 +699,17 @@ class SetKeysTest:public IteratorTest {
                                       "zzz", _gen_val_str("zzz_1")));
     }
 
-  /**
-   * Make sure that the whole-space iterator is able to read values changed on
-   * the store, even after we moved to the updated position.
-   *
-   * This should only be possible when not using the whole-space snapshot
-   * version of the iterator.
-   */
-    void UpdateValuesWhileIteratingSnapshot(KeyValueDB * store,
+    /**
+     * Make sure that the whole-space iterator is able to read values changed on
+     * the store, even after we moved to the updated position.
+     *
+     * This should only be possible when not using the whole-space snapshot
+     * version of the iterator.
+     */
+    void UpdateValuesWhileIteratingSnapshot(KeyValueDB *store,
                                             KeyValueDB::
-                                            WholeSpaceIterator iter) {
+                                            WholeSpaceIterator iter)
+    {
         iter->seek_to_first();
         ASSERT_TRUE(iter->valid());
         ASSERT_TRUE(validate_iterator(iter, prefix1,
@@ -750,13 +777,15 @@ TEST_F(SetKeysTest, UpdateValuesWhileIteratingMockDB)
     ASSERT_FALSE(HasFatalFailure());
 }
 
-class BoundsTest:public IteratorTest {
-  public:
+class BoundsTest: public IteratorTest
+{
+public:
     string prefix1;
     string prefix2;
     string prefix3;
 
-    void init(KeyValueDB * store) {
+    void init(KeyValueDB *store)
+    {
         KeyValueDB::Transaction tx = store->get_transaction();
 
         tx->set(prefix1, "aaa", _gen_val("aaa"));
@@ -770,7 +799,8 @@ class BoundsTest:public IteratorTest {
         tx->set(prefix3, "yyy", _gen_val("yyy"));
 
         store->submit_transaction_sync(tx);
-    } void SetUp() override {
+    } void SetUp() override
+    {
         IteratorTest::SetUp();
 
         prefix1 = "_PREFIX_1_";
@@ -788,12 +818,14 @@ class BoundsTest:public IteratorTest {
         ASSERT_TRUE(validate_db_match());
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         IteratorTest::TearDown();
     }
 
     void LowerBoundWithEmptyKeyOnWholeSpaceIterator(KeyValueDB::
-                                                    WholeSpaceIterator iter) {
+            WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         // see what happens when we have an empty key and try to get to the
         // first available prefix
@@ -872,7 +904,7 @@ class BoundsTest:public IteratorTest {
     }
 
     void LowerBoundWithEmptyPrefixOnWholeSpaceIterator(KeyValueDB::
-                                                       WholeSpaceIterator iter)
+            WholeSpaceIterator iter)
     {
         deque < string > key_deque;
         // check for an empty prefix, with key 'aaa'. Since this key is shared
@@ -924,7 +956,8 @@ class BoundsTest:public IteratorTest {
         ASSERT_TRUE(iter->valid());
     }
 
-    void LowerBoundOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter) {
+    void LowerBoundOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         // check that we find the first key in the store
         // expected: find (prefix1, aaa); iterator is valid
@@ -975,7 +1008,8 @@ class BoundsTest:public IteratorTest {
     }
 
     void UpperBoundWithEmptyKeyOnWholeSpaceIterator(KeyValueDB::
-                                                    WholeSpaceIterator iter) {
+            WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         // check that looking for (prefix1, "") will result in finding
         // the first key in prefix1 (prefix1, "aaa")
@@ -1033,7 +1067,7 @@ class BoundsTest:public IteratorTest {
     }
 
     void UpperBoundWithEmptyPrefixOnWholeSpaceIterator(KeyValueDB::
-                                                       WholeSpaceIterator iter)
+            WholeSpaceIterator iter)
     {
         deque < string > key_deque;
         // check for an empty prefix, with key 'aaa'. Since this key is shared
@@ -1078,7 +1112,8 @@ class BoundsTest:public IteratorTest {
         ASSERT_TRUE(iter->valid());
     }
 
-    void UpperBoundOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter) {
+    void UpperBoundOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         // check that we find the second key in the store
         // expected: find (prefix1, ccc); iterator is valid
@@ -1147,7 +1182,7 @@ TEST_F(BoundsTest, LowerBoundWithEmptyPrefixOnWholeSpaceIteratorLevelDB)
 {
     SCOPED_TRACE("LevelDB: Lower Bound, Empty Prefix, Whole-Space Iterator");
     LowerBoundWithEmptyPrefixOnWholeSpaceIterator(db->
-                                                  get_wholespace_iterator());
+            get_wholespace_iterator());
     ASSERT_FALSE(HasFatalFailure());
 }
 
@@ -1155,7 +1190,7 @@ TEST_F(BoundsTest, LowerBoundWithEmptyPrefixOnWholeSpaceIteratorMockDB)
 {
     SCOPED_TRACE("MockDB: Lower Bound, Empty Prefix, Whole-Space Iterator");
     LowerBoundWithEmptyPrefixOnWholeSpaceIterator(mock->
-                                                  get_wholespace_iterator());
+            get_wholespace_iterator());
     ASSERT_FALSE(HasFatalFailure());
 }
 
@@ -1191,7 +1226,7 @@ TEST_F(BoundsTest, UpperBoundWithEmptyPrefixOnWholeSpaceIteratorLevelDB)
 {
     SCOPED_TRACE("LevelDB: Upper Bound, Empty Prefix, Whole-Space Iterator");
     UpperBoundWithEmptyPrefixOnWholeSpaceIterator(db->
-                                                  get_wholespace_iterator());
+            get_wholespace_iterator());
     ASSERT_FALSE(HasFatalFailure());
 }
 
@@ -1199,7 +1234,7 @@ TEST_F(BoundsTest, UpperBoundWithEmptyPrefixOnWholeSpaceIteratorMockDB)
 {
     SCOPED_TRACE("MockDB: Upper Bound, Empty Prefix, Whole-Space Iterator");
     UpperBoundWithEmptyPrefixOnWholeSpaceIterator(mock->
-                                                  get_wholespace_iterator());
+            get_wholespace_iterator());
     ASSERT_FALSE(HasFatalFailure());
 }
 
@@ -1217,8 +1252,9 @@ TEST_F(BoundsTest, UpperBoundOnWholeSpaceIteratorMockDB)
     ASSERT_FALSE(HasFatalFailure());
 }
 
-class SeeksTest:public IteratorTest {
-  public:
+class SeeksTest: public IteratorTest
+{
+public:
     string prefix0;
     string prefix1;
     string prefix2;
@@ -1226,7 +1262,8 @@ class SeeksTest:public IteratorTest {
     string prefix4;
     string prefix5;
 
-    void init(KeyValueDB * store) {
+    void init(KeyValueDB *store)
+    {
         KeyValueDB::Transaction tx = store->get_transaction();
 
         tx->set(prefix1, "aaa", _gen_val("aaa"));
@@ -1240,7 +1277,8 @@ class SeeksTest:public IteratorTest {
         tx->set(prefix4, "yyy", _gen_val("yyy"));
 
         store->submit_transaction_sync(tx);
-    } void SetUp() override {
+    } void SetUp() override
+    {
         IteratorTest::SetUp();
 
         prefix0 = "_PREFIX_0_";
@@ -1261,11 +1299,13 @@ class SeeksTest:public IteratorTest {
         ASSERT_TRUE(validate_db_match());
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         IteratorTest::TearDown();
     }
 
-    void SeekToFirstOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter) {
+    void SeekToFirstOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter)
+    {
         iter->seek_to_first();
         ASSERT_TRUE(iter->valid());
         deque < string > key_deque;
@@ -1278,7 +1318,8 @@ class SeeksTest:public IteratorTest {
     }
 
     void SeekToFirstWithPrefixOnWholeSpaceIterator(KeyValueDB::
-                                                   WholeSpaceIterator iter) {
+            WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
 
         // if the prefix is empty, we must end up seeking to the first key.
@@ -1351,7 +1392,8 @@ class SeeksTest:public IteratorTest {
         ASSERT_TRUE(iter->valid());
     }
 
-    void SeekToLastOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter) {
+    void SeekToLastOnWholeSpaceIterator(KeyValueDB::WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         iter->seek_to_last();
         key_deque.push_back("yyy");
@@ -1361,7 +1403,8 @@ class SeeksTest:public IteratorTest {
     }
 
     void SeekToLastWithPrefixOnWholeSpaceIterator(KeyValueDB::
-                                                  WholeSpaceIterator iter) {
+            WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
 
         // if the prefix is empty, we must end up seeking to last position
@@ -1492,11 +1535,13 @@ TEST_F(SeeksTest, SeekToLastWithPrefixOnWholeSpaceIteratorMockDB)
     ASSERT_FALSE(HasFatalFailure());
 }
 
-class KeySpaceIteration:public IteratorTest {
-  public:
+class KeySpaceIteration: public IteratorTest
+{
+public:
     string prefix1;
 
-    void init(KeyValueDB * store) {
+    void init(KeyValueDB *store)
+    {
         KeyValueDB::Transaction tx = store->get_transaction();
 
         tx->set(prefix1, "aaa", _gen_val("aaa"));
@@ -1504,7 +1549,8 @@ class KeySpaceIteration:public IteratorTest {
         tx->set(prefix1, "zzz", _gen_val("zzz"));
 
         store->submit_transaction_sync(tx);
-    } void SetUp() override {
+    } void SetUp() override
+    {
         IteratorTest::SetUp();
 
         prefix1 = "_PREFIX_1_";
@@ -1520,11 +1566,13 @@ class KeySpaceIteration:public IteratorTest {
         ASSERT_TRUE(validate_db_match());
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         IteratorTest::TearDown();
     }
 
-    void ForwardIteration(KeyValueDB::WholeSpaceIterator iter) {
+    void ForwardIteration(KeyValueDB::WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         iter->seek_to_first();
         key_deque.push_back("aaa");
@@ -1535,7 +1583,8 @@ class KeySpaceIteration:public IteratorTest {
         ASSERT_FALSE(iter->valid());
     }
 
-    void BackwardIteration(KeyValueDB::WholeSpaceIterator iter) {
+    void BackwardIteration(KeyValueDB::WholeSpaceIterator iter)
+    {
         deque < string > key_deque;
         iter->seek_to_last();
         key_deque.push_back("zzz");
@@ -1575,40 +1624,47 @@ TEST_F(KeySpaceIteration, BackwardIterationMockDB)
     ASSERT_FALSE(HasFatalFailure());
 }
 
-class EmptyStore:public IteratorTest {
-  public:
-    void SetUp() override {
+class EmptyStore: public IteratorTest
+{
+public:
+    void SetUp() override
+    {
         IteratorTest::SetUp();
 
         clear(db.get());
         ASSERT_TRUE(validate_db_clear(db.get()));
         clear(mock.get());
         ASSERT_TRUE(validate_db_match());
-    } void SeekToFirst(KeyValueDB::WholeSpaceIterator iter) {
+    } void SeekToFirst(KeyValueDB::WholeSpaceIterator iter)
+    {
         // expected: iterator is invalid
         iter->seek_to_first();
         ASSERT_FALSE(iter->valid());
     }
 
-    void SeekToFirstWithPrefix(KeyValueDB::WholeSpaceIterator iter) {
+    void SeekToFirstWithPrefix(KeyValueDB::WholeSpaceIterator iter)
+    {
         // expected: iterator is invalid
         iter->seek_to_first("prefix");
         ASSERT_FALSE(iter->valid());
     }
 
-    void SeekToLast(KeyValueDB::WholeSpaceIterator iter) {
+    void SeekToLast(KeyValueDB::WholeSpaceIterator iter)
+    {
         // expected: iterator is invalid
         iter->seek_to_last();
         ASSERT_FALSE(iter->valid());
     }
 
-    void SeekToLastWithPrefix(KeyValueDB::WholeSpaceIterator iter) {
+    void SeekToLastWithPrefix(KeyValueDB::WholeSpaceIterator iter)
+    {
         // expected: iterator is invalid
         iter->seek_to_last("prefix");
         ASSERT_FALSE(iter->valid());
     }
 
-    void LowerBound(KeyValueDB::WholeSpaceIterator iter) {
+    void LowerBound(KeyValueDB::WholeSpaceIterator iter)
+    {
         // expected: iterator is invalid
         iter->lower_bound("prefix", "");
         ASSERT_FALSE(iter->valid());
@@ -1622,7 +1678,8 @@ class EmptyStore:public IteratorTest {
         ASSERT_FALSE(iter->valid());
     }
 
-    void UpperBound(KeyValueDB::WholeSpaceIterator iter) {
+    void UpperBound(KeyValueDB::WholeSpaceIterator iter)
+    {
         // expected: iterator is invalid
         iter->upper_bound("prefix", "");
         ASSERT_FALSE(iter->valid());
@@ -1734,7 +1791,7 @@ int main(int argc, char *argv[])
 
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0]
-            << "[ceph_options] [gtest_options] <store_path>" << std::endl;
+                  << "[ceph_options] [gtest_options] <store_path>" << std::endl;
         return 1;
     }
     store_path = string(argv[1]);

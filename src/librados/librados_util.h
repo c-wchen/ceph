@@ -15,17 +15,19 @@ int translate_flags(int flags);
 
 struct librados::ObjListCtx {
     librados::IoCtxImpl dupctx;
-    librados::IoCtxImpl * ctx;
-    Objecter::NListContext * nlc;
+    librados::IoCtxImpl *ctx;
+    Objecter::NListContext *nlc;
     bool legacy_list_api;
 
-     ObjListCtx(IoCtxImpl * c, Objecter::NListContext * nl, bool legacy = false)
-  :    nlc(nl), legacy_list_api(legacy) {
+    ObjListCtx(IoCtxImpl *c, Objecter::NListContext *nl, bool legacy = false)
+        :    nlc(nl), legacy_list_api(legacy)
+    {
         // Get our own private IoCtxImpl so that namespace setting isn't
         // changed by caller between uses.
         ctx = &dupctx;
         dupctx.dup(*c);
-    } ~ObjListCtx() {
+    } ~ObjListCtx()
+    {
         ctx = NULL;
         delete nlc;
     }

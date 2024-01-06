@@ -29,13 +29,13 @@ using std::set;
 using std::string;
 using std::stringstream;
 
-ClusterState::ClusterState(MonClient * monc_,
-                           Objecter * objecter_, const MgrMap & mgrmap)
-:monc(monc_), objecter(objecter_), mgr_map(mgrmap), asok_hook(NULL)
+ClusterState::ClusterState(MonClient *monc_,
+                           Objecter *objecter_, const MgrMap &mgrmap)
+    : monc(monc_), objecter(objecter_), mgr_map(mgrmap), asok_hook(NULL)
 {
 }
 
-void ClusterState::set_objecter(Objecter * objecter_)
+void ClusterState::set_objecter(Objecter *objecter_)
 {
     std::lock_guard l(lock);
 
@@ -61,7 +61,7 @@ void ClusterState::set_service_map(ServiceMap const &new_service_map)
     servicemap = new_service_map;
 }
 
-void ClusterState::load_digest(MMgrDigest * m)
+void ClusterState::load_digest(MMgrDigest *m)
 {
     std::lock_guard l(lock);
     health_json = std::move(m->health_json);
@@ -73,40 +73,40 @@ void ClusterState::ingest_pgstats(ref_t < MPGStats > stats)
     std::lock_guard l(lock);
 
     const int from = stats->get_orig_source().num();
-    bool is_in = with_osdmap([from] (const OSDMap & osdmap){
-                             return osdmap.is_in(from);}
-    );
+    bool is_in = with_osdmap([from](const OSDMap & osdmap) {
+        return osdmap.is_in(from);
+    }
+                            );
 
     if (is_in) {
         pending_inc.update_stat(from, std::move(stats->osd_stat));
-    }
-    else {
+    } else {
         osd_stat_t empty_stat;
         empty_stat.seq = stats->osd_stat.seq;
         pending_inc.update_stat(from, std::move(empty_stat));
     }
 
-  for (auto p:stats->pg_stat) {
+    for (auto p : stats->pg_stat) {
         pg_t pgid = p.first;
-        const auto & pg_stats = p.second;
+        const auto &pg_stats = p.second;
 
         // In case we're hearing about a PG that according to last
         // OSDMap update should not exist
         auto r = existing_pools.find(pgid.pool());
         if (r == existing_pools.end()) {
             dout(15) << " got " << pgid
-                << " reported at " << pg_stats.reported_epoch << ":"
-                << pg_stats.reported_seq
-                << " state " << pg_state_string(pg_stats.state)
-                << " but pool not in " << existing_pools << dendl;
+                     << " reported at " << pg_stats.reported_epoch << ":"
+                     << pg_stats.reported_seq
+                     << " state " << pg_state_string(pg_stats.state)
+                     << " but pool not in " << existing_pools << dendl;
             continue;
         }
         if (pgid.ps() >= r->second) {
             dout(15) << " got " << pgid
-                << " reported at " << pg_stats.reported_epoch << ":"
-                << pg_stats.reported_seq
-                << " state " << pg_state_string(pg_stats.state)
-                << " but > pg_num " << r->second << dendl;
+                     << " reported at " << pg_stats.reported_epoch << ":"
+                     << pg_stats.reported_seq
+                     << " state " << pg_state_string(pg_stats.state)
+                     << " but > pg_num " << r->second << dendl;
             continue;
         }
         // In case we already heard about more recent stats from this PG
@@ -115,16 +115,16 @@ void ClusterState::ingest_pgstats(ref_t < MPGStats > stats)
         if (q != pg_map.pg_stat.end() &&
             q->second.get_version_pair() > pg_stats.get_version_pair()) {
             dout(15) << " had " << pgid << " from "
-                << q->second.reported_epoch << ":"
-                << q->second.reported_seq << dendl;
+                     << q->second.reported_epoch << ":"
+                     << q->second.reported_seq << dendl;
             continue;
         }
 
         pending_inc.pg_stat_updates[pgid] = pg_stats;
     }
-  for (auto p:stats->pool_stat) {
+    for (auto p : stats->pool_stat) {
         pending_inc.pool_statfs_updates[std::make_pair(p.first, from)] =
-            p.second;
+                       p.second;
     }
 }
 
@@ -148,7 +148,7 @@ void ClusterState::update_delta_stats()
     pending_inc = PGMap::Incremental();
 }
 
-void ClusterState::notify_osdmap(const OSDMap & osd_map)
+void ClusterState::notify_osdmap(const OSDMap &osd_map)
 {
     assert(ceph_mutex_is_locked(lock));
 
@@ -161,7 +161,7 @@ void ClusterState::notify_osdmap(const OSDMap & osd_map)
     // update our list of pools that exist, so that we can filter pg_map updates
     // in synchrony with this OSDMap.
     existing_pools.clear();
-  for (auto & p:osd_map.get_pools()) {
+    for (auto &p : osd_map.get_pools()) {
         existing_pools[p.first] = p.second.get_pg_num();
     }
 
@@ -189,19 +189,22 @@ void ClusterState::notify_osdmap(const OSDMap & osd_map)
     // while the full-blown PGMap lives only here.
 }
 
-class ClusterSocketHook:public AdminSocketHook {
+class ClusterSocketHook: public AdminSocketHook
+{
     ClusterState *cluster_state;
-  public:
-    explicit ClusterSocketHook(ClusterState * o):cluster_state(o) {
-    } int call(std::string_view admin_command, const cmdmap_t & cmdmap,
+public:
+    explicit ClusterSocketHook(ClusterState *o): cluster_state(o)
+    {
+    } int call(std::string_view admin_command, const cmdmap_t &cmdmap,
                const bufferlist &,
-               Formatter * f, std::ostream & errss, bufferlist & out) override {
+               Formatter *f, std::ostream &errss, bufferlist &out) override
+    {
         stringstream outss;
         int r = 0;
         try {
             r = cluster_state->asok_command(admin_command, cmdmap, f, outss);
             out.append(outss);
-        } catch(const TOPNSPC::common::bad_cmd_get & e) {
+        } catch (const TOPNSPC::common::bad_cmd_get &e) {
             errss << e.what();
             r = -EINVAL;
         }
@@ -230,8 +233,8 @@ void ClusterState::shutdown()
 }
 
 bool ClusterState::asok_command(std::string_view admin_command,
-                                const cmdmap_t & cmdmap,
-                                Formatter * f, ostream & ss)
+                                const cmdmap_t &cmdmap,
+                                Formatter *f, ostream &ss)
 {
     std::lock_guard l(lock);
 
@@ -241,22 +244,22 @@ bool ClusterState::asok_command(std::string_view admin_command,
         if (!(TOPNSPC::common::cmd_getval(cmdmap, "value", value))) {
             // Convert milliseconds to microseconds
             value =
-                static_cast < int64_t > (g_ceph_context->_conf.get_val <
-                                         double >("mon_warn_on_slow_ping_time"))
-                *1000;
+                static_cast < int64_t >(g_ceph_context->_conf.get_val <
+                                        double >("mon_warn_on_slow_ping_time"))
+                * 1000;
             if (value == 0) {
                 double ratio =
                     g_conf().get_val < double >("mon_warn_on_slow_ping_ratio");
                 value = g_conf().get_val < int64_t > ("osd_heartbeat_grace");
                 value *= 1000000 * ratio;   // Seconds of grace to microseconds at ratio
             }
-        }
-        else {
+        } else {
             // Convert user input to microseconds
             value *= 1000;
         }
-        if (value < 0)
+        if (value < 0) {
             value = 0;
+        }
 
         struct mgr_ping_time_t {
             uint32_t pingtime;
@@ -269,36 +272,45 @@ bool ClusterState::asok_command(std::string_view admin_command,
             uint32_t last;
             uint32_t last_update;
 
-            bool operator<(const mgr_ping_time_t & rhs) const {
-                if (pingtime < rhs.pingtime)
+            bool operator<(const mgr_ping_time_t &rhs) const
+            {
+                if (pingtime < rhs.pingtime) {
                     return true;
-                if (pingtime > rhs.pingtime)
+                }
+                if (pingtime > rhs.pingtime) {
                     return false;
-                if (from < rhs.from)
+                }
+                if (from < rhs.from) {
                     return true;
-                if (from > rhs.from)
+                }
+                if (from > rhs.from) {
                     return false;
-                if (to < rhs.to)
+                }
+                if (to < rhs.to) {
                     return true;
-                if (to > rhs.to)
+                }
+                if (to > rhs.to) {
                     return false;
+                }
                 return back;
-        }};
+            }
+        };
 
         set < mgr_ping_time_t > sorted;
         utime_t now = ceph_clock_now();
-      for (auto i:pg_map.osd_stat) {
-          for (auto j:i.second.hb_pingtime) {
+        for (auto i : pg_map.osd_stat) {
+            for (auto j : i.second.hb_pingtime) {
 
-                if (j.second.last_update == 0)
+                if (j.second.last_update == 0) {
                     continue;
+                }
                 auto stale_time =
                     g_ceph_context->_conf.get_val < int64_t >
                     ("osd_mon_heartbeat_stat_stale");
                 if (now.sec() - j.second.last_update > stale_time) {
                     dout(20) << __func__ << " time out heartbeat for osd " << i.
-                        first << " last_update " << j.second.
-                        last_update << dendl;
+                             first << " last_update " << j.second.
+                             last_update << dendl;
                     continue;
                 }
                 mgr_ping_time_t item;
@@ -325,8 +337,9 @@ bool ClusterState::asok_command(std::string_view admin_command,
                     sorted.emplace(item);
                 }
 
-                if (j.second.front_last == 0)
+                if (j.second.front_last == 0) {
                     continue;
+                }
                 item.pingtime =
                     std::max(j.second.front_pingtime[0],
                              j.second.front_pingtime[1]);
@@ -356,7 +369,7 @@ bool ClusterState::asok_command(std::string_view admin_command,
         f->open_object_section("network_ping_times");
         f->dump_int("threshold", value / 1000);
         f->open_array_section("entries");
-      for (auto & sitem:boost::adaptors::reverse(sorted)) {
+        for (auto &sitem : boost::adaptors::reverse(sorted)) {
             ceph_assert(!value || sitem.pingtime >= value);
 
             f->open_object_section("entry");
@@ -377,13 +390,13 @@ bool ClusterState::asok_command(std::string_view admin_command,
             f->open_object_section("average");
             f->dump_format_unquoted("1min", "%s",
                                     fixed_u_to_string(sitem.times[0],
-                                                      3).c_str());
+                                            3).c_str());
             f->dump_format_unquoted("5min", "%s",
                                     fixed_u_to_string(sitem.times[1],
-                                                      3).c_str());
+                                            3).c_str());
             f->dump_format_unquoted("15min", "%s",
                                     fixed_u_to_string(sitem.times[2],
-                                                      3).c_str());
+                                            3).c_str());
             f->close_section(); // average
             f->open_object_section("min");
             f->dump_format_unquoted("1min", "%s",
@@ -407,8 +420,7 @@ bool ClusterState::asok_command(std::string_view admin_command,
         }
         f->close_section();     // entries
         f->close_section();     // network_ping_times
-    }
-    else {
+    } else {
         ceph_abort_msg("broken asok registration");
     }
     return true;

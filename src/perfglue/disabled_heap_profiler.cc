@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 #include "heap_profiler.h"
 
@@ -63,7 +63,7 @@ void ceph_heap_profiler_dump(const char *reason)
     return;
 }
 
-bool ceph_heap_get_numeric_property(const char *property, size_t * value)
+bool ceph_heap_get_numeric_property(const char *property, size_t *value)
 {
     return false;
 }
@@ -74,7 +74,7 @@ bool ceph_heap_set_numeric_property(const char *property, size_t value)
 }
 
 void ceph_heap_profiler_handle_command(const std::vector < std::string > &cmd,
-                                       std::ostream & out)
+                                       std::ostream &out)
 {
     return;
 }

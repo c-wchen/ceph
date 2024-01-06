@@ -10,32 +10,39 @@
 
 using std::set;
 
-bool MissingLoc::readable_with_acting(const hobject_t & hoid,
+bool MissingLoc::readable_with_acting(const hobject_t &hoid,
                                       const set < pg_shard_t > &acting,
-                                      eversion_t * v) constconst
-{
+                                      eversion_t *v) constconst {
     if (!needs_recovery(hoid, v))
+    {
         return true;
+    }
     if (is_deleted(hoid))
+    {
         return false;
+    }
     auto missing_loc_entry = missing_loc.find(hoid);
     if (missing_loc_entry == missing_loc.end())
+    {
         return false;
+    }
     const set < pg_shard_t > &locs = missing_loc_entry->second;
     ldout(cct, 10) << __func__ << ": locs:" << locs << dendl;
     set < pg_shard_t > have_acting;
-    for (auto i = locs.begin(); i != locs.end(); ++i) {
-        if (acting.count(*i))
+    for (auto i = locs.begin(); i != locs.end(); ++i)
+    {
+        if (acting.count(*i)) {
             have_acting.insert(*i);
+        }
     }
-    return (*is_readable) (have_acting);
+    return (*is_readable)(have_acting);
 }
 
 void MissingLoc::add_batch_sources_info(const set < pg_shard_t > &sources,
-                                        HBHandle * handle)
+                                        HBHandle *handle)
 {
     ldout(cct, 10) << __func__ << ": adding sources in batch "
-        << sources.size() << dendl;
+                   << sources.size() << dendl;
     unsigned loop = 0;
     bool sources_updated = false;
     for (auto i = needs_recovery_map.begin();
@@ -44,14 +51,14 @@ void MissingLoc::add_batch_sources_info(const set < pg_shard_t > &sources,
             handle->reset_tp_timeout();
             loop = 0;
         }
-        if (i->second.is_delete())
+        if (i->second.is_delete()) {
             continue;
+        }
 
         auto p = missing_loc.find(i->first);
         if (p == missing_loc.end()) {
             p = missing_loc.emplace(i->first, set < pg_shard_t > ()).first;
-        }
-        else {
+        } else {
             _dec_count(p->second);
         }
         missing_loc[i->first].insert(sources.begin(), sources.end());
@@ -65,9 +72,9 @@ void MissingLoc::add_batch_sources_info(const set < pg_shard_t > &sources,
 }
 
 bool MissingLoc::add_source_info(pg_shard_t fromosd,
-                                 const pg_info_t & oinfo,
-                                 const pg_missing_t & omissing,
-                                 HBHandle * handle)
+                                 const pg_info_t &oinfo,
+                                 const pg_missing_t &omissing,
+                                 HBHandle *handle)
 {
     bool found_missing = false;
     unsigned loop = 0;
@@ -75,7 +82,7 @@ bool MissingLoc::add_source_info(pg_shard_t fromosd,
     // found items?
     for (auto p = needs_recovery_map.begin();
          p != needs_recovery_map.end(); ++p) {
-        const hobject_t & soid(p->first);
+        const hobject_t &soid(p->first);
         eversion_t need = p->second.need;
         if (handle && ++loop >= cct->_conf->osd_loop_before_reset_tphandle) {
             handle->reset_tp_timeout();
@@ -83,40 +90,39 @@ bool MissingLoc::add_source_info(pg_shard_t fromosd,
         }
         if (p->second.is_delete()) {
             ldout(cct, 10) << __func__ << " " << soid
-                << " delete, ignoring source" << dendl;
+                           << " delete, ignoring source" << dendl;
             continue;
         }
         if (oinfo.last_update < need) {
             ldout(cct, 10) << "search_for_missing " << soid << " " << need
-                << " also missing on osd." << fromosd
-                << " (last_update " << oinfo.last_update
-                << " < needed " << need << ")" << dendl;
+                           << " also missing on osd." << fromosd
+                           << " (last_update " << oinfo.last_update
+                           << " < needed " << need << ")" << dendl;
             continue;
         }
         if (p->first >= oinfo.last_backfill) {
             // FIXME: this is _probably_ true, although it could conceivably
             // be in the undefined region!  Hmm!
             ldout(cct, 10) << "search_for_missing " << soid << " " << need
-                << " also missing on osd." << fromosd
-                << " (past last_backfill " << oinfo.last_backfill
-                << ")" << dendl;
+                           << " also missing on osd." << fromosd
+                           << " (past last_backfill " << oinfo.last_backfill
+                           << ")" << dendl;
             continue;
         }
         if (omissing.is_missing(soid)) {
             ldout(cct, 10) << "search_for_missing " << soid << " " << need
-                << " also missing on osd." << fromosd << dendl;
+                           << " also missing on osd." << fromosd << dendl;
             continue;
         }
 
         ldout(cct, 10) << "search_for_missing " << soid << " " << need
-            << " is on osd." << fromosd << dendl;
+                       << " is on osd." << fromosd << dendl;
 
         {
             auto p = missing_loc.find(soid);
             if (p == missing_loc.end()) {
                 p = missing_loc.emplace(soid, set < pg_shard_t > ()).first;
-            }
-            else {
+            } else {
                 _dec_count(p->second);
             }
             p->second.insert(fromosd);
@@ -131,11 +137,11 @@ bool MissingLoc::add_source_info(pg_shard_t fromosd,
     }
 
     ldout(cct, 20) << "needs_recovery_map missing " << needs_recovery_map
-        << dendl;
+                   << dendl;
     return found_missing;
 }
 
-void MissingLoc::check_recovery_sources(const OSDMapRef & osdmap)
+void MissingLoc::check_recovery_sources(const OSDMapRef &osdmap)
 {
     set < pg_shard_t > now_down;
     for (auto p = missing_loc_sources.begin(); p != missing_loc_sources.end();) {
@@ -152,12 +158,11 @@ void MissingLoc::check_recovery_sources(const OSDMapRef & osdmap)
     if (now_down.empty()) {
         ldout(cct,
               10) << __func__ << " no source osds (" << missing_loc_sources <<
-            ") went down" << dendl;
-    }
-    else {
+                  ") went down" << dendl;
+    } else {
         ldout(cct,
               10) << __func__ << " sources osds " << now_down <<
-            " now down, remaining sources are " << missing_loc_sources << dendl;
+                  " now down, remaining sources are " << missing_loc_sources << dendl;
 
         // filter missing_loc
         auto p = missing_loc.begin();
@@ -171,15 +176,13 @@ void MissingLoc::check_recovery_sources(const OSDMapRef & osdmap)
                         _dec_count(p->second);
                     }
                     p->second.erase(q++);
-                }
-                else {
+                } else {
                     ++q;
                 }
             }
             if (p->second.empty()) {
                 missing_loc.erase(p++);
-            }
-            else {
+            } else {
                 if (changed) {
                     _inc_count(p->second);
                 }
@@ -193,7 +196,7 @@ void MissingLoc::remove_stray_recovery_sources(pg_shard_t stray)
 {
     ldout(cct,
           10) << __func__ << " remove osd " << stray << " from missing_loc" <<
-        dendl;
+              dendl;
     // filter missing_loc
     auto p = missing_loc.begin();
     while (p != missing_loc.end()) {
@@ -206,15 +209,13 @@ void MissingLoc::remove_stray_recovery_sources(pg_shard_t stray)
                     _dec_count(p->second);
                 }
                 p->second.erase(q++);
-            }
-            else {
+            } else {
                 ++q;
             }
         }
         if (p->second.empty()) {
             missing_loc.erase(p++);
-        }
-        else {
+        } else {
             if (changed) {
                 _inc_count(p->second);
             }
@@ -229,7 +230,7 @@ void MissingLoc::remove_stray_recovery_sources(pg_shard_t stray)
         }
         ldout(cct,
               10) << __func__ << " remove osd" << stray <<
-            " from missing_loc_sources" << dendl;
+                  " from missing_loc_sources" << dendl;
         missing_loc_sources.erase(p++);
     }
 }

@@ -247,8 +247,8 @@ TEST_F(LibRadosMiscPP, AioOperatePP)
 {
     bool my_aio_complete = false;
     AioCompletion *my_completion = cluster.aio_create_completion((void *)
-                                                                 &my_aio_complete,
-                                                                 set_completion_complete);
+                                   &my_aio_complete,
+                                   set_completion_complete);
     AioCompletion *my_completion_null = NULL;
     ASSERT_NE(my_completion, my_completion_null);
 
@@ -347,8 +347,7 @@ TEST_F(LibRadosMiscPP, BigAttrPP)
         bl.clear();
         bl.append(buffer::create(g_conf()->osd_max_attr_size + 1));
         ASSERT_EQ(-EFBIG, ioctx.setxattr("foo", "one", bl));
-    }
-    else {
+    } else {
         cout << "osd_max_attr_size == 0; skipping test" << std::endl;
     }
 
@@ -454,14 +453,18 @@ TEST_F(LibRadosMiscPP, CopyPP)
     }
 }
 
-class LibRadosTwoPoolsECPP:public RadosTestECPP {
-  public:
-    LibRadosTwoPoolsECPP() {
+class LibRadosTwoPoolsECPP: public RadosTestECPP
+{
+public:
+    LibRadosTwoPoolsECPP()
+    {
     };
-    ~LibRadosTwoPoolsECPP()override {
+    ~LibRadosTwoPoolsECPP()override
+    {
     };
-  protected:
-    static void SetUpTestCase() {
+protected:
+    static void SetUpTestCase()
+    {
         SKIP_IF_CRIMSON();
         pool_name = get_temp_pool_name();
         ASSERT_EQ("", create_one_ec_pool_pp(pool_name, s_cluster));
@@ -476,20 +479,23 @@ class LibRadosTwoPoolsECPP:public RadosTestECPP {
         ASSERT_EQ(0, s_cluster.ioctx_create(src_pool_name.c_str(), src_ioctx));
         src_ioctx.application_enable("rados", true);
     }
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         SKIP_IF_CRIMSON();
         ASSERT_EQ(0, s_cluster.pool_delete(src_pool_name.c_str()));
         ASSERT_EQ(0, destroy_one_ec_pool_pp(pool_name, s_cluster));
     }
     static std::string src_pool_name;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         SKIP_IF_CRIMSON();
         RadosTestECPP::SetUp();
         ASSERT_EQ(0, cluster.ioctx_create(src_pool_name.c_str(), src_ioctx));
         src_ioctx.set_namespace(nspace);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         SKIP_IF_CRIMSON();
         // wait for maps to settle before next test
         cluster.wait_for_latest_osdmap();
@@ -540,16 +546,18 @@ TEST_F(LibRadosMiscPP, CopyScrubPP)
 {
     SKIP_IF_CRIMSON();
     bufferlist inbl, bl, x;
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         x.append("barrrrrrrrrrrrrrrrrrrrrrrrrr");
+    }
     bl.append(buffer::create(g_conf()->osd_copyfrom_max_chunk * 3));
     bl.zero();
     bl.append("tail");
     bufferlist cbl;
 
     map < string, bufferlist > to_set;
-    for (int i = 0; i < 1000; ++i)
+    for (int i = 0; i < 1000; ++i) {
         to_set[string("foo") + stringify(i)] = x;
+    }
 
     // small
     cbl = x;
@@ -578,7 +586,7 @@ TEST_F(LibRadosMiscPP, CopyScrubPP)
         for (int i = 0; i < 10; ++i) {
             ostringstream ss;
             ss << "{\"prefix\": \"pg deep-scrub\", \"pgid\": \""
-                << ioctx.get_id() << "." << i << "\"}";
+               << ioctx.get_id() << "." << i << "\"}";
             cluster.mon_command(ss.str(), inbl, NULL, NULL);
         }
 
@@ -617,7 +625,7 @@ TEST_F(LibRadosMiscPP, CopyScrubPP)
         for (int i = 0; i < 10; ++i) {
             ostringstream ss;
             ss << "{\"prefix\": \"pg deep-scrub\", \"pgid\": \""
-                << ioctx.get_id() << "." << i << "\"}";
+               << ioctx.get_id() << "." << i << "\"}";
             cluster.mon_command(ss.str(), inbl, NULL, NULL);
         }
 
@@ -667,8 +675,9 @@ TEST_F(LibRadosMiscPP, WriteSamePP)
     ASSERT_EQ(-EINVAL, ioctx.writesame("ws", bl, sizeof(buf), 0));
 }
 
-template < typename T > class LibRadosChecksum:public LibRadosMiscPP {
-  public:
+template < typename T > class LibRadosChecksum: public LibRadosMiscPP
+{
+public:
     typedef typename T::alg_t alg_t;
     typedef typename T::value_t value_t;
     typedef typename alg_t::init_value_t init_value_t;
@@ -680,7 +689,8 @@ template < typename T > class LibRadosChecksum:public LibRadosMiscPP {
     using LibRadosMiscPP::SetUpTestCase;
     using LibRadosMiscPP::TearDownTestCase;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         LibRadosMiscPP::SetUp();
 
         std::string content(4096, '\0');
@@ -693,20 +703,21 @@ template < typename T > class LibRadosChecksum:public LibRadosMiscPP {
 };
 
 template < rados_checksum_type_t _type, typename AlgT, typename ValueT >
-    class LibRadosChecksumParams {
-  public:
+class LibRadosChecksumParams
+{
+public:
     typedef AlgT alg_t;
     typedef ValueT value_t;
     static const rados_checksum_type_t type = _type;
 };
 
 typedef::testing::Types <
-    LibRadosChecksumParams < LIBRADOS_CHECKSUM_TYPE_XXHASH32,
-    Checksummer::xxhash32, ceph_le32 >,
-    LibRadosChecksumParams < LIBRADOS_CHECKSUM_TYPE_XXHASH64,
-    Checksummer::xxhash64, ceph_le64 >,
-    LibRadosChecksumParams < LIBRADOS_CHECKSUM_TYPE_CRC32C,
-    Checksummer::crc32c, ceph_le32 > >LibRadosChecksumTypes;
+LibRadosChecksumParams < LIBRADOS_CHECKSUM_TYPE_XXHASH32,
+                       Checksummer::xxhash32, ceph_le32 >,
+                       LibRadosChecksumParams < LIBRADOS_CHECKSUM_TYPE_XXHASH64,
+                       Checksummer::xxhash64, ceph_le64 >,
+                       LibRadosChecksumParams < LIBRADOS_CHECKSUM_TYPE_CRC32C,
+                       Checksummer::crc32c, ceph_le32 > > LibRadosChecksumTypes;
 
 TYPED_TEST_SUITE(LibRadosChecksum, LibRadosChecksumTypes);
 
@@ -749,8 +760,8 @@ TYPED_TEST(LibRadosChecksum, Subset)
             buffer::create_static(sizeof(expected_value),
                                   reinterpret_cast < char *>(&expected_value));
         Checksummer::template calculate < typename TestFixture::alg_t >
-            (init_value, chunk_size, 0, chunk_size, content_sub_bl,
-             &expected_value_bp);
+        (init_value, chunk_size, 0, chunk_size, content_sub_bl,
+         &expected_value_bp);
         ASSERT_EQ(expected_value, value);
     }
 }
@@ -786,14 +797,14 @@ TYPED_TEST(LibRadosChecksum, Chunked)
                               reinterpret_cast < char *>(&expected_values[0]));
 
     Checksummer::template calculate < typename TestFixture::alg_t > (init_value,
-                                                                     chunk_size,
-                                                                     0,
-                                                                     this->
-                                                                     content_bl.
-                                                                     length(),
-                                                                     this->
-                                                                     content_bl,
-                                                                     &expected_values_bp);
+            chunk_size,
+            0,
+            this->
+            content_bl.
+            length(),
+            this->
+            content_bl,
+            &expected_values_bp);
 
     for (uint32_t i = 0; i < csum_count; ++i) {
         typename TestFixture::value_t value;
@@ -832,7 +843,8 @@ TEST_F(LibRadosMiscPP, Applications)
     }
 
     std::set < std::string > expected_apps = {
-    "rados"};
+        "rados"
+    };
     std::set < std::string > apps;
     ASSERT_EQ(0, ioctx.application_list(&apps));
     ASSERT_EQ(expected_apps, apps);
@@ -842,7 +854,8 @@ TEST_F(LibRadosMiscPP, Applications)
     ASSERT_EQ(0, ioctx.application_enable("app2", true));
 
     expected_apps = {
-    "app1", "app2", "rados"};
+        "app1", "app2", "rados"
+    };
     ASSERT_EQ(0, ioctx.application_list(&apps));
     ASSERT_EQ(expected_apps, apps);
 
@@ -857,9 +870,11 @@ TEST_F(LibRadosMiscPP, Applications)
     ASSERT_EQ(0, ioctx.application_metadata_set("app1", "key2", "value2"));
 
     expected_meta = { {
-    "key1", "value1"}
-    , {
-    "key2", "value2"}
+            "key1", "value1"
+        }
+        , {
+            "key2", "value2"
+        }
     };
     ASSERT_EQ(0, ioctx.application_metadata_list("app1", &meta));
     ASSERT_EQ(expected_meta, meta);
@@ -867,7 +882,8 @@ TEST_F(LibRadosMiscPP, Applications)
     ASSERT_EQ(0, ioctx.application_metadata_remove("app1", "key1"));
 
     expected_meta = { {
-    "key2", "value2"}
+            "key2", "value2"
+        }
     };
     ASSERT_EQ(0, ioctx.application_metadata_list("app1", &meta));
     ASSERT_EQ(expected_meta, meta);
@@ -909,7 +925,7 @@ TEST_F(LibRadosMiscPP, MinCompatClient)
     int8_t min_compat_client;
     int8_t require_min_compat_client;
     ASSERT_EQ(0, cluster.get_min_compatible_client(&min_compat_client,
-                                                   &require_min_compat_client));
+              &require_min_compat_client));
     ASSERT_LE(-1, min_compat_client);
     ASSERT_GT(CEPH_RELEASE_MAX, min_compat_client);
 
@@ -923,10 +939,11 @@ TEST_F(LibRadosMiscPP, Conf)
     size_t new_size = 1 << 20;
     std::string original;
     ASSERT_EQ(0, cluster.conf_get(option, original));
-    auto restore_setting = make_scope_guard([&]{
-                                            cluster.conf_set(option,
-                                                             original.
-                                                             c_str());});
+    auto restore_setting = make_scope_guard([&] {
+        cluster.conf_set(option,
+                         original.
+                         c_str());
+    });
     std::string expected = std::to_string(new_size);
     ASSERT_EQ(0, cluster.conf_set(option, expected.c_str()));
     std::string actual;

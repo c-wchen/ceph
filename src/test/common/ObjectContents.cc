@@ -21,8 +21,9 @@ bool test_object_contents()
     ceph_assert(bl.length() == 20);
 
     bufferlist bl2;
-    for (unsigned i = 0; i < 8; ++i)
+    for (unsigned i = 0; i < 8; ++i) {
         bl2.append(bl[i]);
+    }
     c.write(10, 8, 4);
     c.debug(std::cerr);
     ObjectContents::Iterator iter = c.get_iterator();
@@ -30,8 +31,9 @@ bool test_object_contents()
     for (uint64_t i = 8; i < 12; ++i, ++iter) {
         bl2.append(*iter);
     }
-    for (unsigned i = 12; i < 20; ++i)
+    for (unsigned i = 12; i < 20; ++i) {
         bl2.append(bl[i]);
+    }
     ceph_assert(bl2.length() == 20);
 
     for (ObjectContents::Iterator iter3 = c.get_iterator();
@@ -69,7 +71,7 @@ unsigned int ObjectContents::Iterator::get_state(uint64_t _pos)
     return current_state;
 }
 
-void ObjectContents::clone_range(ObjectContents & other,
+void ObjectContents::clone_range(ObjectContents &other,
                                  interval_set < uint64_t > &intervals)
 {
     interval_set < uint64_t > written_to_clone;
@@ -96,8 +98,9 @@ void ObjectContents::clone_range(ObjectContents & other,
                      other.seeds.lower_bound(start + len));
     }
 
-    if (intervals.range_end() > _size)
+    if (intervals.range_end() > _size) {
         _size = intervals.range_end();
+    }
     _exists = true;
     return;
 }
@@ -114,7 +117,8 @@ void ObjectContents::write(unsigned int seed, uint64_t start, uint64_t len)
     to_write.insert(start, len);
     written.union_of(to_write);
 
-    if (start + len > _size)
+    if (start + len > _size) {
         _size = start + len;
+    }
     return;
 }

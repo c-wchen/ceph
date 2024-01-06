@@ -48,11 +48,11 @@ struct fs_info {
 };
 
 int FuseStore::open_file(string p, struct fuse_file_info *fi,
-                         std::function < int (bufferlist * bl) > f)
+                         std::function < int (bufferlist *bl) > f)
 {
     if (open_files.count(p)) {
         OpenFile *o = open_files[p];
-        fi->fh = reinterpret_cast < uint64_t > (o);
+        fi->fh = reinterpret_cast < uint64_t >(o);
         ++o->ref;
         return 0;
     }
@@ -65,13 +65,13 @@ int FuseStore::open_file(string p, struct fuse_file_info *fi,
     o->path = p;
     o->bl = std::move(bl);
     open_files[p] = o;
-    fi->fh = reinterpret_cast < uint64_t > (o);
+    fi->fh = reinterpret_cast < uint64_t >(o);
     ++o->ref;
     return 0;
 }
 
-FuseStore::FuseStore(ObjectStore * s, string p)
-:  store(s), mount_point(p), fuse_thread(this)
+FuseStore::FuseStore(ObjectStore *s, string p)
+    :  store(s), mount_point(p), fuse_thread(this)
 {
     info = new fs_info();
 }
@@ -117,124 +117,147 @@ enum {
     FN_HASH_VAL,
 };
 
-static int parse_fn(CephContext * cct, const char *path, coll_t * cid,
-                    ghobject_t * oid, string * key,
-                    uint32_t * hash, uint32_t * hash_bits)
+static int parse_fn(CephContext *cct, const char *path, coll_t *cid,
+                    ghobject_t *oid, string *key,
+                    uint32_t *hash, uint32_t *hash_bits)
 {
     list < string > v;
     for (const char *p = path; *p; ++p) {
-        if (*p == '/')
+        if (*p == '/') {
             continue;
+        }
         const char *e;
         for (e = p + 1; *e && *e != '/'; e++) ;
         string c(p, e - p);
         v.push_back(c);
         p = e;
-        if (!*p)
+        if (!*p) {
             break;
+        }
     }
     ldout(cct, 10) << __func__ << " path " << path << " -> " << v << dendl;
 
-    if (v.empty())
+    if (v.empty()) {
         return FN_ROOT;
+    }
 
-    if (v.front() == "type")
+    if (v.front() == "type") {
         return FN_TYPE;
+    }
 
     if (!cid->parse(v.front())) {
         return -ENOENT;
     }
-    if (v.size() == 1)
+    if (v.size() == 1) {
         return FN_COLLECTION;
+    }
     v.pop_front();
 
-    if (v.front() == "bitwise_hash_start")
+    if (v.front() == "bitwise_hash_start") {
         return FN_HASH_START;
-    if (v.front() == "bitwise_hash_end")
+    }
+    if (v.front() == "bitwise_hash_end") {
         return FN_HASH_END;
-    if (v.front() == "bitwise_hash_bits")
+    }
+    if (v.front() == "bitwise_hash_bits") {
         return FN_HASH_BITS;
+    }
     if (v.front() == "pgmeta") {
         spg_t pgid;
         if (cid->is_pg(&pgid)) {
             *oid = pgid.make_pgmeta_oid();
             v.pop_front();
-            if (v.empty())
+            if (v.empty()) {
                 return FN_OBJECT;
+            }
             goto do_object;
         }
         return -ENOENT;
     }
     if (v.front() == "all") {
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_ALL;
+        }
         goto do_dir;
     }
     if (v.front() == "by_bitwise_hash") {
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_HASH_DIR;
+        }
         unsigned long hv, hm;
         int r = sscanf(v.front().c_str(), "%lx", &hv);
-        if (r != 1)
+        if (r != 1) {
             return -ENOENT;
+        }
         int shift = 32 - v.front().length() * 4;
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_HASH_DIR;
+        }
         r = sscanf(v.front().c_str(), "%ld", &hm);
-        if (r != 1)
+        if (r != 1) {
             return -ENOENT;
-        if (hm < 1 || hm > 32)
+        }
+        if (hm < 1 || hm > 32) {
             return -ENOENT;
+        }
         v.pop_front();
         *hash = hv << shift;    //hobject_t::_reverse_bits(hv << shift);
         *hash_bits = hm;
-        if (v.empty())
+        if (v.empty()) {
             return FN_HASH_VAL;
+        }
         goto do_dir;
     }
     return -ENOENT;
 
-  do_dir:
-    {
+do_dir: {
         string o = v.front();
         if (!oid->parse(o)) {
             return -ENOENT;
         }
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_OBJECT;
+        }
     }
 
-  do_object:
-    if (v.front() == "data")
+do_object:
+    if (v.front() == "data") {
         return FN_OBJECT_DATA;
-    if (v.front() == "omap_header")
+    }
+    if (v.front() == "omap_header") {
         return FN_OBJECT_OMAP_HEADER;
+    }
     if (v.front() == "omap") {
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_OBJECT_OMAP;
+        }
         *key = v.front();
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_OBJECT_OMAP_VAL;
+        }
         return -ENOENT;
     }
     if (v.front() == "attr") {
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_OBJECT_ATTR;
+        }
         *key = v.front();
         v.pop_front();
-        if (v.empty())
+        if (v.empty()) {
             return FN_OBJECT_ATTR_VAL;
+        }
         return -ENOENT;
     }
-    if (v.front() == "bitwise_hash")
+    if (v.front() == "bitwise_hash") {
         return FN_OBJECT_HASH;
+    }
     return -ENOENT;
 }
 
@@ -242,7 +265,7 @@ static int os_getattr(const char *path, struct stat *stbuf
 #if FUSE_VERSION >= FUSE_MAKE_VERSION(3, 0)
                       , struct fuse_file_info *fi
 #endif
-    )
+                     )
 {
     fuse_context *fc = fuse_get_context();
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
@@ -253,8 +276,9 @@ static int os_getattr(const char *path, struct stat *stbuf
     uint32_t hash_value, hash_bits;
     int t = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (t < 0)
+    if (t < 0) {
         return t;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
@@ -266,13 +290,12 @@ static int os_getattr(const char *path, struct stat *stbuf
     auto ch = fs->store->open_collection(cid);
 
     switch (t) {
-    case FN_OBJECT_OMAP:
-    case FN_OBJECT_ATTR:
-    case FN_OBJECT:
-    case FN_OBJECT_DATA:
-    case FN_OBJECT_OMAP_HEADER:
-    case FN_OBJECT_OMAP_VAL:
-        {
+        case FN_OBJECT_OMAP:
+        case FN_OBJECT_ATTR:
+        case FN_OBJECT:
+        case FN_OBJECT_DATA:
+        case FN_OBJECT_OMAP_HEADER:
+        case FN_OBJECT_OMAP_VAL: {
             spg_t pgid;
             if (cid.is_pg(&pgid)) {
                 if (!ch) {
@@ -289,80 +312,87 @@ static int os_getattr(const char *path, struct stat *stbuf
     }
 
     switch (t) {
-    case FN_OBJECT_OMAP:
-    case FN_OBJECT_ATTR:
-    case FN_OBJECT:
-        if (!fs->store->exists(ch, oid))
-            return -ENOENT;
-        // fall-thru
-    case FN_ALL:
-    case FN_HASH_DIR:
-    case FN_HASH_VAL:
-    case FN_COLLECTION:
-        if (!fs->store->collection_exists(cid))
-            return -ENOENT;
-        // fall-thru
-    case FN_ROOT:
-        stbuf->st_mode = S_IFDIR | 0700;
-        return 0;
-
-    case FN_TYPE:
-        stbuf->st_size = fs->store->get_type().length() + 1;
-        break;
-
-    case FN_OBJECT_HASH:
-        if (!fs->store->exists(ch, oid))
-            return -ENOENT;
-        stbuf->st_size = 9;
-        return 0;
-
-    case FN_HASH_END:
-        if (!ch)
-            return -ENOENT;
-        if (fs->store->collection_bits(ch) < 0)
-            return -ENOENT;
-        // fall-thru
-    case FN_HASH_START:
-        stbuf->st_size = 9;
-        return 0;
-
-    case FN_HASH_BITS:
-        {
-            if (!ch)
+        case FN_OBJECT_OMAP:
+        case FN_OBJECT_ATTR:
+        case FN_OBJECT:
+            if (!fs->store->exists(ch, oid)) {
                 return -ENOENT;
+            }
+        // fall-thru
+        case FN_ALL:
+        case FN_HASH_DIR:
+        case FN_HASH_VAL:
+        case FN_COLLECTION:
+            if (!fs->store->collection_exists(cid)) {
+                return -ENOENT;
+            }
+        // fall-thru
+        case FN_ROOT:
+            stbuf->st_mode = S_IFDIR | 0700;
+            return 0;
+
+        case FN_TYPE:
+            stbuf->st_size = fs->store->get_type().length() + 1;
+            break;
+
+        case FN_OBJECT_HASH:
+            if (!fs->store->exists(ch, oid)) {
+                return -ENOENT;
+            }
+            stbuf->st_size = 9;
+            return 0;
+
+        case FN_HASH_END:
+            if (!ch) {
+                return -ENOENT;
+            }
+            if (fs->store->collection_bits(ch) < 0) {
+                return -ENOENT;
+            }
+        // fall-thru
+        case FN_HASH_START:
+            stbuf->st_size = 9;
+            return 0;
+
+        case FN_HASH_BITS: {
+            if (!ch) {
+                return -ENOENT;
+            }
             int bits = fs->store->collection_bits(ch);
-            if (bits < 0)
+            if (bits < 0) {
                 return -ENOENT;
+            }
             char buf[12];
             snprintf(buf, sizeof(buf), "%d\n", bits);
             stbuf->st_size = strlen(buf);
         }
         return 0;
 
-    case FN_OBJECT_DATA:
-        {
-            if (!fs->store->exists(ch, oid))
+        case FN_OBJECT_DATA: {
+            if (!fs->store->exists(ch, oid)) {
                 return -ENOENT;
+            }
             int r = fs->store->stat(ch, oid, stbuf);
-            if (r < 0)
+            if (r < 0) {
                 return r;
+            }
         }
         break;
 
-    case FN_OBJECT_OMAP_HEADER:
-        {
-            if (!fs->store->exists(ch, oid))
+        case FN_OBJECT_OMAP_HEADER: {
+            if (!fs->store->exists(ch, oid)) {
                 return -ENOENT;
+            }
             bufferlist bl;
             fs->store->omap_get_header(ch, oid, &bl);
             stbuf->st_size = bl.length();
         }
         break;
 
-    case FN_OBJECT_OMAP_VAL:
-        {
-            if (!fs->store->exists(ch, oid))
+        case FN_OBJECT_OMAP_VAL: {
+            if (!fs->store->exists(ch, oid)) {
                 return -ENOENT;
+            }
             set < string > k;
             k.insert(key);
             map < string, bufferlist > v;
@@ -374,22 +404,24 @@ static int os_getattr(const char *path, struct stat *stbuf
         }
         break;
 
-    case FN_OBJECT_ATTR_VAL:
-        {
-            if (!fs->store->exists(ch, oid))
+        case FN_OBJECT_ATTR_VAL: {
+            if (!fs->store->exists(ch, oid)) {
                 return -ENOENT;
+            }
             bufferptr v;
             int r = fs->store->getattr(ch, oid, key.c_str(), v);
-            if (r == -ENODATA)
+            if (r == -ENODATA) {
                 r = -ENOENT;
-            if (r < 0)
+            }
+            if (r < 0) {
                 return r;
+            }
             stbuf->st_size = v.length();
         }
         break;
 
-    default:
-        return -ENOENT;
+        default:
+            return -ENOENT;
     }
 
     return 0;
@@ -402,20 +434,21 @@ static int os_readdir(const char *path,
 #if FUSE_VERSION >= FUSE_MAKE_VERSION(3, 0)
                       , enum fuse_readdir_flags
 #endif
-    )
+                     )
 {
     fuse_context *fc = fuse_get_context();
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
     ldout(fs->store->cct, 10) << __func__ << " " << path << " offset " << offset
-        << dendl;
+                              << dendl;
     coll_t cid;
     ghobject_t oid;
     string key;
     uint32_t hash_value, hash_bits;
     int t = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (t < 0)
+    if (t < 0) {
         return t;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
@@ -425,22 +458,21 @@ static int os_readdir(const char *path,
     const int hash_shift = 31;
 
     switch (t) {
-    case FN_ROOT:
-        {
+        case FN_ROOT: {
             filler_compat(filler, buf, "type", NULL, 0);
             vector < coll_t > cls;
             fs->store->list_collections(cls);
-          for (auto c:cls) {
+            for (auto c : cls) {
                 int r =
                     filler_compat(filler, buf, stringify(c).c_str(), NULL, 0);
-                if (r > 0)
+                if (r > 0) {
                     break;
+                }
             }
         }
         break;
 
-    case FN_COLLECTION:
-        {
+        case FN_COLLECTION: {
             if (!ch) {
                 return -ENOENT;
             }
@@ -459,8 +491,7 @@ static int os_readdir(const char *path,
         }
         break;
 
-    case FN_OBJECT:
-        {
+        case FN_OBJECT: {
             filler_compat(filler, buf, "bitwise_hash", NULL, 0);
             filler_compat(filler, buf, "data", NULL, 0);
             filler_compat(filler, buf, "omap", NULL, 0);
@@ -469,9 +500,8 @@ static int os_readdir(const char *path,
         }
         break;
 
-    case FN_HASH_VAL:
-    case FN_ALL:
-        {
+        case FN_HASH_VAL:
+        case FN_ALL: {
             uint32_t bitwise_hash = (offset >> hash_shift) & 0xffffffff;
             uint32_t hashoff = offset - (bitwise_hash << hash_shift);
             int skip = hashoff;
@@ -479,36 +509,36 @@ static int os_readdir(const char *path,
             if (offset) {
                 // obey the offset
                 next.hobj.set_hash(hobject_t::_reverse_bits(bitwise_hash));
-            }
-            else if (t == FN_HASH_VAL) {
+            } else if (t == FN_HASH_VAL) {
                 next.hobj.set_hash(hobject_t::_reverse_bits(hash_value));
             }
             ghobject_t last;
             if (t == FN_HASH_VAL) {
                 last = next;
                 uint64_t rev_end = (hash_value | (0xffffffff >> hash_bits)) + 1;
-                if (rev_end >= 0x100000000)
+                if (rev_end >= 0x100000000) {
                     last = ghobject_t::get_max();
-                else
+                } else {
                     last.hobj.set_hash(hobject_t::_reverse_bits(rev_end));
-            }
-            else {
+                }
+            } else {
                 last = ghobject_t::get_max();
             }
             ldout(fs->store->cct, 10) << __func__ << std::hex
-                << " offset " << offset << " hash "
-                << hobject_t::_reverse_bits(hash_value)
-                << std::dec
-                << "/" << hash_bits
-                << " first " << next << " last " << last << dendl;
+                                      << " offset " << offset << " hash "
+                                      << hobject_t::_reverse_bits(hash_value)
+                                      << std::dec
+                                      << "/" << hash_bits
+                                      << " first " << next << " last " << last << dendl;
             while (true) {
                 vector < ghobject_t > ls;
                 int r =
                     fs->store->collection_list(ch, next, last, 1000, &ls,
                                                &next);
-                if (r < 0)
+                if (r < 0) {
                     return r;
-              for (auto p:ls) {
+                }
+                for (auto p : ls) {
                     if (skip) {
                         --skip;
                         continue;
@@ -520,44 +550,46 @@ static int os_readdir(const char *path,
                     }
                     ++hashoff;
                     uint64_t cur_off = ((uint64_t) bitwise_hash << hash_shift) |
-                        (uint64_t) hashoff;
+                                       (uint64_t) hashoff;
                     string s = stringify(p);
                     r = filler_compat(filler, buf, s.c_str(), NULL, cur_off);
-                    if (r)
+                    if (r) {
                         break;
+                    }
                 }
-                if (r)
+                if (r) {
                     break;
-                if (next == ghobject_t::get_max() || next == last)
+                }
+                if (next == ghobject_t::get_max() || next == last) {
                     break;
+                }
             }
         }
         break;
 
-    case FN_OBJECT_OMAP:
-        {
+        case FN_OBJECT_OMAP: {
             set < string > keys;
             fs->store->omap_get_keys(ch, oid, &keys);
             unsigned skip = offset;
-          for (auto k:keys) {
+            for (auto k : keys) {
                 if (skip) {
                     --skip;
                     continue;
                 }
                 ++offset;
                 int r = filler_compat(filler, buf, k.c_str(), NULL, offset);
-                if (r)
+                if (r) {
                     break;
+                }
             }
         }
         break;
 
-    case FN_OBJECT_ATTR:
-        {
+        case FN_OBJECT_ATTR: {
             map < string, bufferptr, less <>> aset;
             fs->store->getattrs(ch, oid, aset);
             unsigned skip = offset;
-          for (auto a:aset) {
+            for (auto a : aset) {
                 if (skip) {
                     --skip;
                     continue;
@@ -565,8 +597,9 @@ static int os_readdir(const char *path,
                 ++offset;
                 int r =
                     filler_compat(filler, buf, a.first.c_str(), NULL, offset);
-                if (r)
+                if (r) {
                     break;
+                }
             }
         }
         break;
@@ -585,8 +618,9 @@ static int os_open(const char *path, struct fuse_file_info *fi)
     uint32_t hash_value, hash_bits;
     int t = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (t < 0)
+    if (t < 0) {
         return t;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
@@ -594,14 +628,13 @@ static int os_open(const char *path, struct fuse_file_info *fi)
 
     bufferlist *pbl = 0;
     switch (t) {
-    case FN_TYPE:
-        pbl = new bufferlist;
-        pbl->append(fs->store->get_type());
-        pbl->append("\n");
-        break;
+        case FN_TYPE:
+            pbl = new bufferlist;
+            pbl->append(fs->store->get_type());
+            pbl->append("\n");
+            break;
 
-    case FN_HASH_START:
-        {
+        case FN_HASH_START: {
             pbl = new bufferlist;
             spg_t pgid;
             if (cid.is_pg(&pgid)) {
@@ -610,15 +643,13 @@ static int os_open(const char *path, struct fuse_file_info *fi)
                 char buf[10];
                 snprintf(buf, sizeof(buf), "%08lx\n", h);
                 pbl->append(buf);
-            }
-            else {
+            } else {
                 pbl->append("00000000\n");
             }
         }
         break;
 
-    case FN_HASH_END:
-        {
+        case FN_HASH_END: {
             if (!ch) {
                 return -ENOENT;
             }
@@ -630,12 +661,10 @@ static int os_open(const char *path, struct fuse_file_info *fi)
                     uint64_t rev_start = hobject_t::_reverse_bits(pgid.ps());
                     uint64_t rev_end = (rev_start | (0xffffffff >> hash_bits));
                     h = rev_end;
-                }
-                else {
+                } else {
                     return -ENOENT;
                 }
-            }
-            else {
+            } else {
                 h = 0xffffffff;
             }
             char buf[10];
@@ -645,14 +674,14 @@ static int os_open(const char *path, struct fuse_file_info *fi)
         }
         break;
 
-    case FN_HASH_BITS:
-        {
+        case FN_HASH_BITS: {
             if (!ch) {
                 return -ENOENT;
             }
             int r = fs->store->collection_bits(ch);
-            if (r < 0)
+            if (r < 0) {
                 return r;
+            }
             char buf[12];
             snprintf(buf, sizeof(buf), "%d\n", r);
             pbl = new bufferlist;
@@ -660,8 +689,7 @@ static int os_open(const char *path, struct fuse_file_info *fi)
         }
         break;
 
-    case FN_OBJECT_HASH:
-        {
+        case FN_OBJECT_HASH: {
             pbl = new bufferlist;
             char buf[10];
             snprintf(buf, sizeof(buf), "%08x\n",
@@ -670,67 +698,76 @@ static int os_open(const char *path, struct fuse_file_info *fi)
         }
         break;
 
-    case FN_OBJECT_DATA:
-        {
+        case FN_OBJECT_DATA: {
             int r = fs->open_file(path, fi,
-                                  [&](bufferlist * pbl) {
-                                  return fs->store->read(ch, oid, 0, 0, *pbl);}
-            );
+            [&](bufferlist * pbl) {
+                return fs->store->read(ch, oid, 0, 0, *pbl);
+            }
+                                 );
             if (r < 0) {
                 return r;
             }
         }
         break;
 
-    case FN_OBJECT_ATTR_VAL:
-        {
+        case FN_OBJECT_ATTR_VAL: {
             int r = fs->open_file(path, fi,
-                                  [&](bufferlist * pbl) {
-                                  bufferptr bp;
-                                  int r =
-                                  fs->store->getattr(ch, oid, key.c_str(), bp);
-                                  if (r < 0)
-                                  return r; pbl->append(bp); return 0;}
-            ) ;
-            if (r < 0)
+            [&](bufferlist * pbl) {
+                bufferptr bp;
+                int r =
+                    fs->store->getattr(ch, oid, key.c_str(), bp);
+                if (r < 0) {
+                    return r;
+                }
+                pbl->append(bp);
+                return 0;
+            }
+                                 ) ;
+            if (r < 0) {
                 return r;
+            }
         }
         break;
 
-    case FN_OBJECT_OMAP_VAL:
-        {
+        case FN_OBJECT_OMAP_VAL: {
             int r = fs->open_file(path, fi,
-                                  [&](bufferlist * pbl) {
-                                  set < string > k;
-                                  k.insert(key);
-                                  map < string, bufferlist > v;
-                                  int r =
-                                  fs->store->omap_get_values(ch, oid, k, &v);
-                                  if (r < 0)
-                                  return r; *pbl = v[key]; return 0;}
-            ) ;
-            if (r < 0)
+            [&](bufferlist * pbl) {
+                set < string > k;
+                k.insert(key);
+                map < string, bufferlist > v;
+                int r =
+                    fs->store->omap_get_values(ch, oid, k, &v);
+                if (r < 0) {
+                    return r;
+                }
+                *pbl = v[key];
+                return 0;
+            }
+                                 ) ;
+            if (r < 0) {
                 return r;
+            }
         }
         break;
 
-    case FN_OBJECT_OMAP_HEADER:
-        {
+        case FN_OBJECT_OMAP_HEADER: {
             int r = fs->open_file(path, fi,
-                                  [&](bufferlist * pbl) {
-                                  return fs->store->omap_get_header(ch, oid,
-                                                                    pbl);}
-            );
-            if (r < 0)
+            [&](bufferlist * pbl) {
+                return fs->store->omap_get_header(ch, oid,
+                                                  pbl);
+            }
+                                 );
+            if (r < 0) {
                 return r;
+            }
         }
         break;
     }
 
     if (pbl) {
-        FuseStore::OpenFile * o = new FuseStore::OpenFile;
+        FuseStore::OpenFile *o = new FuseStore::OpenFile;
         o->bl = std::move(*pbl);
-        fi->fh = reinterpret_cast < uint64_t > (o);
+        fi->fh = reinterpret_cast < uint64_t >(o);
     }
     return 0;
 }
@@ -746,8 +783,9 @@ static int os_mkdir(const char *path, mode_t mode)
     uint32_t hash_value, hash_bits;
     int f = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (f < 0)
+    if (f < 0) {
         return f;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
@@ -755,8 +793,7 @@ static int os_mkdir(const char *path, mode_t mode)
 
     ObjectStore::Transaction t;
     switch (f) {
-    case FN_OBJECT:
-        {
+        case FN_OBJECT: {
             ch = fs->store->open_collection(cid);
             if (!ch) {
                 return -ENOENT;
@@ -774,23 +811,23 @@ static int os_mkdir(const char *path, mode_t mode)
         }
         break;
 
-    case FN_COLLECTION:
-        if (cid.is_pg()) {
-            // use the mode for the bit count.  e.g., mkdir --mode=0003
-            // mnt/0.7_head will create 0.7 with bits = 3.
-            mode &= 0777;
-            if (mode >= 32)
-                return -EINVAL;
-        }
-        else {
-            mode = 0;
-        }
-        t.create_collection(cid, mode);
-        ch = fs->store->create_new_collection(cid);
-        break;
+        case FN_COLLECTION:
+            if (cid.is_pg()) {
+                // use the mode for the bit count.  e.g., mkdir --mode=0003
+                // mnt/0.7_head will create 0.7 with bits = 3.
+                mode &= 0777;
+                if (mode >= 32) {
+                    return -EINVAL;
+                }
+            } else {
+                mode = 0;
+            }
+            t.create_collection(cid, mode);
+            ch = fs->store->create_new_collection(cid);
+            break;
 
-    default:
-        return -EPERM;
+        default:
+            return -EPERM;
     }
 
     if (!t.empty()) {
@@ -804,7 +841,7 @@ static int os_chmod(const char *path, mode_t mode
 #if FUSE_VERSION >= FUSE_MAKE_VERSION(3, 0)
                     , struct fuse_file_info *fi
 #endif
-    )
+                   )
 {
     fuse_context *fc = fuse_get_context();
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
@@ -823,8 +860,9 @@ static int os_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     uint32_t hash_value, hash_bits;
     int f = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (f < 0)
+    if (f < 0) {
         return f;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
@@ -833,15 +871,13 @@ static int os_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     ObjectStore::Transaction t;
     bufferlist *pbl = 0;
     switch (f) {
-    case FN_OBJECT_DATA:
-        {
+        case FN_OBJECT_DATA: {
             pbl = new bufferlist;
             fs->store->read(ch, oid, 0, 0, *pbl);
         }
         break;
 
-    case FN_OBJECT_ATTR_VAL:
-        {
+        case FN_OBJECT_ATTR_VAL: {
             pbl = new bufferlist;
             bufferptr bp;
             int r = fs->store->getattr(ch, oid, key.c_str(), bp);
@@ -853,8 +889,7 @@ static int os_create(const char *path, mode_t mode, struct fuse_file_info *fi)
         }
         break;
 
-    case FN_OBJECT_OMAP_VAL:
-        {
+        case FN_OBJECT_OMAP_VAL: {
             pbl = new bufferlist;
             set < string > k;
             k.insert(key);
@@ -864,8 +899,7 @@ static int os_create(const char *path, mode_t mode, struct fuse_file_info *fi)
                 map < string, bufferlist > aset;
                 aset[key] = bufferlist();
                 t.omap_setkeys(cid, oid, aset);
-            }
-            else {
+            } else {
                 *pbl = v[key];
             }
         }
@@ -877,10 +911,10 @@ static int os_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     }
 
     if (pbl) {
-        FuseStore::OpenFile * o = new FuseStore::OpenFile;
+        FuseStore::OpenFile *o = new FuseStore::OpenFile;
         o->bl = std::move(*pbl);
         o->dirty = true;
-        fi->fh = reinterpret_cast < uint64_t > (o);
+        fi->fh = reinterpret_cast < uint64_t >(o);
     }
     return 0;
 }
@@ -891,7 +925,7 @@ static int os_release(const char *path, struct fuse_file_info *fi)
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
     ldout(fs->store->cct, 10) << __func__ << " " << path << dendl;
     std::lock_guard < std::mutex > l(fs->lock);
-    FuseStore::OpenFile * o =
+    FuseStore::OpenFile *o =
         reinterpret_cast < FuseStore::OpenFile * >(fi->fh);
     if (--o->ref == 0) {
         ldout(fs->store->cct,
@@ -908,16 +942,19 @@ static int os_read(const char *path, char *buf, size_t size, off_t offset,
     fuse_context *fc = fuse_get_context();
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
     ldout(fs->store->cct, 10) << __func__ << " " << path << " offset " << offset
-        << " size " << size << dendl;
+                              << " size " << size << dendl;
     std::lock_guard < std::mutex > l(fs->lock);
-    FuseStore::OpenFile * o =
+    FuseStore::OpenFile *o =
         reinterpret_cast < FuseStore::OpenFile * >(fi->fh);
-    if (!o)
+    if (!o) {
         return 0;
-    if (offset >= o->bl.length())
+    }
+    if (offset >= o->bl.length()) {
         return 0;
-    if (offset + size > o->bl.length())
+    }
+    if (offset + size > o->bl.length()) {
         size = o->bl.length() - offset;
+    }
     bufferlist r;
     r.substr_of(o->bl, offset, size);
     memcpy(buf, r.c_str(), r.length());
@@ -930,19 +967,19 @@ static int os_write(const char *path, const char *buf, size_t size,
     fuse_context *fc = fuse_get_context();
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
     ldout(fs->store->cct, 10) << __func__ << " " << path << " offset " << offset
-        << " size " << size << dendl;
+                              << " size " << size << dendl;
     std::lock_guard < std::mutex > l(fs->lock);
-    FuseStore::OpenFile * o =
+    FuseStore::OpenFile *o =
         reinterpret_cast < FuseStore::OpenFile * >(fi->fh);
-    if (!o)
+    if (!o) {
         return 0;
+    }
 
     bufferlist final;
     if (offset) {
         if (offset > o->bl.length()) {
             final.substr_of(o->bl, 0, offset);
-        }
-        else {
+        } else {
             final.claim_append(o->bl);
             size_t zlen = offset - final.length();
             final.append_zero(zlen);
@@ -970,45 +1007,47 @@ int os_flush(const char *path, struct fuse_file_info *fi)
     uint32_t hash_value, hash_bits;
     int f = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (f < 0)
+    if (f < 0) {
         return f;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
-    FuseStore::OpenFile * o =
+    FuseStore::OpenFile *o =
         reinterpret_cast < FuseStore::OpenFile * >(fi->fh);
-    if (!o)
+    if (!o) {
         return 0;
-    if (!o->dirty)
+    }
+    if (!o->dirty) {
         return 0;
+    }
 
     ObjectStore::CollectionHandle ch = fs->store->open_collection(cid);
 
     ObjectStore::Transaction t;
 
     switch (f) {
-    case FN_OBJECT_DATA:
-        t.write(cid, oid, 0, o->bl.length(), o->bl);
-        break;
+        case FN_OBJECT_DATA:
+            t.write(cid, oid, 0, o->bl.length(), o->bl);
+            break;
 
-    case FN_OBJECT_ATTR_VAL:
-        t.setattr(cid, oid, key.c_str(), o->bl);
-        break;
+        case FN_OBJECT_ATTR_VAL:
+            t.setattr(cid, oid, key.c_str(), o->bl);
+            break;
 
-    case FN_OBJECT_OMAP_VAL:
-        {
+        case FN_OBJECT_OMAP_VAL: {
             map < string, bufferlist > aset;
             aset[key] = o->bl;
             t.omap_setkeys(cid, oid, aset);
             break;
         }
 
-    case FN_OBJECT_OMAP_HEADER:
-        t.omap_setheader(cid, oid, o->bl);
-        break;
+        case FN_OBJECT_OMAP_HEADER:
+            t.omap_setheader(cid, oid, o->bl);
+            break;
 
-    default:
-        return 0;
+        default:
+            return 0;
     }
 
     fs->store->queue_transaction(ch, std::move(t));
@@ -1027,8 +1066,9 @@ static int os_unlink(const char *path)
     uint32_t hash_value, hash_bits;
     int f = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (f < 0)
+    if (f < 0) {
         return f;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
@@ -1036,45 +1076,44 @@ static int os_unlink(const char *path)
     ObjectStore::Transaction t;
 
     switch (f) {
-    case FN_OBJECT_OMAP_VAL:
-        {
+        case FN_OBJECT_OMAP_VAL: {
             t.omap_rmkey(cid, oid, key);
         }
         break;
 
-    case FN_OBJECT_ATTR_VAL:
-        t.rmattr(cid, oid, key.c_str());
-        break;
+        case FN_OBJECT_ATTR_VAL:
+            t.rmattr(cid, oid, key.c_str());
+            break;
 
-    case FN_OBJECT_OMAP_HEADER:
-        {
+        case FN_OBJECT_OMAP_HEADER: {
             bufferlist empty;
             t.omap_setheader(cid, oid, empty);
         }
         break;
 
-    case FN_OBJECT:
-        t.remove(cid, oid);
-        break;
+        case FN_OBJECT:
+            t.remove(cid, oid);
+            break;
 
-    case FN_COLLECTION:
-        {
+        case FN_COLLECTION: {
             bool empty;
             int r = fs->store->collection_empty(ch, &empty);
-            if (r < 0)
+            if (r < 0) {
                 return r;
-            if (!empty)
+            }
+            if (!empty) {
                 return -ENOTEMPTY;
+            }
             t.remove_collection(cid);
         }
         break;
 
-    case FN_OBJECT_DATA:
-        t.truncate(cid, oid, 0);
-        break;
+        case FN_OBJECT_DATA:
+            t.truncate(cid, oid, 0);
+            break;
 
-    default:
-        return -EPERM;
+        default:
+            return -EPERM;
     }
 
     fs->store->queue_transaction(ch, std::move(t));
@@ -1086,7 +1125,7 @@ static int os_truncate(const char *path, off_t size
 #if FUSE_VERSION >= FUSE_MAKE_VERSION(3, 0)
                        , struct fuse_file_info *fi
 #endif
-    )
+                      )
 {
     fuse_context *fc = fuse_get_context();
     FuseStore *fs = static_cast < FuseStore * >(fc->private_data);
@@ -1098,22 +1137,25 @@ static int os_truncate(const char *path, off_t size
     uint32_t hash_value, hash_bits;
     int f = parse_fn(fs->store->cct, path, &cid, &oid, &key, &hash_value,
                      &hash_bits);
-    if (f < 0)
+    if (f < 0) {
         return f;
+    }
 
     if (f == FN_OBJECT_OMAP_VAL ||
         f == FN_OBJECT_ATTR_VAL || f == FN_OBJECT_OMAP_HEADER) {
-        if (size)
+        if (size) {
             return -EPERM;
+        }
         return 0;
     }
-    if (f != FN_OBJECT_DATA)
+    if (f != FN_OBJECT_DATA) {
         return -EPERM;
+    }
 
     std::lock_guard < std::mutex > l(fs->lock);
 
     if (fs->open_files.count(path)) {
-        FuseStore::OpenFile * o = fs->open_files[path];
+        FuseStore::OpenFile *o = fs->open_files[path];
         if (o->bl.length() > size) {
             bufferlist t;
             t.substr_of(o->bl, 0, size);
@@ -1137,56 +1179,71 @@ static int os_statfs(const char *path, struct statvfs *stbuf)
 
     struct store_statfs_t s;
     int r = fs->store->statfs(&s);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     stbuf->f_bsize = 4096;      // LIES!
     stbuf->f_blocks = s.total / 4096;
     stbuf->f_bavail = s.available / 4096;
     stbuf->f_bfree = stbuf->f_bavail;
 
     ldout(fs->store->cct, 10) << __func__ << " " << path << ": "
-        << stbuf->f_bavail << "/" << stbuf->f_blocks << dendl;
+                              << stbuf->f_bavail << "/" << stbuf->f_blocks << dendl;
     return 0;
 }
 
 static struct fuse_operations fs_oper = {
-  getattr:os_getattr,
-  readlink:0,
+    getattr:
+    os_getattr,
+    readlink: 0,
 #if FUSE_VERSION < FUSE_MAKE_VERSION(3, 0)
-  getdir:0,
+    getdir: 0,
 #endif
-  mknod:0,
-  mkdir:os_mkdir,
-  unlink:os_unlink,
-  rmdir:os_unlink,
-  symlink:0,
-  rename:0,
-  link:0,
-  chmod:os_chmod,
-  chown:0,
-  truncate:os_truncate,
+    mknod: 0,
+    mkdir:
+    os_mkdir,
+    unlink:
+    os_unlink,
+    rmdir:
+    os_unlink,
+    symlink: 0,
+    rename: 0,
+    link: 0,
+    chmod:
+    os_chmod,
+    chown: 0,
+    truncate:
+    os_truncate,
 #if FUSE_VERSION < FUSE_MAKE_VERSION(3, 0)
-  utime:0,
+    utime: 0,
 #endif
-  open:os_open,
-  read:os_read,
-  write:os_write,
-  statfs:os_statfs,
-  flush:os_flush,
-  release:os_release,
-  fsync:0,
-  setxattr:0,
-  getxattr:0,
-  listxattr:0,
-  removexattr:0,
-  opendir:0,
-  readdir:os_readdir,
-  releasedir:0,
-  fsyncdir:0,
-  init:0,
-  destroy:0,
-  access:0,
-  create:os_create,
+    open:
+    os_open,
+    read:
+    os_read,
+    write:
+    os_write,
+    statfs:
+    os_statfs,
+    flush:
+    os_flush,
+    release:
+    os_release,
+    fsync: 0,
+    setxattr: 0,
+    getxattr: 0,
+    listxattr: 0,
+    removexattr: 0,
+    opendir: 0,
+    readdir:
+    os_readdir,
+    releasedir: 0,
+    fsyncdir: 0,
+    init: 0,
+    destroy: 0,
+    access: 0,
+    create:
+    os_create,
 };
 
 int FuseStore::main()
@@ -1194,13 +1251,14 @@ int FuseStore::main()
     const char *v[] = {
         "foo",
         mount_point.c_str(),
-        "-f",
-        "-d",                   // debug
+                   "-f",
+                   "-d",                   // debug
     };
     int c = 3;
     auto fuse_debug = store->cct->_conf.get_val < bool > ("fuse_debug");
-    if (fuse_debug)
+    if (fuse_debug) {
         ++c;
+    }
     return fuse_main(c, (char **)v, &fs_oper, (void *)this);
 }
 
@@ -1212,8 +1270,8 @@ int FuseStore::start()
     const char *v[] = {
         "foo",
         mount_point.c_str(),
-        "-f",                   // foreground
-        "-d",                   // debug
+                   "-f",                   // foreground
+                   "-d",                   // debug
     };
     int c = 3;
 #if FUSE_VERSION >= FUSE_MAKE_VERSION(3, 0)
@@ -1221,8 +1279,9 @@ int FuseStore::start()
     struct fuse_cmdline_opts opts = { };
 #endif
     auto fuse_debug = store->cct->_conf.get_val < bool > ("fuse_debug");
-    if (fuse_debug)
+    if (fuse_debug) {
         ++c;
+    }
     fuse_args a = FUSE_ARGS_INIT(c, (char **)v);
     info->args = a;
 #if FUSE_VERSION >= FUSE_MAKE_VERSION(3, 0)
@@ -1272,8 +1331,9 @@ int FuseStore::loop()
 {
     dout(10) << __func__ << " enter" << dendl;
     int r = fuse_loop(info->f);
-    if (r)
+    if (r) {
         derr << __func__ << " got " << cpp_strerror(r) << dendl;
+    }
     dout(10) << __func__ << " exit" << dendl;
     return r;
 }

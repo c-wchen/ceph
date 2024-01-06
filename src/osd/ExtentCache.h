@@ -80,13 +80,13 @@
       - The extent must persist until Write reqid N completes
       - All ops pinning this extent are writes in the WaitRead state of
         the Write pipeline (there must be an in progress write, so no
-	reads can be in progress).
+    reads can be in progress).
    2) Write Pinned N:
       - This extent has data corresponding to some reqid M <= N
       - The extent must persist until Write reqid N commits
       - All ops pinning this extent are writes in some Write
         state (all are possible).  Reads are not possible
-	in this state (or the others) due to 2).
+    in this state (or the others) due to 2).
 
    All of the above suggests that there are 3 things users can
    ask of the cache corresponding to the 3 Write pipelines
@@ -96,30 +96,36 @@
 /// If someone wants these types, but not ExtentCache, move to another file
 struct bl_split_merge {
     ceph::buffer::list split(uint64_t offset,
-                             uint64_t length, ceph::buffer::list & bl) const {
+                             uint64_t length, ceph::buffer::list &bl) const
+    {
         ceph::buffer::list out;
         out.substr_of(bl, offset, length);
         return out;
-    } bool can_merge(const ceph::buffer::list & left,
-                     const ceph::buffer::list & right)const {
+    } bool can_merge(const ceph::buffer::list &left,
+                     const ceph::buffer::list &right)const
+    {
         return true;
     } ceph::buffer::list merge(ceph::buffer::list && left, ceph::buffer::list
-                               && right) const {
+                               && right) const
+    {
         ceph::buffer::list bl {
-        std::move(left)};
-         bl.claim_append(right);
-         return bl;
-    } uint64_t length(const ceph::buffer::list & b)const {
+            std::move(left)};
+        bl.claim_append(right);
+        return bl;
+    } uint64_t length(const ceph::buffer::list &b)const
+    {
         return b.length();
-}};
+    }
+};
 using extent_set = interval_set < uint64_t >;
 using extent_map =
     interval_map < uint64_t, ceph::buffer::list, bl_split_merge >;
 
-class ExtentCache {
+class ExtentCache
+{
     struct object_extent_set;
     struct pin_state;
-  private:
+private:
 
     struct extent {
         object_extent_set *parent_extent_set = nullptr;
@@ -131,52 +137,64 @@ class ExtentCache {
         uint64_t length;
         std::optional < ceph::buffer::list > bl;
 
-        uint64_t get_length() const {
+        uint64_t get_length() const
+        {
             return length;
-        } bool is_pending() const {
+        } bool is_pending() const
+        {
             return bl == std::nullopt;
-        } bool pinned_by_write() const {
+        } bool pinned_by_write() const
+        {
             ceph_assert(parent_pin_state);
             return parent_pin_state->is_write();
-        } uint64_t pin_tid() const {
+        } uint64_t pin_tid() const
+        {
             ceph_assert(parent_pin_state);
             return parent_pin_state->tid;
         } extent(uint64_t offset, ceph::buffer::list _bl)
-        :offset(offset), length(_bl.length()), bl(_bl) {
+            : offset(offset), length(_bl.length()), bl(_bl)
+        {
         } extent(uint64_t offset, uint64_t length)
-        :offset(offset), length(length) {
-        } bool operator<(const extent & rhs)const {
+            : offset(offset), length(length)
+        {
+        } bool operator<(const extent &rhs)const
+        {
             return offset < rhs.offset;
-      } private:
+        } private:
         // can briefly violate the two link invariant, used in unlink() and move()
-        void _link_pin_state(pin_state & pin_state);
+        void _link_pin_state(pin_state &pin_state);
         void _unlink_pin_state();
-      public:
+    public:
         void unlink();
-        void link(object_extent_set & parent_extent_set, pin_state & pin_state);
-        void move(pin_state & to);
+        void link(object_extent_set &parent_extent_set, pin_state &pin_state);
+        void move(pin_state &to);
     };
 
-    struct object_extent_set:boost::intrusive::set_base_hook <> {
+    struct object_extent_set: boost::intrusive::set_base_hook <> {
         hobject_t oid;
-        explicit object_extent_set(const hobject_t & oid):oid(oid) {
+        explicit object_extent_set(const hobject_t &oid): oid(oid)
+        {
         } using set_member_options = boost::intrusive::member_hook <
-            extent,
-            boost::intrusive::set_member_hook <>, &extent::extent_set_member >;
+                                     extent,
+                                     boost::intrusive::set_member_hook <>, &extent::extent_set_member >;
         using set = boost::intrusive::set < extent, set_member_options >;
         set extent_set;
 
-        bool operator<(const object_extent_set & rhs) const {
+        bool operator<(const object_extent_set &rhs) const
+        {
             return oid < rhs.oid;
         } struct uint_cmp {
-            bool operator() (uint64_t lhs, const extent & rhs)const {
+            bool operator()(uint64_t lhs, const extent &rhs)const
+            {
                 return lhs < rhs.offset;
-            } bool operator() (const extent & lhs, uint64_t rhs)const {
+            } bool operator()(const extent &lhs, uint64_t rhs)const
+            {
                 return lhs.offset < rhs;
-        }};
+            }
+        };
         std::pair < set::iterator,
             set::iterator > get_containing_range(uint64_t offset,
-                                                 uint64_t length);
+                    uint64_t length);
 
         void erase(uint64_t offset, uint64_t length);
 
@@ -189,24 +207,24 @@ class ExtentCache {
             std::optional < ceph::buffer::list > bl;
         };
         template < typename F >
-            void traverse_update(pin_state & pin,
-                                 uint64_t offset, uint64_t length, F && f) {
+        void traverse_update(pin_state &pin,
+                             uint64_t offset, uint64_t length, F && f)
+        {
             auto range = get_containing_range(offset, length);
 
             if (range.first == range.second || range.first->offset > offset) {
                 uint64_t extlen = range.first == range.second ?
-                    length : range.first->offset - offset;
+                                  length : range.first->offset - offset;
 
                 update_action action;
                 f(offset, extlen, nullptr, &action);
                 ceph_assert(!action.bl || action.bl->length() == extlen);
                 if (action.action == update_action::UPDATE_PIN) {
                     extent *ext = action.bl ?
-                        new extent(offset, *action.bl) :
-                        new extent(offset, extlen);
+                                  new extent(offset, *action.bl) :
+                                  new extent(offset, extlen);
                     ext->link(*this, pin);
-                }
-                else {
+                } else {
                     ceph_assert(!action.bl);
                 }
             }
@@ -225,8 +243,7 @@ class ExtentCache {
                 extent *final_extent = nullptr;
                 if (action.action == update_action::NONE) {
                     final_extent = ext;
-                }
-                else {
+                } else {
                     pin_state *ps = ext->parent_pin_state;
                     ext->unlink();
                     if ((ext->offset < offset) &&
@@ -236,8 +253,7 @@ class ExtentCache {
                             ceph::buffer::list bl;
                             bl.substr_of(*(ext->bl), 0, offset - ext->offset);
                             head = new extent(ext->offset, bl);
-                        }
-                        else {
+                        } else {
                             head =
                                 new extent(ext->offset, offset - ext->offset);
                         }
@@ -247,15 +263,14 @@ class ExtentCache {
                         (offset + length > ext->offset)) {
                         uint64_t nlen =
                             (ext->offset + ext->get_length()) - (offset +
-                                                                 length);
+                                length);
                         extent *tail = nullptr;
                         if (ext->bl) {
                             ceph::buffer::list bl;
                             bl.substr_of(*(ext->bl),
                                          ext->get_length() - nlen, nlen);
                             tail = new extent(offset + length, bl);
-                        }
-                        else {
+                        } else {
                             tail = new extent(offset + length, nlen);
                         }
                         tail->link(*this, *ps);
@@ -266,8 +281,7 @@ class ExtentCache {
                             bl.substr_of(*(ext->bl),
                                          extoff - ext->offset, extlen);
                             final_extent = new ExtentCache::extent(extoff, bl);
-                        }
-                        else {
+                        } else {
                             final_extent =
                                 new ExtentCache::extent(extoff, extlen);
                         }
@@ -283,7 +297,7 @@ class ExtentCache {
                 }
 
                 uint64_t next_off = p == range.second ?
-                    offset + length : p->offset;
+                                    offset + length : p->offset;
                 if (extoff + extlen < next_off) {
                     uint64_t tailoff = extoff + extlen;
                     uint64_t taillen = next_off - tailoff;
@@ -293,11 +307,10 @@ class ExtentCache {
                     ceph_assert(!action.bl || action.bl->length() == taillen);
                     if (action.action == update_action::UPDATE_PIN) {
                         extent *ext = action.bl ?
-                            new extent(tailoff, *action.bl) :
-                            new extent(tailoff, taillen);
+                                      new extent(tailoff, *action.bl) :
+                                      new extent(tailoff, taillen);
                         ext->link(*this, pin);
-                    }
-                    else {
+                    } else {
                         ceph_assert(!action.bl);
                     }
                 }
@@ -305,16 +318,19 @@ class ExtentCache {
         }
     };
     struct Cmp {
-        bool operator() (const hobject_t & oid, const object_extent_set & rhs)const {
+        bool operator()(const hobject_t &oid, const object_extent_set &rhs)const
+        {
             return oid < rhs.oid;
-        } bool operator() (const object_extent_set & lhs, const hobject_t & oid)const {
+        } bool operator()(const object_extent_set &lhs, const hobject_t &oid)const
+        {
             return lhs.oid < oid;
-    }};
+        }
+    };
 
-    object_extent_set & get_or_create(const hobject_t & oid);
-    object_extent_set *get_if_exists(const hobject_t & oid);
+    object_extent_set &get_or_create(const hobject_t &oid);
+    object_extent_set *get_if_exists(const hobject_t &oid);
 
-    void remove_and_destroy_if_empty(object_extent_set & set);
+    void remove_and_destroy_if_empty(object_extent_set &set);
     using cache_set = boost::intrusive::set < object_extent_set >;
     cache_set per_object_caches;
 
@@ -327,23 +343,26 @@ class ExtentCache {
             WRITE,
         };
         pin_type_t pin_type = NONE;
-        bool is_write() const {
+        bool is_write() const
+        {
             return pin_type == WRITE;
-        } pin_state(const pin_state & other) = delete;
-        pin_state & operator=(const pin_state & other) = delete;
+        } pin_state(const pin_state &other) = delete;
+        pin_state &operator=(const pin_state &other) = delete;
         pin_state(pin_state && other) = delete;
         pin_state() = default;
 
         using list_member_options = boost::intrusive::member_hook <
-            extent,
-            boost::intrusive::list_member_hook <>, &extent::pin_list_member >;
+                                    extent,
+                                    boost::intrusive::list_member_hook <>, &extent::pin_list_member >;
         using list = boost::intrusive::list < extent, list_member_options >;
         list pin_list;
-        ~pin_state() {
+        ~pin_state()
+        {
             ceph_assert(pin_list.empty());
             ceph_assert(tid == 0);
             ceph_assert(pin_type == NONE);
-        } void _open(uint64_t in_tid, pin_type_t in_type) {
+        } void _open(uint64_t in_tid, pin_type_t in_type)
+        {
             ceph_assert(pin_type == NONE);
             ceph_assert(in_tid > 0);
             tid = in_tid;
@@ -351,12 +370,13 @@ class ExtentCache {
         }
     };
 
-    void release_pin(pin_state & p) {
+    void release_pin(pin_state &p)
+    {
         for (auto iter = p.pin_list.begin(); iter != p.pin_list.end();) {
             std::unique_ptr < extent > extent(&*iter);  // we now own this
             iter++;             // unlink will invalidate
             ceph_assert(extent->parent_extent_set);
-            auto & eset = *(extent->parent_extent_set);
+            auto &eset = *(extent->parent_extent_set);
             extent->unlink();
             remove_and_destroy_if_empty(eset);
         }
@@ -364,95 +384,100 @@ class ExtentCache {
         p.pin_type = pin_state::NONE;
     }
 
-  public:
-  class write_pin:private pin_state {
+public:
+    class write_pin: private pin_state
+    {
         friend class ExtentCache;
-      private:
-        void open(uint64_t in_tid) {
+    private:
+        void open(uint64_t in_tid)
+        {
             _open(in_tid, pin_state::WRITE);
         }
-      public:
-      write_pin():pin_state() {
+    public:
+        write_pin(): pin_state()
+        {
         }
     };
 
-    void open_write_pin(write_pin & pin) {
+    void open_write_pin(write_pin &pin)
+    {
         pin.open(next_write_tid++);
     }
 
-  /**
-   * Reserves extents required for rmw, and learn
-   * which need to be read
-   *
-   * Pins all extents in to_write.  Returns subset of to_read not
-   * currently present in the cache.  Caller must obtain those
-   * extents before calling get_remaining_extents_for_rmw.
-   *
-   * Transition table:
-   * - Empty -> Write Pending pin.reqid
-   * - Write Pending N -> Write Pending pin.reqid
-   * - Write Pinned N -> Write Pinned pin.reqid
-   *
-   * @param oid [in] object undergoing rmw
-   * @param pin [in,out] pin to use (obtained from create_write_pin)
-   * @param to_write [in] extents which will be written
-   * @param to_read [in] extents to read prior to write (must be subset
-   *                     of to_write)
-   * @return subset of to_read which isn't already present or pending
-   */
-    extent_set reserve_extents_for_rmw(const hobject_t & oid,
-                                       write_pin & pin,
-                                       const extent_set & to_write,
-                                       const extent_set & to_read);
+    /**
+     * Reserves extents required for rmw, and learn
+     * which need to be read
+     *
+     * Pins all extents in to_write.  Returns subset of to_read not
+     * currently present in the cache.  Caller must obtain those
+     * extents before calling get_remaining_extents_for_rmw.
+     *
+     * Transition table:
+     * - Empty -> Write Pending pin.reqid
+     * - Write Pending N -> Write Pending pin.reqid
+     * - Write Pinned N -> Write Pinned pin.reqid
+     *
+     * @param oid [in] object undergoing rmw
+     * @param pin [in,out] pin to use (obtained from create_write_pin)
+     * @param to_write [in] extents which will be written
+     * @param to_read [in] extents to read prior to write (must be subset
+     *                     of to_write)
+     * @return subset of to_read which isn't already present or pending
+     */
+    extent_set reserve_extents_for_rmw(const hobject_t &oid,
+                                       write_pin &pin,
+                                       const extent_set &to_write,
+                                       const extent_set &to_read);
 
-  /**
-   * Gets extents required for rmw not returned from
-   * reserve_extents_for_rmw
-   *
-   * Requested extents (to_get) must be the set to_read \ the set
-   * returned from reserve_extents_for_rmw.  No transition table,
-   * all extents at this point must be present and already pinned
-   * for this pin by reserve_extents_for_rmw.
-   *
-   * @param oid [in] object
-   * @param pin [in,out] pin associated with this IO
-   * @param to_get [in] extents to get (see above for restrictions)
-   * @return map of buffers from to_get
-   */
-    extent_map get_remaining_extents_for_rmw(const hobject_t & oid,
-                                             write_pin & pin,
-                                             const extent_set & to_get);
+    /**
+     * Gets extents required for rmw not returned from
+     * reserve_extents_for_rmw
+     *
+     * Requested extents (to_get) must be the set to_read \ the set
+     * returned from reserve_extents_for_rmw.  No transition table,
+     * all extents at this point must be present and already pinned
+     * for this pin by reserve_extents_for_rmw.
+     *
+     * @param oid [in] object
+     * @param pin [in,out] pin associated with this IO
+     * @param to_get [in] extents to get (see above for restrictions)
+     * @return map of buffers from to_get
+     */
+    extent_map get_remaining_extents_for_rmw(const hobject_t &oid,
+            write_pin &pin,
+            const extent_set &to_get);
 
-  /**
-   * Updates the cache to reflect the rmw write
-   *
-   * All presented extents must already have been specified in
-   * reserve_extents_for_rmw under to_write.
-   *
-   * Transition table:
-   * - Empty -> invalid, must call reserve_extents_for_rmw first
-   * - Write Pending N -> Write Pinned N, update buffer
-   *     (assert N >= pin.reqid)
-   * - Write Pinned N -> Update buffer (assert N >= pin.reqid)
-   *
-   * @param oid [in] object
-   * @param pin [in,out] pin associated with this IO
-   * @param extents [in] map of buffers to update
-   * @return void
-   */
-    void present_rmw_update(const hobject_t & oid,
-                            write_pin & pin, const extent_map & extents);
+    /**
+     * Updates the cache to reflect the rmw write
+     *
+     * All presented extents must already have been specified in
+     * reserve_extents_for_rmw under to_write.
+     *
+     * Transition table:
+     * - Empty -> invalid, must call reserve_extents_for_rmw first
+     * - Write Pending N -> Write Pinned N, update buffer
+     *     (assert N >= pin.reqid)
+     * - Write Pinned N -> Update buffer (assert N >= pin.reqid)
+     *
+     * @param oid [in] object
+     * @param pin [in,out] pin associated with this IO
+     * @param extents [in] map of buffers to update
+     * @return void
+     */
+    void present_rmw_update(const hobject_t &oid,
+                            write_pin &pin, const extent_map &extents);
 
-  /**
-   * Release all buffers pinned by pin
-   */
-    void release_write_pin(write_pin & pin) {
+    /**
+     * Release all buffers pinned by pin
+     */
+    void release_write_pin(write_pin &pin)
+    {
         release_pin(pin);
     }
 
-    std::ostream & print(std::ostream & out) const;
+    std::ostream &print(std::ostream &out) const;
 };
 
-std::ostream & operator <<(std::ostream & lhs, const ExtentCache & cache);
+std::ostream &operator <<(std::ostream &lhs, const ExtentCache &cache);
 
 #endif

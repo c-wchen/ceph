@@ -7,8 +7,8 @@
 using std::map;
 using std::string;
 
-KeyValueDB *KeyValueDB::create(CephContext * cct, const string & type,
-                               const string & dir,
+KeyValueDB *KeyValueDB::create(CephContext *cct, const string &type,
+                               const string &dir,
                                map < string, string > options, void *p)
 {
     if (type == "rocksdb") {
@@ -17,7 +17,7 @@ KeyValueDB *KeyValueDB::create(CephContext * cct, const string & type,
     return NULL;
 }
 
-int KeyValueDB::test_init(const string & type, const string & dir)
+int KeyValueDB::test_init(const string &type, const string &dir)
 {
     if (type == "rocksdb") {
         return RocksDBStore::_test_init(dir);

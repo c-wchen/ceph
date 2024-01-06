@@ -10,7 +10,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 #include <stdio.h>
 #include "arch/probe.h"
@@ -29,12 +29,12 @@ int ceph_arch_intel_aesni = 0;
 
 /* http://en.wikipedia.org/wiki/CPUID#EAX.3D1:_Processor_Info_and_Feature_Bits */
 
-#define CPUID_PCLMUL	(1 << 1)
-#define CPUID_SSE42	(1 << 20)
-#define CPUID_SSE41	(1 << 19)
-#define CPUID_SSSE3	(1 << 9)
-#define CPUID_SSE3	(1)
-#define CPUID_SSE2	(1 << 26)
+#define CPUID_PCLMUL    (1 << 1)
+#define CPUID_SSE42 (1 << 20)
+#define CPUID_SSE41 (1 << 19)
+#define CPUID_SSSE3 (1 << 9)
+#define CPUID_SSE3  (1)
+#define CPUID_SSE2  (1 << 26)
 #define CPUID_AESNI (1 << 25)
 
 int ceph_arch_intel_probe(void)

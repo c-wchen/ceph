@@ -13,110 +13,121 @@
 #include <sys/uio.h>
 #include <boost/variant/variant.hpp>
 
-namespace librbd {
+namespace librbd
+{
 
-    struct ImageCtx;
+struct ImageCtx;
 
-    namespace io {
+namespace io
+{
 
-        struct AioCompletion;
-         template < typename > struct ObjectReadRequest;
+struct AioCompletion;
+template < typename > struct ObjectReadRequest;
 
-        class ReadResult {
-          public:
-            struct C_ImageReadRequest:public Context {
-                AioCompletion *aio_completion;
-                uint64_t buffer_offset = 0;
-                Extents image_extents;
-                bufferlist bl;
-                bool ignore_enoent = false;
+class ReadResult
+{
+public:
+    struct C_ImageReadRequest: public Context {
+        AioCompletion *aio_completion;
+        uint64_t buffer_offset = 0;
+        Extents image_extents;
+        bufferlist bl;
+        bool ignore_enoent = false;
 
-                 C_ImageReadRequest(AioCompletion * aio_completion,
-                                    uint64_t buffer_offset,
-                                    const Extents image_extents);
+        C_ImageReadRequest(AioCompletion *aio_completion,
+                           uint64_t buffer_offset,
+                           const Extents image_extents);
 
-                void finish(int r) override;
-            };
+        void finish(int r) override;
+    };
 
-            struct C_ObjectReadRequest:public Context {
-                AioCompletion *aio_completion;
-                ReadExtents extents;
+    struct C_ObjectReadRequest: public Context {
+        AioCompletion *aio_completion;
+        ReadExtents extents;
 
-                 C_ObjectReadRequest(AioCompletion * aio_completion, ReadExtents
-                                     && extents);
+        C_ObjectReadRequest(AioCompletion *aio_completion, ReadExtents
+                            && extents);
 
-                void finish(int r) override;
-            };
+        void finish(int r) override;
+    };
 
-            struct C_ObjectReadMergedExtents:public Context {
-                CephContext *cct;
-                ReadExtents *extents;
-                Context *on_finish;
-                bufferlist bl;
+    struct C_ObjectReadMergedExtents: public Context {
+        CephContext *cct;
+        ReadExtents *extents;
+        Context *on_finish;
+        bufferlist bl;
 
-                 C_ObjectReadMergedExtents(CephContext * cct,
-                                           ReadExtents * extents,
-                                           Context * on_finish);
+        C_ObjectReadMergedExtents(CephContext *cct,
+                                  ReadExtents *extents,
+                                  Context *on_finish);
 
-                void finish(int r) override;
-            };
+        void finish(int r) override;
+    };
 
-             ReadResult();
-             ReadResult(char *buf, size_t buf_len);
-             ReadResult(const struct iovec *iov, int iov_count);
-             ReadResult(ceph::bufferlist * bl);
-             ReadResult(Extents * extent_map, ceph::bufferlist * bl);
+    ReadResult();
+    ReadResult(char *buf, size_t buf_len);
+    ReadResult(const struct iovec *iov, int iov_count);
+    ReadResult(ceph::bufferlist *bl);
+    ReadResult(Extents *extent_map, ceph::bufferlist *bl);
 
-            void set_image_extents(const Extents & image_extents);
+    void set_image_extents(const Extents &image_extents);
 
-            void assemble_result(CephContext * cct);
+    void assemble_result(CephContext *cct);
 
-          private:
-            struct Empty {
-            };
+private:
+    struct Empty {
+    };
 
-            struct Linear {
-                char *buf;
-                size_t buf_len;
+    struct Linear {
+        char *buf;
+        size_t buf_len;
 
-                 Linear(char *buf, size_t buf_len):buf(buf), buf_len(buf_len) {
-            }};
+        Linear(char *buf, size_t buf_len): buf(buf), buf_len(buf_len)
+        {
+        }
+    };
 
-            struct Vector {
-                const struct iovec *iov;
-                int iov_count;
+    struct Vector {
+        const struct iovec *iov;
+        int iov_count;
 
-                 Vector(const struct iovec *iov, int iov_count)
-                :iov(iov), iov_count(iov_count) {
-            }};
+        Vector(const struct iovec *iov, int iov_count)
+            : iov(iov), iov_count(iov_count)
+        {
+        }
+    };
 
-            struct Bufferlist {
-                ceph::bufferlist * bl;
+    struct Bufferlist {
+        ceph::bufferlist *bl;
 
-                Bufferlist(ceph::bufferlist * bl):bl(bl) {
-            }};
+        Bufferlist(ceph::bufferlist *bl): bl(bl)
+        {
+        }
+    };
 
-            struct SparseBufferlist {
-                Extents *extent_map;
-                 ceph::bufferlist * bl;
+    struct SparseBufferlist {
+        Extents *extent_map;
+        ceph::bufferlist *bl;
 
-                Extents image_extents;
+        Extents image_extents;
 
-                 SparseBufferlist(Extents * extent_map, ceph::bufferlist * bl)
-                :extent_map(extent_map), bl(bl) {
-            }};
+        SparseBufferlist(Extents *extent_map, ceph::bufferlist *bl)
+            : extent_map(extent_map), bl(bl)
+        {
+        }
+    };
 
-            typedef boost::variant < Empty,
-                Linear, Vector, Bufferlist, SparseBufferlist > Buffer;
-            struct SetImageExtentsVisitor;
-            struct AssembleResultVisitor;
+    typedef boost::variant < Empty,
+            Linear, Vector, Bufferlist, SparseBufferlist > Buffer;
+    struct SetImageExtentsVisitor;
+    struct AssembleResultVisitor;
 
-            Buffer m_buffer;
-            Striper::StripedReadResult m_destriper;
+    Buffer m_buffer;
+    Striper::StripedReadResult m_destriper;
 
-        };
+};
 
-    }                           // namespace io
+}                           // namespace io
 }                               // namespace librbd
 
 #endif // CEPH_LIBRBD_IO_READ_RESULT_H

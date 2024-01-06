@@ -5,8 +5,11 @@
 #include "crimson/os/seastore/backref_manager.h"
 #include "crimson/os/seastore/backref/btree_backref_manager.h"
 
-namespace crimson::os::seastore {
+namespace crimson::os::seastore
+{
 
-    BackrefManagerRef create_backref_manager(Cache & cache) {
-        return BackrefManagerRef(new backref::BtreeBackrefManager(cache));
-}}                              // namespace crimson::os::seastore::backref
+BackrefManagerRef create_backref_manager(Cache &cache)
+{
+    return BackrefManagerRef(new backref::BtreeBackrefManager(cache));
+}
+}                              // namespace crimson::os::seastore::backref

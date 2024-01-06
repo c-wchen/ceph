@@ -50,41 +50,45 @@ std::string verstr(const std::tuple < uint32_t, uint32_t, uint32_t > &v)
     return fmt::format("v{}.{}.{}", maj, min, p);
 }
 
-template < typename V > void printseq(const V & v, std::ostream & m)
+template < typename V > void printseq(const V &v, std::ostream &m)
 {
-    std::for_each(v.cbegin(), v.cend(),[&m] (const auto & e) {
-                  fmt::print(m, "{}\n", e);});
+    std::for_each(v.cbegin(), v.cend(), [&m](const auto & e) {
+        fmt::print(m, "{}\n", e);
+    });
 }
 
 template < typename V, typename F >
-    void printseq(const V & v, std::ostream & m, F && f)
+void printseq(const V &v, std::ostream &m, F && f)
 {
-    std::for_each(v.cbegin(), v.cend(),[&m, &f] (const auto & e) {
-                  fmt::print(m, "{}\n", f(e));});
+    std::for_each(v.cbegin(), v.cend(), [&m, &f](const auto & e) {
+        fmt::print(m, "{}\n", f(e));
+    });
 }
 
-std::int64_t lookup_pool(R::RADOS & r, const std::string & pname,
+std::int64_t lookup_pool(R::RADOS &r, const std::string &pname,
                          s::yield_context y)
 {
     bs::error_code ec;
     auto p = r.lookup_pool(pname, y[ec]);
-    if (ec)
+    if (ec) {
         throw bs::system_error(ec, fmt::format("when looking up '{}'", pname));
+    }
     return p;
 }
 
-void lspools(R::RADOS & r, const std::vector < std::string > &,
+void lspools(R::RADOS &r, const std::vector < std::string > &,
              s::yield_context y)
 {
     const auto l = r.list_pools(y);
-    printseq(l, std::cout,[](const auto & p)->const std::string & {
-             return p.second;}
-    );
+    printseq(l, std::cout, [](const auto & p)->const std::string & {
+        return p.second;
+    }
+            );
 }
 
-void ls(R::RADOS & r, const std::vector < std::string > &p, s::yield_context y)
+void ls(R::RADOS &r, const std::vector < std::string > &p, s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     const auto pool = lookup_pool(r, pname, y);
 
     std::vector < R::Entry > ls;
@@ -92,20 +96,21 @@ void ls(R::RADOS & r, const std::vector < std::string > &p, s::yield_context y)
     bs::error_code ec;
     do {
         std::tie(ls, next) = r.enumerate_objects(pool, next, R::Cursor::end(),
-                                                 1000, {
-                                                 }
-                                                 , y[ec], R::all_nspaces);
-        if (ec)
+        1000, {
+        }
+        , y[ec], R::all_nspaces);
+        if (ec) {
             throw bs::system_error(ec, fmt::format("when listing {}", pname));
+        }
         printseq(ls, std::cout);
         ls.clear();
     } while (next != R::Cursor::end());
 }
 
-void mkpool(R::RADOS & r, const std::vector < std::string > &p,
+void mkpool(R::RADOS &r, const std::vector < std::string > &p,
             s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     bs::error_code ec;
     r.create_pool(pname, std::nullopt, y[ec]);
     if (ec)
@@ -113,10 +118,10 @@ void mkpool(R::RADOS & r, const std::vector < std::string > &p,
                                fmt::format("when creating pool '{}'", pname));
 }
 
-void rmpool(R::RADOS & r, const std::vector < std::string > &p,
+void rmpool(R::RADOS &r, const std::vector < std::string > &p,
             s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     bs::error_code ec;
     r.delete_pool(pname, y[ec]);
     if (ec)
@@ -124,10 +129,10 @@ void rmpool(R::RADOS & r, const std::vector < std::string > &p,
                                fmt::format("when removing pool '{}'", pname));
 }
 
-void create(R::RADOS & r, const std::vector < std::string > &p,
+void create(R::RADOS &r, const std::vector < std::string > &p,
             s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     const R::Object obj = p[1];
     const auto pool = lookup_pool(r, pname, y);
 
@@ -144,10 +149,10 @@ void create(R::RADOS & r, const std::vector < std::string > &p,
 
 inline constexpr std::size_t io_size = 4 << 20;
 
-void write(R::RADOS & r, const std::vector < std::string > &p,
+void write(R::RADOS &r, const std::vector < std::string > &p,
            s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     const R::Object obj(p[1]);
     const auto pool = lookup_pool(r, pname, y);
 
@@ -164,8 +169,9 @@ void write(R::RADOS & r, const std::vector < std::string > &p,
         std::cin.read(buf.get(), io_size);
         auto len = std::cin.gcount();
         off += len;
-        if (len == 0)
-            break;              // Nothin' to do.
+        if (len == 0) {
+            break;    // Nothin' to do.
+        }
 
         ceph::buffer::list bl;
         bl.append(buffer::create_static(len, buf.get()));
@@ -182,10 +188,10 @@ void write(R::RADOS & r, const std::vector < std::string > &p,
     }
 }
 
-void read(R::RADOS & r, const std::vector < std::string > &p,
+void read(R::RADOS &r, const std::vector < std::string > &p,
           s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     const R::Object obj(p[1]);
     const auto pool = lookup_pool(r, pname, y);
 
@@ -222,9 +228,9 @@ void read(R::RADOS & r, const std::vector < std::string > &p,
     }
 }
 
-void rm(R::RADOS & r, const std::vector < std::string > &p, s::yield_context y)
+void rm(R::RADOS &r, const std::vector < std::string > &p, s::yield_context y)
 {
-    const auto & pname = p[0];
+    const auto &pname = p[0];
     const R::Object obj = p[1];
     const auto pool = lookup_pool(r, pname, y);
 
@@ -241,7 +247,7 @@ void rm(R::RADOS & r, const std::vector < std::string > &p, s::yield_context y)
 
 static constexpr auto version = std::make_tuple(0ul, 0ul, 1ul);
 
-using cmdfunc = void (*)(R::RADOS & r, const std::vector < std::string > &p,
+using cmdfunc = void (*)(R::RADOS &r, const std::vector < std::string > &p,
                          s::yield_context);
 
 struct cmdesc {
@@ -256,48 +262,48 @@ const std::array commands = {
     // Pools operations ;)
 
     cmdesc {"lspools" sv,
-            0, &lspools,
-            "" sv,
-            "List all pools" sv},
+        0, &lspools,
+        "" sv,
+        "List all pools" sv},
 
     // Pool operations
 
     cmdesc {"ls" sv,
-            1, &ls,
-            "POOL" sv,
-            "list all objects in POOL" sv},
+        1, &ls,
+        "POOL" sv,
+        "list all objects in POOL" sv},
     cmdesc {"mkpool" sv,
-            1, &mkpool,
-            "POOL" sv,
-            "create POOL" sv},
+        1, &mkpool,
+        "POOL" sv,
+        "create POOL" sv},
     cmdesc {"rmpool" sv,
-            1, &rmpool,
-            "POOL" sv,
-            "remove POOL" sv},
+        1, &rmpool,
+        "POOL" sv,
+        "remove POOL" sv},
 
     // Object operations
 
     cmdesc {"create" sv,
-            2, &create,
-            "POOL OBJECT" sv,
-            "exclusively create OBJECT in POOL" sv},
+        2, &create,
+        "POOL OBJECT" sv,
+        "exclusively create OBJECT in POOL" sv},
     cmdesc {"write" sv,
-            2, &write,
-            "POOL OBJECT" sv,
-            "write to OBJECT in POOL from standard input" sv},
+        2, &write,
+        "POOL OBJECT" sv,
+        "write to OBJECT in POOL from standard input" sv},
     cmdesc {"read" sv,
-            2, &read,
-            "POOL OBJECT" sv,
-            "read contents of OBJECT in POOL to standard out" sv},
+        2, &read,
+        "POOL OBJECT" sv,
+        "read contents of OBJECT in POOL to standard out" sv},
     cmdesc {"rm" sv,
-            2, &rm,
-            "POOL OBJECT" sv,
-            "remove OBJECT in POOL" sv}
+        2, &rm,
+        "POOL OBJECT" sv,
+        "remove OBJECT in POOL" sv}
 };
 
 #if FMT_VERSION >= 90000
 template <> struct fmt::formatter <
-    boost::program_options::options_description >:ostream_formatter {
+    boost::program_options::options_description > : ostream_formatter {
 };
 #endif // FMT_VERSION
 
@@ -333,7 +339,7 @@ int main(int argc, char *argv[])
         if (vm.count("help")) {
             fmt::print("{}", desc);
             fmt::print("Commands:\n");
-          for (const auto & cmd:commands) {
+            for (const auto &cmd : commands) {
                 fmt::print("    {} {}{}{}\n",
                            cmd.name, cmd.usage,
                            cmd.name.length() + cmd.usage.length() < 13 ?
@@ -362,9 +368,10 @@ int main(int argc, char *argv[])
         ba::io_context c;
 
         if (auto ci = std::find_if(commands.begin(), commands.end(),
-                                   [&command] (const cmdesc & c) {
-                                   return c.name == command;}
-            ); ci != commands.end()) {
+        [&command](const cmdesc & c) {
+        return c.name == command;
+    }
+                              ); ci != commands.end()) {
             if (parameters.size() < ci->arity) {
                 fmt::print(std::cerr, "{}: {}: too few arguments\n\t{} {}\n",
                            prog, command, ci->name, ci->usage);
@@ -375,19 +382,19 @@ int main(int argc, char *argv[])
                            prog, command, ci->name, ci->usage);
                 return 1;
             }
-            s::spawn(c,[&](s::yield_context y) {
-                     auto r = R::RADOS::Builder {
-                     }
-                     .build(c, y); ci->f(r, parameters, y);}
-            );
-        }
-        else {
+            s::spawn(c, [&](s::yield_context y) {
+                auto r = R::RADOS::Builder {
+                }
+                .build(c, y);
+                ci->f(r, parameters, y);
+            }
+                    );
+        } else {
             fmt::print(std::cerr, "{}: {}: unknown command\n", prog, command);
             return 1;
         }
         c.run();
-    }
-    catch(const std::exception & e) {
+    } catch (const std::exception &e) {
         fmt::print(std::cerr, "{}: {}: {}\n", prog, command, e.what());
         return 1;
     }

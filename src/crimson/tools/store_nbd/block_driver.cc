@@ -10,11 +10,9 @@ BlockDriverRef get_backend(BlockDriver::config_t config)
 {
     if (config.type == "transaction_manager") {
         return std::make_unique < TMDriver > (config);
-    }
-    else if (config.is_futurized_store()) {
+    } else if (config.is_futurized_store()) {
         return std::make_unique < FSDriver > (config);
-    }
-    else {
+    } else {
         ceph_assert(0 == "invalid option");
         return BlockDriverRef();
     }

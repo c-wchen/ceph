@@ -11,7 +11,7 @@
 
 #include "ceph_dokan.h"
 
-void print_credentials(std::ostringstream & Stream,
+void print_credentials(std::ostringstream &Stream,
                        PDOKAN_FILE_INFO DokanFileInfo);
 void print_open_params(LPCSTR FilePath,
                        ACCESS_MASK AccessMode,

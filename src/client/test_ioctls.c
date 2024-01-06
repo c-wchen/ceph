@@ -42,9 +42,9 @@ int main(int argc, char **argv)
         return 1;
     }
     printf
-        ("layout:\n stripe_unit %lld\n stripe_count %lld\n object_size %lld\n data_pool %lld\n",
-         (long long)l.stripe_unit, (long long)l.stripe_count,
-         (long long)l.object_size, (long long)l.data_pool);
+    ("layout:\n stripe_unit %lld\n stripe_count %lld\n object_size %lld\n data_pool %lld\n",
+     (long long)l.stripe_unit, (long long)l.stripe_count,
+     (long long)l.object_size, (long long)l.data_pool);
 
     /* set layout */
     l.stripe_unit = 1048576;
@@ -64,9 +64,9 @@ int main(int argc, char **argv)
         return 1;
     }
     printf
-        ("layout:\n stripe_unit %lld\n stripe_count %lld\n object_size %lld\n data_pool %lld\n",
-         (long long)l.stripe_unit, (long long)l.stripe_count,
-         (long long)l.object_size, (long long)l.data_pool);
+    ("layout:\n stripe_unit %lld\n stripe_count %lld\n object_size %lld\n data_pool %lld\n",
+     (long long)l.stripe_unit, (long long)l.stripe_count,
+     (long long)l.object_size, (long long)l.data_pool);
 
     /* dataloc */
     dl.file_offset = atoll(argv[2]);
@@ -79,9 +79,9 @@ int main(int argc, char **argv)
     printf("dataloc:\n");
     printf(" file_offset %lld (of object start)\n", (long long)dl.file_offset);
     printf
-        (" object '%s'\n object_offset %lld\n object_size %lld object_no %lld\n",
-         dl.object_name, (long long)dl.object_offset, (long long)dl.object_size,
-         (long long)dl.object_no);
+    (" object '%s'\n object_offset %lld\n object_size %lld object_no %lld\n",
+     dl.object_name, (long long)dl.object_offset, (long long)dl.object_size,
+     (long long)dl.object_no);
     printf(" block_offset %lld\n block_size %lld\n", (long long)dl.block_offset,
            (long long)dl.block_size);
 
@@ -90,8 +90,9 @@ int main(int argc, char **argv)
                 sizeof(buf), 0, 0, NI_NUMERICHOST);
     printf(" osd%lld %s\n", (long long)dl.osd, buf);
 
-    if (argc < 4)
+    if (argc < 4) {
         return 0;
+    }
 
     /* set dir default layout */
     printf("testing dir policy setting\n");
@@ -122,8 +123,8 @@ int main(int argc, char **argv)
         return 1;
     }
     printf
-        ("layout:\n stripe_unit %lld\n stripe_count %lld\n object_size %lld\n data_pool %lld\n",
-         (long long)l.stripe_unit, (long long)l.stripe_count,
-         (long long)l.object_size, (long long)l.data_pool);
+    ("layout:\n stripe_unit %lld\n stripe_count %lld\n object_size %lld\n data_pool %lld\n",
+     (long long)l.stripe_unit, (long long)l.stripe_count,
+     (long long)l.object_size, (long long)l.data_pool);
     return 0;
 }

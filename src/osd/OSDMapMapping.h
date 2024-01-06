@@ -14,8 +14,9 @@
 class OSDMap;
 
 /// work queue to perform work on batches of pgids on multiple CPUs
-class ParallelPGMapper {
-  public:
+class ParallelPGMapper
+{
+public:
     struct Job {
         utime_t start, finish;
         unsigned shards = 0;
@@ -23,47 +24,53 @@ class ParallelPGMapper {
         bool aborted = false;
         Context *onfinish = nullptr;
 
-         ceph::mutex lock = ceph::make_mutex("ParallelPGMapper::Job::lock");
-         ceph::condition_variable cond;
+        ceph::mutex lock = ceph::make_mutex("ParallelPGMapper::Job::lock");
+        ceph::condition_variable cond;
 
-         Job(const OSDMap * om):start(ceph_clock_now()), osdmap(om) {
-        } virtual ~ Job() {
+        Job(const OSDMap *om): start(ceph_clock_now()), osdmap(om)
+        {
+        } virtual ~ Job()
+        {
             ceph_assert(shards == 0);
         }
         // child must implement either form of process
-            virtual void process(const std::vector < pg_t > &pgs) = 0;
+        virtual void process(const std::vector < pg_t > &pgs) = 0;
         virtual void process(int64_t poolid, unsigned ps_begin,
                              unsigned ps_end) = 0;
         virtual void complete() = 0;
 
-        void set_finish_event(Context * fin) {
+        void set_finish_event(Context *fin)
+        {
             lock.lock();
             if (shards == 0) {
                 // already done.
                 lock.unlock();
                 fin->complete(0);
-            }
-            else {
+            } else {
                 // set finisher
                 onfinish = fin;
                 lock.unlock();
             }
         }
-        bool is_done() {
+        bool is_done()
+        {
             std::lock_guard l(lock);
             return shards == 0;
         }
-        utime_t get_duration() {
+        utime_t get_duration()
+        {
             return finish - start;
         }
-        void wait() {
+        void wait()
+        {
             std::unique_lock l(lock);
-            cond.wait(l,[this] {
-                      return shards == 0;
-                      }
-            );
+            cond.wait(l, [this] {
+                return shards == 0;
+            }
+                     );
         }
-        bool wait_for(double duration) {
+        bool wait_for(double duration)
+        {
             utime_t until = start;
             until += duration;
             std::unique_lock l(lock);
@@ -75,106 +82,118 @@ class ParallelPGMapper {
             }
             return true;
         }
-        void abort() {
+        void abort()
+        {
             Context *fin = nullptr;
             {
                 std::unique_lock l(lock);
                 aborted = true;
                 fin = onfinish;
                 onfinish = nullptr;
-                cond.wait(l,[this] {
-                          return shards == 0;
-                          }
-                );
+                cond.wait(l, [this] {
+                    return shards == 0;
+                }
+                         );
             }
             if (fin) {
                 fin->complete(-ECANCELED);
             }
         }
 
-        void start_one() {
+        void start_one()
+        {
             std::lock_guard l(lock);
             ++shards;
         }
         void finish_one();
     };
 
-  protected:
-    CephContext * cct;
+protected:
+    CephContext *cct;
 
     struct Item {
         Job *job;
         int64_t pool;
         unsigned begin, end;
-         std::vector < pg_t > pgs;
+        std::vector < pg_t > pgs;
 
-         Item(Job * j, std::vector < pg_t > pgs):job(j), pgs(pgs) {
-        } Item(Job * j, int64_t p, unsigned b, unsigned e)
-        :job(j), pool(p), begin(b), end(e) {
+        Item(Job *j, std::vector < pg_t > pgs): job(j), pgs(pgs)
+        {
+        } Item(Job *j, int64_t p, unsigned b, unsigned e)
+            : job(j), pool(p), begin(b), end(e)
+        {
         }
     };
     std::deque < Item * >q;
 
-    struct WQ:public ThreadPool::WorkQueue < Item > {
+    struct WQ: public ThreadPool::WorkQueue < Item > {
         ParallelPGMapper *m;
 
-         WQ(ParallelPGMapper * m_, ThreadPool * tp)
-        :ThreadPool::WorkQueue < Item > ("ParallelPGMapper::WQ",
-                                         ceph::make_timespan(m_->cct->_conf->
-                                                             threadpool_default_timeout),
-                                         ceph::timespan::zero(), tp), m(m_) {
-        } bool _enqueue(Item * i) override {
+        WQ(ParallelPGMapper *m_, ThreadPool *tp)
+            : ThreadPool::WorkQueue < Item > ("ParallelPGMapper::WQ",
+                                              ceph::make_timespan(m_->cct->_conf->
+                                                      threadpool_default_timeout),
+                                              ceph::timespan::zero(), tp), m(m_)
+        {
+        } bool _enqueue(Item *i) override
+        {
             m->q.push_back(i);
             return true;
         }
-        void _dequeue(Item * i) override {
+        void _dequeue(Item *i) override
+        {
             ceph_abort();
         }
-        Item *_dequeue() override {
+        Item *_dequeue() override
+        {
             while (!m->q.empty()) {
                 Item *i = m->q.front();
                 m->q.pop_front();
                 if (i->job->aborted) {
                     i->job->finish_one();
                     delete i;
-                }
-                else {
+                } else {
                     return i;
                 }
             }
             return nullptr;
         }
 
-        void _process(Item * i, ThreadPool::TPHandle & h) override;
+        void _process(Item *i, ThreadPool::TPHandle &h) override;
 
-        void _clear() override {
+        void _clear() override
+        {
             ceph_assert(_empty());
         }
 
-        bool _empty() override {
+        bool _empty() override
+        {
             return m->q.empty();
         }
     }
     wq;
 
-  public:
-    ParallelPGMapper(CephContext * cct, ThreadPool * tp)
-  :    cct(cct), wq(this, tp) {
+public:
+    ParallelPGMapper(CephContext *cct, ThreadPool *tp)
+        :    cct(cct), wq(this, tp)
+    {
     }
 
-    void queue(Job * job,
+    void queue(Job *job,
                unsigned pgs_per_item, const std::vector < pg_t > &input_pgs);
 
-    void drain() {
+    void drain()
+    {
         wq.drain();
     }
 };
 
 /// a precalculated mapping of every PG for a given OSDMap
-class OSDMapMapping {
-  public:
+class OSDMapMapping
+{
+public:
     MEMPOOL_CLASS_HELPERS();
-  private:
+private:
 
     struct PoolMapping {
         MEMPOOL_CLASS_HELPERS();
@@ -182,27 +201,32 @@ class OSDMapMapping {
         unsigned size = 0;
         unsigned pg_num = 0;
         bool erasure = false;
-         mempool::osdmap_mapping::vector < int32_t > table;
+        mempool::osdmap_mapping::vector < int32_t > table;
 
-        size_t row_size() const {
+        size_t row_size() const
+        {
             return 1 +          // acting_primary
-            1 +                 // up_primary
-            1 +                 // num acting
-            1 +                 // num up
-            size +              // acting
-            size;               // up
+                   1 +                 // up_primary
+                   1 +                 // num acting
+                   1 +                 // num up
+                   size +              // acting
+                   size;               // up
         } PoolMapping(int s, int p, bool e)
-        :size(s), pg_num(p), erasure(e), table(pg_num * row_size()) {
+            : size(s), pg_num(p), erasure(e), table(pg_num * row_size())
+        {
         } void get(size_t ps,
-                   std::vector < int >*up,
+                   std::vector < int > *up,
                    int *up_primary,
-                   std::vector < int >*acting, int *acting_primary) const {
+                   std::vector < int > *acting, int *acting_primary) const
+        {
             const int32_t *row = &table[row_size() * ps];
             if (acting_primary) {
                 *acting_primary = row[0];
-            } if (up_primary) {
+            }
+            if (up_primary) {
                 *up_primary = row[1];
-            } if (acting) {
+            }
+            if (acting) {
                 acting->resize(row[2]);
                 for (int i = 0; i < row[2]; ++i) {
                     (*acting)[i] = row[4 + i];
@@ -217,9 +241,10 @@ class OSDMapMapping {
         }
 
         void set(size_t ps,
-                 const std::vector < int >&up,
+                 const std::vector < int > &up,
                  int up_primary,
-                 const std::vector < int >&acting, int acting_primary) {
+                 const std::vector < int > &acting, int acting_primary)
+        {
             int32_t *row = &table[row_size() * ps];
             row[0] = acting_primary;
             row[1] = up_primary;
@@ -243,49 +268,56 @@ class OSDMapMapping {
     epoch_t epoch = 0;
     uint64_t num_pgs = 0;
 
-    void _init_mappings(const OSDMap & osdmap);
-    void _update_range(const OSDMap & map,
+    void _init_mappings(const OSDMap &osdmap);
+    void _update_range(const OSDMap &map,
                        int64_t pool, unsigned pg_begin, unsigned pg_end);
 
-    void _build_rmap(const OSDMap & osdmap);
+    void _build_rmap(const OSDMap &osdmap);
 
-    void _start(const OSDMap & osdmap) {
+    void _start(const OSDMap &osdmap)
+    {
         _init_mappings(osdmap);
     }
-    void _finish(const OSDMap & osdmap);
+    void _finish(const OSDMap &osdmap);
 
     void _dump();
 
     friend class ParallelPGMapper;
 
-    struct MappingJob:public ParallelPGMapper::Job {
+    struct MappingJob: public ParallelPGMapper::Job {
         OSDMapMapping *mapping;
-         MappingJob(const OSDMap * osdmap, OSDMapMapping * m)
-        :Job(osdmap), mapping(m) {
+        MappingJob(const OSDMap *osdmap, OSDMapMapping *m)
+            : Job(osdmap), mapping(m)
+        {
             mapping->_start(*osdmap);
-        } void process(const std::vector < pg_t > &pgs) override {
+        } void process(const std::vector < pg_t > &pgs) override
+        {
         }
-        void process(int64_t pool, unsigned ps_begin, unsigned ps_end) override {
+        void process(int64_t pool, unsigned ps_begin, unsigned ps_end) override
+        {
             mapping->_update_range(*osdmap, pool, ps_begin, ps_end);
         }
-        void complete() override {
+        void complete() override
+        {
             mapping->_finish(*osdmap);
         }
     };
     friend class OSDMapTest;
     // for testing only
-    void update(const OSDMap & map);
+    void update(const OSDMap &map);
 
-  public:
+public:
     void get(pg_t pgid,
-             std::vector < int >*up,
+             std::vector < int > *up,
              int *up_primary,
-             std::vector < int >*acting, int *acting_primary) const {
+             std::vector < int > *acting, int *acting_primary) const
+    {
         auto p = pools.find(pgid.pool());
-         ceph_assert(p != pools.end());
-         ceph_assert(pgid.ps() < p->second.pg_num);
-         p->second.get(pgid.ps(), up, up_primary, acting, acting_primary);
-    } bool get_primary_and_shard(pg_t pgid, int *acting_primary, spg_t * spgid) {
+        ceph_assert(p != pools.end());
+        ceph_assert(pgid.ps() < p->second.pg_num);
+        p->second.get(pgid.ps(), up, up_primary, acting, acting_primary);
+    } bool get_primary_and_shard(pg_t pgid, int *acting_primary, spg_t *spgid)
+    {
         auto p = pools.find(pgid.pool());
         ceph_assert(p != pools.end());
         ceph_assert(pgid.ps() < p->second.pg_num);
@@ -299,34 +331,38 @@ class OSDMapMapping {
                 }
             }
             return false;
-        }
-        else {
+        } else {
             *spgid = spg_t(pgid);
             return true;
         }
     }
 
     const mempool::osdmap_mapping::vector < pg_t >
-        &get_osd_acting_pgs(unsigned osd) {
+    &get_osd_acting_pgs(unsigned osd)
+    {
         ceph_assert(osd < acting_rmap.size());
         return acting_rmap[osd];
     }
 
-    void update(const OSDMap & map, pg_t pgid);
+    void update(const OSDMap &map, pg_t pgid);
 
-    std::unique_ptr < MappingJob > start_update(const OSDMap & map,
-                                                ParallelPGMapper & mapper,
-                                                unsigned pgs_per_item) {
+    std::unique_ptr < MappingJob > start_update(const OSDMap &map,
+            ParallelPGMapper &mapper,
+            unsigned pgs_per_item)
+    {
         std::unique_ptr < MappingJob > job(new MappingJob(&map, this));
         mapper.queue(job.get(), pgs_per_item, {
-                     });
+        });
         return job;
     }
 
-    epoch_t get_epoch() const {
+    epoch_t get_epoch() const
+    {
         return epoch;
-    } uint64_t get_num_pgs() const {
+    } uint64_t get_num_pgs() const
+    {
         return num_pgs;
-}};
+    }
+};
 
 #endif

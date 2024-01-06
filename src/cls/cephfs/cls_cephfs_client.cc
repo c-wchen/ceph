@@ -25,12 +25,12 @@ using ceph::decode;
 #define XATTR_MAX_SIZE "scan_max_size"
 #define XATTR_POOL_ID "scan_pool_id"
 
-int ClsCephFSClient::accumulate_inode_metadata(librados::IoCtx & ctx,
-                                               inodeno_t inode_no,
-                                               const uint64_t obj_index,
-                                               const uint64_t obj_size,
-                                               const int64_t obj_pool_id,
-                                               const time_t mtime)
+int ClsCephFSClient::accumulate_inode_metadata(librados::IoCtx &ctx,
+        inodeno_t inode_no,
+        const uint64_t obj_index,
+        const uint64_t obj_size,
+        const int64_t obj_pool_id,
+        const time_t mtime)
 {
     AccumulateArgs args(obj_index,
                         obj_size,
@@ -56,8 +56,8 @@ int ClsCephFSClient::accumulate_inode_metadata(librados::IoCtx & ctx,
     return ctx.operate(zeroth_object.name, &op);
 }
 
-int ClsCephFSClient::delete_inode_accumulate_result(librados::IoCtx & ctx,
-                                                    const std::string & oid)
+int ClsCephFSClient::delete_inode_accumulate_result(librados::IoCtx &ctx,
+        const std::string &oid)
 {
     librados::ObjectWriteOperation op;
 
@@ -72,13 +72,13 @@ int ClsCephFSClient::delete_inode_accumulate_result(librados::IoCtx & ctx,
     return (ctx.operate(oid, &op));
 }
 
-int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
-                                                   const std::string & oid,
-                                                   inode_backtrace_t *
-                                                   backtrace,
-                                                   file_layout_t * layout,
-                                                   std::string * symlink,
-                                                   AccumulateResult * result)
+int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx &ctx,
+        const std::string &oid,
+        inode_backtrace_t *
+        backtrace,
+        file_layout_t *layout,
+        std::string *symlink,
+        AccumulateResult *result)
 {
     ceph_assert(backtrace != NULL);
     ceph_assert(result != NULL);
@@ -130,8 +130,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
         ceiling.decode(scan_ceiling_bl_iter);
         result->ceiling_obj_index = ceiling.id;
         result->ceiling_obj_size = ceiling.size;
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         //dout(4) << "Invalid ceiling attr on '" << oid << "'" << dendl;
         return -EINVAL;
     }
@@ -140,8 +139,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
     try {
         auto scan_max_size_bl_iter = scan_max_size_bl.cbegin();
         decode(result->max_obj_size, scan_max_size_bl_iter);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         //dout(4) << "Invalid size attr on '" << oid << "'" << dendl;
         return -EINVAL;
     }
@@ -151,8 +149,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
         try {
             auto scan_pool_id_bl_iter = scan_pool_id_bl.cbegin();
             decode(result->obj_pool_id, scan_pool_id_bl_iter);
-        }
-        catch(const ceph::buffer::error & err) {
+        } catch (const ceph::buffer::error &err) {
             //dout(4) << "Invalid pool_id attr on '" << oid << "'" << dendl;
             return -EINVAL;
         }
@@ -162,8 +159,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
     try {
         auto scan_max_mtime_bl_iter = scan_max_mtime_bl.cbegin();
         decode(result->max_mtime, scan_max_mtime_bl_iter);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         //dout(4) << "Invalid mtime attr on '" << oid << "'" << dendl;
         return -EINVAL;
     }
@@ -173,8 +169,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
         try {
             auto q = parent_bl.cbegin();
             backtrace->decode(q);
-        }
-        catch(ceph::buffer::error & e) {
+        } catch (ceph::buffer::error &e) {
             //dout(4) << "Corrupt backtrace on '" << oid << "': " << e << dendl;
             return -EINVAL;
         }
@@ -185,8 +180,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
         try {
             auto q = layout_bl.cbegin();
             decode(*layout, q);
-        }
-        catch(ceph::buffer::error & e) {
+        } catch (ceph::buffer::error &e) {
             return -EINVAL;
         }
     }
@@ -196,8 +190,7 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
         try {
             auto q = symlink_bl.cbegin();
             decode(*symlink, q);
-        }
-        catch(ceph::buffer::error & e) {
+        } catch (ceph::buffer::error &e) {
             return -EINVAL;
         }
     }
@@ -205,8 +198,8 @@ int ClsCephFSClient::fetch_inode_accumulate_result(librados::IoCtx & ctx,
     return 0;
 }
 
-void ClsCephFSClient::build_tag_filter(const std::string & scrub_tag,
-                                       bufferlist * out_bl)
+void ClsCephFSClient::build_tag_filter(const std::string &scrub_tag,
+                                       bufferlist *out_bl)
 {
     ceph_assert(out_bl != NULL);
 

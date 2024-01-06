@@ -37,69 +37,71 @@ static inline bool is_not_alnum_space(char c)
     return !(isalpha(c) || isdigit(c) || (c == '-') || (c == '_'));
 }
 
-static std::string maybe_quote_string(const std::string & str)
+static std::string maybe_quote_string(const std::string &str)
 {
-    if (find_if(str.begin(), str.end(), is_not_alnum_space) == str.end())
+    if (find_if(str.begin(), str.end(), is_not_alnum_space) == str.end()) {
         return str;
+    }
     return std::string("\"") + str + std::string("\"");
 }
 
 #define dout_subsys ceph_subsys_mgr
 
-std::ostream & operator<<(std::ostream & out, const mgr_rwxa_t & p)
+std::ostream &operator<<(std::ostream &out, const mgr_rwxa_t &p)
 {
-    if (p == MGR_CAP_ANY)
+    if (p == MGR_CAP_ANY) {
         return out << "*";
+    }
 
-    if (p & MGR_CAP_R)
+    if (p & MGR_CAP_R) {
         out << "r";
-    if (p & MGR_CAP_W)
+    }
+    if (p & MGR_CAP_W) {
         out << "w";
-    if (p & MGR_CAP_X)
+    }
+    if (p & MGR_CAP_X) {
         out << "x";
+    }
     return out;
 }
 
-std::ostream & operator<<(std::ostream & out, const MgrCapGrantConstraint & c)
+std::ostream &operator<<(std::ostream &out, const MgrCapGrantConstraint &c)
 {
     switch (c.match_type) {
-    case MgrCapGrantConstraint::MATCH_TYPE_EQUAL:
-        out << "=";
-        break;
-    case MgrCapGrantConstraint::MATCH_TYPE_PREFIX:
-        out << " prefix ";
-        break;
-    case MgrCapGrantConstraint::MATCH_TYPE_REGEX:
-        out << " regex ";
-        break;
-    default:
-        break;
+        case MgrCapGrantConstraint::MATCH_TYPE_EQUAL:
+            out << "=";
+            break;
+        case MgrCapGrantConstraint::MATCH_TYPE_PREFIX:
+            out << " prefix ";
+            break;
+        case MgrCapGrantConstraint::MATCH_TYPE_REGEX:
+            out << " regex ";
+            break;
+        default:
+            break;
     }
     out << maybe_quote_string(c.value);
     return out;
 }
 
-std::ostream & operator<<(std::ostream & out, const MgrCapGrant & m)
+std::ostream &operator<<(std::ostream &out, const MgrCapGrant &m)
 {
     if (!m.profile.empty()) {
         out << "profile " << maybe_quote_string(m.profile);
-    }
-    else {
+    } else {
         out << "allow";
         if (!m.service.empty()) {
             out << " service " << maybe_quote_string(m.service);
-        }
-        else if (!m.module.empty()) {
+        } else if (!m.module.empty()) {
             out << " module " << maybe_quote_string(m.module);
-        }
-        else if (!m.command.empty()) {
+        } else if (!m.command.empty()) {
             out << " command " << maybe_quote_string(m.command);
         }
     }
 
     if (!m.arguments.empty()) {
-        out << (!m.profile.empty()? "" : " with");
-      for (auto &[key, constraint]:m.arguments) {
+        out << (!m.profile.empty() ? "" : " with");
+        for (auto &[key, constraint] : m.arguments) {
             out << " " << maybe_quote_string(key) << constraint;
         }
     }
@@ -137,7 +139,7 @@ void MgrCapGrant::parse_network()
                                    &network_prefix);
 }
 
-void MgrCapGrant::expand_profile(std::ostream * err) const const
+void MgrCapGrant::expand_profile(std::ostream *err) const const
 {
     // only generate this list once
     if (!profile_grants.empty()) {
@@ -146,55 +148,55 @@ void MgrCapGrant::expand_profile(std::ostream * err) const const
 
     if (profile == "read-only") {
         // grants READ-ONLY caps MGR-wide
-        profile_grants.push_back( { {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , mgr_rwxa_t {
-                                 MGR_CAP_R}
-                                 }
-        );
+        profile_grants.push_back({ {
+            }
+            , {
+            }
+            , {
+            }
+            , {
+            }
+            , {
+            }
+            , mgr_rwxa_t {
+                MGR_CAP_R}
+        }
+                                );
         return;
     }
 
     if (profile == "read-write") {
         // grants READ-WRITE caps MGR-wide
-        profile_grants.push_back( { {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , mgr_rwxa_t {
-                                 MGR_CAP_R | MGR_CAP_W}
-                                 }
-        );
+        profile_grants.push_back({ {
+            }
+            , {
+            }
+            , {
+            }
+            , {
+            }
+            , {
+            }
+            , mgr_rwxa_t {
+                MGR_CAP_R | MGR_CAP_W}
+        }
+                                );
         return;
     }
 
     if (profile == "crash") {
-        profile_grants.push_back( { {
-                                 }
-                                 , {
-                                 }
-                                 , {
-                                 }
-                                 , "crash post", {
-                                 }
-                                 , {
-                                 }
-                                 }
-        );
+        profile_grants.push_back({ {
+            }
+            , {
+            }
+            , {
+            }
+            , "crash post", {
+            }
+            , {
+            }
+        }
+                                );
         return;
     }
 
@@ -212,14 +214,13 @@ void MgrCapGrant::expand_profile(std::ostream * err) const const
 
     if (profile == "rbd" || profile == "rbd-read-only") {
         Arguments filtered_arguments;
-      for (auto &[key, constraint]:arguments) {
+        for (auto &[key, constraint] : arguments) {
             if (key == "pool" || key == "namespace") {
                 filtered_arguments[key] = std::move(constraint);
-            }
-            else {
+            } else {
                 if (err != nullptr) {
                     *err << "profile '" << profile <<
-                        "' does not recognize key '" << key << "'";
+                         "' does not recognize key '" << key << "'";
                 }
                 return;
             }
@@ -228,19 +229,19 @@ void MgrCapGrant::expand_profile(std::ostream * err) const const
         mgr_rwxa_t perms = mgr_rwxa_t { MGR_CAP_R };
         if (profile == "rbd") {
             perms = mgr_rwxa_t {
-            MGR_CAP_R | MGR_CAP_W};
+                MGR_CAP_R | MGR_CAP_W};
         }
 
         // allow all 'rbd_support' commands (restricted by optional
         // pool/namespace constraints)
-        profile_grants.push_back( { {
-                                 }
-                                 , "rbd_support", {
-                                 }
-                                 , {
-                                 }
-                                 , std::move(filtered_arguments), perms}
-        );
+        profile_grants.push_back({ {
+            }
+            , "rbd_support", {
+            }
+            , {
+            }
+            , std::move(filtered_arguments), perms}
+                                );
         return;
     }
 
@@ -252,7 +253,7 @@ void MgrCapGrant::expand_profile(std::ostream * err) const const
 bool MgrCapGrant::validate_arguments(const std::map < std::string,
                                      std::string > &args) const const
 {
-  for (auto &[key, constraint]:arguments) {
+    for (auto &[key, constraint] : arguments) {
         auto q = args.find(key);
 
         // argument must be present if a constraint exists
@@ -261,50 +262,52 @@ bool MgrCapGrant::validate_arguments(const std::map < std::string,
         }
 
         switch (constraint.match_type) {
-        case MgrCapGrantConstraint::MATCH_TYPE_EQUAL:
-            if (constraint.value != q->second)
-                return false;
-            break;
-        case MgrCapGrantConstraint::MATCH_TYPE_PREFIX:
-            if (q->second.find(constraint.value) != 0)
-                return false;
-            break;
-        case MgrCapGrantConstraint::MATCH_TYPE_REGEX:
-            try {
-                std::regex pattern(constraint.value, std::regex::extended);
-                if (!std::regex_match(q->second, pattern)) {
+            case MgrCapGrantConstraint::MATCH_TYPE_EQUAL:
+                if (constraint.value != q->second) {
                     return false;
                 }
-            }
-            catch(const std::regex_error &) {
+                break;
+            case MgrCapGrantConstraint::MATCH_TYPE_PREFIX:
+                if (q->second.find(constraint.value) != 0) {
+                    return false;
+                }
+                break;
+            case MgrCapGrantConstraint::MATCH_TYPE_REGEX:
+                try {
+                    std::regex pattern(constraint.value, std::regex::extended);
+                    if (!std::regex_match(q->second, pattern)) {
+                        return false;
+                    }
+                } catch (const std::regex_error &) {
+                    return false;
+                }
+                break;
+            default:
                 return false;
-            }
-            break;
-        default:
-            return false;
         }
     }
 
     return true;
 }
 
-mgr_rwxa_t MgrCapGrant::get_allowed(CephContext * cct, EntityName name,
-                                    const std::string & s,
-                                    const std::string & m,
-                                    const std::string & c,
+mgr_rwxa_t MgrCapGrant::get_allowed(CephContext *cct, EntityName name,
+                                    const std::string &s,
+                                    const std::string &m,
+                                    const std::string &c,
                                     const std::map < std::string,
-                                    std::string > &args) constconst
-{
-    if (!profile.empty()) {
+                                    std::string > &args) constconst {
+    if (!profile.empty())
+    {
         expand_profile(nullptr);
         mgr_rwxa_t a;
-      for (auto & grant:profile_grants) {
+        for (auto &grant : profile_grants) {
             a = a | grant.get_allowed(cct, name, s, m, c, args);
         }
         return a;
     }
 
-    if (!service.empty()) {
+    if (!service.empty())
+    {
         if (service != s) {
             return mgr_rwxa_t {
             };
@@ -312,7 +315,8 @@ mgr_rwxa_t MgrCapGrant::get_allowed(CephContext * cct, EntityName name,
         return allow;
     }
 
-    if (!module.empty()) {
+    if (!module.empty())
+    {
         if (module != m) {
             return mgr_rwxa_t {
             };
@@ -326,7 +330,8 @@ mgr_rwxa_t MgrCapGrant::get_allowed(CephContext * cct, EntityName name,
         return allow;
     }
 
-    if (!command.empty()) {
+    if (!command.empty())
+    {
         if (command != c) {
             return mgr_rwxa_t {
             };
@@ -336,16 +341,16 @@ mgr_rwxa_t MgrCapGrant::get_allowed(CephContext * cct, EntityName name,
             };
         }
         return mgr_rwxa_t {
-        MGR_CAP_ANY};
+            MGR_CAP_ANY};
     }
 
     return allow;
 }
 
-std::ostream & operator<<(std::ostream & out, const MgrCap & m)
+std::ostream &operator<<(std::ostream &out, const MgrCap &m)
 {
     bool first = true;
-  for (auto & grant:m.grants) {
+    for (auto &grant : m.grants) {
         if (!first) {
             out << ", ";
         }
@@ -358,7 +363,7 @@ std::ostream & operator<<(std::ostream & out, const MgrCap & m)
 
 bool MgrCap::is_allow_all() const const
 {
-  for (auto & grant:grants) {
+    for (auto &grant : grants) {
         if (grant.is_allow_all()) {
             return true;
         }
@@ -369,41 +374,41 @@ bool MgrCap::is_allow_all() const const
 void MgrCap::set_allow_all()
 {
     grants.clear();
-    grants.push_back( { {
-                     }, {
-                     }, {
-                     }, {
-                     }, {
-                     }, mgr_rwxa_t {
-                     MGR_CAP_ANY}});
+    grants.push_back({ {
+        }, {
+        }, {
+        }, {
+        }, {
+        }, mgr_rwxa_t {
+            MGR_CAP_ANY}});
     text = "allow *";
 }
 
-bool MgrCap::is_capable(CephContext * cct,
+bool MgrCap::is_capable(CephContext *cct,
                         EntityName name,
-                        const std::string & service,
-                        const std::string & module,
-                        const std::string & command,
+                        const std::string &service,
+                        const std::string &module,
+                        const std::string &command,
                         const std::map < std::string,
                         std::string > &command_args, bool op_may_read,
                         bool op_may_write, bool op_may_exec,
-                        const entity_addr_t & addr) const const
+                        const entity_addr_t &addr) const const
 {
     if (cct) {
         ldout(cct, 20) << "is_capable service=" << service << " "
-            << "module=" << module << " "
-            << "command=" << command << (op_may_read ? " read" : "")
-            << (op_may_write ? " write" : "")
-            << (op_may_exec ? " exec" : "")
-            << " addr " << addr << " on cap " << *this << dendl;
+                       << "module=" << module << " "
+                       << "command=" << command << (op_may_read ? " read" : "")
+                       << (op_may_write ? " write" : "")
+                       << (op_may_exec ? " exec" : "")
+                       << " addr " << addr << " on cap " << *this << dendl;
     }
 
     mgr_rwxa_t allow;
-  for (auto & grant:grants) {
+    for (auto &grant : grants) {
         if (cct)
             ldout(cct,
                   20) << " allow so far " << allow << ", doing grant " << grant
-                << dendl;
+                      << dendl;
 
         if (grant.network.size() &&
             (!grant.network_valid ||
@@ -434,7 +439,7 @@ bool MgrCap::is_capable(CephContext * cct,
     return false;
 }
 
-void MgrCap::encode(ceph::buffer::list & bl) const const
+void MgrCap::encode(ceph::buffer::list &bl) const const
 {
     // remain backwards compatible w/ MgrCap
     ENCODE_START(4, 4, bl);
@@ -442,7 +447,7 @@ void MgrCap::encode(ceph::buffer::list & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void MgrCap::decode(ceph::buffer::list::const_iterator & bl)
+void MgrCap::decode(ceph::buffer::list::const_iterator &bl)
 {
     // remain backwards compatible w/ MgrCap
     std::string s;
@@ -452,12 +457,12 @@ void MgrCap::decode(ceph::buffer::list::const_iterator & bl)
     parse(s, NULL);
 }
 
-void MgrCap::dump(ceph::Formatter * f) const const
+void MgrCap::dump(ceph::Formatter *f) const const
 {
     f->dump_string("text", text);
 }
 
-void MgrCap::generate_test_instances(std::list < MgrCap * >&ls)
+void MgrCap::generate_test_instances(std::list < MgrCap * > &ls)
 {
     ls.push_back(new MgrCap);
     ls.push_back(new MgrCap);
@@ -486,9 +491,9 @@ namespace ascii = boost::spirit::ascii;
 namespace phoenix = boost::phoenix;
 
 template < typename Iterator >
-    struct MgrCapParser:qi::grammar < Iterator, MgrCap() >
-{
-  MgrCapParser():MgrCapParser::base_type(mgrcap) {
+struct MgrCapParser: qi::grammar < Iterator, MgrCap() > {
+    MgrCapParser(): MgrCapParser::base_type(mgrcap)
+    {
         using qi::char_;
         using qi::int_;
         using qi::ulong_long;
@@ -512,18 +517,18 @@ template < typename Iterator >
 
         // key <=|prefix|regex> value[ ...]
         str_match = -spaces >> lit('=') >> -spaces >>
-            qi::attr(MgrCapGrantConstraint::MATCH_TYPE_EQUAL) >> str;
+                    qi::attr(MgrCapGrantConstraint::MATCH_TYPE_EQUAL) >> str;
         str_prefix = spaces >> lit("prefix") >> spaces >>
-            qi::attr(MgrCapGrantConstraint::MATCH_TYPE_PREFIX) >> str;
+                     qi::attr(MgrCapGrantConstraint::MATCH_TYPE_PREFIX) >> str;
         str_regex = spaces >> lit("regex") >> spaces >>
-            qi::attr(MgrCapGrantConstraint::MATCH_TYPE_REGEX) >> str;
+                    qi::attr(MgrCapGrantConstraint::MATCH_TYPE_REGEX) >> str;
         kv_pair = str >> (str_match | str_prefix | str_regex);
         kv_map %= kv_pair >> *(spaces >> kv_pair);
 
         // command := command[=]cmd [k1=v1 k2=v2 ...]
         command_match =
             -spaces >> lit("allow") >> spaces >> lit("command") >> (lit('=') |
-                                                                    spaces)
+                spaces)
             >> qi::attr(std::string())
             >> qi::attr(std::string())
             >> qi::attr(std::string())
@@ -534,7 +539,7 @@ template < typename Iterator >
         // service foo rwxa
         service_match %=
             -spaces >> lit("allow") >> spaces >> lit("service") >> (lit('=') |
-                                                                    spaces)
+                spaces)
             >> str >> qi::attr(std::string())
             >> qi::attr(std::string())
             >> qi::attr(std::string())
@@ -545,7 +550,7 @@ template < typename Iterator >
         // module foo rwxa
         module_match %=
             -spaces >> lit("allow") >> spaces >> lit("module") >> (lit('=') |
-                                                                   spaces)
+                spaces)
             >> qi::attr(std::string())
             >> str >> qi::attr(std::string())
             >> qi::attr(std::string())
@@ -555,22 +560,22 @@ template < typename Iterator >
 
         // profile foo
         profile_match %= -spaces >> -(lit("allow") >> spaces)
-            >> lit("profile") >> (lit('=') | spaces)
-            >> qi::attr(std::string())
-            >> qi::attr(std::string())
-            >> str >> qi::attr(std::string())
-            >> -(spaces >> kv_map)
-            >> qi::attr(0)
-            >> -(spaces >> lit("network") >> spaces >> network_str);
+                         >> lit("profile") >> (lit('=') | spaces)
+                         >> qi::attr(std::string())
+                         >> qi::attr(std::string())
+                         >> str >> qi::attr(std::string())
+                         >> -(spaces >> kv_map)
+                         >> qi::attr(0)
+                         >> -(spaces >> lit("network") >> spaces >> network_str);
 
         // rwxa
         rwxa_match %= -spaces >> lit("allow") >> spaces
-            >> qi::attr(std::string())
-            >> qi::attr(std::string())
-            >> qi::attr(std::string())
-            >> qi::attr(std::string())
-            >> qi::attr(std::map < std::string, MgrCapGrantConstraint > ())
-            >> rwxa >> -(spaces >> lit("network") >> spaces >> network_str);
+                      >> qi::attr(std::string())
+                      >> qi::attr(std::string())
+                      >> qi::attr(std::string())
+                      >> qi::attr(std::string())
+                      >> qi::attr(std::map < std::string, MgrCapGrantConstraint > ())
+                      >> rwxa >> -(spaces >> lit("network") >> spaces >> network_str);
 
         // rwxa := * | [r][w][x]
         rwxa =
@@ -592,17 +597,17 @@ template < typename Iterator >
     }
 
     qi::rule < Iterator > spaces;
-    qi::rule < Iterator, unsigned () > rwxa;
+    qi::rule < Iterator, unsigned() > rwxa;
     qi::rule < Iterator, std::string() > quoted_string;
     qi::rule < Iterator, std::string() > unquoted_word;
     qi::rule < Iterator, std::string() > str, network_str;
 
     qi::rule < Iterator, MgrCapGrantConstraint() > str_match, str_prefix,
-        str_regex;
+    str_regex;
     qi::rule < Iterator, std::pair < std::string,
-        MgrCapGrantConstraint > () > kv_pair;
+    MgrCapGrantConstraint > () > kv_pair;
     qi::rule < Iterator, std::map < std::string,
-        MgrCapGrantConstraint > () > kv_map;
+    MgrCapGrantConstraint > () > kv_map;
 
     qi::rule < Iterator, MgrCapGrant() > rwxa_match;
     qi::rule < Iterator, MgrCapGrant() > command_match;
@@ -614,7 +619,7 @@ template < typename Iterator >
     qi::rule < Iterator, MgrCap() > mgrcap;
 };
 
-bool MgrCap::parse(const std::string & str, std::ostream * err)
+bool MgrCap::parse(const std::string &str, std::ostream *err)
 {
     auto iter = str.begin();
     auto end = str.end();
@@ -625,7 +630,7 @@ bool MgrCap::parse(const std::string & str, std::ostream * err)
         text = str;
 
         std::stringstream profile_err;
-      for (auto & g:grants) {
+        for (auto &g : grants) {
             g.parse_network();
 
             if (!g.profile.empty()) {
@@ -636,8 +641,8 @@ bool MgrCap::parse(const std::string & str, std::ostream * err)
         if (!profile_err.str().empty()) {
             if (err != nullptr) {
                 *err <<
-                    "mgr capability parse failed during profile evaluation: " <<
-                    profile_err.str();
+                     "mgr capability parse failed during profile evaluation: " <<
+                     profile_err.str();
             }
             return false;
         }
@@ -650,10 +655,10 @@ bool MgrCap::parse(const std::string & str, std::ostream * err)
     if (err) {
         if (iter != end)
             *err << "mgr capability parse failed, stopped at '"
-                << std::string(iter, end) << "' of '" << str << "'";
+                 << std::string(iter, end) << "' of '" << str << "'";
         else
             *err << "mgr capability parse failed, stopped at end of '" << str <<
-                "'";
+                 "'";
     }
 
     return false;

@@ -15,16 +15,18 @@ using std::ostringstream;
 using std::string;
 using crimson::common::local_conf;
 
-namespace {
-    seastar::logger & logger() {
-        return crimson::get_logger(ceph_subsys_monc);
-    }
+namespace
+{
+seastar::logger &logger()
+{
+    return crimson::get_logger(ceph_subsys_monc);
+}
 }
 
 //TODO: in order to avoid unnecessary maps declarations and moving around,
 //  create a named structure containing the maps and return optional
 //  fit to it.
-int parse_log_client_options(CephContext * cct,
+int parse_log_client_options(CephContext *cct,
                              map < string, string > &log_to_monitors,
                              map < string, string > &log_to_syslog,
                              map < string, string > &log_channels,
@@ -32,7 +34,7 @@ int parse_log_client_options(CephContext * cct,
                              map < string, string > &log_to_graylog,
                              map < string, string > &log_to_graylog_host,
                              map < string, string > &log_to_graylog_port,
-                             uuid_d & fsid, string & host)
+                             uuid_d &fsid, string &host)
 {
     ostringstream oss;
 
@@ -98,21 +100,21 @@ int parse_log_client_options(CephContext * cct,
     return 0;
 }
 
-LogChannel::LogChannel(LogClient * lc, const string & channel)
-:  
-parent(lc), log_channel(channel), log_to_syslog(false), log_to_monitors(false)
+LogChannel::LogChannel(LogClient *lc, const string &channel)
+    :
+    parent(lc), log_channel(channel), log_to_syslog(false), log_to_monitors(false)
 {
 }
 
-LogChannel::LogChannel(LogClient * lc, const string & channel,
-                       const string & facility, const string & prio)
-:parent(lc), log_channel(channel), log_prio(prio),
-syslog_facility(facility), log_to_syslog(false), log_to_monitors(false)
+LogChannel::LogChannel(LogClient *lc, const string &channel,
+                       const string &facility, const string &prio)
+    : parent(lc), log_channel(channel), log_prio(prio),
+      syslog_facility(facility), log_to_syslog(false), log_to_monitors(false)
 {
 }
 
-LogClient::LogClient(crimson::net::Messenger * m, logclient_flag_t flags)
-:  messenger(m), is_mon(flags & FLAG_MON), last_log_sent(0), last_log(0)
+LogClient::LogClient(crimson::net::Messenger *m, logclient_flag_t flags)
+    :  messenger(m), is_mon(flags & FLAG_MON), last_log_sent(0), last_log(0)
 {
 }
 
@@ -131,18 +133,18 @@ void LogChannel::update_config(map < string, string > &log_to_monitors,
                                map < string, string > &log_to_graylog,
                                map < string, string > &log_to_graylog_host,
                                map < string, string > &log_to_graylog_port,
-                               uuid_d & fsid, string & host)
+                               uuid_d &fsid, string &host)
 {
     logger().
-        debug
-        ("{} log_to_monitors {} log_to_syslog {} log_channels {} log_prios {}",
-         __func__, log_to_monitors, log_to_syslog, log_channels, log_prios);
+    debug
+    ("{} log_to_monitors {} log_to_syslog {} log_channels {} log_prios {}",
+     __func__, log_to_monitors, log_to_syslog, log_channels, log_prios);
     bool to_monitors = (get_str_map_key(log_to_monitors, log_channel,
                                         &CLOG_CONFIG_DEFAULT_KEY) == "true");
     bool to_syslog = (get_str_map_key(log_to_syslog, log_channel,
                                       &CLOG_CONFIG_DEFAULT_KEY) == "true");
     string syslog_facility = get_str_map_key(log_channels, log_channel,
-                                             &CLOG_CONFIG_DEFAULT_KEY);
+                             &CLOG_CONFIG_DEFAULT_KEY);
     string prio = get_str_map_key(log_prios, log_channel,
                                   &CLOG_CONFIG_DEFAULT_KEY);
     bool to_graylog = (get_str_map_key(log_to_graylog, log_channel,
@@ -150,7 +152,7 @@ void LogChannel::update_config(map < string, string > &log_to_monitors,
     string graylog_host = get_str_map_key(log_to_graylog_host, log_channel,
                                           &CLOG_CONFIG_DEFAULT_KEY);
     string graylog_port_str = get_str_map_key(log_to_graylog_port, log_channel,
-                                              &CLOG_CONFIG_DEFAULT_KEY);
+                              &CLOG_CONFIG_DEFAULT_KEY);
     int graylog_port = atoi(graylog_port_str.c_str());
 
     set_log_to_monitors(to_monitors);
@@ -160,8 +162,7 @@ void LogChannel::update_config(map < string, string > &log_to_monitors,
 
     if (to_graylog && !graylog) {   /* should but isn't */
         graylog = seastar::make_shared < ceph::logging::Graylog > ("clog");
-    }
-    else if (!to_graylog && graylog) {  /* shouldn't but is */
+    } else if (!to_graylog && graylog) { /* shouldn't but is */
         graylog = nullptr;
     }
 
@@ -182,7 +183,7 @@ void LogChannel::update_config(map < string, string > &log_to_monitors,
                    (to_graylog ? "true" : "false"), graylog_host, graylog_port);
 }
 
-void LogChannel::do_log(clog_type prio, std::stringstream & ss)
+void LogChannel::do_log(clog_type prio, std::stringstream &ss)
 {
     while (!ss.eof()) {
         string s;
@@ -193,12 +194,11 @@ void LogChannel::do_log(clog_type prio, std::stringstream & ss)
     }
 }
 
-void LogChannel::do_log(clog_type prio, const std::string & s)
+void LogChannel::do_log(clog_type prio, const std::string &s)
 {
     if (CLOG_ERROR == prio) {
         logger().error("log {} : {}", prio, s);
-    }
-    else {
+    } else {
         logger().warn("log {} : {}", prio, s);
     }
     LogEntry e;
@@ -214,8 +214,7 @@ void LogChannel::do_log(clog_type prio, const std::string & s)
     // log to monitor?
     if (log_to_monitors) {
         e.seq = parent->queue(e);
-    }
-    else {
+    } else {
         e.seq = parent->get_next_seq();
     }
 
@@ -273,8 +272,7 @@ MessageURef LogClient::_get_mon_log_message()
         num_to_send = std::min(num_unsent,
                                local_conf()->
                                mon_client_max_log_entries_per_message);
-    }
-    else {
+    } else {
         num_to_send = num_unsent;
     }
 
@@ -299,7 +297,7 @@ MessageURef LogClient::_get_mon_log_message()
     return crimson::make_message < MLog > (m_fsid, std::move(out_log_queue));
 }
 
-version_t LogClient::queue(LogEntry & entry)
+version_t LogClient::queue(LogEntry &entry)
 {
     entry.seq = ++last_log;
     log_queue.push_back(entry);
@@ -330,7 +328,7 @@ entity_name_t LogClient::get_myrank()
     return messenger->get_myname();
 }
 
-const EntityName & LogClient::get_myname() const const
+const EntityName &LogClient::get_myname() const const
 {
     return local_conf()->name;
 }
@@ -343,28 +341,30 @@ seastar::future <> LogClient::handle_log_ack(Ref < MLogAck > m)
 
     auto q = log_queue.begin();
     while (q != log_queue.end()) {
-        const LogEntry & entry(*q);
-        if (entry.seq > last)
+        const LogEntry &entry(*q);
+        if (entry.seq > last) {
             break;
+        }
         logger().debug(" logged {}", entry);
         q = log_queue.erase(q);
     }
     return seastar::now();
 }
 
-LogChannelRef LogClient::create_channel(const std::string & name)
+LogChannelRef LogClient::create_channel(const std::string &name)
 {
     auto it = channels.find(name);
     if (it == channels.end()) {
         it = channels.insert(it, {
-                             name, seastar::make_lw_shared < LogChannel > (this,
-                                                                           name)}
-        );
+            name, seastar::make_lw_shared < LogChannel > (this,
+                name)
+        }
+                            );
     }
     return it->second;
 }
 
-seastar::future <> LogClient::set_fsid(const uuid_d & fsid)
+seastar::future <> LogClient::set_fsid(const uuid_d &fsid)
 {
     m_fsid = fsid;
     return seastar::now();

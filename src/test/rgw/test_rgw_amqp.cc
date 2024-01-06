@@ -14,11 +14,14 @@ using namespace rgw;
 const std::chrono::milliseconds wait_time(10);
 const std::chrono::milliseconds long_wait_time = wait_time * 50;
 
-class CctCleaner {
+class CctCleaner
+{
     CephContext *cct;
-  public:
-    CctCleaner(CephContext * _cct):cct(_cct) {
-    } ~CctCleaner() {
+public:
+    CctCleaner(CephContext *_cct): cct(_cct)
+    {
+    } ~CctCleaner()
+    {
 #ifdef WITH_SEASTAR
         delete cct;
 #else
@@ -31,20 +34,24 @@ auto cct = new CephContext(CEPH_ENTITY_TYPE_CLIENT);
 
 CctCleaner cleaner(cct);
 
-class TestAMQP:public::testing::Test {
-  protected:
+class TestAMQP: public::testing::Test
+{
+protected:
     amqp::connection_ptr_t conn = nullptr;
     unsigned current_dequeued = 0U;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         ASSERT_TRUE(amqp::init(cct));
-    } void TearDown() override {
+    } void TearDown() override
+    {
         amqp::shutdown();
     }
 
     // wait for at least one new (since last drain) message to be dequeueud
     // and then wait for all pending answers to be received
-    void wait_until_drained() {
+    void wait_until_drained()
+    {
         while (amqp::get_dequeued() == current_dequeued) {
             std::this_thread::sleep_for(wait_time);
         }
@@ -261,12 +268,15 @@ void my_callback_expect_multiple_acks(int rc)
     ++callbacks_invoked;
 }
 
-class dynamic_callback_wrapper {
+class dynamic_callback_wrapper
+{
     dynamic_callback_wrapper() = default;
-  public:
-    static dynamic_callback_wrapper *create() {
+public:
+    static dynamic_callback_wrapper *create()
+    {
         return new dynamic_callback_wrapper;
-    } void callback(int rc) {
+    } void callback(int rc)
+    {
         EXPECT_EQ(0, rc);
         ++callbacks_invoked;
         delete this;
@@ -368,10 +378,10 @@ TEST_F(TestAMQP, DynamicCallback)
     for (auto i = 0; i < NUMBER_OF_CALLS; ++i) {
         auto rc = publish_with_confirm(conn, "topic", "message",
                                        std::bind(&dynamic_callback_wrapper::
-                                                 callback,
-                                                 dynamic_callback_wrapper::
-                                                 create(),
-                                                 std::placeholders::_1));
+                                           callback,
+                                           dynamic_callback_wrapper::
+                                           create(),
+                                           std::placeholders::_1));
         EXPECT_EQ(rc, 0);
     }
     wait_until_drained();

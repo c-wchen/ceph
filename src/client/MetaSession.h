@@ -47,28 +47,30 @@ struct MetaSession {
     int mds_state = MDSMap::STATE_NULL;
     bool readonly = false;
 
-     std::list < Context * >waiting_for_open;
+    std::list < Context * >waiting_for_open;
 
-     xlist < Cap * >caps;
+    xlist < Cap * >caps;
     // dirty_list keeps all the dirty inodes before flushing in current session.
-     xlist < Inode * >dirty_list;
-     xlist < Inode * >flushing_caps;
-     xlist < MetaRequest * >requests;
-     xlist < MetaRequest * >unsafe_requests;
-     std::set < ceph_tid_t > flushing_caps_tids;
+    xlist < Inode * >dirty_list;
+    xlist < Inode * >flushing_caps;
+    xlist < MetaRequest * >requests;
+    xlist < MetaRequest * >unsafe_requests;
+    std::set < ceph_tid_t > flushing_caps_tids;
 
-     ceph::ref_t < MClientCapRelease > release;
+    ceph::ref_t < MClientCapRelease > release;
 
-     MetaSession(mds_rank_t mds_num, ConnectionRef con,
-                 const entity_addrvec_t & addrs)
-    :mds_num(mds_num), con(con), addrs(addrs) {
-    } xlist < Inode * >&get_dirty_list() {
+    MetaSession(mds_rank_t mds_num, ConnectionRef con,
+                const entity_addrvec_t &addrs)
+        : mds_num(mds_num), con(con), addrs(addrs)
+    {
+    } xlist < Inode * > &get_dirty_list()
+    {
         return dirty_list;
     }
 
     const char *get_state_name() const;
 
-    void dump(Formatter * f, bool cap_dump = false) const;
+    void dump(Formatter *f, bool cap_dump = false) const;
 
     void enqueue_cap_release(inodeno_t ino, uint64_t cap_id, ceph_seq_t iseq,
                              ceph_seq_t mseq, epoch_t osd_barrier);

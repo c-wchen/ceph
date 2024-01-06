@@ -44,7 +44,7 @@ map < set < int >, set < set < int >>>shec_table;
 constexpr int getint(std::initializer_list < int >is)
 {
     int a = 0;
-  for (const auto i:is) {
+    for (const auto i : is) {
         a |= 1 << i;
     }
     return a;
@@ -75,12 +75,12 @@ void create_table_shec432()
                     continue;
                 }
                 if (std::popcount(avails) == 2 && std::popcount(want) == 1) {
-                    if (std::cmp_equal(want | avails, getint( {
-                                                             0, 1, 5}
-                                       )) ||
-                        std::cmp_equal(want | avails, getint( {
-                                                             2, 3, 6}
-                                       ))) {
+                    if (std::cmp_equal(want | avails, getint({
+                    0, 1, 5}
+                                                        )) ||
+                std::cmp_equal(want | avails, getint({
+                    2, 3, 6}
+                                                    ))) {
                         vec.push_back(avails);
                     }
                 }
@@ -92,74 +92,128 @@ void create_table_shec432()
                 }
                 if (std::popcount(avails) == 4) {
                     auto a = to_array < std::initializer_list < int >>({
-                                                                       {0, 1, 2,
-                                                                        3}, {0,
-                                                                             1,
-                                                                             2,
-                                                                             4},
-                                                                       {0, 1, 2,
-                                                                        6}, {0,
-                                                                             1,
-                                                                             3,
-                                                                             4},
-                                                                       {0, 1, 3,
-                                                                        6}, {0,
-                                                                             1,
-                                                                             4,
-                                                                             6},
-                                                                       {0, 2, 3,
-                                                                        4}, {0,
-                                                                             2,
-                                                                             3,
-                                                                             5},
-                                                                       {0, 2, 4,
-                                                                        5}, {0,
-                                                                             2,
-                                                                             4,
-                                                                             6},
-                                                                       {0, 2, 5,
-                                                                        6}, {0,
-                                                                             3,
-                                                                             4,
-                                                                             5},
-                                                                       {0, 3, 4,
-                                                                        6}, {0,
-                                                                             3,
-                                                                             5,
-                                                                             6},
-                                                                       {0, 4, 5,
-                                                                        6}, {1,
-                                                                             2,
-                                                                             3,
-                                                                             4},
-                                                                       {1, 2, 3,
-                                                                        5}, {1,
-                                                                             2,
-                                                                             4,
-                                                                             5},
-                                                                       {1, 2, 4,
-                                                                        6}, {1,
-                                                                             2,
-                                                                             5,
-                                                                             6},
-                                                                       {1, 3, 4,
-                                                                        5}, {1,
-                                                                             3,
-                                                                             4,
-                                                                             6},
-                                                                       {1, 3, 5,
-                                                                        6}, {1,
-                                                                             4,
-                                                                             5,
-                                                                             6},
-                                                                       {2, 3, 4,
-                                                                        5}, {2,
-                                                                             4,
-                                                                             5,
-                                                                             6},
-                                                                       {3, 4, 5,
-                                                                        6}
-                                                                       });
+                        {
+                            0, 1, 2,
+                            3
+                        }, {
+                            0,
+                            1,
+                            2,
+                            4
+                        },
+                        {
+                            0, 1, 2,
+                            6
+                        }, {
+                            0,
+                            1,
+                            3,
+                            4
+                        },
+                        {
+                            0, 1, 3,
+                            6
+                        }, {
+                            0,
+                            1,
+                            4,
+                            6
+                        },
+                        {
+                            0, 2, 3,
+                            4
+                        }, {
+                            0,
+                            2,
+                            3,
+                            5
+                        },
+                        {
+                            0, 2, 4,
+                            5
+                        }, {
+                            0,
+                            2,
+                            4,
+                            6
+                        },
+                        {
+                            0, 2, 5,
+                            6
+                        }, {
+                            0,
+                            3,
+                            4,
+                            5
+                        },
+                        {
+                            0, 3, 4,
+                            6
+                        }, {
+                            0,
+                            3,
+                            5,
+                            6
+                        },
+                        {
+                            0, 4, 5,
+                            6
+                        }, {
+                            1,
+                            2,
+                            3,
+                            4
+                        },
+                        {
+                            1, 2, 3,
+                            5
+                        }, {
+                            1,
+                            2,
+                            4,
+                            5
+                        },
+                        {
+                            1, 2, 4,
+                            6
+                        }, {
+                            1,
+                            2,
+                            5,
+                            6
+                        },
+                        {
+                            1, 3, 4,
+                            5
+                        }, {
+                            1,
+                            3,
+                            4,
+                            6
+                        },
+                        {
+                            1, 3, 5,
+                            6
+                        }, {
+                            1,
+                            4,
+                            5,
+                            6
+                        },
+                        {
+                            2, 3, 4,
+                            5
+                        }, {
+                            2,
+                            4,
+                            5,
+                            6
+                        },
+                        {
+                            3, 4, 5,
+                            6
+                        }
+                    });
                     if (ranges::
                         any_of(a,
                                std::bind_front(cmp_equal < uint, int >, avails),
@@ -236,8 +290,8 @@ TEST(ParameterTest, combination_all)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     map < std::string, std::string > *profile =
         new map < std::string, std::string > ();
     (*profile)["plugin"] = "shec";
@@ -265,7 +319,7 @@ TEST(ParameterTest, combination_all)
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "0123"            //128
-        );
+             );
     set < int >want_to_encode;
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
@@ -331,15 +385,13 @@ TEST(ParameterTest, combination_all)
                         if (result != 0 || dresult != 0) {
                             ++unexpected_count;
                         }
-                    }
-                    else {
+                    } else {
                         // want - avail
                         set < int >want_to_read_without_avails;
-                      for (auto chunk:want_to_read) {
+                        for (auto chunk : want_to_read) {
                             if (!available_chunks.count(chunk)) {
                                 want_to_read_without_avails.insert(chunk);
-                            }
-                            else {
+                            } else {
                                 ++minimum_count;
                             }
                         }
@@ -368,16 +420,14 @@ TEST(ParameterTest, combination_all)
                             if (result != 0 || dresult != 0) {
                                 ++unexpected_count;
                             }
-                        }
-                        else if (want_to_read_without_avails.size() > 3) {
+                        } else if (want_to_read_without_avails.size() > 3) {
                             EXPECT_EQ(-EIO, result);
                             EXPECT_EQ(0u, minimum_chunks.size());
                             EXPECT_EQ(-1, dresult);
                             if (result != -EIO || dresult != -1) {
                                 ++unexpected_count;
                             }
-                        }
-                        else {
+                        } else {
                             // search
                             if (search_table_shec432
                                 (want_to_read_without_avails,
@@ -402,28 +452,27 @@ TEST(ParameterTest, combination_all)
                                         if (cmp != 0) {
                                             ++unexpected_count;
                                             std::
-                                                cout << "decoded[" << i <<
-                                                "] = " << decoded[i].
-                                                c_str() << std::endl;
+                                            cout << "decoded[" << i <<
+                                                 "] = " << decoded[i].
+                                                 c_str() << std::endl;
                                             std::cout << "usable = " << usable.
-                                                c_str() << std::endl;
+                                                      c_str() << std::endl;
                                             std::
-                                                cout << "want_to_read    :" <<
-                                                want_to_read << std::endl;
+                                            cout << "want_to_read    :" <<
+                                                 want_to_read << std::endl;
                                             std::
-                                                cout << "available_chunks:" <<
-                                                available_chunks << std::endl;
+                                            cout << "available_chunks:" <<
+                                                 available_chunks << std::endl;
                                             std::
-                                                cout << "minimum_chunks  :" <<
-                                                minimum_chunks << std::endl;
+                                            cout << "minimum_chunks  :" <<
+                                                 minimum_chunks << std::endl;
                                         }
                                     }
                                 }
                                 if (result != 0 || dresult != 0) {
                                     ++unexpected_count;
                                 }
-                            }
-                            else {
+                            } else {
                                 EXPECT_EQ(-EIO, result);
                                 EXPECT_EQ(0u, minimum_chunks.size());
                                 EXPECT_EQ(-1, dresult);
@@ -464,7 +513,7 @@ int main(int argc, char **argv)
 
     std::cout << "minimum_to_decode:total_num = " << count_num << std::endl;
     std::cout << "minimum_to_decode:unexpected_num = " << unexpected_count
-        << std::endl;
+              << std::endl;
 
     return r;
 }

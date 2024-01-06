@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MCLIENTRECONNECT_H
@@ -19,28 +19,32 @@
 #include "mds/mdstypes.h"
 #include "include/ceph_features.h"
 
-class MClientReconnect final:public SafeMessage {
-  private:
+class MClientReconnect final: public SafeMessage
+{
+private:
     static constexpr int HEAD_VERSION = 5;
     static constexpr int COMPAT_VERSION = 4;
 
-  public:
-     std::map < inodeno_t, cap_reconnect_t > caps;  // only head inodes
-     std::vector < snaprealm_reconnect_t > realms;
+public:
+    std::map < inodeno_t, cap_reconnect_t > caps;  // only head inodes
+    std::vector < snaprealm_reconnect_t > realms;
     bool more = false;
 
-  private:
-     MClientReconnect(): SafeMessage {
-    CEPH_MSG_CLIENT_RECONNECT, HEAD_VERSION, COMPAT_VERSION} {
+private:
+    MClientReconnect(): SafeMessage {
+        CEPH_MSG_CLIENT_RECONNECT, HEAD_VERSION, COMPAT_VERSION}
+    {
     }
-    ~MClientReconnect()final {
+    ~MClientReconnect()final
+    {
     }
 
     size_t cap_size = 0;
     size_t realm_size = 0;
     size_t approx_size = sizeof(__u32) + sizeof(__u32) + 1;
 
-    void calc_item_size() {
+    void calc_item_size()
+    {
         using ceph::encode;
         {
             ceph::buffer::list bl;
@@ -58,55 +62,68 @@ class MClientReconnect final:public SafeMessage {
         }
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "client_reconnect";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "client_reconnect("
             << caps.size() << " caps " << realms.size() << " realms )";
     }
     // Force to use old encoding.// Use connection's features to choose encoding if version is set to 0.
-        void set_encoding_version(int v) {
+    void set_encoding_version(int v)
+    {
         header.version = v;
-        if (v <= 3)
+        if (v <= 3) {
             header.compat_version = 0;
+        }
     }
-    size_t get_approx_size() {
+    size_t get_approx_size()
+    {
         return approx_size;
     }
-    void mark_more() {
+    void mark_more()
+    {
         more = true;
     }
-    bool has_more() const {
+    bool has_more() const
+    {
         return more;
     } void add_cap(inodeno_t ino, uint64_t cap_id, inodeno_t pathbase,
-                   const std::string & path, int wanted, int issued,
-                   inodeno_t sr, snapid_t sf, ceph::buffer::list & lb) {
+                   const std::string &path, int wanted, int issued,
+                   inodeno_t sr, snapid_t sf, ceph::buffer::list &lb)
+    {
         caps[ino] =
             cap_reconnect_t(cap_id, pathbase, path, wanted, issued, sr, sf, lb);
-        if (!cap_size)
+        if (!cap_size) {
             calc_item_size();
+        }
         approx_size += cap_size + path.length() + lb.length();
     }
-    void add_snaprealm(inodeno_t ino, snapid_t seq, inodeno_t parent) {
+    void add_snaprealm(inodeno_t ino, snapid_t seq, inodeno_t parent)
+    {
         snaprealm_reconnect_t r;
         r.realm.ino = ino;
         r.realm.seq = seq;
         r.realm.parent = parent;
         realms.push_back(r);
-        if (!realm_size)
+        if (!realm_size) {
             calc_item_size();
+        }
         approx_size += realm_size;
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         if (header.version == 0) {
-            if (features & CEPH_FEATURE_MDSENC)
+            if (features & CEPH_FEATURE_MDSENC) {
                 header.version = 3;
-            else if (features & CEPH_FEATURE_FLOCK)
+            } else if (features & CEPH_FEATURE_FLOCK) {
                 header.version = 2;
-            else
+            } else {
                 header.version = 1;
+            }
         }
 
         using ceph::encode;
@@ -116,46 +133,44 @@ class MClientReconnect final:public SafeMessage {
             encode(caps, data);
             encode(realms, data);
             encode(more, data);
-        }
-        else {
+        } else {
             // compat crap
             if (header.version == 3) {
                 encode(caps, data);
-            }
-            else if (header.version == 2) {
+            } else if (header.version == 2) {
                 __u32 n = caps.size();
                 encode(n, data);
-              for (auto & p:caps) {
+                for (auto &p : caps) {
                     encode(p.first, data);
                     p.second.encode_old(data);
                 }
-            }
-            else {
+            } else {
                 std::map < inodeno_t, old_cap_reconnect_t > ocaps;
-              for (auto & p:caps) {
+                for (auto &p : caps) {
                     ocaps[p.first] = p.second;
                     encode(ocaps, data);
                 }
-              for (auto & r:realms)
+                for (auto &r : realms) {
                     r.encode_old(data);
+                }
             }
         }
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = data.cbegin();
         if (header.version >= 4) {
             decode(caps, p);
             decode(realms, p);
-            if (header.version >= 5)
+            if (header.version >= 5) {
                 decode(more, p);
-        }
-        else {
+            }
+        } else {
             // compat crap
             if (header.version == 3) {
                 decode(caps, p);
-            }
-            else if (header.version == 2) {
+            } else if (header.version == 2) {
                 __u32 n;
                 decode(n, p);
                 inodeno_t ino;
@@ -163,12 +178,12 @@ class MClientReconnect final:public SafeMessage {
                     decode(ino, p);
                     caps[ino].decode_old(p);
                 }
-            }
-            else {
+            } else {
                 std::map < inodeno_t, old_cap_reconnect_t > ocaps;
                 decode(ocaps, p);
-              for (auto & q:ocaps)
+                for (auto &q : ocaps) {
                     caps[q.first] = q.second;
+                }
             }
             while (!p.end()) {
                 realms.push_back(snaprealm_reconnect_t());
@@ -176,11 +191,11 @@ class MClientReconnect final:public SafeMessage {
             }
         }
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
     template < class T, typename ... Args >
-        friend MURef < T > crimson::make_message(Args && ... args);
+    friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

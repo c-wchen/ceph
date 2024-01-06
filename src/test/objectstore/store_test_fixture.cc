@@ -15,7 +15,7 @@
 
 using namespace std;
 
-static void rm_r(const string & path)
+static void rm_r(const string &path)
 {
     string cmd = string("rm -r ") + path;
     cout << "==> " << cmd << std::endl;
@@ -24,11 +24,10 @@ static void rm_r(const string & path)
         if (r == -1) {
             r = errno;
             cerr << "system() failed to fork() " << cpp_strerror(r)
-                << ", continuing anyway" << std::endl;
-        }
-        else {
+                 << ", continuing anyway" << std::endl;
+        } else {
             cerr << "failed with exit code " << r
-                << ", continuing anyway" << std::endl;
+                 << ", continuing anyway" << std::endl;
         }
     }
 }
@@ -40,7 +39,7 @@ void StoreTestFixture::SetUp()
     if (r < 0) {
         r = -errno;
         cerr << __func__ << ": unable to create " << data_dir << ": " <<
-            cpp_strerror(r) << std::endl;
+             cpp_strerror(r) << std::endl;
     }
     ASSERT_EQ(0, r);
 
@@ -48,7 +47,7 @@ void StoreTestFixture::SetUp()
                                 type, data_dir, "store_test_temp_journal");
     if (!store) {
         cerr << __func__ << ": objectstore type " << type <<
-            " doesn't exist yet!" << std::endl;
+             " doesn't exist yet!" << std::endl;
     }
     ASSERT_TRUE(store);
 #if defined(WITH_BLUESTORE)
@@ -84,7 +83,7 @@ void StoreTestFixture::TearDown()
     }
 }
 
-void StoreTestFixture::SetVal(ConfigProxy & _conf, const char *key,
+void StoreTestFixture::SetVal(ConfigProxy &_conf, const char *key,
                               const char *val)
 {
     ceph_assert(!conf || conf == &_conf);
@@ -101,7 +100,7 @@ void StoreTestFixture::PopSettings(size_t pos)
     if (conf) {
         ceph_assert(pos == 0 || pos <= saved_settings.size());  // for sanity
         while (pos < saved_settings.size()) {
-            auto & e = saved_settings.top();
+            auto &e = saved_settings.top();
             conf->set_val_or_die(e.first, e.second);
             saved_settings.pop();
         }
@@ -121,7 +120,7 @@ void StoreTestFixture::CloseAndReopen()
                                 type, data_dir, "store_test_temp_journal");
     if (!store) {
         cerr << __func__ << ": objectstore type " << type <<
-            " failed to reopen!" << std::endl;
+             " failed to reopen!" << std::endl;
     }
     ASSERT_TRUE(store);
 #if defined(WITH_BLUESTORE)

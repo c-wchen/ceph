@@ -51,7 +51,7 @@ const char *get_rand_socket_path()
     return g_socket_path;
 }
 
-static std::string asok_connect(const std::string & path, int *fd)
+static std::string asok_connect(const std::string &path, int *fd)
 {
     int socket_fd = socket_cloexec(PF_UNIX, SOCK_STREAM, 0);
     if (socket_fd < 0) {
@@ -119,12 +119,12 @@ static std::string asok_request(int socket_fd, std::string request)
     return "";
 }
 
-AdminSocketClient::AdminSocketClient(const std::string & path)
-:  m_path(path)
+AdminSocketClient::AdminSocketClient(const std::string &path)
+    :  m_path(path)
 {
 }
 
-std::string AdminSocketClient::ping(bool * ok)
+std::string AdminSocketClient::ping(bool *ok)
 {
     std::string version;
     std::string result = do_request("{\"prefix\":\"0\"}", &version);
@@ -133,7 +133,7 @@ std::string AdminSocketClient::ping(bool * ok)
 }
 
 std::string AdminSocketClient::do_request(std::string request,
-                                          std::string * result)
+        std::string *result)
 {
     int socket_fd = 0, res;
     std::string buffer;
@@ -169,8 +169,8 @@ std::string AdminSocketClient::do_request(std::string request,
     }
     //printf("MESSAGE FROM SERVER: %s\n", buffer.c_str());
     std::swap(*result, buffer);
-  done:
+done:
     compat_closesocket(socket_fd);
-  out:
+out:
     return err;
 }

@@ -11,13 +11,16 @@
 
 template <> struct fmt::formatter < snapid_t > {
 
-    constexpr auto parse(format_parse_context & ctx) {
+    constexpr auto parse(format_parse_context &ctx)
+    {
         return ctx.begin();
     } template < typename FormatContext >
-        auto format(const snapid_t & snp, FormatContext & ctx)const {
+    auto format(const snapid_t &snp, FormatContext &ctx)const
+    {
         if (snp == CEPH_NOSNAP) {
             return fmt::format_to(ctx.out(), "head");
-        } if (snp == CEPH_SNAPDIR) {
+        }
+        if (snp == CEPH_SNAPDIR) {
             return fmt::format_to(ctx.out(), "snapdir");
         }
         return fmt::format_to(ctx.out(), "{:x}", snp.val);

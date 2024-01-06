@@ -42,23 +42,23 @@
 #define CEPH_MSGR2_INCARNATION_1 (0ull)
 
 #define DEFINE_MSGR2_FEATURE(bit, incarnation, name)               \
-	const static uint64_t CEPH_MSGR2_FEATURE_##name = (1ULL << bit); \
-	const static uint64_t CEPH_MSGR2_FEATUREMASK_##name =            \
-			(1ULL << bit | CEPH_MSGR2_INCARNATION_##incarnation);
+    const static uint64_t CEPH_MSGR2_FEATURE_##name = (1ULL << bit); \
+    const static uint64_t CEPH_MSGR2_FEATUREMASK_##name =            \
+            (1ULL << bit | CEPH_MSGR2_INCARNATION_##incarnation);
 
 #define HAVE_MSGR2_FEATURE(x, name) \
-	(((x) & (CEPH_MSGR2_FEATUREMASK_##name)) == (CEPH_MSGR2_FEATUREMASK_##name))
+    (((x) & (CEPH_MSGR2_FEATUREMASK_##name)) == (CEPH_MSGR2_FEATUREMASK_##name))
 
 DEFINE_MSGR2_FEATURE(0, 1, REVISION_1)  // msgr2.1
-    DEFINE_MSGR2_FEATURE(1, 1, COMPRESSION)
-                                        // on-wire compression
+DEFINE_MSGR2_FEATURE(1, 1, COMPRESSION)
+// on-wire compression
 /*
  * Features supported.  Should be everything above.
  */
 #define CEPH_MSGR2_SUPPORTED_FEATURES \
-	(CEPH_MSGR2_FEATURE_REVISION_1 | \
-	 CEPH_MSGR2_FEATURE_COMPRESSION | \
-	 0ULL)
+    (CEPH_MSGR2_FEATURE_REVISION_1 | \
+     CEPH_MSGR2_FEATURE_COMPRESSION | \
+     0ULL)
 #define CEPH_MSGR2_REQUIRED_FEATURES (0ULL)
 /*
  * Rollover-safe type and comparator for 32-bit sequence numbers.
@@ -78,7 +78,7 @@ static inline __s32 ceph_seq_cmp(__u32 a, __u32 b)
 struct ceph_entity_name {
     __u8 type;                  /* CEPH_ENTITY_TYPE_* */
     __le64 num;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 #define CEPH_ENTITY_TYPE_MON    0x01
 #define CEPH_ENTITY_TYPE_MDS    0x02
@@ -98,12 +98,12 @@ struct ceph_entity_addr {
     __le32 type;
     __le32 nonce;               /* unique id for process (e.g. pid) */
     struct sockaddr_storage in_addr;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 struct ceph_entity_inst {
     struct ceph_entity_name name;
     struct ceph_entity_addr addr;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 /* used by message exchange protocol */
 #define CEPH_MSGR_TAG_READY         1   /* server->client: ready for messages */
@@ -138,7 +138,7 @@ struct ceph_msg_connect {
     __le32 authorizer_protocol;
     __le32 authorizer_len;
     __u8 flags;                 /* CEPH_MSG_CONNECT_* */
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 struct ceph_msg_connect_reply {
     __u8 tag;
@@ -148,7 +148,7 @@ struct ceph_msg_connect_reply {
     __le32 protocol_version;
     __le32 authorizer_len;
     __u8 flags;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 #define CEPH_MSG_CONNECT_LOSSY  1   /* messages i send may be safely dropped */
 
@@ -171,7 +171,7 @@ struct ceph_msg_header_old {
     struct ceph_entity_inst src, orig_src;
     __le32 reserved;
     __le32 crc;                 /* header crc32c */
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 struct ceph_msg_header {
     __le64 seq;                 /* message seq# for this session */
@@ -192,7 +192,7 @@ struct ceph_msg_header {
     __le16 compat_version;
     __le16 reserved;
     __le32 crc;                 /* header crc32c */
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 struct ceph_msg_header2 {
     __le64 seq;                 /* message seq# for this session */
@@ -210,7 +210,7 @@ struct ceph_msg_header2 {
     /* oldest code we think can decode this.  unknown if zero. */
     __le16 compat_version;
     __le16 reserved;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 #define CEPH_MSG_PRIO_LOW     64
 #define CEPH_MSG_PRIO_DEFAULT 127
@@ -225,18 +225,18 @@ struct ceph_msg_header2 {
 struct ceph_msg_footer_old {
     __le32 front_crc, middle_crc, data_crc;
     __u8 flags;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 struct ceph_msg_footer {
     __le32 front_crc, middle_crc, data_crc;
     // sig holds the 64 bits of the digital signature for the message PLR
     __le64 sig;
     __u8 flags;
-} __attribute__ ((packed));
+} __attribute__((packed));
 
 #define CEPH_MSG_FOOTER_COMPLETE  (1<<0)    /* msg wasn't aborted */
 #define CEPH_MSG_FOOTER_NOCRC     (1<<1)    /* no data crc */
-#define CEPH_MSG_FOOTER_SIGNED	  (1<<2)    /* msg was signed */
+#define CEPH_MSG_FOOTER_SIGNED    (1<<2)    /* msg was signed */
 
 #ifndef __KERNEL__
 #undef __le16

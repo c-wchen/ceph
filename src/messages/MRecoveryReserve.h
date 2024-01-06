@@ -19,12 +19,13 @@
 #include "messages/MOSDPeeringOp.h"
 #include "osd/PGPeeringEvent.h"
 
-class MRecoveryReserve:public MOSDPeeringOp {
-  private:
+class MRecoveryReserve: public MOSDPeeringOp
+{
+private:
     static constexpr int HEAD_VERSION = 3;
     static constexpr int COMPAT_VERSION = 2;
-  public:
-     spg_t pgid;
+public:
+    spg_t pgid;
     epoch_t query_epoch;
     enum {
         REQUEST = 0,            // primary->replica: please reserve slot
@@ -35,57 +36,76 @@ class MRecoveryReserve:public MOSDPeeringOp {
     uint32_t type;
     uint32_t priority = 0;
 
-    spg_t get_spg() const {
+    spg_t get_spg() const
+    {
         return pgid;
-    } epoch_t get_map_epoch() const {
+    } epoch_t get_map_epoch() const
+    {
         return query_epoch;
-    } epoch_t get_min_epoch() const {
+    } epoch_t get_min_epoch() const
+    {
         return query_epoch;
-    } PGPeeringEvent *get_event() override {
+    } PGPeeringEvent *get_event() override
+    {
         switch (type) {
-        case REQUEST:
-            return new PGPeeringEvent(query_epoch,
-                                      query_epoch,
-                                      RequestRecoveryPrio(priority));
-            case GRANT:return new PGPeeringEvent(query_epoch,
-                                                 query_epoch,
-                                                 RemoteRecoveryReserved());
-            case RELEASE:return new PGPeeringEvent(query_epoch,
-                                                   query_epoch, RecoveryDone());
-            case REVOKE:return new PGPeeringEvent(query_epoch,
-                                                  query_epoch,
-                                                  DeferRecovery(0.0));
-            default:ceph_abort();
-    }} MRecoveryReserve()
-    :MOSDPeeringOp {
-    MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION}
-    , query_epoch(0), type(-1) {
+            case REQUEST:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          RequestRecoveryPrio(priority));
+            case GRANT:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          RemoteRecoveryReserved());
+            case RELEASE:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch, RecoveryDone());
+            case REVOKE:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          DeferRecovery(0.0));
+            default:
+                ceph_abort();
+        }
+    } MRecoveryReserve()
+        : MOSDPeeringOp {
+        MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION}
+    , query_epoch(0), type(-1)
+    {
     }
     MRecoveryReserve(int type,
                      spg_t pgid, epoch_t query_epoch, unsigned prio = 0)
-  :    MOSDPeeringOp {
-    MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION},
-        pgid(pgid), query_epoch(query_epoch), type(type), priority(prio) {
+        :    MOSDPeeringOp {
+        MSG_OSD_RECOVERY_RESERVE, HEAD_VERSION, COMPAT_VERSION},
+    pgid(pgid), query_epoch(query_epoch), type(type), priority(prio)
+    {
     }
 
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "MRecoveryReserve";
-    } void inner_print(std::ostream & out) const override {
+    } void inner_print(std::ostream &out) const override
+    {
         switch (type) {
-        case REQUEST:
-            out << "REQUEST";
-            break;
-            case GRANT:out << "GRANT";
-            break;
-            case RELEASE:out << "RELEASE";
-            break;
-            case REVOKE:out << "REVOKE";
-            break;
-        } if (type == REQUEST)
+            case REQUEST:
+                out << "REQUEST";
+                break;
+            case GRANT:
+                out << "GRANT";
+                break;
+            case RELEASE:
+                out << "RELEASE";
+                break;
+            case REVOKE:
+                out << "REVOKE";
+                break;
+        }
+        if (type == REQUEST) {
             out << " prio: " << priority;
+        }
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         auto p = payload.cbegin();
         using ceph::decode;
         decode(pgid.pgid, p);
@@ -97,7 +117,8 @@ class MRecoveryReserve:public MOSDPeeringOp {
         }
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(pgid.pgid, payload);
         encode(query_epoch, payload);
@@ -105,9 +126,9 @@ class MRecoveryReserve:public MOSDPeeringOp {
         encode(pgid.shard, payload);
         encode(priority, payload);
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

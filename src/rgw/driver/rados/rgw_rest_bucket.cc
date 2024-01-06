@@ -15,19 +15,24 @@
 
 using namespace std;
 
-class RGWOp_Bucket_Info:public RGWRESTOp {
+class RGWOp_Bucket_Info: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Bucket_Info() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Bucket_Info()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_READ);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_bucket_info";
-}};
+    }
+};
 
 void RGWOp_Bucket_Info::execute(optional_yield y)
 {
@@ -52,19 +57,24 @@ void RGWOp_Bucket_Info::execute(optional_yield y)
     op_ret = RGWBucketAdminOp::info(driver, op_state, flusher, y, this);
 }
 
-class RGWOp_Get_Policy:public RGWRESTOp {
+class RGWOp_Get_Policy: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Get_Policy() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Get_Policy()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_READ);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_policy";
-}};
+    }
+};
 
 void RGWOp_Get_Policy::execute(optional_yield y)
 {
@@ -82,19 +92,24 @@ void RGWOp_Get_Policy::execute(optional_yield y)
     op_ret = RGWBucketAdminOp::get_policy(driver, op_state, flusher, this);
 }
 
-class RGWOp_Check_Bucket_Index:public RGWRESTOp {
+class RGWOp_Check_Bucket_Index: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Check_Bucket_Index() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Check_Bucket_Index()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "check_bucket_index";
-}};
+    }
+};
 
 void RGWOp_Check_Bucket_Index::execute(optional_yield y)
 {
@@ -117,19 +132,24 @@ void RGWOp_Check_Bucket_Index::execute(optional_yield y)
         RGWBucketAdminOp::check_index(driver, op_state, flusher, s->yield, s);
 }
 
-class RGWOp_Bucket_Link:public RGWRESTOp {
+class RGWOp_Bucket_Link: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Bucket_Link() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Bucket_Link()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "link_bucket";
-}};
+    }
+};
 
 void RGWOp_Bucket_Link::execute(optional_yield y)
 {
@@ -159,25 +179,30 @@ void RGWOp_Bucket_Link::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWBucketAdminOp::link(driver, op_state, s);
 }
 
-class RGWOp_Bucket_Unlink:public RGWRESTOp {
+class RGWOp_Bucket_Unlink: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Bucket_Unlink() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Bucket_Unlink()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "unlink_bucket";
-}};
+    }
+};
 
 void RGWOp_Bucket_Unlink::execute(optional_yield y)
 {
@@ -201,25 +226,30 @@ void RGWOp_Bucket_Unlink::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWBucketAdminOp::unlink(driver, op_state, s);
 }
 
-class RGWOp_Bucket_Remove:public RGWRESTOp {
+class RGWOp_Bucket_Remove: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Bucket_Remove() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Bucket_Remove()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "remove_bucket";
-}};
+    }
+};
 
 void RGWOp_Bucket_Remove::execute(optional_yield y)
 {
@@ -246,19 +276,24 @@ void RGWOp_Bucket_Remove::execute(optional_yield y)
         bucket->remove_bucket(s, delete_children, true, &s->info, s->yield);
 }
 
-class RGWOp_Set_Bucket_Quota:public RGWRESTOp {
+class RGWOp_Set_Bucket_Quota: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Set_Bucket_Quota() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Set_Bucket_Quota()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "set_bucket_quota";
-}};
+    }
+};
 
 #define QUOTA_INPUT_MAX_LEN 1024
 
@@ -285,8 +320,7 @@ void RGWOp_Set_Bucket_Quota::execute(optional_yield y)
 
     if (s->content_length > 0) {
         use_http_params = false;
-    }
-    else {
+    } else {
         const char *encoding = s->info.env->get("HTTP_TRANSFER_ENCODING");
         use_http_params = (!encoding || strcmp(encoding, "chunked") != 0);
     }
@@ -297,8 +331,9 @@ void RGWOp_Set_Bucket_Quota::execute(optional_yield y)
             get_json_input(driver->ctx(), s, quota, QUOTA_INPUT_MAX_LEN,
                            &empty);
         if (op_ret < 0) {
-            if (!empty)
+            if (!empty) {
                 return;
+            }
             /* was probably chunked input, but no content provided, configure via http params */
             use_http_params = true;
         }
@@ -321,8 +356,9 @@ void RGWOp_Set_Bucket_Quota::execute(optional_yield y)
                             &quota.max_size);
         RESTArgs::get_int64(s, "max-size-kb", old_max_size_kb, &max_size_kb,
                             &has_max_size_kb);
-        if (has_max_size_kb)
+        if (has_max_size_kb) {
             quota.max_size = max_size_kb * 1024;
+        }
         RESTArgs::get_bool(s, "enabled", old_quota->enabled, &quota.enabled);
     }
 
@@ -334,19 +370,24 @@ void RGWOp_Set_Bucket_Quota::execute(optional_yield y)
     op_ret = RGWBucketAdminOp::set_quota(driver, op_state, s);
 }
 
-class RGWOp_Sync_Bucket:public RGWRESTOp {
+class RGWOp_Sync_Bucket: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Sync_Bucket() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Sync_Bucket()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "sync_bucket";
-}};
+    }
+};
 
 void RGWOp_Sync_Bucket::execute(optional_yield y)
 {
@@ -366,19 +407,24 @@ void RGWOp_Sync_Bucket::execute(optional_yield y)
     op_ret = RGWBucketAdminOp::sync_bucket(driver, op_state, s);
 }
 
-class RGWOp_Object_Remove:public RGWRESTOp {
+class RGWOp_Object_Remove: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Object_Remove() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Object_Remove()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("buckets", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "remove_object";
-}};
+    }
+};
 
 void RGWOp_Object_Remove::execute(optional_yield y)
 {
@@ -399,22 +445,26 @@ void RGWOp_Object_Remove::execute(optional_yield y)
 RGWOp *RGWHandler_Bucket::op_get()
 {
 
-    if (s->info.args.sub_resource_exists("policy"))
+    if (s->info.args.sub_resource_exists("policy")) {
         return new RGWOp_Get_Policy;
+    }
 
-    if (s->info.args.sub_resource_exists("index"))
+    if (s->info.args.sub_resource_exists("index")) {
         return new RGWOp_Check_Bucket_Index;
+    }
 
     return new RGWOp_Bucket_Info;
 }
 
 RGWOp *RGWHandler_Bucket::op_put()
 {
-    if (s->info.args.sub_resource_exists("quota"))
+    if (s->info.args.sub_resource_exists("quota")) {
         return new RGWOp_Set_Bucket_Quota;
+    }
 
-    if (s->info.args.sub_resource_exists("sync"))
+    if (s->info.args.sub_resource_exists("sync")) {
         return new RGWOp_Sync_Bucket;
+    }
 
     return new RGWOp_Bucket_Link;
 }
@@ -426,8 +476,9 @@ RGWOp *RGWHandler_Bucket::op_post()
 
 RGWOp *RGWHandler_Bucket::op_delete()
 {
-    if (s->info.args.sub_resource_exists("object"))
+    if (s->info.args.sub_resource_exists("object")) {
         return new RGWOp_Object_Remove;
+    }
 
     return new RGWOp_Bucket_Remove;
 }

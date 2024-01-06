@@ -14,15 +14,16 @@
 
 RGWKMIPManager *rgw_kmip_manager;
 
-int
- RGWKMIPTransceiver::wait(optional_yield y)
+int RGWKMIPTransceiver::wait(optional_yield y)
 {
-    if (done)
+    if (done) {
         return ret;
+    }
     std::unique_lock l {
-    lock};
-    if (!done)
+        lock};
+    if (!done) {
         cond.wait(l);
+    }
     if (ret) {
         lderr(cct) << "kmip process failed, " << ret << dendl;
     }
@@ -41,16 +42,18 @@ int RGWKMIPTransceiver::send()
 int RGWKMIPTransceiver::process(optional_yield y)
 {
     int r = send();
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     return wait(y);
 }
 
 RGWKMIPTransceiver::~RGWKMIPTransceiver()
 {
     int i;
-    if (out)
+    if (out) {
         free(out);
+    }
     out = nullptr;
     if (outlist->strings) {
         for (i = 0; i < outlist->string_count; ++i) {
@@ -66,7 +69,7 @@ RGWKMIPTransceiver::~RGWKMIPTransceiver()
     }
 }
 
-void rgw_kmip_client_init(RGWKMIPManager & m)
+void rgw_kmip_client_init(RGWKMIPManager &m)
 {
     rgw_kmip_manager = &m;
     rgw_kmip_manager->start();

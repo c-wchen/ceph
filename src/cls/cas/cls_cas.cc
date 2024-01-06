@@ -19,7 +19,7 @@ CLS_NAME(cas)
 //
 // helpers
 //
-static int chunk_read_refcount(cls_method_context_t hctx, chunk_refs_t * objr)
+static int chunk_read_refcount(cls_method_context_t hctx, chunk_refs_t *objr)
 {
     bufferlist bl;
     objr->clear();
@@ -27,14 +27,14 @@ static int chunk_read_refcount(cls_method_context_t hctx, chunk_refs_t * objr)
     if (ret == -ENODATA) {
         return 0;
     }
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     try {
         auto iter = bl.cbegin();
         decode(*objr, iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(0,
                 "ERROR: chunk_read_refcount(): failed to decode refcount entry\n");
         return -EIO;
@@ -51,8 +51,9 @@ static int chunk_set_refcount(cls_method_context_t hctx,
     encode(objr, bl);
 
     int ret = cls_cxx_setxattr(hctx, CHUNK_REFCOUNT_ATTR, &bl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
@@ -62,14 +63,14 @@ static int chunk_set_refcount(cls_method_context_t hctx,
 //
 
 static int chunk_create_or_get_ref(cls_method_context_t hctx,
-                                   bufferlist * in, bufferlist * out)
+                                   bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_cas_chunk_create_or_get_ref_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: failed to decode entry\n");
         return -EINVAL;
     }
@@ -88,11 +89,9 @@ static int chunk_create_or_get_ref(cls_method_context_t hctx,
         if (ret < 0) {
             return ret;
         }
-    }
-    else if (ret < 0) {
+    } else if (ret < 0) {
         return ret;
-    }
-    else {
+    } else {
         // existing chunk; inc ref
         if (op.flags & cls_cas_chunk_create_or_get_ref_op::FLAG_VERIFY) {
             bufferlist old;
@@ -114,14 +113,14 @@ static int chunk_create_or_get_ref(cls_method_context_t hctx,
 }
 
 static int chunk_get_ref(cls_method_context_t hctx,
-                         bufferlist * in, bufferlist * out)
+                         bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_cas_chunk_get_ref_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: failed to decode entry\n");
         return -EINVAL;
     }
@@ -146,22 +145,23 @@ static int chunk_get_ref(cls_method_context_t hctx,
 }
 
 static int chunk_put_ref(cls_method_context_t hctx,
-                         bufferlist * in, bufferlist * out)
+                         bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_cas_chunk_put_ref_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: failed to decode entry\n");
         return -EINVAL;
     }
 
     chunk_refs_t objr;
     int ret = chunk_read_refcount(hctx, &objr);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     if (!objr.put(op.source)) {
         CLS_LOG(10, "oid=%s (no ref)\n", op.source.oid.name.c_str());
@@ -175,22 +175,22 @@ static int chunk_put_ref(cls_method_context_t hctx,
 
     CLS_LOG(10, "oid=%s (dec)\n", op.source.oid.name.c_str());
     ret = chunk_set_refcount(hctx, objr);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
 static int references_chunk(cls_method_context_t hctx,
-                            bufferlist * in, bufferlist * out)
+                            bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
     std::string fp_oid;
     bufferlist indata, outdata;
     try {
         decode(fp_oid, in_iter);
-    }
-    catch(ceph::buffer::error & e) {
+    } catch (ceph::buffer::error &e) {
         return -EINVAL;
     }
     CLS_LOG(10, "fp_oid: %s \n", fp_oid.c_str());

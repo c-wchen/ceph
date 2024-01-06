@@ -28,8 +28,8 @@ using std::set;
  * @post: idata contains complete information
  * stored
  */
-static int get_idata_from_key(cls_method_context_t hctx, const string & key,
-                              index_data & idata, index_data & next_idata)
+static int get_idata_from_key(cls_method_context_t hctx, const string &key,
+                              index_data &idata, index_data &next_idata)
 {
     bufferlist raw_val;
     int r = 0;
@@ -54,8 +54,7 @@ static int get_idata_from_key(cls_method_context_t hctx, const string & key,
             next_idata.decode(b);
         }
         return r;
-    }
-    else if (r == -ENOENT || r == -ENODATA) {
+    } else if (r == -ENOENT || r == -ENODATA) {
         auto b = kvmap.begin()->second.cbegin();
         idata.decode(b);
         if (idata.kdata.prefix != "1") {
@@ -63,8 +62,7 @@ static int get_idata_from_key(cls_method_context_t hctx, const string & key,
             next_idata.decode(nb);
         }
         r = 0;
-    }
-    else if (r < 0) {
+    } else if (r < 0) {
         CLS_LOG(20, "error reading index for duplicates %s: %d", key.c_str(),
                 r);
         return r;
@@ -75,22 +73,21 @@ static int get_idata_from_key(cls_method_context_t hctx, const string & key,
 }
 
 static int get_idata_from_key_op(cls_method_context_t hctx,
-                                 bufferlist * in, bufferlist * out)
+                                 bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "get_idata_from_key_op");
     idata_from_key_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         CLS_LOG(20, "error decoding idata_from_key_args.");
         return -EINVAL;
     }
     int r = get_idata_from_key(hctx, op.key, op.idata, op.next_idata);
     if (r < 0) {
         return r;
-    }
-    else {
+    } else {
         encode(op, *out);
         return 0;
     }
@@ -107,8 +104,8 @@ static int get_idata_from_key_op(cls_method_context_t hctx,
  * @pre: idata must contain a key.
  * @post: out_data contains complete information
  */
-static int get_next_idata(cls_method_context_t hctx, const index_data & idata,
-                          index_data & out_data)
+static int get_next_idata(cls_method_context_t hctx, const index_data &idata,
+                          index_data &out_data)
 {
     int r = 0;
     std::map < std::string, bufferlist > kvs;
@@ -123,8 +120,7 @@ static int get_next_idata(cls_method_context_t hctx, const index_data & idata,
         out_data.kdata.parse(kvs.begin()->first);
         auto b = kvs.begin()->second.cbegin();
         out_data.decode(b);
-    }
-    else {
+    } else {
         r = -EOVERFLOW;
     }
 
@@ -132,21 +128,20 @@ static int get_next_idata(cls_method_context_t hctx, const index_data & idata,
 }
 
 static int get_next_idata_op(cls_method_context_t hctx,
-                             bufferlist * in, bufferlist * out)
+                             bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "get_next_idata_op");
     idata_from_idata_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     int r = get_next_idata(hctx, op.idata, op.next_idata);
     if (r < 0) {
         return r;
-    }
-    else {
+    } else {
         op.encode(*out);
         return 0;
     }
@@ -163,8 +158,8 @@ static int get_next_idata_op(cls_method_context_t hctx,
  * @pre: idata must contain a key.
  * @ost: out_data contains complete information
  */
-static int get_prev_idata(cls_method_context_t hctx, const index_data & idata,
-                          index_data & out_data)
+static int get_prev_idata(cls_method_context_t hctx, const index_data &idata,
+                          index_data &out_data)
 {
     int r = 0;
     std::map < std::string, bufferlist > kvs;
@@ -186,8 +181,7 @@ static int get_prev_idata(cls_method_context_t hctx, const index_data & idata,
     if (it == kvs.begin()) {
         //it is the first object, there is no previous.
         return -ERANGE;
-    }
-    else {
+    } else {
         --it;
     }
     out_data.kdata.parse(it->first);
@@ -198,21 +192,20 @@ static int get_prev_idata(cls_method_context_t hctx, const index_data & idata,
 }
 
 static int get_prev_idata_op(cls_method_context_t hctx,
-                             bufferlist * in, bufferlist * out)
+                             bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "get_next_idata_op");
     idata_from_idata_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     int r = get_prev_idata(hctx, op.idata, op.next_idata);
     if (r < 0) {
         return r;
-    }
-    else {
+    } else {
         op.encode(*out);
         return 0;
     }
@@ -243,8 +236,8 @@ static int read_many(cls_method_context_t hctx, const set < string > &keys,
     return r;
 }
 
-static int read_many_op(cls_method_context_t hctx, bufferlist * in,
-                        bufferlist * out)
+static int read_many_op(cls_method_context_t hctx, bufferlist *in,
+                        bufferlist *out)
 {
     CLS_LOG(20, "read_many_op");
     set < string > op;
@@ -252,14 +245,13 @@ static int read_many_op(cls_method_context_t hctx, bufferlist * in,
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     int r = read_many(hctx, op, &outmap);
     if (r < 0) {
         return r;
-    }
-    else {
+    } else {
         encode(outmap, *out);
         return 0;
     }
@@ -279,14 +271,13 @@ static int check_writable(cls_method_context_t hctx)
     }
     if (string(bl.c_str(), bl.length()) == "1") {
         return -EACCES;
-    }
-    else {
+    } else {
         return 0;
     }
 }
 
 static int check_writable_op(cls_method_context_t hctx,
-                             bufferlist * in, bufferlist * out)
+                             bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "check_writable_op");
     return check_writable(hctx);
@@ -314,38 +305,38 @@ static int assert_size_in_bound(cls_method_context_t hctx, int bound,
 
     //compare size to comparator
     switch (comparator) {
-    case CEPH_OSD_CMPXATTR_OP_EQ:
-        if (size != bound) {
-            return -EKEYREJECTED;
-        }
-        break;
-    case CEPH_OSD_CMPXATTR_OP_LT:
-        if (size >= bound) {
-            return -EKEYREJECTED;
-        }
-        break;
-    case CEPH_OSD_CMPXATTR_OP_GT:
-        if (size <= bound) {
-            return -EKEYREJECTED;
-        }
-        break;
-    default:
-        CLS_LOG(20, "invalid argument passed to assert_size_in_bound: %d",
-                comparator);
-        return -EINVAL;
+        case CEPH_OSD_CMPXATTR_OP_EQ:
+            if (size != bound) {
+                return -EKEYREJECTED;
+            }
+            break;
+        case CEPH_OSD_CMPXATTR_OP_LT:
+            if (size >= bound) {
+                return -EKEYREJECTED;
+            }
+            break;
+        case CEPH_OSD_CMPXATTR_OP_GT:
+            if (size <= bound) {
+                return -EKEYREJECTED;
+            }
+            break;
+        default:
+            CLS_LOG(20, "invalid argument passed to assert_size_in_bound: %d",
+                    comparator);
+            return -EINVAL;
     }
     return 0;
 }
 
 static int assert_size_in_bound_op(cls_method_context_t hctx,
-                                   bufferlist * in, bufferlist * out)
+                                   bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "assert_size_in_bound_op");
     assert_size_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     return assert_size_in_bound(hctx, op.bound, op.comparator);
@@ -394,8 +385,7 @@ static int omap_insert(cls_method_context_t hctx,
             }
             assert_bound++;
             CLS_LOG(20, "increased assert_bound to %d", assert_bound);
-        }
-        else if (r != -ENODATA && r != -ENOENT) {
+        } else if (r != -ENODATA && r != -ENOENT) {
             CLS_LOG(20, "error reading omap val for %s: %d", it->first.c_str(),
                     r);
             return r;
@@ -441,14 +431,14 @@ static int omap_insert(cls_method_context_t hctx,
 }
 
 static int omap_insert_op(cls_method_context_t hctx,
-                          bufferlist * in, bufferlist * out)
+                          bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "omap_insert");
     omap_set_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     return omap_insert(hctx, op.omap, op.bound, op.exclusive);
@@ -497,14 +487,14 @@ static int create_with_omap(cls_method_context_t hctx,
 }
 
 static int create_with_omap_op(cls_method_context_t hctx,
-                               bufferlist * in, bufferlist * out)
+                               bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "omap_insert");
     map < string, bufferlist > omap;
     auto it = in->cbegin();
     try {
         decode(omap, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     return create_with_omap(hctx, omap);
@@ -545,8 +535,7 @@ static int omap_remove(cls_method_context_t hctx,
         if (r == -ENOENT || r == -ENODATA
             || string(bl.c_str(), bl.length()) == "") {
             return -ENODATA;
-        }
-        else if (r < 0) {
+        } else if (r < 0) {
             CLS_LOG(20, "error reading omap val for %s: %d", it->c_str(), r);
             return r;
         }
@@ -592,14 +581,14 @@ static int omap_remove(cls_method_context_t hctx,
 }
 
 static int omap_remove_op(cls_method_context_t hctx,
-                          bufferlist * in, bufferlist * out)
+                          bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "omap_remove");
     omap_rm_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     return omap_remove(hctx, op.omap, op.bound);
@@ -614,7 +603,7 @@ static int omap_remove_op(cls_method_context_t hctx,
  * Otherwise, odata contains the size and unwritable attribute.
  */
 static int maybe_read_for_balance(cls_method_context_t hctx,
-                                  object_data & odata, int bound,
+                                  object_data &odata, int bound,
                                   int comparator)
 {
     CLS_LOG(20, "rebalance reading");
@@ -625,8 +614,7 @@ static int maybe_read_for_balance(cls_method_context_t hctx,
         CLS_LOG(20, "rebalance read: error getting xattr %s: %d", "unwritable",
                 r);
         return r;
-    }
-    else {
+    } else {
         odata.unwritable = false;
     }
 
@@ -661,21 +649,20 @@ static int maybe_read_for_balance(cls_method_context_t hctx,
 }
 
 static int maybe_read_for_balance_op(cls_method_context_t hctx,
-                                     bufferlist * in, bufferlist * out)
+                                     bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "maybe_read_for_balance");
     rebalance_args op;
     auto it = in->cbegin();
     try {
         decode(op, it);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EINVAL;
     }
     int r = maybe_read_for_balance(hctx, op.odata, op.bound, op.comparator);
     if (r < 0) {
         return r;
-    }
-    else {
+    } else {
         op.encode(*out);
         return 0;
     }

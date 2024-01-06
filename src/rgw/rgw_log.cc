@@ -24,16 +24,17 @@
 
 using namespace std;
 
-static void set_param_str(req_state * s, const char *name, string & str)
+static void set_param_str(req_state *s, const char *name, string &str)
 {
     const char *p = s->info.env->get(name);
-    if (p)
+    if (p) {
         str = p;
+    }
 }
 
-string render_log_object_name(const string & format,
-                              struct tm *dt, const string & bucket_id,
-                              const string & bucket_name)
+string render_log_object_name(const string &format,
+                              struct tm *dt, const string &bucket_id,
+                              const string &bucket_name)
 {
     string o;
     for (unsigned i = 0; i < format.size(); i++) {
@@ -41,47 +42,47 @@ string render_log_object_name(const string & format,
             i++;
             char buf[32];
             switch (format[i]) {
-            case '%':
-                strcpy(buf, "%");
-                break;
-            case 'Y':
-                sprintf(buf, "%.4d", dt->tm_year + 1900);
-                break;
-            case 'y':
-                sprintf(buf, "%.2d", dt->tm_year % 100);
-                break;
-            case 'm':
-                sprintf(buf, "%.2d", dt->tm_mon + 1);
-                break;
-            case 'd':
-                sprintf(buf, "%.2d", dt->tm_mday);
-                break;
-            case 'H':
-                sprintf(buf, "%.2d", dt->tm_hour);
-                break;
-            case 'I':
-                sprintf(buf, "%.2d", (dt->tm_hour % 12) + 1);
-                break;
-            case 'k':
-                sprintf(buf, "%d", dt->tm_hour);
-                break;
-            case 'l':
-                sprintf(buf, "%d", (dt->tm_hour % 12) + 1);
-                break;
-            case 'M':
-                sprintf(buf, "%.2d", dt->tm_min);
-                break;
+                case '%':
+                    strcpy(buf, "%");
+                    break;
+                case 'Y':
+                    sprintf(buf, "%.4d", dt->tm_year + 1900);
+                    break;
+                case 'y':
+                    sprintf(buf, "%.2d", dt->tm_year % 100);
+                    break;
+                case 'm':
+                    sprintf(buf, "%.2d", dt->tm_mon + 1);
+                    break;
+                case 'd':
+                    sprintf(buf, "%.2d", dt->tm_mday);
+                    break;
+                case 'H':
+                    sprintf(buf, "%.2d", dt->tm_hour);
+                    break;
+                case 'I':
+                    sprintf(buf, "%.2d", (dt->tm_hour % 12) + 1);
+                    break;
+                case 'k':
+                    sprintf(buf, "%d", dt->tm_hour);
+                    break;
+                case 'l':
+                    sprintf(buf, "%d", (dt->tm_hour % 12) + 1);
+                    break;
+                case 'M':
+                    sprintf(buf, "%.2d", dt->tm_min);
+                    break;
 
-            case 'i':
-                o += bucket_id;
-                continue;
-            case 'n':
-                o += bucket_name;
-                continue;
-            default:
-                // unknown code
-                sprintf(buf, "%%%c", format[i]);
-                break;
+                case 'i':
+                    o += bucket_id;
+                    continue;
+                case 'n':
+                    o += bucket_name;
+                    continue;
+                default:
+                    // unknown code
+                    sprintf(buf, "%%%c", format[i]);
+                    break;
             }
             o += buf;
             continue;
@@ -92,87 +93,99 @@ string render_log_object_name(const string & format,
 }
 
 /* usage logger */
-class UsageLogger:public DoutPrefixProvider {
+class UsageLogger: public DoutPrefixProvider
+{
     CephContext *cct;
-     rgw::sal::Driver * driver;
-     map < rgw_user_bucket, RGWUsageBatch > usage_map;
-     ceph::mutex lock = ceph::make_mutex("UsageLogger");
+    rgw::sal::Driver *driver;
+    map < rgw_user_bucket, RGWUsageBatch > usage_map;
+    ceph::mutex lock = ceph::make_mutex("UsageLogger");
     int32_t num_entries;
-     ceph::mutex timer_lock = ceph::make_mutex("UsageLogger::timer_lock");
+    ceph::mutex timer_lock = ceph::make_mutex("UsageLogger::timer_lock");
     SafeTimer timer;
     utime_t round_timestamp;
 
-    class C_UsageLogTimeout:public Context {
+    class C_UsageLogTimeout: public Context
+    {
         UsageLogger *logger;
-      public:
-         explicit C_UsageLogTimeout(UsageLogger * _l):logger(_l) {
-        } void finish(int r) override {
+    public:
+        explicit C_UsageLogTimeout(UsageLogger *_l): logger(_l)
+        {
+        } void finish(int r) override
+        {
             logger->flush();
             logger->set_timer();
-    }};
+        }
+    };
 
-    void set_timer() {
+    void set_timer()
+    {
         timer.add_event_after(cct->_conf->rgw_usage_log_tick_interval,
                               new C_UsageLogTimeout(this));
     }
-  public:
+public:
 
-  UsageLogger(CephContext * _cct, rgw::sal::Driver * _driver):cct(_cct), driver(_driver), num_entries(0), timer(cct,
-                                                      timer_lock)
+    UsageLogger(CephContext *_cct, rgw::sal::Driver *_driver): cct(_cct), driver(_driver), num_entries(0), timer(cct,
+                timer_lock)
     {
         timer.init();
         std::lock_guard l {
-        timer_lock};
+            timer_lock};
         set_timer();
         utime_t ts = ceph_clock_now();
         recalc_round_timestamp(ts);
     }
 
-    ~UsageLogger() {
+    ~UsageLogger()
+    {
         std::lock_guard l {
-        timer_lock};
+            timer_lock};
         flush();
         timer.cancel_all_events();
         timer.shutdown();
     }
 
-    void recalc_round_timestamp(utime_t & ts) {
+    void recalc_round_timestamp(utime_t &ts)
+    {
         round_timestamp = ts.round_to_hour();
     }
 
-    void insert_user(utime_t & timestamp, const rgw_user & user,
-                     rgw_usage_log_entry & entry) {
+    void insert_user(utime_t &timestamp, const rgw_user &user,
+                     rgw_usage_log_entry &entry)
+    {
         lock.lock();
-        if (timestamp.sec() > round_timestamp + 3600)
+        if (timestamp.sec() > round_timestamp + 3600) {
             recalc_round_timestamp(timestamp);
+        }
         entry.epoch = round_timestamp.sec();
         bool account;
         string u = user.to_str();
         rgw_user_bucket ub(u, entry.bucket);
         real_time rt = round_timestamp.to_real_time();
         usage_map[ub].insert(rt, entry, &account);
-        if (account)
+        if (account) {
             num_entries++;
+        }
         bool need_flush =
             (num_entries > cct->_conf->rgw_usage_log_flush_threshold);
         lock.unlock();
         if (need_flush) {
             std::lock_guard l {
-            timer_lock};
+                timer_lock};
             flush();
         }
     }
 
-    void insert(utime_t & timestamp, rgw_usage_log_entry & entry) {
+    void insert(utime_t &timestamp, rgw_usage_log_entry &entry)
+    {
         if (entry.payer.empty()) {
             insert_user(timestamp, entry.owner, entry);
-        }
-        else {
+        } else {
             insert_user(timestamp, entry.payer, entry);
         }
     }
 
-    void flush() {
+    void flush()
+    {
         map < rgw_user_bucket, RGWUsageBatch > old_map;
         lock.lock();
         old_map.swap(usage_map);
@@ -182,17 +195,21 @@ class UsageLogger:public DoutPrefixProvider {
         driver->log_usage(this, old_map);
     }
 
-    CephContext *get_cct() const override {
+    CephContext *get_cct() const override
+    {
         return cct;
-    } unsigned get_subsys() const override {
+    } unsigned get_subsys() const override
+    {
         return dout_subsys;
-    } std::ostream & gen_prefix(std::ostream & out) const override {
+    } std::ostream &gen_prefix(std::ostream &out) const override
+    {
         return out << "rgw UsageLogger: ";
-}};
+    }
+};
 
 static UsageLogger *usage_logger = NULL;
 
-void rgw_log_usage_init(CephContext * cct, rgw::sal::Driver * driver)
+void rgw_log_usage_init(CephContext *cct, rgw::sal::Driver *driver)
 {
     usage_logger = new UsageLogger(cct, driver);
 }
@@ -203,13 +220,15 @@ void rgw_log_usage_finalize()
     usage_logger = NULL;
 }
 
-static void log_usage(req_state * s, const string & op_name)
+static void log_usage(req_state *s, const string &op_name)
 {
-    if (s->system_request)      /* don't log system user operations */
+    if (s->system_request) {    /* don't log system user operations */
         return;
+    }
 
-    if (!usage_logger)
+    if (!usage_logger) {
         return;
+    }
 
     rgw_user user;
     rgw_user payer;
@@ -224,8 +243,7 @@ static void log_usage(req_state * s, const string & op_name)
             s->bucket->get_info().requester_pays) {
             payer = s->user->get_id();
         }
-    }
-    else {
+    } else {
         user = s->user->get_id();
     }
 
@@ -244,13 +262,14 @@ static void log_usage(req_state * s, const string & op_name)
     rgw_usage_data data(bytes_sent, bytes_received);
 
     data.ops = 1;
-    if (!s->is_err())
+    if (!s->is_err()) {
         data.successful_ops = 1;
+    }
 
     ldpp_dout(s, 30) << "log_usage: bucket_name=" << bucket_name
-        << " tenant=" << s->bucket_tenant
-        << ", bytes_sent=" << bytes_sent << ", bytes_received="
-        << bytes_received << ", success=" << data.successful_ops << dendl;
+                     << " tenant=" << s->bucket_tenant
+                     << ", bytes_sent=" << bytes_sent << ", bytes_received="
+                     << bytes_received << ", success=" << data.successful_ops << dendl;
 
     entry.add(op_name, data);
 
@@ -260,7 +279,7 @@ static void log_usage(req_state * s, const string & op_name)
 }
 
 void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
-                              Formatter * formatter)
+                              Formatter *formatter)
 {
     formatter->open_object_section("log_entry");
     formatter->dump_string("bucket", entry.bucket);
@@ -271,8 +290,9 @@ void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
     }
     formatter->dump_string("remote_addr", entry.remote_addr);
     string obj_owner = entry.object_owner.to_str();
-    if (obj_owner.length())
+    if (obj_owner.length()) {
         formatter->dump_string("object_owner", obj_owner);
+    }
     formatter->dump_string("user", entry.user);
     formatter->dump_string("operation", entry.op);
     formatter->dump_string("uri", entry.uri);
@@ -291,7 +311,7 @@ void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
     formatter->dump_string("referrer", entry.referrer);
     if (entry.x_headers.size() > 0) {
         formatter->open_array_section("http_x_headers");
-      for (const auto & iter:entry.x_headers) {
+        for (const auto &iter : entry.x_headers) {
             formatter->open_object_section(iter.first.c_str());
             formatter->dump_string(iter.first.c_str(), iter.second);
             formatter->close_section();
@@ -300,28 +320,28 @@ void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
     }
     formatter->dump_string("trans_id", entry.trans_id);
     switch (entry.identity_type) {
-    case TYPE_RGW:
-        formatter->dump_string("authentication_type", "Local");
-        break;
-    case TYPE_LDAP:
-        formatter->dump_string("authentication_type", "LDAP");
-        break;
-    case TYPE_KEYSTONE:
-        formatter->dump_string("authentication_type", "Keystone");
-        break;
-    case TYPE_WEB:
-        formatter->dump_string("authentication_type", "OIDC Provider");
-        break;
-    case TYPE_ROLE:
-        formatter->dump_string("authentication_type", "STS");
-        break;
-    default:
-        break;
+        case TYPE_RGW:
+            formatter->dump_string("authentication_type", "Local");
+            break;
+        case TYPE_LDAP:
+            formatter->dump_string("authentication_type", "LDAP");
+            break;
+        case TYPE_KEYSTONE:
+            formatter->dump_string("authentication_type", "Keystone");
+            break;
+        case TYPE_WEB:
+            formatter->dump_string("authentication_type", "OIDC Provider");
+            break;
+        case TYPE_ROLE:
+            formatter->dump_string("authentication_type", "STS");
+            break;
+        default:
+            break;
     }
     if (entry.token_claims.size() > 0) {
         if (entry.token_claims[0] == "sts") {
             formatter->open_object_section("sts_info");
-          for (const auto & iter:entry.token_claims) {
+            for (const auto &iter : entry.token_claims) {
                 auto pos = iter.find(":");
                 if (pos != string::npos) {
                     formatter->dump_string(iter.substr(0, pos),
@@ -344,7 +364,7 @@ void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
         formatter->dump_int("num_ok", entry.delete_multi_obj_meta.num_ok);
         formatter->dump_int("num_err", entry.delete_multi_obj_meta.num_err);
         formatter->open_array_section("objects");
-      for (const auto & iter:entry.delete_multi_obj_meta.objects) {
+        for (const auto &iter : entry.delete_multi_obj_meta.objects) {
             formatter->open_object_section("");
             formatter->dump_string("key", iter.key);
             formatter->dump_string("version_id", iter.version_id);
@@ -352,8 +372,7 @@ void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
             formatter->dump_bool("error", iter.error);
             if (iter.error) {
                 formatter->dump_string("error_message", iter.error_message);
-            }
-            else {
+            } else {
                 formatter->dump_bool("delete_marker", iter.delete_marker);
                 formatter->dump_string("marker_version_id",
                                        iter.marker_version_id);
@@ -368,20 +387,20 @@ void rgw_format_ops_log_entry(struct rgw_log_entry &entry,
 
 OpsLogManifold::~OpsLogManifold()
 {
-  for (const auto & sink:sinks) {
+    for (const auto &sink : sinks) {
         delete sink;
     }
 }
 
-void OpsLogManifold::add_sink(OpsLogSink * sink)
+void OpsLogManifold::add_sink(OpsLogSink *sink)
 {
     sinks.push_back(sink);
 }
 
-int OpsLogManifold::log(req_state * s, struct rgw_log_entry &entry)
+int OpsLogManifold::log(req_state *s, struct rgw_log_entry &entry)
 {
     int ret = 0;
-  for (const auto & sink:sinks) {
+    for (const auto &sink : sinks) {
         if (sink->log(s, entry) < 0) {
             ret = -1;
         }
@@ -389,9 +408,9 @@ int OpsLogManifold::log(req_state * s, struct rgw_log_entry &entry)
     return ret;
 }
 
-OpsLogFile::OpsLogFile(CephContext * cct, std::string & path, uint64_t max_data_size):
-cct(cct), data_size(0), max_data_size(max_data_size), path(path),
-need_reopen(false)
+OpsLogFile::OpsLogFile(CephContext *cct, std::string &path, uint64_t max_data_size):
+    cct(cct), data_size(0), max_data_size(max_data_size), path(path),
+    need_reopen(false)
 {
 }
 
@@ -408,7 +427,7 @@ void OpsLogFile::flush()
         flush_buffer.swap(log_buffer);
         data_size = 0;
     }
-  for (auto bl:flush_buffer) {
+    for (auto bl : flush_buffer) {
         int try_num = 0;
         while (true) {
             if (!file.is_open() || need_reopen) {
@@ -420,7 +439,7 @@ void OpsLogFile::flush()
             if (!file) {
                 ldpp_dout(this,
                           0) << "ERROR: failed to log RGW ops log file entry" <<
-                    dendl;
+                             dendl;
                 file.clear();
                 if (stopped) {
                     break;
@@ -429,8 +448,7 @@ void OpsLogFile::flush()
                 std::this_thread::sleep_for(std::chrono::
                                             seconds(sleep_time_secs));
                 try_num++;
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -480,14 +498,14 @@ OpsLogFile::~OpsLogFile()
     file.close();
 }
 
-int OpsLogFile::log_json(req_state * s, bufferlist & bl)
+int OpsLogFile::log_json(req_state *s, bufferlist &bl)
 {
     std::unique_lock lock(mutex);
     if (data_size + bl.length() >= max_data_size) {
         ldout(s->cct,
               0) <<
-            "ERROR: RGW ops log file buffer too full, dropping log for txn: " <<
-            s->trans_id << dendl;
+                 "ERROR: RGW ops log file buffer too full, dropping log for txn: " <<
+                 s->trans_id << dendl;
         return -1;
     }
     log_buffer.push_back(bl);
@@ -511,15 +529,15 @@ JsonOpsLogSink::~JsonOpsLogSink()
     delete formatter;
 }
 
-void JsonOpsLogSink::formatter_to_bl(bufferlist & bl)
+void JsonOpsLogSink::formatter_to_bl(bufferlist &bl)
 {
     stringstream ss;
     formatter->flush(ss);
-    const string & s = ss.str();
+    const string &s = ss.str();
     bl.append(s);
 }
 
-int JsonOpsLogSink::log(req_state * s, struct rgw_log_entry &entry)
+int JsonOpsLogSink::log(req_state *s, struct rgw_log_entry &entry)
 {
     bufferlist bl;
 
@@ -531,28 +549,28 @@ int JsonOpsLogSink::log(req_state * s, struct rgw_log_entry &entry)
     return log_json(s, bl);
 }
 
-void OpsLogSocket::init_connection(bufferlist & bl)
+void OpsLogSocket::init_connection(bufferlist &bl)
 {
     bl.append("[");
 }
 
-OpsLogSocket::OpsLogSocket(CephContext * cct, uint64_t _backlog):OutputDataSocket(cct,
-                 _backlog)
+OpsLogSocket::OpsLogSocket(CephContext *cct, uint64_t _backlog): OutputDataSocket(cct,
+            _backlog)
 {
     delim.append(",\n");
 }
 
-int OpsLogSocket::log_json(req_state * s, bufferlist & bl)
+int OpsLogSocket::log_json(req_state *s, bufferlist &bl)
 {
     append_output(bl);
     return 0;
 }
 
-OpsLogRados::OpsLogRados(rgw::sal::Driver * const &driver):driver(driver)
+OpsLogRados::OpsLogRados(rgw::sal::Driver *const &driver): driver(driver)
 {
 }
 
-int OpsLogRados::log(req_state * s, struct rgw_log_entry &entry)
+int OpsLogRados::log(req_state *s, struct rgw_log_entry &entry)
 {
     if (!s->cct->_conf->rgw_ops_log_rados) {
         return 0;
@@ -562,50 +580,51 @@ int OpsLogRados::log(req_state * s, struct rgw_log_entry &entry)
 
     struct tm bdt;
     time_t t = req_state::Clock::to_time_t(entry.time);
-    if (s->cct->_conf->rgw_log_object_name_utc)
+    if (s->cct->_conf->rgw_log_object_name_utc) {
         gmtime_r(&t, &bdt);
-    else
+    } else {
         localtime_r(&t, &bdt);
+    }
     string oid =
         render_log_object_name(s->cct->_conf->rgw_log_object_name, &bdt,
                                entry.bucket_id, entry.bucket);
     if (driver->log_op(s, oid, bl) < 0) {
         ldpp_dout(s,
                   0) << "ERROR: failed to log RADOS RGW ops log entry for txn: "
-            << s->trans_id << dendl;
+                     << s->trans_id << dendl;
         return -1;
     }
     return 0;
 }
 
-int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
-               OpsLogSink * olog)
+int rgw_log_op(RGWREST *const rest, req_state *s, const RGWOp *op,
+               OpsLogSink *olog)
 {
     struct rgw_log_entry entry;
     string bucket_id;
     string op_name = (op ? op->name() : "unknown");
 
-    if (s->enable_usage_log)
+    if (s->enable_usage_log) {
         log_usage(s, op_name);
+    }
 
-    if (!s->enable_ops_log)
+    if (!s->enable_ops_log) {
         return 0;
+    }
 
     if (s->bucket_name.empty()) {
         /* this case is needed for, e.g., list_buckets */
-    }
-    else {
+    } else {
         if (s->err.ret == -ERR_NO_SUCH_BUCKET ||
             rgw::sal::Bucket::empty(s->bucket.get())) {
             if (!s->cct->_conf->rgw_log_nonexistent_bucket) {
                 ldout(s->cct,
                       5) << "bucket " << s->
-                    bucket_name << " doesn't exist, not logging" << dendl;
+                         bucket_name << " doesn't exist, not logging" << dendl;
                 return 0;
             }
             bucket_id = "";
-        }
-        else {
+        } else {
             bucket_id = s->bucket->get_bucket_id();
         }
         entry.bucket =
@@ -614,14 +633,13 @@ int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
         if (check_utf8(entry.bucket.c_str(), entry.bucket.size()) != 0) {
             ldpp_dout(s,
                       5) << "not logging op on bucket with non-utf8 name" <<
-                dendl;
+                         dendl;
             return 0;
         }
 
         if (!rgw::sal::Object::empty(s->object.get())) {
             entry.obj = s->object->get_key();
-        }
-        else {
+        } else {
             entry.obj = rgw_obj_key("-");
         }
 
@@ -631,14 +649,16 @@ int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
     if (s->cct->_conf->rgw_remote_addr_param.length())
         set_param_str(s, s->cct->_conf->rgw_remote_addr_param.c_str(),
                       entry.remote_addr);
-    else
+    else {
         set_param_str(s, "REMOTE_ADDR", entry.remote_addr);
+    }
     set_param_str(s, "HTTP_USER_AGENT", entry.user_agent);
     // legacy apps are still using misspelling referer, such as curl -e option
-    if (s->info.env->exists("HTTP_REFERRER"))
+    if (s->info.env->exists("HTTP_REFERRER")) {
         set_param_str(s, "HTTP_REFERRER", entry.referrer);
-    else
+    } else {
         set_param_str(s, "HTTP_REFERER", entry.referrer);
+    }
 
     std::string uri;
     if (s->info.env->exists("REQUEST_METHOD")) {
@@ -670,8 +690,7 @@ int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
     if (s->auth.identity) {
         entry.identity_type = s->auth.identity->get_identity_type();
         s->auth.identity->write_ops_log_entry(entry);
-    }
-    else {
+    } else {
         entry.identity_type = TYPE_NONE;
     }
 
@@ -682,19 +701,20 @@ int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
     /* custom header logging */
     if (rest) {
         if (rest->log_x_headers()) {
-          for (const auto & iter:s->info.env->get_map()) {
+            for (const auto &iter : s->info.env->get_map()) {
                 if (rest->log_x_header(iter.first)) {
                     entry.x_headers.
-                        insert(rgw_log_entry::headers_map::
-                               value_type(iter.first, iter.second));
+                    insert(rgw_log_entry::headers_map::
+                           value_type(iter.first, iter.second));
                 }
             }
         }
     }
 
     entry.user = s->user->get_id().to_str();
-    if (s->object_acl)
+    if (s->object_acl) {
         entry.object_owner = s->object_acl->get_owner().get_id();
+    }
     entry.bucket_owner = s->bucket_owner.get_id();
 
     uint64_t bytes_sent = ACCOUNTING_IO(s)->get_bytes_sent();
@@ -708,8 +728,7 @@ int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
         char buf[16];
         snprintf(buf, sizeof(buf), "%d", s->err.http_ret);
         entry.http_status = buf;
-    }
-    else {
+    } else {
         entry.http_status = "200";  // default
     }
     entry.error_code = s->err.err_code;
@@ -721,7 +740,7 @@ int rgw_log_op(RGWREST * const rest, req_state * s, const RGWOp * op,
     return 0;
 }
 
-void rgw_log_entry::generate_test_instances(list < rgw_log_entry * >&o)
+void rgw_log_entry::generate_test_instances(list < rgw_log_entry * > &o)
 {
     rgw_log_entry *e = new rgw_log_entry;
     e->object_owner = "object_owner";
@@ -745,7 +764,7 @@ void rgw_log_entry::generate_test_instances(list < rgw_log_entry * >&o)
     o.push_back(new rgw_log_entry);
 }
 
-void rgw_log_entry::dump(Formatter * f) const const
+void rgw_log_entry::dump(Formatter *f) const const
 {
     f->dump_string("object_owner", object_owner.to_str());
     f->dump_string("bucket_owner", bucket_owner.to_str());

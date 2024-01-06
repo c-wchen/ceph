@@ -33,8 +33,7 @@ extern "C" {
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 // -----------------------------------------------------------------------------// -----------------------------------------------------------------------------
-    static ostream &
-_prefix(std::ostream * _dout)
+static ostream &_prefix(std::ostream *_dout)
 {
     return *_dout << "ErasureCodeIsa: ";
 }
@@ -46,12 +45,13 @@ const std::string ErasureCodeIsaDefault::DEFAULT_M("3");
 
 // -----------------------------------------------------------------------------
 
-int ErasureCodeIsa::init(ErasureCodeProfile & profile, ostream * ss)
+int ErasureCodeIsa::init(ErasureCodeProfile &profile, ostream *ss)
 {
     int err = 0;
     err |= parse(profile, ss);
-    if (err)
+    if (err) {
         return err;
+    }
     prepare();
     return ErasureCode::init(profile, ss);
 }
@@ -63,11 +63,11 @@ unsigned int ErasureCodeIsa::get_chunk_size(unsigned int object_size) const cons
     unsigned alignment = get_alignment();
     unsigned chunk_size = (object_size + k - 1) / k;
     dout(20) << "get_chunk_size: chunk_size " << chunk_size
-        << " must be modulo " << alignment << dendl;
+             << " must be modulo " << alignment << dendl;
     unsigned modulo = chunk_size % alignment;
     if (modulo) {
         dout(10) << "get_chunk_size: " << chunk_size
-            << " padded to " << chunk_size + alignment - modulo << dendl;
+                 << " padded to " << chunk_size + alignment - modulo << dendl;
         chunk_size += alignment - modulo;
     }
     return chunk_size;
@@ -75,17 +75,18 @@ unsigned int ErasureCodeIsa::get_chunk_size(unsigned int object_size) const cons
 
 // -----------------------------------------------------------------------------
 
-int ErasureCodeIsa::encode_chunks(const set < int >&want_to_encode,
+int ErasureCodeIsa::encode_chunks(const set < int > &want_to_encode,
                                   map < int, bufferlist > *encoded)
 {
     char *chunks[k + m];
-    for (int i = 0; i < k + m; i++)
+    for (int i = 0; i < k + m; i++) {
         chunks[i] = (*encoded)[i].c_str();
+    }
     isa_encode(&chunks[0], &chunks[k], (*encoded)[0].length());
     return 0;
 }
 
-int ErasureCodeIsa::decode_chunks(const set < int >&want_to_read,
+int ErasureCodeIsa::decode_chunks(const set < int > &want_to_read,
                                   const map < int, bufferlist > &chunks,
                                   map < int, bufferlist > *decoded)
 {
@@ -99,10 +100,11 @@ int ErasureCodeIsa::decode_chunks(const set < int >&want_to_read,
             erasures[erasures_count] = i;
             erasures_count++;
         }
-        if (i < k)
+        if (i < k) {
             data[i] = (*decoded)[i].c_str();
-        else
+        } else {
             coding[i - k] = (*decoded)[i].c_str();
+        }
     }
     erasures[erasures_count] = -1;
     ceph_assert(erasures_count > 0);
@@ -129,8 +131,9 @@ void ErasureCodeIsaDefault::isa_encode(char **data,
 bool ErasureCodeIsaDefault::erasure_contains(int *erasures, int i)
 {
     for (int l = 0; erasures[l] != -1; l++) {
-        if (erasures[l] == i)
+        if (erasures[l] == i) {
             return true;
+        }
     }
     return false;
 }
@@ -164,19 +167,16 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
             if (r < k) {
                 if (i < k) {
                     recover_source[r] = (unsigned char *)data[i];
-                }
-                else {
+                } else {
                     recover_source[r] = (unsigned char *)coding[i - k];
                 }
                 r++;
             }
-        }
-        else {
+        } else {
             if (s < m) {
                 if (i < k) {
                     recover_target[s] = (unsigned char *)data[i];
-                }
-                else {
+                } else {
                     recover_target[s] = (unsigned char *)coding[i - k];
                 }
                 s++;
@@ -188,7 +188,7 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
         // single parity decoding
         ceph_assert(1 == nerrs);
         dout(20) << "isa_decode: reconstruct using region xor [" <<
-            erasures[0] << "]" << dendl;
+                 erasures[0] << "]" << dendl;
         region_xor(recover_source, recover_target[0], k, blocksize);
         return 0;
     }
@@ -196,7 +196,7 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
     if ((matrixtype == kVandermonde) && (nerrs == 1) && (erasures[0] < (k + 1))) {
         // use xor decoding if a data chunk is missing or the first coding chunk
         dout(20) << "isa_decode: reconstruct using region xor [" <<
-            erasures[0] << "]" << dendl;
+                 erasures[0] << "]" << dendl;
         ceph_assert(1 == s);
         ceph_assert(k == r);
         region_xor(recover_source, recover_target[0], k, blocksize);
@@ -209,8 +209,9 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
 
     int decode_index[k];
 
-    if (nerrs > m)
+    if (nerrs > m) {
         return -1;
+    }
 
     std::string erasure_signature;  // describes a matrix configuration for caching
 
@@ -220,8 +221,9 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
 
     for (i = 0, r = 0; i < k; i++, r++) {
         char id[128];
-        while (erasure_contains(erasures, r))
+        while (erasure_contains(erasures, r)) {
             r++;
+        }
 
         decode_index[i] = r;
 
@@ -247,8 +249,9 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
 
         for (i = 0; i < k; i++) {
             r = decode_index[i];
-            for (j = 0; j < k; j++)
+            for (j = 0; j < k; j++) {
                 b[k * i + j] = encode_coeff[k * r + j];
+            }
         }
         // ---------------------------------------------
         // Compute inverted matrix
@@ -273,8 +276,7 @@ int ErasureCodeIsaDefault::isa_decode(int *erasures,
                 for (j = 0; j < k; j++) {
                     c[k * p + j] = d[k * erasures[p] + j];
                 }
-            }
-            else {
+            } else {
                 // decoding matrix element for coding chunks
                 for (i = 0; i < k; i++) {
                     int s = 0;
@@ -310,7 +312,7 @@ unsigned ErasureCodeIsaDefault::get_alignment() const const
 
 // -----------------------------------------------------------------------------
 
-int ErasureCodeIsaDefault::parse(ErasureCodeProfile & profile, ostream * ss)
+int ErasureCodeIsaDefault::parse(ErasureCodeProfile &profile, ostream *ss)
 {
     int err = ErasureCode::parse(profile, ss);
     err |= to_int("k", profile, &k, DEFAULT_K, ss);
@@ -337,17 +339,17 @@ int ErasureCodeIsaDefault::parse(ErasureCodeProfile & profile, ostream * ss)
             err = -EINVAL;
         }
         switch (m) {
-        case 4:
-            if (k > 21) {
-                *ss << "Vandermonde: k=" << k
-                    << " should be less than 22 to guarantee an MDS"
-                    << " codec with m=4: revert to k=21" << std::endl;
-                k = 21;
-                err = -EINVAL;
-            }
-            break;
-        default:
-            ;
+            case 4:
+                if (k > 21) {
+                    *ss << "Vandermonde: k=" << k
+                        << " should be less than 22 to guarantee an MDS"
+                        << " codec with m=4: revert to k=21" << std::endl;
+                    k = 21;
+                    err = -EINVAL;
+                }
+                break;
+            default:
+                ;
         }
     }
     return err;
@@ -365,28 +367,29 @@ void ErasureCodeIsaDefault::prepare()
 
     if (!*p_enc_coeff) {
         dout(10) << "[ cache tables ] creating coeff for k=" <<
-            k << " m=" << m << dendl;
+                 k << " m=" << m << dendl;
         // build encoding coefficients which need to be computed once for each (k,m)
         encode_coeff = (unsigned char *)malloc(k * (m + k));
 
-        if (matrixtype == kVandermonde)
+        if (matrixtype == kVandermonde) {
             gf_gen_rs_matrix(encode_coeff, k + m, k);
-        if (matrixtype == kCauchy)
+        }
+        if (matrixtype == kCauchy) {
             gf_gen_cauchy1_matrix(encode_coeff, k + m, k);
+        }
 
         // either our new created coefficients are stored or if they have been
         // created in the meanwhile the locally allocated coefficients will be
         // freed by setEncodingCoefficient
         encode_coeff =
             tcache.setEncodingCoefficient(matrixtype, k, m, encode_coeff);
-    }
-    else {
+    } else {
         encode_coeff = *p_enc_coeff;
     }
 
     if (!*p_enc_table) {
         dout(10) << "[ cache tables ] creating tables for k=" <<
-            k << " m=" << m << dendl;
+                 k << " m=" << m << dendl;
         // build encoding table which needs to be computed once for each (k,m)
         encode_tbls = (unsigned char *)malloc(k * (m + k) * 32);
         ec_init_tables(k, m, &encode_coeff[k * k], encode_tbls);
@@ -395,8 +398,7 @@ void ErasureCodeIsaDefault::prepare()
         // created in the meanwhile the locally allocated table will be
         // freed by setEncodingTable
         encode_tbls = tcache.setEncodingTable(matrixtype, k, m, encode_tbls);
-    }
-    else {
+    } else {
         encode_tbls = *p_enc_table;
     }
 
@@ -404,8 +406,8 @@ void ErasureCodeIsaDefault::prepare()
         k * (m + k) * 32 * tcache.decoding_tables_lru_length;
 
     dout(10) << "[ cache memory ] = " << memory_lru_cache << " bytes" <<
-        " [ matrix ] = " <<
-        ((matrixtype == kVandermonde) ? "Vandermonde" : "Cauchy") << dendl;
+             " [ matrix ] = " <<
+             ((matrixtype == kVandermonde) ? "Vandermonde" : "Cauchy") << dendl;
 
     ceph_assert((matrixtype == kVandermonde) || (matrixtype == kCauchy));
 

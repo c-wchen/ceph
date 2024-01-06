@@ -1,312 +1,312 @@
 #include "ceph_time.h"
 TYPE(real_time_wrapper)
-    TYPE(coarse_real_time_wrapper)
-    TYPE(timespan_wrapper)
+TYPE(coarse_real_time_wrapper)
+TYPE(timespan_wrapper)
 #include "include/utime.h"
-    TYPE(utime_t)
+TYPE(utime_t)
 #include "include/uuid.h"
-    TYPE(uuid_d)
+TYPE(uuid_d)
 #include "sstring.h"
-    TYPE(sstring_wrapper)
+TYPE(sstring_wrapper)
 #include "str.h"
-    TYPE(string_wrapper)
+TYPE(string_wrapper)
 #include "include/CompatSet.h"
-    TYPE(CompatSet)
+TYPE(CompatSet)
 #include "include/filepath.h"
-    TYPE(filepath)
+TYPE(filepath)
 #include "include/fs_types.h"
-    TYPE_FEATUREFUL(file_layout_t)
+TYPE_FEATUREFUL(file_layout_t)
 #include "include/util.h"
-    TYPE(ceph_data_stats)
+TYPE(ceph_data_stats)
 #include "common/bit_vector.hpp"
-    TYPE(BitVector < 2 >)
+TYPE(BitVector < 2 >)
 #include "common/bloom_filter.hpp"
-    TYPE(bloom_filter)
-    TYPE(compressible_bloom_filter)
+TYPE(bloom_filter)
+TYPE(compressible_bloom_filter)
 #include "common/DecayCounter.h"
-    TYPE(DecayCounter)
+TYPE(DecayCounter)
 #include "common/histogram.h"
-    TYPE(pow2_hist_t)
+TYPE(pow2_hist_t)
 #include "common/hobject.h"
-    TYPE(hobject_t)
-    TYPE(ghobject_t)
+TYPE(hobject_t)
+TYPE(ghobject_t)
 #include "common/LogEntry.h"
-    TYPE_FEATUREFUL(LogEntry)
-    TYPE_FEATUREFUL(LogSummary)
+TYPE_FEATUREFUL(LogEntry)
+TYPE_FEATUREFUL(LogSummary)
 #include "common/SloppyCRCMap.h"
-    TYPE(SloppyCRCMap)
+TYPE(SloppyCRCMap)
 #include "common/snap_types.h"
-    TYPE(SnapContext)
-    TYPE(SnapRealmInfo)
+TYPE(SnapContext)
+TYPE(SnapRealmInfo)
 #include "msg/msg_types.h"
-    TYPE(entity_name_t)
-    TYPE_FEATUREFUL(entity_addr_t)
-    TYPE_FEATUREFUL(entity_addrvec_t)
-    TYPE_FEATUREFUL(entity_inst_t)
+TYPE(entity_name_t)
+TYPE_FEATUREFUL(entity_addr_t)
+TYPE_FEATUREFUL(entity_addrvec_t)
+TYPE_FEATUREFUL(entity_inst_t)
 #include "crush/CrushWrapper.h"
-    TYPE_FEATUREFUL_NOCOPY(CrushWrapper)
+TYPE_FEATUREFUL_NOCOPY(CrushWrapper)
 #include "cls/cas/cls_cas_ops.h"
-    TYPE(cls_cas_chunk_create_or_get_ref_op)
-    TYPE(cls_cas_chunk_get_ref_op)
-    TYPE(cls_cas_chunk_put_ref_op)
+TYPE(cls_cas_chunk_create_or_get_ref_op)
+TYPE(cls_cas_chunk_get_ref_op)
+TYPE(cls_cas_chunk_put_ref_op)
 #include "cls/cas/cls_cas_internal.h"
-    TYPE(chunk_refs_t)
+TYPE(chunk_refs_t)
 #include "cls/lock/cls_lock_types.h"
-    TYPE(rados::cls::lock::locker_id_t)
-    TYPE_FEATUREFUL(rados::cls::lock::locker_info_t)
-    TYPE_FEATUREFUL(rados::cls::lock::lock_info_t)
+TYPE(rados::cls::lock::locker_id_t)
+TYPE_FEATUREFUL(rados::cls::lock::locker_info_t)
+TYPE_FEATUREFUL(rados::cls::lock::lock_info_t)
 #include "cls/lock/cls_lock_ops.h"
-    TYPE(cls_lock_lock_op)
-    TYPE(cls_lock_unlock_op)
-    TYPE(cls_lock_break_op)
-    TYPE(cls_lock_get_info_op)
-    TYPE_FEATUREFUL(cls_lock_get_info_reply)
-    TYPE(cls_lock_list_locks_reply)
-    TYPE(cls_lock_assert_op)
-    TYPE(cls_lock_set_cookie_op)
+TYPE(cls_lock_lock_op)
+TYPE(cls_lock_unlock_op)
+TYPE(cls_lock_break_op)
+TYPE(cls_lock_get_info_op)
+TYPE_FEATUREFUL(cls_lock_get_info_reply)
+TYPE(cls_lock_list_locks_reply)
+TYPE(cls_lock_assert_op)
+TYPE(cls_lock_set_cookie_op)
 #include "cls/refcount/cls_refcount_ops.h"
-    TYPE(cls_refcount_get_op)
-    TYPE(cls_refcount_put_op)
-    TYPE(cls_refcount_set_op)
-    TYPE(cls_refcount_read_op)
-    TYPE(cls_refcount_read_ret)
-    TYPE(obj_refcount)
+TYPE(cls_refcount_get_op)
+TYPE(cls_refcount_put_op)
+TYPE(cls_refcount_set_op)
+TYPE(cls_refcount_read_op)
+TYPE(cls_refcount_read_ret)
+TYPE(obj_refcount)
 #include "cls/timeindex/cls_timeindex_types.h"
-    TYPE(cls_timeindex_entry)
+TYPE(cls_timeindex_entry)
 #include "journal/Entry.h"
-    TYPE(journal::Entry)
+TYPE(journal::Entry)
 // --- messages ---
 #include "messages/MAuth.h"
-    MESSAGE(MAuth)
+MESSAGE(MAuth)
 #include "messages/MAuthReply.h"
-    MESSAGE(MAuthReply)
+MESSAGE(MAuthReply)
 #include "messages/MCacheExpire.h"
-    MESSAGE(MCacheExpire)
+MESSAGE(MCacheExpire)
 #include "messages/MClientCapRelease.h"
-    MESSAGE(MClientCapRelease)
+MESSAGE(MClientCapRelease)
 #include "messages/MClientCaps.h"
-    MESSAGE(MClientCaps)
+MESSAGE(MClientCaps)
 #include "messages/MClientLease.h"
-    MESSAGE(MClientLease)
+MESSAGE(MClientLease)
 #include "messages/MClientReconnect.h"
-    MESSAGE(MClientReconnect)
+MESSAGE(MClientReconnect)
 #include "messages/MClientReply.h"
-    MESSAGE(MClientReply)
+MESSAGE(MClientReply)
 #include "messages/MClientRequest.h"
-    MESSAGE(MClientRequest)
+MESSAGE(MClientRequest)
 #include "messages/MClientRequestForward.h"
-    MESSAGE(MClientRequestForward)
+MESSAGE(MClientRequestForward)
 #include "messages/MClientQuota.h"
-    MESSAGE(MClientQuota)
+MESSAGE(MClientQuota)
 #include "messages/MClientSession.h"
-    MESSAGE(MClientSession)
+MESSAGE(MClientSession)
 #include "messages/MClientSnap.h"
-    MESSAGE(MClientSnap)
+MESSAGE(MClientSnap)
 #include "messages/MCommand.h"
-    MESSAGE(MCommand)
+MESSAGE(MCommand)
 #include "messages/MCommandReply.h"
-    MESSAGE(MCommandReply)
+MESSAGE(MCommandReply)
 #include "messages/MConfig.h"
-    MESSAGE(MConfig)
+MESSAGE(MConfig)
 #include "messages/MDentryLink.h"
-    MESSAGE(MDentryLink)
+MESSAGE(MDentryLink)
 #include "messages/MDentryUnlink.h"
-    MESSAGE(MDentryUnlink)
+MESSAGE(MDentryUnlink)
 #include "messages/MDirUpdate.h"
-    MESSAGE(MDirUpdate)
+MESSAGE(MDirUpdate)
 #include "messages/MDiscover.h"
-    MESSAGE(MDiscover)
+MESSAGE(MDiscover)
 #include "messages/MDiscoverReply.h"
-    MESSAGE(MDiscoverReply)
+MESSAGE(MDiscoverReply)
 #include "messages/MExportCaps.h"
-    MESSAGE(MExportCaps)
+MESSAGE(MExportCaps)
 #include "messages/MExportCapsAck.h"
-    MESSAGE(MExportCapsAck)
+MESSAGE(MExportCapsAck)
 #include "messages/MExportDir.h"
-    MESSAGE(MExportDir)
+MESSAGE(MExportDir)
 #include "messages/MExportDirAck.h"
-    MESSAGE(MExportDirAck)
+MESSAGE(MExportDirAck)
 #include "messages/MExportDirCancel.h"
-    MESSAGE(MExportDirCancel)
+MESSAGE(MExportDirCancel)
 #include "messages/MExportDirDiscover.h"
-    MESSAGE(MExportDirDiscover)
+MESSAGE(MExportDirDiscover)
 #include "messages/MExportDirDiscoverAck.h"
-    MESSAGE(MExportDirDiscoverAck)
+MESSAGE(MExportDirDiscoverAck)
 #include "messages/MExportDirFinish.h"
-    MESSAGE(MExportDirFinish)
+MESSAGE(MExportDirFinish)
 #include "messages/MExportDirNotify.h"
-    MESSAGE(MExportDirNotify)
+MESSAGE(MExportDirNotify)
 #include "messages/MExportDirNotifyAck.h"
-    MESSAGE(MExportDirNotifyAck)
+MESSAGE(MExportDirNotifyAck)
 #include "messages/MExportDirPrep.h"
-    MESSAGE(MExportDirPrep)
+MESSAGE(MExportDirPrep)
 #include "messages/MExportDirPrepAck.h"
-    MESSAGE(MExportDirPrepAck)
+MESSAGE(MExportDirPrepAck)
 #include "messages/MForward.h"
-    MESSAGE(MForward)
+MESSAGE(MForward)
 #include "messages/MFSMap.h"
-    MESSAGE(MFSMap)
+MESSAGE(MFSMap)
 #include "messages/MFSMapUser.h"
-    MESSAGE(MFSMapUser)
+MESSAGE(MFSMapUser)
 #include "messages/MGatherCaps.h"
-    MESSAGE(MGatherCaps)
+MESSAGE(MGatherCaps)
 #include "messages/MGenericMessage.h"
-    MESSAGE(MGenericMessage)
+MESSAGE(MGenericMessage)
 #include "messages/MGetConfig.h"
-    MESSAGE(MGetConfig)
+MESSAGE(MGetConfig)
 #include "messages/MGetPoolStats.h"
-    MESSAGE(MGetPoolStats)
+MESSAGE(MGetPoolStats)
 #include "messages/MGetPoolStatsReply.h"
-    MESSAGE(MGetPoolStatsReply)
+MESSAGE(MGetPoolStatsReply)
 #include "messages/MHeartbeat.h"
-    MESSAGE(MHeartbeat)
+MESSAGE(MHeartbeat)
 #include "messages/MInodeFileCaps.h"
-    MESSAGE(MInodeFileCaps)
+MESSAGE(MInodeFileCaps)
 #include "messages/MLock.h"
-    MESSAGE(MLock)
+MESSAGE(MLock)
 #include "messages/MLog.h"
-    MESSAGE(MLog)
+MESSAGE(MLog)
 #include "messages/MLogAck.h"
-    MESSAGE(MLogAck)
+MESSAGE(MLogAck)
 #include "messages/MMDSOpenIno.h"
-    MESSAGE(MMDSOpenIno)
+MESSAGE(MMDSOpenIno)
 #include "messages/MMDSOpenInoReply.h"
-    MESSAGE(MMDSOpenInoReply)
+MESSAGE(MMDSOpenInoReply)
 #include "messages/MMDSBeacon.h"
-    MESSAGE(MMDSBeacon)
+MESSAGE(MMDSBeacon)
 #include "messages/MMDSCacheRejoin.h"
-    MESSAGE(MMDSCacheRejoin)
+MESSAGE(MMDSCacheRejoin)
 #include "messages/MMDSFindIno.h"
-    MESSAGE(MMDSFindIno)
+MESSAGE(MMDSFindIno)
 #include "messages/MMDSFindInoReply.h"
-    MESSAGE(MMDSFindInoReply)
+MESSAGE(MMDSFindInoReply)
 #include "messages/MMDSFragmentNotify.h"
-    MESSAGE(MMDSFragmentNotify)
+MESSAGE(MMDSFragmentNotify)
 #include "messages/MMDSLoadTargets.h"
-    MESSAGE(MMDSLoadTargets)
+MESSAGE(MMDSLoadTargets)
 #include "messages/MMDSMap.h"
-    MESSAGE(MMDSMap)
+MESSAGE(MMDSMap)
 #include "messages/MMgrReport.h"
-    MESSAGE(MMgrReport)
+MESSAGE(MMgrReport)
 #include "messages/MMDSResolve.h"
-    MESSAGE(MMDSResolve)
+MESSAGE(MMDSResolve)
 #include "messages/MMDSResolveAck.h"
-    MESSAGE(MMDSResolveAck)
+MESSAGE(MMDSResolveAck)
 #include "messages/MMDSPeerRequest.h"
-    MESSAGE(MMDSPeerRequest)
+MESSAGE(MMDSPeerRequest)
 #include "messages/MMDSSnapUpdate.h"
-    MESSAGE(MMDSSnapUpdate)
+MESSAGE(MMDSSnapUpdate)
 #include "messages/MMDSTableRequest.h"
-    MESSAGE(MMDSTableRequest)
+MESSAGE(MMDSTableRequest)
 #include "messages/MMgrClose.h"
-    MESSAGE(MMgrClose)
+MESSAGE(MMgrClose)
 #include "messages/MMgrConfigure.h"
-    MESSAGE(MMgrConfigure)
+MESSAGE(MMgrConfigure)
 #include "messages/MMgrDigest.h"
-    MESSAGE(MMgrDigest)
+MESSAGE(MMgrDigest)
 #include "messages/MMgrMap.h"
-    MESSAGE(MMgrMap)
+MESSAGE(MMgrMap)
 #include "messages/MMgrOpen.h"
-    MESSAGE(MMgrOpen)
+MESSAGE(MMgrOpen)
 #include "messages/MMonCommand.h"
-    MESSAGE(MMonCommand)
+MESSAGE(MMonCommand)
 #include "messages/MMonCommandAck.h"
-    MESSAGE(MMonCommandAck)
+MESSAGE(MMonCommandAck)
 #include "messages/MMonElection.h"
-    MESSAGE(MMonElection)
+MESSAGE(MMonElection)
 #include "messages/MMonGetMap.h"
-    MESSAGE(MMonGetMap)
+MESSAGE(MMonGetMap)
 #include "messages/MMonGetVersion.h"
-    MESSAGE(MMonGetVersion)
+MESSAGE(MMonGetVersion)
 #include "messages/MMonGetVersionReply.h"
-    MESSAGE(MMonGetVersionReply)
+MESSAGE(MMonGetVersionReply)
 #include "messages/MMonGlobalID.h"
-    MESSAGE(MMonGlobalID)
+MESSAGE(MMonGlobalID)
 #include "messages/MMonJoin.h"
-    MESSAGE(MMonJoin)
+MESSAGE(MMonJoin)
 #include "messages/MMonMap.h"
-    MESSAGE(MMonMap)
+MESSAGE(MMonMap)
 #include "messages/MMonPaxos.h"
-    MESSAGE(MMonPaxos)
+MESSAGE(MMonPaxos)
 #include "messages/MMonProbe.h"
-    MESSAGE(MMonProbe)
+MESSAGE(MMonProbe)
 #include "messages/MMonScrub.h"
-    MESSAGE(MMonScrub)
+MESSAGE(MMonScrub)
 #include "messages/MMonSync.h"
-    MESSAGE(MMonSync)
+MESSAGE(MMonSync)
 #include "messages/MMonSubscribe.h"
-    MESSAGE(MMonSubscribe)
+MESSAGE(MMonSubscribe)
 #include "messages/MMonSubscribeAck.h"
-    MESSAGE(MMonSubscribeAck)
+MESSAGE(MMonSubscribeAck)
 #include "messages/MOSDAlive.h"
-    MESSAGE(MOSDAlive)
+MESSAGE(MOSDAlive)
 #include "messages/MOSDBoot.h"
-    MESSAGE(MOSDBoot)
+MESSAGE(MOSDBoot)
 #include "messages/MOSDFailure.h"
-    MESSAGE(MOSDFailure)
+MESSAGE(MOSDFailure)
 #include "messages/MOSDMap.h"
-    MESSAGE(MOSDMap)
+MESSAGE(MOSDMap)
 #include "messages/MOSDOp.h"
-    MESSAGE(MOSDOp)
+MESSAGE(MOSDOp)
 #include "messages/MOSDOpReply.h"
-    MESSAGE(MOSDOpReply)
+MESSAGE(MOSDOpReply)
 #include "messages/MOSDPGBackfill.h"
-    MESSAGE(MOSDPGBackfill)
+MESSAGE(MOSDPGBackfill)
 #include "messages/MOSDPGCreate2.h"
-    MESSAGE(MOSDPGCreate2)
+MESSAGE(MOSDPGCreate2)
 #include "messages/MOSDPGInfo.h"
-    MESSAGE(MOSDPGInfo)
+MESSAGE(MOSDPGInfo)
 #include "messages/MOSDPGLog.h"
-    MESSAGE(MOSDPGLog)
+MESSAGE(MOSDPGLog)
 #include "messages/MOSDPGNotify.h"
-    MESSAGE(MOSDPGNotify)
+MESSAGE(MOSDPGNotify)
 #include "messages/MOSDPGQuery.h"
-    MESSAGE(MOSDPGQuery)
+MESSAGE(MOSDPGQuery)
 #include "messages/MOSDPGRemove.h"
-    MESSAGE(MOSDPGRemove)
+MESSAGE(MOSDPGRemove)
 #include "messages/MOSDPGRecoveryDelete.h"
-    MESSAGE(MOSDPGRecoveryDelete)
+MESSAGE(MOSDPGRecoveryDelete)
 #include "messages/MOSDPGRecoveryDeleteReply.h"
-    MESSAGE(MOSDPGRecoveryDeleteReply)
+MESSAGE(MOSDPGRecoveryDeleteReply)
 #include "messages/MOSDPGScan.h"
-    MESSAGE(MOSDPGScan)
+MESSAGE(MOSDPGScan)
 #include "messages/MOSDPGTemp.h"
-    MESSAGE(MOSDPGTemp)
+MESSAGE(MOSDPGTemp)
 #include "messages/MOSDPGTrim.h"
-    MESSAGE(MOSDPGTrim)
+MESSAGE(MOSDPGTrim)
 #include "messages/MOSDPing.h"
-    MESSAGE(MOSDPing)
+MESSAGE(MOSDPing)
 #include "messages/MOSDRepScrub.h"
-    MESSAGE(MOSDRepScrub)
+MESSAGE(MOSDRepScrub)
 #include "messages/MOSDScrub2.h"
-    MESSAGE(MOSDScrub2)
+MESSAGE(MOSDScrub2)
 #include "messages/MOSDForceRecovery.h"
-    MESSAGE(MOSDForceRecovery)
+MESSAGE(MOSDForceRecovery)
 #include "messages/MPGStats.h"
-    MESSAGE(MPGStats)
+MESSAGE(MPGStats)
 #include "messages/MPGStatsAck.h"
-    MESSAGE(MPGStatsAck)
+MESSAGE(MPGStatsAck)
 #include "messages/MPing.h"
-    MESSAGE(MPing)
+MESSAGE(MPing)
 #include "messages/MPoolOp.h"
-    MESSAGE(MPoolOp)
+MESSAGE(MPoolOp)
 #include "messages/MPoolOpReply.h"
-    MESSAGE(MPoolOpReply)
+MESSAGE(MPoolOpReply)
 #include "messages/MRemoveSnaps.h"
-    MESSAGE(MRemoveSnaps)
+MESSAGE(MRemoveSnaps)
 #include "messages/MRoute.h"
-    MESSAGE(MRoute)
+MESSAGE(MRoute)
 #include "messages/MServiceMap.h"
-    MESSAGE(MServiceMap)
+MESSAGE(MServiceMap)
 #include "messages/MStatfs.h"
-    MESSAGE(MStatfs)
+MESSAGE(MStatfs)
 #include "messages/MStatfsReply.h"
-    MESSAGE(MStatfsReply)
+MESSAGE(MStatfsReply)
 #include "messages/MTimeCheck.h"
-    MESSAGE(MTimeCheck)
+MESSAGE(MTimeCheck)
 #include "messages/MTimeCheck2.h"
-    MESSAGE(MTimeCheck2)
+MESSAGE(MTimeCheck2)
 #include "messages/MWatchNotify.h"
-    MESSAGE(MWatchNotify)
+MESSAGE(MWatchNotify)
 #include "messages/MMgrUpdate.h"
-    MESSAGE(MMgrUpdate)
+MESSAGE(MMgrUpdate)

@@ -12,13 +12,15 @@
 #include <gmock/gmock.h>
 #include "include/ceph_assert.h"
 
-namespace librados {
-    class TestRadosClient;
-    class MockTestMemCluster;
-    class MockTestMemIoCtxImpl;
-    class MockTestMemRadosClient;
-} namespace librbd {
-    class MockImageCtx;
+namespace librados
+{
+class TestRadosClient;
+class MockTestMemCluster;
+class MockTestMemIoCtxImpl;
+class MockTestMemRadosClient;
+} namespace librbd
+{
+class MockImageCtx;
 } ACTION_P(CopyInBufferlist, str)
 {
     arg0->append(str);
@@ -44,28 +46,31 @@ MATCHER_P(ContentsEqual, bl, "")
 {
     // TODO fix const-correctness of bufferlist
     return const_cast < bufferlist & >(arg).contents_equal(const_cast <
-                                                           bufferlist & >(bl));
+            bufferlist & >(bl));
 }
 
-namespace rbd {
-    namespace mirror {
+namespace rbd
+{
+namespace mirror
+{
 
-        class TestMockFixture:public TestFixture {
-          public:
-            typedef boost::shared_ptr < librados::TestCluster > TestClusterRef;
+class TestMockFixture: public TestFixture
+{
+public:
+    typedef boost::shared_ptr < librados::TestCluster > TestClusterRef;
 
-            static void SetUpTestCase();
-            static void TearDownTestCase();
+    static void SetUpTestCase();
+    static void TearDownTestCase();
 
-            void TearDown() override;
+    void TearDown() override;
 
-            void expect_test_features(librbd::MockImageCtx & mock_image_ctx);
+    void expect_test_features(librbd::MockImageCtx &mock_image_ctx);
 
-             librados::MockTestMemCluster & get_mock_cluster();
+    librados::MockTestMemCluster &get_mock_cluster();
 
-          private:
-            static TestClusterRef s_test_cluster;
-        };
+private:
+    static TestClusterRef s_test_cluster;
+};
 
 } // namespace mirror }         // namespace rbd
 #endif                          // CEPH_TEST_RBD_MIRROR_TEST_MOCK_FIXTURE_H

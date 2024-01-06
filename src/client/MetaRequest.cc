@@ -8,7 +8,7 @@
 #include "messages/MClientReply.h"
 #include "common/Formatter.h"
 
-void MetaRequest::dump(Formatter * f) const const
+void MetaRequest::dump(Formatter *f) const const
 {
     auto age = std::chrono::duration < double >(ceph_clock_now() - op_stamp);
 
@@ -16,18 +16,24 @@ void MetaRequest::dump(Formatter * f) const const
     f->dump_string("op", ceph_mds_op_name(head.op));
     f->dump_stream("path") << path;
     f->dump_stream("path2") << path2;
-    if (_inode)
+    if (_inode) {
         f->dump_stream("ino") << _inode->ino;
-    if (_old_inode)
+    }
+    if (_old_inode) {
         f->dump_stream("old_ino") << _old_inode->ino;
-    if (_other_inode)
+    }
+    if (_other_inode) {
         f->dump_stream("other_ino") << _other_inode->ino;
-    if (target)
+    }
+    if (target) {
         f->dump_stream("target_ino") << target->ino;
-    if (_dentry)
+    }
+    if (_dentry) {
         f->dump_string("dentry", _dentry->name);
-    if (_old_dentry)
+    }
+    if (_old_dentry) {
         f->dump_string("old_dentry", _old_dentry->name);
+    }
     f->dump_stream("hint_ino") << inodeno_t(head.ino);
 
     f->dump_stream("sent_stamp") << sent_stamp;
@@ -55,13 +61,15 @@ void MetaRequest::dump(Formatter * f) const const
 
 MetaRequest::~MetaRequest()
 {
-    if (_dentry)
+    if (_dentry) {
         _dentry->put();
-    if (_old_dentry)
+    }
+    if (_old_dentry) {
         _old_dentry->put();
+    }
 }
 
-void MetaRequest::set_dentry(Dentry * d)
+void MetaRequest::set_dentry(Dentry *d)
 {
     ceph_assert(_dentry == NULL);
     _dentry = d;
@@ -73,7 +81,7 @@ Dentry *MetaRequest::dentry()
     return _dentry;
 }
 
-void MetaRequest::set_old_dentry(Dentry * d)
+void MetaRequest::set_old_dentry(Dentry *d)
 {
     ceph_assert(_old_dentry == NULL);
     _old_dentry = d;

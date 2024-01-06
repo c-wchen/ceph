@@ -49,18 +49,19 @@
  *   }
  */
 
-class SubProcess {
-  public:
+class SubProcess
+{
+public:
     enum std_fd_op {
         KEEP,
         CLOSE,
         PIPE
     };
-  public:
-     SubProcess(const char *cmd,
-                std_fd_op stdin_op = CLOSE,
-                std_fd_op stdout_op = CLOSE, std_fd_op stderr_op = CLOSE);
-     virtual ~ SubProcess();
+public:
+    SubProcess(const char *cmd,
+               std_fd_op stdin_op = CLOSE,
+               std_fd_op stdout_op = CLOSE, std_fd_op stderr_op = CLOSE);
+    virtual ~ SubProcess();
 
     void add_cmd_args(const char *arg, ...);
     void add_cmd_arg(const char *arg);
@@ -68,7 +69,8 @@ class SubProcess {
     virtual int spawn();        // Returns 0 on success or -errno on failure.
     virtual int join();         // Returns exit code (0 on success).
 
-    bool is_spawned() const {
+    bool is_spawned() const
+    {
         return pid > 0;
     } int get_stdin() const;
     int get_stdout() const;
@@ -82,20 +84,21 @@ class SubProcess {
 
     const std::string err() const;
 
-  protected:
-     bool is_child() const {
+protected:
+    bool is_child() const
+    {
         return pid == 0;
     } virtual void exec();
 
     void close(int &fd);
 
 #ifdef _WIN32
-    void close_h(HANDLE & handle);
+    void close_h(HANDLE &handle);
 #endif
 
-  protected:
-     std::string cmd;
-     std::vector < std::string > cmd_args;
+protected:
+    std::string cmd;
+    std::vector < std::string > cmd_args;
     std_fd_op stdin_op;
     std_fd_op stdout_op;
     std_fd_op stderr_op;
@@ -103,15 +106,16 @@ class SubProcess {
     int stdout_pipe_in_fd;
     int stderr_pipe_in_fd;
     int pid;
-     std::ostringstream errstr;
+    std::ostringstream errstr;
 
 #ifdef _WIN32
     HANDLE proc_handle = INVALID_HANDLE_VALUE;
 #endif
 };
 
-class SubProcessTimed:public SubProcess {
-  public:
+class SubProcessTimed: public SubProcess
+{
+public:
     SubProcessTimed(const char *cmd, std_fd_op stdin_op = CLOSE,
                     std_fd_op stdout_op = CLOSE, std_fd_op stderr_op = CLOSE,
                     int timeout = 0, int sigkill = SIGKILL);
@@ -121,15 +125,15 @@ class SubProcessTimed:public SubProcess {
     int join() override;
 #endif
 
-  protected:
+protected:
     void exec() override;
 
-  private:
+private:
     int timeout;
     int sigkill;
 
 #ifdef _WIN32
-     std::thread waiter;
+    std::thread waiter;
 #endif
 };
 

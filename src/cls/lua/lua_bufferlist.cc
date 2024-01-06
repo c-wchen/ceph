@@ -18,12 +18,12 @@ struct bufferlist_wrap {
     int gc;                     /* do garbage collect? */
 };
 
-static inline struct bufferlist_wrap *to_blwrap(lua_State * L, int pos = 1)
+static inline struct bufferlist_wrap *to_blwrap(lua_State *L, int pos = 1)
 {
     return (bufferlist_wrap *) luaL_checkudata(L, pos, LUA_BUFFERLIST);
 }
 
-bufferlist *clslua_checkbufferlist(lua_State * L, int pos)
+bufferlist *clslua_checkbufferlist(lua_State *L, int pos)
 {
     struct bufferlist_wrap *blw = to_blwrap(L, pos);
     return blw->bl;
@@ -33,7 +33,7 @@ bufferlist *clslua_checkbufferlist(lua_State * L, int pos)
  * Pushes a new bufferlist userdata object onto the stack. If @set is non-null
  * it is assumed to be a bufferlist that should not be garbage collected.
  */
-bufferlist *clslua_pushbufferlist(lua_State * L, bufferlist * set)
+bufferlist *clslua_pushbufferlist(lua_State *L, bufferlist *set)
 {
     bufferlist_wrap *blw =
         static_cast < bufferlist_wrap * >(lua_newuserdata(L, sizeof(*blw)));
@@ -47,7 +47,7 @@ bufferlist *clslua_pushbufferlist(lua_State * L, bufferlist * set)
 /*
  * Create a new bufferlist
  */
-static int bl_new(lua_State * L)
+static int bl_new(lua_State *L)
 {
     clslua_pushbufferlist(L, NULL);
     return 1;
@@ -56,7 +56,7 @@ static int bl_new(lua_State * L)
 /*
  * Convert bufferlist to Lua string
  */
-static int bl_str(lua_State * L)
+static int bl_str(lua_State *L)
 {
     bufferlist *bl = clslua_checkbufferlist(L);
     lua_pushlstring(L, bl->c_str(), bl->length());
@@ -66,7 +66,7 @@ static int bl_str(lua_State * L)
 /*
  * Append a Lua string to bufferlist
  */
-static int bl_append(lua_State * L)
+static int bl_append(lua_State *L)
 {
     bufferlist *bl = clslua_checkbufferlist(L);
     luaL_checktype(L, 2, LUA_TSTRING);
@@ -81,7 +81,7 @@ static int bl_append(lua_State * L)
 /*
  * Return the length in bytes of bufferlist
  */
-static int bl_len(lua_State * L)
+static int bl_len(lua_State *L)
 {
     bufferlist *bl = clslua_checkbufferlist(L);
     lua_pushinteger(L, bl->length());
@@ -91,7 +91,7 @@ static int bl_len(lua_State * L)
 /*
  * Perform byte-for-byte bufferlist equality test
  */
-static int bl_eq(lua_State * L)
+static int bl_eq(lua_State *L)
 {
     bufferlist *bl1 = clslua_checkbufferlist(L, 1);
     bufferlist *bl2 = clslua_checkbufferlist(L, 2);
@@ -102,7 +102,7 @@ static int bl_eq(lua_State * L)
 /*
  * Bufferlist < operator
  */
-static int bl_lt(lua_State * L)
+static int bl_lt(lua_State *L)
 {
     bufferlist *bl1 = clslua_checkbufferlist(L, 1);
     bufferlist *bl2 = clslua_checkbufferlist(L, 2);
@@ -113,7 +113,7 @@ static int bl_lt(lua_State * L)
 /*
  * Bufferlist <= operator
  */
-static int bl_le(lua_State * L)
+static int bl_le(lua_State *L)
 {
     bufferlist *bl1 = clslua_checkbufferlist(L, 1);
     bufferlist *bl2 = clslua_checkbufferlist(L, 2);
@@ -124,7 +124,7 @@ static int bl_le(lua_State * L)
 /*
  * Bufferlist concatentation
  */
-static int bl_concat(lua_State * L)
+static int bl_concat(lua_State *L)
 {
     bufferlist *bl1 = clslua_checkbufferlist(L, 1);
     bufferlist *bl2 = clslua_checkbufferlist(L, 2);
@@ -137,13 +137,14 @@ static int bl_concat(lua_State * L)
 /*
  * Garbage collect bufferlist
  */
-static int bl_gc(lua_State * L)
+static int bl_gc(lua_State *L)
 {
     struct bufferlist_wrap *blw = to_blwrap(L);
     ceph_assert(blw);
     ceph_assert(blw->bl);
-    if (blw->gc)
+    if (blw->gc) {
         delete blw->bl;
+    }
     return 0;
 }
 
@@ -164,7 +165,7 @@ static const struct luaL_Reg bllib_f[] = {
     {NULL, NULL}
 };
 
-int luaopen_bufferlist(lua_State * L)
+int luaopen_bufferlist(lua_State *L)
 {
     /* Setup bufferlist user-data type */
     luaL_newmetatable(L, LUA_BUFFERLIST);

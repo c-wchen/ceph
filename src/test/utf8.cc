@@ -29,16 +29,16 @@ TEST(IsValidUtf8, ControlChars)
 {
     // Sadly, control characters are valid utf8...
     uint8_t control_chars[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d
-    };
+                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d
+                              };
     ASSERT_EQ(0, check_utf8((char *)control_chars, sizeof(control_chars)));
 }
 
 TEST(IsValidUtf8, SimpleUtf8)
 {
     uint8_t funkystr[] = { 0x66, 0xd1, 0x86, 0xd1, 0x9d, 0xd2, 0xa0, 0xd3,
-        0xad, 0xd3, 0xae, 0x0a
-    };
+                           0xad, 0xd3, 0xae, 0x0a
+                         };
     ASSERT_EQ(0, check_utf8((char *)funkystr, sizeof(funkystr)));
 
     uint8_t valid2[] = { 0xc3, 0xb1 };
@@ -59,11 +59,11 @@ TEST(HasControlChars, HasControlChars1)
     uint8_t has_control_chars[] = { 0x41, 0x01, 0x00 };
     ASSERT_NE(0,
               check_for_control_characters_cstr((const char *)
-                                                has_control_chars));
+                      has_control_chars));
     uint8_t has_control_chars2[] = { 0x7f, 0x41, 0x00 };
     ASSERT_NE(0,
               check_for_control_characters_cstr((const char *)
-                                                has_control_chars2));
+                      has_control_chars2));
 
     char has_newline[] = "blah   blah\n";
     ASSERT_NE(0, check_for_control_characters_cstr(has_newline));
@@ -72,7 +72,7 @@ TEST(HasControlChars, HasControlChars1)
     ASSERT_EQ(0, check_for_control_characters_cstr(no_control_chars));
 
     uint8_t validutf[] = { 0x66, 0xd1, 0x86, 0xd1, 0x9d, 0xd2, 0xa0, 0xd3,
-        0xad, 0xd3, 0xae, 0x0
-    };
+                           0xad, 0xd3, 0xae, 0x0
+                         };
     ASSERT_EQ(0, check_for_control_characters_cstr((const char *)validutf));
 }

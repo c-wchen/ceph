@@ -55,17 +55,19 @@
 int manual_fallocate(int fd, off_t offset, off_t len)
 {
     int r = lseek(fd, offset, SEEK_SET);
-    if (r == -1)
+    if (r == -1) {
         return errno;
+    }
     char data[1024 * 128];
     // TODO: compressing filesystems would require random data
     // FIPS zeroization audit 20191115: this memset is not security related.
     memset(data, 0x42, sizeof(data));
     for (off_t off = 0; off < len; off += sizeof(data)) {
-        if (off + static_cast < off_t > (sizeof(data)) > len)
+        if (off + static_cast < off_t >(sizeof(data)) > len) {
             r = safe_write(fd, data, len - off);
-        else
+        } else {
             r = safe_write(fd, data, sizeof(data));
+        }
         if (r == -1) {
             return errno;
         }
@@ -91,8 +93,7 @@ int ceph_posix_fallocate(int fd, off_t offset, off_t len)
 #ifdef HAVE_POSIX_FALLOCATE
     if (on_zfs(fd)) {
         return manual_fallocate(fd, offset, len);
-    }
-    else {
+    } else {
         return posix_fallocate(fd, offset, len);
     }
 #elif defined(__APPLE__)
@@ -117,8 +118,9 @@ int pipe_cloexec(int pipefd[2], int flags)
 #if defined(HAVE_PIPE2)
     return pipe2(pipefd, O_CLOEXEC | flags);
 #else
-    if (pipe(pipefd) == -1)
+    if (pipe(pipefd) == -1) {
         return -1;
+    }
 
 #ifndef _WIN32
     /*
@@ -135,7 +137,7 @@ int pipe_cloexec(int pipefd[2], int flags)
 #endif
 
     return 0;
-  fail:
+fail:
     int save_errno = errno;
     VOID_TEMP_FAILURE_RETRY(close(pipefd[0]));
     VOID_TEMP_FAILURE_RETRY(close(pipefd[1]));
@@ -149,16 +151,18 @@ int socket_cloexec(int domain, int type, int protocol)
     return socket(domain, type | SOCK_CLOEXEC, protocol);
 #else
     int fd = socket(domain, type, protocol);
-    if (fd == -1)
+    if (fd == -1) {
         return -1;
+    }
 
 #ifndef _WIN32
-    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
         goto fail;
+    }
 #endif
 
     return fd;
-  fail:
+fail:
     int save_errno = errno;
     VOID_TEMP_FAILURE_RETRY(close(fd));
     return (errno = save_errno, -1);
@@ -174,19 +178,22 @@ int socketpair_cloexec(int domain, int type, int protocol, int sv[2])
     return -ENOTSUP;
 #else
     int rc = socketpair(domain, type, protocol, sv);
-    if (rc == -1)
+    if (rc == -1) {
         return -1;
+    }
 
 #ifndef _WIN32
-    if (fcntl(sv[0], F_SETFD, FD_CLOEXEC) < 0)
+    if (fcntl(sv[0], F_SETFD, FD_CLOEXEC) < 0) {
         goto fail;
+    }
 
-    if (fcntl(sv[1], F_SETFD, FD_CLOEXEC) < 0)
+    if (fcntl(sv[1], F_SETFD, FD_CLOEXEC) < 0) {
         goto fail;
+    }
 #endif
 
     return 0;
-  fail:
+fail:
     int save_errno = errno;
     VOID_TEMP_FAILURE_RETRY(close(sv[0]));
     VOID_TEMP_FAILURE_RETRY(close(sv[1]));
@@ -194,22 +201,24 @@ int socketpair_cloexec(int domain, int type, int protocol, int sv[2])
 #endif
 }
 
-int accept_cloexec(int sockfd, struct sockaddr *addr, socklen_t * addrlen)
+int accept_cloexec(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
 #ifdef HAVE_ACCEPT4
     return accept4(sockfd, addr, addrlen, SOCK_CLOEXEC);
 #else
     int fd = accept(sockfd, addr, addrlen);
-    if (fd == -1)
+    if (fd == -1) {
         return -1;
+    }
 
 #ifndef _WIN32
-    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
         goto fail;
+    }
 #endif
 
     return fd;
-  fail:
+fail:
     int save_errno = errno;
     VOID_TEMP_FAILURE_RETRY(close(fd));
     return (errno = save_errno, -1);
@@ -217,7 +226,7 @@ int accept_cloexec(int sockfd, struct sockaddr *addr, socklen_t * addrlen)
 }
 
 #if defined(__FreeBSD__)
-int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t * mask)
+int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)
 {
     return 0;
 }
@@ -314,10 +323,12 @@ int random()
 int fsync(int fd)
 {
     HANDLE handle = (HANDLE *) _get_osfhandle(fd);
-    if (handle == INVALID_HANDLE_VALUE)
+    if (handle == INVALID_HANDLE_VALUE) {
         return -1;
-    if (!FlushFileBuffers(handle))
+    }
+    if (!FlushFileBuffers(handle)) {
         return -1;
+    }
     return 0;
 }
 
@@ -326,8 +337,9 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset)
     DWORD bytes_written = 0;
 
     HANDLE handle = (HANDLE *) _get_osfhandle(fd);
-    if (handle == INVALID_HANDLE_VALUE)
+    if (handle == INVALID_HANDLE_VALUE) {
         return -1;
+    }
 
     OVERLAPPED overlapped = { 0 };
     ULARGE_INTEGER offsetUnion;
@@ -339,7 +351,9 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset)
     if (!WriteFile(handle, buf, count, &bytes_written, &overlapped))
         // we may consider mapping error codes, although that may
         // not be exhaustive.
+    {
         return -1;
+    }
 
     return bytes_written;
 }
@@ -349,8 +363,9 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
     DWORD bytes_read = 0;
 
     HANDLE handle = (HANDLE *) _get_osfhandle(fd);
-    if (handle == INVALID_HANDLE_VALUE)
+    if (handle == INVALID_HANDLE_VALUE) {
         return -1;
+    }
 
     OVERLAPPED overlapped = { 0 };
     ULARGE_INTEGER offsetUnion;
@@ -360,40 +375,45 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
     overlapped.OffsetHigh = offsetUnion.HighPart;
 
     if (!ReadFile(handle, buf, count, &bytes_read, &overlapped)) {
-        if (GetLastError() != ERROR_HANDLE_EOF)
+        if (GetLastError() != ERROR_HANDLE_EOF) {
             return -1;
+        }
     }
 
     return bytes_read;
 }
 
-ssize_t preadv(int fd, const struct iovec * iov, int iov_cnt)
+ssize_t preadv(int fd, const struct iovec *iov, int iov_cnt)
 {
     ssize_t read = 0;
 
     for (int i = 0; i < iov_cnt; i++) {
         int r =::read(fd, iov[i].iov_base, iov[i].iov_len);
-        if (r < 0)
+        if (r < 0) {
             return r;
+        }
         read += r;
-        if (r < iov[i].iov_len)
+        if (r < iov[i].iov_len) {
             break;
+        }
     }
 
     return read;
 }
 
-ssize_t writev(int fd, const struct iovec * iov, int iov_cnt)
+ssize_t writev(int fd, const struct iovec *iov, int iov_cnt)
 {
     ssize_t written = 0;
 
     for (int i = 0; i < iov_cnt; i++) {
         int r =::write(fd, iov[i].iov_base, iov[i].iov_len);
-        if (r < 0)
+        if (r < 0) {
             return r;
+        }
         written += r;
-        if (r < iov[i].iov_len)
+        if (r < iov[i].iov_len) {
             break;
+        }
     }
 
     return written;
@@ -469,22 +489,29 @@ int _win_socketpair(int socks[2])
 
     do {
         if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-                       (char *)&reuse, (socklen_t) sizeof(reuse)) == -1)
+                       (char *)&reuse, (socklen_t) sizeof(reuse)) == -1) {
             break;
-        if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
+        }
+        if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR) {
             break;
-        if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
+        }
+        if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR) {
             break;
-        if (listen(listener, 1) == SOCKET_ERROR)
+        }
+        if (listen(listener, 1) == SOCKET_ERROR) {
             break;
+        }
         s[0] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (s[0] == INVALID_SOCKET)
+        if (s[0] == INVALID_SOCKET) {
             break;
-        if (connect(s[0], &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
+        }
+        if (connect(s[0], &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR) {
             break;
+        }
         s[1] = accept(listener, NULL, NULL);
-        if (s[1] == INVALID_SOCKET)
+        if (s[1] == INVALID_SOCKET) {
             break;
+        }
 
         closesocket(listener);
 
@@ -528,8 +555,7 @@ int win_socketpair(int socks[2])
         if (r && WSAGetLastError() == WSAEADDRINUSE) {
             sleep(2);
             continue;
-        }
-        else {
+        } else {
             break;
         }
     }

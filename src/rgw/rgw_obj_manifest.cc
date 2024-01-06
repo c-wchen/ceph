@@ -56,15 +56,15 @@ void RGWObjManifest::obj_iterator::operator++()
     cur_stripe++;
     ldpp_dout(dpp,
               20) << "RGWObjManifest::operator++(): rule->part_size=" << rule->
-        part_size << " rules.size()=" << manifest->rules.size() << dendl;
+                  part_size << " rules.size()=" << manifest->rules.size() << dendl;
 
     if (rule->part_size > 0) {
         /* multi part, multi stripes object */
 
         ldpp_dout(dpp,
                   20) << "RGWObjManifest::operator++(): stripe_ofs=" <<
-            stripe_ofs << " part_ofs=" << part_ofs << " rule->part_size=" <<
-            rule->part_size << dendl;
+                      stripe_ofs << " part_ofs=" << part_ofs << " rule->part_size=" <<
+                      rule->part_size << dendl;
 
         if (stripe_ofs >= part_ofs + rule->part_size) {
             /* moved to the next part */
@@ -81,8 +81,7 @@ void RGWObjManifest::obj_iterator::operator++()
                     ++next_rule_iter;
                 }
                 cur_part_id = rule_iter->second.start_part_num;
-            }
-            else {
+            } else {
                 cur_part_id++;
             }
 
@@ -105,8 +104,8 @@ void RGWObjManifest::obj_iterator::operator++()
 
     ldpp_dout(dpp,
               20) << "RGWObjManifest::operator++(): result: ofs=" << ofs <<
-        " stripe_ofs=" << stripe_ofs << " part_ofs=" << part_ofs <<
-        " rule->part_size=" << rule->part_size << dendl;
+                  " stripe_ofs=" << stripe_ofs << " part_ofs=" << part_ofs <<
+                  " rule->part_size=" << rule->part_size << dendl;
     update_location();
 }
 
@@ -120,8 +119,7 @@ void RGWObjManifest::obj_iterator::seek(uint64_t o)
         }
         if (ofs < manifest->obj_size) {
             update_explicit_pos();
-        }
-        else {
+        } else {
             ofs = manifest->obj_size;
         }
         update_location();
@@ -150,13 +148,12 @@ void RGWObjManifest::obj_iterator::seek(uint64_t o)
         return;
     }
 
-    const RGWObjManifestRule & rule = rule_iter->second;
+    const RGWObjManifestRule &rule = rule_iter->second;
 
     if (rule.part_size > 0) {
         cur_part_id =
             rule.start_part_num + (ofs - rule.start_ofs) / rule.part_size;
-    }
-    else {
+    } else {
         cur_part_id = rule.start_part_num;
     }
     part_ofs =
@@ -169,8 +166,7 @@ void RGWObjManifest::obj_iterator::seek(uint64_t o)
         if (!cur_part_id && manifest->get_head_size() > 0) {
             cur_stripe++;
         }
-    }
-    else {
+    } else {
         cur_stripe = 0;
         stripe_ofs = part_ofs;
     }
@@ -179,8 +175,7 @@ void RGWObjManifest::obj_iterator::seek(uint64_t o)
         stripe_size = rule.stripe_max_size;
         stripe_size =
             std::min(manifest->get_obj_size() - stripe_ofs, stripe_size);
-    }
-    else {
+    } else {
         uint64_t next =
             std::min(stripe_ofs + rule.stripe_max_size,
                      part_ofs + rule.part_size);
@@ -201,8 +196,7 @@ void RGWObjManifest::obj_iterator::update_explicit_pos()
     ++next_iter;
     if (next_iter != manifest->objs.end()) {
         stripe_size = next_iter->first - ofs;
-    }
-    else {
+    } else {
         stripe_size = manifest->obj_size - ofs;
     }
 }
@@ -213,8 +207,7 @@ void RGWObjManifest::obj_iterator::update_location()
         if (manifest->empty()) {
             location = rgw_obj_select {
             };
-        }
-        else {
+        } else {
             location = explicit_iter->second.loc;
         }
         return;
@@ -231,20 +224,19 @@ void RGWObjManifest::obj_iterator::update_location()
 }
 
 void RGWObjManifest::get_implicit_location(uint64_t cur_part_id,
-                                           uint64_t cur_stripe, uint64_t ofs,
-                                           string * override_prefix,
-                                           rgw_obj_select *
-                                           location) const const
+        uint64_t cur_stripe, uint64_t ofs,
+        string *override_prefix,
+        rgw_obj_select *
+        location) const const
 {
     rgw_obj loc;
 
-    string & oid = loc.key.name;
-    string & ns = loc.key.ns;
+    string &oid = loc.key.name;
+    string &ns = loc.key.ns;
 
     if (!override_prefix || override_prefix->empty()) {
         oid = prefix;
-    }
-    else {
+    } else {
         oid = *override_prefix;
     }
 
@@ -253,22 +245,19 @@ void RGWObjManifest::get_implicit_location(uint64_t cur_part_id,
             location->set_placement_rule(head_placement_rule);
             *location = obj;
             return;
-        }
-        else {
+        } else {
             char buf[16];
             snprintf(buf, sizeof(buf), "%d", (int)cur_stripe);
             oid += buf;
             ns = RGW_OBJ_NS_SHADOW;
         }
-    }
-    else {
+    } else {
         char buf[32];
         if (cur_stripe == 0) {
             snprintf(buf, sizeof(buf), ".%d", (int)cur_part_id);
             oid += buf;
             ns = RGW_OBJ_NS_MULTIPART;
-        }
-        else {
+        } else {
             snprintf(buf, sizeof(buf), ".%d_%d", (int)cur_part_id,
                      (int)cur_stripe);
             oid += buf;
@@ -278,8 +267,7 @@ void RGWObjManifest::get_implicit_location(uint64_t cur_part_id,
 
     if (!tail_placement.bucket.name.empty()) {
         loc.bucket = tail_placement.bucket;
-    }
-    else {
+    } else {
         loc.bucket = obj.bucket;
     }
 

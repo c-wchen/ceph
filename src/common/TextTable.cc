@@ -15,7 +15,7 @@
 
 using namespace std;
 
-void TextTable::define_column(const string & heading,
+void TextTable::define_column(const string &heading,
                               enum TextTable::Align hd_align,
                               enum TextTable::Align col_align)
 {
@@ -30,8 +30,9 @@ void TextTable::clear()
     indent = 0;
     row.clear();
     // reset widths to heading widths
-    for (unsigned int i = 0; i < col.size(); i++)
+    for (unsigned int i = 0; i < col.size(); i++) {
         col[i].width = col[i].heading.size();
+    }
 }
 
 /**
@@ -49,22 +50,22 @@ static string pad(string s, int width, TextTable::Align align)
     lpad = 0;
     rpad = 0;
     switch (align) {
-    case TextTable::LEFT:
-        rpad = width - s.length();
-        break;
-    case TextTable::CENTER:
-        lpad = width / 2 - s.length() / 2;
-        rpad = width - lpad - s.length();
-        break;
-    case TextTable::RIGHT:
-        lpad = width - s.length();
-        break;
+        case TextTable::LEFT:
+            rpad = width - s.length();
+            break;
+        case TextTable::CENTER:
+            lpad = width / 2 - s.length() / 2;
+            rpad = width - lpad - s.length();
+            break;
+        case TextTable::RIGHT:
+            lpad = width - s.length();
+            break;
     }
 
     return string(lpad, ' ') + s + string(rpad, ' ');
 }
 
-std::ostream & operator<<(std::ostream & out, const TextTable & t)
+std::ostream &operator<<(std::ostream &out, const TextTable &t)
 {
     for (unsigned int i = 0; i < t.col.size(); i++) {
         TextTable::TextTableColumn col = t.col[i];

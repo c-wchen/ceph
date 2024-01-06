@@ -13,11 +13,12 @@
 
 struct RGWServices_Def;
 
-class RGWServiceInstance {
+class RGWServiceInstance
+{
     friend struct RGWServices_Def;
 
-  protected:
-     CephContext * cct;
+protected:
+    CephContext *cct;
 
     enum StartState {
         StateInit = 0,
@@ -25,22 +26,27 @@ class RGWServiceInstance {
         StateStarted = 2,
     } start_state { StateInit };
 
-    virtual void shutdown() {
+    virtual void shutdown()
+    {
     }
-    virtual int do_start(optional_yield, const DoutPrefixProvider * dpp) {
+    virtual int do_start(optional_yield, const DoutPrefixProvider *dpp)
+    {
         return 0;
     }
-  public:
-  RGWServiceInstance(CephContext * _cct):cct(_cct) {
+public:
+    RGWServiceInstance(CephContext *_cct): cct(_cct)
+    {
     }
     virtual ~ RGWServiceInstance();
 
-    int start(optional_yield y, const DoutPrefixProvider * dpp);
-    bool is_started() {
+    int start(optional_yield y, const DoutPrefixProvider *dpp);
+    bool is_started()
+    {
         return (start_state == StateStarted);
     }
 
-    CephContext *ctx() {
+    CephContext *ctx()
+    {
         return cct;
     }
 };
@@ -78,40 +84,40 @@ class RGWSI_Role_RADOS;
 
 struct RGWServices_Def {
     bool can_shutdown {
-    false};
+        false};
     bool has_shutdown {
-    false};
+        false};
 
-     std::unique_ptr < RGWSI_Finisher > finisher;
-     std::unique_ptr < RGWSI_Bucket_SObj > bucket_sobj;
-     std::unique_ptr < RGWSI_Bucket_Sync_SObj > bucket_sync_sobj;
-     std::unique_ptr < RGWSI_BucketIndex_RADOS > bi_rados;
-     std::unique_ptr < RGWSI_BILog_RADOS > bilog_rados;
-     std::unique_ptr < RGWSI_Cls > cls;
-     std::unique_ptr < RGWSI_ConfigKey_RADOS > config_key_rados;
-     std::unique_ptr < RGWSI_MDLog > mdlog;
-     std::unique_ptr < RGWSI_Meta > meta;
-     std::unique_ptr < RGWSI_MetaBackend_SObj > meta_be_sobj;
-     std::unique_ptr < RGWSI_MetaBackend_OTP > meta_be_otp;
-     std::unique_ptr < RGWSI_Notify > notify;
-     std::unique_ptr < RGWSI_OTP > otp;
-     std::unique_ptr < RGWSI_RADOS > rados;
-     std::unique_ptr < RGWSI_Zone > zone;
-     std::unique_ptr < RGWSI_ZoneUtils > zone_utils;
-     std::unique_ptr < RGWSI_Quota > quota;
-     std::unique_ptr < RGWSI_SyncModules > sync_modules;
-     std::unique_ptr < RGWSI_SysObj > sysobj;
-     std::unique_ptr < RGWSI_SysObj_Core > sysobj_core;
-     std::unique_ptr < RGWSI_SysObj_Cache > sysobj_cache;
-     std::unique_ptr < RGWSI_User_RADOS > user_rados;
-     std::unique_ptr < RGWDataChangesLog > datalog_rados;
-     std::unique_ptr < RGWSI_Role_RADOS > role_rados;
+    std::unique_ptr < RGWSI_Finisher > finisher;
+    std::unique_ptr < RGWSI_Bucket_SObj > bucket_sobj;
+    std::unique_ptr < RGWSI_Bucket_Sync_SObj > bucket_sync_sobj;
+    std::unique_ptr < RGWSI_BucketIndex_RADOS > bi_rados;
+    std::unique_ptr < RGWSI_BILog_RADOS > bilog_rados;
+    std::unique_ptr < RGWSI_Cls > cls;
+    std::unique_ptr < RGWSI_ConfigKey_RADOS > config_key_rados;
+    std::unique_ptr < RGWSI_MDLog > mdlog;
+    std::unique_ptr < RGWSI_Meta > meta;
+    std::unique_ptr < RGWSI_MetaBackend_SObj > meta_be_sobj;
+    std::unique_ptr < RGWSI_MetaBackend_OTP > meta_be_otp;
+    std::unique_ptr < RGWSI_Notify > notify;
+    std::unique_ptr < RGWSI_OTP > otp;
+    std::unique_ptr < RGWSI_RADOS > rados;
+    std::unique_ptr < RGWSI_Zone > zone;
+    std::unique_ptr < RGWSI_ZoneUtils > zone_utils;
+    std::unique_ptr < RGWSI_Quota > quota;
+    std::unique_ptr < RGWSI_SyncModules > sync_modules;
+    std::unique_ptr < RGWSI_SysObj > sysobj;
+    std::unique_ptr < RGWSI_SysObj_Core > sysobj_core;
+    std::unique_ptr < RGWSI_SysObj_Cache > sysobj_cache;
+    std::unique_ptr < RGWSI_User_RADOS > user_rados;
+    std::unique_ptr < RGWDataChangesLog > datalog_rados;
+    std::unique_ptr < RGWSI_Role_RADOS > role_rados;
 
-     RGWServices_Def();
+    RGWServices_Def();
     ~RGWServices_Def();
 
-    int init(CephContext * cct, bool have_cache, bool raw_storage,
-             bool run_sync, optional_yield y, const DoutPrefixProvider * dpp);
+    int init(CephContext *cct, bool have_cache, bool raw_storage,
+             bool run_sync, optional_yield y, const DoutPrefixProvider *dpp);
     void shutdown();
 };
 
@@ -121,74 +127,77 @@ struct RGWServices {
     CephContext *cct;
 
     RGWSI_Finisher *finisher {
-    nullptr};
+        nullptr};
     RGWSI_Bucket *bucket {
-    nullptr};
+        nullptr};
     RGWSI_Bucket_SObj *bucket_sobj {
-    nullptr};
+        nullptr};
     RGWSI_Bucket_Sync *bucket_sync {
-    nullptr};
+        nullptr};
     RGWSI_Bucket_Sync_SObj *bucket_sync_sobj {
-    nullptr};
+        nullptr};
     RGWSI_BucketIndex *bi {
-    nullptr};
+        nullptr};
     RGWSI_BucketIndex_RADOS *bi_rados {
-    nullptr};
+        nullptr};
     RGWSI_BILog_RADOS *bilog_rados {
-    nullptr};
+        nullptr};
     RGWSI_Cls *cls {
-    nullptr};
+        nullptr};
     RGWSI_ConfigKey_RADOS *config_key_rados {
-    nullptr};
+        nullptr};
     RGWSI_ConfigKey *config_key {
-    nullptr};
+        nullptr};
     RGWDataChangesLog *datalog_rados {
-    nullptr};
+        nullptr};
     RGWSI_MDLog *mdlog {
-    nullptr};
+        nullptr};
     RGWSI_Meta *meta {
-    nullptr};
+        nullptr};
     RGWSI_MetaBackend *meta_be_sobj {
-    nullptr};
+        nullptr};
     RGWSI_MetaBackend *meta_be_otp {
-    nullptr};
+        nullptr};
     RGWSI_Notify *notify {
-    nullptr};
+        nullptr};
     RGWSI_OTP *otp {
-    nullptr};
+        nullptr};
     RGWSI_RADOS *rados {
-    nullptr};
+        nullptr};
     RGWSI_Zone *zone {
-    nullptr};
+        nullptr};
     RGWSI_ZoneUtils *zone_utils {
-    nullptr};
+        nullptr};
     RGWSI_Quota *quota {
-    nullptr};
+        nullptr};
     RGWSI_SyncModules *sync_modules {
-    nullptr};
+        nullptr};
     RGWSI_SysObj *sysobj {
-    nullptr};
+        nullptr};
     RGWSI_SysObj_Cache *cache {
-    nullptr};
+        nullptr};
     RGWSI_SysObj_Core *core {
-    nullptr};
+        nullptr};
     RGWSI_User *user {
-    nullptr};
+        nullptr};
     RGWSI_Role_RADOS *role {
-    nullptr};
+        nullptr};
 
-    int do_init(CephContext * cct, bool have_cache, bool raw_storage,
+    int do_init(CephContext *cct, bool have_cache, bool raw_storage,
                 bool run_sync, optional_yield y,
-                const DoutPrefixProvider * dpp);
+                const DoutPrefixProvider *dpp);
 
-    int init(CephContext * cct, bool have_cache, bool run_sync,
-             optional_yield y, const DoutPrefixProvider * dpp) {
+    int init(CephContext *cct, bool have_cache, bool run_sync,
+             optional_yield y, const DoutPrefixProvider *dpp)
+    {
         return do_init(cct, have_cache, false, run_sync, y, dpp);
-    } int init_raw(CephContext * cct, bool have_cache, optional_yield y,
-                   const DoutPrefixProvider * dpp) {
+    } int init_raw(CephContext *cct, bool have_cache, optional_yield y,
+                   const DoutPrefixProvider *dpp)
+    {
         return do_init(cct, have_cache, true, false, y, dpp);
     }
-    void shutdown() {
+    void shutdown()
+    {
         _svc.shutdown();
     }
 };
@@ -212,48 +221,48 @@ struct RGWCtlDef {
         ~_meta();
     } meta;
 
-     std::unique_ptr < RGWUserCtl > user;
-     std::unique_ptr < RGWBucketCtl > bucket;
-     std::unique_ptr < RGWOTPCtl > otp;
+    std::unique_ptr < RGWUserCtl > user;
+    std::unique_ptr < RGWBucketCtl > bucket;
+    std::unique_ptr < RGWOTPCtl > otp;
 
-     RGWCtlDef();
+    RGWCtlDef();
     ~RGWCtlDef();
 
-    int init(RGWServices & svc, rgw::sal::Driver * driver,
-             const DoutPrefixProvider * dpp);
+    int init(RGWServices &svc, rgw::sal::Driver *driver,
+             const DoutPrefixProvider *dpp);
 };
 
 struct RGWCtl {
     CephContext *cct {
-    nullptr};
+        nullptr};
     RGWServices *svc {
-    nullptr};
+        nullptr};
 
     RGWCtlDef _ctl;
 
     struct _meta {
         RGWMetadataManager *mgr {
-        nullptr};
+            nullptr};
 
         RGWMetadataHandler *bucket {
-        nullptr};
+            nullptr};
         RGWMetadataHandler *bucket_instance {
-        nullptr};
+            nullptr};
         RGWMetadataHandler *user {
-        nullptr};
+            nullptr};
         RGWMetadataHandler *otp {
-        nullptr};
+            nullptr};
         RGWMetadataHandler *role {
-        nullptr};
+            nullptr};
     } meta;
 
     RGWUserCtl *user {
-    nullptr};
+        nullptr};
     RGWBucketCtl *bucket {
-    nullptr};
+        nullptr};
     RGWOTPCtl *otp {
-    nullptr};
+        nullptr};
 
-    int init(RGWServices * _svc, rgw::sal::Driver * driver,
-             const DoutPrefixProvider * dpp);
+    int init(RGWServices *_svc, rgw::sal::Driver *driver,
+             const DoutPrefixProvider *dpp);
 };

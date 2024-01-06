@@ -11,12 +11,12 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "mds.pinger " << __func__
 
-MDSPinger::MDSPinger(MDSRank * mds)
-:  mds(mds)
+MDSPinger::MDSPinger(MDSRank *mds)
+    :  mds(mds)
 {
 }
 
-void MDSPinger::send_ping(mds_rank_t rank, const entity_addrvec_t & addr)
+void MDSPinger::send_ping(mds_rank_t rank, const entity_addrvec_t &addr)
 {
     dout(10) << ": rank=" << rank << dendl;
 
@@ -26,13 +26,13 @@ void MDSPinger::send_ping(mds_rank_t rank, const entity_addrvec_t & addr)
         dout(20) << ": init ping pong state for rank=" << rank << dendl;
     }
 
-    auto & ping_state = it->second;
+    auto &ping_state = it->second;
     auto last_seq = ping_state.last_seq++;
 
     ping_state.seq_time_map.emplace(last_seq, clock::now());
 
     dout(10) << ": sending ping with sequence=" << last_seq << " to rank="
-        << rank << dendl;
+             << rank << dendl;
     mds->send_message_mds(make_message < MMDSPing > (last_seq), addr);
 }
 
@@ -49,17 +49,17 @@ bool MDSPinger::pong_received(mds_rank_t rank, version_t seq)
         // or when non rank 0 active MDSs begin sending metric updates before
         // rank 0 can start pinging it (although, that should resolve out soon).
         dout(10) << ": received pong from rank=" << rank <<
-            " to which ping was never" << " sent (ignoring...)." << dendl;
+                 " to which ping was never" << " sent (ignoring...)." << dendl;
         return false;
     }
 
-    auto & ping_state = it1->second;
+    auto &ping_state = it1->second;
     // find incoming seq timestamp for updation
     auto it2 = ping_state.seq_time_map.find(seq);
     if (it2 == ping_state.seq_time_map.end()) {
         // rank still bootstrapping
         dout(10) << ": pong received for unknown ping sequence " << seq
-            << ", rank " << rank << " should catch up soon." << dendl;
+                 << ", rank " << rank << " should catch up soon." << dendl;
         return false;
     }
 
@@ -77,7 +77,7 @@ void MDSPinger::reset_ping(mds_rank_t rank)
     auto it = ping_state_by_rank.find(rank);
     if (it == ping_state_by_rank.end()) {
         dout(10) << ": rank=" << rank << " was never sent ping request." <<
-            dendl;
+                 dendl;
         return;
     }
 
@@ -100,12 +100,12 @@ bool MDSPinger::is_rank_lagging(mds_rank_t rank)
     auto now = clock::now();
     auto since =
         std::chrono::duration <
-        double >(now - it->second.last_acked_time).count();
+        double > (now - it->second.last_acked_time).count();
     if (since > g_conf().get_val < std::chrono::seconds >
         ("mds_ping_grace").count()) {
         dout(5) << ": rank=" << rank <<
-            " is lagging a pong response (last ack time is " << it->second.
-            last_acked_time << ")" << dendl;
+                " is lagging a pong response (last ack time is " << it->second.
+                last_acked_time << ")" << dendl;
         return true;
     }
 

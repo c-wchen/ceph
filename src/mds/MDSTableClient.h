@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MDSTABLECLIENT_H
@@ -24,52 +24,62 @@
 class MDSRank;
 class LogSegment;
 
-class MDSTableClient {
-  public:
-    MDSTableClient(MDSRank * m, int tab):mds(m), table(tab) {
-    } virtual ~ MDSTableClient() {
+class MDSTableClient
+{
+public:
+    MDSTableClient(MDSRank *m, int tab): mds(m), table(tab)
+    {
+    } virtual ~ MDSTableClient()
+    {
     }
 
     void handle_request(const cref_t < MMDSTableRequest > &m);
 
-    void _prepare(bufferlist & mutation, version_t * ptid, bufferlist * pbl,
-                  MDSContext * onfinish);
-    void commit(version_t tid, LogSegment * ls);
+    void _prepare(bufferlist &mutation, version_t *ptid, bufferlist *pbl,
+                  MDSContext *onfinish);
+    void commit(version_t tid, LogSegment *ls);
 
     void resend_commits();
     void resend_prepares();
 
     // for recovery (by me)
-    void got_journaled_agree(version_t tid, LogSegment * ls);
+    void got_journaled_agree(version_t tid, LogSegment *ls);
     void got_journaled_ack(version_t tid);
 
-    bool has_committed(version_t tid) const {
+    bool has_committed(version_t tid) const
+    {
         return pending_commit.count(tid) == 0;
-    } void wait_for_ack(version_t tid, MDSContext * c) {
+    } void wait_for_ack(version_t tid, MDSContext *c)
+    {
         ack_waiters[tid].push_back(c);
     }
 
-    std::set < version_t > get_journaled_tids()const {
+    std::set < version_t > get_journaled_tids()const
+    {
         std::set < version_t > tids;
-        for (auto p:pending_commit)
+        for (auto p : pending_commit) {
             tids.insert(p.first);
+        }
         return tids;
     } void handle_mds_failure(mds_rank_t mds);
 
-    bool is_server_ready(void) const {
+    bool is_server_ready(void) const
+    {
         return server_ready;
     }
     // child must implement virtual void resend_queries() = 0;
     virtual void handle_query_result(const cref_t < MMDSTableRequest > &m) = 0;
     virtual void handle_notify_prep(const cref_t < MMDSTableRequest > &m) = 0;
     virtual void notify_commit(version_t tid) = 0;
-  protected:
+protected:
     // prepares
     struct _pending_prepare {
-        _pending_prepare() {
-        } _pending_prepare(MDSContext * c, version_t * pt, bufferlist * pb,
-                           bufferlist & m):onfinish(c), ptid(pt), pbl(pb),
-            mutation(m) {
+        _pending_prepare()
+        {
+        } _pending_prepare(MDSContext *c, version_t *pt, bufferlist *pb,
+                           bufferlist &m): onfinish(c), ptid(pt), pbl(pb),
+            mutation(m)
+        {
         }
 
         MDSContext *onfinish = nullptr;
@@ -80,7 +90,7 @@ class MDSTableClient {
 
     friend class C_LoggedAck;
 
-    void handle_reply(class MMDSTableQuery * m);
+    void handle_reply(class MMDSTableQuery *m);
     void _logged_ack(version_t tid);
 
     MDSRank *mds;

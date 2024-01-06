@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #ifdef ENCODE_DUMP
@@ -236,18 +236,21 @@ void Message::encode(uint64_t features, int crcflags, bool skip_header_crc)
 
         // if the encoder didn't specify past compatibility, we assume it
         // is incompatible.
-        if (header.compat_version == 0)
+        if (header.compat_version == 0) {
             header.compat_version = header.version;
+        }
     }
-    if (crcflags & MSG_CRC_HEADER)
+    if (crcflags & MSG_CRC_HEADER) {
         calc_front_crc();
+    }
 
     // update envelope
     header.front_len = get_payload().length();
     header.middle_len = get_middle().length();
     header.data_len = get_data().length();
-    if (!skip_header_crc && (crcflags & MSG_CRC_HEADER))
+    if (!skip_header_crc && (crcflags & MSG_CRC_HEADER)) {
         calc_header_crc();
+    }
 
     footer.flags = CEPH_MSG_FOOTER_COMPLETE;
 
@@ -276,8 +279,9 @@ void Message::encode(uint64_t features, int crcflags, bool skip_header_crc)
         static int i = 0;
         i++;
         int bits = 0;
-        for (unsigned t = i; t; bits++)
+        for (unsigned t = i; t; bits++) {
             t &= t - 1;
+        }
         if (bits <= 2) {
             char fn[200];
             int status;
@@ -293,26 +297,25 @@ void Message::encode(uint64_t features, int crcflags, bool skip_header_crc)
             }
         }
 #endif
-    }
-    else {
+    } else {
         footer.flags = (unsigned)footer.flags | CEPH_MSG_FOOTER_NOCRC;
     }
 }
 
-void Message::dump(ceph::Formatter * f) const const
+void Message::dump(ceph::Formatter *f) const const
 {
     std::stringstream ss;
     print(ss);
     f->dump_string("summary", ss.str());
 }
 
-Message *decode_message(CephContext * cct,
+Message *decode_message(CephContext *cct,
                         int crcflags,
-                        ceph_msg_header & header,
-                        ceph_msg_footer & footer,
-                        ceph::bufferlist & front,
-                        ceph::bufferlist & middle,
-                        ceph::bufferlist & data, Message::ConnectionRef conn)
+                        ceph_msg_header &header,
+                        ceph_msg_footer &footer,
+                        ceph::bufferlist &front,
+                        ceph::bufferlist &middle,
+                        ceph::bufferlist &data, Message::ConnectionRef conn)
 {
 #ifdef WITH_SEASTAR
     // In crimson, conn is independently maintained outside Message.
@@ -327,8 +330,8 @@ Message *decode_message(CephContext * cct,
             if (cct) {
                 ldout(cct,
                       0) << "bad crc in front " << front_crc << " != exp " <<
-                    footer.front_crc << " from " << conn->
-                    get_peer_addr() << dendl;
+                         footer.front_crc << " from " << conn->
+                         get_peer_addr() << dendl;
                 ldout(cct, 20) << " ";
                 front.hexdump(*_dout);
                 *_dout << dendl;
@@ -339,8 +342,8 @@ Message *decode_message(CephContext * cct,
             if (cct) {
                 ldout(cct,
                       0) << "bad crc in middle " << middle_crc << " != exp " <<
-                    footer.middle_crc << " from " << conn->
-                    get_peer_addr() << dendl;
+                         footer.middle_crc << " from " << conn->
+                         get_peer_addr() << dendl;
                 ldout(cct, 20) << " ";
                 middle.hexdump(*_dout);
                 *_dout << dendl;
@@ -355,8 +358,8 @@ Message *decode_message(CephContext * cct,
                 if (cct) {
                     ldout(cct,
                           0) << "bad crc in data " << data_crc << " != exp " <<
-                        footer.data_crc << " from " << conn->
-                        get_peer_addr() << dendl;
+                             footer.data_crc << " from " << conn->
+                             get_peer_addr() << dendl;
                     ldout(cct, 20) << " ";
                     data.hexdump(*_dout);
                     *_dout << dendl;
@@ -371,583 +374,584 @@ Message *decode_message(CephContext * cct,
     int type = header.type;
     switch (type) {
 
-        // -- with payload --
+            // -- with payload --
 
-        using ceph::make_message;
+            using ceph::make_message;
 
-    case MSG_PGSTATS:
-        m = make_message < MPGStats > ();
-        break;
-    case MSG_PGSTATSACK:
-        m = make_message < MPGStatsAck > ();
-        break;
+        case MSG_PGSTATS:
+            m = make_message < MPGStats > ();
+            break;
+        case MSG_PGSTATSACK:
+            m = make_message < MPGStatsAck > ();
+            break;
 
-    case CEPH_MSG_STATFS:
-        m = make_message < MStatfs > ();
-        break;
-    case CEPH_MSG_STATFS_REPLY:
-        m = make_message < MStatfsReply > ();
-        break;
-    case MSG_GETPOOLSTATS:
-        m = make_message < MGetPoolStats > ();
-        break;
-    case MSG_GETPOOLSTATSREPLY:
-        m = make_message < MGetPoolStatsReply > ();
-        break;
-    case CEPH_MSG_POOLOP:
-        m = make_message < MPoolOp > ();
-        break;
-    case CEPH_MSG_POOLOP_REPLY:
-        m = make_message < MPoolOpReply > ();
-        break;
-    case MSG_MON_COMMAND:
-        m = make_message < MMonCommand > ();
-        break;
-    case MSG_MON_COMMAND_ACK:
-        m = make_message < MMonCommandAck > ();
-        break;
-    case MSG_MON_PAXOS:
-        m = make_message < MMonPaxos > ();
-        break;
-    case MSG_CONFIG:
-        m = make_message < MConfig > ();
-        break;
-    case MSG_GET_CONFIG:
-        m = make_message < MGetConfig > ();
-        break;
-    case MSG_KV_DATA:
-        m = make_message < MKVData > ();
-        break;
+        case CEPH_MSG_STATFS:
+            m = make_message < MStatfs > ();
+            break;
+        case CEPH_MSG_STATFS_REPLY:
+            m = make_message < MStatfsReply > ();
+            break;
+        case MSG_GETPOOLSTATS:
+            m = make_message < MGetPoolStats > ();
+            break;
+        case MSG_GETPOOLSTATSREPLY:
+            m = make_message < MGetPoolStatsReply > ();
+            break;
+        case CEPH_MSG_POOLOP:
+            m = make_message < MPoolOp > ();
+            break;
+        case CEPH_MSG_POOLOP_REPLY:
+            m = make_message < MPoolOpReply > ();
+            break;
+        case MSG_MON_COMMAND:
+            m = make_message < MMonCommand > ();
+            break;
+        case MSG_MON_COMMAND_ACK:
+            m = make_message < MMonCommandAck > ();
+            break;
+        case MSG_MON_PAXOS:
+            m = make_message < MMonPaxos > ();
+            break;
+        case MSG_CONFIG:
+            m = make_message < MConfig > ();
+            break;
+        case MSG_GET_CONFIG:
+            m = make_message < MGetConfig > ();
+            break;
+        case MSG_KV_DATA:
+            m = make_message < MKVData > ();
+            break;
 
-    case MSG_MON_PROBE:
-        m = make_message < MMonProbe > ();
-        break;
-    case MSG_MON_JOIN:
-        m = make_message < MMonJoin > ();
-        break;
-    case MSG_MON_ELECTION:
-        m = make_message < MMonElection > ();
-        break;
-    case MSG_MON_SYNC:
-        m = make_message < MMonSync > ();
-        break;
-    case MSG_MON_PING:
-        m = make_message < MMonPing > ();
-        break;
-    case MSG_MON_SCRUB:
-        m = make_message < MMonScrub > ();
-        break;
+        case MSG_MON_PROBE:
+            m = make_message < MMonProbe > ();
+            break;
+        case MSG_MON_JOIN:
+            m = make_message < MMonJoin > ();
+            break;
+        case MSG_MON_ELECTION:
+            m = make_message < MMonElection > ();
+            break;
+        case MSG_MON_SYNC:
+            m = make_message < MMonSync > ();
+            break;
+        case MSG_MON_PING:
+            m = make_message < MMonPing > ();
+            break;
+        case MSG_MON_SCRUB:
+            m = make_message < MMonScrub > ();
+            break;
 
-    case MSG_LOG:
-        m = make_message < MLog > ();
-        break;
-    case MSG_LOGACK:
-        m = make_message < MLogAck > ();
-        break;
+        case MSG_LOG:
+            m = make_message < MLog > ();
+            break;
+        case MSG_LOGACK:
+            m = make_message < MLogAck > ();
+            break;
 
-    case CEPH_MSG_PING:
-        m = make_message < MPing > ();
-        break;
-    case MSG_COMMAND:
-        m = make_message < MCommand > ();
-        break;
-    case MSG_COMMAND_REPLY:
-        m = make_message < MCommandReply > ();
-        break;
-    case MSG_OSD_BACKFILL_RESERVE:
-        m = make_message < MBackfillReserve > ();
-        break;
-    case MSG_OSD_RECOVERY_RESERVE:
-        m = make_message < MRecoveryReserve > ();
-        break;
-    case MSG_OSD_FORCE_RECOVERY:
-        m = make_message < MOSDForceRecovery > ();
-        break;
+        case CEPH_MSG_PING:
+            m = make_message < MPing > ();
+            break;
+        case MSG_COMMAND:
+            m = make_message < MCommand > ();
+            break;
+        case MSG_COMMAND_REPLY:
+            m = make_message < MCommandReply > ();
+            break;
+        case MSG_OSD_BACKFILL_RESERVE:
+            m = make_message < MBackfillReserve > ();
+            break;
+        case MSG_OSD_RECOVERY_RESERVE:
+            m = make_message < MRecoveryReserve > ();
+            break;
+        case MSG_OSD_FORCE_RECOVERY:
+            m = make_message < MOSDForceRecovery > ();
+            break;
 
-    case MSG_ROUTE:
-        m = make_message < MRoute > ();
-        break;
-    case MSG_FORWARD:
-        m = make_message < MForward > ();
-        break;
+        case MSG_ROUTE:
+            m = make_message < MRoute > ();
+            break;
+        case MSG_FORWARD:
+            m = make_message < MForward > ();
+            break;
 
-    case CEPH_MSG_MON_MAP:
-        m = make_message < MMonMap > ();
-        break;
-    case CEPH_MSG_MON_GET_MAP:
-        m = make_message < MMonGetMap > ();
-        break;
-    case CEPH_MSG_MON_GET_OSDMAP:
-        m = make_message < MMonGetOSDMap > ();
-        break;
-    case MSG_MON_GET_PURGED_SNAPS:
-        m = make_message < MMonGetPurgedSnaps > ();
-        break;
-    case MSG_MON_GET_PURGED_SNAPS_REPLY:
-        m = make_message < MMonGetPurgedSnapsReply > ();
-        break;
-    case CEPH_MSG_MON_GET_VERSION:
-        m = make_message < MMonGetVersion > ();
-        break;
-    case CEPH_MSG_MON_GET_VERSION_REPLY:
-        m = make_message < MMonGetVersionReply > ();
-        break;
+        case CEPH_MSG_MON_MAP:
+            m = make_message < MMonMap > ();
+            break;
+        case CEPH_MSG_MON_GET_MAP:
+            m = make_message < MMonGetMap > ();
+            break;
+        case CEPH_MSG_MON_GET_OSDMAP:
+            m = make_message < MMonGetOSDMap > ();
+            break;
+        case MSG_MON_GET_PURGED_SNAPS:
+            m = make_message < MMonGetPurgedSnaps > ();
+            break;
+        case MSG_MON_GET_PURGED_SNAPS_REPLY:
+            m = make_message < MMonGetPurgedSnapsReply > ();
+            break;
+        case CEPH_MSG_MON_GET_VERSION:
+            m = make_message < MMonGetVersion > ();
+            break;
+        case CEPH_MSG_MON_GET_VERSION_REPLY:
+            m = make_message < MMonGetVersionReply > ();
+            break;
 
-    case MSG_OSD_BOOT:
-        m = make_message < MOSDBoot > ();
-        break;
-    case MSG_OSD_ALIVE:
-        m = make_message < MOSDAlive > ();
-        break;
-    case MSG_OSD_BEACON:
-        m = make_message < MOSDBeacon > ();
-        break;
-    case MSG_OSD_PGTEMP:
-        m = make_message < MOSDPGTemp > ();
-        break;
-    case MSG_OSD_FAILURE:
-        m = make_message < MOSDFailure > ();
-        break;
-    case MSG_OSD_MARK_ME_DOWN:
-        m = make_message < MOSDMarkMeDown > ();
-        break;
-    case MSG_OSD_MARK_ME_DEAD:
-        m = make_message < MOSDMarkMeDead > ();
-        break;
-    case MSG_OSD_FULL:
-        m = make_message < MOSDFull > ();
-        break;
-    case MSG_OSD_PING:
-        m = make_message < MOSDPing > ();
-        break;
-    case CEPH_MSG_OSD_OP:
-        m = make_message < MOSDOp > ();
-        break;
-    case CEPH_MSG_OSD_OPREPLY:
-        m = make_message < MOSDOpReply > ();
-        break;
-    case MSG_OSD_REPOP:
-        m = make_message < MOSDRepOp > ();
-        break;
-    case MSG_OSD_REPOPREPLY:
-        m = make_message < MOSDRepOpReply > ();
-        break;
-    case MSG_OSD_PG_CREATED:
-        m = make_message < MOSDPGCreated > ();
-        break;
-    case MSG_OSD_PG_UPDATE_LOG_MISSING:
-        m = make_message < MOSDPGUpdateLogMissing > ();
-        break;
-    case MSG_OSD_PG_UPDATE_LOG_MISSING_REPLY:
-        m = make_message < MOSDPGUpdateLogMissingReply > ();
-        break;
-    case CEPH_MSG_OSD_BACKOFF:
-        m = make_message < MOSDBackoff > ();
-        break;
+        case MSG_OSD_BOOT:
+            m = make_message < MOSDBoot > ();
+            break;
+        case MSG_OSD_ALIVE:
+            m = make_message < MOSDAlive > ();
+            break;
+        case MSG_OSD_BEACON:
+            m = make_message < MOSDBeacon > ();
+            break;
+        case MSG_OSD_PGTEMP:
+            m = make_message < MOSDPGTemp > ();
+            break;
+        case MSG_OSD_FAILURE:
+            m = make_message < MOSDFailure > ();
+            break;
+        case MSG_OSD_MARK_ME_DOWN:
+            m = make_message < MOSDMarkMeDown > ();
+            break;
+        case MSG_OSD_MARK_ME_DEAD:
+            m = make_message < MOSDMarkMeDead > ();
+            break;
+        case MSG_OSD_FULL:
+            m = make_message < MOSDFull > ();
+            break;
+        case MSG_OSD_PING:
+            m = make_message < MOSDPing > ();
+            break;
+        case CEPH_MSG_OSD_OP:
+            m = make_message < MOSDOp > ();
+            break;
+        case CEPH_MSG_OSD_OPREPLY:
+            m = make_message < MOSDOpReply > ();
+            break;
+        case MSG_OSD_REPOP:
+            m = make_message < MOSDRepOp > ();
+            break;
+        case MSG_OSD_REPOPREPLY:
+            m = make_message < MOSDRepOpReply > ();
+            break;
+        case MSG_OSD_PG_CREATED:
+            m = make_message < MOSDPGCreated > ();
+            break;
+        case MSG_OSD_PG_UPDATE_LOG_MISSING:
+            m = make_message < MOSDPGUpdateLogMissing > ();
+            break;
+        case MSG_OSD_PG_UPDATE_LOG_MISSING_REPLY:
+            m = make_message < MOSDPGUpdateLogMissingReply > ();
+            break;
+        case CEPH_MSG_OSD_BACKOFF:
+            m = make_message < MOSDBackoff > ();
+            break;
 
-    case CEPH_MSG_OSD_MAP:
-        m = make_message < MOSDMap > ();
-        break;
+        case CEPH_MSG_OSD_MAP:
+            m = make_message < MOSDMap > ();
+            break;
 
-    case CEPH_MSG_WATCH_NOTIFY:
-        m = make_message < MWatchNotify > ();
-        break;
+        case CEPH_MSG_WATCH_NOTIFY:
+            m = make_message < MWatchNotify > ();
+            break;
 
-    case MSG_OSD_PG_NOTIFY:
-        m = make_message < MOSDPGNotify > ();
-        break;
-    case MSG_OSD_PG_NOTIFY2:
-        m = make_message < MOSDPGNotify2 > ();
-        break;
-    case MSG_OSD_PG_QUERY:
-        m = make_message < MOSDPGQuery > ();
-        break;
-    case MSG_OSD_PG_QUERY2:
-        m = make_message < MOSDPGQuery2 > ();
-        break;
-    case MSG_OSD_PG_LOG:
-        m = make_message < MOSDPGLog > ();
-        break;
-    case MSG_OSD_PG_REMOVE:
-        m = make_message < MOSDPGRemove > ();
-        break;
-    case MSG_OSD_PG_INFO:
-        m = make_message < MOSDPGInfo > ();
-        break;
-    case MSG_OSD_PG_INFO2:
-        m = make_message < MOSDPGInfo2 > ();
-        break;
-    case MSG_OSD_PG_CREATE2:
-        m = make_message < MOSDPGCreate2 > ();
-        break;
-    case MSG_OSD_PG_TRIM:
-        m = make_message < MOSDPGTrim > ();
-        break;
-    case MSG_OSD_PG_LEASE:
-        m = make_message < MOSDPGLease > ();
-        break;
-    case MSG_OSD_PG_LEASE_ACK:
-        m = make_message < MOSDPGLeaseAck > ();
-        break;
+        case MSG_OSD_PG_NOTIFY:
+            m = make_message < MOSDPGNotify > ();
+            break;
+        case MSG_OSD_PG_NOTIFY2:
+            m = make_message < MOSDPGNotify2 > ();
+            break;
+        case MSG_OSD_PG_QUERY:
+            m = make_message < MOSDPGQuery > ();
+            break;
+        case MSG_OSD_PG_QUERY2:
+            m = make_message < MOSDPGQuery2 > ();
+            break;
+        case MSG_OSD_PG_LOG:
+            m = make_message < MOSDPGLog > ();
+            break;
+        case MSG_OSD_PG_REMOVE:
+            m = make_message < MOSDPGRemove > ();
+            break;
+        case MSG_OSD_PG_INFO:
+            m = make_message < MOSDPGInfo > ();
+            break;
+        case MSG_OSD_PG_INFO2:
+            m = make_message < MOSDPGInfo2 > ();
+            break;
+        case MSG_OSD_PG_CREATE2:
+            m = make_message < MOSDPGCreate2 > ();
+            break;
+        case MSG_OSD_PG_TRIM:
+            m = make_message < MOSDPGTrim > ();
+            break;
+        case MSG_OSD_PG_LEASE:
+            m = make_message < MOSDPGLease > ();
+            break;
+        case MSG_OSD_PG_LEASE_ACK:
+            m = make_message < MOSDPGLeaseAck > ();
+            break;
 
-    case MSG_OSD_SCRUB2:
-        m = make_message < MOSDScrub2 > ();
-        break;
-    case MSG_OSD_SCRUB_RESERVE:
-        m = make_message < MOSDScrubReserve > ();
-        break;
-    case MSG_REMOVE_SNAPS:
-        m = make_message < MRemoveSnaps > ();
-        break;
-    case MSG_OSD_REP_SCRUB:
-        m = make_message < MOSDRepScrub > ();
-        break;
-    case MSG_OSD_REP_SCRUBMAP:
-        m = make_message < MOSDRepScrubMap > ();
-        break;
-    case MSG_OSD_PG_SCAN:
-        m = make_message < MOSDPGScan > ();
-        break;
-    case MSG_OSD_PG_BACKFILL:
-        m = make_message < MOSDPGBackfill > ();
-        break;
-    case MSG_OSD_PG_BACKFILL_REMOVE:
-        m = make_message < MOSDPGBackfillRemove > ();
-        break;
-    case MSG_OSD_PG_PUSH:
-        m = make_message < MOSDPGPush > ();
-        break;
-    case MSG_OSD_PG_PULL:
-        m = make_message < MOSDPGPull > ();
-        break;
-    case MSG_OSD_PG_PUSH_REPLY:
-        m = make_message < MOSDPGPushReply > ();
-        break;
-    case MSG_OSD_PG_RECOVERY_DELETE:
-        m = make_message < MOSDPGRecoveryDelete > ();
-        break;
-    case MSG_OSD_PG_RECOVERY_DELETE_REPLY:
-        m = make_message < MOSDPGRecoveryDeleteReply > ();
-        break;
-    case MSG_OSD_PG_READY_TO_MERGE:
-        m = make_message < MOSDPGReadyToMerge > ();
-        break;
-    case MSG_OSD_EC_WRITE:
-        m = make_message < MOSDECSubOpWrite > ();
-        break;
-    case MSG_OSD_EC_WRITE_REPLY:
-        m = make_message < MOSDECSubOpWriteReply > ();
-        break;
-    case MSG_OSD_EC_READ:
-        m = make_message < MOSDECSubOpRead > ();
-        break;
-    case MSG_OSD_EC_READ_REPLY:
-        m = make_message < MOSDECSubOpReadReply > ();
-        break;
+        case MSG_OSD_SCRUB2:
+            m = make_message < MOSDScrub2 > ();
+            break;
+        case MSG_OSD_SCRUB_RESERVE:
+            m = make_message < MOSDScrubReserve > ();
+            break;
+        case MSG_REMOVE_SNAPS:
+            m = make_message < MRemoveSnaps > ();
+            break;
+        case MSG_OSD_REP_SCRUB:
+            m = make_message < MOSDRepScrub > ();
+            break;
+        case MSG_OSD_REP_SCRUBMAP:
+            m = make_message < MOSDRepScrubMap > ();
+            break;
+        case MSG_OSD_PG_SCAN:
+            m = make_message < MOSDPGScan > ();
+            break;
+        case MSG_OSD_PG_BACKFILL:
+            m = make_message < MOSDPGBackfill > ();
+            break;
+        case MSG_OSD_PG_BACKFILL_REMOVE:
+            m = make_message < MOSDPGBackfillRemove > ();
+            break;
+        case MSG_OSD_PG_PUSH:
+            m = make_message < MOSDPGPush > ();
+            break;
+        case MSG_OSD_PG_PULL:
+            m = make_message < MOSDPGPull > ();
+            break;
+        case MSG_OSD_PG_PUSH_REPLY:
+            m = make_message < MOSDPGPushReply > ();
+            break;
+        case MSG_OSD_PG_RECOVERY_DELETE:
+            m = make_message < MOSDPGRecoveryDelete > ();
+            break;
+        case MSG_OSD_PG_RECOVERY_DELETE_REPLY:
+            m = make_message < MOSDPGRecoveryDeleteReply > ();
+            break;
+        case MSG_OSD_PG_READY_TO_MERGE:
+            m = make_message < MOSDPGReadyToMerge > ();
+            break;
+        case MSG_OSD_EC_WRITE:
+            m = make_message < MOSDECSubOpWrite > ();
+            break;
+        case MSG_OSD_EC_WRITE_REPLY:
+            m = make_message < MOSDECSubOpWriteReply > ();
+            break;
+        case MSG_OSD_EC_READ:
+            m = make_message < MOSDECSubOpRead > ();
+            break;
+        case MSG_OSD_EC_READ_REPLY:
+            m = make_message < MOSDECSubOpReadReply > ();
+            break;
         // auth
-    case CEPH_MSG_AUTH:
-        m = make_message < MAuth > ();
-        break;
-    case CEPH_MSG_AUTH_REPLY:
-        m = make_message < MAuthReply > ();
-        break;
+        case CEPH_MSG_AUTH:
+            m = make_message < MAuth > ();
+            break;
+        case CEPH_MSG_AUTH_REPLY:
+            m = make_message < MAuthReply > ();
+            break;
 
-    case MSG_MON_GLOBAL_ID:
-        m = make_message < MMonGlobalID > ();
-        break;
-    case MSG_MON_USED_PENDING_KEYS:
-        m = make_message < MMonUsedPendingKeys > ();
-        break;
+        case MSG_MON_GLOBAL_ID:
+            m = make_message < MMonGlobalID > ();
+            break;
+        case MSG_MON_USED_PENDING_KEYS:
+            m = make_message < MMonUsedPendingKeys > ();
+            break;
 
         // clients
-    case CEPH_MSG_MON_SUBSCRIBE:
-        m = make_message < MMonSubscribe > ();
-        break;
-    case CEPH_MSG_MON_SUBSCRIBE_ACK:
-        m = make_message < MMonSubscribeAck > ();
-        break;
-    case CEPH_MSG_CLIENT_SESSION:
-        m = make_message < MClientSession > ();
-        break;
-    case CEPH_MSG_CLIENT_RECONNECT:
-        m = make_message < MClientReconnect > ();
-        break;
-    case CEPH_MSG_CLIENT_REQUEST:
-        m = make_message < MClientRequest > ();
-        break;
-    case CEPH_MSG_CLIENT_REQUEST_FORWARD:
-        m = make_message < MClientRequestForward > ();
-        break;
-    case CEPH_MSG_CLIENT_REPLY:
-        m = make_message < MClientReply > ();
-        break;
-    case CEPH_MSG_CLIENT_RECLAIM:
-        m = make_message < MClientReclaim > ();
-        break;
-    case CEPH_MSG_CLIENT_RECLAIM_REPLY:
-        m = make_message < MClientReclaimReply > ();
-        break;
-    case CEPH_MSG_CLIENT_CAPS:
-        m = make_message < MClientCaps > ();
-        break;
-    case CEPH_MSG_CLIENT_CAPRELEASE:
-        m = make_message < MClientCapRelease > ();
-        break;
-    case CEPH_MSG_CLIENT_LEASE:
-        m = make_message < MClientLease > ();
-        break;
-    case CEPH_MSG_CLIENT_SNAP:
-        m = make_message < MClientSnap > ();
-        break;
-    case CEPH_MSG_CLIENT_QUOTA:
-        m = make_message < MClientQuota > ();
-        break;
-    case CEPH_MSG_CLIENT_METRICS:
-        m = make_message < MClientMetrics > ();
-        break;
+        case CEPH_MSG_MON_SUBSCRIBE:
+            m = make_message < MMonSubscribe > ();
+            break;
+        case CEPH_MSG_MON_SUBSCRIBE_ACK:
+            m = make_message < MMonSubscribeAck > ();
+            break;
+        case CEPH_MSG_CLIENT_SESSION:
+            m = make_message < MClientSession > ();
+            break;
+        case CEPH_MSG_CLIENT_RECONNECT:
+            m = make_message < MClientReconnect > ();
+            break;
+        case CEPH_MSG_CLIENT_REQUEST:
+            m = make_message < MClientRequest > ();
+            break;
+        case CEPH_MSG_CLIENT_REQUEST_FORWARD:
+            m = make_message < MClientRequestForward > ();
+            break;
+        case CEPH_MSG_CLIENT_REPLY:
+            m = make_message < MClientReply > ();
+            break;
+        case CEPH_MSG_CLIENT_RECLAIM:
+            m = make_message < MClientReclaim > ();
+            break;
+        case CEPH_MSG_CLIENT_RECLAIM_REPLY:
+            m = make_message < MClientReclaimReply > ();
+            break;
+        case CEPH_MSG_CLIENT_CAPS:
+            m = make_message < MClientCaps > ();
+            break;
+        case CEPH_MSG_CLIENT_CAPRELEASE:
+            m = make_message < MClientCapRelease > ();
+            break;
+        case CEPH_MSG_CLIENT_LEASE:
+            m = make_message < MClientLease > ();
+            break;
+        case CEPH_MSG_CLIENT_SNAP:
+            m = make_message < MClientSnap > ();
+            break;
+        case CEPH_MSG_CLIENT_QUOTA:
+            m = make_message < MClientQuota > ();
+            break;
+        case CEPH_MSG_CLIENT_METRICS:
+            m = make_message < MClientMetrics > ();
+            break;
 
         // mds
-    case MSG_MDS_PEER_REQUEST:
-        m = make_message < MMDSPeerRequest > ();
-        break;
+        case MSG_MDS_PEER_REQUEST:
+            m = make_message < MMDSPeerRequest > ();
+            break;
 
-    case CEPH_MSG_MDS_MAP:
-        m = make_message < MMDSMap > ();
-        break;
-    case CEPH_MSG_FS_MAP:
-        m = make_message < MFSMap > ();
-        break;
-    case CEPH_MSG_FS_MAP_USER:
-        m = make_message < MFSMapUser > ();
-        break;
-    case MSG_MDS_BEACON:
-        m = make_message < MMDSBeacon > ();
-        break;
-    case MSG_MDS_OFFLOAD_TARGETS:
-        m = make_message < MMDSLoadTargets > ();
-        break;
-    case MSG_MDS_RESOLVE:
-        m = make_message < MMDSResolve > ();
-        break;
-    case MSG_MDS_RESOLVEACK:
-        m = make_message < MMDSResolveAck > ();
-        break;
-    case MSG_MDS_CACHEREJOIN:
-        m = make_message < MMDSCacheRejoin > ();
-        break;
+        case CEPH_MSG_MDS_MAP:
+            m = make_message < MMDSMap > ();
+            break;
+        case CEPH_MSG_FS_MAP:
+            m = make_message < MFSMap > ();
+            break;
+        case CEPH_MSG_FS_MAP_USER:
+            m = make_message < MFSMapUser > ();
+            break;
+        case MSG_MDS_BEACON:
+            m = make_message < MMDSBeacon > ();
+            break;
+        case MSG_MDS_OFFLOAD_TARGETS:
+            m = make_message < MMDSLoadTargets > ();
+            break;
+        case MSG_MDS_RESOLVE:
+            m = make_message < MMDSResolve > ();
+            break;
+        case MSG_MDS_RESOLVEACK:
+            m = make_message < MMDSResolveAck > ();
+            break;
+        case MSG_MDS_CACHEREJOIN:
+            m = make_message < MMDSCacheRejoin > ();
+            break;
 
-    case MSG_MDS_DIRUPDATE:
-        m = make_message < MDirUpdate > ();
-        break;
+        case MSG_MDS_DIRUPDATE:
+            m = make_message < MDirUpdate > ();
+            break;
 
-    case MSG_MDS_DISCOVER:
-        m = make_message < MDiscover > ();
-        break;
-    case MSG_MDS_DISCOVERREPLY:
-        m = make_message < MDiscoverReply > ();
-        break;
+        case MSG_MDS_DISCOVER:
+            m = make_message < MDiscover > ();
+            break;
+        case MSG_MDS_DISCOVERREPLY:
+            m = make_message < MDiscoverReply > ();
+            break;
 
-    case MSG_MDS_FINDINO:
-        m = make_message < MMDSFindIno > ();
-        break;
-    case MSG_MDS_FINDINOREPLY:
-        m = make_message < MMDSFindInoReply > ();
-        break;
+        case MSG_MDS_FINDINO:
+            m = make_message < MMDSFindIno > ();
+            break;
+        case MSG_MDS_FINDINOREPLY:
+            m = make_message < MMDSFindInoReply > ();
+            break;
 
-    case MSG_MDS_OPENINO:
-        m = make_message < MMDSOpenIno > ();
-        break;
-    case MSG_MDS_OPENINOREPLY:
-        m = make_message < MMDSOpenInoReply > ();
-        break;
+        case MSG_MDS_OPENINO:
+            m = make_message < MMDSOpenIno > ();
+            break;
+        case MSG_MDS_OPENINOREPLY:
+            m = make_message < MMDSOpenInoReply > ();
+            break;
 
-    case MSG_MDS_SNAPUPDATE:
-        m = make_message < MMDSSnapUpdate > ();
-        break;
+        case MSG_MDS_SNAPUPDATE:
+            m = make_message < MMDSSnapUpdate > ();
+            break;
 
-    case MSG_MDS_FRAGMENTNOTIFY:
-        m = make_message < MMDSFragmentNotify > ();
-        break;
+        case MSG_MDS_FRAGMENTNOTIFY:
+            m = make_message < MMDSFragmentNotify > ();
+            break;
 
-    case MSG_MDS_FRAGMENTNOTIFYACK:
-        m = make_message < MMDSFragmentNotifyAck > ();
-        break;
+        case MSG_MDS_FRAGMENTNOTIFYACK:
+            m = make_message < MMDSFragmentNotifyAck > ();
+            break;
 
-    case MSG_MDS_SCRUB:
-        m = make_message < MMDSScrub > ();
-        break;
+        case MSG_MDS_SCRUB:
+            m = make_message < MMDSScrub > ();
+            break;
 
-    case MSG_MDS_SCRUB_STATS:
-        m = make_message < MMDSScrubStats > ();
-        break;
+        case MSG_MDS_SCRUB_STATS:
+            m = make_message < MMDSScrubStats > ();
+            break;
 
-    case MSG_MDS_EXPORTDIRDISCOVER:
-        m = make_message < MExportDirDiscover > ();
-        break;
-    case MSG_MDS_EXPORTDIRDISCOVERACK:
-        m = make_message < MExportDirDiscoverAck > ();
-        break;
-    case MSG_MDS_EXPORTDIRCANCEL:
-        m = make_message < MExportDirCancel > ();
-        break;
+        case MSG_MDS_EXPORTDIRDISCOVER:
+            m = make_message < MExportDirDiscover > ();
+            break;
+        case MSG_MDS_EXPORTDIRDISCOVERACK:
+            m = make_message < MExportDirDiscoverAck > ();
+            break;
+        case MSG_MDS_EXPORTDIRCANCEL:
+            m = make_message < MExportDirCancel > ();
+            break;
 
-    case MSG_MDS_EXPORTDIR:
-        m = make_message < MExportDir > ();
-        break;
-    case MSG_MDS_EXPORTDIRACK:
-        m = make_message < MExportDirAck > ();
-        break;
-    case MSG_MDS_EXPORTDIRFINISH:
-        m = make_message < MExportDirFinish > ();
-        break;
+        case MSG_MDS_EXPORTDIR:
+            m = make_message < MExportDir > ();
+            break;
+        case MSG_MDS_EXPORTDIRACK:
+            m = make_message < MExportDirAck > ();
+            break;
+        case MSG_MDS_EXPORTDIRFINISH:
+            m = make_message < MExportDirFinish > ();
+            break;
 
-    case MSG_MDS_EXPORTDIRNOTIFY:
-        m = make_message < MExportDirNotify > ();
-        break;
+        case MSG_MDS_EXPORTDIRNOTIFY:
+            m = make_message < MExportDirNotify > ();
+            break;
 
-    case MSG_MDS_EXPORTDIRNOTIFYACK:
-        m = make_message < MExportDirNotifyAck > ();
-        break;
+        case MSG_MDS_EXPORTDIRNOTIFYACK:
+            m = make_message < MExportDirNotifyAck > ();
+            break;
 
-    case MSG_MDS_EXPORTDIRPREP:
-        m = make_message < MExportDirPrep > ();
-        break;
+        case MSG_MDS_EXPORTDIRPREP:
+            m = make_message < MExportDirPrep > ();
+            break;
 
-    case MSG_MDS_EXPORTDIRPREPACK:
-        m = make_message < MExportDirPrepAck > ();
-        break;
+        case MSG_MDS_EXPORTDIRPREPACK:
+            m = make_message < MExportDirPrepAck > ();
+            break;
 
-    case MSG_MDS_EXPORTCAPS:
-        m = make_message < MExportCaps > ();
-        break;
-    case MSG_MDS_EXPORTCAPSACK:
-        m = make_message < MExportCapsAck > ();
-        break;
-    case MSG_MDS_GATHERCAPS:
-        m = make_message < MGatherCaps > ();
-        break;
+        case MSG_MDS_EXPORTCAPS:
+            m = make_message < MExportCaps > ();
+            break;
+        case MSG_MDS_EXPORTCAPSACK:
+            m = make_message < MExportCapsAck > ();
+            break;
+        case MSG_MDS_GATHERCAPS:
+            m = make_message < MGatherCaps > ();
+            break;
 
-    case MSG_MDS_DENTRYUNLINK_ACK:
-        m = make_message < MDentryUnlinkAck > ();
-        break;
-    case MSG_MDS_DENTRYUNLINK:
-        m = make_message < MDentryUnlink > ();
-        break;
-    case MSG_MDS_DENTRYLINK:
-        m = make_message < MDentryLink > ();
-        break;
+        case MSG_MDS_DENTRYUNLINK_ACK:
+            m = make_message < MDentryUnlinkAck > ();
+            break;
+        case MSG_MDS_DENTRYUNLINK:
+            m = make_message < MDentryUnlink > ();
+            break;
+        case MSG_MDS_DENTRYLINK:
+            m = make_message < MDentryLink > ();
+            break;
 
-    case MSG_MDS_HEARTBEAT:
-        m = make_message < MHeartbeat > ();
-        break;
+        case MSG_MDS_HEARTBEAT:
+            m = make_message < MHeartbeat > ();
+            break;
 
-    case MSG_MDS_CACHEEXPIRE:
-        m = make_message < MCacheExpire > ();
-        break;
+        case MSG_MDS_CACHEEXPIRE:
+            m = make_message < MCacheExpire > ();
+            break;
 
-    case MSG_MDS_TABLE_REQUEST:
-        m = make_message < MMDSTableRequest > ();
-        break;
+        case MSG_MDS_TABLE_REQUEST:
+            m = make_message < MMDSTableRequest > ();
+            break;
 
         /*  case MSG_MDS_INODEUPDATE:
            m = make_message<MInodeUpdate>();
            break;
          */
 
-    case MSG_MDS_INODEFILECAPS:
-        m = make_message < MInodeFileCaps > ();
-        break;
+        case MSG_MDS_INODEFILECAPS:
+            m = make_message < MInodeFileCaps > ();
+            break;
 
-    case MSG_MDS_LOCK:
-        m = make_message < MLock > ();
-        break;
+        case MSG_MDS_LOCK:
+            m = make_message < MLock > ();
+            break;
 
-    case MSG_MDS_METRICS:
-        m = make_message < MMDSMetrics > ();
-        break;
+        case MSG_MDS_METRICS:
+            m = make_message < MMDSMetrics > ();
+            break;
 
-    case MSG_MDS_PING:
-        m = make_message < MMDSPing > ();
-        break;
+        case MSG_MDS_PING:
+            m = make_message < MMDSPing > ();
+            break;
 
-    case MSG_MGR_BEACON:
-        m = make_message < MMgrBeacon > ();
-        break;
+        case MSG_MGR_BEACON:
+            m = make_message < MMgrBeacon > ();
+            break;
 
-    case MSG_MON_MGR_REPORT:
-        m = make_message < MMonMgrReport > ();
-        break;
+        case MSG_MON_MGR_REPORT:
+            m = make_message < MMonMgrReport > ();
+            break;
 
-    case MSG_SERVICE_MAP:
-        m = make_message < MServiceMap > ();
-        break;
+        case MSG_SERVICE_MAP:
+            m = make_message < MServiceMap > ();
+            break;
 
-    case MSG_MGR_MAP:
-        m = make_message < MMgrMap > ();
-        break;
+        case MSG_MGR_MAP:
+            m = make_message < MMgrMap > ();
+            break;
 
-    case MSG_MGR_DIGEST:
-        m = make_message < MMgrDigest > ();
-        break;
+        case MSG_MGR_DIGEST:
+            m = make_message < MMgrDigest > ();
+            break;
 
-    case MSG_MGR_COMMAND:
-        m = make_message < MMgrCommand > ();
-        break;
+        case MSG_MGR_COMMAND:
+            m = make_message < MMgrCommand > ();
+            break;
 
-    case MSG_MGR_COMMAND_REPLY:
-        m = make_message < MMgrCommandReply > ();
-        break;
+        case MSG_MGR_COMMAND_REPLY:
+            m = make_message < MMgrCommandReply > ();
+            break;
 
-    case MSG_MGR_OPEN:
-        m = make_message < MMgrOpen > ();
-        break;
+        case MSG_MGR_OPEN:
+            m = make_message < MMgrOpen > ();
+            break;
 
-    case MSG_MGR_UPDATE:
-        m = make_message < MMgrUpdate > ();
-        break;
+        case MSG_MGR_UPDATE:
+            m = make_message < MMgrUpdate > ();
+            break;
 
-    case MSG_MGR_CLOSE:
-        m = make_message < MMgrClose > ();
-        break;
+        case MSG_MGR_CLOSE:
+            m = make_message < MMgrClose > ();
+            break;
 
-    case MSG_MGR_REPORT:
-        m = make_message < MMgrReport > ();
-        break;
+        case MSG_MGR_REPORT:
+            m = make_message < MMgrReport > ();
+            break;
 
-    case MSG_MGR_CONFIGURE:
-        m = make_message < MMgrConfigure > ();
-        break;
+        case MSG_MGR_CONFIGURE:
+            m = make_message < MMgrConfigure > ();
+            break;
 
-    case MSG_TIMECHECK:
-        m = make_message < MTimeCheck > ();
-        break;
-    case MSG_TIMECHECK2:
-        m = make_message < MTimeCheck2 > ();
-        break;
+        case MSG_TIMECHECK:
+            m = make_message < MTimeCheck > ();
+            break;
+        case MSG_TIMECHECK2:
+            m = make_message < MTimeCheck2 > ();
+            break;
 
-    case MSG_MON_HEALTH:
-        m = make_message < MMonHealth > ();
-        break;
+        case MSG_MON_HEALTH:
+            m = make_message < MMonHealth > ();
+            break;
 
-    case MSG_MON_HEALTH_CHECKS:
-        m = make_message < MMonHealthChecks > ();
-        break;
+        case MSG_MON_HEALTH_CHECKS:
+            m = make_message < MMonHealthChecks > ();
+            break;
 
         // -- simple messages without payload --
 
-    case CEPH_MSG_SHUTDOWN:
-        m = make_message < MGenericMessage > (type);
-        break;
+        case CEPH_MSG_SHUTDOWN:
+            m = make_message < MGenericMessage > (type);
+            break;
 
-    default:
-        if (cct) {
-            ldout(cct,
-                  0) << "can't decode unknown message type " << type <<
-                " MSG_AUTH=" << CEPH_MSG_AUTH << dendl;
-            if (cct->_conf->ms_die_on_bad_msg)
-                ceph_abort();
-        }
-        return 0;
+        default:
+            if (cct) {
+                ldout(cct,
+                      0) << "can't decode unknown message type " << type <<
+                         " MSG_AUTH=" << CEPH_MSG_AUTH << dendl;
+                if (cct->_conf->ms_die_on_bad_msg) {
+                    ceph_abort();
+                }
+            }
+            return 0;
     }
 
     m->set_cct(cct);
@@ -959,11 +963,12 @@ Message *decode_message(CephContext * cct,
         m->get_header().version < header.compat_version) {
         if (cct) {
             ldout(cct, 0) << "will not decode message of type " << type
-                << " version " << header.version
-                << " because compat_version " << header.compat_version
-                << " > supported version " << m->get_header().version << dendl;
-            if (cct->_conf->ms_die_on_bad_msg)
+                          << " version " << header.version
+                          << " because compat_version " << header.compat_version
+                          << " > supported version " << m->get_header().version << dendl;
+            if (cct->_conf->ms_die_on_bad_msg) {
                 ceph_abort();
+            }
         }
         return 0;
     }
@@ -977,19 +982,19 @@ Message *decode_message(CephContext * cct,
 
     try {
         m->decode_payload();
-    }
-    catch(const ceph::buffer::error & e) {
+    } catch (const ceph::buffer::error &e) {
         if (cct) {
             lderr(cct) << "failed to decode message of type " << type
-                << " v" << header.version << ": " << e.what() << dendl;
+                       << " v" << header.version << ": " << e.what() << dendl;
             ldout(cct,
                   ceph::dout::need_dynamic(cct->_conf->
                                            ms_dump_corrupt_message_level)) <<
-                "dump: \n";
+                                                   "dump: \n";
             m->get_payload().hexdump(*_dout);
             *_dout << dendl;
-            if (cct->_conf->ms_die_on_bad_msg)
+            if (cct->_conf->ms_die_on_bad_msg) {
                 ceph_abort();
+            }
         }
         return 0;
     }
@@ -998,7 +1003,7 @@ Message *decode_message(CephContext * cct,
     return m.detach();
 }
 
-void Message::encode_trace(ceph::bufferlist & bl, uint64_t features) const const
+void Message::encode_trace(ceph::bufferlist &bl, uint64_t features) const const
 {
     using ceph::encode;
     auto p = trace.get_info();
@@ -1009,23 +1014,23 @@ void Message::encode_trace(ceph::bufferlist & bl, uint64_t features) const const
     encode(*p, bl);
 }
 
-void Message::decode_trace(ceph::bufferlist::const_iterator & p, bool create)
+void Message::decode_trace(ceph::bufferlist::const_iterator &p, bool create)
 {
     blkin_trace_info info = { };
     decode(info, p);
 
 #ifdef WITH_BLKIN
-    if (!connection)
+    if (!connection) {
         return;
+    }
 
     const auto msgr = connection->get_messenger();
     const auto endpoint = msgr->get_trace_endpoint();
     if (info.trace_id) {
         trace.init(get_type_name().data(), endpoint, &info, true);
         trace.event("decoded trace");
-    }
-    else if (create || (msgr->get_myname().is_osd() &&
-                        msgr->cct->_conf->osd_blkin_trace_all)) {
+    } else if (create || (msgr->get_myname().is_osd() &&
+                          msgr->cct->_conf->osd_blkin_trace_all)) {
         // create a trace even if we didn't get one on the wire
         trace.init(get_type_name().data(), endpoint);
         trace.event("created trace");
@@ -1042,8 +1047,8 @@ void Message::decode_trace(ceph::bufferlist::const_iterator & p, bool create)
 // problems, we currently always encode and decode using the old footer format that doesn't
 // allow for message authentication.  Eventually we should fix that.  PLR
 
-void encode_message(Message * msg, uint64_t features,
-                    ceph::bufferlist & payload)
+void encode_message(Message *msg, uint64_t features,
+                    ceph::bufferlist &payload)
 {
     ceph_msg_footer_old old_footer;
     msg->encode(features, MSG_CRC_ALL);
@@ -1068,8 +1073,8 @@ void encode_message(Message * msg, uint64_t features,
 // We've slipped in a 0 signature at this point, so any signature checking after this will
 // fail.  PLR
 
-Message *decode_message(CephContext * cct, int crcflags,
-                        ceph::bufferlist::const_iterator & p)
+Message *decode_message(CephContext *cct, int crcflags,
+                        ceph::bufferlist::const_iterator &p)
 {
     ceph_msg_header h;
     ceph_msg_footer_old fo;

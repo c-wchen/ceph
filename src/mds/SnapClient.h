@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_SNAPCLIENT_H
@@ -24,17 +24,20 @@
 class MDSRank;
 class LogSegment;
 
-class SnapClient:public MDSTableClient {
-  public:
-    explicit SnapClient(MDSRank * m):MDSTableClient(m, TABLE_SNAP) {
+class SnapClient: public MDSTableClient
+{
+public:
+    explicit SnapClient(MDSRank *m): MDSTableClient(m, TABLE_SNAP)
+    {
     } void resend_queries() override;
     void handle_query_result(const cref_t < MMDSTableRequest > &m) override;
     void handle_notify_prep(const cref_t < MMDSTableRequest > &m) override;
     void notify_commit(version_t tid) override;
 
     void prepare_create(inodeno_t dirino, std::string_view name, utime_t stamp,
-                        version_t * pstid, bufferlist * pbl,
-                        MDSContext * onfinish) {
+                        version_t *pstid, bufferlist *pbl,
+                        MDSContext *onfinish)
+    {
         bufferlist bl;
         __u32 op = TABLE_OP_CREATE;
         encode(op, bl);
@@ -44,8 +47,9 @@ class SnapClient:public MDSTableClient {
         _prepare(bl, pstid, pbl, onfinish);
     }
 
-    void prepare_create_realm(inodeno_t ino, version_t * pstid,
-                              bufferlist * pbl, MDSContext * onfinish) {
+    void prepare_create_realm(inodeno_t ino, version_t *pstid,
+                              bufferlist *pbl, MDSContext *onfinish)
+    {
         bufferlist bl;
         __u32 op = TABLE_OP_CREATE;
         encode(op, bl);
@@ -53,8 +57,9 @@ class SnapClient:public MDSTableClient {
         _prepare(bl, pstid, pbl, onfinish);
     }
 
-    void prepare_destroy(inodeno_t ino, snapid_t snapid, version_t * pstid,
-                         bufferlist * pbl, MDSContext * onfinish) {
+    void prepare_destroy(inodeno_t ino, snapid_t snapid, version_t *pstid,
+                         bufferlist *pbl, MDSContext *onfinish)
+    {
         bufferlist bl;
         __u32 op = TABLE_OP_DESTROY;
         encode(op, bl);
@@ -64,8 +69,9 @@ class SnapClient:public MDSTableClient {
     }
 
     void prepare_update(inodeno_t ino, snapid_t snapid, std::string_view name,
-                        utime_t stamp, version_t * pstid,
-                        MDSContext * onfinish) {
+                        utime_t stamp, version_t *pstid,
+                        MDSContext *onfinish)
+    {
         bufferlist bl;
         __u32 op = TABLE_OP_UPDATE;
         encode(op, bl);
@@ -76,35 +82,41 @@ class SnapClient:public MDSTableClient {
         _prepare(bl, pstid, NULL, onfinish);
     }
 
-    version_t get_cached_version() const {
+    version_t get_cached_version() const
+    {
         return cached_version;
-    } void refresh(version_t want, MDSContext * onfinish);
+    } void refresh(version_t want, MDSContext *onfinish);
 
-    void sync(MDSContext * onfinish);
+    void sync(MDSContext *onfinish);
 
-    bool is_synced() const {
+    bool is_synced() const
+    {
         return synced;
-    } void wait_for_sync(MDSContext * c) {
+    } void wait_for_sync(MDSContext *c)
+    {
         ceph_assert(!synced);
         waiting_for_version[std::max < version_t >
                             (cached_version, 1)].push_back(c);
     }
 
-    snapid_t get_last_created() const {
+    snapid_t get_last_created() const
+    {
         return cached_last_created;
-    } snapid_t get_last_destroyed() const {
+    } snapid_t get_last_destroyed() const
+    {
         return cached_last_destroyed;
-    } snapid_t get_last_seq() const {
+    } snapid_t get_last_seq() const
+    {
         return std::max(cached_last_destroyed, cached_last_created);
     } void get_snaps(std::set < snapid_t > &snaps) const;
     std::set < snapid_t > filter(const std::set < snapid_t > &snaps) const;
     const SnapInfo *get_snap_info(snapid_t snapid) const;
-    void get_snap_infos(std::map < snapid_t, const SnapInfo * >&infomap,
+    void get_snap_infos(std::map < snapid_t, const SnapInfo * > &infomap,
                         const std::set < snapid_t > &snaps) const;
 
-    int dump_cache(Formatter * f) const;
+    int dump_cache(Formatter *f) const;
 
-  private:
+private:
     version_t cached_version = 0;
     snapid_t cached_last_created = 0, cached_last_destroyed = 0;
     std::map < snapid_t, SnapInfo > cached_snaps;

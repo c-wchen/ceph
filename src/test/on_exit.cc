@@ -80,8 +80,7 @@ int main(int argc, char **argv)
         ceph_assert(ret == pid);    // should be our child
         ceph_assert(status == 0);
         ceph_assert(*shared_val == MAIN_SCOPE_VAL);
-    }
-    else {
+    } else {
         // child adds a callback to the static scope callback manager and then
         // exits by returning from main. The parent checks the value after the
         // child exits via the memory map.
@@ -102,8 +101,7 @@ int main(int argc, char **argv)
         ceph_assert(ret == pid);    // should be our child
         ceph_assert(WEXITSTATUS(status) == 3);
         ceph_assert(*shared_val == EXIT_FUNC_VAL);
-    }
-    else {
+    } else {
         // child adds a callback to the static scope callback manager and then
         // exits via exit().
         ceph_assert(*shared_val == 0);

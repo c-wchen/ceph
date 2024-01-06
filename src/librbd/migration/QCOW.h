@@ -150,7 +150,7 @@
 typedef struct QCowHeaderProbe {
     uint32_t magic;
     uint32_t version;
-} __attribute__ ((__packed__)) QCowHeaderProbe;
+} __attribute__((__packed__)) QCowHeaderProbe;
 
 typedef struct QCowHeaderV1 {
     uint32_t magic;
@@ -164,7 +164,7 @@ typedef struct QCowHeaderV1 {
     uint16_t padding;
     uint32_t crypt_method;
     uint64_t l1_table_offset;
-} __attribute__ ((__packed__)) QCowHeaderV1;
+} __attribute__((__packed__)) QCowHeaderV1;
 
 typedef struct QCowHeader {
     uint32_t magic;
@@ -194,7 +194,7 @@ typedef struct QCowHeader {
 
     /* header must be a multiple of 8 */
     uint8_t padding[7];
-} __attribute__ ((__packed__)) QCowHeader;
+} __attribute__((__packed__)) QCowHeader;
 
 typedef struct QCowSnapshotHeader {
     /* header is 8 byte aligned */
@@ -214,13 +214,13 @@ typedef struct QCowSnapshotHeader {
     /* extra data follows */
     /* id_str follows */
     /* name follows  */
-} __attribute__ ((__packed__)) QCowSnapshotHeader;
+} __attribute__((__packed__)) QCowSnapshotHeader;
 
 typedef struct QCowSnapshotExtraData {
     uint64_t vm_state_size_large;
     uint64_t disk_size;
     uint64_t icount;
-} __attribute__ ((__packed__)) QCowSnapshotExtraData;
+} __attribute__((__packed__)) QCowSnapshotExtraData;
 
 typedef struct QCowSnapshot {
     uint64_t l1_table_offset;
@@ -243,7 +243,7 @@ typedef struct QCowSnapshot {
 typedef struct Qcow2CryptoHeaderExtension {
     uint64_t offset;
     uint64_t length;
-} __attribute__ ((__packed__)) Qcow2CryptoHeaderExtension;
+} __attribute__((__packed__)) Qcow2CryptoHeaderExtension;
 
 typedef struct Qcow2UnknownHeaderExtension {
     uint32_t magic;
@@ -271,9 +271,9 @@ enum {
     QCOW2_INCOMPAT_EXTL2 = 1 << QCOW2_INCOMPAT_EXTL2_BITNR,
 
     QCOW2_INCOMPAT_MASK = QCOW2_INCOMPAT_DIRTY
-        | QCOW2_INCOMPAT_CORRUPT
-        | QCOW2_INCOMPAT_DATA_FILE
-        | QCOW2_INCOMPAT_COMPRESSION | QCOW2_INCOMPAT_EXTL2,
+                          | QCOW2_INCOMPAT_CORRUPT
+                          | QCOW2_INCOMPAT_DATA_FILE
+                          | QCOW2_INCOMPAT_COMPRESSION | QCOW2_INCOMPAT_EXTL2,
 };
 
 /* Compatible feature bits */
@@ -292,7 +292,7 @@ enum {
     QCOW2_AUTOCLEAR_DATA_FILE_RAW = 1 << QCOW2_AUTOCLEAR_DATA_FILE_RAW_BITNR,
 
     QCOW2_AUTOCLEAR_MASK = QCOW2_AUTOCLEAR_BITMAPS
-        | QCOW2_AUTOCLEAR_DATA_FILE_RAW,
+                           | QCOW2_AUTOCLEAR_DATA_FILE_RAW,
 };
 
 enum qcow2_discard_type {
@@ -308,7 +308,7 @@ typedef struct Qcow2Feature {
     uint8_t type;
     uint8_t bit;
     char name[46];
-} __attribute__ ((__packed__)) Qcow2Feature;
+} __attribute__((__packed__)) Qcow2Feature;
 
 typedef struct Qcow2DiscardRegion {
     uint64_t offset;
@@ -325,7 +325,7 @@ typedef struct Qcow2BitmapHeaderExt {
     uint32_t reserved32;
     uint64_t bitmap_directory_size;
     uint64_t bitmap_directory_offset;
-} __attribute__ ((__packed__)) Qcow2BitmapHeaderExt;
+} __attribute__((__packed__)) Qcow2BitmapHeaderExt;
 
 #define QCOW_RC_CACHE_SIZE QCOW_L2_CACHE_SIZE;
 
@@ -444,12 +444,12 @@ typedef enum QCow2MetadataOverlap {
 
 #define INV_OFFSET (-1ULL)
 
-static inline uint64_t l2meta_cow_start(QCowL2Meta * m)
+static inline uint64_t l2meta_cow_start(QCowL2Meta *m)
 {
     return m->offset + m->cow_start.offset;
 }
 
-static inline uint64_t l2meta_cow_end(QCowL2Meta * m)
+static inline uint64_t l2meta_cow_end(QCowL2Meta *m)
 {
     return m->offset + m->cow_end.offset + m->cow_end.nb_bytes;
 }

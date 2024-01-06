@@ -15,7 +15,7 @@
 using namespace std;
 
 CLS_VER(1, 0)
-    CLS_NAME(lua)
+CLS_NAME(lua)
 
 /*
  * Jump point for recovering from Lua panic.
@@ -25,7 +25,7 @@ static jmp_buf cls_lua_panic_jump;
 /*
  * Handle Lua panic.
  */
-static int cls_lua_atpanic(lua_State * lua)
+static int cls_lua_atpanic(lua_State *lua)
 {
     CLS_ERR("error: Lua panic: %s", lua_tostring(lua, -1));
     longjmp(cls_lua_panic_jump, 1);
@@ -65,7 +65,7 @@ static char clslua_hctx_reg_key;
 /*
  * Grabs the full method handler context
  */
-static clslua_hctx *__clslua_get_hctx(lua_State * L)
+static clslua_hctx *__clslua_get_hctx(lua_State *L)
 {
     /* lookup registry value */
     lua_pushlightuserdata(L, &clslua_hctx_reg_key);
@@ -87,7 +87,7 @@ static clslua_hctx *__clslua_get_hctx(lua_State * L)
  * of each clx_cxx_* wrapper, and must be set before there is any chance a Lua
  * script calling a 'cls' module function that requires it.
  */
-static cls_method_context_t clslua_get_hctx(lua_State * L)
+static cls_method_context_t clslua_get_hctx(lua_State *L)
 {
     struct clslua_hctx *hctx = __clslua_get_hctx(L);
     return *hctx->hctx;
@@ -96,7 +96,7 @@ static cls_method_context_t clslua_get_hctx(lua_State * L)
 /*
  * Returns a reference to cls_lua error state from registry.
  */
-struct clslua_err *clslua_checkerr(lua_State * L)
+struct clslua_err *clslua_checkerr(lua_State *L)
 {
     struct clslua_hctx *hctx = __clslua_get_hctx(L);
     struct clslua_err *err = &hctx->error;
@@ -111,7 +111,7 @@ static char clslua_pcall_reg_key;
  * bufferlist decoding errors). The global error is cleared before returning
  * to the caller.
  */
-static int clslua_pcall(lua_State * L)
+static int clslua_pcall(lua_State *L)
 {
     int nargs = lua_gettop(L);
     lua_pushlightuserdata(L, &clslua_pcall_reg_key);
@@ -131,12 +131,13 @@ static int clslua_pcall(lua_State * L)
 /*
  * cls_log
  */
-static int clslua_log(lua_State * L)
+static int clslua_log(lua_State *L)
 {
     int nargs = lua_gettop(L);
 
-    if (!nargs)
+    if (!nargs) {
         return 0;
+    }
 
     int loglevel = LOG_LEVEL_DEFAULT;
     bool custom_ll = false;
@@ -157,14 +158,16 @@ static int clslua_log(lua_State * L)
     for (int i = custom_ll ? 2 : 1; i <= nargs; i++) {
         const char *part = lua_tostring(L, i);
         if (!part) {
-            if (lua_type(L, i) == LUA_TBOOLEAN)
+            if (lua_type(L, i) == LUA_TBOOLEAN) {
                 part = lua_toboolean(L, i) ? "true" : "false";
-            else
+            } else {
                 part = luaL_typename(L, i);
+            }
         }
         lua_pushstring(L, part);
-        if ((i + 1) <= nargs)
+        if ((i + 1) <= nargs) {
             lua_pushstring(L, " ");
+        }
     }
 
     /* join string parts and send to Ceph/reply log */
@@ -180,7 +183,7 @@ static char clslua_registered_handle_reg_key;
 /*
  * Register a function to be used as a handler target
  */
-static int clslua_register(lua_State * L)
+static int clslua_register(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TFUNCTION);
 
@@ -197,8 +200,7 @@ static int clslua_register(lua_State * L)
         lua_pushvalue(L, 1);
         lua_pushvalue(L, 1);
         lua_settable(L, -4);
-    }
-    else {
+    } else {
         lua_pushstring(L, "Cannot register handler more than once");
         return lua_error(L);
     }
@@ -209,7 +211,7 @@ static int clslua_register(lua_State * L)
 /*
  * Check if a function is registered as a handler
  */
-static void clslua_check_registered_handler(lua_State * L)
+static void clslua_check_registered_handler(lua_State *L)
 {
     luaL_checktype(L, -1, LUA_TFUNCTION);
 
@@ -235,7 +237,7 @@ static void clslua_check_registered_handler(lua_State * L)
  * the number of Lua return arguments on the stack. Otherwise we save error
  * information in the registry and throw a Lua error.
  */
-static int clslua_opresult(lua_State * L, int ok, int ret, int nargs,
+static int clslua_opresult(lua_State *L, int ok, int ret, int nargs,
                            bool error_on_stack = false)
 {
     struct clslua_err *err = clslua_checkerr(L);
@@ -247,16 +249,18 @@ static int clslua_opresult(lua_State * L, int ok, int ret, int nargs,
     }
 
     /* everything is cherry */
-    if (ok)
+    if (ok) {
         return nargs;
+    }
 
     /* set error in registry */
     err->error = true;
     err->ret = ret;
 
     /* push error message */
-    if (!error_on_stack)
+    if (!error_on_stack) {
         lua_pushfstring(L, "%s", strerror(-ret));
+    }
 
     return lua_error(L);
 }
@@ -264,7 +268,7 @@ static int clslua_opresult(lua_State * L, int ok, int ret, int nargs,
 /*
  * cls_cxx_create
  */
-static int clslua_create(lua_State * lua)
+static int clslua_create(lua_State *lua)
 {
     cls_method_context_t hctx = clslua_get_hctx(lua);
     int exclusive = lua_toboolean(lua, 1);
@@ -276,7 +280,7 @@ static int clslua_create(lua_State * lua)
 /*
  * cls_cxx_remove
  */
-static int clslua_remove(lua_State * lua)
+static int clslua_remove(lua_State *lua)
 {
     cls_method_context_t hctx = clslua_get_hctx(lua);
 
@@ -287,7 +291,7 @@ static int clslua_remove(lua_State * lua)
 /*
  * cls_cxx_stat
  */
-static int clslua_stat(lua_State * L)
+static int clslua_stat(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
 
@@ -304,7 +308,7 @@ static int clslua_stat(lua_State * L)
 /*
  * cls_cxx_read
  */
-static int clslua_read(lua_State * L)
+static int clslua_read(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     int offset = luaL_checkinteger(L, 1);
@@ -317,7 +321,7 @@ static int clslua_read(lua_State * L)
 /*
  * cls_cxx_write
  */
-static int clslua_write(lua_State * L)
+static int clslua_write(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     int offset = luaL_checkinteger(L, 1);
@@ -330,7 +334,7 @@ static int clslua_write(lua_State * L)
 /*
  * cls_cxx_write_full
  */
-static int clslua_write_full(lua_State * L)
+static int clslua_write_full(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     bufferlist *bl = clslua_checkbufferlist(L, 1);
@@ -341,7 +345,7 @@ static int clslua_write_full(lua_State * L)
 /*
  * cls_cxx_getxattr
  */
-static int clslua_getxattr(lua_State * L)
+static int clslua_getxattr(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *name = luaL_checkstring(L, 1);
@@ -353,14 +357,15 @@ static int clslua_getxattr(lua_State * L)
 /*
  * cls_cxx_getxattrs
  */
-static int clslua_getxattrs(lua_State * L)
+static int clslua_getxattrs(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
 
     map < string, bufferlist > attrs;
     int ret = cls_cxx_getxattrs(hctx, &attrs);
-    if (ret < 0)
+    if (ret < 0) {
         return clslua_opresult(L, 0, ret, 0);
+    }
 
     lua_createtable(L, 0, attrs.size());
 
@@ -377,7 +382,7 @@ static int clslua_getxattrs(lua_State * L)
 /*
  * cls_cxx_setxattr
  */
-static int clslua_setxattr(lua_State * L)
+static int clslua_setxattr(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *name = luaL_checkstring(L, 1);
@@ -389,7 +394,7 @@ static int clslua_setxattr(lua_State * L)
 /*
  * cls_cxx_map_get_val
  */
-static int clslua_map_get_val(lua_State * L)
+static int clslua_map_get_val(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *key = luaL_checkstring(L, 1);
@@ -401,7 +406,7 @@ static int clslua_map_get_val(lua_State * L)
 /*
  * cls_cxx_map_set_val
  */
-static int clslua_map_set_val(lua_State * L)
+static int clslua_map_set_val(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *key = luaL_checkstring(L, 1);
@@ -413,7 +418,7 @@ static int clslua_map_set_val(lua_State * L)
 /*
  * cls_cxx_map_clear
  */
-static int clslua_map_clear(lua_State * L)
+static int clslua_map_clear(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     int ret = cls_cxx_map_clear(hctx);
@@ -423,7 +428,7 @@ static int clslua_map_clear(lua_State * L)
 /*
  * cls_cxx_map_get_keys
  */
-static int clslua_map_get_keys(lua_State * L)
+static int clslua_map_get_keys(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *start_after = luaL_checkstring(L, 1);
@@ -432,13 +437,14 @@ static int clslua_map_get_keys(lua_State * L)
     std::set < string > keys;
     bool more;
     int ret = cls_cxx_map_get_keys(hctx, start_after, max_to_get, &keys, &more);
-    if (ret < 0)
+    if (ret < 0) {
         return clslua_opresult(L, 0, ret, 0);
+    }
 
     lua_createtable(L, 0, keys.size());
 
     for (auto it = keys.cbegin(); it != keys.cend(); it++) {
-        const std::string & key = *it;
+        const std::string &key = *it;
         lua_pushstring(L, key.c_str());
         lua_pushboolean(L, 1);
         lua_settable(L, -3);
@@ -450,7 +456,7 @@ static int clslua_map_get_keys(lua_State * L)
 /*
  * cls_cxx_map_get_vals
  */
-static int clslua_map_get_vals(lua_State * L)
+static int clslua_map_get_vals(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *start_after = luaL_checkstring(L, 1);
@@ -461,8 +467,9 @@ static int clslua_map_get_vals(lua_State * L)
     bool more;
     int ret = cls_cxx_map_get_vals(hctx, start_after, filter_prefix,
                                    max_to_get, &kvpairs, &more);
-    if (ret < 0)
+    if (ret < 0) {
         return clslua_opresult(L, 0, ret, 0);
+    }
 
     lua_createtable(L, 0, kvpairs.size());
 
@@ -479,7 +486,7 @@ static int clslua_map_get_vals(lua_State * L)
 /*
  * cls_cxx_map_read_header
  */
-static int clslua_map_read_header(lua_State * L)
+static int clslua_map_read_header(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     bufferlist *bl = clslua_pushbufferlist(L, NULL);
@@ -490,7 +497,7 @@ static int clslua_map_read_header(lua_State * L)
 /*
  * cls_cxx_map_write_header
  */
-static int clslua_map_write_header(lua_State * L)
+static int clslua_map_write_header(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     bufferlist *bl = clslua_checkbufferlist(L, 1);
@@ -501,7 +508,7 @@ static int clslua_map_write_header(lua_State * L)
 /*
  * cls_cxx_map_set_vals
  */
-static int clslua_map_set_vals(lua_State * L)
+static int clslua_map_set_vals(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     luaL_checktype(L, 1, LUA_TTABLE);
@@ -517,38 +524,37 @@ static int clslua_map_set_vals(lua_State * L)
         string key;
         int type_code = lua_type(L, -2);
         switch (type_code) {
-        case LUA_TSTRING:
-            key.assign(lua_tolstring(L, -2, NULL));
-            break;
+            case LUA_TSTRING:
+                key.assign(lua_tolstring(L, -2, NULL));
+                break;
 
-        case LUA_TNUMBER:
-            lua_pushvalue(L, -2);
-            key.assign(lua_tolstring(L, -1, NULL));
-            lua_pop(L, 1);
-            break;
+            case LUA_TNUMBER:
+                lua_pushvalue(L, -2);
+                key.assign(lua_tolstring(L, -1, NULL));
+                lua_pop(L, 1);
+                break;
 
-        default:
-            lua_pushfstring(L, "map_set_vals: invalid key type (%s)",
-                            lua_typename(L, type_code));
-            return clslua_opresult(L, 0, -EINVAL, 0, true);
+            default:
+                lua_pushfstring(L, "map_set_vals: invalid key type (%s)",
+                                lua_typename(L, type_code));
+                return clslua_opresult(L, 0, -EINVAL, 0, true);
         }
 
         bufferlist val;
         type_code = lua_type(L, -1);
         switch (type_code) {
-        case LUA_TSTRING:
-            {
+            case LUA_TSTRING: {
                 size_t len;
                 const char *data = lua_tolstring(L, -1, &len);
                 val.append(data, len);
             }
             break;
 
-        default:
-            lua_pushfstring(L,
-                            "map_set_vals: invalid val type (%s) for key (%s)",
-                            lua_typename(L, type_code), key.c_str());
-            return clslua_opresult(L, 0, -EINVAL, 0, true);
+            default:
+                lua_pushfstring(L,
+                                "map_set_vals: invalid val type (%s) for key (%s)",
+                                lua_typename(L, type_code), key.c_str());
+                return clslua_opresult(L, 0, -EINVAL, 0, true);
         }
 
         kvpairs[key] = val;
@@ -562,7 +568,7 @@ static int clslua_map_set_vals(lua_State * L)
 /*
  * cls_cxx_map_remove_key
  */
-static int clslua_map_remove_key(lua_State * L)
+static int clslua_map_remove_key(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     const char *key = luaL_checkstring(L, 1);
@@ -573,7 +579,7 @@ static int clslua_map_remove_key(lua_State * L)
 /*
  * cls_current_version
  */
-static int clslua_current_version(lua_State * L)
+static int clslua_current_version(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     uint64_t version = cls_current_version(hctx);
@@ -584,7 +590,7 @@ static int clslua_current_version(lua_State * L)
 /*
  * cls_current_subop_num
  */
-static int clslua_current_subop_num(lua_State * L)
+static int clslua_current_subop_num(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     int num = cls_current_subop_num(hctx);
@@ -595,7 +601,7 @@ static int clslua_current_subop_num(lua_State * L)
 /*
  * cls_current_subop_version
  */
-static int clslua_current_subop_version(lua_State * L)
+static int clslua_current_subop_version(lua_State *L)
 {
     cls_method_context_t hctx = clslua_get_hctx(L);
     string s;
@@ -655,7 +661,7 @@ static const luaL_Reg clslua_lib[] = {
 /*
  *
  */
-static int luaopen_objclass(lua_State * L)
+static int luaopen_objclass(lua_State *L)
 {
     lua_newtable(L);
 
@@ -710,7 +716,7 @@ static int luaopen_objclass(lua_State * L)
  * system. All this will change when/if we decide to use some shared Lua
  * states, most likely for performance reasons.
  */
-static void clslua_setup_env(lua_State * L)
+static void clslua_setup_env(lua_State *L)
 {
     luaL_requiref(L, "_G", luaopen_base, 1);
     lua_pop(L, 1);
@@ -762,9 +768,9 @@ static void clslua_setup_env(lua_State * L)
  *   "input": "..." # optional
  * }
  */
-static int unpack_json_command(lua_State * L, struct clslua_hctx *ctx,
-                               std::string & script, std::string & handler,
-                               std::string & input, size_t * input_len)
+static int unpack_json_command(lua_State *L, struct clslua_hctx *ctx,
+                               std::string &script, std::string &handler,
+                               std::string &input, size_t *input_len)
 {
     std::string json_input(ctx->inbl->c_str());
     json_spirit::mValue value;
@@ -831,7 +837,7 @@ static int unpack_json_command(lua_State * L, struct clslua_hctx *ctx,
 /*
  * Runs the script, and calls handler.
  */
-static int clslua_eval(lua_State * L)
+static int clslua_eval(lua_State *L)
 {
     struct clslua_hctx *ctx = __clslua_get_hctx(L);
     ctx->ret = -EIO;            /* assume failure */
@@ -847,31 +853,29 @@ static int clslua_eval(lua_State * L)
      * to call, and the handler input.
      */
     switch (ctx->in_enc) {
-    case JSON_ENC:
-        {
+        case JSON_ENC: {
             std::string input_str;
             size_t input_str_len = 0;
 
             // if there is an error decoding json then ctx->ret will be set and we
             // return normally from this function.
             if (unpack_json_command
-                (L, ctx, ctx->script, ctx->handler, input_str, &input_str_len))
+                (L, ctx, ctx->script, ctx->handler, input_str, &input_str_len)) {
                 return 0;
+            }
 
             bufferptr bp(input_str.c_str(), input_str_len);
             ctx->input.push_back(bp);
         }
         break;
 
-    case BUFFERLIST_ENC:
-        {
+        case BUFFERLIST_ENC: {
             cls_lua_eval_op op;
 
             try {
                 auto it = ctx->inbl->cbegin();
                 decode(op, it);
-            }
-            catch(const buffer::error & err) {
+            } catch (const buffer::error &err) {
                 CLS_ERR("error: could not decode ceph encoded input");
                 ctx->ret = -EINVAL;
                 return 0;
@@ -883,11 +887,11 @@ static int clslua_eval(lua_State * L)
         }
         break;
 
-    default:
-        CLS_ERR("error: unknown encoding type");
-        ctx->ret = -EFAULT;
-        ceph_abort();
-        return 0;
+        default:
+            CLS_ERR("error: unknown encoding type");
+            ctx->ret = -EFAULT;
+            ceph_abort();
+            return 0;
     }
 
     /*
@@ -902,8 +906,9 @@ static int clslua_eval(lua_State * L)
     lua_settable(L, LUA_REGISTRYINDEX);
 
     /* load and compile chunk */
-    if (luaL_loadstring(L, ctx->script.c_str()))
+    if (luaL_loadstring(L, ctx->script.c_str())) {
         return lua_error(L);
+    }
 
     /* execute chunk */
     lua_call(L, 0, 0);
@@ -939,8 +944,9 @@ static int clslua_eval(lua_State * L)
     lua_call(L, 2, LUA_MULTRET);
 
     /* store return value in context */
-    if (!(lua_gettop(L) + 3 - top))
+    if (!(lua_gettop(L) + 3 - top)) {
         lua_pushinteger(L, 0);
+    }
     ctx->ret = luaL_checkinteger(L, -1);
 
     return 0;
@@ -949,8 +955,8 @@ static int clslua_eval(lua_State * L)
 /*
  * Main handler. Proxies the Lua VM and the Lua-defined handler.
  */
-static int eval_generic(cls_method_context_t hctx, bufferlist * in,
-                        bufferlist * out, InputEncoding in_enc)
+static int eval_generic(cls_method_context_t hctx, bufferlist *in,
+                        bufferlist *out, InputEncoding in_enc)
 {
     struct clslua_hctx ctx;
     lua_State *L = NULL;
@@ -1005,14 +1011,13 @@ static int eval_generic(cls_method_context_t hctx, bufferlist * in,
                     ret = -EFAULT;
                 }
 
+            } else {
+                ret = -EIO;    /* Generic error code */
             }
-            else
-                ret = -EIO;     /* Generic error code */
 
             CLS_ERR("error: %s", lua_tostring(L, -1));
 
-        }
-        else {
+        } else {
             /*
              * No Lua error encountered while running the script, but the handler
              * may still have returned an error code (e.g. an errno value).
@@ -1020,26 +1025,26 @@ static int eval_generic(cls_method_context_t hctx, bufferlist * in,
             ret = ctx.ret;
         }
 
-    }
-    else {
+    } else {
         CLS_ERR("error: recovering from Lua panic");
         ret = -EFAULT;
     }
 
-  out:
-    if (L)
+out:
+    if (L) {
         lua_close(L);
+    }
     return ret;
 }
 
-static int eval_json(cls_method_context_t hctx, bufferlist * in,
-                     bufferlist * out)
+static int eval_json(cls_method_context_t hctx, bufferlist *in,
+                     bufferlist *out)
 {
     return eval_generic(hctx, in, out, JSON_ENC);
 }
 
-static int eval_bufferlist(cls_method_context_t hctx, bufferlist * in,
-                           bufferlist * out)
+static int eval_bufferlist(cls_method_context_t hctx, bufferlist *in,
+                           bufferlist *out)
 {
     return eval_generic(hctx, in, out, BUFFERLIST_ENC);
 }

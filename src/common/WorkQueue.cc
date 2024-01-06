@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "WorkQueue.h"
@@ -20,10 +20,11 @@
 #undef dout_prefix
 #define dout_prefix *_dout << name << " "
 
-ThreadPool::ThreadPool(CephContext * cct_, std::string nm, std::string tn,
+ThreadPool::ThreadPool(CephContext *cct_, std::string nm, std::string tn,
                        int n, const char *option)
-:cct(cct_), name(std::move(nm)), thread_name(std::move(tn)), lockname(name + "::lock"), _lock(ceph::make_mutex(lockname)),  // this should be safe due to declaration order
-_stop(false), _pause(0), _draining(0), _num_threads(n), processing(0)
+    : cct(cct_), name(std::move(nm)), thread_name(std::move(tn)), lockname(name + "::lock"),
+      _lock(ceph::make_mutex(lockname)),  // this should be safe due to declaration order
+      _stop(false), _pause(0), _draining(0), _num_threads(n), processing(0)
 {
     if (option) {
         _thread_num_option = option;
@@ -31,8 +32,7 @@ _stop(false), _pause(0), _draining(0), _num_threads(n), processing(0)
         _conf_keys = new const char *[2];
         _conf_keys[0] = _thread_num_option.c_str();
         _conf_keys[1] = NULL;
-    }
-    else {
+    } else {
         _conf_keys = new const char *[1];
         _conf_keys[0] = NULL;
     }
@@ -54,7 +54,7 @@ ThreadPool::~ThreadPool()
     delete[]_conf_keys;
 }
 
-void ThreadPool::handle_conf_change(const ConfigProxy & conf,
+void ThreadPool::handle_conf_change(const ConfigProxy &conf,
                                     const std::set < std::string > &changed)
 {
     if (changed.count(_thread_num_option)) {
@@ -73,7 +73,7 @@ void ThreadPool::handle_conf_change(const ConfigProxy & conf,
     }
 }
 
-void ThreadPool::worker(WorkThread * wt)
+void ThreadPool::worker(WorkThread *wt)
 {
     std::unique_lock ul(_lock);
     ldout(cct, 10) << "worker start" << dendl;
@@ -89,7 +89,7 @@ void ThreadPool::worker(WorkThread * wt)
         if (_threads.size() > _num_threads) {
             ldout(cct,
                   1) << " worker shutting down; too many threads (" << _threads.
-                size() << " > " << _num_threads << ")" << dendl;
+                     size() << " > " << _num_threads << ")" << dendl;
             _threads.erase(wt);
             _old_threads.push_back(wt);
             break;
@@ -97,8 +97,7 @@ void ThreadPool::worker(WorkThread * wt)
 
         if (work_queues.empty()) {
             ldout(cct, 10) << "worker no work queues" << dendl;
-        }
-        else if (!_pause) {
+        } else if (!_pause) {
             WorkQueue_ *wq;
             int tries = 2 * work_queues.size();
             bool did = false;
@@ -111,8 +110,8 @@ void ThreadPool::worker(WorkThread * wt)
                     processing++;
                     ldout(cct,
                           12) << "worker wq " << wq->
-                        name << " start processing " << item << " (" <<
-                        processing << " active)" << dendl;
+                              name << " start processing " << item << " (" <<
+                              processing << " active)" << dendl;
                     ul.unlock();
                     TPHandle tp_handle(cct, hb, wq->timeout_interval,
                                        wq->suicide_interval);
@@ -123,22 +122,24 @@ void ThreadPool::worker(WorkThread * wt)
                     processing--;
                     ldout(cct,
                           15) << "worker wq " << wq->
-                        name << " done processing " << item << " (" <<
-                        processing << " active)" << dendl;
-                    if (_pause || _draining)
+                              name << " done processing " << item << " (" <<
+                              processing << " active)" << dendl;
+                    if (_pause || _draining) {
                         _wait_cond.notify_all();
+                    }
                     did = true;
                     break;
                 }
             }
-            if (did)
+            if (did) {
                 continue;
+            }
         }
 
         ldout(cct, 20) << "worker waiting" << dendl;
         cct->get_heartbeat_map()->reset_timeout(hb,
                                                 ceph::make_timespan(cct->_conf->
-                                                                    threadpool_default_timeout),
+                                                        threadpool_default_timeout),
                                                 ceph::make_timespan(0));
         auto wait =
             std::chrono::seconds(cct->_conf->threadpool_empty_queue_max_wait);
@@ -167,7 +168,7 @@ void ThreadPool::join_old_threads()
     while (!_old_threads.empty()) {
         ldout(cct,
               10) << "join_old_threads joining and deleting " << _old_threads.
-            front() << dendl;
+                  front() << dendl;
         _old_threads.front()->join();
         delete _old_threads.front();
         _old_threads.pop_front();
@@ -181,7 +182,7 @@ void ThreadPool::start()
     if (_thread_num_option.length()) {
         ldout(cct,
               10) << " registering config observer on " << _thread_num_option <<
-            dendl;
+                  dendl;
         cct->_conf.add_observer(this);
     }
 
@@ -198,7 +199,7 @@ void ThreadPool::stop(bool clear_after)
     if (_thread_num_option.length()) {
         ldout(cct,
               10) << " unregistering config observer on " << _thread_num_option
-            << dendl;
+                  << dendl;
         cct->_conf.remove_observer(this);
     }
 
@@ -213,8 +214,9 @@ void ThreadPool::stop(bool clear_after)
     }
     _threads.clear();
     _lock.lock();
-    for (unsigned i = 0; i < work_queues.size(); i++)
+    for (unsigned i = 0; i < work_queues.size(); i++) {
         work_queues[i]->_clear();
+    }
     _stop = false;
     _lock.unlock();
     ldout(cct, 15) << "stopped" << dendl;
@@ -260,13 +262,13 @@ void ThreadPool::drain(WorkQueue_ * wq)
     _draining--;
 }
 
-ShardedThreadPool::ShardedThreadPool(CephContext * pcct_, std::string nm, std::string tn, uint32_t pnum_threads):
-cct(pcct_),
-name(std::move(nm)),
-thread_name(std::move(tn)),
-lockname(name + "::lock"),
-shardedpool_lock(ceph::make_mutex(lockname)),
-num_threads(pnum_threads), num_paused(0), num_drained(0), wq(NULL)
+ShardedThreadPool::ShardedThreadPool(CephContext *pcct_, std::string nm, std::string tn, uint32_t pnum_threads):
+    cct(pcct_),
+    name(std::move(nm)),
+    thread_name(std::move(tn)),
+    lockname(name + "::lock"),
+    shardedpool_lock(ceph::make_mutex(lockname)),
+    num_threads(pnum_threads), num_paused(0), num_drained(0), wq(NULL)
 {
 }
 
@@ -290,7 +292,7 @@ void ShardedThreadPool::shardedthreadpool_worker(uint32_t thread_index)
                                                         wq->suicide_interval);
                 shardedpool_cond.wait_for(ul,
                                           std::chrono::seconds(cct->_conf->
-                                                               threadpool_empty_queue_max_wait));
+                                                  threadpool_empty_queue_max_wait));
             }
             --num_paused;
         }
@@ -307,7 +309,7 @@ void ShardedThreadPool::shardedthreadpool_worker(uint32_t thread_index)
                                                             suicide_interval);
                     shardedpool_cond.wait_for(ul,
                                               std::chrono::seconds(cct->_conf->
-                                                                   threadpool_empty_queue_max_wait));
+                                                      threadpool_empty_queue_max_wait));
                 }
                 --num_drained;
             }

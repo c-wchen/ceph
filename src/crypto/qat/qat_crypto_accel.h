@@ -19,13 +19,16 @@
 #include "crypto/crypto_accel.h"
 #include "crypto/qat/qcccrypto.h"
 
-class QccCryptoAccel:public CryptoAccel {
-  public:
+class QccCryptoAccel: public CryptoAccel
+{
+public:
     QccCrypto qcccrypto;
-    QccCryptoAccel() {
+    QccCryptoAccel()
+    {
         qcccrypto.init();
     };
-    ~QccCryptoAccel() {
+    ~QccCryptoAccel()
+    {
         qcccrypto.destroy();
     };
 

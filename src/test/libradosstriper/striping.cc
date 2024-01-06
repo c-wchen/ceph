@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #include "include/compat.h"
@@ -16,29 +16,34 @@
 using namespace librados;
 using namespace libradosstriper;
 
-class StriperTestRT:public StriperTestParam {
-  public:
-    StriperTestRT():StriperTestParam() {
-  } protected:
-    char *getObjName(const std::string & soid, uint64_t nb) {
+class StriperTestRT: public StriperTestParam
+{
+public:
+    StriperTestRT(): StriperTestParam()
+    {
+    } protected:
+    char *getObjName(const std::string &soid, uint64_t nb)
+    {
         char name[soid.size() + 18];
         sprintf(name, "%s.%016llx", soid.c_str(), (long long unsigned int)nb);
         return strdup(name);
     }
 
-    void checkObjectFromRados(const std::string & soid, bufferlist & bl,
+    void checkObjectFromRados(const std::string &soid, bufferlist &bl,
                               uint64_t exp_stripe_unit,
                               uint64_t exp_stripe_count,
-                              uint64_t exp_object_size, size_t size) {
+                              uint64_t exp_object_size, size_t size)
+    {
         checkObjectFromRados(soid, bl, exp_stripe_unit, exp_stripe_count,
                              exp_object_size, size, size);
     }
 
-    void checkObjectFromRados(const std::string & soid, bufferlist & bl,
+    void checkObjectFromRados(const std::string &soid, bufferlist &bl,
                               uint64_t exp_stripe_unit,
                               uint64_t exp_stripe_count,
                               uint64_t exp_object_size, size_t size,
-                              size_t actual_size_if_sparse) {
+                              size_t actual_size_if_sparse)
+    {
         // checking first object's rados xattrs
         bufferlist xattrbl;
         char *firstOid = getObjName(soid, 0);
@@ -94,8 +99,9 @@ class StriperTestRT:public StriperTestParam {
                 ((actual_size_if_sparse + stripe_unit - 1) / stripe_unit) - 1 ==
                 stripe_nb) {
                 len = actual_size_if_sparse % stripe_unit;
-                if (0 == len)
+                if (0 == len) {
                     len = stripe_unit;
+                }
             }
             bufferlist stripe_data;
             // check object content
@@ -110,12 +116,10 @@ class StriperTestRT:public StriperTestParam {
                      objectset * stripe_per_objectset) * stripe_unit;
                 if (actual_size_if_sparse <= object_start) {
                     ASSERT_EQ(rc, -ENOENT);
-                }
-                else {
+                } else {
                     ASSERT_EQ(rc, 0);
                 }
-            }
-            else {
+            } else {
                 ASSERT_EQ((uint64_t) rc, len);
                 bufferlist original_data;
                 original_data.substr_of(bl, stripe_nb * stripe_unit, len);
@@ -129,8 +133,9 @@ class StriperTestRT:public StriperTestParam {
         uint64_t nb_full_object_sets =
             nb_stripes_in_object / stripe_per_objectset;
         uint64_t nb_extra_objects = nb_stripes_in_object % stripe_per_objectset;
-        if (nb_extra_objects > stripe_count)
+        if (nb_extra_objects > stripe_count) {
             nb_extra_objects = stripe_count;
+        }
         uint64_t nb_objects =
             nb_full_object_sets * stripe_count + nb_extra_objects;
         for (uint64_t object_nb = 0; object_nb < nb_objects; object_nb++) {
@@ -145,8 +150,7 @@ class StriperTestRT:public StriperTestParam {
             if (actual_size_if_sparse < size and actual_size_if_sparse <=
                 object_start_off) {
                 ASSERT_EQ(-ENOENT, ioctx.stat(oid, &rados_size, &mtime));
-            }
-            else {
+            } else {
                 ASSERT_EQ(0, ioctx.stat(oid, &rados_size, &mtime));
                 uint64_t offset;
                 uint64_t stripe_size = stripe_count * stripe_unit;
@@ -158,8 +162,7 @@ class StriperTestRT:public StriperTestParam {
                      offset += stripe_size) {
                     if (offset + stripe_unit > actual_size_if_sparse) {
                         len += actual_size_if_sparse - offset;
-                    }
-                    else {
+                    } else {
                         len += stripe_unit;
                     }
                 }
@@ -195,8 +198,9 @@ TEST_P(StriperTestRT, StripedRoundtrip)
     {
         SCOPED_TRACE("Writing initial object");
         buf1 = std::make_unique < char[] > (testData.size);
-        for (unsigned int i = 0; i < testData.size; i++)
+        for (unsigned int i = 0; i < testData.size; i++) {
             buf1[i] = 13 * ((unsigned char)i);
+        }
         bl1.append(buf1.get(), testData.size);
         ASSERT_EQ(0, striper.write(soid, bl1, testData.size, 0));
         // checking object state from Rados point of view
@@ -211,8 +215,9 @@ TEST_P(StriperTestRT, StripedRoundtrip)
     {
         SCOPED_TRACE("Testing append");
         buf2 = std::make_unique < char[] > (testData.size);
-        for (unsigned int i = 0; i < testData.size; i++)
+        for (unsigned int i = 0; i < testData.size; i++) {
             buf2[i] = 17 * ((unsigned char)i);
+        }
         bl2.append(buf2.get(), testData.size);
         ASSERT_EQ(0, striper.append(soid, bl2, testData.size));
         bl1.append(buf2.get(), testData.size);
@@ -299,26 +304,46 @@ const TestData simple_stripe_schemes[] = {
     {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT, CEPH_MIN_STRIPE_UNIT - 1},
     {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT, 2 * CEPH_MIN_STRIPE_UNIT},
     {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT, 12 * CEPH_MIN_STRIPE_UNIT},
-    {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT - 1},
-    {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT - 1},
-    {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
-     8 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
-     15 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
-     25 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
-     45 * CEPH_MIN_STRIPE_UNIT + 100},
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT - 1
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT - 1
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
+        8 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
+        15 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
+        25 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 5, 3 * CEPH_MIN_STRIPE_UNIT,
+        45 * CEPH_MIN_STRIPE_UNIT + 100
+    },
     {262144, 5, 262144, 2},
     {262144, 5, 262144, 262144},
     {262144, 5, 262144, 262144 - 1},
@@ -339,53 +364,93 @@ const TestData simple_stripe_schemes[] = {
     {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT, CEPH_MIN_STRIPE_UNIT - 1},
     {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT, 2 * CEPH_MIN_STRIPE_UNIT},
     {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT, 12 * CEPH_MIN_STRIPE_UNIT},
-    {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT - 1},
-    {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT - 1},
-    {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
-     8 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
-     15 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
-     25 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
-     45 * CEPH_MIN_STRIPE_UNIT + 100},
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT - 1
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT - 1
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
+        8 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
+        15 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
+        25 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 1, 3 * CEPH_MIN_STRIPE_UNIT,
+        45 * CEPH_MIN_STRIPE_UNIT + 100
+    },
     {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT, 2},
     {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT, CEPH_MIN_STRIPE_UNIT},
     {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT, CEPH_MIN_STRIPE_UNIT - 1},
     {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT, 2 * CEPH_MIN_STRIPE_UNIT},
     {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT, 12 * CEPH_MIN_STRIPE_UNIT},
-    {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT - 1},
-    {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT - 1},
-    {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
-     2 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
-     8 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
-     12 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
-     15 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
-     25 * CEPH_MIN_STRIPE_UNIT + 100},
-    {CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
-     45 * CEPH_MIN_STRIPE_UNIT + 100}
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT - 1
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT - 1
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
+        2 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
+        8 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
+        12 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
+        15 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
+        25 * CEPH_MIN_STRIPE_UNIT + 100
+    },
+    {
+        CEPH_MIN_STRIPE_UNIT, 50, 3 * CEPH_MIN_STRIPE_UNIT,
+        45 * CEPH_MIN_STRIPE_UNIT + 100
+    }
 };
 
 INSTANTIATE_TEST_SUITE_P(SimpleStriping,
-                         StriperTestRT,::testing::
+                         StriperTestRT, ::testing::
                          ValuesIn(simple_stripe_schemes));

@@ -11,19 +11,19 @@
 #include <stdexcept>
 
 static const char *xmldoc_1 = R "(<Filter>
-   <And>
-      <Prefix>tax/</Prefix>
-      <Tag>
-         <Key>key1</Key>
-         <Value>value1</Value>
-      </Tag>
-      <Tag>
-         <Key>key2</Key>
-         <Value>value2</Value>
-      </Tag>
-    </And>
-</Filter>
-)";
+                              <And>
+                              <Prefix>tax / < / Prefix >
+                              <Tag>
+                              <Key>key1 < / Key >
+                              <Value>value1 < / Value >
+                              < / Tag >
+                              <Tag>
+                              <Key>key2 < / Key >
+                              <Value>value2 < / Value >
+                              < / Tag >
+                              < / And >
+                              < / Filter >
+                              )";
 
 TEST(TestLCFilterDecoder, XMLDoc1)
 {
@@ -44,15 +44,15 @@ TEST(TestLCFilterDecoder, XMLDoc1)
 }
 
 static const char *xmldoc_2 = R "(<Filter>
-   <And>
-      <ArchiveZone />
-      <Tag>
-         <Key>spongebob</Key>
-         <Value>squarepants</Value>
-      </Tag>
-    </And>
-</Filter>
-)";
+                              <And>
+                              < ArchiveZone / >
+                              <Tag>
+                              <Key>spongebob < / Key >
+                              <Value>squarepants < / Value >
+                              < / Tag >
+                              < / And >
+                              < / Filter >
+                              )";
 
 TEST(TestLCFilterDecoder, XMLDoc2)
 {
@@ -72,18 +72,18 @@ TEST(TestLCFilterDecoder, XMLDoc2)
 
 // invalid And element placement
 static const char *xmldoc_3 = R "(<Filter>
-    <And>
-      <Tag>
-         <Key>miles</Key>
-         <Value>davis</Value>
-      </Tag>
-    </And>
-      <Tag>
-         <Key>spongebob</Key>
-         <Value>squarepants</Value>
-      </Tag>
-</Filter>
-)";
+                              <And>
+                              <Tag>
+                              <Key>miles < / Key >
+                              <Value>davis < / Value >
+                              < / Tag >
+                              < / And >
+                              <Tag>
+                              <Key>spongebob < / Key >
+                              <Value>squarepants < / Value >
+                              < / Tag >
+                              < / Filter >
+                              )";
 
 TEST(TestLCFilterInvalidAnd, XMLDoc3)
 {

@@ -12,59 +12,70 @@ using namespace rgw;
 namespace fs = std::filesystem;
 const static std::string TEST_DIR = "rgw_dbstore_tests";
 
-bool endsWith(const std::string & mainStr, const std::string & toMatch)
+bool endsWith(const std::string &mainStr, const std::string &toMatch)
 {
     if (mainStr.size() >= toMatch.size() &&
         mainStr.compare(mainStr.size() - toMatch.size(), toMatch.size(),
-                        toMatch) == 0)
+                        toMatch) == 0) {
         return true;
-    else
+    } else {
         return false;
+    }
 }
 
-class TestDBStoreManager:public::testing::Test {
-  protected:
-    void SetUp() override {
+class TestDBStoreManager: public::testing::Test
+{
+protected:
+    void SetUp() override
+    {
         ctx_ = std::make_shared < CephContext > (CEPH_ENTITY_TYPE_CLIENT);
         g_ceph_context = ctx_.get();
         fs::current_path(fs::temp_directory_path());
         fs::create_directory(TEST_DIR);
-    } void TearDown() override {
+    } void TearDown() override
+    {
         fs::current_path(fs::temp_directory_path());
         fs::remove_all(TEST_DIR);
     }
 
-    std::string getTestDir()const {
+    std::string getTestDir()const
+    {
         auto test_dir = fs::temp_directory_path() / TEST_DIR;
         return test_dir.string();
-    } fs::path getDBFullPath(const std::string & base_dir,
-                             const std::string & tenant)const {
+    } fs::path getDBFullPath(const std::string &base_dir,
+                             const std::string &tenant)const
+    {
         auto db_path = ctx_->_conf.get_val < std::string > ("dbstore_db_dir");
-        const auto & db_name =
+        const auto &db_name =
             ctx_->_conf.get_val < std::string >
             ("dbstore_db_name_prefix") + "-" + tenant + ".db";
 
         auto db_full_path = std::filesystem::path(db_path) / db_name;
         auto db_full_path_test = fs::path(base_dir) / db_full_path;
         return db_full_path_test;
-    } std::string getDBTenant(const std::string & base_dir,
-                              const std::string & tenant)const {
+    } std::string getDBTenant(const std::string &base_dir,
+                              const std::string &tenant)const
+    {
         auto db_name =
             ctx_->_conf.get_val < std::string > ("dbstore_db_name_prefix");
         db_name += "-" + tenant;
         auto db_full_path = fs::path(base_dir) / db_name;
         return db_full_path.string();
-    } std::string getDBTenant(const std::string & tenant = default_tenant)const {
+    } std::string getDBTenant(const std::string &tenant = default_tenant)const
+    {
         return getDBTenant(getTestDir(), tenant);
-    } fs::path getDBFullPath(const std::string & tenant)const {
+    } fs::path getDBFullPath(const std::string &tenant)const
+    {
         return getDBFullPath(getTestDir(), tenant);
-    } fs::path getLogFilePath(const std::string & log_file) {
+    } fs::path getLogFilePath(const std::string &log_file)
+    {
         return fs::temp_directory_path() / log_file;
     }
 
-    std::shared_ptr < CephContext > getContext()const {
+    std::shared_ptr < CephContext > getContext()const
+    {
         return ctx_;
-  } private:
+    } private:
     std::shared_ptr < CephContext > ctx_;
 };
 
@@ -99,8 +110,8 @@ TEST_F(TestDBStoreManager, BasicInstantiateSecondConstructor)
     EXPECT_FALSE(fs::exists(getDBFullPath(default_tenant)));
     auto dbstore_mgr =
         std::make_shared < DBStoreManager > (getContext().get(),
-                                             getLogFilePath("test.log").
-                                             string(), 10);
+            getLogFilePath("test.log").
+            string(), 10);
     EXPECT_TRUE(fs::exists(getDBFullPath(default_tenant)));
 }
 

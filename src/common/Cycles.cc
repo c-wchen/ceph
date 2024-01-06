@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -44,12 +44,14 @@ double Cycles::cycles_per_sec = 0;
  */
 void Cycles::init()
 {
-    if (cycles_per_sec != 0)
+    if (cycles_per_sec != 0) {
         return;
+    }
 
     // Skip initialization if rtdsc is not implemented
-    if (rdtsc() == 0)
+    if (rdtsc() == 0) {
         return;
+    }
 
     // Compute the frequency of the fine-grained CPU timer: to do this,
     // take parallel time readings using both rdtsc and gettimeofday.
@@ -76,7 +78,7 @@ void Cycles::init()
             }
             uint64_t stop_cycles = rdtsc();
             micros = (stop_time.tv_usec - start_time.tv_usec) +
-                (stop_time.tv_sec - start_time.tv_sec) * 1000000;
+                     (stop_time.tv_sec - start_time.tv_sec) * 1000000;
             if (micros > 10000) {
                 cycles_per_sec =
                     static_cast < double >(stop_cycles - start_cycles);
@@ -117,8 +119,9 @@ double Cycles::per_second()
  */
 double Cycles::to_seconds(uint64_t cycles, double cycles_per_sec)
 {
-    if (cycles_per_sec == 0)
+    if (cycles_per_sec == 0) {
         cycles_per_sec = get_cycles_per_sec();
+    }
     return static_cast < double >(cycles) / cycles_per_sec;
 }
 
@@ -137,9 +140,10 @@ double Cycles::to_seconds(uint64_t cycles, double cycles_per_sec)
  */
 uint64_t Cycles::from_seconds(double seconds, double cycles_per_sec)
 {
-    if (cycles_per_sec == 0)
+    if (cycles_per_sec == 0) {
         cycles_per_sec = get_cycles_per_sec();
-    return (uint64_t) (seconds * cycles_per_sec + 0.5);
+    }
+    return (uint64_t)(seconds * cycles_per_sec + 0.5);
 }
 
 /**
@@ -177,10 +181,11 @@ uint64_t Cycles::to_microseconds(uint64_t cycles, double cycles_per_sec)
  */
 uint64_t Cycles::to_nanoseconds(uint64_t cycles, double cycles_per_sec)
 {
-    if (cycles_per_sec == 0)
+    if (cycles_per_sec == 0) {
         cycles_per_sec = get_cycles_per_sec();
-    return (uint64_t) (1e09 * static_cast <
-                       double >(cycles) / cycles_per_sec + 0.5);
+    }
+    return (uint64_t)(1e09 * static_cast <
+                      double >(cycles) / cycles_per_sec + 0.5);
 }
 
 /**
@@ -198,10 +203,11 @@ uint64_t Cycles::to_nanoseconds(uint64_t cycles, double cycles_per_sec)
  */
 uint64_t Cycles::from_nanoseconds(uint64_t ns, double cycles_per_sec)
 {
-    if (cycles_per_sec == 0)
+    if (cycles_per_sec == 0) {
         cycles_per_sec = get_cycles_per_sec();
-    return (uint64_t) (static_cast <
-                       double >(ns) * cycles_per_sec / 1e09 + 0.5);
+    }
+    return (uint64_t)(static_cast <
+                      double >(ns) * cycles_per_sec / 1e09 + 0.5);
 }
 
 /**

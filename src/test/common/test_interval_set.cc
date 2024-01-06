@@ -24,17 +24,18 @@ using namespace ceph;
 typedef uint64_t IntervalValueType;
 
 template < typename T >         // tuple<type to test on, test array size>
-class IntervalSetTest:public::testing::Test {
+class IntervalSetTest: public::testing::Test
+{
 
-  public:
+public:
     typedef T ISet;
 };
 
 typedef::testing::Types <
-    interval_set < IntervalValueType >,
-    interval_set < IntervalValueType, btree::btree_map >,
-    interval_set < IntervalValueType, boost::container::flat_map >
-    >IntervalSetTypes;
+interval_set < IntervalValueType >,
+             interval_set < IntervalValueType, btree::btree_map >,
+             interval_set < IntervalValueType, boost::container::flat_map >
+             > IntervalSetTypes;
 
 TYPED_TEST_SUITE(IntervalSetTest, IntervalSetTypes);
 
@@ -256,14 +257,14 @@ TYPED_TEST(IntervalSetTest, insert_erase)
     ASSERT_EQ(2, iset1.num_intervals());
     ASSERT_EQ(18, iset1.size());
 
-    //adding rigtmost standalone interval 
+    //adding rigtmost standalone interval
     iset1.insert(30, 5, &start, &len);
     ASSERT_EQ(30, start);
     ASSERT_EQ(5, len);
     ASSERT_EQ(3, iset1.num_intervals());
     ASSERT_EQ(23, iset1.size());
 
-    //adding rigtmost adjusent interval 
+    //adding rigtmost adjusent interval
     iset1.insert(35, 10, &start, &len);
     ASSERT_EQ(30, start);
     ASSERT_EQ(15, len);

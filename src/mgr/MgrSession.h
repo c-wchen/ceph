@@ -12,7 +12,7 @@
 /**
  * Session state associated with the Connection.
  */
-struct MgrSession:public RefCountedObject {
+struct MgrSession: public RefCountedObject {
     uint64_t global_id = 0;
     EntityName entity_name;
     entity_inst_t inst;
@@ -21,13 +21,15 @@ struct MgrSession:public RefCountedObject {
 
     MgrCap caps;
 
-     std::set < std::string > declared_types;
+    std::set < std::string > declared_types;
 
-    const entity_addr_t & get_peer_addr() const {
+    const entity_addr_t &get_peer_addr() const
+    {
         return inst.addr;
-  } private:
-     FRIEND_MAKE_REF(MgrSession);
-    explicit MgrSession(CephContext * cct):RefCountedObject(cct) {
+    } private:
+    FRIEND_MAKE_REF(MgrSession);
+    explicit MgrSession(CephContext *cct): RefCountedObject(cct)
+    {
     } ~MgrSession() override = default;
 };
 

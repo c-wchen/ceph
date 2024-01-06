@@ -29,8 +29,9 @@ int main(void)
     f.queue(new librados::C_AioComplete(aio->pc));
     f.start();
 
-    while (completed < max_completions)
+    while (completed < max_completions) {
         f.wait_for_empty();
+    }
 
     f.stop();
 

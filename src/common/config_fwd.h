@@ -3,6 +3,7 @@
 #pragma once
 #include "include/common_fwd.h"
 
-namespace TOPNSPC::common {
-    class ConfigProxy;
+namespace TOPNSPC::common
+{
+class ConfigProxy;
 } using TOPNSPC::common::ConfigProxy;

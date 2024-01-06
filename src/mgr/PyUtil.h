@@ -10,4 +10,4 @@
 #include "common/options.h"
 
 PyObject *get_python_typed_option_value(Option::type_t type,
-                                        const std::string & value);
+                                        const std::string &value);

@@ -40,8 +40,9 @@
  * of type K used to enqueue items.  e.g. you could use entity_inst_t
  * to provide fairness for different clients.
  */
-template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
-    K > {
+template < typename T, typename K > class PrioritizedQueue: public OpQueue < T,
+    K >
+{
     int64_t total_priority;
     int64_t max_tokens_per_subqueue;
     int64_t min_cost;
@@ -49,66 +50,77 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
     typedef std::list < std::pair < unsigned, T > >ListPairs;
 
     struct SubQueue {
-      private:
+    private:
         typedef std::map < K, ListPairs > Classes;
         Classes q;
         unsigned tokens, max_tokens;
         int64_t size;
         typename Classes::iterator cur;
-      public:
-         SubQueue(const SubQueue & other)
-        :q(other.q),
-            tokens(other.tokens),
-            max_tokens(other.max_tokens), size(other.size), cur(q.begin()) {
+    public:
+        SubQueue(const SubQueue &other)
+            : q(other.q),
+              tokens(other.tokens),
+              max_tokens(other.max_tokens), size(other.size), cur(q.begin())
+        {
         } SubQueue()
-        :tokens(0), max_tokens(0), size(0), cur(q.begin()) {
+            : tokens(0), max_tokens(0), size(0), cur(q.begin())
+        {
         }
-        void set_max_tokens(unsigned mt) {
+        void set_max_tokens(unsigned mt)
+        {
             max_tokens = mt;
         }
-        unsigned get_max_tokens() const {
+        unsigned get_max_tokens() const
+        {
             return max_tokens;
-        } unsigned num_tokens() const {
+        } unsigned num_tokens() const
+        {
             return tokens;
-        } void put_tokens(unsigned t) {
+        } void put_tokens(unsigned t)
+        {
             tokens += t;
             if (tokens > max_tokens) {
                 tokens = max_tokens;
             }
         }
-        void take_tokens(unsigned t) {
+        void take_tokens(unsigned t)
+        {
             if (tokens > t) {
                 tokens -= t;
-            }
-            else {
+            } else {
                 tokens = 0;
             }
         }
-        void enqueue(K cl, unsigned cost, T && item) {
+        void enqueue(K cl, unsigned cost, T && item)
+        {
             q[cl].push_back(std::make_pair(cost, std::move(item)));
-            if (cur == q.end())
+            if (cur == q.end()) {
                 cur = q.begin();
+            }
             size++;
         }
-        void enqueue_front(K cl, unsigned cost, T && item) {
+        void enqueue_front(K cl, unsigned cost, T && item)
+        {
             q[cl].push_front(std::make_pair(cost, std::move(item)));
-            if (cur == q.end())
+            if (cur == q.end()) {
                 cur = q.begin();
+            }
             size++;
         }
-        std::pair < unsigned, T > &front() const {
+        std::pair < unsigned, T > &front() const
+        {
             ceph_assert(!(q.empty()));
             ceph_assert(cur != q.end());
             return cur->second.front();
-        } T pop_front() {
+        } T pop_front()
+        {
             ceph_assert(!(q.empty()));
             ceph_assert(cur != q.end());
             T ret = std::move(cur->second.front().second);
             cur->second.pop_front();
             if (cur->second.empty()) {
                 q.erase(cur++);
-            }
-            else {
+            } else {
                 ++cur;
             }
             if (cur == q.end()) {
@@ -117,12 +129,15 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
             size--;
             return ret;
         }
-        unsigned length() const {
+        unsigned length() const
+        {
             ceph_assert(size >= 0);
             return (unsigned)size;
-        } bool empty() const {
+        } bool empty() const
+        {
             return q.empty();
-        } void remove_by_class(K k, std::list < T > *out) {
+        } void remove_by_class(K k, std::list < T > *out)
+        {
             typename Classes::iterator i = q.find(k);
             if (i == q.end()) {
                 return;
@@ -133,7 +148,7 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
             }
             if (out) {
                 for (typename ListPairs::reverse_iterator j =
-                     i->second.rbegin(); j != i->second.rend(); ++j) {
+                         i->second.rbegin(); j != i->second.rend(); ++j) {
                     out->push_front(std::move(j->second));
                 }
             }
@@ -143,20 +158,24 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
             }
         }
 
-        void dump(ceph::Formatter * f) const {
+        void dump(ceph::Formatter *f) const
+        {
             f->dump_int("tokens", tokens);
             f->dump_int("max_tokens", max_tokens);
             f->dump_int("size", size);
             f->dump_int("num_keys", q.size());
             if (!empty()) {
                 f->dump_int("first_item_cost", front().first);
-    }}};
+            }
+        }
+    };
 
     typedef std::map < unsigned, SubQueue > SubQueues;
     SubQueues high_queue;
     SubQueues queue;
 
-    SubQueue *create_queue(unsigned priority) {
+    SubQueue *create_queue(unsigned priority)
+    {
         typename SubQueues::iterator p = queue.find(priority);
         if (p != queue.end()) {
             return &p->second;
@@ -167,14 +186,16 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
         return sq;
     }
 
-    void remove_queue(unsigned priority) {
+    void remove_queue(unsigned priority)
+    {
         ceph_assert(queue.count(priority));
         queue.erase(priority);
         total_priority -= priority;
         ceph_assert(total_priority >= 0);
     }
 
-    void distribute_tokens(unsigned cost) {
+    void distribute_tokens(unsigned cost)
+    {
         if (total_priority == 0) {
             return;
         }
@@ -184,34 +205,37 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
         }
     }
 
-  public:
+public:
     PrioritizedQueue(unsigned max_per, unsigned min_c)
-    :total_priority(0), max_tokens_per_subqueue(max_per), min_cost(min_c) {
+        : total_priority(0), max_tokens_per_subqueue(max_per), min_cost(min_c)
+    {
     }
 
-    unsigned length() const {
+    unsigned length() const
+    {
         unsigned total = 0;
         for (typename SubQueues::const_iterator i = queue.begin();
              i != queue.end(); ++i) {
             ceph_assert(i->second.length());
             total += i->second.length();
-        } for (typename SubQueues::const_iterator i = high_queue.begin();
-               i != high_queue.end(); ++i) {
+        }
+        for (typename SubQueues::const_iterator i = high_queue.begin();
+             i != high_queue.end(); ++i) {
             ceph_assert(i->second.length());
             total += i->second.length();
         }
         return total;
     }
 
-    void remove_by_class(K k, std::list < T > *out = 0) final {
+    void remove_by_class(K k, std::list < T > *out = 0) final
+    {
         for (typename SubQueues::iterator i = queue.begin(); i != queue.end();) {
             i->second.remove_by_class(k, out);
             if (i->second.empty()) {
                 unsigned priority = i->first;
                 ++i;
                 remove_queue(priority);
-            }
-            else {
+            } else {
                 ++i;
             }
         }
@@ -220,42 +244,51 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
             i->second.remove_by_class(k, out);
             if (i->second.empty()) {
                 high_queue.erase(i++);
-            }
-            else {
+            } else {
                 ++i;
             }
         }
     }
 
-    void enqueue_strict(K cl, unsigned priority, T && item) final {
+    void enqueue_strict(K cl, unsigned priority, T && item) final
+    {
         high_queue[priority].enqueue(cl, 0, std::move(item));
     }
 
-    void enqueue_strict_front(K cl, unsigned priority, T && item) final {
+    void enqueue_strict_front(K cl, unsigned priority, T && item) final
+    {
         high_queue[priority].enqueue_front(cl, 0, std::move(item));
     }
 
-    void enqueue(K cl, unsigned priority, unsigned cost, T && item) final {
-        if (cost < min_cost)
+    void enqueue(K cl, unsigned priority, unsigned cost, T && item) final
+    {
+        if (cost < min_cost) {
             cost = min_cost;
-        if (cost > max_tokens_per_subqueue)
+        }
+        if (cost > max_tokens_per_subqueue) {
             cost = max_tokens_per_subqueue;
+        }
         create_queue(priority)->enqueue(cl, cost, std::move(item));
     }
 
-    void enqueue_front(K cl, unsigned priority, unsigned cost, T && item) final {
-        if (cost < min_cost)
+    void enqueue_front(K cl, unsigned priority, unsigned cost, T && item) final
+    {
+        if (cost < min_cost) {
             cost = min_cost;
-        if (cost > max_tokens_per_subqueue)
+        }
+        if (cost > max_tokens_per_subqueue) {
             cost = max_tokens_per_subqueue;
+        }
         create_queue(priority)->enqueue_front(cl, cost, std::move(item));
     }
 
-    bool empty() const final {
+    bool empty() const final
+    {
         ceph_assert(total_priority >= 0);
         ceph_assert((total_priority == 0) || !(queue.empty()));
         return queue.empty() && high_queue.empty();
-    } T dequeue() final {
+    } T dequeue() final
+    {
         ceph_assert(!empty());
 
         if (!(high_queue.empty())) {
@@ -298,7 +331,8 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
         return ret;
     }
 
-    void dump(ceph::Formatter * f) const final {
+    void dump(ceph::Formatter *f) const final
+    {
         f->dump_int("total_priority", total_priority);
         f->dump_int("max_tokens_per_subqueue", max_tokens_per_subqueue);
         f->dump_int("min_cost", min_cost);
@@ -309,7 +343,8 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
             f->dump_int("priority", p->first);
             p->second.dump(f);
             f->close_section();
-        } f->close_section();
+        }
+        f->close_section();
         f->open_array_section("queues");
         for (typename SubQueues::const_iterator p = queue.begin();
              p != queue.end(); ++p) {
@@ -321,8 +356,10 @@ template < typename T, typename K > class PrioritizedQueue:public OpQueue < T,
         f->close_section();
     }
 
-    void print(std::ostream & ostream) const final {
+    void print(std::ostream &ostream) const final
+    {
         ostream << "PrioritizedQueue";
-}};
+    }
+};
 
 #endif

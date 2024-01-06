@@ -20,7 +20,7 @@
 // Initialize the singleton service instance.
 ServiceBase *ServiceBase::s_service = NULL;
 
-ServiceBase::ServiceBase(CephContext * cct_):cct(cct_)
+ServiceBase::ServiceBase(CephContext *cct_): cct(cct_)
 {
     status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
@@ -32,7 +32,7 @@ ServiceBase::ServiceBase(CephContext * cct_):cct(cct_)
 }
 
 /* Register service action callbacks */
-int ServiceBase::initialize(ServiceBase * service)
+int ServiceBase::initialize(ServiceBase *service)
 {
     s_service = service;
 
@@ -45,7 +45,7 @@ int ServiceBase::initialize(ServiceBase * service)
     if (!StartServiceCtrlDispatcher(service_table)) {
         int err = GetLastError();
         lderr(service->cct) << "StartServiceCtrlDispatcher error: "
-            << err << dendl;
+                            << err << dendl;
         return -EINVAL;
     }
     return 0;
@@ -63,7 +63,7 @@ void WINAPI ServiceBase::run()
     if (!s_service->hstatus) {
         lderr(s_service->
               cct) << "Could not initialize service control handler. " <<
-            "Error: " << GetLastError() << dendl;
+                   "Error: " << GetLastError() << dendl;
         return;
     }
 
@@ -74,10 +74,9 @@ void WINAPI ServiceBase::run()
     int err = s_service->run_hook();
     if (err) {
         lderr(s_service->cct) << "Failed to start service. Error code: "
-            << err << dendl;
+                              << err << dendl;
         s_service->shutdown(true);
-    }
-    else {
+    } else {
         ldout(s_service->cct, 0) << "Successfully started service." << dendl;
         s_service->set_status(SERVICE_RUNNING);
     }
@@ -93,16 +92,14 @@ void ServiceBase::shutdown(bool ignore_errors)
         derr << "Shutdown service hook failed. Error code: " << err << dendl;
         if (ignore_errors) {
             derr <<
-                "Ignoring shutdown hook failure, marking the service as stopped."
-                << dendl;
+                 "Ignoring shutdown hook failure, marking the service as stopped."
+                 << dendl;
             set_status(SERVICE_STOPPED);
-        }
-        else {
+        } else {
             derr << "Reverting to original service state." << dendl;
             set_status(original_state);
         }
-    }
-    else {
+    } else {
         dout(0) << "Shutdown hook completed." << dendl;
         set_status(SERVICE_STOPPED);
     }
@@ -117,8 +114,7 @@ void ServiceBase::stop()
     if (err) {
         derr << "Service stop hook failed. Error code: " << err << dendl;
         set_status(original_state);
-    }
-    else {
+    } else {
         dout(0) << "Successfully stopped service." << dendl;
         set_status(SERVICE_STOPPED);
     }
@@ -130,14 +126,14 @@ void ServiceBase::stop()
 void ServiceBase::control_handler(DWORD request)
 {
     switch (request) {
-    case SERVICE_CONTROL_STOP:
-        s_service->stop();
-        break;
-    case SERVICE_CONTROL_SHUTDOWN:
-        s_service->shutdown();
-        break;
-    default:
-        break;
+        case SERVICE_CONTROL_STOP:
+            s_service->stop();
+            break;
+        case SERVICE_CONTROL_SHUTDOWN:
+            s_service->shutdown();
+            break;
+        default:
+            break;
     }
 }
 
@@ -153,12 +149,11 @@ void ServiceBase::set_status(DWORD current_state, DWORD exit_code)
 
     if (hstatus) {
         dout(5) << "Updating service service status (" << current_state
-            << ") and exit code(" << exit_code << ")." << dendl;
+                << ") and exit code(" << exit_code << ")." << dendl;
         ::SetServiceStatus(hstatus, &status);
-    }
-    else {
+    } else {
         derr << "Service control handler not initialized. Cannot "
-            << "update service status (" << current_state
-            << ") and exit code(" << exit_code << ")." << dendl;
+             << "update service status (" << current_state
+             << ") and exit code(" << exit_code << ")." << dendl;
     }
 }

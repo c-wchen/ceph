@@ -18,54 +18,67 @@
 #include <memory>
 #include <tuple>
 
-template < class C > class Ct {
-  public:
-    virtual ~ Ct() {
+template < class C > class Ct
+{
+public:
+    virtual ~ Ct()
+    {
     }
-    virtual Ct < C > *call(C * foo) const = 0;
+    virtual Ct < C > *call(C *foo) const = 0;
 };
 
-template < class C, typename ... Args > class CtFun:public Ct < C > {
-  private:
+template < class C, typename ... Args > class CtFun: public Ct < C >
+{
+private:
     using fn_t = Ct < C > *(C::*)(Args ...);
     fn_t _f;
     std::tuple < Args ... >_params;
 
     template < std::size_t ... Is >
-        inline Ct < C > *_call(C * foo, std::index_sequence < Is ... >)const {
-        return (foo->*_f) (std::get < Is > (_params) ...);
-  } public:
-     CtFun(fn_t f):_f(f) {
+    inline Ct < C > *_call(C *foo, std::index_sequence < Is ... >)const
+    {
+        return (foo->*_f)(std::get < Is > (_params) ...);
+    } public:
+    CtFun(fn_t f): _f(f)
+    {
     }
 
-    inline void setParams(Args ... args) {
+    inline void setParams(Args ... args)
+    {
         _params = std::make_tuple(args ...);
     }
-    inline Ct < C > *call(C * foo) const override {
+    inline Ct < C > *call(C *foo) const override
+    {
         return _call(foo, std::index_sequence_for < Args ... >());
-}};
+    }
+};
 
 using rx_buffer_t =
     std::unique_ptr < ceph::buffer::ptr_node,
     ceph::buffer::ptr_node::disposer >;
 
-template < class C > class CtRxNode:public Ct < C > {
+template < class C > class CtRxNode: public Ct < C >
+{
     using fn_t = Ct < C > *(C::*)(rx_buffer_t &&, int r);
     fn_t _f;
 
-  public:
+public:
     mutable rx_buffer_t node;
     int r;
 
-  CtRxNode(fn_t f):_f(f) {
+    CtRxNode(fn_t f): _f(f)
+    {
     }
-    void setParams(rx_buffer_t && node, int r) {
+    void setParams(rx_buffer_t && node, int r)
+    {
         this->node = std::move(node);
         this->r = r;
     }
-    inline Ct < C > *call(C * foo) const override {
-        return (foo->*_f) (std::move(node), r);
-}};
+    inline Ct < C > *call(C *foo) const override
+    {
+        return (foo->*_f)(std::move(node), r);
+    }
+};
 
 template < class C > using CONTINUATION_TYPE = CtFun < C >;
 template < class C > using CONTINUATION_TX_TYPE = CtFun < C, int >;
@@ -98,18 +111,19 @@ template < class C > using CONTINUATION_RXBPTR_TYPE = CtRxNode < C >;
 
 class AsyncMessenger;
 
-class Protocol {
-  public:
+class Protocol
+{
+public:
     const int proto_type;
-  protected:
-    AsyncConnection * connection;
+protected:
+    AsyncConnection *connection;
     AsyncMessenger *messenger;
     CephContext *cct;
-  public:
+public:
     std::shared_ptr < AuthConnectionMeta > auth_meta;
 
-  public:
-    Protocol(int type, AsyncConnection * connection);
+public:
+    Protocol(int type, AsyncConnection *connection);
     virtual ~ Protocol();
 
     // prepare protocol for connecting to peer
@@ -123,7 +137,7 @@ class Protocol {
     // signal and handle connection failure
     virtual void fault() = 0;
     // send message
-    virtual void send_message(Message * m) = 0;
+    virtual void send_message(Message *m) = 0;
     // send keepalive
     virtual void send_keepalive() = 0;
 
@@ -131,8 +145,10 @@ class Protocol {
     virtual void write_event() = 0;
     virtual bool is_queued() = 0;
 
-    int get_con_mode() const {
+    int get_con_mode() const
+    {
         return auth_meta->con_mode;
-}};
+    }
+};
 
 #endif /* _MSG_ASYNC_PROTOCOL_ */

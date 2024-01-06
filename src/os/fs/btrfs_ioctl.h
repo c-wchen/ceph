@@ -35,7 +35,7 @@ struct btrfs_ioctl_vol_args {
     char name[BTRFS_PATH_NAME_MAX + 1];
 };
 
-#define BTRFS_SUBVOL_CREATE_ASYNC	(1ULL << 0)
+#define BTRFS_SUBVOL_CREATE_ASYNC   (1ULL << 0)
 
 #define BTRFS_SUBVOL_NAME_MAX 4039
 struct btrfs_ioctl_vol_args_v2 {
@@ -155,13 +155,13 @@ struct btrfs_ioctl_space_args {
 };
 
 #define BTRFS_IOC_SNAP_CREATE _IOW(BTRFS_IOCTL_MAGIC, 1, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_DEFRAG _IOW(BTRFS_IOCTL_MAGIC, 2, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_RESIZE _IOW(BTRFS_IOCTL_MAGIC, 3, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_SCAN_DEV _IOW(BTRFS_IOCTL_MAGIC, 4, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 /* trans start and trans end are dangerous, and only for
  * use by applications that know how to avoid the
  * resulting deadlocks
@@ -172,30 +172,30 @@ struct btrfs_ioctl_space_args {
 
 #define BTRFS_IOC_CLONE        _IOW(BTRFS_IOCTL_MAGIC, 9, int)
 #define BTRFS_IOC_ADD_DEV _IOW(BTRFS_IOCTL_MAGIC, 10, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_RM_DEV _IOW(BTRFS_IOCTL_MAGIC, 11, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_BALANCE _IOW(BTRFS_IOCTL_MAGIC, 12, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 
 #define BTRFS_IOC_CLONE_RANGE _IOW(BTRFS_IOCTL_MAGIC, 13, \
-				  struct btrfs_ioctl_clone_range_args)
+                  struct btrfs_ioctl_clone_range_args)
 
 #define BTRFS_IOC_SUBVOL_CREATE _IOW(BTRFS_IOCTL_MAGIC, 14, \
-				   struct btrfs_ioctl_vol_args)
+                   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_SNAP_DESTROY _IOW(BTRFS_IOCTL_MAGIC, 15, \
-				struct btrfs_ioctl_vol_args)
+                struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_DEFRAG_RANGE _IOW(BTRFS_IOCTL_MAGIC, 16, \
-				struct btrfs_ioctl_defrag_range_args)
+                struct btrfs_ioctl_defrag_range_args)
 #define BTRFS_IOC_TREE_SEARCH _IOWR(BTRFS_IOCTL_MAGIC, 17, \
-				   struct btrfs_ioctl_search_args)
+                   struct btrfs_ioctl_search_args)
 #define BTRFS_IOC_INO_LOOKUP _IOWR(BTRFS_IOCTL_MAGIC, 18, \
-				   struct btrfs_ioctl_ino_lookup_args)
+                   struct btrfs_ioctl_ino_lookup_args)
 #define BTRFS_IOC_DEFAULT_SUBVOL _IOW(BTRFS_IOCTL_MAGIC, 19, u64)
 #define BTRFS_IOC_SPACE_INFO _IOWR(BTRFS_IOCTL_MAGIC, 20, \
-				    struct btrfs_ioctl_space_args)
+                    struct btrfs_ioctl_space_args)
 #define BTRFS_IOC_START_SYNC _IOR(BTRFS_IOCTL_MAGIC, 24, __u64)
 #define BTRFS_IOC_WAIT_SYNC  _IOW(BTRFS_IOCTL_MAGIC, 22, __u64)
 #define BTRFS_IOC_SNAP_CREATE_V2 _IOW(BTRFS_IOCTL_MAGIC, 23, \
-				   struct btrfs_ioctl_vol_args_v2)
+                   struct btrfs_ioctl_vol_args_v2)
 #endif

@@ -14,7 +14,7 @@ rados_t RadosTestNS::s_cluster = NULL;
 void RadosTestNS::SetUpTestCase()
 {
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_pool(pool_name, &s_cluster));
@@ -36,8 +36,9 @@ void RadosTestNS::SetUp()
 
 void RadosTestNS::TearDown()
 {
-    if (cleanup)
+    if (cleanup) {
         cleanup_all_objects(ioctx);
+    }
     rados_ioctx_destroy(ioctx);
 }
 
@@ -49,16 +50,16 @@ void RadosTestNS::cleanup_all_objects(rados_ioctx_t ioctx)
     rados_list_ctx_t list_ctx;
 
     ASSERT_EQ(0, rados_nobjects_list_open(ioctx, &list_ctx));
-    auto sg = make_scope_guard([&]{ rados_nobjects_list_close(list_ctx);
-                               });
+    auto sg = make_scope_guard([&] { rados_nobjects_list_close(list_ctx);
+                                   });
 
     int r;
     const char *entry = NULL;
     const char *key = NULL;
     const char *nspace = NULL;
     while ((r =
-            rados_nobjects_list_next(list_ctx, &entry, &key,
-                                     &nspace)) != -ENOENT) {
+                rados_nobjects_list_next(list_ctx, &entry, &key,
+                                         &nspace)) != -ENOENT) {
         ASSERT_EQ(0, r);
         rados_ioctx_locator_set_key(ioctx, key);
         rados_ioctx_set_namespace(ioctx, nspace);
@@ -73,7 +74,7 @@ void RadosTestECNS::SetUpTestCase()
 {
     SKIP_IF_CRIMSON();
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_ec_pool(pool_name, &s_cluster));
@@ -100,8 +101,9 @@ void RadosTestECNS::SetUp()
 void RadosTestECNS::TearDown()
 {
     SKIP_IF_CRIMSON();
-    if (cleanup)
+    if (cleanup) {
         cleanup_all_objects(ioctx);
+    }
     rados_ioctx_destroy(ioctx);
 }
 
@@ -111,7 +113,7 @@ rados_t RadosTest::s_cluster = NULL;
 void RadosTest::SetUpTestCase()
 {
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_pool(pool_name, &s_cluster));
@@ -156,15 +158,15 @@ void RadosTest::cleanup_namespace(rados_ioctx_t ioctx, std::string ns)
     rados_list_ctx_t list_ctx;
 
     ASSERT_EQ(0, rados_nobjects_list_open(ioctx, &list_ctx));
-    auto sg = make_scope_guard([&]{ rados_nobjects_list_close(list_ctx);
-                               });
+    auto sg = make_scope_guard([&] { rados_nobjects_list_close(list_ctx);
+                                   });
 
     int r;
     const char *entry = NULL;
     const char *key = NULL;
     while ((r =
-            rados_nobjects_list_next(list_ctx, &entry, &key,
-                                     NULL)) != -ENOENT) {
+                rados_nobjects_list_next(list_ctx, &entry, &key,
+                                         NULL)) != -ENOENT) {
         ASSERT_EQ(0, r);
         rados_ioctx_locator_set_key(ioctx, key);
         ASSERT_EQ(0, rados_remove(ioctx, entry));
@@ -178,7 +180,7 @@ void RadosTestEC::SetUpTestCase()
 {
     SKIP_IF_CRIMSON();
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_ec_pool(pool_name, &s_cluster));

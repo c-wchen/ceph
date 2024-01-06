@@ -37,7 +37,8 @@
 namespace fs = std::filesystem;
 
 std::set < std::string > obsolete_modules = {
-"orchestrator_cli",};
+    "orchestrator_cli",
+};
 
 void PyModuleRegistry::init()
 {
@@ -71,7 +72,7 @@ void PyModuleRegistry::init()
         g_conf().get_val < std::string > ("mgr_module_path");
     auto module_names = probe_modules(module_path);
     // Load python code
-  for (const auto & module_name:module_names) {
+    for (const auto &module_name : module_names) {
         dout(1) << "Loading python module '" << module_name << "'" << dendl;
 
         // Everything starts disabled, set enabled flag on module
@@ -82,7 +83,7 @@ void PyModuleRegistry::init()
             // Don't use handle_pyerror() here; we don't have the GIL
             // or the right thread state (this is deliberate).
             derr << "Error loading module '" << module_name << "': "
-                << cpp_strerror(r) << dendl;
+                 << cpp_strerror(r) << dendl;
             failed_modules.push_back(module_name);
             // Don't drop out here, load the other modules
         }
@@ -96,13 +97,13 @@ void PyModuleRegistry::init()
     }
     if (!failed_modules.empty()) {
         clog->
-            error() << "Failed to load ceph-mgr modules: " <<
-            joinify(failed_modules.begin(), failed_modules.end(),
-                    std::string(", "));
+        error() << "Failed to load ceph-mgr modules: " <<
+                joinify(failed_modules.begin(), failed_modules.end(),
+                        std::string(", "));
     }
 }
 
-bool PyModuleRegistry::handle_mgr_map(const MgrMap & mgr_map_)
+bool PyModuleRegistry::handle_mgr_map(const MgrMap &mgr_map_)
 {
     std::lock_guard l(lock);
 
@@ -112,7 +113,7 @@ bool PyModuleRegistry::handle_mgr_map(const MgrMap & mgr_map_)
         // First time we see MgrMap, set the enabled flags on modules
         // This should always happen before someone calls standby_start
         // or active_start
-      for (const auto &[module_name, module]:modules) {
+        for (const auto &[module_name, module] : modules) {
             const bool enabled = (mgr_map.modules.count(module_name) > 0);
             module->set_enabled(enabled);
             const bool always_on =
@@ -121,10 +122,9 @@ bool PyModuleRegistry::handle_mgr_map(const MgrMap & mgr_map_)
         }
 
         return false;
-    }
-    else {
+    } else {
         bool modules_changed = mgr_map_.modules != mgr_map.modules ||
-            mgr_map_.always_on_modules != mgr_map.always_on_modules;
+                               mgr_map_.always_on_modules != mgr_map.always_on_modules;
         mgr_map = mgr_map_;
 
         if (standby_modules != nullptr) {
@@ -135,7 +135,7 @@ bool PyModuleRegistry::handle_mgr_map(const MgrMap & mgr_map_)
     }
 }
 
-void PyModuleRegistry::standby_start(MonClient & mc, Finisher & f)
+void PyModuleRegistry::standby_start(MonClient &mc, Finisher &f)
 {
     std::lock_guard l(lock);
     ceph_assert(active_modules == nullptr);
@@ -148,10 +148,10 @@ void PyModuleRegistry::standby_start(MonClient & mc, Finisher & f)
     dout(4) << "Starting modules in standby mode" << dendl;
 
     standby_modules.
-        reset(new StandbyPyModules(mgr_map, module_config, clog, mc, f));
+    reset(new StandbyPyModules(mgr_map, module_config, clog, mc, f));
 
     std::set < std::string > failed_modules;
-  for (const auto & i:modules) {
+    for (const auto &i : modules) {
         if (!(i.second->is_enabled() && i.second->get_can_run())) {
             // report always_on modules with a standby mode that won't run
             if (i.second->is_always_on() && i.second->pStandbyClass) {
@@ -163,30 +163,29 @@ void PyModuleRegistry::standby_start(MonClient & mc, Finisher & f)
         if (i.second->pStandbyClass) {
             dout(4) << "starting module " << i.second->get_name() << dendl;
             standby_modules->start_one(i.second);
-        }
-        else {
+        } else {
             dout(4) << "skipping module '" << i.second->
-                get_name() << "' because "
-                "it does not implement a standby mode" << dendl;
+                    get_name() << "' because "
+                    "it does not implement a standby mode" << dendl;
         }
     }
 
     if (!failed_modules.empty()) {
         clog->
-            error() << "Failed to execute ceph-mgr module(s) in standby mode: "
-            << joinify(failed_modules.begin(), failed_modules.end(),
-                       std::string(", "));
+        error() << "Failed to execute ceph-mgr module(s) in standby mode: "
+                << joinify(failed_modules.begin(), failed_modules.end(),
+                           std::string(", "));
     }
 }
 
-void PyModuleRegistry::active_start(DaemonStateIndex & ds, ClusterState & cs,
+void PyModuleRegistry::active_start(DaemonStateIndex &ds, ClusterState &cs,
                                     const std::map < std::string,
                                     std::string > &kv_store,
-                                    bool mon_provides_kv_sub, MonClient & mc,
+                                    bool mon_provides_kv_sub, MonClient &mc,
                                     LogChannelRef clog_,
                                     LogChannelRef audit_clog_,
-                                    Objecter & objecter_, Client & client_,
-                                    Finisher & f, DaemonServer & server)
+                                    Objecter &objecter_, Client &client_,
+                                    Finisher &f, DaemonServer &server)
 {
     std::lock_guard locker(lock);
 
@@ -204,12 +203,12 @@ void PyModuleRegistry::active_start(DaemonStateIndex & ds, ClusterState & cs,
     }
 
     active_modules.reset(new ActivePyModules(module_config,
-                                             kv_store, mon_provides_kv_sub,
-                                             ds, cs, mc,
-                                             clog_, audit_clog_, objecter_,
-                                             client_, f, server, *this));
+                         kv_store, mon_provides_kv_sub,
+                         ds, cs, mc,
+                         clog_, audit_clog_, objecter_,
+                         client_, f, server, *this));
 
-  for (const auto & i:modules) {
+    for (const auto &i : modules) {
         // Anything we're skipping because of !can_run will be flagged
         // to the user separately via get_health_checks
         if (!(i.second->is_enabled() && i.second->is_loaded())) {
@@ -268,14 +267,13 @@ void PyModuleRegistry::shutdown()
     Py_Finalize();
 }
 
-std::vector < std::string >
-    PyModuleRegistry::probe_modules(const std::string & path) const const
+std::vector < std::string > PyModuleRegistry::probe_modules(const std::string &path) const const
 {
     const auto opt = g_conf().get_val < std::string > ("mgr_disabled_modules");
     const auto disabled_modules = ceph::split(opt);
 
     std::vector < std::string > modules;
-  for (const auto & entry:fs::directory_iterator(path)) {
+    for (const auto &entry : fs::directory_iterator(path)) {
         if (!fs::is_directory(entry)) {
             continue;
         }
@@ -292,53 +290,52 @@ std::vector < std::string >
     return modules;
 }
 
-int PyModuleRegistry::handle_command(const ModuleCommand & module_command,
-                                     const MgrSession & session,
-                                     const cmdmap_t & cmdmap,
-                                     const bufferlist & inbuf,
-                                     std::stringstream * ds,
-                                     std::stringstream * ss)
+int PyModuleRegistry::handle_command(const ModuleCommand &module_command,
+                                     const MgrSession &session,
+                                     const cmdmap_t &cmdmap,
+                                     const bufferlist &inbuf,
+                                     std::stringstream *ds,
+                                     std::stringstream *ss)
 {
     if (active_modules) {
         return active_modules->handle_command(module_command, session, cmdmap,
                                               inbuf, ds, ss);
-    }
-    else {
+    } else {
         // We do not expect to be called before active modules is up, but
         // it's straightfoward to handle this case so let's do it.
         return -EAGAIN;
     }
 }
 
-std::vector < ModuleCommand > PyModuleRegistry::get_py_commands() constconst
-{
+std::vector < ModuleCommand > PyModuleRegistry::get_py_commands() constconst {
     std::lock_guard l(lock);
 
     std::vector < ModuleCommand > result;
-  for (const auto & i:modules) {
+    for (const auto &i : modules)
+    {
         i.second->get_commands(&result);
     }
 
     return result;
 }
 
-std::vector < MonCommand > PyModuleRegistry::get_commands() constconst
-{
+std::vector < MonCommand > PyModuleRegistry::get_commands() constconst {
     std::vector < ModuleCommand > commands = get_py_commands();
     std::vector < MonCommand > result;
-  for (auto & pyc:commands) {
+    for (auto &pyc : commands)
+    {
         uint64_t flags = MonCommand::FLAG_MGR;
         if (pyc.polling) {
             flags |= MonCommand::FLAG_POLL;
         }
-        result.push_back( {
-                         pyc.cmdstring, pyc.helpstring, "mgr", pyc.perm, flags}
-        );
+        result.push_back({
+            pyc.cmdstring, pyc.helpstring, "mgr", pyc.perm, flags}
+                        );
     }
     return result;
 }
 
-void PyModuleRegistry::get_health_checks(health_check_map_t * checks)
+void PyModuleRegistry::get_health_checks(health_check_map_t *checks)
 {
     std::lock_guard l(lock);
 
@@ -360,14 +357,13 @@ void PyModuleRegistry::get_health_checks(health_check_map_t * checks)
          *    to investigate and gather evidence.
          */
 
-      for (const auto & i:modules) {
+        for (const auto &i : modules) {
             auto module = i.second;
             if (module->is_enabled() && !module->get_can_run()) {
                 dependency_modules[module->get_name()] =
                     module->get_error_string();
-            }
-            else if ((module->is_enabled() && !module->is_loaded())
-                     || (module->is_failed() && module->get_can_run())) {
+            } else if ((module->is_enabled() && !module->is_loaded())
+                       || (module->is_failed() && module->get_can_run())) {
                 // - Unloadable modules are only reported if they're enabled,
                 //   to avoid spamming users about modules they don't have the
                 //   dependencies installed for because they don't use it.
@@ -379,7 +375,7 @@ void PyModuleRegistry::get_health_checks(health_check_map_t * checks)
         }
 
         // report failed always_on modules as health errors
-      for (const auto & name:mgr_map.get_always_on_modules()) {
+        for (const auto &name : mgr_map.get_always_on_modules()) {
             if (obsolete_modules.count(name)) {
                 continue;
             }
@@ -399,19 +395,18 @@ void PyModuleRegistry::get_health_checks(health_check_map_t * checks)
             if (dependency_modules.size() == 1) {
                 auto iter = dependency_modules.begin();
                 ss << "Module '" << iter->first << "' has failed dependency: "
-                    << iter->second;
-            }
-            else if (dependency_modules.size() > 1) {
+                   << iter->second;
+            } else if (dependency_modules.size() > 1) {
                 ss << dependency_modules.size()
-                    << " mgr modules have failed dependencies";
+                   << " mgr modules have failed dependencies";
             }
-            auto & d =
+            auto &d =
                 checks->add("MGR_MODULE_DEPENDENCY", HEALTH_WARN, ss.str(),
                             dependency_modules.size());
-          for (auto & i:dependency_modules) {
+            for (auto &i : dependency_modules) {
                 std::ostringstream ss;
                 ss << "Module '" << i.first << "' has failed dependency: " << i.
-                    second;
+                   second;
                 d.detail.push_back(ss.str());
             }
         }
@@ -421,14 +416,13 @@ void PyModuleRegistry::get_health_checks(health_check_map_t * checks)
             if (failed_modules.size() == 1) {
                 auto iter = failed_modules.begin();
                 ss << "Module '" << iter->first << "' has failed: " << iter->
-                    second;
-            }
-            else if (failed_modules.size() > 1) {
+                   second;
+            } else if (failed_modules.size() > 1) {
                 ss << failed_modules.size() << " mgr modules have failed";
             }
-            auto & d = checks->add("MGR_MODULE_ERROR", HEALTH_ERR, ss.str(),
-                                   failed_modules.size());
-          for (auto & i:failed_modules) {
+            auto &d = checks->add("MGR_MODULE_ERROR", HEALTH_ERR, ss.str(),
+                                  failed_modules.size());
+            for (auto &i : failed_modules) {
                 std::ostringstream ss;
                 ss << "Module '" << i.first << "' has failed: " << i.second;
                 d.detail.push_back(ss.str());
@@ -437,8 +431,8 @@ void PyModuleRegistry::get_health_checks(health_check_map_t * checks)
     }
 }
 
-void PyModuleRegistry::handle_config(const std::string & k,
-                                     const std::string & v)
+void PyModuleRegistry::handle_config(const std::string &k,
+                                     const std::string &v)
 {
     std::lock_guard l(module_config.lock);
 
@@ -448,8 +442,7 @@ void PyModuleRegistry::handle_config(const std::string & k,
         // dout(10) << "Loaded module_config entry " << k << ":" << v << dendl;
         dout(10) << "Loaded module_config entry " << k << ":" << dendl;
         module_config.config[k] = v;
-    }
-    else {
+    } else {
         module_config.config.erase(k);
     }
 }

@@ -151,8 +151,9 @@ int main(int argc, char *argv[])
     int i;
     unsigned long long transid;
 
-    if (argc < 3)
+    if (argc < 3) {
         usage_exit(argv[0]);
+    }
 
     base_dir = argv[1];
     snap_name = argv[2];

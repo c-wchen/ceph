@@ -93,8 +93,7 @@ static void reraise_fatal(int signum)
         snprintf(buf, sizeof(buf), "reraise_fatal: failed to re-raise "
                  "signal %d\n", signum);
         dout_emergency(buf);
-    }
-    else {
+    } else {
         snprintf(buf, sizeof(buf), "reraise_fatal: default handler for "
                  "signal %d didn't terminate the process?\n", signum);
         dout_emergency(buf);
@@ -143,7 +142,7 @@ static int parse_from_os_release(const char *file, const char *key, char *out)
 }
 
 void generate_crash_dump(char *base,
-                         const BackTrace & bt,
+                         const BackTrace &bt,
                          std::map < std::string, std::string > *extra)
 {
     if (g_ceph_context && g_ceph_context->_conf->crash_dir.size()) {
@@ -257,7 +256,7 @@ void generate_crash_dump(char *base,
                 bt.dump(&jf);
 
                 if (extra) {
-                  for (auto & i:*extra) {
+                    for (auto &i : *extra) {
                         jf.dump_string(i.first, i.second);
                     }
                 }
@@ -279,19 +278,18 @@ void generate_crash_dump(char *base,
 static void handle_oneshot_fatal_signal(int signum)
 {
     constexpr static pid_t NULL_TID {
-    0};
+        0};
     static std::atomic < pid_t > handler_tid {
-    NULL_TID};
-    if (auto expected {
         NULL_TID};
-        !handler_tid.compare_exchange_strong(expected, ceph_gettid())) {
+    if (auto expected {
+    NULL_TID};
+!handler_tid.compare_exchange_strong(expected, ceph_gettid())) {
         if (expected == ceph_gettid()) {
             // The handler code may itself trigger a SIGSEGV if the heap is corrupt.
             // In that case, SIG_DFL followed by return specifies that the default
             // signal handler -- presumably dump core -- will handle it.
             signal(signum, SIG_DFL);
-        }
-        else {
+        } else {
             // Huh, another thread got into troubles while we are handling the fault.
             // If this is i.e. SIGSEGV handler, returning means retrying the faulty
             // instruction one more time, and thus all those extra threads will run
@@ -341,8 +339,8 @@ static void handle_oneshot_fatal_signal(int signum)
         derr << buf << std::endl;
         bt.print(*_dout);
         *_dout <<
-            " NOTE: a copy of the executable, or `objdump -rdS <executable>` "
-            << "is needed to interpret this.\n" << dendl;
+               " NOTE: a copy of the executable, or `objdump -rdS <executable>` "
+               << "is needed to interpret this.\n" << dendl;
 
         g_ceph_context->_log->dump_recent();
 
@@ -359,8 +357,7 @@ static void handle_oneshot_fatal_signal(int signum)
         // if this was an EIO crash, we don't need to trigger a core dump,
         // since the problem is hardware, or some layer beneath us.
         _exit(EIO);
-    }
-    else {
+    } else {
         reraise_fatal(signum);
     }
 }
@@ -391,8 +388,8 @@ string get_name_by_pid(pid_t pid)
     int ret = proc_pidpath(pid, buf, sizeof(buf));
     if (ret == 0) {
         derr << "Fail to proc_pidpath(" << pid << ")"
-            << " error = " << cpp_strerror(ret)
-            << dendl;
+             << " error = " << cpp_strerror(ret)
+             << dendl;
         return "<unknown>";
     }
     return string(buf, ret);
@@ -411,8 +408,8 @@ string get_name_by_pid(pid_t pid)
     if (fd < 0) {
         fd = -errno;
         derr << "Fail to open '" << proc_pid_path
-            << "' error = " << cpp_strerror(fd)
-            << dendl;
+             << "' error = " << cpp_strerror(fd)
+             << dendl;
         return "<unknown>";
     }
     // assuming the cmdline length does not exceed PATH_MAX. if it
@@ -423,8 +420,8 @@ string get_name_by_pid(pid_t pid)
     if (ret < 0) {
         ret = -errno;
         derr << "Fail to read '" << proc_pid_path
-            << "' error = " << cpp_strerror(ret)
-            << dendl;
+             << "' error = " << cpp_strerror(ret)
+             << dendl;
         return "<unknown>";
     }
     std::replace(buf, buf + ret, '\0', ' ');
@@ -445,7 +442,7 @@ string get_name_by_pid(pid_t pid)
  *   - signals are not lost, unless multiple instances of the same signal
  *     are sent twice in quick succession.
  */
-struct SignalHandler:public Thread {
+struct SignalHandler: public Thread {
     /// to kick the thread, for shutdown, new handlers, etc.
     int pipefd[2];              // write to [1], read from [0]
 
@@ -455,7 +452,8 @@ struct SignalHandler:public Thread {
     /// for an individual signal
     struct safe_handler {
 
-        safe_handler() {
+        safe_handler()
+        {
             memset(pipefd, 0, sizeof(pipefd));
             memset(&handler, 0, sizeof(handler));
             memset(&info_t, 0, sizeof(info_t));
@@ -470,7 +468,8 @@ struct SignalHandler:public Thread {
     /// to protect the handlers array
     ceph::mutex lock = ceph::make_mutex("SignalHandler::lock");
 
-    SignalHandler() {
+    SignalHandler()
+    {
         // create signal pipe
         int r = pipe_cloexec(pipefd, 0);
         ceph_assert(r == 0);
@@ -481,23 +480,27 @@ struct SignalHandler:public Thread {
         create("signal_handler");
     }
 
-    ~SignalHandler()override {
+    ~SignalHandler()override
+    {
         shutdown();
     }
 
-    void signal_thread() {
+    void signal_thread()
+    {
         int r = write(pipefd[1], "\0", 1);
         ceph_assert(r == 1);
     }
 
-    void shutdown() {
+    void shutdown()
+    {
         stop = true;
         signal_thread();
         join();
     }
 
     // thread entry point
-    void *entry() override {
+    void *entry() override
+    {
         while (!stop) {
             // build fd list
             struct pollfd fds[33];
@@ -520,8 +523,9 @@ struct SignalHandler:public Thread {
 
             // wait for data on any of those pipes
             int r = poll(fds, num_fds, -1);
-            if (stop)
+            if (stop) {
                 break;
+            }
             if (r > 0) {
                 char v;
 
@@ -537,33 +541,32 @@ struct SignalHandler:public Thread {
                             ostringstream message;
                             message << "received  signal: " << sig_str(signum);
                             switch (siginfo->si_code) {
-                            case SI_USER:
-                                message << " from " << get_name_by_pid(siginfo->
-                                                                       si_pid);
-                                // If PID is undefined, it doesn't have a meaning to be displayed
-                                if (siginfo->si_pid) {
-                                    message << " (PID: " << siginfo->
-                                        si_pid << ")";
-                                }
-                                else {
-                                    message <<
-                                        " ( Could be generated by pthread_kill(), raise(), abort(), alarm() )";
-                                }
-                                message << " UID: " << siginfo->si_uid;
-                                break;
-                            default:
-                                /* As we have a not expected signal, let's report the structure to help debugging */
-                                message << ", si_code : " << siginfo->si_code;
-                                message << ", si_value (int): " << siginfo->
-                                    si_value.sival_int;
-                                message << ", si_value (ptr): " << siginfo->
-                                    si_value.sival_ptr;
-                                message << ", si_errno: " << siginfo->si_errno;
-                                message << ", si_pid : " << siginfo->si_pid;
-                                message << ", si_uid : " << siginfo->si_uid;
-                                message << ", si_addr" << siginfo->si_addr;
-                                message << ", si_status" << siginfo->si_status;
-                                break;
+                                case SI_USER:
+                                    message << " from " << get_name_by_pid(siginfo->
+                                                                           si_pid);
+                                    // If PID is undefined, it doesn't have a meaning to be displayed
+                                    if (siginfo->si_pid) {
+                                        message << " (PID: " << siginfo->
+                                                si_pid << ")";
+                                    } else {
+                                        message <<
+                                                " ( Could be generated by pthread_kill(), raise(), abort(), alarm() )";
+                                    }
+                                    message << " UID: " << siginfo->si_uid;
+                                    break;
+                                default:
+                                    /* As we have a not expected signal, let's report the structure to help debugging */
+                                    message << ", si_code : " << siginfo->si_code;
+                                    message << ", si_value (int): " << siginfo->
+                                            si_value.sival_int;
+                                    message << ", si_value (ptr): " << siginfo->
+                                            si_value.sival_ptr;
+                                    message << ", si_errno: " << siginfo->si_errno;
+                                    message << ", si_pid : " << siginfo->si_pid;
+                                    message << ", si_uid : " << siginfo->si_uid;
+                                    message << ", si_addr" << siginfo->si_addr;
+                                    message << ", si_status" << siginfo->si_status;
+                                    break;
                             }
                             derr << message.str() << dendl;
                             handlers[signum]->handler(signum);
@@ -576,7 +579,8 @@ struct SignalHandler:public Thread {
         return NULL;
     }
 
-    void queue_signal(int signum) {
+    void queue_signal(int signum)
+    {
         // If this signal handler is registered, the callback must be
         // defined.  We can do this without the lock because we will never
         // have the signal handler defined without the handlers entry also
@@ -586,7 +590,8 @@ struct SignalHandler:public Thread {
         ceph_assert(r == 1);
     }
 
-    void queue_signal_info(int signum, siginfo_t * siginfo, void *content) {
+    void queue_signal_info(int signum, siginfo_t *siginfo, void *content)
+    {
         // If this signal handler is registered, the callback must be
         // defined.  We can do this without the lock because we will never
         // have the signal handler defined without the handlers entry also
@@ -603,7 +608,7 @@ struct SignalHandler:public Thread {
 
 static SignalHandler *g_signal_handler = NULL;
 
-static void handler_signal_hook(int signum, siginfo_t * siginfo, void *content)
+static void handler_signal_hook(int signum, siginfo_t *siginfo, void *content)
 {
     g_signal_handler->queue_signal_info(signum, siginfo, content);
 }

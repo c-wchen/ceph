@@ -12,11 +12,13 @@ struct NameAndStatus {
     bool status;
 
     // intrusive XML decoding API
-    bool decode_xml(XMLObj * obj) {
+    bool decode_xml(XMLObj *obj)
+    {
         if (!RGWXMLDecoder::decode_xml("Name", name, obj, true)) {
             // name is mandatory
             return false;
-        } if (!RGWXMLDecoder::decode_xml("Status", status, obj, false)) {
+        }
+        if (!RGWXMLDecoder::decode_xml("Status", status, obj, false)) {
             // status is optional and defaults to True
             status = true;
         }
@@ -31,16 +33,18 @@ struct Item {
     int extra_value;
 
     // these are attributes
-     std::string date;
-     std::string comment;
+    std::string date;
+    std::string comment;
 
     // intrusive XML decoding API
-    bool decode_xml(XMLObj * obj) {
+    bool decode_xml(XMLObj *obj)
+    {
         if (!RGWXMLDecoder::
             decode_xml("NameAndStatus", name_and_status, obj, true)) {
             // name amd status are mandatory
             return false;
-        } if (!RGWXMLDecoder::decode_xml("Value", value, obj, true)) {
+        }
+        if (!RGWXMLDecoder::decode_xml("Value", value, obj, true)) {
             // value is mandatory
             return false;
         }
@@ -67,70 +71,81 @@ struct Items {
     std::list < Item > item_list;
 
     // intrusive XML decoding API
-    bool decode_xml(XMLObj * obj) {
+    bool decode_xml(XMLObj *obj)
+    {
         do_decode_xml_obj(item_list, "Item", obj);
         return true;
-}};
+    }
+};
 
 // in case of non-intrusive decoding class
 // hierarchy should reflect the XML hierarchy
 
-class NameXMLObj:public XMLObj {
-  protected:
-    void xml_handle_data(const char *s, int len) override {
+class NameXMLObj: public XMLObj
+{
+protected:
+    void xml_handle_data(const char *s, int len) override
+    {
         // no need to set "data", setting "name" directly
         value.append(s, len);
-  } public:
-     std::string value;
+    } public:
+    std::string value;
     ~NameXMLObj()override = default;
 };
 
-class StatusXMLObj:public XMLObj {
-  protected:
-    void xml_handle_data(const char *s, int len) override {
+class StatusXMLObj: public XMLObj
+{
+protected:
+    void xml_handle_data(const char *s, int len) override
+    {
         std::istringstream is(std::string(s, len));
         is >> std::boolalpha >> value;
-  } public:
-     bool value;
+    } public:
+    bool value;
     ~StatusXMLObj()override = default;
 };
 
-class NameAndStatusXMLObj:public NameAndStatus, public XMLObj {
-  public:
+class NameAndStatusXMLObj: public NameAndStatus, public XMLObj
+{
+public:
     ~NameAndStatusXMLObj() override = default;
 
-    bool xml_end(const char *el) override {
+    bool xml_end(const char *el) override
+    {
         XMLObjIter iter = find("Name");
         NameXMLObj *_name = static_cast < NameXMLObj * >(iter.get_next());
         if (!_name) {
             // name is mandatory
             return false;
-        } name = _name->value;
+        }
+        name = _name->value;
         iter = find("Status");
         StatusXMLObj *_status = static_cast < StatusXMLObj * >(iter.get_next());
         if (!_status) {
             // status is optional and defaults to True
             status = true;
-        }
-        else {
+        } else {
             status = _status->value;
         }
         return true;
     }
 };
 
-class ItemXMLObj:public Item, public XMLObj {
-  public:
+class ItemXMLObj: public Item, public XMLObj
+{
+public:
     ~ItemXMLObj() override = default;
 
-    bool xml_end(const char *el) override {
+    bool xml_end(const char *el) override
+    {
         XMLObjIter iter = find("NameAndStatus");
         NameAndStatusXMLObj *_name_and_status =
             static_cast < NameAndStatusXMLObj * >(iter.get_next());
         if (!_name_and_status) {
             // name and status are mandatory
             return false;
-        } name_and_status = *static_cast < NameAndStatus * >(_name_and_status);
+        }
+        name_and_status = *static_cast < NameAndStatus * >(_name_and_status);
         iter = find("Value");
         XMLObj *_value = iter.get_next();
         if (!_value) {
@@ -139,8 +154,7 @@ class ItemXMLObj:public Item, public XMLObj {
         }
         try {
             value = std::stoi(_value->get_data());
-        }
-        catch(const std::exception & e) {
+        } catch (const std::exception &e) {
             return false;
         }
         iter = find("ExtraValue");
@@ -149,12 +163,10 @@ class ItemXMLObj:public Item, public XMLObj {
             // extra value is optional but cannot contain garbage
             try {
                 extra_value = std::stoi(_extra_value->get_data());
-            }
-            catch(const std::exception & e) {
+            } catch (const std::exception &e) {
                 return false;
             }
-        }
-        else {
+        } else {
             // if not set, it defaults to zero
             extra_value = 0;
         }
@@ -172,11 +184,13 @@ class ItemXMLObj:public Item, public XMLObj {
     }
 };
 
-class ItemsXMLObj:public Items, public XMLObj {
-  public:
+class ItemsXMLObj: public Items, public XMLObj
+{
+public:
     ~ItemsXMLObj() override = default;
 
-    bool xml_end(const char *el) override {
+    bool xml_end(const char *el) override
+    {
         XMLObjIter iter = find("Item");
         ItemXMLObj *item_ptr = static_cast < ItemXMLObj * >(iter.get_next());
         // mandatory to have at least one item
@@ -185,28 +199,27 @@ class ItemsXMLObj:public Items, public XMLObj {
             item_list.push_back(*static_cast < Item * >(item_ptr));
             item_ptr = static_cast < ItemXMLObj * >(iter.get_next());
             item_found = true;
-        } return item_found;
+        }
+        return item_found;
     }
 };
 
-class ItemsXMLParser:public RGWXMLParser {
+class ItemsXMLParser: public RGWXMLParser
+{
     static const int MAX_NAME_LEN = 16;
-  public:
-     XMLObj * alloc_obj(const char *el) override {
+public:
+    XMLObj *alloc_obj(const char *el) override
+    {
         if (strncmp(el, "Items", MAX_NAME_LEN) == 0) {
             items = new ItemsXMLObj;
             return items;
-        }
-        else if (strncmp(el, "Item", MAX_NAME_LEN) == 0) {
+        } else if (strncmp(el, "Item", MAX_NAME_LEN) == 0) {
             return new ItemXMLObj;
-        }
-        else if (strncmp(el, "NameAndStatus", MAX_NAME_LEN) == 0) {
+        } else if (strncmp(el, "NameAndStatus", MAX_NAME_LEN) == 0) {
             return new NameAndStatusXMLObj;
-        }
-        else if (strncmp(el, "Name", MAX_NAME_LEN) == 0) {
+        } else if (strncmp(el, "Name", MAX_NAME_LEN) == 0) {
             return new NameXMLObj;
-        }
-        else if (strncmp(el, "Status", MAX_NAME_LEN) == 0) {
+        } else if (strncmp(el, "Status", MAX_NAME_LEN) == 0) {
             return new StatusXMLObj;
         }
         return nullptr;
@@ -216,35 +229,35 @@ class ItemsXMLParser:public RGWXMLParser {
 };
 
 static const char *good_input = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    "<Items>"
-    "<Item><NameAndStatus><Name>hello</Name></NameAndStatus><Value>1</Value></Item>"
-    "<Item><ExtraValue>99</ExtraValue><NameAndStatus><Name>world</Name></NameAndStatus><Value>2</Value></Item>"
-    "<Item><Value>3</Value><NameAndStatus><Name>foo</Name></NameAndStatus></Item>"
-    "<Item><Value>4</Value><ExtraValue>42</ExtraValue><NameAndStatus><Name>bar</Name><Status>False</Status></NameAndStatus></Item>"
-    "</Items>";
+                                "<Items>"
+                                "<Item><NameAndStatus><Name>hello</Name></NameAndStatus><Value>1</Value></Item>"
+                                "<Item><ExtraValue>99</ExtraValue><NameAndStatus><Name>world</Name></NameAndStatus><Value>2</Value></Item>"
+                                "<Item><Value>3</Value><NameAndStatus><Name>foo</Name></NameAndStatus></Item>"
+                                "<Item><Value>4</Value><ExtraValue>42</ExtraValue><NameAndStatus><Name>bar</Name><Status>False</Status></NameAndStatus></Item>"
+                                "</Items>";
 
 static const char *expected_output =
     "((hello,1),1,0),((world,1),2,99),((foo,1),3,0),((bar,0),4,42),";
 
-std::string to_string(const Items & items)
+std::string to_string(const Items &items)
 {
     std::stringstream ss;
-  for (const auto & item:items.item_list) {
+    for (const auto &item : items.item_list) {
         ss << "((" << item.name_and_status.name << "," << item.name_and_status.
-            status << ")," << item.value << "," << item.
-            extra_value << ")" << ",";
+           status << ")," << item.value << "," << item.
+           extra_value << ")" << ",";
     }
     return ss.str();
 }
 
-std::string to_string_with_attributes(const Items & items)
+std::string to_string_with_attributes(const Items &items)
 {
     std::stringstream ss;
-  for (const auto & item:items.item_list) {
+    for (const auto &item : items.item_list) {
         ss << "(" << item.date << "," << item.comment << ",(" << item.
-            name_and_status.name << "," << item.name_and_status.
-            status << ")," << item.value << "," << item.
-            extra_value << ")" << ",";
+           name_and_status.name << "," << item.name_and_status.
+           status << ")," << item.value << "," << item.
+           extra_value << ")" << ",";
     }
     return ss.str();
 }
@@ -323,14 +336,14 @@ TEST(TestParser, InvalidValue)
 }
 
 static const char *good_input1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    "<Items>"
-    "<Item><NameAndStatus><Name>hello</Name></NameAndStatus><Value>1</Value></Item>"
-    "<Item><ExtraValue>99</ExtraValue><NameAndStatus><Name>world</Name>";
+                                 "<Items>"
+                                 "<Item><NameAndStatus><Name>hello</Name></NameAndStatus><Value>1</Value></Item>"
+                                 "<Item><ExtraValue>99</ExtraValue><NameAndStatus><Name>world</Name>";
 
 static const char *good_input2 = "</NameAndStatus><Value>2</Value></Item>"
-    "<Item><Value>3</Value><NameAndStatus><Name>foo</Name></NameAndStatus></Item>"
-    "<Item><Value>4</Value><ExtraValue>42</ExtraValue><NameAndStatus><Name>bar</Name><Status>False</Status></NameAndStatus></Item>"
-    "</Items>";
+                                 "<Item><Value>3</Value><NameAndStatus><Name>foo</Name></NameAndStatus></Item>"
+                                 "<Item><Value>4</Value><ExtraValue>42</ExtraValue><NameAndStatus><Name>bar</Name><Status>False</Status></NameAndStatus></Item>"
+                                 "</Items>";
 
 TEST(TestParser, MultipleChunks)
 {
@@ -376,9 +389,9 @@ TEST(TestDecoder, BasicParsing)
     ASSERT_TRUE(parser.init());
     ASSERT_TRUE(parser.parse(good_input, strlen(good_input), 1));
     Items result;
-    ASSERT_NO_THROW( {
-                    ASSERT_TRUE(RGWXMLDecoder::
-                                decode_xml("Items", result, &parser, true));});
+    ASSERT_NO_THROW({
+        ASSERT_TRUE(RGWXMLDecoder::
+                    decode_xml("Items", result, &parser, true));});
     ASSERT_EQ(result.item_list.size(), 4U);
     ASSERT_STREQ(to_string(result).c_str(), expected_output);
 }
@@ -397,9 +410,9 @@ TEST(TestDecoder, MissingMandatoryTag)
     ASSERT_TRUE(parser.
                 parse(missing_value_input, strlen(missing_value_input), 1));
     Items result;
-    ASSERT_ANY_THROW( {
-                     ASSERT_TRUE(RGWXMLDecoder::
-                                 decode_xml("Items", result, &parser, true));});
+    ASSERT_ANY_THROW({
+        ASSERT_TRUE(RGWXMLDecoder::
+                    decode_xml("Items", result, &parser, true));});
 }
 
 TEST(TestDecoder, InvalidValue)
@@ -409,9 +422,9 @@ TEST(TestDecoder, InvalidValue)
     ASSERT_TRUE(parser.
                 parse(invalid_value_input, strlen(invalid_value_input), 1));
     Items result;
-    ASSERT_ANY_THROW( {
-                     ASSERT_TRUE(RGWXMLDecoder::
-                                 decode_xml("Items", result, &parser, true));});
+    ASSERT_ANY_THROW({
+        ASSERT_TRUE(RGWXMLDecoder::
+                    decode_xml("Items", result, &parser, true));});
 }
 
 TEST(TestDecoder, MultipleChunks)
@@ -421,9 +434,9 @@ TEST(TestDecoder, MultipleChunks)
     ASSERT_TRUE(parser.parse(good_input1, strlen(good_input1), 0));
     ASSERT_TRUE(parser.parse(good_input2, strlen(good_input2), 1));
     Items result;
-    ASSERT_NO_THROW( {
-                    ASSERT_TRUE(RGWXMLDecoder::
-                                decode_xml("Items", result, &parser, true));});
+    ASSERT_NO_THROW({
+        ASSERT_TRUE(RGWXMLDecoder::
+                    decode_xml("Items", result, &parser, true));});
     ASSERT_EQ(result.item_list.size(), 4U);
     ASSERT_STREQ(to_string(result).c_str(), expected_output);
 }
@@ -435,9 +448,9 @@ TEST(TestDecoder, Attributes)
     ASSERT_TRUE(parser.
                 parse(input_with_attributes, strlen(input_with_attributes), 1));
     Items result;
-    ASSERT_NO_THROW( {
-                    ASSERT_TRUE(RGWXMLDecoder::
-                                decode_xml("Items", result, &parser, true));});
+    ASSERT_NO_THROW({
+        ASSERT_TRUE(RGWXMLDecoder::
+                    decode_xml("Items", result, &parser, true));});
     ASSERT_EQ(result.item_list.size(), 4U);
     ASSERT_STREQ(to_string_with_attributes(result).c_str(),
                  expected_output_with_attributes);

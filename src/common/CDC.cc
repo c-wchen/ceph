@@ -7,7 +7,7 @@
 #include "FastCDC.h"
 #include "FixedCDC.h"
 
-std::unique_ptr < CDC > CDC::create(const std::string & type,
+std::unique_ptr < CDC > CDC::create(const std::string &type,
                                     int bits, int windowbits)
 {
     if (type == "fastcdc") {
@@ -19,7 +19,7 @@ std::unique_ptr < CDC > CDC::create(const std::string & type,
     return nullptr;
 }
 
-void generate_buffer(int size, bufferlist * outbl, int seed)
+void generate_buffer(int size, bufferlist *outbl, int seed)
 {
     std::mt19937_64 engine, engine2;
     engine.seed(seed);

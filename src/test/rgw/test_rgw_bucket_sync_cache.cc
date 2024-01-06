@@ -18,12 +18,12 @@
 using namespace rgw::bucket_sync;
 
 // helper function to construct rgw_bucket_shard
-static rgw_bucket_shard make_key(const std::string & tenant,
-                                 const std::string & bucket, int shard)
+static rgw_bucket_shard make_key(const std::string &tenant,
+                                 const std::string &bucket, int shard)
 {
     auto key = rgw_bucket_key { tenant, bucket };
     return rgw_bucket_shard {
-    std::move(key), shard};
+        std::move(key), shard};
 }
 
 TEST(BucketSyncCache, ReturnCachedPinned)

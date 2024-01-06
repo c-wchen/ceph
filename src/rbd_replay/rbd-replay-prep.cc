@@ -41,21 +41,26 @@ using namespace rbd_replay;
     exit(1);                       \
   }
 
-class Thread {
-  public:
+class Thread
+{
+public:
     typedef boost::shared_ptr < Thread > ptr;
 
-     Thread(thread_id_t id, uint64_t window)
-    :m_id(id), m_window(window), m_latest_io(IO::ptr()), m_max_ts(0) {
-    } void insert_ts(uint64_t ts) {
+    Thread(thread_id_t id, uint64_t window)
+        : m_id(id), m_window(window), m_latest_io(IO::ptr()), m_max_ts(0)
+    {
+    } void insert_ts(uint64_t ts)
+    {
         if (m_max_ts == 0 || ts > m_max_ts) {
             m_max_ts = ts;
         }
     }
 
-    uint64_t max_ts() const {
+    uint64_t max_ts() const
+    {
         return m_max_ts;
-    } void issued_io(IO::ptr io, std::set < IO::ptr > *latest_ios) {
+    } void issued_io(IO::ptr io, std::set < IO::ptr > *latest_ios)
+    {
         ceph_assert(io);
         if (m_latest_io.get() != NULL) {
             latest_ios->erase(m_latest_io);
@@ -64,34 +69,40 @@ class Thread {
         latest_ios->insert(io);
     }
 
-    thread_id_t id() const {
+    thread_id_t id() const
+    {
         return m_id;
-    } IO::ptr latest_io() {
+    } IO::ptr latest_io()
+    {
         return m_latest_io;
     }
 
-  private:
+private:
     thread_id_t m_id;
     uint64_t m_window;
     IO::ptr m_latest_io;
     uint64_t m_max_ts;
 };
 
-class AnonymizedImage {
-  public:
-    void init(const string & image_name, int index) {
+class AnonymizedImage
+{
+public:
+    void init(const string &image_name, int index)
+    {
         ceph_assert(m_image_name == "");
         m_image_name = image_name;
         ostringstream oss;
-         oss << "image" << index;
-         m_anonymized_image_name = oss.str();
-    } string image_name() const {
+        oss << "image" << index;
+        m_anonymized_image_name = oss.str();
+    } string image_name() const
+    {
         return m_image_name;
-    } pair < string, string > anonymize(string snap_name) {
+    } pair < string, string > anonymize(string snap_name)
+    {
         if (snap_name == "") {
             return pair < string, string > (m_anonymized_image_name, "");
         }
-        string & anonymized_snap_name(m_snaps[snap_name]);
+        string &anonymized_snap_name(m_snaps[snap_name]);
         if (anonymized_snap_name == "") {
             ostringstream oss;
             oss << "snap" << m_snaps.size();
@@ -101,74 +112,69 @@ class AnonymizedImage {
                                         anonymized_snap_name);
     }
 
-  private:
+private:
     string m_image_name;
     string m_anonymized_image_name;
     map < string, string > m_snaps;
 };
 
-static void usage(const string & prog)
+static void usage(const string &prog)
 {
     std::stringstream str;
     str << "Usage: " << prog << " ";
     std::cout << str.
-        str() << "[ --window <seconds> ] [ --anonymize ] [ --verbose ]" << std::
-        endl << std::string(str.str().size(),
-                            ' ') << "<trace-input> <replay-output>" << endl;
+              str() << "[ --window <seconds> ] [ --anonymize ] [ --verbose ]" << std::
+              endl << std::string(str.str().size(),
+                                  ' ') << "<trace-input> <replay-output>" << endl;
 }
 
-__attribute__ ((noreturn))
-static void usage_exit(const string & prog, const string & msg)
+__attribute__((noreturn))
+static void usage_exit(const string &prog, const string &msg)
 {
     cerr << msg << endl;
     usage(prog);
     exit(1);
 }
 
-class Processor {
-  public:
+class Processor
+{
+public:
     Processor()
-    :m_window(1000000000ULL),   // 1 billion nanoseconds, i.e., one second
-    m_io_count(0), m_anonymize(false), m_verbose(false) {
-    } void run(vector < string > args) {
+        : m_window(1000000000ULL),  // 1 billion nanoseconds, i.e., one second
+          m_io_count(0), m_anonymize(false), m_verbose(false)
+    {
+    } void run(vector < string > args)
+    {
         string input_file_name;
         string output_file_name;
         bool got_input = false;
         bool got_output = false;
         for (int i = 1, nargs = args.size(); i < nargs; i++) {
-            const string & arg(args[i]);
+            const string &arg(args[i]);
             if (arg == "--window") {
                 if (i == nargs - 1) {
                     usage_exit(args[0], "--window requires an argument");
                 }
-                m_window = (uint64_t) (1e9 * atof(args[++i].c_str()));
-            }
-            else if (arg.compare(0, 9, "--window=") == 0) {
+                m_window = (uint64_t)(1e9 * atof(args[++i].c_str()));
+            } else if (arg.compare(0, 9, "--window=") == 0) {
                 m_window =
-                    (uint64_t) (1e9 * atof(arg.c_str() + sizeof("--window=")));
-            }
-            else if (arg == "--anonymize") {
+                    (uint64_t)(1e9 * atof(arg.c_str() + sizeof("--window=")));
+            } else if (arg == "--anonymize") {
                 m_anonymize = true;
-            }
-            else if (arg == "--verbose") {
+            } else if (arg == "--verbose") {
                 m_verbose = true;
-            }
-            else if (arg == "-h" || arg == "--help") {
+            } else if (arg == "-h" || arg == "--help") {
                 usage(args[0]);
                 exit(0);
-            }
-            else if (arg.compare(0, 1, "-") == 0) {
+            } else if (arg.compare(0, 1, "-") == 0) {
                 usage_exit(args[0], "Unrecognized argument: " + arg);
-            }
-            else if (!got_input) {
+            } else if (!got_input) {
                 input_file_name = arg;
                 got_input = true;
-            }
-            else if (!got_output) {
+            } else if (!got_output) {
                 output_file_name = arg;
                 got_output = true;
-            }
-            else {
+            } else {
                 usage_exit(args[0], "Too many arguments");
             }
         }
@@ -192,8 +198,8 @@ class Processor {
                     "Error extracting creation time from trace");
 
         struct bt_ctf_iter *itr = bt_ctf_iter_create(ctx,
-                                                     NULL,  // begin_pos
-                                                     NULL); // end_pos
+                                  NULL,  // begin_pos
+                                  NULL); // end_pos
         ceph_assert(itr);
 
         struct bt_iter *bt_itr = bt_ctf_get_iter(itr);
@@ -206,7 +212,8 @@ class Processor {
                     cpp_strerror(errno));
         BOOST_SCOPE_EXIT((fd)) {
             close(fd);
-        } BOOST_SCOPE_EXIT_END;
+        }
+        BOOST_SCOPE_EXIT_END;
 
         write_banner(fd);
 
@@ -240,8 +247,9 @@ class Processor {
         insert_thread_stops(fd);
     }
 
-  private:
-    void write_banner(int fd) {
+private:
+    void write_banner(int fd)
+    {
         bufferlist bl;
         bl.append(rbd_replay::action::BANNER);
         int r = bl.write_fd(fd);
@@ -249,7 +257,8 @@ class Processor {
                     "Error writing to output file: " << cpp_strerror(r));
     }
 
-    void serialize_events(int fd, const IO::ptrs & ptrs) {
+    void serialize_events(int fd, const IO::ptrs &ptrs)
+    {
         for (IO::ptrs::const_iterator it = ptrs.begin(); it != ptrs.end(); ++it) {
             IO::ptr io(*it);
 
@@ -267,10 +276,11 @@ class Processor {
         }
     }
 
-    void insert_thread_stops(int fd) {
+    void insert_thread_stops(int fd)
+    {
         IO::ptrs ios;
         for (map < thread_id_t, Thread::ptr >::const_iterator itr =
-             m_threads.begin(), end = m_threads.end(); itr != end; ++itr) {
+                 m_threads.begin(), end = m_threads.end(); itr != end; ++itr) {
             Thread::ptr thread(itr->second);
             ios.push_back(IO::ptr(new StopThreadIO(next_id(), thread->max_ts(),
                                                    thread->id(),
@@ -279,7 +289,8 @@ class Processor {
         serialize_events(fd, ios);
     }
 
-    void process_event(uint64_t ts, struct bt_ctf_event *evt, IO::ptrs * ios) {
+    void process_event(uint64_t ts, struct bt_ctf_event *evt, IO::ptrs *ios)
+    {
         const char *event_name = bt_ctf_event_name(evt);
         const struct bt_definition *scope_context =
             bt_ctf_get_top_level_scope(evt,
@@ -296,7 +307,7 @@ class Processor {
         ASSERT_EXIT(pthread_id_field != NULL, "Error retrieving thread id");
 
         thread_id_t threadID = bt_ctf_get_uint64(pthread_id_field);
-        Thread::ptr & thread(m_threads[threadID]);
+        Thread::ptr &thread(m_threads[threadID]);
         if (!thread) {
             thread.reset(new Thread(threadID, m_window));
             IO::ptr io(new StartThreadIO(next_id(), ts - 4, threadID));
@@ -304,12 +315,15 @@ class Processor {
         }
         thread->insert_ts(ts);
 
-        class FieldLookup {
-          public:
+        class FieldLookup
+        {
+        public:
             FieldLookup(struct bt_ctf_event *evt,
                         const struct bt_definition *scope)
-            :m_evt(evt), m_scope(scope) {
-            } const char *string(const char *name) {
+                : m_evt(evt), m_scope(scope)
+            {
+            } const char *string(const char *name)
+            {
                 const struct bt_definition *field =
                     bt_ctf_get_field(m_evt, m_scope, name);
                 ASSERT_EXIT(field != NULL,
@@ -324,7 +338,8 @@ class Processor {
                 return c;
             }
 
-            int64_t int64(const char *name) {
+            int64_t int64(const char *name)
+            {
                 const struct bt_definition *field =
                     bt_ctf_get_field(m_evt, m_scope, name);
                 ASSERT_EXIT(field != NULL,
@@ -338,7 +353,8 @@ class Processor {
                 return val;
             }
 
-            uint64_t uint64(const char *name) {
+            uint64_t uint64(const char *name)
+            {
                 const struct bt_definition *field =
                     bt_ctf_get_field(m_evt, m_scope, name);
                 ASSERT_EXIT(field != NULL,
@@ -352,7 +368,7 @@ class Processor {
                 return val;
             }
 
-          private:
+        private:
             struct bt_ctf_event *m_evt;
             const struct bt_definition *m_scope;
         } fields(evt, scope_fields);
@@ -370,16 +386,14 @@ class Processor {
                                    readonly));
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
-        }
-        else if (strcmp(event_name, "librbd:open_image_exit") == 0) {
+        } else if (strcmp(event_name, "librbd:open_image_exit") == 0) {
             completed(thread->latest_io());
             boost::shared_ptr < OpenImageIO > io(boost::dynamic_pointer_cast <
                                                  OpenImageIO >
                                                  (thread->latest_io()));
             ceph_assert(io);
             m_open_images.insert(io->imagectx());
-        }
-        else if (strcmp(event_name, "librbd:close_image_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:close_image_enter") == 0) {
             imagectx_id_t imagectx = fields.uint64("imagectx");
             action_id_t ionum = next_id();
             IO::ptr io(new
@@ -387,16 +401,14 @@ class Processor {
                                     imagectx));
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(thread->latest_io());
-        }
-        else if (strcmp(event_name, "librbd:close_image_exit") == 0) {
+        } else if (strcmp(event_name, "librbd:close_image_exit") == 0) {
             completed(thread->latest_io());
             boost::shared_ptr < CloseImageIO > io(boost::dynamic_pointer_cast <
                                                   CloseImageIO >
                                                   (thread->latest_io()));
             ceph_assert(io);
             m_open_images.erase(io->imagectx());
-        }
-        else if (strcmp(event_name, "librbd:aio_open_image_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:aio_open_image_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.uint64("read_only");
@@ -411,8 +423,7 @@ class Processor {
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
             m_pending_ios[completion] = io;
-        }
-        else if (strcmp(event_name, "librbd:aio_close_image_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:aio_close_image_enter") == 0) {
             imagectx_id_t imagectx = fields.uint64("imagectx");
             uint64_t completion = fields.uint64("completion");
             action_id_t ionum = next_id();
@@ -422,9 +433,8 @@ class Processor {
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(thread->latest_io());
             m_pending_ios[completion] = io;
-        }
-        else if (strcmp(event_name, "librbd:read_enter") == 0 ||
-                 strcmp(event_name, "librbd:read2_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:read_enter") == 0 ||
+                   strcmp(event_name, "librbd:read2_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.int64("read_only");
@@ -438,12 +448,10 @@ class Processor {
                               imagectx, offset, length));
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
-        }
-        else if (strcmp(event_name, "librbd:read_exit") == 0) {
+        } else if (strcmp(event_name, "librbd:read_exit") == 0) {
             completed(thread->latest_io());
-        }
-        else if (strcmp(event_name, "librbd:write_enter") == 0 ||
-                 strcmp(event_name, "librbd:write2_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:write_enter") == 0 ||
+                   strcmp(event_name, "librbd:write2_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.int64("read_only");
@@ -456,11 +464,9 @@ class Processor {
                                    imagectx, offset, length));
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
-        }
-        else if (strcmp(event_name, "librbd:write_exit") == 0) {
+        } else if (strcmp(event_name, "librbd:write_exit") == 0) {
             completed(thread->latest_io());
-        }
-        else if (strcmp(event_name, "librbd:discard_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:discard_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.int64("read_only");
@@ -473,12 +479,10 @@ class Processor {
                                      imagectx, offset, length));
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
-        }
-        else if (strcmp(event_name, "librbd:discard_exit") == 0) {
+        } else if (strcmp(event_name, "librbd:discard_exit") == 0) {
             completed(thread->latest_io());
-        }
-        else if (strcmp(event_name, "librbd:aio_read_enter") == 0 ||
-                 strcmp(event_name, "librbd:aio_read2_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:aio_read_enter") == 0 ||
+                   strcmp(event_name, "librbd:aio_read2_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.int64("read_only");
@@ -493,9 +497,8 @@ class Processor {
             ios->push_back(io);
             thread->issued_io(io, &m_latest_ios);
             m_pending_ios[completion] = io;
-        }
-        else if (strcmp(event_name, "librbd:aio_write_enter") == 0 ||
-                 strcmp(event_name, "librbd:aio_write2_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:aio_write_enter") == 0 ||
+                   strcmp(event_name, "librbd:aio_write2_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.int64("read_only");
@@ -510,8 +513,7 @@ class Processor {
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
             m_pending_ios[completion] = io;
-        }
-        else if (strcmp(event_name, "librbd:aio_discard_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:aio_discard_enter") == 0) {
             string name(fields.string("name"));
             string snap_name(fields.string("snap_name"));
             bool readonly = fields.int64("read_only");
@@ -527,8 +529,7 @@ class Processor {
             thread->issued_io(io, &m_latest_ios);
             ios->push_back(io);
             m_pending_ios[completion] = io;
-        }
-        else if (strcmp(event_name, "librbd:aio_complete_enter") == 0) {
+        } else if (strcmp(event_name, "librbd:aio_complete_enter") == 0) {
             uint64_t completion = fields.uint64("completion");
             map < uint64_t, IO::ptr >::iterator itr =
                 m_pending_ios.find(completion);
@@ -540,13 +541,15 @@ class Processor {
         }
     }
 
-    action_id_t next_id() {
+    action_id_t next_id()
+    {
         action_id_t id = m_io_count;
         m_io_count += 2;
         return id;
     }
 
-    void completed(IO::ptr io) {
+    void completed(IO::ptr io)
+    {
         uint64_t limit = (io->start_time() < m_window ?
                           0 : io->start_time() - m_window);
         for (io_set_t::iterator itr = m_recent_completions.begin();
@@ -556,19 +559,19 @@ class Processor {
                  io->dependencies().count(recent_comp) != 0) &&
                 m_latest_ios.count(recent_comp) == 0) {
                 m_recent_completions.erase(itr++);
-            }
-            else {
+            } else {
                 ++itr;
             }
         }
         m_recent_completions.insert(io);
     }
 
-    pair < string, string > map_image_snap(string image_name, string snap_name) {
+    pair < string, string > map_image_snap(string image_name, string snap_name)
+    {
         if (!m_anonymize) {
             return pair < string, string > (image_name, snap_name);
         }
-        AnonymizedImage & m(m_anonymized_images[image_name]);
+        AnonymizedImage &m(m_anonymized_images[image_name]);
         if (m.image_name() == "") {
             m.init(image_name, m_anonymized_images.size());
         }
@@ -578,9 +581,10 @@ class Processor {
     void require_image(uint64_t ts,
                        Thread::ptr thread,
                        imagectx_id_t imagectx,
-                       const string & name,
-                       const string & snap_name,
-                       bool readonly, IO::ptrs * ios) {
+                       const string &name,
+                       const string &snap_name,
+                       bool readonly, IO::ptrs *ios)
+    {
         ceph_assert(thread);
         if (m_open_images.count(imagectx) > 0) {
             return;

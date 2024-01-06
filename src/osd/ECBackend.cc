@@ -52,80 +52,81 @@ using ceph::bufferptr;
 using ceph::ErasureCodeInterfaceRef;
 using ceph::Formatter;
 
-static ostream & _prefix(std::ostream * _dout, ECBackend * pgb)
+static ostream &_prefix(std::ostream *_dout, ECBackend *pgb)
 {
     return pgb->get_parent()->gen_dbg_prefix(*_dout);
 }
 
-struct ECRecoveryHandle:public PGBackend::RecoveryHandle {
+struct ECRecoveryHandle: public PGBackend::RecoveryHandle {
     list < ECBackend::RecoveryOp > ops;
 };
 
-ostream & operator<<(ostream & lhs, const ECBackend::pipeline_state_t & rhs)
+ostream &operator<<(ostream &lhs, const ECBackend::pipeline_state_t &rhs)
 {
     switch (rhs.pipeline_state) {
-    case ECBackend::pipeline_state_t::CACHE_VALID:
-        return lhs << "CACHE_VALID";
-    case ECBackend::pipeline_state_t::CACHE_INVALID:
-        return lhs << "CACHE_INVALID";
-    default:
-        ceph_abort_msg("invalid pipeline state");
+        case ECBackend::pipeline_state_t::CACHE_VALID:
+            return lhs << "CACHE_VALID";
+        case ECBackend::pipeline_state_t::CACHE_INVALID:
+            return lhs << "CACHE_INVALID";
+        default:
+            ceph_abort_msg("invalid pipeline state");
     }
     return lhs;                 // unreachable
 }
 
-static ostream & operator<<(ostream & lhs, const map < pg_shard_t,
-                            bufferlist > &rhs)
+static ostream &operator<<(ostream &lhs, const map < pg_shard_t,
+                           bufferlist > &rhs)
 {
     lhs << "[";
     for (map < pg_shard_t, bufferlist >::const_iterator i = rhs.begin();
          i != rhs.end(); ++i) {
-        if (i != rhs.begin())
+        if (i != rhs.begin()) {
             lhs << ", ";
+        }
         lhs << make_pair(i->first, i->second.length());
     }
     return lhs << "]";
 }
 
-static ostream & operator<<(ostream & lhs, const map < int, bufferlist > &rhs)
+static ostream &operator<<(ostream &lhs, const map < int, bufferlist > &rhs)
 {
     lhs << "[";
     for (map < int, bufferlist >::const_iterator i = rhs.begin();
          i != rhs.end(); ++i) {
-        if (i != rhs.begin())
+        if (i != rhs.begin()) {
             lhs << ", ";
+        }
         lhs << make_pair(i->first, i->second.length());
     }
     return lhs << "]";
 }
 
-static ostream & operator<<(ostream & lhs,
-                            const boost::tuple < uint64_t, uint64_t,
-                            map < pg_shard_t, bufferlist > >&rhs)
+static ostream &operator<<(ostream &lhs,
+                           const boost::tuple < uint64_t, uint64_t,
+                           map < pg_shard_t, bufferlist > > &rhs)
 {
     return lhs << "(" << rhs.get < 0 > () << ", "
-        << rhs.get < 1 > () << ", " << rhs.get < 2 > () << ")";
+           << rhs.get < 1 > () << ", " << rhs.get < 2 > () << ")";
 }
 
-ostream & operator<<(ostream & lhs, const ECBackend::read_request_t & rhs)
+ostream &operator<<(ostream &lhs, const ECBackend::read_request_t &rhs)
 {
     return lhs << "read_request_t(to_read=[" << rhs.to_read << "]"
-        << ", need=" << rhs.need << ", want_attrs=" << rhs.want_attrs << ")";
+           << ", need=" << rhs.need << ", want_attrs=" << rhs.want_attrs << ")";
 }
 
-ostream & operator<<(ostream & lhs, const ECBackend::read_result_t & rhs)
+ostream &operator<<(ostream &lhs, const ECBackend::read_result_t &rhs)
 {
     lhs << "read_result_t(r=" << rhs.r << ", errors=" << rhs.errors;
     if (rhs.attrs) {
         lhs << ", attrs=" << *(rhs.attrs);
-    }
-    else {
+    } else {
         lhs << ", noattrs";
     }
     return lhs << ", returned=" << rhs.returned << ")";
 }
 
-ostream & operator<<(ostream & lhs, const ECBackend::ReadOp & rhs)
+ostream &operator<<(ostream &lhs, const ECBackend::ReadOp &rhs)
 {
     lhs << "ReadOp(tid=" << rhs.tid;
     if (rhs.op && rhs.op->get_req()) {
@@ -133,14 +134,14 @@ ostream & operator<<(ostream & lhs, const ECBackend::ReadOp & rhs)
         rhs.op->get_req()->print(lhs);
     }
     return lhs << ", to_read=" << rhs.to_read
-        << ", complete=" << rhs.complete
-        << ", priority=" << rhs.priority
-        << ", obj_to_source=" << rhs.obj_to_source
-        << ", source_to_obj=" << rhs.source_to_obj
-        << ", in_progress=" << rhs.in_progress << ")";
+           << ", complete=" << rhs.complete
+           << ", priority=" << rhs.priority
+           << ", obj_to_source=" << rhs.obj_to_source
+           << ", source_to_obj=" << rhs.source_to_obj
+           << ", in_progress=" << rhs.in_progress << ")";
 }
 
-void ECBackend::ReadOp::dump(Formatter * f) const const
+void ECBackend::ReadOp::dump(Formatter *f) const const
 {
     f->dump_unsigned("tid", tid);
     if (op && op->get_req()) {
@@ -154,7 +155,7 @@ void ECBackend::ReadOp::dump(Formatter * f) const const
     f->dump_stream("in_progress") << in_progress;
 }
 
-ostream & operator<<(ostream & lhs, const ECBackend::Op & rhs)
+ostream &operator<<(ostream &lhs, const ECBackend::Op &rhs)
 {
     lhs << "Op(" << rhs.hoid
         << " v=" << rhs.version
@@ -177,22 +178,22 @@ ostream & operator<<(ostream & lhs, const ECBackend::Op & rhs)
     return lhs;
 }
 
-ostream & operator<<(ostream & lhs, const ECBackend::RecoveryOp & rhs)
+ostream &operator<<(ostream &lhs, const ECBackend::RecoveryOp &rhs)
 {
     return lhs << "RecoveryOp("
-        << "hoid=" << rhs.hoid
-        << " v=" << rhs.v
-        << " missing_on=" << rhs.missing_on
-        << " missing_on_shards=" << rhs.missing_on_shards
-        << " recovery_info=" << rhs.recovery_info
-        << " recovery_progress=" << rhs.recovery_progress
-        << " obc refcount=" << rhs.obc.use_count()
-        << " state=" << ECBackend::RecoveryOp::tostr(rhs.state)
-        << " waiting_on_pushes=" << rhs.waiting_on_pushes
-        << " extent_requested=" << rhs.extent_requested << ")";
+           << "hoid=" << rhs.hoid
+           << " v=" << rhs.v
+           << " missing_on=" << rhs.missing_on
+           << " missing_on_shards=" << rhs.missing_on_shards
+           << " recovery_info=" << rhs.recovery_info
+           << " recovery_progress=" << rhs.recovery_progress
+           << " obc refcount=" << rhs.obc.use_count()
+           << " state=" << ECBackend::RecoveryOp::tostr(rhs.state)
+           << " waiting_on_pushes=" << rhs.waiting_on_pushes
+           << " extent_requested=" << rhs.extent_requested << ")";
 }
 
-void ECBackend::RecoveryOp::dump(Formatter * f) const const
+void ECBackend::RecoveryOp::dump(Formatter *f) const const
 {
     f->dump_stream("hoid") << hoid;
     f->dump_stream("v") << v;
@@ -205,52 +206,54 @@ void ECBackend::RecoveryOp::dump(Formatter * f) const const
     f->dump_stream("extent_requested") << extent_requested;
 }
 
-ECBackend::ECBackend(PGBackend::Listener * pg,
-                     const coll_t & coll,
-                     ObjectStore::CollectionHandle & ch,
-                     ObjectStore * store,
-                     CephContext * cct,
+ECBackend::ECBackend(PGBackend::Listener *pg,
+                     const coll_t &coll,
+                     ObjectStore::CollectionHandle &ch,
+                     ObjectStore *store,
+                     CephContext *cct,
                      ErasureCodeInterfaceRef ec_impl, uint64_t stripe_width)
-:PGBackend(cct, pg, store, coll, ch),
-ec_impl(ec_impl), sinfo(ec_impl->get_data_chunk_count(), stripe_width)
+    : PGBackend(cct, pg, store, coll, ch),
+      ec_impl(ec_impl), sinfo(ec_impl->get_data_chunk_count(), stripe_width)
 {
     ceph_assert((ec_impl->get_data_chunk_count() *
                  ec_impl->get_chunk_size(stripe_width)) == stripe_width);
 }
 
-PGBackend::RecoveryHandle * ECBackend::open_recovery_op()
+PGBackend::RecoveryHandle *ECBackend::open_recovery_op()
 {
     return new ECRecoveryHandle;
 }
 
-void ECBackend::_failed_push(const hobject_t & hoid,
+void ECBackend::_failed_push(const hobject_t &hoid,
                              pair < RecoveryMessages *,
-                             ECBackend::read_result_t & >&in)
+                             ECBackend::read_result_t & > &in)
 {
-    ECBackend::read_result_t & res = in.second;
+    ECBackend::read_result_t &res = in.second;
     dout(10) << __func__ << ": Read error " << hoid << " r="
-        << res.r << " errors=" << res.errors << dendl;
+             << res.r << " errors=" << res.errors << dendl;
     dout(10) << __func__ << ": canceling recovery op for obj " << hoid << dendl;
     ceph_assert(recovery_ops.count(hoid));
     eversion_t v = recovery_ops[hoid].v;
     recovery_ops.erase(hoid);
 
     set < pg_shard_t > fl;
-  for (auto && i:res.errors) {
+    for (auto && i : res.errors) {
         fl.insert(i.first);
     }
     get_parent()->on_failed_pull(fl, hoid, v);
 }
 
-struct OnRecoveryReadComplete:public GenContext < pair < RecoveryMessages *,
+struct OnRecoveryReadComplete: public GenContext < pair < RecoveryMessages *,
     ECBackend::read_result_t & >&> {
     ECBackend *pg;
     hobject_t hoid;
-     OnRecoveryReadComplete(ECBackend * pg, const hobject_t & hoid)
-    :pg(pg), hoid(hoid) {
+    OnRecoveryReadComplete(ECBackend *pg, const hobject_t &hoid)
+        : pg(pg), hoid(hoid)
+    {
     } void finish(pair < RecoveryMessages *,
-                  ECBackend::read_result_t & >&in) override {
-        ECBackend::read_result_t & res = in.second;
+                  ECBackend::read_result_t & > &in) override
+    {
+        ECBackend::read_result_t &res = in.second;
         if (!(res.r == 0 && res.errors.empty())) {
             pg->_failed_push(hoid, in);
             return;
@@ -265,37 +268,40 @@ struct OnRecoveryReadComplete:public GenContext < pair < RecoveryMessages *,
 struct RecoveryMessages {
     map < hobject_t, ECBackend::read_request_t > reads;
     map < hobject_t, set < int >>want_to_read;
-    void read(ECBackend * ec,
-              const hobject_t & hoid, uint64_t off, uint64_t len,
+    void read(ECBackend *ec,
+              const hobject_t &hoid, uint64_t off, uint64_t len,
               set < int >&&_want_to_read,
-              const map < pg_shard_t, vector < pair < int, int >>>&need,
-              bool attrs) {
+              const map < pg_shard_t, vector < pair < int, int >>> &need,
+              bool attrs)
+    {
         list < boost::tuple < uint64_t, uint64_t, uint32_t > >to_read;
         to_read.push_back(boost::make_tuple(off, len, 0));
         ceph_assert(!reads.count(hoid));
         want_to_read.insert(make_pair(hoid, std::move(_want_to_read)));
         reads.insert(make_pair(hoid,
                                ECBackend::read_request_t(to_read,
-                                                         need,
-                                                         attrs,
-                                                         new
-                                                         OnRecoveryReadComplete
-                                                         (ec, hoid))));
+                                       need,
+                                       attrs,
+                                       new
+                                       OnRecoveryReadComplete
+                                       (ec, hoid))));
     } map < pg_shard_t, vector < PushOp > >pushes;
     map < pg_shard_t, vector < PushReplyOp > >push_replies;
     ObjectStore::Transaction t;
-    RecoveryMessages() {
+    RecoveryMessages()
+    {
     }
-    ~RecoveryMessages() {
+    ~RecoveryMessages()
+    {
     }
 };
 
-void ECBackend::handle_recovery_push(const PushOp & op,
-                                     RecoveryMessages * m, bool is_repair)
+void ECBackend::handle_recovery_push(const PushOp &op,
+                                     RecoveryMessages *m, bool is_repair)
 {
     if (get_parent()->check_failsafe_full()) {
         dout(10) << __func__ <<
-            " Out of space (failsafe) processing push request." << dendl;
+                 " Out of space (failsafe) processing push request." << dendl;
         ceph_abort();
     }
 
@@ -304,15 +310,14 @@ void ECBackend::handle_recovery_push(const PushOp & op,
     if (oneshot) {
         tobj = ghobject_t(op.soid, ghobject_t::NO_GEN,
                           get_parent()->whoami_shard().shard);
-    }
-    else {
+    } else {
         tobj = ghobject_t(get_parent()->get_temp_recovery_object(op.soid,
-                                                                 op.version),
+                          op.version),
                           ghobject_t::NO_GEN,
                           get_parent()->whoami_shard().shard);
         if (op.before_progress.first) {
             dout(10) << __func__ << ": Adding oid "
-                << tobj.hobj << " in the temp collection" << dendl;
+                     << tobj.hobj << " in the temp collection" << dendl;
             add_temp_obj(tobj.hobj);
         }
     }
@@ -328,8 +333,7 @@ void ECBackend::handle_recovery_push(const PushOp & op,
         ceph_assert(op.data.length() == (end - start));
 
         m->t.write(coll, tobj, start, op.data.length(), op.data);
-    }
-    else {
+    } else {
         ceph_assert(op.data.length() == 0);
     }
 
@@ -338,10 +342,10 @@ void ECBackend::handle_recovery_push(const PushOp & op,
         get_parent()->pg_add_num_bytes(op.data.length() *
                                        get_ec_data_chunk_count());
         dout(10) << __func__ << " " << op.
-            soid << " add new actual data by " << op.data.length()
-            << " add new num_bytes by " << op.data.length() *
-            get_ec_data_chunk_count()
-            << dendl;
+                 soid << " add new actual data by " << op.data.length()
+                 << " add new num_bytes by " << op.data.length() *
+                 get_ec_data_chunk_count()
+                 << dendl;
     }
 
     if (op.before_progress.first) {
@@ -351,7 +355,7 @@ void ECBackend::handle_recovery_push(const PushOp & op,
 
     if (op.after_progress.data_complete && !oneshot) {
         dout(10) << __func__ << ": Removing oid "
-            << tobj.hobj << " from the temp collection" << dendl;
+                 << tobj.hobj << " from the temp collection" << dendl;
         clear_temp_obj(tobj.hobj);
         m->t.remove(coll,
                     ghobject_t(op.soid, ghobject_t::NO_GEN,
@@ -365,17 +369,18 @@ void ECBackend::handle_recovery_push(const PushOp & op,
         if ((get_parent()->pgb_is_primary())) {
             ceph_assert(recovery_ops.count(op.soid));
             ceph_assert(recovery_ops[op.soid].obc);
-            if (get_parent()->pg_is_repair() || is_repair)
+            if (get_parent()->pg_is_repair() || is_repair) {
                 get_parent()->inc_osd_stat_repaired();
+            }
             get_parent()->on_local_recover(op.soid,
                                            op.recovery_info,
                                            recovery_ops[op.soid].obc,
                                            false, &m->t);
-        }
-        else {
+        } else {
             // If primary told us this is a repair, bump osd_stat_t::num_objects_repaired
-            if (is_repair)
+            if (is_repair) {
                 get_parent()->inc_osd_stat_repaired();
+            }
             get_parent()->on_local_recover(op.soid,
                                            op.recovery_info,
                                            ObjectContextRef(), false, &m->t);
@@ -390,10 +395,10 @@ void ECBackend::handle_recovery_push(const PushOp & op,
                     get_parent()->pg_sub_num_bytes(st.st_size *
                                                    get_ec_data_chunk_count());
                     dout(10) << __func__ << " " << op.
-                        soid << " sub actual data by " << st.
-                        st_size << " sub num_bytes by " << st.st_size *
-                        get_ec_data_chunk_count()
-                        << dendl;
+                             soid << " sub actual data by " << st.
+                             st_size << " sub num_bytes by " << st.st_size *
+                             get_ec_data_chunk_count()
+                             << dendl;
                 }
             }
         }
@@ -402,33 +407,34 @@ void ECBackend::handle_recovery_push(const PushOp & op,
     m->push_replies[get_parent()->primary_shard()].back().soid = op.soid;
 }
 
-void ECBackend::handle_recovery_push_reply(const PushReplyOp & op,
-                                           pg_shard_t from,
-                                           RecoveryMessages * m)
+void ECBackend::handle_recovery_push_reply(const PushReplyOp &op,
+        pg_shard_t from,
+        RecoveryMessages *m)
 {
-    if (!recovery_ops.count(op.soid))
+    if (!recovery_ops.count(op.soid)) {
         return;
-    RecoveryOp & rop = recovery_ops[op.soid];
+    }
+    RecoveryOp &rop = recovery_ops[op.soid];
     ceph_assert(rop.waiting_on_pushes.count(from));
     rop.waiting_on_pushes.erase(from);
     continue_recovery_op(rop, m);
 }
 
-void ECBackend::handle_recovery_read_complete(const hobject_t & hoid,
-                                              boost::tuple < uint64_t, uint64_t,
-                                              map < pg_shard_t,
-                                              bufferlist > >&to_read,
-                                              std::optional < map < string,
-                                              bufferlist, less <>> >attrs,
-                                              RecoveryMessages * m)
+void ECBackend::handle_recovery_read_complete(const hobject_t &hoid,
+        boost::tuple < uint64_t, uint64_t,
+        map < pg_shard_t,
+        bufferlist > > &to_read,
+        std::optional < map < string,
+        bufferlist, less <>> >attrs,
+        RecoveryMessages *m)
 {
     dout(10) << __func__ << ": returned " << hoid << " "
-        << "(" << to_read.get < 0 > ()
-        << ", " << to_read.get < 1 > ()
-        << ", " << to_read.get < 2 > ()
-        << ")" << dendl;
+             << "(" << to_read.get < 0 > ()
+             << ", " << to_read.get < 1 > ()
+             << ", " << to_read.get < 2 > ()
+             << ")" << dendl;
     ceph_assert(recovery_ops.count(hoid));
-    RecoveryOp & op = recovery_ops[hoid];
+    RecoveryOp &op = recovery_ops[hoid];
     ceph_assert(op.returned_data.empty());
     map < int, bufferlist * >target;
     for (set < shard_id_t >::iterator i = op.missing_on_shards.begin();
@@ -437,7 +443,7 @@ void ECBackend::handle_recovery_read_complete(const hobject_t & hoid,
     }
     map < int, bufferlist > from;
     for (map < pg_shard_t, bufferlist >::iterator i =
-         to_read.get < 2 > ().begin(); i != to_read.get < 2 > ().end(); ++i) {
+             to_read.get < 2 > ().begin(); i != to_read.get < 2 > ().end(); ++i) {
         from[i->first.shard] = std::move(i->second);
     }
     dout(10) << __func__ << ": " << from << dendl;
@@ -481,15 +487,17 @@ void ECBackend::handle_recovery_read_complete(const hobject_t & hoid,
     continue_recovery_op(op, m);
 }
 
-struct SendPushReplies:public Context {
-    PGBackend::Listener * l;
+struct SendPushReplies: public Context {
+    PGBackend::Listener *l;
     epoch_t epoch;
     map < int, MOSDPGPushReply * >replies;
-    SendPushReplies(PGBackend::Listener * l,
+    SendPushReplies(PGBackend::Listener *l,
                     epoch_t epoch,
-                    map < int, MOSDPGPushReply * >&in):l(l), epoch(epoch) {
+                    map < int, MOSDPGPushReply * > &in): l(l), epoch(epoch)
+    {
         replies.swap(in);
-    } void finish(int) override {
+    } void finish(int) override
+    {
         std::vector < std::pair < int, Message * >>messages;
         messages.reserve(replies.size());
         for (map < int, MOSDPGPushReply * >::iterator i = replies.begin();
@@ -501,7 +509,8 @@ struct SendPushReplies:public Context {
         }
         replies.clear();
     }
-    ~SendPushReplies()override {
+    ~SendPushReplies()override
+    {
         for (map < int, MOSDPGPushReply * >::iterator i = replies.begin();
              i != replies.end(); ++i) {
             i->second->put();
@@ -510,7 +519,7 @@ struct SendPushReplies:public Context {
     }
 };
 
-void ECBackend::dispatch_recovery_messages(RecoveryMessages & m, int priority)
+void ECBackend::dispatch_recovery_messages(RecoveryMessages &m, int priority)
 {
     for (map < pg_shard_t, vector < PushOp > >::iterator i = m.pushes.begin();
          i != m.pushes.end(); m.pushes.erase(i++)) {
@@ -527,7 +536,7 @@ void ECBackend::dispatch_recovery_messages(RecoveryMessages & m, int priority)
     }
     map < int, MOSDPGPushReply * >replies;
     for (map < pg_shard_t, vector < PushReplyOp > >::iterator i =
-         m.push_replies.begin();
+             m.push_replies.begin();
          i != m.push_replies.end(); m.push_replies.erase(i++)) {
         MOSDPGPushReply *msg = new MOSDPGPushReply();
         msg->set_priority(priority);
@@ -543,24 +552,25 @@ void ECBackend::dispatch_recovery_messages(RecoveryMessages & m, int priority)
     if (!replies.empty()) {
         (m.t).register_on_complete(get_parent()->
                                    bless_context(new
-                                                 SendPushReplies(get_parent(),
-                                                                 get_osdmap_epoch
-                                                                 (), replies)));
+                                           SendPushReplies(get_parent(),
+                                                   get_osdmap_epoch
+                                                   (), replies)));
         get_parent()->queue_transaction(std::move(m.t));
     }
 
-    if (m.reads.empty())
+    if (m.reads.empty()) {
         return;
+    }
     start_read_op(priority,
                   m.want_to_read, m.reads, OpRequestRef(), false, true);
 }
 
-void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
+void ECBackend::continue_recovery_op(RecoveryOp &op, RecoveryMessages *m)
 {
     dout(10) << __func__ << ": continuing " << op << dendl;
     while (1) {
         switch (op.state) {
-        case RecoveryOp::IDLE:{
+            case RecoveryOp::IDLE: {
                 // start read
                 op.state = RecoveryOp::READING;
                 ceph_assert(!op.recovery_progress.data_complete);
@@ -574,14 +584,14 @@ void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
                     op.hinfo = get_hash_info(op.hoid);
                     if (!op.hinfo) {
                         derr << __func__ << ": " << op.
-                            hoid << " has inconsistent hinfo" << dendl;
+                             hoid << " has inconsistent hinfo" << dendl;
                         ceph_assert(recovery_ops.count(op.hoid));
                         eversion_t v = recovery_ops[op.hoid].v;
                         recovery_ops.erase(op.hoid);
-                        get_parent()->on_failed_pull( {
-                                                     get_parent()->
-                                                     whoami_shard()}
-                                                     , op.hoid, v);
+                        get_parent()->on_failed_pull({
+                            get_parent()->
+                            whoami_shard()}
+                        , op.hoid, v);
                         return;
                     }
                     op.xattrs = op.obc->attr_cache;
@@ -596,7 +606,7 @@ void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
                     // we must have lost a recovery source
                     ceph_assert(!op.recovery_progress.first);
                     dout(10) << __func__ << ": canceling recovery op for obj "
-                        << op.hoid << dendl;
+                             << op.hoid << dendl;
                     get_parent()->cancel_pull(op.hoid);
                     recovery_ops.erase(op.hoid);
                     return;
@@ -611,7 +621,7 @@ void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
                 dout(10) << __func__ << ": IDLE return " << op << dendl;
                 return;
             }
-        case RecoveryOp::READING:{
+            case RecoveryOp::READING: {
                 // read completed, start write
                 ceph_assert(op.xattrs.size());
                 ceph_assert(op.returned_data.size());
@@ -629,36 +639,37 @@ void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
                      mi != op.missing_on.end(); ++mi) {
                     ceph_assert(op.returned_data.count(mi->shard));
                     m->pushes[*mi].push_back(PushOp());
-                    PushOp & pop = m->pushes[*mi].back();
+                    PushOp &pop = m->pushes[*mi].back();
                     pop.soid = op.hoid;
                     pop.version = op.v;
                     pop.data = op.returned_data[mi->shard];
                     dout(10) << __func__ << ": before_progress=" << op.
-                        recovery_progress << ", after_progress=" <<
-                        after_progress << ", pop.data.length()=" << pop.data.
-                        length()
-                        << ", size=" << op.obc->obs.oi.size << dendl;
+                             recovery_progress << ", after_progress=" <<
+                             after_progress << ", pop.data.length()=" << pop.data.
+                             length()
+                             << ", size=" << op.obc->obs.oi.size << dendl;
                     ceph_assert(pop.data.length() ==
                                 sinfo.
                                 aligned_logical_offset_to_chunk_offset
                                 (after_progress.data_recovered_to -
                                  op.recovery_progress.data_recovered_to)
-                        );
+                               );
                     if (pop.data.length())
                         pop.data_included.insert(sinfo.
                                                  aligned_logical_offset_to_chunk_offset
                                                  (op.recovery_progress.
                                                   data_recovered_to),
                                                  pop.data.length()
-                            );
+                                                );
                     if (op.recovery_progress.first) {
                         pop.attrset = op.xattrs;
                     }
                     pop.recovery_info = op.recovery_info;
                     pop.before_progress = op.recovery_progress;
                     pop.after_progress = after_progress;
-                    if (*mi != get_parent()->primary_shard())
+                    if (*mi != get_parent()->primary_shard()) {
                         get_parent()->begin_peer_recover(*mi, op.hoid);
+                    }
                 }
                 op.returned_data.clear();
                 op.waiting_on_pushes = op.missing_on;
@@ -666,16 +677,16 @@ void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
                 dout(10) << __func__ << ": READING return " << op << dendl;
                 return;
             }
-        case RecoveryOp::WRITING:{
+            case RecoveryOp::WRITING: {
                 if (op.waiting_on_pushes.empty()) {
                     if (op.recovery_progress.data_complete) {
                         op.state = RecoveryOp::COMPLETE;
                         for (set < pg_shard_t >::iterator i =
-                             op.missing_on.begin(); i != op.missing_on.end();
+                                 op.missing_on.begin(); i != op.missing_on.end();
                              ++i) {
                             if (*i != get_parent()->primary_shard()) {
                                 dout(10) << __func__ << ": on_peer_recover on "
-                                    << *i << ", obj " << op.hoid << dendl;
+                                         << *i << ", obj " << op.hoid << dendl;
                                 get_parent()->on_peer_recover(*i, op.hoid,
                                                               op.recovery_info);
                             }
@@ -684,33 +695,33 @@ void ECBackend::continue_recovery_op(RecoveryOp & op, RecoveryMessages * m)
                         stat.num_bytes_recovered = op.recovery_info.size;
                         stat.num_keys_recovered = 0;    // ??? op ... omap_entries.size(); ?
                         stat.num_objects_recovered = 1;
-                        if (get_parent()->pg_is_repair())
+                        if (get_parent()->pg_is_repair()) {
                             stat.num_objects_repaired = 1;
+                        }
                         get_parent()->on_global_recover(op.hoid, stat, false);
                         dout(10) << __func__ << ": WRITING return " << op <<
-                            dendl;
+                                 dendl;
                         recovery_ops.erase(op.hoid);
                         return;
-                    }
-                    else {
+                    } else {
                         op.state = RecoveryOp::IDLE;
                         dout(10) << __func__ << ": WRITING continue " << op <<
-                            dendl;
+                                 dendl;
                         continue;
                     }
                 }
                 return;
             }
             // should never be called once complete
-        case RecoveryOp::COMPLETE:
-        default:{
+            case RecoveryOp::COMPLETE:
+            default: {
                 ceph_abort();
             };
         }
     }
 }
 
-void ECBackend::run_recovery_op(RecoveryHandle * _h, int priority)
+void ECBackend::run_recovery_op(RecoveryHandle *_h, int priority)
 {
     ECRecoveryHandle *h = static_cast < ECRecoveryHandle * >(_h);
     RecoveryMessages m;
@@ -718,7 +729,7 @@ void ECBackend::run_recovery_op(RecoveryHandle * _h, int priority)
          i != h->ops.end(); ++i) {
         dout(10) << __func__ << ": starting " << *i << dendl;
         ceph_assert(!recovery_ops.count(i->hoid));
-        RecoveryOp & op =
+        RecoveryOp &op =
             recovery_ops.insert(make_pair(i->hoid, *i)).first->second;
         continue_recovery_op(op, &m);
     }
@@ -728,10 +739,10 @@ void ECBackend::run_recovery_op(RecoveryHandle * _h, int priority)
     delete _h;
 }
 
-int ECBackend::recover_object(const hobject_t & hoid,
+int ECBackend::recover_object(const hobject_t &hoid,
                               eversion_t v,
                               ObjectContextRef head,
-                              ObjectContextRef obc, RecoveryHandle * _h)
+                              ObjectContextRef obc, RecoveryHandle *_h)
 {
     ECRecoveryHandle *h = static_cast < ECRecoveryHandle * >(_h);
     h->ops.push_back(RecoveryOp());
@@ -748,18 +759,16 @@ int ECBackend::recover_object(const hobject_t & hoid,
         if (obc) {
             ceph_assert(obc->ssc);
             h->ops.back().recovery_info.ss = obc->ssc->snapset;
-        }
-        else if (head) {
+        } else if (head) {
             ceph_assert(head->ssc);
             h->ops.back().recovery_info.ss = head->ssc->snapset;
-        }
-        else {
+        } else {
             ceph_abort_msg("neither obc nor head set for a snap object");
         }
     }
     h->ops.back().recovery_progress.omap_complete = true;
     for (set < pg_shard_t >::const_iterator i =
-         get_parent()->get_acting_recovery_backfill_shards().begin();
+             get_parent()->get_acting_recovery_backfill_shards().begin();
          i != get_parent()->get_acting_recovery_backfill_shards().end(); ++i) {
         dout(10) << "checking " << *i << dendl;
         if (get_parent()->get_shard_missing(*i).is_missing(hoid)) {
@@ -781,7 +790,7 @@ bool ECBackend::_handle_message(OpRequestRef _op)
     dout(10) << __func__ << ": " << *_op->get_req() << dendl;
     int priority = _op->get_req()->get_priority();
     switch (_op->get_req()->get_type()) {
-    case MSG_OSD_EC_WRITE:{
+        case MSG_OSD_EC_WRITE: {
             // NOTE: this is non-const because handle_sub_write modifies the embedded
             // ObjectStore::Transaction in place (and then std::move's it).  It does
             // not conflict with ECSubWrite's operator<<.
@@ -791,13 +800,13 @@ bool ECBackend::_handle_message(OpRequestRef _op)
             handle_sub_write(op->op.from, _op, op->op, _op->pg_trace);
             return true;
         }
-    case MSG_OSD_EC_WRITE_REPLY:{
+        case MSG_OSD_EC_WRITE_REPLY: {
             const MOSDECSubOpWriteReply *op =
                 static_cast < const MOSDECSubOpWriteReply * >(_op->get_req());
             handle_sub_write_reply(op->op.from, op->op, _op->pg_trace);
             return true;
         }
-    case MSG_OSD_EC_READ:{
+        case MSG_OSD_EC_READ: {
             auto op = _op->get_req < MOSDECSubOpRead > ();
             MOSDECSubOpReadReply *reply = new MOSDECSubOpReadReply;
             reply->pgid = get_parent()->primary_spg_t();
@@ -810,7 +819,7 @@ bool ECBackend::_handle_message(OpRequestRef _op)
                                                    get_connection());
             return true;
         }
-    case MSG_OSD_EC_READ_REPLY:{
+        case MSG_OSD_EC_READ_REPLY: {
             // NOTE: this is non-const because handle_sub_read_reply steals resulting
             // buffers.  It does not conflict with ECSubReadReply operator<<.
             MOSDECSubOpReadReply *op =
@@ -820,7 +829,7 @@ bool ECBackend::_handle_message(OpRequestRef _op)
             dispatch_recovery_messages(rm, priority);
             return true;
         }
-    case MSG_OSD_PG_PUSH:{
+        case MSG_OSD_PG_PUSH: {
             auto op = _op->get_req < MOSDPGPush > ();
             RecoveryMessages rm;
             for (vector < PushOp >::const_iterator i = op->pushes.begin();
@@ -830,7 +839,7 @@ bool ECBackend::_handle_message(OpRequestRef _op)
             dispatch_recovery_messages(rm, priority);
             return true;
         }
-    case MSG_OSD_PG_PUSH_REPLY:{
+        case MSG_OSD_PG_PUSH_REPLY: {
             const MOSDPGPushReply *op =
                 static_cast < const MOSDPGPushReply * >(_op->get_req());
             RecoveryMessages rm;
@@ -841,36 +850,39 @@ bool ECBackend::_handle_message(OpRequestRef _op)
             dispatch_recovery_messages(rm, priority);
             return true;
         }
-    default:
-        return false;
+        default:
+            return false;
     }
     return false;
 }
 
-struct SubWriteCommitted:public Context {
+struct SubWriteCommitted: public Context {
     ECBackend *pg;
     OpRequestRef msg;
     ceph_tid_t tid;
     eversion_t version;
     eversion_t last_complete;
     const ZTracer::Trace trace;
-    SubWriteCommitted(ECBackend * pg,
+    SubWriteCommitted(ECBackend *pg,
                       OpRequestRef msg,
                       ceph_tid_t tid,
                       eversion_t version,
-                      eversion_t last_complete, const ZTracer::Trace & trace)
-    :pg(pg), msg(msg), tid(tid),
-        version(version), last_complete(last_complete), trace(trace) {
-    } void finish(int) override {
-        if (msg)
+                      eversion_t last_complete, const ZTracer::Trace &trace)
+        : pg(pg), msg(msg), tid(tid),
+          version(version), last_complete(last_complete), trace(trace)
+    {
+    } void finish(int) override
+    {
+        if (msg) {
             msg->mark_event("sub_op_committed");
+        }
         pg->sub_write_committed(tid, version, last_complete, trace);
     }
 };
 
 void ECBackend::sub_write_committed(ceph_tid_t tid, eversion_t version,
                                     eversion_t last_complete,
-                                    const ZTracer::Trace & trace)
+                                    const ZTracer::Trace &trace)
 {
     if (get_parent()->pgb_is_primary()) {
         ECSubWriteReply reply;
@@ -880,8 +892,7 @@ void ECBackend::sub_write_committed(ceph_tid_t tid, eversion_t version,
         reply.applied = true;
         reply.from = get_parent()->whoami_shard();
         handle_sub_write_reply(get_parent()->whoami_shard(), reply, trace);
-    }
-    else {
+    } else {
         get_parent()->update_last_complete_ondisk(last_complete);
         MOSDECSubOpWriteReply *r = new MOSDECSubOpWriteReply;
         r->pgid = get_parent()->primary_spg_t();
@@ -902,15 +913,16 @@ void ECBackend::sub_write_committed(ceph_tid_t tid, eversion_t version,
 
 void ECBackend::handle_sub_write(pg_shard_t from,
                                  OpRequestRef msg,
-                                 ECSubWrite & op, const ZTracer::Trace & trace)
+                                 ECSubWrite &op, const ZTracer::Trace &trace)
 {
     if (msg) {
         msg->mark_event("sub_op_started");
     }
     trace.event("handle_sub_write");
 
-    if (!get_parent()->pgb_is_primary())
+    if (!get_parent()->pgb_is_primary()) {
         get_parent()->update_stats(op.stats);
+    }
     ObjectStore::Transaction localt;
     if (!op.temp_added.empty()) {
         add_temp_objs(op.temp_added);
@@ -919,7 +931,7 @@ void ECBackend::handle_sub_write(pg_shard_t from,
         for (set < hobject_t >::iterator i = op.temp_removed.begin();
              i != op.temp_removed.end(); ++i) {
             dout(10) << __func__ << ": removing object " << *i
-                << " since we won't get the transaction" << dendl;
+                     << " since we won't get the transaction" << dendl;
             localt.remove(coll,
                           ghobject_t(*i,
                                      ghobject_t::NO_GEN,
@@ -928,16 +940,16 @@ void ECBackend::handle_sub_write(pg_shard_t from,
     }
     clear_temp_objs(op.temp_removed);
     dout(30) << __func__ << " missing before " << get_parent()->get_log().
-        get_missing().get_items() << dendl;
+             get_missing().get_items() << dendl;
     // flag set to true during async recovery
     bool async = false;
     pg_missing_tracker_t pmissing = get_parent()->get_local_missing();
     if (pmissing.is_missing(op.soid)) {
         async = true;
         dout(30) << __func__ << " is_missing " << pmissing.is_missing(op.
-                                                                      soid) <<
-            dendl;
-      for (auto && e:op.log_entries) {
+                 soid) <<
+                 dendl;
+        for (auto && e : op.log_entries) {
             dout(30) << " add_next_event entry " << e << dendl;
             get_parent()->add_local_next_event(e);
             dout(30) << " entry is_delete " << e.is_delete() << dendl;
@@ -952,24 +964,25 @@ void ECBackend::handle_sub_write(pg_shard_t from,
 
     if (!get_parent()->pg_is_undersized() &&
         (unsigned)get_parent()->whoami_shard().shard >=
-        ec_impl->get_data_chunk_count())
+        ec_impl->get_data_chunk_count()) {
         op.t.set_fadvise_flag(CEPH_OSD_OP_FLAG_FADVISE_DONTNEED);
+    }
 
     localt.register_on_commit(get_parent()->
                               bless_context(new
                                             SubWriteCommitted(this, msg, op.tid,
-                                                              op.at_version,
-                                                              get_parent()->
-                                                              get_info().
-                                                              last_complete,
-                                                              trace)));
+                                                    op.at_version,
+                                                    get_parent()->
+                                                    get_info().
+                                                    last_complete,
+                                                    trace)));
     vector < ObjectStore::Transaction > tls;
     tls.reserve(2);
     tls.push_back(std::move(op.t));
     tls.push_back(std::move(localt));
     get_parent()->queue_transactions(tls, msg);
     dout(30) << __func__ << " missing after" << get_parent()->get_log().
-        get_missing().get_items() << dendl;
+             get_missing().get_items() << dendl;
     if (op.at_version != eversion_t()) {
         // dummy rollforward transaction doesn't get at_version (and doesn't advance it)
         get_parent()->op_applied(op.at_version);
@@ -977,9 +990,9 @@ void ECBackend::handle_sub_write(pg_shard_t from,
 }
 
 void ECBackend::handle_sub_read(pg_shard_t from,
-                                const ECSubRead & op,
-                                ECSubReadReply * reply,
-                                const ZTracer::Trace & trace)
+                                const ECSubRead &op,
+                                ECSubReadReply *reply,
+                                const ZTracer::Trace &trace)
 {
     trace.event("handle sub read");
     shard_id_t shard = get_parent()->whoami_shard().shard;
@@ -991,18 +1004,18 @@ void ECBackend::handle_sub_read(pg_shard_t from,
                 (op.subchunks.find(i->first)->second.front().second ==
                  ec_impl->get_sub_chunk_count())) {
                 dout(25) << __func__ <<
-                    " case1: reading the complete chunk/shard." << dendl;
-                r = store->read(ch, ghobject_t(i->first, ghobject_t::NO_GEN, shard), j->get < 0 > (), j->get < 1 > (), bl, j->get < 2 > ());    // Allow EIO return
-            }
-            else {
+                         " case1: reading the complete chunk/shard." << dendl;
+                r = store->read(ch, ghobject_t(i->first, ghobject_t::NO_GEN, shard), j->get < 0 > (), j->get < 1 > (), bl,
+                                j->get < 2 > ());    // Allow EIO return
+            } else {
                 dout(25) << __func__ << " case2: going to do fragmented read."
-                    << dendl;
+                         << dendl;
                 int subchunk_size =
                     sinfo.get_chunk_size() / ec_impl->get_sub_chunk_count();
                 bool error = false;
                 for (int m = 0; m < (int)j->get < 1 > () && !error;
                      m += sinfo.get_chunk_size()) {
-                  for (auto && k:op.subchunks.find(i->first)->
+                    for (auto && k : op.subchunks.find(i->first)->
                          second) {
                         bufferlist bl0;
                         r = store->read(ch,
@@ -1027,23 +1040,21 @@ void ECBackend::handle_sub_read(pg_shard_t from,
                 // ENOENT.  Suppress the message to the cluster log in that case.
                 if (r == -ENOENT && get_parent()->get_pool().fast_read) {
                     dout(5) << __func__ << ": Error " << r
-                        << " reading " << i->first << ", fast read, probably ok"
-                        << dendl;
-                }
-                else {
+                            << " reading " << i->first << ", fast read, probably ok"
+                            << dendl;
+                } else {
                     get_parent()->clog_error() << "Error " << r
-                        << " reading object " << i->first;
+                                               << " reading object " << i->first;
                     dout(5) << __func__ << ": Error " << r
-                        << " reading " << i->first << dendl;
+                            << " reading " << i->first << dendl;
                 }
                 goto error;
-            }
-            else {
+            } else {
                 dout(20) << __func__ << " read request=" << j->get < 1 >
-                    () << " r=" << r << " len=" << bl.length() << dendl;
+                         () << " r=" << r << " len=" << bl.length() << dendl;
                 reply->buffers_read[i->first].
-                    push_back(make_pair(j->get < 0 > (), bl)
-                    );
+                push_back(make_pair(j->get < 0 > (), bl)
+                         );
             }
 
             if (!get_parent()->get_pool().allows_ecoverwrites()) {
@@ -1056,27 +1067,27 @@ void ECBackend::handle_sub_read(pg_shard_t from,
                 if (!hinfo) {
                     r = -EIO;
                     get_parent()->clog_error() << "Corruption detected: object "
-                        << i->first << " is missing hash_info";
+                                               << i->first << " is missing hash_info";
                     dout(5) << __func__ << ": No hinfo for " << i->
-                        first << dendl;
+                            first << dendl;
                     goto error;
                 }
                 ceph_assert(hinfo->has_chunk_hash());
                 if ((bl.length() == hinfo->get_total_chunk_size()) &&
                     (j->get < 0 > () == 0)) {
                     dout(20) << __func__ << ": Checking hash of " << i->
-                        first << dendl;
+                             first << dendl;
                     bufferhash h(-1);
                     h << bl;
                     if (h.digest() != hinfo->get_chunk_hash(shard)) {
                         get_parent()->clog_error() << "Bad hash for " << i->
-                            first << " digest 0x" << hex << h.
-                            digest() << " expected 0x" << hinfo->
-                            get_chunk_hash(shard) << dec;
+                                                   first << " digest 0x" << hex << h.
+                                                   digest() << " expected 0x" << hinfo->
+                                                   get_chunk_hash(shard) << dec;
                         dout(5) << __func__ << ": Bad hash for " << i->
-                            first << " digest 0x" << hex << h.
-                            digest() << " expected 0x" << hinfo->
-                            get_chunk_hash(shard) << dec << dendl;
+                                first << " digest 0x" << hex << h.
+                                digest() << " expected 0x" << hinfo->
+                                get_chunk_hash(shard) << dec << dendl;
                         r = -EIO;
                         goto error;
                     }
@@ -1084,7 +1095,7 @@ void ECBackend::handle_sub_read(pg_shard_t from,
             }
         }
         continue;
-      error:
+error:
         // Do NOT check osd_read_eio_on_bad_digest here.  We need to report
         // the state of our chunk in case other chunks could substitute.
         reply->buffers_read.erase(i->first);
@@ -1093,8 +1104,9 @@ void ECBackend::handle_sub_read(pg_shard_t from,
     for (set < hobject_t >::iterator i = op.attrs_to_read.begin();
          i != op.attrs_to_read.end(); ++i) {
         dout(10) << __func__ << ": fulfilling attr request on " << *i << dendl;
-        if (reply->errors.count(*i))
+        if (reply->errors.count(*i)) {
             continue;
+        }
         int r = store->getattrs(ch,
                                 ghobject_t(*i, ghobject_t::NO_GEN, shard),
                                 reply->attrs_read[*i]);
@@ -1110,8 +1122,8 @@ void ECBackend::handle_sub_read(pg_shard_t from,
 }
 
 void ECBackend::handle_sub_write_reply(pg_shard_t from,
-                                       const ECSubWriteReply & op,
-                                       const ZTracer::Trace & trace)
+                                       const ECSubWriteReply &op,
+                                       const ZTracer::Trace &trace)
 {
     map < ceph_tid_t, Op >::iterator i = tid_to_op_map.find(op.tid);
     ceph_assert(i != tid_to_op_map.end());
@@ -1121,7 +1133,7 @@ void ECBackend::handle_sub_write_reply(pg_shard_t from,
         i->second.pending_commit.erase(from);
         if (from != get_parent()->whoami_shard()) {
             get_parent()->update_peer_last_complete_ondisk(from,
-                                                           op.last_complete);
+                    op.last_complete);
         }
     }
     if (op.applied) {
@@ -1134,7 +1146,7 @@ void ECBackend::handle_sub_write_reply(pg_shard_t from,
         // also wait for apply, to preserve ordering with luminous peers.
         i->second.pending_apply.empty()) {
         dout(10) << __func__ << " Calling on_all_commit on " << i->
-            second << dendl;
+                 second << dendl;
         i->second.on_all_commit->complete(0);
         i->second.on_all_commit = 0;
         i->second.trace.event("ec write all committed");
@@ -1143,9 +1155,9 @@ void ECBackend::handle_sub_write_reply(pg_shard_t from,
 }
 
 void ECBackend::handle_sub_read_reply(pg_shard_t from,
-                                      ECSubReadReply & op,
-                                      RecoveryMessages * m,
-                                      const ZTracer::Trace & trace)
+                                      ECSubReadReply &op,
+                                      RecoveryMessages *m,
+                                      const ZTracer::Trace &trace)
 {
     trace.event("ec sub read reply");
     dout(10) << __func__ << ": reply " << op << dendl;
@@ -1155,7 +1167,7 @@ void ECBackend::handle_sub_read_reply(pg_shard_t from,
         dout(20) << __func__ << ": dropped " << op << dendl;
         return;
     }
-    ReadOp & rop = iter->second;
+    ReadOp &rop = iter->second;
     for (auto i = op.buffers_read.begin(); i != op.buffers_read.end(); ++i) {
         ceph_assert(!op.errors.count(i->first));    // If attribute error we better not have sent a buffer
         if (!rop.to_read.count(i->first)) {
@@ -1164,13 +1176,13 @@ void ECBackend::handle_sub_read_reply(pg_shard_t from,
             continue;
         }
         list < boost::tuple < uint64_t, uint64_t,
-            uint32_t > >::const_iterator req_iter =
-            rop.to_read.find(i->first)->second.to_read.begin();
+             uint32_t > >::const_iterator req_iter =
+                 rop.to_read.find(i->first)->second.to_read.begin();
         list < boost::tuple < uint64_t, uint64_t, map < pg_shard_t,
-            bufferlist > > >::iterator riter =
-            rop.complete[i->first].returned.begin();
+             bufferlist > > >::iterator riter =
+                 rop.complete[i->first].returned.begin();
         for (list < pair < uint64_t, bufferlist > >::iterator j =
-             i->second.begin(); j != i->second.end();
+                 i->second.begin(); j != i->second.end();
              ++j, ++req_iter, ++riter) {
             ceph_assert(req_iter !=
                         rop.to_read.find(i->first)->second.to_read.end());
@@ -1197,7 +1209,7 @@ void ECBackend::handle_sub_read_reply(pg_shard_t from,
     for (auto i = op.errors.begin(); i != op.errors.end(); ++i) {
         rop.complete[i->first].errors.insert(make_pair(from, i->second));
         dout(20) << __func__ << " shard=" << from << " error=" << i->
-            second << dendl;
+                 second << dendl;
     }
 
     map < pg_shard_t, set < ceph_tid_t > >::iterator siter =
@@ -1214,20 +1226,20 @@ void ECBackend::handle_sub_read_reply(pg_shard_t from,
     // or in a non-recovery read check for completion once all the shards read.
     if (rop.do_redundant_reads || rop.in_progress.empty()) {
         for (map < hobject_t, read_result_t >::const_iterator iter =
-             rop.complete.begin(); iter != rop.complete.end(); ++iter) {
+                 rop.complete.begin(); iter != rop.complete.end(); ++iter) {
             set < int >have;
             for (map < pg_shard_t, bufferlist >::const_iterator j =
-                 iter->second.returned.front().get < 2 > ().begin();
+                     iter->second.returned.front().get < 2 > ().begin();
                  j != iter->second.returned.front().get < 2 > ().end(); ++j) {
                 have.insert(j->first.shard);
                 dout(20) << __func__ << " have shard=" << j->first.
-                    shard << dendl;
+                         shard << dendl;
             }
             map < int, vector < pair < int, int >>>dummy_minimum;
             int err;
             if ((err =
-                 ec_impl->minimum_to_decode(rop.want_to_read[iter->first], have,
-                                            &dummy_minimum)) < 0) {
+                     ec_impl->minimum_to_decode(rop.want_to_read[iter->first], have,
+                                                &dummy_minimum)) < 0) {
                 dout(20) << __func__ << " minimum_to_decode failed" << dendl;
                 if (rop.in_progress.empty()) {
                     // If we don't have enough copies, try other pg_shard_ts if available.
@@ -1250,22 +1262,20 @@ void ECBackend::handle_sub_read_reply(pg_shard_t from,
                     rop.complete[iter->first].r = err;
                     ++is_complete;
                 }
-            }
-            else {
+            } else {
                 ceph_assert(rop.complete[iter->first].r == 0);
                 if (!rop.complete[iter->first].errors.empty()) {
                     if (cct->_conf->osd_read_ec_check_for_errors) {
                         dout(10) << __func__ <<
-                            ": Not ignoring errors, use one shard err=" << err
-                            << dendl;
+                                 ": Not ignoring errors, use one shard err=" << err
+                                 << dendl;
                         err = rop.complete[iter->first].errors.begin()->second;
                         rop.complete[iter->first].r = err;
-                    }
-                    else {
+                    } else {
                         get_parent()->clog_warn() << "Error(s) ignored for "
-                            << iter->first << " enough copies available";
+                                                  << iter->first << " enough copies available";
                         dout(10) << __func__ << " Error(s) ignored for " <<
-                            iter->first << " enough copies available" << dendl;
+                                 iter->first << " enough copies available" << dendl;
                         rop.complete[iter->first].errors.clear();
                     }
                 }
@@ -1278,18 +1288,16 @@ void ECBackend::handle_sub_read_reply(pg_shard_t from,
     }
     if (need_resend) {
         do_read_op(rop);
-    }
-    else if (rop.in_progress.empty() || is_complete == rop.complete.size()) {
+    } else if (rop.in_progress.empty() || is_complete == rop.complete.size()) {
         dout(20) << __func__ << " Complete: " << rop << dendl;
         rop.trace.event("ec read complete");
         complete_read_op(rop, m);
-    }
-    else {
+    } else {
         dout(10) << __func__ << " readop not complete: " << rop << dendl;
     }
 }
 
-void ECBackend::complete_read_op(ReadOp & rop, RecoveryMessages * m)
+void ECBackend::complete_read_op(ReadOp &rop, RecoveryMessages *m)
 {
     map < hobject_t, read_request_t >::iterator reqiter = rop.to_read.begin();
     map < hobject_t, read_result_t >::iterator resiter = rop.complete.begin();
@@ -1310,11 +1318,13 @@ void ECBackend::complete_read_op(ReadOp & rop, RecoveryMessages * m)
     tid_to_read_map.erase(rop.tid);
 }
 
-struct FinishReadOp:public GenContext < ThreadPool::TPHandle & > {
+struct FinishReadOp: public GenContext < ThreadPool::TPHandle & > {
     ECBackend *ec;
     ceph_tid_t tid;
-    FinishReadOp(ECBackend * ec, ceph_tid_t tid):ec(ec), tid(tid) {
-    } void finish(ThreadPool::TPHandle & handle) override {
+    FinishReadOp(ECBackend *ec, ceph_tid_t tid): ec(ec), tid(tid)
+    {
+    } void finish(ThreadPool::TPHandle &handle) override
+    {
         auto ropiter = ec->tid_to_read_map.find(tid);
         ceph_assert(ropiter != ec->tid_to_read_map.end());
         int priority = ropiter->second.priority;
@@ -1324,11 +1334,11 @@ struct FinishReadOp:public GenContext < ThreadPool::TPHandle & > {
     }
 };
 
-void ECBackend::filter_read_op(const OSDMapRef & osdmap, ReadOp & op)
+void ECBackend::filter_read_op(const OSDMapRef &osdmap, ReadOp &op)
 {
     set < hobject_t > to_cancel;
     for (map < pg_shard_t, set < hobject_t > >::iterator i =
-         op.source_to_obj.begin(); i != op.source_to_obj.end(); ++i) {
+             op.source_to_obj.begin(); i != op.source_to_obj.end(); ++i) {
         if (osdmap->is_down(i->first.osd)) {
             to_cancel.insert(i->second.begin(), i->second.end());
             op.in_progress.erase(i->first);
@@ -1336,22 +1346,23 @@ void ECBackend::filter_read_op(const OSDMapRef & osdmap, ReadOp & op)
         }
     }
 
-    if (to_cancel.empty())
+    if (to_cancel.empty()) {
         return;
+    }
 
     for (map < pg_shard_t, set < hobject_t > >::iterator i =
-         op.source_to_obj.begin(); i != op.source_to_obj.end();) {
+             op.source_to_obj.begin(); i != op.source_to_obj.end();) {
         for (set < hobject_t >::iterator j = i->second.begin();
              j != i->second.end();) {
-            if (to_cancel.count(*j))
+            if (to_cancel.count(*j)) {
                 i->second.erase(j++);
-            else
+            } else {
                 ++j;
+            }
         }
         if (i->second.empty()) {
             op.source_to_obj.erase(i++);
-        }
-        else {
+        } else {
             ceph_assert(!osdmap->is_down(i->first.osd));
             ++i;
         }
@@ -1362,9 +1373,9 @@ void ECBackend::filter_read_op(const OSDMapRef & osdmap, ReadOp & op)
         get_parent()->cancel_pull(*i);
 
         ceph_assert(op.to_read.count(*i));
-        read_request_t & req = op.to_read.find(*i)->second;
+        read_request_t &req = op.to_read.find(*i)->second;
         dout(10) << __func__ << ": canceling " << req
-            << "  for obj " << *i << dendl;
+                 << "  for obj " << *i << dendl;
         ceph_assert(req.cb);
         delete req.cb;
         req.cb = nullptr;
@@ -1392,15 +1403,15 @@ void ECBackend::filter_read_op(const OSDMapRef & osdmap, ReadOp & op)
          */
         get_parent()->schedule_recovery_work(get_parent()->
                                              bless_unlocked_gencontext(new
-                                                                       FinishReadOp
-                                                                       (this,
-                                                                        op.
-                                                                        tid)),
+                                                     FinishReadOp
+                                                     (this,
+                                                             op.
+                                                             tid)),
                                              1);
     }
 }
 
-void ECBackend::check_recovery_sources(const OSDMapRef & osdmap)
+void ECBackend::check_recovery_sources(const OSDMapRef &osdmap)
 {
     set < ceph_tid_t > tids_to_filter;
     for (map < pg_shard_t, set < ceph_tid_t > >::iterator
@@ -1408,8 +1419,7 @@ void ECBackend::check_recovery_sources(const OSDMapRef & osdmap)
         if (osdmap->is_down(i->first.osd)) {
             tids_to_filter.insert(i->second.begin(), i->second.end());
             shard_to_read_map.erase(i++);
-        }
-        else {
+        } else {
             ++i;
         }
     }
@@ -1431,7 +1441,7 @@ void ECBackend::on_change()
     waiting_reads.clear();
     waiting_state.clear();
     waiting_commit.clear();
-  for (auto && op:tid_to_op_map) {
+    for (auto && op : tid_to_op_map) {
         cache.release_write_pin(op.second.pin);
     }
     tid_to_op_map.clear();
@@ -1440,7 +1450,7 @@ void ECBackend::on_change()
          i != tid_to_read_map.end(); ++i) {
         dout(10) << __func__ << ": cancelling " << i->second << dendl;
         for (map < hobject_t, read_request_t >::iterator j =
-             i->second.to_read.begin(); j != i->second.to_read.end(); ++j) {
+                 i->second.to_read.begin(); j != i->second.to_read.end(); ++j) {
             delete j->second.cb;
             j->second.cb = nullptr;
         }
@@ -1456,7 +1466,7 @@ void ECBackend::clear_recovery_state()
     recovery_ops.clear();
 }
 
-void ECBackend::dump_recovery_info(Formatter * f) const const
+void ECBackend::dump_recovery_info(Formatter *f) const const
 {
     f->open_array_section("recovery_ops");
     for (map < hobject_t, RecoveryOp >::const_iterator i = recovery_ops.begin();
@@ -1476,15 +1486,15 @@ void ECBackend::dump_recovery_info(Formatter * f) const const
     f->close_section();
 }
 
-void ECBackend::submit_transaction(const hobject_t & hoid,
-                                   const object_stat_sum_t & delta_stats,
-                                   const eversion_t & at_version,
+void ECBackend::submit_transaction(const hobject_t &hoid,
+                                   const object_stat_sum_t &delta_stats,
+                                   const eversion_t &at_version,
                                    PGTransactionUPtr && t,
-                                   const eversion_t & trim_to,
-                                   const eversion_t & min_last_complete_ondisk,
+                                   const eversion_t &trim_to,
+                                   const eversion_t &min_last_complete_ondisk,
                                    vector < pg_log_entry_t > &&log_entries,
                                    std::optional < pg_hit_set_history_t >
-                                   &hset_history, Context * on_all_commit,
+                                   &hset_history, Context *on_all_commit,
                                    ceph_tid_t tid, osd_reqid_t reqid,
                                    OpRequestRef client_op)
 {
@@ -1512,29 +1522,28 @@ void ECBackend::call_write_ordered(std::function < void (void) > &&cb)
 {
     if (!waiting_state.empty()) {
         waiting_state.back().on_write.emplace_back(std::move(cb));
-    }
-    else if (!waiting_reads.empty()) {
+    } else if (!waiting_reads.empty()) {
         waiting_reads.back().on_write.emplace_back(std::move(cb));
-    }
-    else {
+    } else {
         // Nothing earlier in the pipeline, just call it
         cb();
     }
 }
 
-void ECBackend::get_all_avail_shards(const hobject_t & hoid,
+void ECBackend::get_all_avail_shards(const hobject_t &hoid,
                                      const set < pg_shard_t > &error_shards,
-                                     set < int >&have,
+                                     set < int > &have,
                                      map < shard_id_t, pg_shard_t > &shards,
                                      bool for_recovery)
 {
     for (set < pg_shard_t >::const_iterator i =
-         get_parent()->get_acting_shards().begin();
+             get_parent()->get_acting_shards().begin();
          i != get_parent()->get_acting_shards().end(); ++i) {
         dout(10) << __func__ << ": checking acting " << *i << dendl;
-        const pg_missing_t & missing = get_parent()->get_shard_missing(*i);
-        if (error_shards.find(*i) != error_shards.end())
+        const pg_missing_t &missing = get_parent()->get_shard_missing(*i);
+        if (error_shards.find(*i) != error_shards.end()) {
             continue;
+        }
         if (!missing.is_missing(hoid)) {
             ceph_assert(!have.count(i->shard));
             have.insert(i->shard);
@@ -1545,18 +1554,19 @@ void ECBackend::get_all_avail_shards(const hobject_t & hoid,
 
     if (for_recovery) {
         for (set < pg_shard_t >::const_iterator i =
-             get_parent()->get_backfill_shards().begin();
+                 get_parent()->get_backfill_shards().begin();
              i != get_parent()->get_backfill_shards().end(); ++i) {
-            if (error_shards.find(*i) != error_shards.end())
+            if (error_shards.find(*i) != error_shards.end()) {
                 continue;
+            }
             if (have.count(i->shard)) {
                 ceph_assert(shards.count(i->shard));
                 continue;
             }
             dout(10) << __func__ << ": checking backfill " << *i << dendl;
             ceph_assert(!shards.count(i->shard));
-            const pg_info_t & info = get_parent()->get_shard_info(*i);
-            const pg_missing_t & missing = get_parent()->get_shard_missing(*i);
+            const pg_info_t &info = get_parent()->get_shard_info(*i);
+            const pg_missing_t &missing = get_parent()->get_shard_missing(*i);
             if (hoid < info.last_backfill && !missing.is_missing(hoid)) {
                 have.insert(i->shard);
                 shards.insert(make_pair(i->shard, *i));
@@ -1564,18 +1574,19 @@ void ECBackend::get_all_avail_shards(const hobject_t & hoid,
         }
 
         map < hobject_t, set < pg_shard_t >>::const_iterator miter =
-            get_parent()->get_missing_loc_shards().find(hoid);
+                                              get_parent()->get_missing_loc_shards().find(hoid);
         if (miter != get_parent()->get_missing_loc_shards().end()) {
             for (set < pg_shard_t >::iterator i = miter->second.begin();
                  i != miter->second.end(); ++i) {
                 dout(10) << __func__ << ": checking missing_loc " << *i <<
-                    dendl;
+                         dendl;
                 auto m = get_parent()->maybe_get_shard_missing(*i);
                 if (m) {
                     ceph_assert(!(*m).is_missing(hoid));
                 }
-                if (error_shards.find(*i) != error_shards.end())
+                if (error_shards.find(*i) != error_shards.end()) {
                     continue;
+                }
                 have.insert(i->shard);
                 shards.insert(make_pair(i->shard, *i));
             }
@@ -1583,13 +1594,13 @@ void ECBackend::get_all_avail_shards(const hobject_t & hoid,
     }
 }
 
-int ECBackend::get_min_avail_to_read_shards(const hobject_t & hoid,
-                                            const set < int >&want,
-                                            bool for_recovery,
-                                            bool do_redundant_reads,
-                                            map < pg_shard_t,
-                                            vector < pair < int,
-                                            int >>>*to_read)
+int ECBackend::get_min_avail_to_read_shards(const hobject_t &hoid,
+        const set < int > &want,
+        bool for_recovery,
+        bool do_redundant_reads,
+        map < pg_shard_t,
+        vector < pair < int,
+        int >>> *to_read)
 {
     // Make sure we don't do redundant reads for recovery
     ceph_assert(!for_recovery || !do_redundant_reads);
@@ -1602,40 +1613,42 @@ int ECBackend::get_min_avail_to_read_shards(const hobject_t & hoid,
 
     map < int, vector < pair < int, int >>>need;
     int r = ec_impl->minimum_to_decode(want, have, &need);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     if (do_redundant_reads) {
         vector < pair < int, int >>subchunks_list;
         subchunks_list.push_back(make_pair(0, ec_impl->get_sub_chunk_count()));
-      for (auto && i:have) {
+        for (auto && i : have) {
             need[i] = subchunks_list;
         }
     }
 
-    if (!to_read)
+    if (!to_read) {
         return 0;
+    }
 
-  for (auto && i:need) {
+    for (auto && i : need) {
         ceph_assert(shards.count(shard_id_t(i.first)));
         to_read->insert(make_pair(shards[shard_id_t(i.first)], i.second));
     }
     return 0;
 }
 
-int ECBackend::get_remaining_shards(const hobject_t & hoid,
-                                    const set < int >&avail,
-                                    const set < int >&want,
-                                    const read_result_t & result,
+int ECBackend::get_remaining_shards(const hobject_t &hoid,
+                                    const set < int > &avail,
+                                    const set < int > &want,
+                                    const read_result_t &result,
                                     map < pg_shard_t, vector < pair < int,
-                                    int >>>*to_read, bool for_recovery)
+                                    int >>> *to_read, bool for_recovery)
 {
     ceph_assert(to_read);
 
     set < int >have;
     map < shard_id_t, pg_shard_t > shards;
     set < pg_shard_t > error_shards;
-  for (auto & p:result.errors) {
+    for (auto &p : result.errors) {
         error_shards.insert(p.first);
     }
 
@@ -1645,12 +1658,12 @@ int ECBackend::get_remaining_shards(const hobject_t & hoid,
     int r = ec_impl->minimum_to_decode(want, have, &need);
     if (r < 0) {
         dout(0) << __func__ << " not enough shards left to try for " << hoid
-            << " read result was " << result << dendl;
+                << " read result was " << result << dendl;
         return -EIO;
     }
 
     set < int >shards_left;
-  for (auto p:need) {
+    for (auto p : need) {
         if (avail.find(p.first) == avail.end()) {
             shards_left.insert(p.first);
         }
@@ -1668,22 +1681,22 @@ int ECBackend::get_remaining_shards(const hobject_t & hoid,
 }
 
 void ECBackend::start_read_op(int priority,
-                              map < hobject_t, set < int >>&want_to_read,
+                              map < hobject_t, set < int >> &want_to_read,
                               map < hobject_t, read_request_t > &to_read,
                               OpRequestRef _op,
                               bool do_redundant_reads, bool for_recovery)
 {
     ceph_tid_t tid = get_parent()->get_tid();
     ceph_assert(!tid_to_read_map.count(tid));
-    auto & op = tid_to_read_map.emplace(tid,
-                                        ReadOp(priority,
-                                               tid,
-                                               do_redundant_reads,
-                                               for_recovery,
-                                               _op,
-                                               std::move(want_to_read),
-                                               std::move(to_read))).first->
-        second;
+    auto &op = tid_to_read_map.emplace(tid,
+                                       ReadOp(priority,
+                                           tid,
+                                           do_redundant_reads,
+                                           for_recovery,
+                                           _op,
+                                           std::move(want_to_read),
+                                           std::move(to_read))).first->
+               second;
     dout(10) << __func__ << ": starting " << op << dendl;
     if (_op) {
         op.trace = _op->pg_trace;
@@ -1692,7 +1705,7 @@ void ECBackend::start_read_op(int priority,
     do_read_op(op);
 }
 
-void ECBackend::do_read_op(ReadOp & op)
+void ECBackend::do_read_op(ReadOp &op)
 {
     int priority = op.priority;
     ceph_tid_t tid = op.tid;
@@ -1723,10 +1736,10 @@ void ECBackend::do_read_op(ReadOp & op)
             for (auto k = i->second.need.begin(); k != i->second.need.end();
                  ++k) {
                 messages[k->first].to_read[i->first].
-                    push_back(boost::
-                              make_tuple(chunk_off_len.first,
-                                         chunk_off_len.second,
-                                         j->get < 2 > ()));
+                push_back(boost::
+                          make_tuple(chunk_off_len.first,
+                                     chunk_off_len.second,
+                                     j->get < 2 > ()));
             }
             ceph_assert(!need_attrs);
         }
@@ -1761,9 +1774,9 @@ void ECBackend::do_read_op(ReadOp & op)
     dout(10) << __func__ << ": started " << op << dendl;
 }
 
-ECUtil::HashInfoRef ECBackend::get_hash_info(const hobject_t & hoid,
-                                             bool create, const map < string,
-                                             bufferptr, less <>> *attrs)
+ECUtil::HashInfoRef ECBackend::get_hash_info(const hobject_t &hoid,
+        bool create, const map < string,
+        bufferptr, less <>> *attrs)
 {
     dout(10) << __func__ << ": Getting attr on " << hoid << dendl;
     ECUtil::HashInfoRef ref = unstable_hashinfo_registry.lookup(hoid);
@@ -1777,20 +1790,18 @@ ECUtil::HashInfoRef ECBackend::get_hash_info(const hobject_t & hoid,
         ECUtil::HashInfo hinfo(ec_impl->get_chunk_count());
         if (r >= 0) {
             dout(10) << __func__ << ": found on disk, size " << st.
-                st_size << dendl;
+                     st_size << dendl;
             bufferlist bl;
             if (attrs) {
                 map < string, bufferptr >::const_iterator k =
                     attrs->find(ECUtil::get_hinfo_key());
                 if (k == attrs->end()) {
                     dout(5) << __func__ << " " << hoid << " missing hinfo attr"
-                        << dendl;
-                }
-                else {
+                            << dendl;
+                } else {
                     bl.push_back(k->second);
                 }
-            }
-            else {
+            } else {
                 r = store->getattr(ch,
                                    ghobject_t(hoid, ghobject_t::NO_GEN,
                                               get_parent()->whoami_shard().
@@ -1798,7 +1809,7 @@ ECUtil::HashInfoRef ECBackend::get_hash_info(const hobject_t & hoid,
                                    bl);
                 if (r < 0) {
                     dout(5) << __func__ << ": getattr failed: " <<
-                        cpp_strerror(r) << dendl;
+                            cpp_strerror(r) << dendl;
                     bl.clear(); // just in case
                 }
             }
@@ -1806,26 +1817,23 @@ ECUtil::HashInfoRef ECBackend::get_hash_info(const hobject_t & hoid,
                 auto bp = bl.cbegin();
                 try {
                     decode(hinfo, bp);
-                }
-                catch( ...) {
+                } catch (...) {
                     dout(0) << __func__ << ": Can't decode hinfo for " << hoid
-                        << dendl;
+                            << dendl;
                     return ECUtil::HashInfoRef();
                 }
                 if (hinfo.get_total_chunk_size() != (uint64_t) st.st_size) {
                     dout(0) << __func__ << ": Mismatch of total_chunk_size "
-                        << hinfo.get_total_chunk_size() << dendl;
+                            << hinfo.get_total_chunk_size() << dendl;
                     return ECUtil::HashInfoRef();
                 }
-            }
-            else if (st.st_size > 0) {  // If empty object and no hinfo, create it
+            } else if (st.st_size > 0) { // If empty object and no hinfo, create it
                 return ECUtil::HashInfoRef();
             }
-        }
-        else if (r != -ENOENT || !create) {
+        } else if (r != -ENOENT || !create) {
             derr << __func__ << ": stat " << hoid << " failed: " <<
-                cpp_strerror(r)
-                << dendl;
+                 cpp_strerror(r)
+                 << dendl;
             return ECUtil::HashInfoRef();
         }
         ref = unstable_hashinfo_registry.lookup_or_create(hoid, hinfo);
@@ -1833,24 +1841,27 @@ ECUtil::HashInfoRef ECBackend::get_hash_info(const hobject_t & hoid,
     return ref;
 }
 
-void ECBackend::start_rmw(Op * op, PGTransactionUPtr && t)
+void ECBackend::start_rmw(Op *op, PGTransactionUPtr && t)
 {
     ceph_assert(op);
 
     op->plan = ECTransaction::get_write_plan(sinfo,
-                                             std::move(t),
-                                             [&](const hobject_t & i) {
-                                             ECUtil::HashInfoRef ref =
-                                             get_hash_info(i, true); if (!ref) {
-                                             derr << __func__ <<
-                                             ": get_hash_info(" << i << ")" <<
-                                             " returned a null pointer and there is no "
-                                             <<
-                                             " way to recover from such an error in this "
-                                             << " context" << dendl;
-                                             ceph_abort();}
-                                             return ref;}
-                                             , get_parent()->get_dpp()) ;
+               std::move(t),
+    [&](const hobject_t &i) {
+        ECUtil::HashInfoRef ref =
+            get_hash_info(i, true);
+        if (!ref) {
+            derr << __func__ <<
+                 ": get_hash_info(" << i << ")" <<
+                 " returned a null pointer and there is no "
+                 <<
+                 " way to recover from such an error in this "
+                 << " context" << dendl;
+            ceph_abort();
+        }
+        return ref;
+    }
+    , get_parent()->get_dpp()) ;
 
     dout(10) << __func__ << ": " << *op << dendl;
 
@@ -1860,22 +1871,22 @@ void ECBackend::start_rmw(Op * op, PGTransactionUPtr && t)
 
 bool ECBackend::try_state_to_reads()
 {
-    if (waiting_state.empty())
+    if (waiting_state.empty()) {
         return false;
+    }
 
     Op *op = &(waiting_state.front());
     if (op->requires_rmw() && pipeline_state.cache_invalid()) {
         ceph_assert(get_parent()->get_pool().allows_ecoverwrites());
         dout(20) << __func__ << ": blocking " << *op
-            << " because it requires an rmw and the cache is invalid "
-            << pipeline_state << dendl;
+                 << " because it requires an rmw and the cache is invalid "
+                 << pipeline_state << dendl;
         return false;
     }
 
     if (!pipeline_state.caching_enabled()) {
         op->using_cache = false;
-    }
-    else if (op->invalidates_cache()) {
+    } else if (op->invalidates_cache()) {
         dout(20) << __func__ << ": invalidating cache after this op" << dendl;
         pipeline_state.invalidate();
     }
@@ -1887,16 +1898,16 @@ bool ECBackend::try_state_to_reads()
         cache.open_write_pin(op->pin);
 
         extent_set empty;
-      for (auto && hpair:op->plan.will_write) {
+        for (auto && hpair : op->plan.will_write) {
             auto to_read_plan_iter = op->plan.to_read.find(hpair.first);
-            const extent_set & to_read_plan =
-                to_read_plan_iter == op->plan.to_read.end()?
+            const extent_set &to_read_plan =
+                to_read_plan_iter == op->plan.to_read.end() ?
                 empty : to_read_plan_iter->second;
 
             extent_set remote_read = cache.reserve_extents_for_rmw(hpair.first,
-                                                                   op->pin,
-                                                                   hpair.second,
-                                                                   to_read_plan);
+                                     op->pin,
+                                     hpair.second,
+                                     to_read_plan);
 
             extent_set pending_read = to_read_plan;
             pending_read.subtract(remote_read);
@@ -1908,8 +1919,7 @@ bool ECBackend::try_state_to_reads()
                 op->pending_read[hpair.first] = std::move(pending_read);
             }
         }
-    }
-    else {
+    } else {
         op->remote_read = op->plan.to_read;
     }
 
@@ -1918,14 +1928,16 @@ bool ECBackend::try_state_to_reads()
     if (!op->remote_read.empty()) {
         ceph_assert(get_parent()->get_pool().allows_ecoverwrites());
         objects_read_async_no_cache(op->remote_read,
-                                    [this, op] (map < hobject_t, pair < int,
-                                                extent_map > >&&results) {
-          for (auto && i:          results) {
-                                    op->remote_read_result.emplace(i.first,
-                                                                   i.second.
-                                                                   second);}
-                                    check_ops();}
-        ) ;
+                                    [this, op](map < hobject_t, pair < int,
+        extent_map > >&&results) {
+            for (auto && i :          results) {
+                op->remote_read_result.emplace(i.first,
+                                               i.second.
+                                               second);
+            }
+            check_ops();
+        }
+                                   ) ;
     }
 
     return true;
@@ -1933,11 +1945,13 @@ bool ECBackend::try_state_to_reads()
 
 bool ECBackend::try_reads_to_commit()
 {
-    if (waiting_reads.empty())
+    if (waiting_reads.empty()) {
         return false;
+    }
     Op *op = &(waiting_reads.front());
-    if (op->read_in_progress())
+    if (op->read_in_progress()) {
         return false;
+    }
     waiting_reads.pop_front();
     waiting_commit.push_back(*op);
 
@@ -1947,21 +1961,20 @@ bool ECBackend::try_reads_to_commit()
     get_parent()->apply_stats(op->hoid, op->delta_stats);
 
     if (op->using_cache) {
-      for (auto && hpair:op->pending_read) {
+        for (auto && hpair : op->pending_read) {
             op->remote_read_result[hpair.first].insert(cache.
-                                                       get_remaining_extents_for_rmw
-                                                       (hpair.first, op->pin,
-                                                        hpair.second));
+                    get_remaining_extents_for_rmw
+                    (hpair.first, op->pin,
+                     hpair.second));
         }
         op->pending_read.clear();
-    }
-    else {
+    } else {
         ceph_assert(op->pending_read.empty());
     }
 
     map < shard_id_t, ObjectStore::Transaction > trans;
     for (set < pg_shard_t >::const_iterator i =
-         get_parent()->get_acting_recovery_backfill_shards().begin();
+             get_parent()->get_acting_recovery_backfill_shards().begin();
          i != get_parent()->get_acting_recovery_backfill_shards().end(); ++i) {
         trans[i->shard];
     }
@@ -1989,24 +2002,24 @@ bool ECBackend::try_reads_to_commit()
     dout(20) << __func__ << ": op: " << *op << dendl;
 
     if (!get_parent()->get_pool().allows_ecoverwrites()) {
-      for (auto && i:op->log_entries) {
+        for (auto && i : op->log_entries) {
             if (i.requires_kraken()) {
                 derr << __func__ << ": log entry " << i << " requires kraken"
-                    << " but overwrites are not enabled!" << dendl;
+                     << " but overwrites are not enabled!" << dendl;
                 ceph_abort();
             }
         }
     }
 
     map < hobject_t, extent_set > written_set;
-  for (auto && i:written) {
+    for (auto && i : written) {
         written_set[i.first] = i.second.get_interval_set();
     }
     dout(20) << __func__ << ": written_set: " << written_set << dendl;
     ceph_assert(written_set == op->plan.will_write);
 
     if (op->using_cache) {
-      for (auto && hpair:written) {
+        for (auto && hpair : written) {
             dout(20) << __func__ << ": " << hpair << dendl;
             cache.present_rmw_update(hpair.first, op->pin, hpair.second);
         }
@@ -2022,7 +2035,7 @@ bool ECBackend::try_reads_to_commit()
                      size());
     set < pg_shard_t > backfill_shards = get_parent()->get_backfill_shards();
     for (set < pg_shard_t >::const_iterator i =
-         get_parent()->get_acting_recovery_backfill_shards().begin();
+             get_parent()->get_acting_recovery_backfill_shards().begin();
          i != get_parent()->get_acting_recovery_backfill_shards().end(); ++i) {
         op->pending_apply.insert(*i);
         op->pending_commit.insert(*i);
@@ -2030,7 +2043,7 @@ bool ECBackend::try_reads_to_commit()
             trans.find(i->shard);
         ceph_assert(iter != trans.end());
         bool should_send = get_parent()->should_send_op(*i, op->hoid);
-        const pg_stat_t & stats =
+        const pg_stat_t &stats =
             (should_send || !backfill_shards.count(*i)) ?
             get_info().stats : parent->get_shard_info().find(*i)->second.stats;
 
@@ -2057,8 +2070,7 @@ bool ECBackend::try_reads_to_commit()
         if (*i == get_parent()->whoami_shard()) {
             should_write_local = true;
             local_write_op.claim(sop);
-        }
-        else {
+        } else {
             MOSDECSubOpWrite *r = new MOSDECSubOpWrite(sop);
             r->pgid = spg_t(get_parent()->primary_spg_t().pgid, i->shard);
             r->map_epoch = get_osdmap_epoch();
@@ -2079,7 +2091,7 @@ bool ECBackend::try_reads_to_commit()
 
     for (auto i = op->on_write.begin();
          i != op->on_write.end(); op->on_write.erase(i++)) {
-        (*i) ();
+        (*i)();
     }
 
     return true;
@@ -2087,20 +2099,24 @@ bool ECBackend::try_reads_to_commit()
 
 bool ECBackend::try_finish_rmw()
 {
-    if (waiting_commit.empty())
+    if (waiting_commit.empty()) {
         return false;
+    }
     Op *op = &(waiting_commit.front());
-    if (op->write_in_progress())
+    if (op->write_in_progress()) {
         return false;
+    }
     waiting_commit.pop_front();
 
     dout(10) << __func__ << ": " << *op << dendl;
     dout(20) << __func__ << ": " << cache << dendl;
 
-    if (op->roll_forward_to > completed_to)
+    if (op->roll_forward_to > completed_to) {
         completed_to = op->roll_forward_to;
-    if (op->version > committed_to)
+    }
+    if (op->version > committed_to) {
         committed_to = op->version;
+    }
 
     if (get_osdmap()->require_osd_release >= ceph_release_t::kraken) {
         if (op->version > get_parent()->get_log().get_can_rollback_to() &&
@@ -2125,7 +2141,7 @@ bool ECBackend::try_finish_rmw()
     if (waiting_reads.empty() && waiting_commit.empty()) {
         pipeline_state.clear();
         dout(20) << __func__ << ": clearing pipeline_state "
-            << pipeline_state << dendl;
+                 << pipeline_state << dendl;
     }
     return true;
 }
@@ -2135,19 +2151,19 @@ void ECBackend::check_ops()
     while (try_state_to_reads() || try_reads_to_commit() || try_finish_rmw()) ;
 }
 
-int ECBackend::objects_read_sync(const hobject_t & hoid,
+int ECBackend::objects_read_sync(const hobject_t &hoid,
                                  uint64_t off,
                                  uint64_t len,
-                                 uint32_t op_flags, bufferlist * bl)
+                                 uint32_t op_flags, bufferlist *bl)
 {
     return -EOPNOTSUPP;
 }
 
-void ECBackend::objects_read_async(const hobject_t & hoid,
+void ECBackend::objects_read_async(const hobject_t &hoid,
                                    const list < pair < boost::tuple < uint64_t,
                                    uint64_t, uint32_t >, pair < bufferlist *,
-                                   Context * > > >&to_read,
-                                   Context * on_complete, bool fast_read)
+                                   Context * > > > &to_read,
+                                   Context *on_complete, bool fast_read)
 {
     map < hobject_t, std::list < boost::tuple < uint64_t, uint64_t,
         uint32_t > > >reads;
@@ -2156,7 +2172,7 @@ void ECBackend::objects_read_async(const hobject_t & hoid,
     extent_set es;
     for (list < pair < boost::tuple < uint64_t, uint64_t, uint32_t >,
          pair < bufferlist *, Context * > > >::const_iterator i =
-         to_read.begin(); i != to_read.end(); ++i) {
+             to_read.begin(); i != to_read.end(); ++i) {
         pair < uint64_t, uint64_t > tmp =
             sinfo.
             offset_len_to_stripe_bounds(make_pair
@@ -2168,7 +2184,7 @@ void ECBackend::objects_read_async(const hobject_t & hoid,
     }
 
     if (!es.empty()) {
-        auto & offsets = reads[hoid];
+        auto &offsets = reads[hoid];
         for (auto j = es.begin(); j != es.end(); ++j) {
             offsets.push_back(boost::make_tuple(j.get_start(),
                                                 j.get_len(), flags));
@@ -2179,34 +2195,36 @@ void ECBackend::objects_read_async(const hobject_t & hoid,
         ECBackend *ec;
         hobject_t hoid;
         list < pair < boost::tuple < uint64_t, uint64_t, uint32_t >,
-            pair < bufferlist *, Context * >>>to_read;
+             pair < bufferlist *, Context * >>>to_read;
         unique_ptr < Context > on_complete;
         cb(const cb &) = delete;
         cb(cb &&) = default;
-        cb(ECBackend * ec,
-           const hobject_t & hoid,
+        cb(ECBackend *ec,
+           const hobject_t &hoid,
            const list < pair < boost::tuple < uint64_t, uint64_t, uint32_t >,
-           pair < bufferlist *, Context * > > >&to_read, Context * on_complete)
-        :ec(ec), hoid(hoid), to_read(to_read), on_complete(on_complete) {
-        } void operator() (map < hobject_t, pair < int, extent_map > >&&results) {
+           pair < bufferlist *, Context * > > > &to_read, Context *on_complete)
+            : ec(ec), hoid(hoid), to_read(to_read), on_complete(on_complete)
+        {
+        } void operator()(map < hobject_t, pair < int, extent_map > >&&results)
+        {
             auto dpp = ec->get_parent()->get_dpp();
             ldpp_dout(dpp, 20) << "objects_read_async_cb: got: " << results
-                << dendl;
+                               << dendl;
             ldpp_dout(dpp, 20) << "objects_read_async_cb: cache: " << ec->cache
-                << dendl;
+                               << dendl;
 
-            auto & got = results[hoid];
+            auto &got = results[hoid];
 
             int r = 0;
-          for (auto && read:to_read) {
+            for (auto && read : to_read) {
                 if (got.first < 0) {
                     if (read.second.second) {
                         read.second.second->complete(got.first);
                     }
-                    if (r == 0)
+                    if (r == 0) {
                         r = got.first;
-                }
-                else {
+                    }
+                } else {
                     ceph_assert(read.second.first);
                     uint64_t offset = read.first.get < 0 > ();
                     uint64_t length = read.first.get < 1 > ();
@@ -2217,11 +2235,11 @@ void ECBackend::objects_read_async(const hobject_t & hoid,
                     ldpp_dout(dpp, 30) << "offset: " << offset << dendl;
                     ldpp_dout(dpp,
                               30) << "range offset: " << range.first.
-                        get_off() << dendl;
+                                  get_off() << dendl;
                     ldpp_dout(dpp, 30) << "length: " << length << dendl;
                     ldpp_dout(dpp,
                               30) << "range length: " << range.first.
-                        get_len() << dendl;
+                                  get_len() << dendl;
                     ceph_assert((offset + length) <=
                                 (range.first.get_off() +
                                  range.first.get_len()));
@@ -2239,8 +2257,9 @@ void ECBackend::objects_read_async(const hobject_t & hoid,
                 on_complete.release()->complete(r);
             }
         }
-        ~cb() {
-          for (auto && i:to_read) {
+        ~cb()
+        {
+            for (auto && i : to_read) {
                 delete i.second.second;
             }
             to_read.clear();
@@ -2249,31 +2268,34 @@ void ECBackend::objects_read_async(const hobject_t & hoid,
     objects_read_and_reconstruct(reads,
                                  fast_read,
                                  make_gen_lambda_context <
-                                 map < hobject_t, pair < int, extent_map > >&&,
+                                 map < hobject_t, pair < int, extent_map > > &&,
                                  cb > (cb(this, hoid, to_read, on_complete)));
 }
 
-struct CallClientContexts:public GenContext < pair < RecoveryMessages *,
+struct CallClientContexts: public GenContext < pair < RecoveryMessages *,
     ECBackend::read_result_t & >&> {
     hobject_t hoid;
     ECBackend *ec;
-     ECBackend::ClientAsyncReadStatus * status;
-     list < boost::tuple < uint64_t, uint64_t, uint32_t > >to_read;
-     CallClientContexts(hobject_t hoid,
-                        ECBackend * ec,
-                        ECBackend::ClientAsyncReadStatus * status,
-                        const list < boost::tuple < uint64_t, uint64_t,
-                        uint32_t > >&to_read)
-    :hoid(hoid), ec(ec), status(status), to_read(to_read) {
+    ECBackend::ClientAsyncReadStatus *status;
+    list < boost::tuple < uint64_t, uint64_t, uint32_t > >to_read;
+    CallClientContexts(hobject_t hoid,
+                       ECBackend *ec,
+                       ECBackend::ClientAsyncReadStatus *status,
+                       const list < boost::tuple < uint64_t, uint64_t,
+                       uint32_t > > &to_read)
+        : hoid(hoid), ec(ec), status(status), to_read(to_read)
+    {
     } void finish(pair < RecoveryMessages *,
-                  ECBackend::read_result_t & >&in) override {
-        ECBackend::read_result_t & res = in.second;
+                  ECBackend::read_result_t & > &in) override
+    {
+        ECBackend::read_result_t &res = in.second;
         extent_map result;
-        if (res.r != 0)
+        if (res.r != 0) {
             goto out;
+        }
         ceph_assert(res.returned.size() == to_read.size());
         ceph_assert(res.errors.empty());
-      for (auto && read:to_read) {
+        for (auto && read : to_read) {
             pair < uint64_t, uint64_t > adjusted =
                 ec->sinfo.
                 offset_len_to_stripe_bounds(make_pair
@@ -2284,7 +2306,7 @@ struct CallClientContexts:public GenContext < pair < RecoveryMessages *,
             map < int, bufferlist > to_decode;
             bufferlist bl;
             for (map < pg_shard_t, bufferlist >::iterator j =
-                 res.returned.front().get < 2 > ().begin();
+                     res.returned.front().get < 2 > ().begin();
                  j != res.returned.front().get < 2 > ().end(); ++j) {
                 to_decode[j->first.shard] = std::move(j->second);
             }
@@ -2301,25 +2323,25 @@ struct CallClientContexts:public GenContext < pair < RecoveryMessages *,
                               read.get < 0 > () - adjusted.first,
                               std::min(read.get < 1 > (),
                                        bl.length() - (read.get < 0 >
-                                                      () - adjusted.first)));
+                                               () - adjusted.first)));
             result.insert(read.get < 0 > (), trimmed.length(),
                           std::move(trimmed));
             res.returned.pop_front();
         }
-      out:
+out:
         status->complete_object(hoid, res.r, std::move(result));
         ec->kick_reads();
     }
 };
 
 void ECBackend::objects_read_and_reconstruct(const map < hobject_t,
-                                             std::list < boost::tuple <
-                                             uint64_t, uint64_t,
-                                             uint32_t > > >&reads,
-                                             bool fast_read,
-                                             GenContextURef < map < hobject_t,
-                                             pair < int,
-                                             extent_map > >&&>&&func)
+        std::list < boost::tuple <
+        uint64_t, uint64_t,
+        uint32_t > > > &reads,
+        bool fast_read,
+        GenContextURef < map < hobject_t,
+        pair < int,
+        extent_map > > && > &&func)
 {
     in_progress_client_reads.emplace_back(reads.size(), std::move(func));
     if (!reads.size()) {
@@ -2332,7 +2354,7 @@ void ECBackend::objects_read_and_reconstruct(const map < hobject_t,
     get_want_to_read_shards(&want_to_read);
 
     map < hobject_t, read_request_t > for_read_op;
-  for (auto && to_read:reads) {
+    for (auto && to_read : reads) {
         map < pg_shard_t, vector < pair < int, int >>>shards;
         int r = get_min_avail_to_read_shards(to_read.first,
                                              want_to_read,
@@ -2342,14 +2364,14 @@ void ECBackend::objects_read_and_reconstruct(const map < hobject_t,
         ceph_assert(r == 0);
 
         CallClientContexts *c = new CallClientContexts(to_read.first,
-                                                       this,
-                                                       &
-                                                       (in_progress_client_reads.
-                                                        back()),
-                                                       to_read.second);
+            this,
+            &
+            (in_progress_client_reads.
+             back()),
+            to_read.second);
         for_read_op.insert(make_pair(to_read.first,
                                      read_request_t(to_read.second,
-                                                    shards, false, c)));
+                                             shards, false, c)));
         obj_want_to_read.insert(make_pair(to_read.first, want_to_read));
     }
 
@@ -2359,22 +2381,24 @@ void ECBackend::objects_read_and_reconstruct(const map < hobject_t,
     return;
 }
 
-int ECBackend::send_all_remaining_reads(const hobject_t & hoid, ReadOp & rop)
+int ECBackend::send_all_remaining_reads(const hobject_t &hoid, ReadOp &rop)
 {
     set < int >already_read;
     const set < pg_shard_t > &ots = rop.obj_to_source[hoid];
-    for (set < pg_shard_t >::iterator i = ots.begin(); i != ots.end(); ++i)
+    for (set < pg_shard_t >::iterator i = ots.begin(); i != ots.end(); ++i) {
         already_read.insert(i->shard);
+    }
     dout(10) << __func__ << " have/error shards=" << already_read << dendl;
     map < pg_shard_t, vector < pair < int, int >>>shards;
     int r = get_remaining_shards(hoid, already_read, rop.want_to_read[hoid],
                                  rop.complete[hoid], &shards, rop.for_recovery);
-    if (r)
+    if (r) {
         return r;
+    }
 
     list < boost::tuple < uint64_t, uint64_t, uint32_t > >offsets =
         rop.to_read.find(hoid)->second.to_read;
-    GenContext < pair < RecoveryMessages *, read_result_t & >&>*c =
+    GenContext < pair < RecoveryMessages *, read_result_t & >&> *c =
         rop.to_read.find(hoid)->second.cb;
 
     // (Note cuixf) If we need to read attrs and we read failed, try to read again.
@@ -2388,32 +2412,34 @@ int ECBackend::send_all_remaining_reads(const hobject_t & hoid, ReadOp & rop)
     rop.to_read.erase(hoid);
     rop.to_read.insert(make_pair(hoid,
                                  read_request_t(offsets,
-                                                shards, want_attrs, c)));
+                                         shards, want_attrs, c)));
     return 0;
 }
 
-int ECBackend::objects_get_attrs(const hobject_t & hoid,
+int ECBackend::objects_get_attrs(const hobject_t &hoid,
                                  map < string, bufferlist, less <>> *out)
 {
     int r = store->getattrs(ch,
                             ghobject_t(hoid, ghobject_t::NO_GEN,
                                        get_parent()->whoami_shard().shard),
                             *out);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     for (map < string, bufferlist >::iterator i = out->begin();
          i != out->end();) {
-        if (ECUtil::is_hinfo_key_string(i->first))
+        if (ECUtil::is_hinfo_key_string(i->first)) {
             out->erase(i++);
-        else
+        } else {
             ++i;
+        }
     }
     return r;
 }
 
-void ECBackend::rollback_append(const hobject_t & hoid,
-                                uint64_t old_size, ObjectStore::Transaction * t)
+void ECBackend::rollback_append(const hobject_t &hoid,
+                                uint64_t old_size, ObjectStore::Transaction *t)
 {
     ceph_assert(old_size % sinfo.get_stripe_width() == 0);
     t->truncate(coll,
@@ -2422,21 +2448,21 @@ void ECBackend::rollback_append(const hobject_t & hoid,
                 sinfo.aligned_logical_offset_to_chunk_offset(old_size));
 }
 
-int ECBackend::be_deep_scrub(const hobject_t & poid,
-                             ScrubMap & map,
-                             ScrubMapBuilder & pos, ScrubMap::object & o)
+int ECBackend::be_deep_scrub(const hobject_t &poid,
+                             ScrubMap &map,
+                             ScrubMapBuilder &pos, ScrubMap::object &o)
 {
     dout(10) << __func__ << " " << poid << " pos " << pos << dendl;
     int r;
 
     uint32_t fadvise_flags = CEPH_OSD_OP_FLAG_FADVISE_SEQUENTIAL |
-        CEPH_OSD_OP_FLAG_FADVISE_DONTNEED;
+                             CEPH_OSD_OP_FLAG_FADVISE_DONTNEED;
 
     utime_t sleeptime;
     sleeptime.set_from_double(cct->_conf->osd_debug_deep_scrub_sleep);
     if (sleeptime != utime_t()) {
         lgeneric_derr(cct) << __func__ << " sleeping for " << sleeptime <<
-            dendl;
+                           dendl;
         sleeptime.sleep();
     }
 
@@ -2445,8 +2471,9 @@ int ECBackend::be_deep_scrub(const hobject_t & poid,
     }
 
     uint64_t stride = cct->_conf->osd_deep_scrub_stride;
-    if (stride % sinfo.get_chunk_size())
+    if (stride % sinfo.get_chunk_size()) {
         stride += sinfo.get_chunk_size() - (stride % sinfo.get_chunk_size());
+    }
 
     bufferlist bl;
     r = store->read(ch,
@@ -2455,14 +2482,14 @@ int ECBackend::be_deep_scrub(const hobject_t & poid,
                     pos.data_pos, stride, bl, fadvise_flags);
     if (r < 0) {
         dout(20) << __func__ << "  " << poid << " got "
-            << r << " on read, read_error" << dendl;
+                 << r << " on read, read_error" << dendl;
         o.read_error = true;
         return 0;
     }
     if (bl.length() % sinfo.get_chunk_size()) {
         dout(20) << __func__ << "  " << poid << " got "
-            << r << " on read, not chunk size " << sinfo.
-            get_chunk_size() << " aligned" << dendl;
+                 << r << " on read, not chunk size " << sinfo.
+                 get_chunk_size() << " aligned" << dendl;
         o.read_error = true;
         return 0;
     }
@@ -2477,24 +2504,23 @@ int ECBackend::be_deep_scrub(const hobject_t & poid,
     ECUtil::HashInfoRef hinfo = get_hash_info(poid, false, &o.attrs);
     if (!hinfo) {
         dout(0) << "_scan_list  " << poid << " could not retrieve hash info" <<
-            dendl;
+                dendl;
         o.read_error = true;
         o.digest_present = false;
         return 0;
-    }
-    else {
+    } else {
         if (!get_parent()->get_pool().allows_ecoverwrites()) {
             if (!hinfo->has_chunk_hash()) {
                 dout(0) << "_scan_list  " << poid << " got invalid hash info" <<
-                    dendl;
+                        dendl;
                 o.ec_size_mismatch = true;
                 return 0;
             }
             if (hinfo->get_total_chunk_size() != (unsigned)pos.data_pos) {
                 dout(0) << "_scan_list  " << poid <<
-                    " got incorrect size on read 0x" << std::
-                    hex << pos << " expected 0x" << hinfo->
-                    get_total_chunk_size() << std::dec << dendl;
+                        " got incorrect size on read 0x" << std::
+                        hex << pos << " expected 0x" << hinfo->
+                        get_total_chunk_size() << std::dec << dendl;
                 o.ec_size_mismatch = true;
                 return 0;
             }
@@ -2502,10 +2528,10 @@ int ECBackend::be_deep_scrub(const hobject_t & poid,
             if (hinfo->get_chunk_hash(get_parent()->whoami_shard().shard) !=
                 pos.data_hash.digest()) {
                 dout(0) << "_scan_list  " << poid <<
-                    " got incorrect hash on read 0x" << std::hex << pos.
-                    data_hash.digest() << " !=  expected 0x" << hinfo->
-                    get_chunk_hash(get_parent()->whoami_shard().shard)
-                    << std::dec << dendl;
+                        " got incorrect hash on read 0x" << std::hex << pos.
+                        data_hash.digest() << " !=  expected 0x" << hinfo->
+                        get_chunk_hash(get_parent()->whoami_shard().shard)
+                        << std::dec << dendl;
                 o.ec_hash_mismatch = true;
                 return 0;
             }
@@ -2518,8 +2544,7 @@ int ECBackend::be_deep_scrub(const hobject_t & poid,
              */
             o.digest = hinfo->get_chunk_hash(0);
             o.digest_present = true;
-        }
-        else {
+        } else {
             /* Hack! We must be using partial overwrites, and partial overwrites
              * don't support deep-scrub yet
              */

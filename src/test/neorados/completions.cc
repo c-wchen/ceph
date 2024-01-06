@@ -9,8 +9,9 @@ boost::asio::io_context c;
 
 void nested_cb()
 {
-    if (++completed < max_completions)
+    if (++completed < max_completions) {
         c.post(&nested_cb);
+    }
 }
 
 int main(void)

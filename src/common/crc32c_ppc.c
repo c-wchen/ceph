@@ -17,24 +17,26 @@
 #include <stdlib.h>
 #include <strings.h>
 
-#define VMX_ALIGN	16
-#define VMX_ALIGN_MASK	(VMX_ALIGN-1)
+#define VMX_ALIGN   16
+#define VMX_ALIGN_MASK  (VMX_ALIGN-1)
 
 #ifdef HAVE_PPC64LE
 #ifdef REFLECT
 static unsigned int crc32_align(unsigned int crc, unsigned char const *p,
                                 unsigned long len)
 {
-    while (len--)
+    while (len--) {
         crc = crc_table[(crc ^ *p++) & 0xff] ^ (crc >> 8);
+    }
     return crc;
 }
 #else
 static unsigned int crc32_align(unsigned int crc, unsigned char const *p,
                                 unsigned long len)
 {
-    while (len--)
+    while (len--) {
         crc = crc_table[((crc >> 24) ^ *p++) & 0xff] ^ (crc << 8);
+    }
     return crc;
 }
 #endif
@@ -45,7 +47,7 @@ static inline unsigned long polynomial_multiply(unsigned int a, unsigned int b)
     vector unsigned int vb = { b, 0, 0, 0 };
     vector unsigned long vt;
 
-  __asm__("vpmsumw %0,%1,%2": "=v"(vt):"v"(va), "v"(vb));
+    __asm__("vpmsumw %0,%1,%2": "=v"(vt):"v"(va), "v"(vb));
 
     return vt[0];
 }
@@ -105,7 +107,7 @@ static uint32_t crc32_vpmsum(uint32_t crc, unsigned char const *data,
         crc = crc32_align(crc, data, tail);
     }
 
-  out:
+out:
 #ifdef CRC_XOR
     crc ^= 0xffffffff;
 #endif
@@ -113,7 +115,7 @@ static uint32_t crc32_vpmsum(uint32_t crc, unsigned char const *data,
     return crc;
 }
 
-/* This wrapper function works around the fact that crc32_vpmsum 
+/* This wrapper function works around the fact that crc32_vpmsum
  * does not gracefully handle the case where the data pointer is NULL.
  */
 uint32_t ceph_crc32c_ppc(uint32_t crc, unsigned char const *data, unsigned len)
@@ -129,8 +131,7 @@ uint32_t ceph_crc32c_ppc(uint32_t crc, unsigned char const *data, unsigned len)
 #ifdef REFLECT
         crc = reverse_bits(crc);
 #endif
-    }
-    else {
+    } else {
         /* Handle the valid buffer case. */
         crc = crc32_vpmsum(crc, data, (unsigned long)len);
     }

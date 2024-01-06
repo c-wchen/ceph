@@ -7,12 +7,13 @@
 #include "rgw_frontend.h"
 #define REQUEST_TIMEOUT 65000
 
-class RGWAsioFrontend:public RGWFrontend {
+class RGWAsioFrontend: public RGWFrontend
+{
     class Impl;
-     std::unique_ptr < Impl > impl;
-  public:
-     RGWAsioFrontend(RGWProcessEnv & env, RGWFrontendConfig * conf,
-                     rgw::dmclock::SchedulerCtx & sched_ctx);
+    std::unique_ptr < Impl > impl;
+public:
+    RGWAsioFrontend(RGWProcessEnv &env, RGWFrontendConfig *conf,
+                    rgw::dmclock::SchedulerCtx &sched_ctx);
     ~RGWAsioFrontend() override;
 
     int init() override;

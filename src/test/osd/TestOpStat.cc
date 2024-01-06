@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 #include "include/interval_set.h"
 #include "include/buffer.h"
 #include <list>
@@ -7,17 +7,17 @@
 #include "RadosModel.h"
 #include "TestOpStat.h"
 
-void TestOpStat::begin(TestOp * in)
+void TestOpStat::begin(TestOp *in)
 {
     std::lock_guard l {
-    stat_lock};
+        stat_lock};
     stats[in->getType()].begin(in);
 }
 
-void TestOpStat::end(TestOp * in)
+void TestOpStat::end(TestOp *in)
 {
     std::lock_guard l {
-    stat_lock};
+        stat_lock};
     stats[in->getType()].end(in);
 }
 
@@ -36,10 +36,10 @@ void TestOpStat::TypeStatus::export_latencies(std::map < double, uint64_t > &in)
     }
 }
 
-std::ostream & operator<<(std::ostream & out, const TestOpStat & rhs)
+std::ostream &operator<<(std::ostream &out, const TestOpStat &rhs)
 {
     std::lock_guard l {
-    rhs.stat_lock};
+        rhs.stat_lock};
     for (auto i = rhs.stats.begin(); i != rhs.stats.end(); ++i) {
         std::map < double, uint64_t > latency;
         latency[10] = 0;
@@ -50,8 +50,9 @@ std::ostream & operator<<(std::ostream & out, const TestOpStat & rhs)
 
         out << i->first << " latency: " << std::endl;
         for (auto j = latency.begin(); j != latency.end(); ++j) {
-            if (j->second == 0)
+            if (j->second == 0) {
                 break;
+            }
             out << "\t" << j->first << "th percentile: "
                 << j->second / 1000 << "ms" << std::endl;
         }

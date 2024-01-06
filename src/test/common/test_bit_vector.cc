@@ -15,13 +15,15 @@
 
 using namespace ceph;
 
-template < uint8_t _bit_count > class TestParams {
-  public:
+template < uint8_t _bit_count > class TestParams
+{
+public:
     static const uint8_t BIT_COUNT = _bit_count;
 };
 
-template < typename T > class BitVectorTest:public::testing::Test {
-  public:
+template < typename T > class BitVectorTest: public::testing::Test
+{
+public:
     typedef BitVector < T::BIT_COUNT > bit_vector_t;
 };
 
@@ -39,7 +41,7 @@ TYPED_TEST(BitVectorTest, resize)
     bit_vector.resize(size);
     ASSERT_EQ(bit_vector.size(), size);
     ASSERT_EQ(bit_vector.get_data().length(),
-              static_cast < uint64_t > (std::ceil(size / elements_per_byte)));
+              static_cast < uint64_t >(std::ceil(size / elements_per_byte)));
 }
 
 TYPED_TEST(BitVectorTest, clear)
@@ -80,7 +82,7 @@ TYPED_TEST(BitVectorTest, get_set)
         bit_vector[i] = v;
     }
 
-    const typename TestFixture::bit_vector_t & const_bit_vector(bit_vector);
+    const typename TestFixture::bit_vector_t &const_bit_vector(bit_vector);
     for (size_t i = 0; i < size; ++i) {
         ASSERT_EQ(ref[i], bit_vector[i]);
         ASSERT_EQ(ref[i], const_bit_vector[i]);
@@ -167,13 +169,16 @@ TYPED_TEST(BitVectorTest, partial_decode_encode)
     typedef std::list < Extent > Extents;
 
     Extents extents =
-        boost::assign::list_of(std::make_pair(0, 1)) (std::
-                                                      make_pair((bit_vector.
-                                                                 BLOCK_SIZE *
-                                                                 elements_per_byte)
-                                                                - 2,
-                                                                4)) (std::
-                                                                     make_pair((bit_vector.BLOCK_SIZE * elements_per_byte) + 2, 2)) (std::make_pair((2 * bit_vector.BLOCK_SIZE * elements_per_byte) - 2, 4)) (std::make_pair((2 * bit_vector.BLOCK_SIZE * elements_per_byte) + 2, 2)) (std::make_pair(2, 2 * bit_vector.BLOCK_SIZE));
+        boost::assign::list_of(std::make_pair(0, 1))(std::
+            make_pair((bit_vector.
+                       BLOCK_SIZE *
+                       elements_per_byte)
+                      - 2,
+                      4))(std::
+                          make_pair((bit_vector.BLOCK_SIZE * elements_per_byte) + 2,
+                                    2))(std::make_pair((2 * bit_vector.BLOCK_SIZE * elements_per_byte) - 2,
+                                        4))(std::make_pair((2 * bit_vector.BLOCK_SIZE * elements_per_byte) + 2, 2))(std::make_pair(2,
+                                            2 * bit_vector.BLOCK_SIZE));
     for (Extents::iterator it = extents.begin(); it != extents.end(); ++it) {
         bufferlist footer_bl;
         uint64_t footer_byte_offset;
@@ -212,7 +217,7 @@ TYPED_TEST(BitVectorTest, partial_decode_encode)
 
         if (data_byte_offset + byte_length < bit_vector.get_footer_offset()) {
             uint64_t tail_data_offset = bit_vector.get_header_length() +
-                data_byte_offset + byte_length;
+                                        data_byte_offset + byte_length;
             data_bl.substr_of(bl, tail_data_offset,
                               bit_vector.get_footer_offset() -
                               tail_data_offset);

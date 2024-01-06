@@ -38,14 +38,15 @@ CLS_NAME(lock)
 static int clean_lock(cls_method_context_t hctx)
 {
     int r = cls_cxx_remove(hctx);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
 
 static int read_lock(cls_method_context_t hctx,
-                     const string & name, lock_info_t * lock)
+                     const string &name, lock_info_t *lock)
 {
     bufferlist bl;
     string key = LOCK_PREFIX;
@@ -66,8 +67,7 @@ static int read_lock(cls_method_context_t hctx,
     try {
         auto it = bl.cbegin();
         decode(*lock, it);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("error decoding %s", key.c_str());
         return -EIO;
     }
@@ -83,8 +83,7 @@ static int read_lock(cls_method_context_t hctx,
         if (!info.expiration.is_zero() && info.expiration < now) {
             CLS_LOG(20, "expiring locker");
             iter = lock->lockers.erase(iter);
-        }
-        else {
+        } else {
             ++iter;
         }
     }
@@ -100,8 +99,8 @@ static int read_lock(cls_method_context_t hctx,
     return 0;
 }
 
-static int write_lock(cls_method_context_t hctx, const string & name,
-                      const lock_info_t & lock)
+static int write_lock(cls_method_context_t hctx, const string &name,
+                      const lock_info_t &lock)
 {
     using ceph::encode;
     string key = LOCK_PREFIX;
@@ -111,8 +110,9 @@ static int write_lock(cls_method_context_t hctx, const string & name,
     encode(lock, lock_bl, cls_get_client_features(hctx));
 
     int r = cls_cxx_setxattr(hctx, key.c_str(), &lock_bl);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
@@ -133,11 +133,11 @@ static int write_lock(cls_method_context_t hctx, const string & name,
  * @return 0 on success, or -errno on failure
  */
 static int lock_obj(cls_method_context_t hctx,
-                    const string & name,
+                    const string &name,
                     ClsLockType lock_type,
                     utime_t duration,
-                    const string & description,
-                    uint8_t flags, const string & cookie, const string & tag)
+                    const string &description,
+                    uint8_t flags, const string &cookie, const string &tag)
 {
     bool exclusive = cls_lock_is_exclusive(lock_type);
     lock_info_t linfo;
@@ -152,8 +152,9 @@ static int lock_obj(cls_method_context_t hctx,
         return -EINVAL;
     }
 
-    if (name.empty())
+    if (name.empty()) {
         return -EINVAL;
+    }
 
     if (!fail_if_exists && fail_if_does_not_exist) {
         // at most one of LOCK_FLAG_MAY_RENEW and LOCK_FLAG_MUST_RENEW may
@@ -169,7 +170,7 @@ static int lock_obj(cls_method_context_t hctx,
         return r;
     }
 
-    auto & lockers = linfo.lockers;
+    auto &lockers = linfo.lockers;
 
     locker_id_t id;
     id.cookie = cookie;
@@ -191,18 +192,16 @@ static int lock_obj(cls_method_context_t hctx,
     if (iter != lockers.end()) {
         if (fail_if_exists && !fail_if_does_not_exist) {
             return -EEXIST;
-        }
-        else {
+        } else {
             lockers.erase(iter);    // remove old entry
         }
-    }
-    else if (fail_if_does_not_exist) {
+    } else if (fail_if_does_not_exist) {
         return -ENOENT;
     }
 
     if (!lockers.empty()) {
         if (exclusive) {
-            auto locker_lister =[&lockers] ()->std::string {
+            auto locker_lister = [&lockers]()->std::string {
                 std::stringstream locker_list;
                 locker_list << lockers;
                 return locker_list.str();
@@ -238,8 +237,9 @@ static int lock_obj(cls_method_context_t hctx,
     linfo.lockers[id] = info;
 
     r = write_lock(hctx, name, linfo);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
@@ -253,14 +253,14 @@ static int lock_obj(cls_method_context_t hctx,
  * @returns 0 on success, -EINVAL if it can't decode the lock_cookie,
  * -EBUSY if the object is already locked, or -errno on (unexpected) failure.
  */
-static int lock_op(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
+static int lock_op(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "lock_op");
     cls_lock_lock_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 
@@ -280,8 +280,8 @@ static int lock_op(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
  *  entity or cookie is wrong), or -errno on other error.
  */
 static int remove_lock(cls_method_context_t hctx,
-                       const string & name,
-                       entity_name_t & locker, const string & cookie)
+                       const string &name,
+                       entity_name_t &locker, const string &cookie)
 {
     // get current lockers
     lock_info_t linfo;
@@ -292,7 +292,7 @@ static int remove_lock(cls_method_context_t hctx,
         return r;
     }
 
-    auto & lockers = linfo.lockers;
+    auto &lockers = linfo.lockers;
     struct locker_id_t id(locker, cookie);
 
     // remove named locker from set
@@ -307,8 +307,7 @@ static int remove_lock(cls_method_context_t hctx,
     if (cls_lock_is_ephemeral(linfo.lock_type)) {
         ceph_assert(lockers.empty());
         r = clean_lock(hctx);
-    }
-    else {
+    } else {
         r = write_lock(hctx, name, linfo);
     }
 
@@ -326,14 +325,14 @@ static int remove_lock(cls_method_context_t hctx,
  * -errno on other (unexpected) error.
  */
 static int unlock_op(cls_method_context_t hctx,
-                     bufferlist * in, bufferlist * out)
+                     bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "unlock_op");
     cls_lock_unlock_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 
@@ -354,14 +353,14 @@ static int unlock_op(cls_method_context_t hctx,
  * is wrong), or -errno on other (unexpected) error.
  */
 static int break_lock(cls_method_context_t hctx,
-                      bufferlist * in, bufferlist * out)
+                      bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "break_lock");
     cls_lock_break_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 
@@ -379,15 +378,15 @@ static int break_lock(cls_method_context_t hctx,
  *
  * @return 0 on success, -errno on failure.
  */
-static int get_info(cls_method_context_t hctx, bufferlist * in,
-                    bufferlist * out)
+static int get_info(cls_method_context_t hctx, bufferlist *in,
+                    bufferlist *out)
 {
     CLS_LOG(20, "get_info");
     cls_lock_get_info_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 
@@ -423,22 +422,23 @@ static int get_info(cls_method_context_t hctx, bufferlist * in,
  *
  * @return 0 on success, -errno on failure.
  */
-static int list_locks(cls_method_context_t hctx, bufferlist * in,
-                      bufferlist * out)
+static int list_locks(cls_method_context_t hctx, bufferlist *in,
+                      bufferlist *out)
 {
     CLS_LOG(20, "list_locks");
 
     map < string, bufferlist > attrs;
 
     int r = cls_cxx_getxattrs(hctx, &attrs);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     cls_lock_list_locks_reply ret;
 
     size_t pos = sizeof(LOCK_PREFIX) - 1;
     for (auto iter = attrs.begin(); iter != attrs.end(); ++iter) {
-        const string & attr = iter->first;
+        const string &attr = iter->first;
         if (attr.substr(0, pos).compare(LOCK_PREFIX) == 0) {
             ret.locks.push_back(attr.substr(pos));
         }
@@ -460,7 +460,7 @@ static int list_locks(cls_method_context_t hctx, bufferlist * in,
  *
  * @return 0 on success, -errno on failure.
  */
-int assert_locked(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
+int assert_locked(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "assert_locked");
 
@@ -468,7 +468,7 @@ int assert_locked(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 
@@ -532,7 +532,7 @@ int assert_locked(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
  *
  * @return 0 on success, -errno on failure.
  */
-int set_cookie(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
+int set_cookie(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "set_cookie");
 
@@ -540,7 +540,7 @@ int set_cookie(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 

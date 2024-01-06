@@ -9,7 +9,8 @@
 struct Context;
 
 struct MockContextWQ {
-    void queue(Context * ctx) {
+    void queue(Context *ctx)
+    {
         queue(ctx, 0);
     } MOCK_METHOD2(queue, void (Context *, int));
 };

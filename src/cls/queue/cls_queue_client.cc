@@ -9,7 +9,7 @@
 using namespace std;
 using namespace librados;
 
-void cls_queue_init(ObjectWriteOperation & op, const string & queue_name,
+void cls_queue_init(ObjectWriteOperation &op, const string &queue_name,
                     uint64_t size)
 {
     bufferlist in;
@@ -20,19 +20,19 @@ void cls_queue_init(ObjectWriteOperation & op, const string & queue_name,
     op.exec(QUEUE_CLASS, QUEUE_INIT, in);
 }
 
-int cls_queue_get_capacity(IoCtx & io_ctx, const string & oid, uint64_t & size)
+int cls_queue_get_capacity(IoCtx &io_ctx, const string &oid, uint64_t &size)
 {
     bufferlist in, out;
     int r = io_ctx.exec(oid, QUEUE_CLASS, QUEUE_GET_CAPACITY, in, out);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     cls_queue_get_capacity_ret op_ret;
     auto iter = out.cbegin();
     try {
         decode(op_ret, iter);
-    }
-    catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EIO;
     }
 
@@ -41,7 +41,7 @@ int cls_queue_get_capacity(IoCtx & io_ctx, const string & oid, uint64_t & size)
     return 0;
 }
 
-void cls_queue_enqueue(ObjectWriteOperation & op, uint32_t expiration_secs,
+void cls_queue_enqueue(ObjectWriteOperation &op, uint32_t expiration_secs,
                        vector < bufferlist > bl_data_vec)
 {
     bufferlist in;
@@ -51,10 +51,10 @@ void cls_queue_enqueue(ObjectWriteOperation & op, uint32_t expiration_secs,
     op.exec(QUEUE_CLASS, QUEUE_ENQUEUE, in);
 }
 
-int cls_queue_list_entries(IoCtx & io_ctx, const string & oid,
-                           const string & marker, uint32_t max,
+int cls_queue_list_entries(IoCtx &io_ctx, const string &oid,
+                           const string &marker, uint32_t max,
                            vector < cls_queue_entry > &entries,
-                           bool * truncated, string & next_marker)
+                           bool *truncated, string &next_marker)
 {
     bufferlist in, out;
     cls_queue_list_op op;
@@ -63,15 +63,15 @@ int cls_queue_list_entries(IoCtx & io_ctx, const string & oid,
     encode(op, in);
 
     int r = io_ctx.exec(oid, QUEUE_CLASS, QUEUE_LIST_ENTRIES, in, out);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     cls_queue_list_ret ret;
     auto iter = out.cbegin();
     try {
         decode(ret, iter);
-    }
-    catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EIO;
     }
 
@@ -83,8 +83,8 @@ int cls_queue_list_entries(IoCtx & io_ctx, const string & oid,
     return 0;
 }
 
-void cls_queue_remove_entries(ObjectWriteOperation & op,
-                              const string & end_marker)
+void cls_queue_remove_entries(ObjectWriteOperation &op,
+                              const string &end_marker)
 {
     bufferlist in, out;
     cls_queue_remove_op rem_op;

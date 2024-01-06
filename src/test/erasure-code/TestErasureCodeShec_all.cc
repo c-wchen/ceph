@@ -50,14 +50,15 @@ struct Recover_d {
     int k;
     int m;
     int c;
-     set < int >want;
-     set < int >avail;
+    set < int >want;
+    set < int >avail;
 };
 struct std::vector < Recover_d > cannot_recover;
 
-class ParameterTest:public::testing::TestWithParam < struct Param_d > {
+class ParameterTest: public::testing::TestWithParam < struct Param_d >
+    {
 
-};
+    };
 
 TEST_P(ParameterTest, parameter_all)
 {
@@ -74,8 +75,8 @@ TEST_P(ParameterTest, parameter_all)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -131,8 +132,7 @@ TEST_P(ParameterTest, parameter_all)
                 EXPECT_EQ(0, result);
                 EXPECT_TRUE(minimum_chunks.size());
                 g_recover++;
-            }
-            else {
+            } else {
                 EXPECT_EQ(-EIO, result);
                 EXPECT_EQ(0u, minimum_chunks.size());
                 g_cannot_recover++;
@@ -164,8 +164,8 @@ TEST_P(ParameterTest, parameter_all)
     }
 
     result = shec->minimum_to_decode_with_cost(want_to_decode_with_cost,
-                                               available_chunks_with_cost,
-                                               &minimum_chunks_with_cost);
+             available_chunks_with_cost,
+             &minimum_chunks_with_cost);
     EXPECT_EQ(0, result);
     EXPECT_TRUE(minimum_chunks_with_cost.size());
 
@@ -178,7 +178,7 @@ TEST_P(ParameterTest, parameter_all)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "012345"          //192
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); i++) {
         want_to_encode.insert(i);
     }
@@ -262,7 +262,7 @@ TEST_P(ParameterTest, parameter_all)
     delete crush;
 }
 
-INSTANTIATE_TEST_SUITE_P(Test, ParameterTest,::testing::ValuesIn(param));
+INSTANTIATE_TEST_SUITE_P(Test, ParameterTest, ::testing::ValuesIn(param));
 
 int main(int argc, char **argv)
 {
@@ -306,24 +306,23 @@ int main(int argc, char **argv)
 
     std::cout << "minimum_to_decode:recover_num = " << g_recover << std::endl;
     std::cout << "minimum_to_decode:cannot_recover_num = " << g_cannot_recover
-        << std::endl;
+              << std::endl;
     recovery_percentage = 100.0
-        - (float)(100.0 * g_cannot_recover / (g_recover + g_cannot_recover));
+                          - (float)(100.0 * g_cannot_recover / (g_recover + g_cannot_recover));
     printf("recovery_percentage:%f\n", recovery_percentage);
     if (recovery_percentage > 99.0) {
         std::cout << "[       OK ] Recovery percentage is more than 99.0%"
-            << std::endl;
-    }
-    else {
+                  << std::endl;
+    } else {
         std::cout << "[       NG ] Recovery percentage is less than 99.0%"
-            << std::endl;
+                  << std::endl;
     }
     std::cout << "cannot recovery patterns:" << std::endl;
     for (std::vector < Recover_d >::const_iterator i = cannot_recover.begin();
          i != cannot_recover.end(); ++i) {
         std::cout << "---" << std::endl;
         std::cout << "k = " << i->k << ", m = " << i->m << ", c = " << i->c
-            << std::endl;
+                  << std::endl;
         std::cout << "want_to_decode  :" << i->want << std::endl;
         std::cout << "available_chunks:" << i->avail << std::endl;
     }

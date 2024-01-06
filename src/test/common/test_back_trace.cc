@@ -36,9 +36,10 @@ TEST(BackTrace, Basic)
     std::regex e {
         "^ 1: "
 #ifdef __FreeBSD__
-    "<foo.*>\\s" "at\\s.*$"};
+        "<foo.*>\\s" "at\\s.*$"};
 #else
-    "\\(foo.*\\)\\s" "\\[0x[[:xdigit:]]+\\]$"};
+        "\\(foo.*\\)\\s" "\\[0x[[:xdigit:]]+\\]$"
+    };
 #endif
     EXPECT_TRUE(std::regex_match(lines[lineno], e));
 }

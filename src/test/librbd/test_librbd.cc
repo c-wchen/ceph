@@ -84,19 +84,19 @@ void register_test_librbd()
 {
 }
 
-static int get_features(bool * old_format, uint64_t * features)
+static int get_features(bool *old_format, uint64_t *features)
 {
     const char *c = getenv("RBD_FEATURES");
     if (c && strlen(c) > 0) {
         stringstream ss;
         ss << c;
         ss >> *features;
-        if (ss.fail())
+        if (ss.fail()) {
             return -EINVAL;
+        }
         *old_format = false;
         cout << "using new format!" << std::endl;
-    }
-    else {
+    } else {
         *old_format = true;
         *features = 0;
         cout << "using old format" << std::endl;
@@ -117,8 +117,7 @@ static int create_image_full(rados_ioctx_t ioctx, const char *name,
             return r;
         }
         return rbd_create(ioctx, name, size, order);
-    }
-    else if ((features & RBD_FEATURE_STRIPINGV2) != 0) {
+    } else if ((features & RBD_FEATURE_STRIPINGV2) != 0) {
         uint64_t stripe_unit = IMAGE_STRIPE_UNIT;
         if (*order) {
             // use a conservative stripe_unit for non default order
@@ -129,8 +128,7 @@ static int create_image_full(rados_ioctx_t ioctx, const char *name,
                "stripe count: %" PRIu64 "\n", stripe_unit, IMAGE_STRIPE_COUNT);
         return rbd_create3(ioctx, name, size, features, order,
                            stripe_unit, IMAGE_STRIPE_COUNT);
-    }
-    else {
+    } else {
         return rbd_create2(ioctx, name, size, features, order);
     }
 }
@@ -164,20 +162,22 @@ static int create_image(rados_ioctx_t ioctx, const char *name,
     uint64_t features;
 
     int r = get_features(&old_format, &features);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     return create_image_full(ioctx, name, size, order, old_format, features);
 }
 
-static int create_image_pp(librbd::RBD & rbd,
-                           librados::IoCtx & ioctx,
+static int create_image_pp(librbd::RBD &rbd,
+                           librados::IoCtx &ioctx,
                            const char *name, uint64_t size, int *order)
 {
     bool old_format;
     uint64_t features;
     int r = get_features(&old_format, &features);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     if (old_format) {
         librados::Rados rados(ioctx);
         int r = rados.conf_set("rbd_default_format", "1");
@@ -185,8 +185,7 @@ static int create_image_pp(librbd::RBD & rbd,
             return r;
         }
         return rbd.create(ioctx, name, size, order);
-    }
-    else {
+    } else {
         return rbd.create2(ioctx, name, size, features, order);
     }
 }
@@ -203,7 +202,7 @@ void simple_read_cb(rbd_completion_t cb, void *arg)
 
 void aio_write_test_data_and_poll(rbd_image_t image, int fd,
                                   const char *test_data, uint64_t off,
-                                  size_t len, uint32_t iohint, bool * passed)
+                                  size_t len, uint32_t iohint, bool *passed)
 {
     rbd_completion_t comp;
     uint64_t data = 0x123;
@@ -211,10 +210,11 @@ void aio_write_test_data_and_poll(rbd_image_t image, int fd,
                               &comp);
     printf("created completion\n");
     printf("started write\n");
-    if (iohint)
+    if (iohint) {
         rbd_aio_write2(image, off, len, test_data, comp, iohint);
-    else
+    } else {
         rbd_aio_write(image, off, len, test_data, comp);
+    }
 
     struct pollfd pfd;
     pfd.fd = fd;
@@ -226,7 +226,7 @@ void aio_write_test_data_and_poll(rbd_image_t image, int fd,
     rbd_completion_t comps[1];
     ASSERT_EQ(1, rbd_poll_io_events(image, comps, 1));
     uint64_t count;
-    ASSERT_EQ(static_cast < ssize_t > (sizeof(count)),
+    ASSERT_EQ(static_cast < ssize_t >(sizeof(count)),
               read(fd, &count, sizeof(count)));
     int r = rbd_aio_get_return_value(comps[0]);
     ASSERT_TRUE(rbd_aio_is_complete(comps[0]));
@@ -239,15 +239,16 @@ void aio_write_test_data_and_poll(rbd_image_t image, int fd,
 }
 
 void aio_write_test_data(rbd_image_t image, const char *test_data, uint64_t off,
-                         size_t len, uint32_t iohint, bool * passed)
+                         size_t len, uint32_t iohint, bool *passed)
 {
     rbd_completion_t comp;
     rbd_aio_create_completion(NULL, (rbd_callback_t) simple_write_cb, &comp);
     printf("created completion\n");
-    if (iohint)
+    if (iohint) {
         rbd_aio_write2(image, off, len, test_data, comp, iohint);
-    else
+    } else {
         rbd_aio_write(image, off, len, test_data, comp);
+    }
     printf("started write\n");
     rbd_aio_wait_for_complete(comp);
     int r = rbd_aio_get_return_value(comp);
@@ -259,20 +260,21 @@ void aio_write_test_data(rbd_image_t image, const char *test_data, uint64_t off,
 }
 
 void write_test_data(rbd_image_t image, const char *test_data, uint64_t off,
-                     size_t len, uint32_t iohint, bool * passed)
+                     size_t len, uint32_t iohint, bool *passed)
 {
     ssize_t written;
-    if (iohint)
+    if (iohint) {
         written = rbd_write2(image, off, len, test_data, iohint);
-    else
+    } else {
         written = rbd_write(image, off, len, test_data);
+    }
     printf("wrote: %d\n", (int)written);
-    ASSERT_EQ(len, static_cast < size_t > (written));
+    ASSERT_EQ(len, static_cast < size_t >(written));
     *passed = true;
 }
 
 void aio_discard_test_data(rbd_image_t image, uint64_t off, uint64_t len,
-                           bool * passed)
+                           bool *passed)
 {
     rbd_completion_t comp;
     rbd_aio_create_completion(NULL, (rbd_callback_t) simple_write_cb, &comp);
@@ -286,18 +288,18 @@ void aio_discard_test_data(rbd_image_t image, uint64_t off, uint64_t len,
 }
 
 void discard_test_data(rbd_image_t image, uint64_t off, size_t len,
-                       bool * passed)
+                       bool *passed)
 {
     ssize_t written;
     written = rbd_discard(image, off, len);
     printf("discard: %d~%d = %d\n", (int)off, (int)len, (int)written);
-    ASSERT_EQ(len, static_cast < size_t > (written));
+    ASSERT_EQ(len, static_cast < size_t >(written));
     *passed = true;
 }
 
 void aio_read_test_data_and_poll(rbd_image_t image, int fd,
                                  const char *expected, uint64_t off, size_t len,
-                                 uint32_t iohint, bool * passed)
+                                 uint32_t iohint, bool *passed)
 {
     rbd_completion_t comp;
     char *result = (char *)malloc(len + 1);
@@ -306,10 +308,11 @@ void aio_read_test_data_and_poll(rbd_image_t image, int fd,
     rbd_aio_create_completion(NULL, (rbd_callback_t) simple_read_cb, &comp);
     printf("created completion\n");
     printf("started read\n");
-    if (iohint)
+    if (iohint) {
         rbd_aio_read2(image, off, len, result, comp, iohint);
-    else
+    } else {
         rbd_aio_read(image, off, len, result, comp);
+    }
 
     struct pollfd pfd;
     pfd.fd = fd;
@@ -321,13 +324,13 @@ void aio_read_test_data_and_poll(rbd_image_t image, int fd,
     rbd_completion_t comps[1];
     ASSERT_EQ(1, rbd_poll_io_events(image, comps, 1));
     uint64_t count;
-    ASSERT_EQ(static_cast < ssize_t > (sizeof(count)),
+    ASSERT_EQ(static_cast < ssize_t >(sizeof(count)),
               read(fd, &count, sizeof(count)));
 
     int r = rbd_aio_get_return_value(comps[0]);
     ASSERT_TRUE(rbd_aio_is_complete(comps[0]));
     printf("return value is: %d\n", r);
-    ASSERT_EQ(len, static_cast < size_t > (r));
+    ASSERT_EQ(len, static_cast < size_t >(r));
     rbd_aio_release(comps[0]);
     if (memcmp(result, expected, len)) {
         printf("read: %s\nexpected: %s\n", result, expected);
@@ -338,7 +341,7 @@ void aio_read_test_data_and_poll(rbd_image_t image, int fd,
 }
 
 void aio_read_test_data(rbd_image_t image, const char *expected, uint64_t off,
-                        size_t len, uint32_t iohint, bool * passed)
+                        size_t len, uint32_t iohint, bool *passed)
 {
     rbd_completion_t comp;
     char *result = (char *)malloc(len + 1);
@@ -346,15 +349,16 @@ void aio_read_test_data(rbd_image_t image, const char *expected, uint64_t off,
     ASSERT_NE(static_cast < char *>(NULL), result);
     rbd_aio_create_completion(NULL, (rbd_callback_t) simple_read_cb, &comp);
     printf("created completion\n");
-    if (iohint)
+    if (iohint) {
         rbd_aio_read2(image, off, len, result, comp, iohint);
-    else
+    } else {
         rbd_aio_read(image, off, len, result, comp);
+    }
     printf("started read\n");
     rbd_aio_wait_for_complete(comp);
     int r = rbd_aio_get_return_value(comp);
     printf("return value is: %d\n", r);
-    ASSERT_EQ(len, static_cast < size_t > (r));
+    ASSERT_EQ(len, static_cast < size_t >(r));
     rbd_aio_release(comp);
     if (memcmp(result, expected, len)) {
         printf("read: %s\nexpected: %s\n", result, expected);
@@ -365,18 +369,19 @@ void aio_read_test_data(rbd_image_t image, const char *expected, uint64_t off,
 }
 
 void read_test_data(rbd_image_t image, const char *expected, uint64_t off,
-                    size_t len, uint32_t iohint, bool * passed)
+                    size_t len, uint32_t iohint, bool *passed)
 {
     ssize_t read;
     char *result = (char *)malloc(len + 1);
 
     ASSERT_NE(static_cast < char *>(NULL), result);
-    if (iohint)
+    if (iohint) {
         read = rbd_read2(image, off, len, result, iohint);
-    else
+    } else {
         read = rbd_read(image, off, len, result);
+    }
     printf("read: %d\n", (int)read);
-    ASSERT_EQ(len, static_cast < size_t > (read));
+    ASSERT_EQ(len, static_cast < size_t >(read));
     result[len] = '\0';
     if (memcmp(result, expected, len)) {
         printf("read: %s\nexpected: %s\n", result, expected);
@@ -388,7 +393,7 @@ void read_test_data(rbd_image_t image, const char *expected, uint64_t off,
 
 void aio_writesame_test_data(rbd_image_t image, const char *test_data,
                              uint64_t off, uint64_t len, uint64_t data_len,
-                             uint32_t iohint, bool * passed)
+                             uint32_t iohint, bool *passed)
 {
     rbd_completion_t comp;
     rbd_aio_create_completion(NULL, (rbd_callback_t) simple_write_cb, &comp);
@@ -419,7 +424,7 @@ void aio_writesame_test_data(rbd_image_t image, const char *test_data,
     uint64_t left = len;
     while (left > 0) {
         read = rbd_read(image, off, data_len, result);
-        ASSERT_EQ(data_len, static_cast < size_t > (read));
+        ASSERT_EQ(data_len, static_cast < size_t >(read));
         result[data_len] = '\0';
         if (memcmp(result, test_data, data_len)) {
             printf("read: %d ~ %d\n", (int)off, (int)read);
@@ -438,7 +443,7 @@ void aio_writesame_test_data(rbd_image_t image, const char *test_data,
 
 void writesame_test_data(rbd_image_t image, const char *test_data, uint64_t off,
                          uint64_t len, uint64_t data_len, uint32_t iohint,
-                         bool * passed)
+                         bool *passed)
 {
     ssize_t written;
     written = rbd_writesame(image, off, len, test_data, data_len, iohint);
@@ -448,7 +453,7 @@ void writesame_test_data(rbd_image_t image, const char *test_data, uint64_t off,
         *passed = true;
         return;
     }
-    ASSERT_EQ(len, static_cast < size_t > (written));
+    ASSERT_EQ(len, static_cast < size_t >(written));
     printf("wrote: %d\n", (int)written);
 
     //verify data
@@ -459,7 +464,7 @@ void writesame_test_data(rbd_image_t image, const char *test_data, uint64_t off,
     uint64_t left = len;
     while (left > 0) {
         read = rbd_read(image, off, data_len, result);
-        ASSERT_EQ(data_len, static_cast < size_t > (read));
+        ASSERT_EQ(data_len, static_cast < size_t >(read));
         result[data_len] = '\0';
         if (memcmp(result, test_data, data_len)) {
             printf("read: %d ~ %d\n", (int)off, (int)read);
@@ -478,7 +483,7 @@ void writesame_test_data(rbd_image_t image, const char *test_data, uint64_t off,
 
 void aio_compare_and_write_test_data(rbd_image_t image, const char *cmp_data,
                                      const char *test_data, uint64_t off,
-                                     size_t len, uint32_t iohint, bool * passed)
+                                     size_t len, uint32_t iohint, bool *passed)
 {
     rbd_completion_t comp;
     rbd_aio_create_completion(NULL, (rbd_callback_t) simple_write_cb, &comp);
@@ -499,8 +504,8 @@ void aio_compare_and_write_test_data(rbd_image_t image, const char *cmp_data,
 
 void compare_and_write_test_data(rbd_image_t image, const char *cmp_data,
                                  const char *test_data, uint64_t off,
-                                 size_t len, uint64_t * mismatch_off,
-                                 uint32_t iohint, bool * passed)
+                                 size_t len, uint64_t *mismatch_off,
+                                 uint32_t iohint, bool *passed)
 {
     printf("start compare and write\n");
     ssize_t written;
@@ -508,15 +513,18 @@ void compare_and_write_test_data(rbd_image_t image, const char *cmp_data,
         rbd_compare_and_write(image, off, len, cmp_data, test_data,
                               mismatch_off, iohint);
     printf("compare and  wrote: %d\n", (int)written);
-    ASSERT_EQ(len, static_cast < size_t > (written));
+    ASSERT_EQ(len, static_cast < size_t >(written));
     *passed = true;
 }
 
-class TestLibRBD:public::testing::Test {
-  public:
+class TestLibRBD: public::testing::Test
+{
+public:
 
-    TestLibRBD():m_pool_number() {
-    } static void SetUpTestCase() {
+    TestLibRBD(): m_pool_number()
+    {
+    } static void SetUpTestCase()
+    {
         _pool_names.clear();
         _unique_pool_names.clear();
         _image_number = 0;
@@ -526,7 +534,8 @@ class TestLibRBD:public::testing::Test {
         create_optional_data_pool();
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         rados_shutdown(_cluster);
         _rados.wait_for_latest_osdmap();
         _pool_names.insert(_pool_names.end(), _unique_pool_names.begin(),
@@ -539,17 +548,20 @@ class TestLibRBD:public::testing::Test {
         }
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         ASSERT_NE("", m_pool_name = create_pool());
     }
 
-    bool is_skip_partial_discard_enabled() {
+    bool is_skip_partial_discard_enabled()
+    {
         std::string value;
         EXPECT_EQ(0, _rados.conf_get("rbd_skip_partial_discard", value));
         return value == "true";
     }
 
-    bool is_skip_partial_discard_enabled(rbd_image_t image) {
+    bool is_skip_partial_discard_enabled(rbd_image_t image)
+    {
         if (is_skip_partial_discard_enabled()) {
             rbd_flush(image);
             uint64_t features;
@@ -559,7 +571,8 @@ class TestLibRBD:public::testing::Test {
         return false;
     }
 
-    bool is_skip_partial_discard_enabled(librbd::Image & image) {
+    bool is_skip_partial_discard_enabled(librbd::Image &image)
+    {
         if (is_skip_partial_discard_enabled()) {
             image.flush();
             uint64_t features;
@@ -569,24 +582,28 @@ class TestLibRBD:public::testing::Test {
         return false;
     }
 
-    void validate_object_map(rbd_image_t image, bool * passed) {
+    void validate_object_map(rbd_image_t image, bool *passed)
+    {
         uint64_t flags;
         ASSERT_EQ(0, rbd_get_flags(image, &flags));
         *passed = ((flags & RBD_FLAG_OBJECT_MAP_INVALID) == 0);
     }
 
-    void validate_object_map(librbd::Image & image, bool * passed) {
+    void validate_object_map(librbd::Image &image, bool *passed)
+    {
         uint64_t flags;
         ASSERT_EQ(0, image.get_flags(&flags));
         *passed = ((flags & RBD_FLAG_OBJECT_MAP_INVALID) == 0);
     }
 
-    static std::string get_temp_image_name() {
+    static std::string get_temp_image_name()
+    {
         ++_image_number;
         return "image" + stringify(_image_number);
     }
 
-    static void create_optional_data_pool() {
+    static void create_optional_data_pool()
+    {
         bool created = false;
         std::string data_pool;
         ASSERT_EQ(0, create_image_data_pool(_rados, data_pool, &created));
@@ -598,18 +615,17 @@ class TestLibRBD:public::testing::Test {
         }
     }
 
-    std::string create_pool(bool unique = false) {
+    std::string create_pool(bool unique = false)
+    {
         librados::Rados rados;
         std::string pool_name;
         if (unique) {
             pool_name = get_temp_pool_name("test-librbd-");
             EXPECT_EQ("", create_one_pool_pp(pool_name, rados));
             _unique_pool_names.push_back(pool_name);
-        }
-        else if (m_pool_number < _pool_names.size()) {
+        } else if (m_pool_number < _pool_names.size()) {
             pool_name = _pool_names[m_pool_number];
-        }
-        else {
+        } else {
             pool_name = get_temp_pool_name("test-librbd-");
             EXPECT_EQ("", create_one_pool_pp(pool_name, rados));
             _pool_names.push_back(pool_name);
@@ -618,7 +634,8 @@ class TestLibRBD:public::testing::Test {
         return pool_name;
     }
 
-    void test_io(rbd_image_t image) {
+    void test_io(rbd_image_t image)
+    {
         bool skip_discard = is_skip_partial_discard_enabled(image);
 
         char test_data[TEST_IO_SIZE + 1];
@@ -684,16 +701,14 @@ class TestLibRBD:public::testing::Test {
                 ASSERT_PASSED(writesame_test_data, image, zero_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                               TEST_IO_SIZE, 0);
-            }
-            else if (i % 3 == 1) {
+            } else if (i % 3 == 1) {
                 ASSERT_PASSED(writesame_test_data, image, test_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
                 ASSERT_PASSED(writesame_test_data, image, zero_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
-            }
-            else {
+            } else {
                 ASSERT_PASSED(writesame_test_data, image, test_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
@@ -710,16 +725,14 @@ class TestLibRBD:public::testing::Test {
                 ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                               TEST_IO_SIZE, 0);
-            }
-            else if (i % 3 == 1) {
+            } else if (i % 3 == 1) {
                 ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
                 ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
-            }
-            else {
+            } else {
                 ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
@@ -756,8 +769,8 @@ class TestLibRBD:public::testing::Test {
                       LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
         mismatch_offset = 123;
         ASSERT_EQ(-EILSEQ, rbd_compare_and_write(image, 0, TEST_IO_SIZE,
-                                                 mismatch_data, mismatch_data,
-                                                 &mismatch_offset, 0));
+                  mismatch_data, mismatch_data,
+                  &mismatch_offset, 0));
         ASSERT_EQ(0U, mismatch_offset);
         rbd_aio_create_completion(NULL, (rbd_callback_t) simple_read_cb, &comp);
         mismatch_offset = 123;
@@ -833,14 +846,15 @@ TEST_F(TestLibRBD, CreateWithSameDataPool)
     rbd_image_options_create(&image_options);
     BOOST_SCOPE_EXIT((&image_options)) {
         rbd_image_options_destroy(image_options);
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     ASSERT_EQ(0, rbd_image_options_set_uint64(image_options,
-                                              RBD_IMAGE_OPTION_FEATURES,
-                                              features));
+              RBD_IMAGE_OPTION_FEATURES,
+              features));
     ASSERT_EQ(0, rbd_image_options_set_string(image_options,
-                                              RBD_IMAGE_OPTION_DATA_POOL,
-                                              m_pool_name.c_str()));
+              RBD_IMAGE_OPTION_DATA_POOL,
+              m_pool_name.c_str()));
 
     ASSERT_EQ(0, rbd_create4(ioctx, name.c_str(), size, image_options));
     ASSERT_EQ(0, rbd_open(ioctx, name.c_str(), &image, NULL));
@@ -889,8 +903,7 @@ TEST_F(TestLibRBD, GetId)
     if (!is_feature_enabled(0)) {
         // V1 image
         ASSERT_EQ(-EINVAL, rbd_get_id(image, id, sizeof(id)));
-    }
-    else {
+    } else {
         ASSERT_EQ(-ERANGE, rbd_get_id(image, id, 0));
         ASSERT_EQ(0, rbd_get_id(image, id, sizeof(id)));
         ASSERT_LT(0U, strlen(id));
@@ -925,8 +938,7 @@ TEST_F(TestLibRBD, GetIdPP)
     if (!is_feature_enabled(0)) {
         // V1 image
         ASSERT_EQ(-EINVAL, image.get_id(&id));
-    }
-    else {
+    } else {
         ASSERT_EQ(0, image.get_id(&id));
         ASSERT_LT(0U, id.size());
 
@@ -1087,7 +1099,7 @@ TEST_F(TestLibRBD, OpenAioPP)
 
     ASSERT_EQ(0, create_image_pp(rbd, ioctx, name.c_str(), size, &order));
 
-    librbd::RBD::AioCompletion * open_comp =
+    librbd::RBD::AioCompletion *open_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, rbd.aio_open(ioctx, image, name.c_str(), NULL, open_comp));
     ASSERT_EQ(0, open_comp->wait_for_complete());
@@ -1108,7 +1120,7 @@ TEST_F(TestLibRBD, OpenAioPP)
     open_comp->release();
 
     // close
-    librbd::RBD::AioCompletion * close_comp =
+    librbd::RBD::AioCompletion *close_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, image.aio_close(close_comp));
     ASSERT_EQ(0, close_comp->wait_for_complete());
@@ -1134,7 +1146,7 @@ TEST_F(TestLibRBD, OpenAioFailPP)
         librbd::Image image;
         std::string name = get_temp_image_name();
 
-        librbd::RBD::AioCompletion * open_comp =
+        librbd::RBD::AioCompletion *open_comp =
             new librbd::RBD::AioCompletion(NULL, NULL);
         ASSERT_EQ(0, rbd.aio_open(ioctx, image, name.c_str(), NULL, open_comp));
         ASSERT_EQ(0, open_comp->wait_for_complete());
@@ -1223,28 +1235,32 @@ TEST_F(TestLibRBD, UpdateWatchAndResize)
     std::string name = get_temp_image_name();
     uint64_t size = 2 << 20;
     struct Watcher {
-        rbd_image_t & m_image;
+        rbd_image_t &m_image;
         std::mutex m_lock;
         std::condition_variable m_cond;
         size_t m_size = 0;
-        static void cb(void *arg) {
+        static void cb(void *arg)
+        {
             Watcher *watcher = static_cast < Watcher * >(arg);
             watcher->handle_notify();
-        } explicit Watcher(rbd_image_t & image):m_image(image) {
+        } explicit Watcher(rbd_image_t &image): m_image(image)
+        {
         }
-        void handle_notify() {
+        void handle_notify()
+        {
             rbd_image_info_t info;
             ASSERT_EQ(0, rbd_stat(m_image, &info, sizeof(info)));
             std::lock_guard < std::mutex > locker(m_lock);
             m_size = info.size;
             m_cond.notify_one();
         }
-        void wait_for_size(size_t size) {
+        void wait_for_size(size_t size)
+        {
             std::unique_lock < std::mutex > locker(m_lock);
-            ASSERT_TRUE(m_cond.wait_for(locker, seconds(5),[size, this] {
-                                        return this->m_size == size;
-                                        }
-                        ));
+            ASSERT_TRUE(m_cond.wait_for(locker, seconds(5), [size, this] {
+                return this->m_size == size;
+            }
+                                       ));
         }
     }
     watcher(image);
@@ -1278,23 +1294,26 @@ TEST_F(TestLibRBD, UpdateWatchAndResizePP)
         int order = 0;
         std::string name = get_temp_image_name();
         uint64_t size = 2 << 20;
-        struct Watcher:public librbd::UpdateWatchCtx {
-            explicit Watcher(librbd::Image & image):m_image(image) {
-            } void handle_notify() override {
+        struct Watcher: public librbd::UpdateWatchCtx {
+            explicit Watcher(librbd::Image &image): m_image(image)
+            {
+            } void handle_notify() override
+            {
                 librbd::image_info_t info;
                 ASSERT_EQ(0, m_image.stat(info, sizeof(info)));
                 std::lock_guard < std::mutex > locker(m_lock);
                 m_size = info.size;
                 m_cond.notify_one();
             }
-            void wait_for_size(size_t size) {
+            void wait_for_size(size_t size)
+            {
                 std::unique_lock < std::mutex > locker(m_lock);
-                ASSERT_TRUE(m_cond.wait_for(locker, seconds(5),[size, this] {
-                                            return this->m_size == size;
-                                            }
-                            ));
+                ASSERT_TRUE(m_cond.wait_for(locker, seconds(5), [size, this] {
+                    return this->m_size == size;
+                }
+                                           ));
             }
-            librbd::Image & m_image;
+            librbd::Image &m_image;
             std::mutex m_lock;
             std::condition_variable m_cond;
             size_t m_size = 0;
@@ -1347,8 +1366,7 @@ int test_ls(rados_ioctx_t io_ctx, size_t num_expected, ...)
             printf("found %s\n", expected);
             image_names.erase(it);
             printf("erased %s\n", expected);
-        }
-        else {
+        } else {
             ADD_FAILURE() << "Unable to find image " << expected;
             va_end(ap);
             return -ENOENT;
@@ -1386,7 +1404,7 @@ TEST_F(TestLibRBD, TestCreateLsDelete)
     rados_ioctx_destroy(ioctx);
 }
 
-int test_ls_pp(librbd::RBD & rbd, librados::IoCtx & io_ctx, size_t num_expected,
+int test_ls_pp(librbd::RBD &rbd, librados::IoCtx &io_ctx, size_t num_expected,
                ...)
 {
     int r;
@@ -1394,11 +1412,12 @@ int test_ls_pp(librbd::RBD & rbd, librados::IoCtx & io_ctx, size_t num_expected,
     va_list ap;
     vector < string > names;
     r = rbd.list(io_ctx, names);
-    if (r == -ENOENT)
+    if (r == -ENOENT) {
         r = 0;
+    }
     EXPECT_TRUE(r >= 0);
     cout << "num images is: " << names.size() << std::endl
-        << "expected: " << num_expected << std::endl;
+         << "expected: " << num_expected << std::endl;
     int num = names.size();
 
     for (i = 0; i < names.size(); i++) {
@@ -1543,13 +1562,16 @@ TEST_F(TestLibRBD, TestCopy)
     rados_ioctx_destroy(ioctx);
 }
 
-class PrintProgress:public librbd::ProgressContext {
-  public:
-    int update_progress(uint64_t offset, uint64_t src_size) override {
+class PrintProgress: public librbd::ProgressContext
+{
+public:
+    int update_progress(uint64_t offset, uint64_t src_size) override
+    {
         float percent = ((float)offset * 100) / src_size;
         printf("%3.2f%% done\n", percent);
         return 0;
-}};
+    }
+};
 
 TEST_F(TestLibRBD, TestCopyPP)
 {
@@ -1698,7 +1720,7 @@ TEST_F(TestLibRBD, TestDeepCopy)
     }
 
     ASSERT_EQ(0, rbd_deep_copy_with_progress(image, ioctx, name3.c_str(), opts,
-                                             print_progress_percent, NULL));
+              print_progress_percent, NULL));
     ASSERT_EQ(3, test_ls(ioctx, 3, name.c_str(), name2.c_str(), name3.c_str()));
 
     keys_len = sizeof(keys);
@@ -1758,7 +1780,7 @@ TEST_F(TestLibRBD, TestDeepCopy)
     }
 
     ASSERT_EQ(0, rbd_deep_copy_with_progress(image4, ioctx, name6.c_str(), opts,
-                                             print_progress_percent, NULL));
+              print_progress_percent, NULL));
     ASSERT_EQ(6, test_ls(ioctx, 6, name.c_str(), name2.c_str(), name3.c_str(),
                          name4.c_str(), name5.c_str(), name6.c_str()));
 
@@ -1872,8 +1894,9 @@ int test_ls_snaps(rbd_image_t image, int num_expected, ...)
         uint64_t expected_size = va_arg(ap, uint64_t);
         bool found = false;
         for (j = 0; j < num_snaps; j++) {
-            if (snaps[j].name == NULL)
+            if (snaps[j].name == NULL) {
                 continue;
+            }
             if (strcmp(snaps[j].name, expected) == 0) {
                 printf("found %s with size %llu\n", snaps[j].name,
                        (unsigned long long)snaps[j].size);
@@ -1968,7 +1991,7 @@ TEST_F(TestLibRBD, TestGetSnapShotTimeStamp)
     rados_ioctx_destroy(ioctx);
 }
 
-int test_ls_snaps(librbd::Image & image, size_t num_expected, ...)
+int test_ls_snaps(librbd::Image &image, size_t num_expected, ...)
 {
     int r;
     size_t i, j;
@@ -1977,7 +2000,7 @@ int test_ls_snaps(librbd::Image & image, size_t num_expected, ...)
     r = image.snap_list(snaps);
     EXPECT_TRUE(r >= 0);
     cout << "num snaps is: " << snaps.size() << std::endl
-        << "expected: " << num_expected << std::endl;
+         << "expected: " << num_expected << std::endl;
 
     for (i = 0; i < snaps.size(); i++) {
         cout << "snap: " << snaps[i].name << std::endl;
@@ -1989,11 +2012,12 @@ int test_ls_snaps(librbd::Image & image, size_t num_expected, ...)
         uint64_t expected_size = va_arg(ap, uint64_t);
         int found = 0;
         for (j = 0; j < snaps.size(); j++) {
-            if (snaps[j].name == "")
+            if (snaps[j].name == "") {
                 continue;
+            }
             if (strcmp(snaps[j].name.c_str(), expected) == 0) {
                 cout << "found " << snaps[j].name << " with size " << snaps[j].
-                    size << std::endl;
+                     size << std::endl;
                 EXPECT_EQ(expected_size, snaps[j].size);
                 snaps[j].name = "";
                 found = 1;
@@ -2162,25 +2186,26 @@ TEST_F(TestLibRBD, ConcurrentCreatesUnvalidatedPool)
     uint64_t size = 2 << 20;
 
     std::vector < std::thread > threads;
-  for (const auto & name:names) {
-        threads.emplace_back([ioctx, &name, size] () {
-                             int order = 0;
-                             ASSERT_EQ(0,
-                                       create_image(ioctx, name.c_str(), size,
-                                                    &order));});
+    for (const auto &name : names) {
+        threads.emplace_back([ioctx, &name, size]() {
+            int order = 0;
+            ASSERT_EQ(0,
+                      create_image(ioctx, name.c_str(), size,
+                                   &order));
+        });
     }
-  for (auto & thread:threads) {
+    for (auto &thread : threads) {
         thread.join();
     }
 
-  for (const auto & name:names) {
+    for (const auto &name : names) {
         ASSERT_EQ(0, rbd_remove(ioctx, name.c_str()));
     }
     rados_ioctx_destroy(ioctx);
 }
 
-static void remove_full_try(rados_ioctx_t ioctx, const std::string & image_name,
-                            const std::string & data_pool_name)
+static void remove_full_try(rados_ioctx_t ioctx, const std::string &image_name,
+                            const std::string &data_pool_name)
 {
     int order = 0;
     uint64_t quota = 10 << 20;
@@ -2188,8 +2213,8 @@ static void remove_full_try(rados_ioctx_t ioctx, const std::string & image_name,
     ASSERT_EQ(0, create_image(ioctx, image_name.c_str(), size, &order));
 
     std::string cmdstr = "{\"prefix\": \"osd pool set-quota\", \"pool\": \"" +
-        data_pool_name + "\", \"field\": \"max_bytes\", \"val\": \"" +
-        std::to_string(quota) + "\"}";
+                         data_pool_name + "\", \"field\": \"max_bytes\", \"val\": \"" +
+                         std::to_string(quota) + "\"}";
     char *cmd[1];
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0, rados_mon_command(rados_ioctx_get_cluster(ioctx),
@@ -2586,17 +2611,23 @@ TEST_F(TestLibRBD, TestCloneEncryption)
 
     // verify child3 data
     rbd_encryption_spec_t specs[] = {
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS2,
-         .opts = &child3_opts,
-         .opts_size = sizeof(child3_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS2,
+            .opts = &child3_opts,
+            .opts_size = sizeof(child3_opts)
+        }
         ,
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS2,
-         .opts = &child2_opts,
-         .opts_size = sizeof(child2_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS2,
+            .opts = &child2_opts,
+            .opts_size = sizeof(child2_opts)
+        }
         ,
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS1,
-         .opts = &child1_opts,
-         .opts_size = sizeof(child1_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS1,
+            .opts = &child1_opts,
+            .opts_size = sizeof(child1_opts)
+        }
     };
 
     ASSERT_EQ(0, rbd_encryption_load2(child3, specs, 3));
@@ -2617,21 +2648,29 @@ TEST_F(TestLibRBD, TestCloneEncryption)
     ASSERT_EQ(0, rbd_open(ioctx, child4_name.c_str(), &child4, NULL));
 
     rbd_encryption_spec_t child4_specs[] = {
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS2,
-         .opts = &child3_opts,
-         .opts_size = sizeof(child3_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS2,
+            .opts = &child3_opts,
+            .opts_size = sizeof(child3_opts)
+        }
         ,
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS2,
-         .opts = &child3_opts,
-         .opts_size = sizeof(child3_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS2,
+            .opts = &child3_opts,
+            .opts_size = sizeof(child3_opts)
+        }
         ,
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS2,
-         .opts = &child2_opts,
-         .opts_size = sizeof(child2_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS2,
+            .opts = &child2_opts,
+            .opts_size = sizeof(child2_opts)
+        }
         ,
-        {.format = RBD_ENCRYPTION_FORMAT_LUKS1,
-         .opts = &child1_opts,
-         .opts_size = sizeof(child1_opts)}
+        {
+            .format = RBD_ENCRYPTION_FORMAT_LUKS1,
+            .opts = &child1_opts,
+            .opts_size = sizeof(child1_opts)
+        }
     };
 
     ASSERT_EQ(0, rbd_encryption_load2(child4, child4_specs, 4));
@@ -2698,7 +2737,8 @@ TEST_F(TestLibRBD, LUKS1UnderLUKS2WithoutResize)
         ASSERT_EQ(0, rbd.open(ioctx, parent, parent_name.c_str(), nullptr));
 
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, parent_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, parent_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                            sizeof(fopts)));
@@ -2720,20 +2760,25 @@ TEST_F(TestLibRBD, LUKS1UnderLUKS2WithoutResize)
         ASSERT_EQ(0, rbd.open(ioctx, clone, clone_name.c_str(), nullptr));
 
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, clone_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, clone_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                           sizeof(fopts)));
 
         librbd::encryption_luks_format_options_t opts1 = {
-        parent_passphrase};
+            parent_passphrase
+        };
         librbd::encryption_luks_format_options_t opts2 = {
-        clone_passphrase};
+            clone_passphrase
+        };
         librbd::encryption_spec_t specs[] = {
             {
-            RBD_ENCRYPTION_FORMAT_LUKS, &opts2, sizeof(opts2)}
+                RBD_ENCRYPTION_FORMAT_LUKS, &opts2, sizeof(opts2)
+            }
             , {
-            RBD_ENCRYPTION_FORMAT_LUKS, &opts1, sizeof(opts1)}
+                RBD_ENCRYPTION_FORMAT_LUKS, &opts1, sizeof(opts1)
+            }
         };
         ASSERT_EQ(0, clone.encryption_load2(specs, std::size(specs)));
 
@@ -2746,8 +2791,8 @@ TEST_F(TestLibRBD, LUKS1UnderLUKS2WithoutResize)
 
         ceph::bufferlist expected_bl;
         expected_bl.
-            append(std::
-                   string(data_size + luks1_meta_size - luks2_meta_size, 'a'));
+        append(std::
+               string(data_size + luks1_meta_size - luks2_meta_size, 'a'));
 
         ceph::bufferlist read_bl;
         ASSERT_EQ(expected_bl.length(),
@@ -2782,7 +2827,8 @@ TEST_F(TestLibRBD, LUKS2UnderLUKS1WithoutResize)
         ASSERT_EQ(0, rbd.open(ioctx, parent, parent_name.c_str(), nullptr));
 
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, parent_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, parent_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                            sizeof(fopts)));
@@ -2804,20 +2850,25 @@ TEST_F(TestLibRBD, LUKS2UnderLUKS1WithoutResize)
         ASSERT_EQ(0, rbd.open(ioctx, clone, clone_name.c_str(), nullptr));
 
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, clone_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, clone_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                           sizeof(fopts)));
 
         librbd::encryption_luks_format_options_t opts1 = {
-        parent_passphrase};
+            parent_passphrase
+        };
         librbd::encryption_luks_format_options_t opts2 = {
-        clone_passphrase};
+            clone_passphrase
+        };
         librbd::encryption_spec_t specs[] = {
             {
-            RBD_ENCRYPTION_FORMAT_LUKS, &opts2, sizeof(opts2)}
+                RBD_ENCRYPTION_FORMAT_LUKS, &opts2, sizeof(opts2)
+            }
             , {
-            RBD_ENCRYPTION_FORMAT_LUKS, &opts1, sizeof(opts1)}
+                RBD_ENCRYPTION_FORMAT_LUKS, &opts1, sizeof(opts1)
+            }
         };
         ASSERT_EQ(0, clone.encryption_load2(specs, std::size(specs)));
 
@@ -2860,9 +2911,10 @@ TEST_F(TestLibRBD, EncryptionFormatNoData)
         ASSERT_EQ(0, rbd.open(ioctx, image, name.c_str(), nullptr));
 
         librbd::encryption_luks1_format_options_t opts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+        };
         ASSERT_EQ(-ENOSPC, image.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1,
-                                                   &opts, sizeof(opts)));
+                  &opts, sizeof(opts)));
         uint64_t size;
         ASSERT_EQ(0, image.size(&size));
         ASSERT_EQ(luks1_meta_size - 1, size);
@@ -2874,7 +2926,8 @@ TEST_F(TestLibRBD, EncryptionFormatNoData)
         ASSERT_EQ(0, image.resize(luks1_meta_size));
 
         librbd::encryption_luks1_format_options_t opts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+        };
         ASSERT_EQ(0, image.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &opts,
                                              sizeof(opts)));
         uint64_t size;
@@ -2903,7 +2956,8 @@ TEST_F(TestLibRBD, EncryptionLoadBadSize)
         ASSERT_EQ(0, rbd.open(ioctx, image, name.c_str(), nullptr));
 
         librbd::encryption_luks1_format_options_t opts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+        };
         ASSERT_EQ(0, image.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &opts,
                                              sizeof(opts)));
     }
@@ -2913,7 +2967,8 @@ TEST_F(TestLibRBD, EncryptionLoadBadSize)
         ASSERT_EQ(0, rbd.open(ioctx, image, name.c_str(), nullptr));
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         uint64_t size;
@@ -2927,7 +2982,8 @@ TEST_F(TestLibRBD, EncryptionLoadBadSize)
         ASSERT_EQ(0, image.resize(luks1_meta_size - 1));
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(-EINVAL,
                   image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                         sizeof(opts)));
@@ -2965,7 +3021,8 @@ TEST_F(TestLibRBD, EncryptionLoadBadStripePattern)
         ASSERT_EQ(0, rbd.open(ioctx, image, name1.c_str(), nullptr));
 
         librbd::encryption_luks1_format_options_t opts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+        };
         ASSERT_EQ(0, image.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &opts,
                                              sizeof(opts)));
         uint64_t size;
@@ -2988,7 +3045,8 @@ TEST_F(TestLibRBD, EncryptionLoadBadStripePattern)
         ASSERT_EQ(0, rbd.open(ioctx, image, name2.c_str(), nullptr));
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         uint64_t size;
@@ -3011,7 +3069,8 @@ TEST_F(TestLibRBD, EncryptionLoadBadStripePattern)
         ASSERT_EQ(0, rbd.open(ioctx, image, name3.c_str(), nullptr));
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(-EINVAL,
                   image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                         sizeof(opts)));
@@ -3036,11 +3095,14 @@ TEST_F(TestLibRBD, EncryptionLoadFormatMismatch)
     std::string passphrase = "some passphrase";
 
     librbd::encryption_luks1_format_options_t luks1_opts = {
-    RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+    };
     librbd::encryption_luks2_format_options_t luks2_opts = {
-    RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+    };
     librbd::encryption_luks_format_options_t luks_opts = {
-    passphrase};
+        passphrase
+    };
 
 #define LUKS_ONE {RBD_ENCRYPTION_FORMAT_LUKS1, &luks1_opts, sizeof(luks1_opts)}
 #define LUKS_TWO {RBD_ENCRYPTION_FORMAT_LUKS2, &luks2_opts, sizeof(luks2_opts)}
@@ -3134,13 +3196,13 @@ TEST_F(TestLibRBD, EncryptionLoadFormatMismatch)
     {
         librbd::Image image3;
         ASSERT_EQ(0, rbd.open(ioctx, image3, name3.c_str(), nullptr));
-      for (auto & specs:bad_specs) {
+        for (auto &specs : bad_specs) {
             ASSERT_EQ(-EINVAL,
                       image3.encryption_load2(specs.data(), specs.size()));
         }
     }
 
-  for (auto & specs:good_specs) {
+    for (auto &specs : good_specs) {
         librbd::Image image3;
         ASSERT_EQ(0, rbd.open(ioctx, image3, name3.c_str(), nullptr));
         ASSERT_EQ(0, image3.encryption_load2(specs.data(), specs.size()));
@@ -3172,7 +3234,8 @@ TEST_F(TestLibRBD, EncryptedResize)
         ASSERT_EQ(luks2_meta_size + data_size, size);
 
         librbd::encryption_luks2_format_options_t opts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+        };
         ASSERT_EQ(0, image.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &opts,
                                              sizeof(opts)));
         ASSERT_EQ(0, image.size(&size));
@@ -3191,7 +3254,8 @@ TEST_F(TestLibRBD, EncryptedResize)
         ASSERT_EQ(luks2_meta_size + data_size * 3, size);
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         ASSERT_EQ(0, image.size(&size));
@@ -3210,7 +3274,8 @@ TEST_F(TestLibRBD, EncryptedResize)
         ASSERT_EQ(luks2_meta_size + data_size / 2, size);
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         ASSERT_EQ(0, image.size(&size));
@@ -3229,7 +3294,8 @@ TEST_F(TestLibRBD, EncryptedResize)
         ASSERT_EQ(luks2_meta_size, size);
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, image.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         ASSERT_EQ(0, image.size(&size));
@@ -3273,7 +3339,8 @@ TEST_F(TestLibRBD, EncryptedFlattenSmallData)
         ASSERT_EQ(0, rbd.open(ioctx, parent, parent_name.c_str(), nullptr));
 
         librbd::encryption_luks2_format_options_t opts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &opts,
                                            sizeof(opts)));
@@ -3295,7 +3362,8 @@ TEST_F(TestLibRBD, EncryptedFlattenSmallData)
         ASSERT_EQ(0, rbd.open(ioctx, clone, clone_name.c_str(), nullptr));
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, clone.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         uint64_t size;
@@ -3324,7 +3392,8 @@ TEST_F(TestLibRBD, EncryptedFlattenSmallData)
         ASSERT_EQ(0, rbd.open(ioctx, clone, clone_name.c_str(), nullptr));
 
         librbd::encryption_luks_format_options_t opts = {
-        passphrase};
+            passphrase
+        };
         ASSERT_EQ(0, clone.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                            sizeof(opts)));
         uint64_t size;
@@ -3344,14 +3413,17 @@ TEST_F(TestLibRBD, EncryptedFlattenSmallData)
 }
 
 struct LUKSOnePassphrase {
-    int load(librbd::Image & clone) {
+    int load(librbd::Image &clone)
+    {
         librbd::encryption_luks_format_options_t opts = {
-        m_passphrase};
+            m_passphrase
+        };
         return clone.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                      sizeof(opts));
     }
 
-    int load_flattened(librbd::Image & clone) {
+    int load_flattened(librbd::Image &clone)
+    {
         return load(clone);
     }
 
@@ -3359,23 +3431,30 @@ struct LUKSOnePassphrase {
 };
 
 struct LUKSTwoPassphrases {
-    int load(librbd::Image & clone) {
+    int load(librbd::Image &clone)
+    {
         librbd::encryption_luks_format_options_t opts1 = {
-        m_parent_passphrase};
+            m_parent_passphrase
+        };
         librbd::encryption_luks_format_options_t opts2 = {
-        m_clone_passphrase};
+            m_clone_passphrase
+        };
         librbd::encryption_spec_t specs[] = {
             {
-            RBD_ENCRYPTION_FORMAT_LUKS, &opts2, sizeof(opts2)}
+                RBD_ENCRYPTION_FORMAT_LUKS, &opts2, sizeof(opts2)
+            }
             , {
-            RBD_ENCRYPTION_FORMAT_LUKS, &opts1, sizeof(opts1)}
+                RBD_ENCRYPTION_FORMAT_LUKS, &opts1, sizeof(opts1)
+            }
         };
         return clone.encryption_load2(specs, std::size(specs));
     }
 
-    int load_flattened(librbd::Image & clone) {
+    int load_flattened(librbd::Image &clone)
+    {
         librbd::encryption_luks_format_options_t opts = {
-        m_clone_passphrase};
+            m_clone_passphrase
+        };
         return clone.encryption_load(RBD_ENCRYPTION_FORMAT_LUKS, &opts,
                                      sizeof(opts));
     }
@@ -3384,9 +3463,10 @@ struct LUKSTwoPassphrases {
     std::string m_clone_passphrase = "clone passphrase";
 };
 
-struct PlaintextUnderLUKS1:LUKSOnePassphrase {
-  protected:
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct PlaintextUnderLUKS1: LUKSOnePassphrase {
+protected:
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         ceph::bufferlist bl;
         bl.append(std::string(data_size, 'a'));
         ASSERT_EQ(data_size, parent.write(0, data_size, bl));
@@ -3397,9 +3477,11 @@ struct PlaintextUnderLUKS1:LUKSOnePassphrase {
         uint64_t luks1_meta_size = 4 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks1_meta_size));
         *passed = true;
-    } void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    } void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                           sizeof(fopts)));
@@ -3407,8 +3489,9 @@ struct PlaintextUnderLUKS1:LUKSOnePassphrase {
     }
 };
 
-struct PlaintextUnderLUKS2:LUKSOnePassphrase {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct PlaintextUnderLUKS2: LUKSOnePassphrase {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         ceph::bufferlist bl;
         bl.append(std::string(data_size, 'a'));
         ASSERT_EQ(data_size, parent.write(0, data_size, bl));
@@ -3419,9 +3502,11 @@ struct PlaintextUnderLUKS2:LUKSOnePassphrase {
         uint64_t luks2_meta_size = 16 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks2_meta_size));
         *passed = true;
-    } void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    } void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                           sizeof(fopts)));
@@ -3429,12 +3514,14 @@ struct PlaintextUnderLUKS2:LUKSOnePassphrase {
     }
 };
 
-struct UnformattedLUKS1:LUKSOnePassphrase {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct UnformattedLUKS1: LUKSOnePassphrase {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         uint64_t luks1_meta_size = 4 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks1_meta_size));
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                            sizeof(fopts)));
@@ -3445,17 +3532,20 @@ struct UnformattedLUKS1:LUKSOnePassphrase {
         *passed = true;
     }
 
-    void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         *passed = true;
     }
 };
 
-struct LUKS1UnderLUKS1:LUKSTwoPassphrases {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct LUKS1UnderLUKS1: LUKSTwoPassphrases {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         uint64_t luks1_meta_size = 4 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks1_meta_size));
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                            sizeof(fopts)));
@@ -3466,9 +3556,11 @@ struct LUKS1UnderLUKS1:LUKSTwoPassphrases {
         *passed = true;
     }
 
-    void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                           sizeof(fopts)));
@@ -3476,12 +3568,14 @@ struct LUKS1UnderLUKS1:LUKSTwoPassphrases {
     }
 };
 
-struct LUKS1UnderLUKS2:LUKSTwoPassphrases {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct LUKS1UnderLUKS2: LUKSTwoPassphrases {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         uint64_t luks1_meta_size = 4 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks1_meta_size));
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                            sizeof(fopts)));
@@ -3500,9 +3594,11 @@ struct LUKS1UnderLUKS2:LUKSTwoPassphrases {
         *passed = true;
     }
 
-    void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                           sizeof(fopts)));
@@ -3510,12 +3606,14 @@ struct LUKS1UnderLUKS2:LUKSTwoPassphrases {
     }
 };
 
-struct UnformattedLUKS2:LUKSOnePassphrase {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct UnformattedLUKS2: LUKSOnePassphrase {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         uint64_t luks2_meta_size = 16 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks2_meta_size));
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                            sizeof(fopts)));
@@ -3526,17 +3624,20 @@ struct UnformattedLUKS2:LUKSOnePassphrase {
         *passed = true;
     }
 
-    void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         *passed = true;
     }
 };
 
-struct LUKS2UnderLUKS2:LUKSTwoPassphrases {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct LUKS2UnderLUKS2: LUKSTwoPassphrases {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         uint64_t luks2_meta_size = 16 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks2_meta_size));
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                            sizeof(fopts)));
@@ -3547,9 +3648,11 @@ struct LUKS2UnderLUKS2:LUKSTwoPassphrases {
         *passed = true;
     }
 
-    void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                           sizeof(fopts)));
@@ -3557,12 +3660,14 @@ struct LUKS2UnderLUKS2:LUKSTwoPassphrases {
     }
 };
 
-struct LUKS2UnderLUKS1:LUKSTwoPassphrases {
-    void setup_parent(librbd::Image & parent, uint64_t data_size, bool * passed) {
+struct LUKS2UnderLUKS1: LUKSTwoPassphrases {
+    void setup_parent(librbd::Image &parent, uint64_t data_size, bool *passed)
+    {
         uint64_t luks2_meta_size = 16 << 20;
         ASSERT_EQ(0, parent.resize(data_size + luks2_meta_size));
         librbd::encryption_luks2_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_parent_passphrase
+        };
         ASSERT_EQ(0,
                   parent.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS2, &fopts,
                                            sizeof(fopts)));
@@ -3573,9 +3678,11 @@ struct LUKS2UnderLUKS1:LUKSTwoPassphrases {
         *passed = true;
     }
 
-    void setup_clone(librbd::Image & clone, uint64_t data_size, bool * passed) {
+    void setup_clone(librbd::Image &clone, uint64_t data_size, bool *passed)
+    {
         librbd::encryption_luks1_format_options_t fopts = {
-        RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase};
+            RBD_ENCRYPTION_ALGORITHM_AES256, m_clone_passphrase
+        };
         ASSERT_EQ(0,
                   clone.encryption_format(RBD_ENCRYPTION_FORMAT_LUKS1, &fopts,
                                           sizeof(fopts)));
@@ -3589,10 +3696,12 @@ struct LUKS2UnderLUKS1:LUKSTwoPassphrases {
     }
 };
 
-template < typename FormatPolicy > class EncryptedFlattenTest:public TestLibRBD,
-    FormatPolicy {
-  protected:
-    void create_and_setup(bool * passed) {
+template < typename FormatPolicy > class EncryptedFlattenTest: public TestLibRBD,
+    FormatPolicy
+{
+protected:
+    void create_and_setup(bool *passed)
+    {
         ASSERT_EQ(0, _rados.ioctx_create(m_pool_name.c_str(), m_ioctx));
 
         int order = 22;
@@ -3617,20 +3726,23 @@ template < typename FormatPolicy > class EncryptedFlattenTest:public TestLibRBD,
         *passed = true;
     }
 
-    void open_and_load(librbd::Image & clone, bool * passed) {
+    void open_and_load(librbd::Image &clone, bool *passed)
+    {
         ASSERT_EQ(0, m_rbd.open(m_ioctx, clone, m_clone_name.c_str(), nullptr));
         ASSERT_EQ(0, FormatPolicy::load(clone));
         *passed = true;
     }
 
-    void open_and_load_flattened(librbd::Image & clone, bool * passed) {
+    void open_and_load_flattened(librbd::Image &clone, bool *passed)
+    {
         ASSERT_EQ(0, m_rbd.open(m_ioctx, clone, m_clone_name.c_str(), nullptr));
         ASSERT_EQ(0, FormatPolicy::load_flattened(clone));
         *passed = true;
     }
 
-    void verify_size_and_overlap(librbd::Image & image, uint64_t expected_size,
-                                 uint64_t expected_overlap) {
+    void verify_size_and_overlap(librbd::Image &image, uint64_t expected_size,
+                                 uint64_t expected_overlap)
+    {
         uint64_t size;
         ASSERT_EQ(0, image.size(&size));
         EXPECT_EQ(expected_size, size);
@@ -3639,8 +3751,9 @@ template < typename FormatPolicy > class EncryptedFlattenTest:public TestLibRBD,
         EXPECT_EQ(expected_overlap, overlap);
     }
 
-    void verify_data(librbd::Image & image,
-                     const ceph::bufferlist & expected_bl) {
+    void verify_data(librbd::Image &image,
+                     const ceph::bufferlist &expected_bl)
+    {
         ceph::bufferlist read_bl;
         ASSERT_EQ(expected_bl.length(),
                   image.read(0, expected_bl.length(), read_bl));
@@ -3655,8 +3768,8 @@ template < typename FormatPolicy > class EncryptedFlattenTest:public TestLibRBD,
 };
 
 using EncryptedFlattenTestTypes =::testing::Types < PlaintextUnderLUKS1,
-    PlaintextUnderLUKS2, UnformattedLUKS1, LUKS1UnderLUKS1, LUKS1UnderLUKS2,
-    UnformattedLUKS2, LUKS2UnderLUKS2, LUKS2UnderLUKS1 >;
+      PlaintextUnderLUKS2, UnformattedLUKS1, LUKS1UnderLUKS1, LUKS1UnderLUKS2,
+      UnformattedLUKS2, LUKS2UnderLUKS2, LUKS2UnderLUKS1 >;
 TYPED_TEST_SUITE(EncryptedFlattenTest, EncryptedFlattenTestTypes);
 
 TYPED_TEST(EncryptedFlattenTest, Simple)
@@ -3952,16 +4065,14 @@ TEST_F(TestLibRBD, TestIOWithIOHint)
             ASSERT_PASSED(writesame_test_data, image, zero_data,
                           TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                           TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
-        }
-        else if (i % 3 == 1) {
+        } else if (i % 3 == 1) {
             ASSERT_PASSED(writesame_test_data, image, test_data,
                           TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32, TEST_IO_SIZE,
                           LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
             ASSERT_PASSED(writesame_test_data, image, zero_data,
                           TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32, TEST_IO_SIZE,
                           LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
-        }
-        else {
+        } else {
             ASSERT_PASSED(writesame_test_data, image, test_data,
                           TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32, TEST_IO_SIZE,
                           LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
@@ -3978,16 +4089,14 @@ TEST_F(TestLibRBD, TestIOWithIOHint)
             ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                           TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                           TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
-        }
-        else if (i % 3 == 1) {
+        } else if (i % 3 == 1) {
             ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                           TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32, TEST_IO_SIZE,
                           LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
             ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                           TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32, TEST_IO_SIZE,
                           LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
-        }
-        else {
+        } else {
             ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                           TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32, TEST_IO_SIZE,
                           LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
@@ -4068,11 +4177,11 @@ TEST_F(TestLibRBD, TestDataPoolIO)
     BOOST_SCOPE_EXIT_END;
 
     ASSERT_EQ(0, rbd_image_options_set_uint64(image_options,
-                                              RBD_IMAGE_OPTION_FEATURES,
-                                              features));
+              RBD_IMAGE_OPTION_FEATURES,
+              features));
     ASSERT_EQ(0, rbd_image_options_set_string(image_options,
-                                              RBD_IMAGE_OPTION_DATA_POOL,
-                                              data_pool_name.c_str()));
+              RBD_IMAGE_OPTION_DATA_POOL,
+              data_pool_name.c_str()));
 
     ASSERT_EQ(0, rbd_create4(ioctx, name.c_str(), size, image_options));
     ASSERT_EQ(0, rbd_open(ioctx, name.c_str(), &image, NULL));
@@ -4692,9 +4801,9 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteVIovecLenDiffers)
 
     std::string write_buffer("Write this !!!");
     struct iovec write_iovs[] = {
-        {.iov_base = &write_buffer[0],.iov_len = 6},
-        {.iov_base = &write_buffer[6],.iov_len = 5},
-        {.iov_base = &write_buffer[11],.iov_len = 3}
+        {.iov_base = &write_buffer[0], .iov_len = 6},
+        {.iov_base = &write_buffer[6], .iov_len = 5},
+        {.iov_base = &write_buffer[11], .iov_len = 3}
     };
 
     ASSERT_EQ(cmp_len, rbd_write(image, off, cmp_len, cmp_buffer.data()));
@@ -4704,7 +4813,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteVIovecLenDiffers)
     rbd_aio_create_completion(NULL, NULL, &comp);
     uint64_t mismatch_off = 0;
     int ret = rbd_aio_compare_and_writev(image, off,
-                                         write_iovs /* cmp_iovs */ , 1,
+                                         write_iovs /* cmp_iovs */, 1,
                                          write_iovs, std::size(write_iovs),
                                          comp, &mismatch_off, 0);
     ASSERT_EQ(-EINVAL, ret);
@@ -4743,16 +4852,16 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteVMismatch)
 
     std::string write_buffer("Write this !!!");
     struct iovec write_iovs[] = {
-        {.iov_base = &write_buffer[0],.iov_len = 6},
-        {.iov_base = &write_buffer[6],.iov_len = 5},
-        {.iov_base = &write_buffer[11],.iov_len = 3}
+        {.iov_base = &write_buffer[0], .iov_len = 6},
+        {.iov_base = &write_buffer[6], .iov_len = 5},
+        {.iov_base = &write_buffer[11], .iov_len = 3}
     };
 
     std::string mismatch_buffer("This will fail");
     struct iovec mismatch_iovs[] = {
-        {.iov_base = &mismatch_buffer[0],.iov_len = 5},
-        {.iov_base = &mismatch_buffer[5],.iov_len = 5},
-        {.iov_base = &mismatch_buffer[10],.iov_len = 4}
+        {.iov_base = &mismatch_buffer[0], .iov_len = 5},
+        {.iov_base = &mismatch_buffer[5], .iov_len = 5},
+        {.iov_base = &mismatch_buffer[10], .iov_len = 4}
     };
 
     ASSERT_EQ(cmp_len, rbd_write(image, off, cmp_len, cmp_buffer.data()));
@@ -4762,7 +4871,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteVMismatch)
     rbd_aio_create_completion(NULL, NULL, &comp);
     uint64_t mismatch_off = 0;
     int ret = rbd_aio_compare_and_writev(image, off,
-                                         mismatch_iovs /* cmp_iovs */ ,
+                                         mismatch_iovs /* cmp_iovs */,
                                          std::size(mismatch_iovs),
                                          write_iovs, std::size(write_iovs),
                                          comp, &mismatch_off, 0);
@@ -4801,18 +4910,18 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteVSuccess)
 
     std::string cmp_buffer("This is a test");
     struct iovec cmp_iovs[] = {
-        {.iov_base = &cmp_buffer[0],.iov_len = 5},
-        {.iov_base = &cmp_buffer[5],.iov_len = 3},
-        {.iov_base = &cmp_buffer[8],.iov_len = 2},
-        {.iov_base = &cmp_buffer[10],.iov_len = 4}
+        {.iov_base = &cmp_buffer[0], .iov_len = 5},
+        {.iov_base = &cmp_buffer[5], .iov_len = 3},
+        {.iov_base = &cmp_buffer[8], .iov_len = 2},
+        {.iov_base = &cmp_buffer[10], .iov_len = 4}
     };
     size_t cmp_len = cmp_buffer.length();
 
     std::string write_buffer("Write this !!!");
     struct iovec write_iovs[] = {
-        {.iov_base = &write_buffer[0],.iov_len = 6},
-        {.iov_base = &write_buffer[6],.iov_len = 5},
-        {.iov_base = &write_buffer[11],.iov_len = 3}
+        {.iov_base = &write_buffer[0], .iov_len = 6},
+        {.iov_base = &write_buffer[6], .iov_len = 5},
+        {.iov_base = &write_buffer[11], .iov_len = 3}
     };
 
     ASSERT_EQ(cmp_len, rbd_write(image, off, cmp_len, cmp_buffer.data()));
@@ -4860,14 +4969,14 @@ TEST_F(TestLibRBD, TestScatterGatherIO)
     std::string write_buffer("This is a test");
     // These iovecs should produce a length overflow
     struct iovec bad_iovs[] = {
-        {.iov_base = &write_buffer[0],.iov_len = 5},
-        {.iov_base = NULL,.iov_len = std::numeric_limits < size_t >::max()}
+        {.iov_base = &write_buffer[0], .iov_len = 5},
+        {.iov_base = NULL, .iov_len = std::numeric_limits < size_t >::max()}
     };
     struct iovec write_iovs[] = {
-        {.iov_base = &write_buffer[0],.iov_len = 5},
-        {.iov_base = &write_buffer[5],.iov_len = 3},
-        {.iov_base = &write_buffer[8],.iov_len = 2},
-        {.iov_base = &write_buffer[10],.iov_len = 4}
+        {.iov_base = &write_buffer[0], .iov_len = 5},
+        {.iov_base = &write_buffer[5], .iov_len = 3},
+        {.iov_base = &write_buffer[8], .iov_len = 2},
+        {.iov_base = &write_buffer[10], .iov_len = 4}
     };
 
     rbd_completion_t comp;
@@ -4883,9 +4992,9 @@ TEST_F(TestLibRBD, TestScatterGatherIO)
 
     std::string read_buffer(write_buffer.size(), '1');
     struct iovec read_iovs[] = {
-        {.iov_base = &read_buffer[0],.iov_len = 4},
-        {.iov_base = &read_buffer[8],.iov_len = 4},
-        {.iov_base = &read_buffer[12],.iov_len = 2}
+        {.iov_base = &read_buffer[0], .iov_len = 4},
+        {.iov_base = &read_buffer[8], .iov_len = 4},
+        {.iov_base = &read_buffer[12], .iov_len = 2}
     };
 
     rbd_aio_create_completion(NULL, NULL, &comp);
@@ -4901,7 +5010,7 @@ TEST_F(TestLibRBD, TestScatterGatherIO)
 
     std::string linear_buffer(write_buffer.size(), '1');
     struct iovec linear_iovs[] = {
-        {.iov_base = &linear_buffer[4],.iov_len = 4}
+        {.iov_base = &linear_buffer[4], .iov_len = 4}
     };
     rbd_aio_create_completion(NULL, NULL, &comp);
     ASSERT_EQ(0, rbd_aio_readv(image, linear_iovs,
@@ -5003,19 +5112,20 @@ void simple_read_cb_pp(librbd::completion_t cb, void *arg)
     cout << "read completion cb called!" << std::endl;
 }
 
-void aio_write_test_data(librbd::Image & image, const char *test_data,
-                         off_t off, uint32_t iohint, bool * passed)
+void aio_write_test_data(librbd::Image &image, const char *test_data,
+                         off_t off, uint32_t iohint, bool *passed)
 {
     ceph::bufferlist bl;
     bl.append(test_data, strlen(test_data));
-    librbd::RBD::AioCompletion * comp =
+    librbd::RBD::AioCompletion *comp =
         new librbd::RBD::AioCompletion(NULL,
                                        (librbd::callback_t) simple_write_cb_pp);
     printf("created completion\n");
-    if (iohint)
+    if (iohint) {
         image.aio_write2(off, strlen(test_data), bl, comp, iohint);
-    else
+    } else {
         image.aio_write(off, strlen(test_data), bl, comp);
+    }
     printf("started write\n");
     comp->wait_for_complete();
     int r = comp->get_return_value();
@@ -5026,10 +5136,10 @@ void aio_write_test_data(librbd::Image & image, const char *test_data,
     *passed = true;
 }
 
-void aio_discard_test_data(librbd::Image & image, off_t off, size_t len,
-                           bool * passed)
+void aio_discard_test_data(librbd::Image &image, off_t off, size_t len,
+                           bool *passed)
 {
-    librbd::RBD::AioCompletion * comp =
+    librbd::RBD::AioCompletion *comp =
         new librbd::RBD::AioCompletion(NULL,
                                        (librbd::callback_t) simple_write_cb_pp);
     image.aio_discard(off, len, comp);
@@ -5040,24 +5150,25 @@ void aio_discard_test_data(librbd::Image & image, off_t off, size_t len,
     *passed = true;
 }
 
-void write_test_data(librbd::Image & image, const char *test_data, off_t off,
-                     uint32_t iohint, bool * passed)
+void write_test_data(librbd::Image &image, const char *test_data, off_t off,
+                     uint32_t iohint, bool *passed)
 {
     size_t written;
     size_t len = strlen(test_data);
     ceph::bufferlist bl;
     bl.append(test_data, len);
-    if (iohint)
+    if (iohint) {
         written = image.write2(off, len, bl, iohint);
-    else
+    } else {
         written = image.write(off, len, bl);
+    }
     printf("wrote: %u\n", (unsigned int)written);
     ASSERT_EQ(bl.length(), written);
     *passed = true;
 }
 
-void discard_test_data(librbd::Image & image, off_t off, size_t len,
-                       bool * passed)
+void discard_test_data(librbd::Image &image, off_t off, size_t len,
+                       bool *passed)
 {
     size_t written;
     written = image.discard(off, len);
@@ -5066,18 +5177,19 @@ void discard_test_data(librbd::Image & image, off_t off, size_t len,
     *passed = true;
 }
 
-void aio_read_test_data(librbd::Image & image, const char *expected, off_t off,
-                        size_t expected_len, uint32_t iohint, bool * passed)
+void aio_read_test_data(librbd::Image &image, const char *expected, off_t off,
+                        size_t expected_len, uint32_t iohint, bool *passed)
 {
-    librbd::RBD::AioCompletion * comp =
+    librbd::RBD::AioCompletion *comp =
         new librbd::RBD::AioCompletion(NULL,
                                        (librbd::callback_t) simple_read_cb_pp);
     ceph::bufferlist bl;
     printf("created completion\n");
-    if (iohint)
+    if (iohint) {
         image.aio_read2(off, expected_len, bl, comp, iohint);
-    else
+    } else {
         image.aio_read(off, expected_len, bl, comp);
+    }
     printf("started read\n");
     comp->wait_for_complete();
     int r = comp->get_return_value();
@@ -5089,16 +5201,17 @@ void aio_read_test_data(librbd::Image & image, const char *expected, off_t off,
     *passed = true;
 }
 
-void read_test_data(librbd::Image & image, const char *expected, off_t off,
-                    size_t expected_len, uint32_t iohint, bool * passed)
+void read_test_data(librbd::Image &image, const char *expected, off_t off,
+                    size_t expected_len, uint32_t iohint, bool *passed)
 {
     int read;
     size_t len = expected_len;
     ceph::bufferlist bl;
-    if (iohint)
+    if (iohint) {
         read = image.read2(off, len, bl, iohint);
-    else
+    } else {
         read = image.read(off, len, bl);
+    }
     ASSERT_TRUE(read >= 0);
     std::string bl_str(bl.c_str(), read);
 
@@ -5111,13 +5224,13 @@ void read_test_data(librbd::Image & image, const char *expected, off_t off,
     *passed = true;
 }
 
-void aio_writesame_test_data(librbd::Image & image, const char *test_data,
+void aio_writesame_test_data(librbd::Image &image, const char *test_data,
                              off_t off, size_t len, size_t data_len,
-                             uint32_t iohint, bool * passed)
+                             uint32_t iohint, bool *passed)
 {
     ceph::bufferlist bl;
     bl.append(test_data, data_len);
-    librbd::RBD::AioCompletion * comp =
+    librbd::RBD::AioCompletion *comp =
         new librbd::RBD::AioCompletion(NULL,
                                        (librbd::callback_t) simple_write_cb_pp);
     printf("created completion\n");
@@ -5146,7 +5259,7 @@ void aio_writesame_test_data(librbd::Image & image, const char *test_data,
     while (left > 0) {
         ceph::bufferlist bl;
         read = image.read(off, data_len, bl);
-        ASSERT_EQ(data_len, static_cast < size_t > (read));
+        ASSERT_EQ(data_len, static_cast < size_t >(read));
         std::string bl_str(bl.c_str(), read);
         int result = memcmp(bl_str.c_str(), test_data, data_len);
         if (result != 0) {
@@ -5163,9 +5276,9 @@ void aio_writesame_test_data(librbd::Image & image, const char *test_data,
     *passed = true;
 }
 
-void writesame_test_data(librbd::Image & image, const char *test_data,
+void writesame_test_data(librbd::Image &image, const char *test_data,
                          off_t off, ssize_t len, size_t data_len,
-                         uint32_t iohint, bool * passed)
+                         uint32_t iohint, bool *passed)
 {
     ssize_t written;
     ceph::bufferlist bl;
@@ -5188,7 +5301,7 @@ void writesame_test_data(librbd::Image & image, const char *test_data,
     while (left > 0) {
         ceph::bufferlist bl;
         read = image.read(off, data_len, bl);
-        ASSERT_EQ(data_len, static_cast < size_t > (read));
+        ASSERT_EQ(data_len, static_cast < size_t >(read));
         std::string bl_str(bl.c_str(), read);
         int result = memcmp(bl_str.c_str(), test_data, data_len);
         if (result != 0) {
@@ -5205,17 +5318,17 @@ void writesame_test_data(librbd::Image & image, const char *test_data,
     *passed = true;
 }
 
-void aio_compare_and_write_test_data(librbd::Image & image,
+void aio_compare_and_write_test_data(librbd::Image &image,
                                      const char *cmp_data,
                                      const char *test_data, off_t off,
                                      ssize_t len, uint32_t iohint,
-                                     bool * passed)
+                                     bool *passed)
 {
     ceph::bufferlist cmp_bl;
     cmp_bl.append(cmp_data, strlen(cmp_data));
     ceph::bufferlist test_bl;
     test_bl.append(test_data, strlen(test_data));
-    librbd::RBD::AioCompletion * comp =
+    librbd::RBD::AioCompletion *comp =
         new librbd::RBD::AioCompletion(NULL,
                                        (librbd::callback_t) simple_write_cb_pp);
     printf("created completion\n");
@@ -5233,10 +5346,10 @@ void aio_compare_and_write_test_data(librbd::Image & image,
     *passed = true;
 }
 
-void compare_and_write_test_data(librbd::Image & image, const char *cmp_data,
+void compare_and_write_test_data(librbd::Image &image, const char *cmp_data,
                                  const char *test_data, off_t off, ssize_t len,
-                                 uint64_t * mismatch_off, uint32_t iohint,
-                                 bool * passed)
+                                 uint64_t *mismatch_off, uint32_t iohint,
+                                 bool *passed)
 {
     size_t written;
     ceph::bufferlist cmp_bl;
@@ -5248,7 +5361,7 @@ void compare_and_write_test_data(librbd::Image & image, const char *cmp_data,
         image.compare_and_write(off, len, cmp_bl, test_bl, mismatch_off,
                                 iohint);
     printf("compare and  wrote: %d\n", (int)written);
-    ASSERT_EQ(len, static_cast < ssize_t > (written));
+    ASSERT_EQ(len, static_cast < ssize_t >(written));
     *passed = true;
 }
 
@@ -5330,16 +5443,14 @@ TEST_F(TestLibRBD, TestIOPP)
                 ASSERT_PASSED(writesame_test_data, image, zero_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                               TEST_IO_SIZE, 0);
-            }
-            else if (i % 3 == 1) {
+            } else if (i % 3 == 1) {
                 ASSERT_PASSED(writesame_test_data, image, test_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
                 ASSERT_PASSED(writesame_test_data, image, zero_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
-            }
-            else {
+            } else {
                 ASSERT_PASSED(writesame_test_data, image, test_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
@@ -5356,16 +5467,14 @@ TEST_F(TestLibRBD, TestIOPP)
                 ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                               TEST_IO_SIZE, 0);
-            }
-            else if (i % 3 == 1) {
+            } else if (i % 3 == 1) {
                 ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
                 ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
-            }
-            else {
+            } else {
                 ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, 0);
@@ -5381,8 +5490,8 @@ TEST_F(TestLibRBD, TestIOPP)
     ioctx.close();
 }
 
-static void compare_written(librbd::Image & image, off_t off, size_t len,
-                            const std::string & buffer, bool * passed)
+static void compare_written(librbd::Image &image, off_t off, size_t len,
+                            const std::string &buffer, bool *passed)
 {
     bufferlist read_bl;
     ssize_t read = image.read(off, len, read_bl);
@@ -5480,7 +5589,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteCompareTooSmallPP)
         small_bl.append(&small_buffer[4], 4);
 
         // should fail because compare bufferlist cannot be smaller than len
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -5575,7 +5684,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteWriteTooSmallPP)
         small_bl.append(&small_buffer[4], 4);
 
         // should fail because write bufferlist cannot be smaller than len
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -5687,7 +5796,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteMismatchPP)
         ASSERT_EQ(cmp_bl.length(), written);
 
         // this should execute the compare but fail because of mismatch
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -5811,7 +5920,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteMismatchBufferlistGreaterLenPP)
          * we allow cmp_bl and write_bl to be greater than len so this
          * should execute the compare but fail because of mismatch
          */
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -5918,7 +6027,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteSuccessPP)
         ASSERT_EQ(cmp_bl.length(), written);
 
         // compare against the buffer written before => should succeed
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -6055,7 +6164,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteSuccessBufferlistGreaterLenPP)
         ASSERT_EQ(len_m1, written);
         // the content of the image at off should now be "This is a tesl"
 
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -6171,7 +6280,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteStripeUnitUnalignedPP)
          * compare and write at offset stripe_unit + 1 and stripe unit size
          * Expect fail because access exceeds stripe
          */
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -6286,7 +6395,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteTooLargePP)
          * compare and write at offset stripe_unit and stripe unit size + 1
          * Expect fail because access is larger than stripe unit size
          */
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -6393,7 +6502,7 @@ TEST_F(TestLibRBD, TestAioCompareAndWriteStripeUnitSuccessPP)
         ASSERT_EQ(large_cmp_bl.length(), written);
 
         // aligned stripe unit size access => expect success
-        librbd::RBD::AioCompletion * comp =
+        librbd::RBD::AioCompletion *comp =
             new librbd::RBD::AioCompletion(NULL,
                                            (librbd::
                                             callback_t) simple_write_cb_pp);
@@ -6473,16 +6582,14 @@ TEST_F(TestLibRBD, TestIOPPWithIOHint)
                 ASSERT_PASSED(writesame_test_data, image, zero_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
-            }
-            else if (i % 3 == 1) {
+            } else if (i % 3 == 1) {
                 ASSERT_PASSED(writesame_test_data, image, test_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
                 ASSERT_PASSED(writesame_test_data, image, zero_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
-            }
-            else {
+            } else {
                 ASSERT_PASSED(writesame_test_data, image, test_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_NOCACHE);
@@ -6499,16 +6606,14 @@ TEST_F(TestLibRBD, TestIOPPWithIOHint)
                 ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32 + i,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
-            }
-            else if (i % 3 == 1) {
+            } else if (i % 3 == 1) {
                 ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
                 ASSERT_PASSED(aio_writesame_test_data, image, zero_data,
                               TEST_IO_SIZE + i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
-            }
-            else {
+            } else {
                 ASSERT_PASSED(aio_writesame_test_data, image, test_data,
                               TEST_IO_SIZE * i, TEST_IO_SIZE * i * 32,
                               TEST_IO_SIZE, LIBRADOS_OP_FLAG_FADVISE_DONTNEED);
@@ -6542,8 +6647,9 @@ TEST_F(TestLibRBD, TestIOToSnapshot)
     char orig_data[TEST_IO_TO_SNAP_SIZE + 1];
     char test_data[TEST_IO_TO_SNAP_SIZE + 1];
 
-    for (i = 0; i < TEST_IO_TO_SNAP_SIZE; ++i)
+    for (i = 0; i < TEST_IO_TO_SNAP_SIZE; ++i) {
         test_data[i] = (char)(i + 48);
+    }
     test_data[TEST_IO_TO_SNAP_SIZE] = '\0';
     orig_data[TEST_IO_TO_SNAP_SIZE] = '\0';
 
@@ -6934,13 +7040,13 @@ TEST_F(TestLibRBD, TestClone2)
 
     rbd_snap_namespace_type_t snap_namespace_type;
     ASSERT_EQ(0, rbd_snap_get_namespace_type(parent, snaps[0].id,
-                                             &snap_namespace_type));
+              &snap_namespace_type));
     ASSERT_EQ(RBD_SNAP_NAMESPACE_TYPE_TRASH, snap_namespace_type);
 
     char original_name[32];
     ASSERT_EQ(0, rbd_snap_get_trash_namespace(parent, snaps[0].id,
-                                              original_name,
-                                              sizeof(original_name)));
+              original_name,
+              sizeof(original_name)));
     ASSERT_EQ(0, strcmp("parent_snap", original_name));
 
     ASSERT_EQ(0, rbd_close(child));
@@ -6994,10 +7100,12 @@ static void test_list_children(rbd_image_t image, ssize_t num_expected, ...)
     }
     va_end(ap);
 
-    if (pools)
+    if (pools) {
         free(pools);
-    if (children)
+    }
+    if (children) {
         free(children);
+    }
 }
 
 static void test_list_children2(rbd_image_t image, int num_expected, ...)
@@ -7021,8 +7129,9 @@ static void test_list_children2(rbd_image_t image, int num_expected, ...)
         bool found = false;
         for (j = 0; j < num_children; j++) {
             if (children[j].pool_name == NULL ||
-                children[j].image_name == NULL || children[j].image_id == NULL)
+                children[j].image_name == NULL || children[j].image_id == NULL) {
                 continue;
+            }
             if (strcmp(children[j].image_id, expected_id) == 0 &&
                 strcmp(children[j].pool_name, expected_pool) == 0 &&
                 strcmp(children[j].image_name, expected_image) == 0 &&
@@ -7225,8 +7334,8 @@ TEST_F(TestLibRBD, ListChildrenTiered)
     ASSERT_NE("", pool_name3);
 
     std::string cmdstr = "{\"prefix\": \"osd tier add\", \"pool\": \"" +
-        pool_name1 + "\", \"tierpool\":\"" + pool_name3 +
-        "\", \"force_nonempty\":\"\"}";
+                         pool_name1 + "\", \"tierpool\":\"" + pool_name3 +
+                         "\", \"force_nonempty\":\"\"}";
     char *cmd[1];
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
@@ -7234,14 +7343,14 @@ TEST_F(TestLibRBD, ListChildrenTiered)
                                 NULL, 0));
 
     cmdstr = "{\"prefix\": \"osd tier cache-mode\", \"pool\": \"" +
-        pool_name3 + "\", \"mode\":\"writeback\"}";
+             pool_name3 + "\", \"mode\":\"writeback\"}";
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
               rados_mon_command(_cluster, (const char **)cmd, 1, "", 0, NULL, 0,
                                 NULL, 0));
 
     cmdstr = "{\"prefix\": \"osd tier set-overlay\", \"pool\": \"" +
-        pool_name1 + "\", \"overlaypool\":\"" + pool_name3 + "\"}";
+             pool_name1 + "\", \"overlaypool\":\"" + pool_name3 + "\"}";
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
               rados_mon_command(_cluster, (const char **)cmd, 1, "", 0, NULL, 0,
@@ -7412,7 +7521,7 @@ TEST_F(TestLibRBD, ListChildrenTiered)
     rados_ioctx_destroy(ioctx1);
     rados_ioctx_destroy(ioctx2);
     cmdstr = "{\"prefix\": \"osd tier remove-overlay\", \"pool\": \"" +
-        pool_name1 + "\"}";
+             pool_name1 + "\"}";
     cmd[0] = (char *)cmdstr.c_str();
     ASSERT_EQ(0,
               rados_mon_command(_cluster, (const char **)cmd, 1, "", 0, NULL, 0,
@@ -7561,7 +7670,7 @@ TEST_F(TestLibRBD, FlushAioPP)
         }
         test_data[TEST_IO_SIZE] = '\0';
 
-        librbd::RBD::AioCompletion * write_comps[num_aios];
+        librbd::RBD::AioCompletion *write_comps[num_aios];
         ceph::bufferlist bls[num_aios];
         for (i = 0; i < num_aios; ++i) {
             bls[i].append(test_data, strlen(test_data));
@@ -7571,7 +7680,7 @@ TEST_F(TestLibRBD, FlushAioPP)
                                          write_comps[i]));
         }
 
-        librbd::RBD::AioCompletion * flush_comp =
+        librbd::RBD::AioCompletion *flush_comp =
             new librbd::RBD::AioCompletion(NULL, NULL);
         ASSERT_EQ(0, image.aio_flush(flush_comp));
         ASSERT_EQ(0, flush_comp->wait_for_complete());
@@ -7579,7 +7688,7 @@ TEST_F(TestLibRBD, FlushAioPP)
         flush_comp->release();
 
         for (i = 0; i < num_aios; ++i) {
-            librbd::RBD::AioCompletion * comp = write_comps[i];
+            librbd::RBD::AioCompletion *comp = write_comps[i];
             ASSERT_EQ(1, comp->is_complete());
             comp->release();
         }
@@ -7603,7 +7712,7 @@ static int iterate_error_cb(uint64_t off, size_t len, int exists, void *arg)
     return -EINVAL;
 }
 
-void scribble(librbd::Image & image, int n, int max, bool skip_discard,
+void scribble(librbd::Image &image, int n, int max, bool skip_discard,
               interval_set < uint64_t > *exists,
               interval_set < uint64_t > *what)
 {
@@ -7634,8 +7743,7 @@ void scribble(librbd::Image & image, int n, int max, bool skip_discard,
             w3.intersection_of(exists_at_start);
             what->union_of(w3);
 
-        }
-        else {
+        } else {
             bufferlist bl;
             bl.append(buffer::create(len));
             bl.zero();
@@ -7649,7 +7757,7 @@ void scribble(librbd::Image & image, int n, int max, bool skip_discard,
 }
 
 interval_set < uint64_t > round_diff_interval(const interval_set < uint64_t >
-                                              &diff, uint64_t object_size)
+        &diff, uint64_t object_size)
 {
     if (object_size == 0) {
         return diff;
@@ -7724,18 +7832,20 @@ TEST_F(TestLibRBD, SnapDiff)
     rados_ioctx_destroy(ioctx);
 }
 
-template < typename T > class DiffIterateTest:public TestLibRBD {
-  public:
+template < typename T > class DiffIterateTest: public TestLibRBD
+{
+public:
     static const uint8_t whole_object = T::whole_object;
 };
 
-template < bool _whole_object > class DiffIterateParams {
-  public:
+template < bool _whole_object > class DiffIterateParams
+{
+public:
     static const uint8_t whole_object = _whole_object;
 };
 
 typedef::testing::Types < DiffIterateParams < false >,
-    DiffIterateParams < true > >DiffIterateTypes;
+        DiffIterateParams < true > >DiffIterateTypes;
 TYPED_TEST_SUITE(DiffIterateTest, DiffIterateTypes);
 
 TYPED_TEST(DiffIterateTest, DiffIterate)
@@ -7789,23 +7899,27 @@ TYPED_TEST(DiffIterateTest, DiffIterate)
 
 struct diff_extent {
     diff_extent(uint64_t _offset, uint64_t _length, bool _exists,
-                uint64_t object_size):offset(_offset), length(_length),
-        exists(_exists) {
+                uint64_t object_size): offset(_offset), length(_length),
+        exists(_exists)
+    {
         if (object_size != 0) {
             offset -= offset % object_size;
             length = object_size;
-    }} uint64_t offset;
+        }
+    } uint64_t offset;
     uint64_t length;
     bool exists;
-    bool operator==(const diff_extent & o) const {
+    bool operator==(const diff_extent &o) const
+    {
         return offset == o.offset && length == o.length && exists == o.exists;
-}};
+    }
+};
 
-ostream & operator<<(ostream & o, const diff_extent & e)
+ostream &operator<<(ostream &o, const diff_extent &e)
 {
     return o << '(' << e.offset << '~' << e.length << ' ' << (e.
-                                                              exists ? "true" :
-                                                              "false") << ')';
+            exists ? "true" :
+            "false") << ')';
 }
 
 int vector_iterate_cb(uint64_t off, size_t len, int exists, void *arg)
@@ -7919,7 +8033,7 @@ TYPED_TEST(DiffIterateTest, DiffIterateStress)
         interval_set < uint64_t > w;
         scribble(image, 10, 8192000, skip_discard, &curexists, &w);
         cout << " i=" << i << " exists " << curexists << " wrote " << w << std::
-            endl;
+             endl;
         string s = "snap" + stringify(i);
         ASSERT_EQ(0, image.snap_create(s.c_str()));
         wrote.push_back(w);
@@ -7931,11 +8045,12 @@ TYPED_TEST(DiffIterateTest, DiffIterateStress)
         for (int i = 0; i < n - h - 1; i++) {
             for (int j = (h == 0 ? i + 1 : n - 1); j < n; j++) {
                 interval_set < uint64_t > diff, actual, uex;
-                for (int k = i + 1; k <= j; k++)
+                for (int k = i + 1; k <= j; k++) {
                     diff.union_of(wrote[k]);
+                }
                 cout << "from " << i << " to "
-                    << (h != 0 ? string("HEAD") : stringify(j)) << " diff "
-                    << round_diff_interval(diff, object_size) << std::endl;
+                     << (h != 0 ? string("HEAD") : stringify(j)) << " diff "
+                     << round_diff_interval(diff, object_size) << std::endl;
 
                 // limit to extents that exists both at the beginning and at the end
                 uex.union_of(exists[i], exists[j]);
@@ -8006,7 +8121,7 @@ TYPED_TEST(DiffIterateTest, DiffIterateRegression6926)
     extents.clear();
     ASSERT_EQ(0, image.diff_iterate2(NULL, 0, size, true, this->whole_object,
                                      vector_iterate_cb, (void *)&extents));
-    ASSERT_EQ(static_cast < size_t > (0), extents.size());
+    ASSERT_EQ(static_cast < size_t >(0), extents.size());
 }
 
 TYPED_TEST(DiffIterateTest, DiffIterateParent)
@@ -8463,12 +8578,12 @@ TEST_F(TestLibRBD, LargeCacheRead)
 
     std::string buffer(1 << order, '1');
 
-    ASSERT_EQ(static_cast < ssize_t > (buffer.size()),
+    ASSERT_EQ(static_cast < ssize_t >(buffer.size()),
               rbd_write(image, 0, buffer.size(), buffer.c_str()));
 
     ASSERT_EQ(0, rbd_invalidate_cache(image));
 
-    ASSERT_EQ(static_cast < ssize_t > (buffer.size()),
+    ASSERT_EQ(static_cast < ssize_t >(buffer.size()),
               rbd_read(image, 0, buffer.size(), &buffer[0]));
 
     ASSERT_EQ(0, rbd_close(image));
@@ -8536,8 +8651,8 @@ TEST_F(TestLibRBD, TestPendingAio)
     rados_ioctx_destroy(ioctx);
 }
 
-void compare_and_write_copyup(librados::IoCtx & ioctx, bool deep_copyup,
-                              bool * passed)
+void compare_and_write_copyup(librados::IoCtx &ioctx, bool deep_copyup,
+                              bool *passed)
 {
     librbd::RBD rbd;
     std::string parent_name = TestLibRBD::get_temp_image_name();
@@ -8600,8 +8715,8 @@ TEST_F(TestLibRBD, CompareAndWriteCopyup)
     ASSERT_PASSED(compare_and_write_copyup, ioctx, true);
 }
 
-void compare_and_write_copyup_mismatch(librados::IoCtx & ioctx,
-                                       bool deep_copyup, bool * passed)
+void compare_and_write_copyup_mismatch(librados::IoCtx &ioctx,
+                                       bool deep_copyup, bool *passed)
 {
     librbd::RBD rbd;
     std::string parent_name = TestLibRBD::get_temp_image_name();
@@ -8697,7 +8812,7 @@ TEST_F(TestLibRBD, Flatten)
     ASSERT_EQ(0, rbd.open(ioctx, clone_image, clone_name.c_str(), NULL));
     ASSERT_EQ(0, clone_image.flatten());
 
-    librbd::RBD::AioCompletion * read_comp =
+    librbd::RBD::AioCompletion *read_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     bufferlist read_bl;
     clone_image.aio_read(0, bl.length(), read_bl, read_comp);
@@ -8735,8 +8850,7 @@ TEST_F(TestLibRBD, Sparsify)
             if (i % 2) {
                 test_data[i * CHUNK_SIZE + j] =
                     (char)(rand() % (126 - 33) + 33);
-            }
-            else {
+            } else {
                 test_data[i * CHUNK_SIZE + j] = '\0';
             }
         }
@@ -9421,16 +9535,17 @@ TEST_F(TestLibRBD, ObjectMapConsistentSnap)
         ASSERT_EQ(0, image1.snap_create(snap_name.c_str()));
     }
 
-    thread writer([&image1] () {
-                  librbd::image_info_t info;
-                  int r = image1.stat(info, sizeof(info));
-                  ceph_assert(r == 0);
-                  bufferlist bl;
-                  bl.append("foo");
-                  for (unsigned i = 0; i < info.num_objs; ++i) {
-                  r = image1.write((1 << info.order) * i, bl.length(), bl);
-                  ceph_assert(r == (int)bl.length());}
-                  }) ;
+    thread writer([&image1]() {
+        librbd::image_info_t info;
+        int r = image1.stat(info, sizeof(info));
+        ceph_assert(r == 0);
+        bufferlist bl;
+        bl.append("foo");
+        for (unsigned i = 0; i < info.num_objs; ++i) {
+            r = image1.write((1 << info.order) * i, bl.length(), bl);
+            ceph_assert(r == (int)bl.length());
+        }
+    }) ;
     writer.join();
 
     for (int i = 0; i < num_snaps; ++i) {
@@ -9787,7 +9902,7 @@ TEST_F(TestLibRBD, UpdateFeatures)
     ASSERT_NE(0U, features & RBD_FEATURE_OBJECT_MAP);
 
     uint64_t expected_flags = RBD_FLAG_OBJECT_MAP_INVALID |
-        RBD_FLAG_FAST_DIFF_INVALID;
+                              RBD_FLAG_FAST_DIFF_INVALID;
     uint64_t flags;
     ASSERT_EQ(0, image.get_flags(&flags));
     ASSERT_EQ(expected_flags, flags);
@@ -10038,7 +10153,8 @@ TEST_F(TestLibRBD, BlockingAIO)
     BOOST_SCOPE_EXIT((non_blocking_aio)) {
         ASSERT_EQ(0, _rados.conf_set("rbd_non_blocking_aio",
                                      non_blocking_aio.c_str()));
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     librbd::Image image;
     ASSERT_EQ(0, rbd.open(ioctx, image, name.c_str(), NULL));
@@ -10049,11 +10165,11 @@ TEST_F(TestLibRBD, BlockingAIO)
     ASSERT_EQ(0, image.write(0, bl.length(), bl));
 
     bl.append(std::string(256, '1'));
-    librbd::RBD::AioCompletion * write_comp =
+    librbd::RBD::AioCompletion *write_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, image.aio_write(0, bl.length(), bl, write_comp));
 
-    librbd::RBD::AioCompletion * flush_comp =
+    librbd::RBD::AioCompletion *flush_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, image.aio_flush(flush_comp));
     ASSERT_EQ(0, flush_comp->wait_for_complete());
@@ -10064,13 +10180,13 @@ TEST_F(TestLibRBD, BlockingAIO)
     ASSERT_EQ(0, write_comp->get_return_value());
     write_comp->release();
 
-    librbd::RBD::AioCompletion * discard_comp =
+    librbd::RBD::AioCompletion *discard_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, image.aio_discard(128, 128, discard_comp));
     ASSERT_EQ(0, discard_comp->wait_for_complete());
     discard_comp->release();
 
-    librbd::RBD::AioCompletion * read_comp =
+    librbd::RBD::AioCompletion *read_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     bufferlist read_bl;
     image.aio_read(0, bl.length(), read_bl, read_comp);
@@ -10108,15 +10224,14 @@ TEST_F(TestLibRBD, ExclusiveLockTransition)
     ceph::bufferlist bl;
     bl.append(std::string(1 << order, '1'));
     for (size_t object_no = 0; object_no < (size >> 12); ++object_no) {
-        librbd::RBD::AioCompletion * comp = new librbd::RBD::AioCompletion(NULL,
-                                                                           NULL);
+        librbd::RBD::AioCompletion *comp = new librbd::RBD::AioCompletion(NULL,
+            NULL);
         comps.push_back(comp);
         if (object_no % 2 == 0) {
             ASSERT_EQ(0,
                       image1.aio_write(object_no << order, bl.length(), bl,
                                        comp));
-        }
-        else {
+        } else {
             ASSERT_EQ(0,
                       image2.aio_write(object_no << order, bl.length(), bl,
                                        comp));
@@ -10124,7 +10239,7 @@ TEST_F(TestLibRBD, ExclusiveLockTransition)
     }
 
     while (!comps.empty()) {
-        librbd::RBD::AioCompletion * comp = comps.front();
+        librbd::RBD::AioCompletion *comp = comps.front();
         comps.pop_front();
         ASSERT_EQ(0, comp->wait_for_complete());
         ASSERT_EQ(1, comp->is_complete());
@@ -10179,16 +10294,15 @@ TEST_F(TestLibRBD, ExclusiveLockReadTransition)
     std::list < librbd::RBD::AioCompletion * >comps;
     std::list < bufferlist > read_bls;
     for (size_t object_no = 0; object_no < (size >> 12); ++object_no) {
-        librbd::RBD::AioCompletion * comp = new librbd::RBD::AioCompletion(NULL,
-                                                                           NULL);
+        librbd::RBD::AioCompletion *comp = new librbd::RBD::AioCompletion(NULL,
+            NULL);
         comps.push_back(comp);
         read_bls.emplace_back();
         if (object_no % 2 == 0) {
             ASSERT_EQ(0,
                       image1.aio_read(object_no << order, 1 << order,
                                       read_bls.back(), comp));
-        }
-        else {
+        } else {
             ASSERT_EQ(0,
                       image2.aio_read(object_no << order, 1 << order,
                                       read_bls.back(), comp));
@@ -10196,7 +10310,7 @@ TEST_F(TestLibRBD, ExclusiveLockReadTransition)
     }
 
     while (!comps.empty()) {
-        librbd::RBD::AioCompletion * comp = comps.front();
+        librbd::RBD::AioCompletion *comp = comps.front();
         comps.pop_front();
         ASSERT_EQ(0, comp->wait_for_complete());
         ASSERT_EQ(1, comp->is_complete());
@@ -10265,7 +10379,8 @@ TEST_F(TestLibRBD, FlushEmptyOpsOnExternalSnapshot)
     ASSERT_EQ(0, _rados.conf_set("rbd_cache", "false"));
     BOOST_SCOPE_EXIT((cache_enabled)) {
         ASSERT_EQ(0, _rados.conf_set("rbd_cache", cache_enabled.c_str()));
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     librados::IoCtx ioctx;
     ASSERT_EQ(0, _rados.ioctx_create(m_pool_name.c_str(), ioctx));
@@ -10282,7 +10397,7 @@ TEST_F(TestLibRBD, FlushEmptyOpsOnExternalSnapshot)
     ASSERT_EQ(0, rbd.open(ioctx, image2, name.c_str(), NULL));
     ASSERT_EQ(0, image1.snap_create("snap1"));
 
-    librbd::RBD::AioCompletion * read_comp =
+    librbd::RBD::AioCompletion *read_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     bufferlist read_bl;
     image2.aio_read(0, 1024, read_bl, read_comp);
@@ -10310,11 +10425,11 @@ TEST_F(TestLibRBD, TestImageOptions)
     ASSERT_FALSE(is_set);
 
     ASSERT_EQ(0, rbd_image_options_set_uint64(opts, RBD_IMAGE_OPTION_FORMAT,
-                                              2));
+              2));
     ASSERT_EQ(0, rbd_image_options_set_uint64(opts, RBD_IMAGE_OPTION_FEATURES,
-                                              features));
+              features));
     ASSERT_EQ(0, rbd_image_options_set_uint64(opts, RBD_IMAGE_OPTION_ORDER,
-                                              order));
+              order));
     ASSERT_EQ(0,
               rbd_image_options_set_uint64(opts, RBD_IMAGE_OPTION_STRIPE_UNIT,
                                            stripe_unit));
@@ -10333,7 +10448,7 @@ TEST_F(TestLibRBD, TestImageOptions)
 
     // check order is returned in opts
     ASSERT_EQ(0, rbd_image_options_get_uint64(opts, RBD_IMAGE_OPTION_ORDER,
-                                              &order));
+              &order));
     ASSERT_NE((uint64_t) 0, order);
 
     // write some data to parent
@@ -10382,7 +10497,7 @@ TEST_F(TestLibRBD, TestImageOptionsPP)
     uint64_t stripe_count = IMAGE_STRIPE_COUNT;
     librbd::ImageOptions opts;
     ASSERT_EQ(0,
-              opts.set(RBD_IMAGE_OPTION_FORMAT, static_cast < uint64_t > (2)));
+              opts.set(RBD_IMAGE_OPTION_FORMAT, static_cast < uint64_t >(2)));
     ASSERT_EQ(0, opts.set(RBD_IMAGE_OPTION_FEATURES, features));
     ASSERT_EQ(0, opts.set(RBD_IMAGE_OPTION_ORDER, order));
     ASSERT_EQ(0, opts.set(RBD_IMAGE_OPTION_STRIPE_UNIT, stripe_unit));
@@ -10490,7 +10605,7 @@ TEST_F(TestLibRBD, EventSocketEventfd)
     ASSERT_EQ(1, poll(&poll_fd, 1, -1));
     ASSERT_TRUE(poll_fd.revents & POLLIN);
 
-    ASSERT_EQ(static_cast < ssize_t > (sizeof(uint64_t)),
+    ASSERT_EQ(static_cast < ssize_t >(sizeof(uint64_t)),
               read(event_fd, buf, 32));
     ASSERT_EQ(1U, *reinterpret_cast < uint64_t * >(buf));
 
@@ -10520,8 +10635,9 @@ TEST_F(TestLibRBD, ImagePollIO)
     char zero_data[TEST_IO_SIZE + 1];
     int i;
 
-    for (i = 0; i < TEST_IO_SIZE; ++i)
+    for (i = 0; i < TEST_IO_SIZE; ++i) {
         test_data[i] = (char)(rand() % (126 - 33) + 33);
+    }
     test_data[TEST_IO_SIZE] = '\0';
     memset(zero_data, 0, sizeof(zero_data));
 
@@ -10542,31 +10658,36 @@ TEST_F(TestLibRBD, ImagePollIO)
 #endif
 }
 
-namespace librbd {
+namespace librbd
+{
 
-    static bool operator==(const image_spec_t & lhs, const image_spec_t & rhs) {
-        return (lhs.id == rhs.id && lhs.name == rhs.name);
-    } static bool operator==(const linked_image_spec_t & lhs,
-                             const linked_image_spec_t & rhs) {
-        return (lhs.pool_id == rhs.pool_id &&
-                lhs.pool_name == rhs.pool_name &&
-                lhs.pool_namespace == rhs.pool_namespace &&
-                lhs.image_id == rhs.image_id &&
-                lhs.image_name == rhs.image_name && lhs.trash == rhs.trash);
-    }
+static bool operator==(const image_spec_t &lhs, const image_spec_t &rhs)
+{
+    return (lhs.id == rhs.id && lhs.name == rhs.name);
+} static bool operator==(const linked_image_spec_t &lhs,
+                         const linked_image_spec_t &rhs)
+{
+    return (lhs.pool_id == rhs.pool_id &&
+            lhs.pool_name == rhs.pool_name &&
+            lhs.pool_namespace == rhs.pool_namespace &&
+            lhs.image_id == rhs.image_id &&
+            lhs.image_name == rhs.image_name && lhs.trash == rhs.trash);
+}
 
-    static bool operator==(const mirror_peer_t & lhs, const mirror_peer_t & rhs) {
-        return (lhs.uuid == rhs.uuid &&
-                lhs.cluster_name == rhs.cluster_name &&
-                lhs.client_name == rhs.client_name);
-    }
+static bool operator==(const mirror_peer_t &lhs, const mirror_peer_t &rhs)
+{
+    return (lhs.uuid == rhs.uuid &&
+            lhs.cluster_name == rhs.cluster_name &&
+            lhs.client_name == rhs.client_name);
+}
 
-    static std::ostream & operator<<(std::ostream & os,
-                                     const mirror_peer_t & peer) {
-        os << "uuid=" << peer.uuid << ", " << "cluster=" << peer.
-            cluster_name << ", " << "client=" << peer.client_name;
-        return os;
-    }
+static std::ostream &operator<<(std::ostream &os,
+                                const mirror_peer_t &peer)
+{
+    os << "uuid=" << peer.uuid << ", " << "cluster=" << peer.
+       cluster_name << ", " << "client=" << peer.client_name;
+    return os;
+}
 
 }                               // namespace librbd
 
@@ -10629,17 +10750,20 @@ TEST_F(TestLibRBD, Mirror)
     ASSERT_EQ(0, rbd.mirror_peer_add(ioctx, &uuid3, "cluster3", "admin"));
 
     ASSERT_EQ(0, rbd.mirror_peer_list(ioctx, &peers));
-    auto sort_peers =[](const librbd::mirror_peer_t & lhs,
-                        const librbd::mirror_peer_t & rhs){
+    auto sort_peers = [](const librbd::mirror_peer_t &lhs,
+    const librbd::mirror_peer_t &rhs) {
         return lhs.uuid < rhs.uuid;
     };
     expected_peers = {
         {
-        uuid1, "cluster1", "client"}
+            uuid1, "cluster1", "client"
+        }
         , {
-        uuid2, "cluster2", "admin"}
+            uuid2, "cluster2", "admin"
+        }
         , {
-        uuid3, "cluster3", "admin"}
+            uuid3, "cluster3", "admin"
+        }
     };
     std::sort(expected_peers.begin(), expected_peers.end(), sort_peers);
     ASSERT_EQ(expected_peers, peers);
@@ -10652,15 +10776,17 @@ TEST_F(TestLibRBD, Mirror)
     ASSERT_EQ(0, rbd.mirror_peer_set_client(ioctx, uuid1, "new client"));
 
     ASSERT_EQ(-ENOENT, rbd.mirror_peer_set_cluster(ioctx, "uuid4",
-                                                   "new cluster"));
+              "new cluster"));
     ASSERT_EQ(0, rbd.mirror_peer_set_cluster(ioctx, uuid3, "new cluster"));
 
     ASSERT_EQ(0, rbd.mirror_peer_list(ioctx, &peers));
     expected_peers = {
         {
-        uuid1, "cluster1", "new client"}
+            uuid1, "cluster1", "new client"
+        }
         , {
-        uuid3, "new cluster", "admin"}
+            uuid3, "new cluster", "admin"
+        }
     };
     std::sort(expected_peers.begin(), expected_peers.end(), sort_peers);
     ASSERT_EQ(expected_peers, peers);
@@ -10689,16 +10815,18 @@ TEST_F(TestLibRBD, MirrorPeerAttributes)
               rbd.mirror_peer_get_attributes(ioctx, uuid, &attributes));
     ASSERT_EQ(-ENOENT,
               rbd.mirror_peer_set_attributes(ioctx, "missing uuid",
-                                             attributes));
+                      attributes));
 
     std::map < std::string, std::string > expected_attributes {
         {
-        "mon_host", "1.2.3.4"}
+            "mon_host", "1.2.3.4"
+        }
         , {
-        "key", "ABC"}
+            "key", "ABC"
+        }
     };
     ASSERT_EQ(0, rbd.mirror_peer_set_attributes(ioctx, uuid,
-                                                expected_attributes));
+              expected_attributes));
 
     ASSERT_EQ(0, rbd.mirror_peer_get_attributes(ioctx, uuid, &attributes));
     ASSERT_EQ(expected_attributes, attributes);
@@ -10790,7 +10918,7 @@ TEST_F(TestLibRBD, FlushCacheWithCopyupOnExternalSnapshot)
     ASSERT_EQ(1, image.write(0, 1, bl));
     ASSERT_EQ(0, image2.snap_create("snap1"));
 
-    librbd::RBD::AioCompletion * read_comp =
+    librbd::RBD::AioCompletion *read_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     bufferlist read_bl;
     image.aio_read(0, 1024, read_bl, read_comp);
@@ -10875,13 +11003,13 @@ TEST_F(TestLibRBD, ExclusiveLock)
 
     int owner_id = -1;
     std::mutex lock;
-    const auto pingpong =[&](int m_id, rbd_image_t & m_image){
+    const auto pingpong = [&](int m_id, rbd_image_t &m_image) {
         for (int i = 0; i < 10; i++) {
             {
                 std::lock_guard < std::mutex > locker(lock);
                 if (owner_id == m_id) {
                     std::cout << m_id << ": releasing exclusive lock" << std::
-                        endl;
+                              endl;
                     EXPECT_EQ(0, rbd_lock_release(m_image));
                     int lock_owner;
                     EXPECT_EQ(0,
@@ -10890,7 +11018,7 @@ TEST_F(TestLibRBD, ExclusiveLock)
                     EXPECT_FALSE(lock_owner);
                     owner_id = -1;
                     std::cout << m_id << ": exclusive lock released" << std::
-                        endl;
+                              endl;
                     continue;
                 }
             }
@@ -11027,19 +11155,19 @@ TEST_F(TestLibRBD, DiscardAfterWrite)
     bufferlist bl;
     bl.append(std::string(256, '1'));
 
-    librbd::RBD::AioCompletion * write_comp =
+    librbd::RBD::AioCompletion *write_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, image.aio_write(0, bl.length(), bl, write_comp));
     ASSERT_EQ(0, write_comp->wait_for_complete());
     write_comp->release();
 
-    librbd::RBD::AioCompletion * discard_comp =
+    librbd::RBD::AioCompletion *discard_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     ASSERT_EQ(0, image.aio_discard(0, 256, discard_comp));
     ASSERT_EQ(0, discard_comp->wait_for_complete());
     discard_comp->release();
 
-    librbd::RBD::AioCompletion * read_comp =
+    librbd::RBD::AioCompletion *read_comp =
         new librbd::RBD::AioCompletion(NULL, NULL);
     bufferlist read_bl;
     image.aio_read(0, bl.length(), read_bl, read_comp);
@@ -11060,20 +11188,25 @@ TEST_F(TestLibRBD, DefaultFeatures)
     };
 
     std::list < std::pair < std::string,
-        std::string > >feature_names_to_bitmask = {
+    std::string > >feature_names_to_bitmask = {
         {
-        "", orig_default_features}
+            "", orig_default_features
+        }
         , {
-        "layering", "1"}
+            "layering", "1"
+        }
         , {
-        "layering, exclusive-lock", "5"}
+            "layering, exclusive-lock", "5"
+        }
         , {
-        "exclusive-lock,journaling", "68"}
+            "exclusive-lock,journaling", "68"
+        }
         , {
-        "125", "125"}
+            "125", "125"
+        }
     };
 
-  for (auto & pair:feature_names_to_bitmask) {
+    for (auto &pair : feature_names_to_bitmask) {
         ASSERT_EQ(0,
                   _rados.conf_set("rbd_default_features", pair.first.c_str()));
         std::string features;
@@ -11107,7 +11240,7 @@ TEST_F(TestLibRBD, TestTrashMoveAndPurge)
 
     std::vector < std::string > images;
     ASSERT_EQ(0, rbd.list(ioctx, images));
-  for (const auto & image:images) {
+    for (const auto &image : images) {
         ASSERT_TRUE(image != name);
     }
 
@@ -11124,7 +11257,7 @@ TEST_F(TestLibRBD, TestTrashMoveAndPurge)
     entries.clear();
     PrintProgress pp;
     ASSERT_EQ(0, rbd.trash_remove_with_progress(ioctx, image_id.c_str(),
-                                                false, pp));
+              false, pp));
     ASSERT_EQ(0, rbd.trash_list(ioctx, entries));
     ASSERT_TRUE(entries.empty());
 }
@@ -11154,11 +11287,11 @@ TEST_F(TestLibRBD, TestTrashMoveAndPurgeNonExpiredDelay)
 
     PrintProgress pp;
     ASSERT_EQ(-EPERM, rbd.trash_remove_with_progress(ioctx, image_id.c_str(),
-                                                     false, pp));
+              false, pp));
 
     PrintProgress pp2;
     ASSERT_EQ(0, rbd.trash_remove_with_progress(ioctx, image_id.c_str(),
-                                                true, pp2));
+              true, pp2));
 }
 
 TEST_F(TestLibRBD, TestTrashPurge)
@@ -11244,7 +11377,7 @@ TEST_F(TestLibRBD, TestTrashMoveAndRestore)
 
     std::vector < std::string > images;
     ASSERT_EQ(0, rbd.list(ioctx, images));
-  for (const auto & image:images) {
+    for (const auto &image : images) {
         ASSERT_TRUE(image != name);
     }
 
@@ -11258,7 +11391,7 @@ TEST_F(TestLibRBD, TestTrashMoveAndRestore)
     ASSERT_EQ(0, rbd.list(ioctx, images));
     ASSERT_FALSE(images.empty());
     bool found = false;
-  for (const auto & image:images) {
+    for (const auto &image : images) {
         if (image == name) {
             found = true;
             break;
@@ -11425,9 +11558,9 @@ TEST_F(TestLibRBD, NamespacesPP)
 
     PrintProgress pp;
     ASSERT_EQ(-ENOENT, rbd.trash_remove_with_progress(ioctx, image_id.c_str(),
-                                                      false, pp));
+              false, pp));
     ASSERT_EQ(0, rbd.trash_remove_with_progress(ns_io_ctx, image_id.c_str(),
-                                                false, pp));
+              false, pp));
     ASSERT_EQ(0, rbd.namespace_remove(ns_io_ctx, "name1"));
 
     names.clear();
@@ -11458,7 +11591,8 @@ TEST_F(TestLibRBD, Migration)
     rbd_image_options_create(&image_options);
     BOOST_SCOPE_EXIT(&image_options) {
         rbd_image_options_destroy(image_options);
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     ASSERT_EQ(0, rbd_migration_prepare(ioctx, name.c_str(), ioctx, name.c_str(),
                                        image_options));
@@ -11470,8 +11604,7 @@ TEST_F(TestLibRBD, Migration)
     ASSERT_EQ(status.source_image_name, name);
     if (old_format) {
         ASSERT_EQ(status.source_image_id, string());
-    }
-    else {
+    } else {
         ASSERT_NE(status.source_image_id, string());
         ASSERT_EQ(-EROFS,
                   rbd_trash_remove(ioctx, status.source_image_id, false));
@@ -11490,7 +11623,7 @@ TEST_F(TestLibRBD, Migration)
     char source_spec[2048];
     size_t source_spec_length = sizeof(source_spec);
     ASSERT_EQ(0, rbd_get_migration_source_spec(image, source_spec,
-                                               &source_spec_length));
+              &source_spec_length));
     json_spirit::mValue json_source_spec;
     json_spirit::read(source_spec, json_source_spec);
     EXPECT_EQ(0, rbd_close(image));
@@ -11548,8 +11681,7 @@ TEST_F(TestLibRBD, MigrationPP)
     ASSERT_EQ(status.source_image_name, name);
     if (old_format) {
         ASSERT_EQ(status.source_image_id, "");
-    }
-    else {
+    } else {
         ASSERT_NE(status.source_image_id, "");
         ASSERT_EQ(-EROFS,
                   rbd.trash_remove(ioctx, status.source_image_id.c_str(),
@@ -11876,8 +12008,7 @@ TEST_F(TestLibRBD, Config)
         if (options[i].name == std::string("rbd_cache")) {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_POOL);
             ASSERT_STREQ("false", options[i].value);
-        }
-        else {
+        } else {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -11896,8 +12027,7 @@ TEST_F(TestLibRBD, Config)
         if (options[i].name == std::string("rbd_cache")) {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_POOL);
             ASSERT_STREQ("false", options[i].value);
-        }
-        else {
+        } else {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -11910,8 +12040,7 @@ TEST_F(TestLibRBD, Config)
         if (options[i].name == std::string("rbd_cache")) {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_IMAGE);
             ASSERT_STREQ("true", options[i].value);
-        }
-        else {
+        } else {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -11924,8 +12053,7 @@ TEST_F(TestLibRBD, Config)
         if (options[i].name == std::string("rbd_cache")) {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_POOL);
             ASSERT_STREQ("false", options[i].value);
-        }
-        else {
+        } else {
             ASSERT_EQ(options[i].source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -11959,12 +12087,11 @@ TEST_F(TestLibRBD, ConfigPP)
 
     std::vector < librbd::config_option_t > options;
     ASSERT_EQ(0, rbd.config_list(ioctx, &options));
-  for (auto & option:options) {
+    for (auto &option : options) {
         if (option.name == std::string("rbd_cache")) {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_POOL);
             ASSERT_EQ("false", option.value);
-        }
-        else {
+        } else {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -11979,12 +12106,11 @@ TEST_F(TestLibRBD, ConfigPP)
 
     options.clear();
     ASSERT_EQ(0, image.config_list(&options));
-  for (auto & option:options) {
+    for (auto &option : options) {
         if (option.name == std::string("rbd_cache")) {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_POOL);
             ASSERT_EQ("false", option.value);
-        }
-        else {
+        } else {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -11993,12 +12119,11 @@ TEST_F(TestLibRBD, ConfigPP)
 
     options.clear();
     ASSERT_EQ(0, image.config_list(&options));
-  for (auto & option:options) {
+    for (auto &option : options) {
         if (option.name == std::string("rbd_cache")) {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_IMAGE);
             ASSERT_EQ("true", option.value);
-        }
-        else {
+        } else {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -12007,12 +12132,11 @@ TEST_F(TestLibRBD, ConfigPP)
 
     options.clear();
     ASSERT_EQ(0, image.config_list(&options));
-  for (auto & option:options) {
+    for (auto &option : options) {
         if (option.name == std::string("rbd_cache")) {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_POOL);
             ASSERT_EQ("false", option.value);
-        }
-        else {
+        } else {
             ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_CONFIG);
         }
     }
@@ -12021,7 +12145,7 @@ TEST_F(TestLibRBD, ConfigPP)
 
     options.clear();
     ASSERT_EQ(0, rbd.config_list(ioctx, &options));
-  for (auto & option:options) {
+    for (auto &option : options) {
         ASSERT_EQ(option.source, RBD_CONFIG_SOURCE_CONFIG);
     }
 }
@@ -12146,14 +12270,17 @@ TEST_F(TestLibRBD, ImageSpec)
 
     std::vector < librbd::image_spec_t > expected_images {
         {
-        .id = parent_id,.name = name}, {
-        .id = clone_id,.name = clone_name}
+            .id = parent_id, .name = name
+        }, {
+            .id = clone_id, .name = clone_name
+        }
     };
     std::sort(expected_images.begin(), expected_images.end(),
-              [](const librbd::image_spec_t & lhs,
-                 const librbd::image_spec_t & rhs) {
-              return lhs.name < rhs.name;}
-    );
+              [](const librbd::image_spec_t &lhs,
+    const librbd::image_spec_t &rhs) {
+        return lhs.name < rhs.name;
+    }
+             );
     ASSERT_EQ(expected_images, images);
 
     librbd::linked_image_spec_t parent_image_spec;
@@ -12161,10 +12288,10 @@ TEST_F(TestLibRBD, ImageSpec)
     ASSERT_EQ(0, clone_image.get_parent(&parent_image_spec, &parent_snap_spec));
 
     librbd::linked_image_spec_t expected_parent_image_spec {
-    .pool_id = ioctx.get_id(),.pool_name =
-            ioctx.get_pool_name(),.pool_namespace =
-            ioctx.get_namespace(),.image_id = parent_id,.image_name =
-            name,.trash = false};
+        .pool_id = ioctx.get_id(), .pool_name =
+                        ioctx.get_pool_name(), .pool_namespace =
+                        ioctx.get_namespace(), .image_id = parent_id, .image_name =
+                        name, .trash = false};
     ASSERT_EQ(expected_parent_image_spec, parent_image_spec);
     ASSERT_EQ(RBD_SNAP_NAMESPACE_TYPE_USER, parent_snap_spec.namespace_type);
     ASSERT_EQ("snap", parent_snap_spec.name);
@@ -12174,10 +12301,11 @@ TEST_F(TestLibRBD, ImageSpec)
 
     std::vector < librbd::linked_image_spec_t > expected_children {
         {
-        .pool_id = ioctx.get_id(),.pool_name =
-                ioctx.get_pool_name(),.pool_namespace =
-                ioctx.get_namespace(),.image_id = clone_id,.image_name =
-                clone_name,.trash = false}
+            .pool_id = ioctx.get_id(), .pool_name =
+                            ioctx.get_pool_name(), .pool_namespace =
+                            ioctx.get_namespace(), .image_id = clone_id, .image_name =
+                            clone_name, .trash = false
+        }
     };
     ASSERT_EQ(expected_children, children);
 
@@ -12203,13 +12331,13 @@ TEST_F(TestLibRBD, ImageSpec)
 
     children.clear();
     ASSERT_EQ(0, parent_image.list_descendants(&children));
-    expected_children.push_back( {
-                                .pool_id = ioctx.get_id(),.pool_name =
-                                ioctx.get_pool_name(),.pool_namespace =
-                                ioctx.get_namespace(),.image_id =
-                                grand_clone_id,.image_name =
-                                grand_clone_name,.trash = false}
-    );
+    expected_children.push_back({
+        .pool_id = ioctx.get_id(), .pool_name =
+                        ioctx.get_pool_name(), .pool_namespace =
+                        ioctx.get_namespace(), .image_id =
+                        grand_clone_id, .image_name =
+                        grand_clone_name, .trash = false}
+                               );
     ASSERT_EQ(expected_children, children);
 }
 
@@ -12260,7 +12388,7 @@ TEST_F(TestLibRBD, DISABLED_TestSeqWriteAIOPP)
             if (i % 1000 == 0) {
                 cout << i << " reqs sent" << std::endl;
                 image.flush();
-              for (auto comp:comps) {
+                for (auto comp : comps) {
                     comp->wait_for_complete();
                     ASSERT_EQ(0, comp->get_return_value());
                     comp->release();
@@ -12269,7 +12397,7 @@ TEST_F(TestLibRBD, DISABLED_TestSeqWriteAIOPP)
             }
         }
         int i = 0;
-      for (auto comp:comps) {
+        for (auto comp : comps) {
             comp->wait_for_complete();
             ASSERT_EQ(0, comp->get_return_value());
             comp->release();
@@ -12283,7 +12411,7 @@ TEST_F(TestLibRBD, DISABLED_TestSeqWriteAIOPP)
         struct timespec end_time;
         clock_gettime(CLOCK_REALTIME, &end_time);
         int duration = end_time.tv_sec * 1000 + end_time.tv_nsec / 1000000 -
-            start_time.tv_sec * 1000 - start_time.tv_nsec / 1000000;
+                       start_time.tv_sec * 1000 - start_time.tv_nsec / 1000000;
         std::cout << "duration: " << duration << " msec" << std::endl;
 
         for (uint64_t i = 0; i < size / TEST_IO_SIZE; ++i) {
@@ -12407,15 +12535,17 @@ TEST_F(TestLibRBD, QuiesceWatch)
     ASSERT_EQ(0, rbd_open(ioctx, name.c_str(), &image2, NULL));
 
     struct Watcher {
-        static void quiesce_cb(void *arg) {
+        static void quiesce_cb(void *arg)
+        {
             Watcher *watcher = static_cast < Watcher * >(arg);
             watcher->handle_quiesce();
-        } static void unquiesce_cb(void *arg) {
+        } static void unquiesce_cb(void *arg)
+        {
             Watcher *watcher = static_cast < Watcher * >(arg);
             watcher->handle_unquiesce();
         }
 
-        rbd_image_t & image;
+        rbd_image_t &image;
         uint64_t handle = 0;
         size_t quiesce_count = 0;
         size_t unquiesce_count = 0;
@@ -12423,26 +12553,30 @@ TEST_F(TestLibRBD, QuiesceWatch)
         ceph::mutex lock = ceph::make_mutex("lock");
         ceph::condition_variable cv;
 
-      Watcher(rbd_image_t & image):image(image) {
+        Watcher(rbd_image_t &image): image(image)
+        {
         }
 
-        void handle_quiesce() {
+        void handle_quiesce()
+        {
             ASSERT_EQ(quiesce_count, unquiesce_count);
             quiesce_count++;
             rbd_quiesce_complete(image, handle, 0);
         }
-        void handle_unquiesce() {
+        void handle_unquiesce()
+        {
             std::unique_lock locker(lock);
             unquiesce_count++;
             ASSERT_EQ(quiesce_count, unquiesce_count);
             cv.notify_one();
         }
-        bool wait_for_unquiesce(size_t c) {
+        bool wait_for_unquiesce(size_t c)
+        {
             std::unique_lock locker(lock);
-            return cv.wait_for(locker, seconds(60),[this, c] () {
-                               return unquiesce_count >= c;
-                               }
-            );
+            return cv.wait_for(locker, seconds(60), [this, c]() {
+                return unquiesce_count >= c;
+            }
+                              );
         }
     }
     watcher1(image1), watcher2(image2);
@@ -12500,8 +12634,8 @@ TEST_F(TestLibRBD, QuiesceWatchPP)
         ASSERT_EQ(0, rbd.open(ioctx, image1, name.c_str(), NULL));
         ASSERT_EQ(0, rbd.open(ioctx, image2, name.c_str(), NULL));
 
-        struct Watcher:public librbd::QuiesceWatchCtx {
-            librbd::Image & image;
+        struct Watcher: public librbd::QuiesceWatchCtx {
+            librbd::Image &image;
             uint64_t handle = 0;
             size_t quiesce_count = 0;
             size_t unquiesce_count = 0;
@@ -12509,24 +12643,28 @@ TEST_F(TestLibRBD, QuiesceWatchPP)
             ceph::mutex lock = ceph::make_mutex("lock");
             ceph::condition_variable cv;
 
-            Watcher(librbd::Image & image):image(image) {
-            } void handle_quiesce() override {
+            Watcher(librbd::Image &image): image(image)
+            {
+            } void handle_quiesce() override
+            {
                 ASSERT_EQ(quiesce_count, unquiesce_count);
                 quiesce_count++;
                 image.quiesce_complete(handle, 0);
             }
-            void handle_unquiesce() override {
+            void handle_unquiesce() override
+            {
                 std::unique_lock locker(lock);
                 unquiesce_count++;
                 ASSERT_EQ(quiesce_count, unquiesce_count);
                 cv.notify_one();
             }
-            bool wait_for_unquiesce(size_t c) {
+            bool wait_for_unquiesce(size_t c)
+            {
                 std::unique_lock locker(lock);
-                return cv.wait_for(locker, seconds(60),[this, c] () {
-                                   return unquiesce_count >= c;
-                                   }
-                );
+                return cv.wait_for(locker, seconds(60), [this, c]() {
+                    return unquiesce_count >= c;
+                }
+                                  );
             }
         }
         watcher1(image1), watcher2(image2);
@@ -12581,8 +12719,8 @@ TEST_F(TestLibRBD, QuiesceWatchError)
         ASSERT_EQ(0, rbd.open(ioctx, image1, name.c_str(), NULL));
         ASSERT_EQ(0, rbd.open(ioctx, image2, name.c_str(), NULL));
 
-        struct Watcher:public librbd::QuiesceWatchCtx {
-            librbd::Image & image;
+        struct Watcher: public librbd::QuiesceWatchCtx {
+            librbd::Image &image;
             int r;
             uint64_t handle;
             size_t quiesce_count = 0;
@@ -12591,28 +12729,34 @@ TEST_F(TestLibRBD, QuiesceWatchError)
             ceph::mutex lock = ceph::make_mutex("lock");
             ceph::condition_variable cv;
 
-            Watcher(librbd::Image & image, int r):image(image), r(r) {
-            } void reset_counters() {
+            Watcher(librbd::Image &image, int r): image(image), r(r)
+            {
+            } void reset_counters()
+            {
                 quiesce_count = 0;
                 unquiesce_count = 0;
             }
 
-            void handle_quiesce() override {
+            void handle_quiesce() override
+            {
                 quiesce_count++;
                 image.quiesce_complete(handle, r);
             }
 
-            void handle_unquiesce() override {
+            void handle_unquiesce() override
+            {
                 std::unique_lock locker(lock);
                 unquiesce_count++;
                 cv.notify_one();
             }
 
-            bool wait_for_unquiesce() {
+            bool wait_for_unquiesce()
+            {
                 std::unique_lock locker(lock);
-                return cv.wait_for(locker, seconds(60),[this] () {
-                                   return quiesce_count == unquiesce_count;}
-                );
+                return cv.wait_for(locker, seconds(60), [this]() {
+                    return quiesce_count == unquiesce_count;
+                }
+                                  );
             }
         }
         watcher10(image1, -EINVAL), watcher11(image1, 0), watcher20(image2, 0);
@@ -12690,39 +12834,46 @@ TEST_F(TestLibRBD, QuiesceWatchTimeout)
         librbd::Image image;
         ASSERT_EQ(0, rbd.open(ioctx, image, name.c_str(), NULL));
 
-        struct Watcher:public librbd::QuiesceWatchCtx {
-            librbd::Image & image;
+        struct Watcher: public librbd::QuiesceWatchCtx {
+            librbd::Image &image;
             std::mutex m_lock;
             std::condition_variable m_cond;
             size_t quiesce_count = 0;
             size_t unquiesce_count = 0;
 
-            Watcher(librbd::Image & image):image(image) {
-            } void handle_quiesce() override {
+            Watcher(librbd::Image &image): image(image)
+            {
+            } void handle_quiesce() override
+            {
                 std::lock_guard < std::mutex > locker(m_lock);
                 quiesce_count++;
                 m_cond.notify_one();
             }
 
-            void handle_unquiesce() override {
+            void handle_unquiesce() override
+            {
                 std::lock_guard < std::mutex > locker(m_lock);
                 unquiesce_count++;
                 m_cond.notify_one();
             }
 
-            void wait_for_quiesce() {
+            void wait_for_quiesce()
+            {
                 std::unique_lock < std::mutex > locker(m_lock);
-                ASSERT_TRUE(m_cond.wait_for(locker, seconds(60),[this] {
-                                            return quiesce_count >= 1;}
-                            ));
+                ASSERT_TRUE(m_cond.wait_for(locker, seconds(60), [this] {
+                    return quiesce_count >= 1;
+                }
+                                           ));
             }
 
-            void wait_for_unquiesce() {
+            void wait_for_unquiesce()
+            {
                 std::unique_lock < std::mutex > locker(m_lock);
-                ASSERT_TRUE(m_cond.wait_for(locker, seconds(60),[this] {
-                                            return quiesce_count ==
-                                            unquiesce_count;}
-                            ));
+                ASSERT_TRUE(m_cond.wait_for(locker, seconds(60), [this] {
+                    return quiesce_count ==
+                    unquiesce_count;
+                }
+                                           ));
                 quiesce_count = unquiesce_count = 0;
             }
         }
@@ -12733,10 +12884,12 @@ TEST_F(TestLibRBD, QuiesceWatchTimeout)
 
         std::cerr << "test quiesce is not long enough to time out" << std::endl;
 
-        thread quiesce1([&image, &watcher, handle] () {
-                        watcher.wait_for_quiesce();
-                        sleep(8); image.quiesce_complete(handle, 0);}
-        );
+        thread quiesce1([&image, &watcher, handle]() {
+            watcher.wait_for_quiesce();
+            sleep(8);
+            image.quiesce_complete(handle, 0);
+        }
+                       );
 
         ASSERT_EQ(0, image.snap_create("snap1"));
         quiesce1.join();
@@ -12746,12 +12899,15 @@ TEST_F(TestLibRBD, QuiesceWatchTimeout)
         std::cerr << "test quiesce is timed out" << std::endl;
 
         bool timed_out = false;
-        thread quiesce2([&image, &watcher, handle, &timed_out] () {
-                        watcher.wait_for_quiesce();
-                        for (int i = 0; !timed_out && i < 60; i++) {
-                        std::cerr << "waiting for timed out ... " << i << std::
-                        endl; sleep(1);}
-                        image.quiesce_complete(handle, 0);}) ;
+        thread quiesce2([&image, &watcher, handle, &timed_out]() {
+            watcher.wait_for_quiesce();
+            for (int i = 0; !timed_out && i < 60; i++) {
+                std::cerr << "waiting for timed out ... " << i << std::
+                          endl;
+                sleep(1);
+            }
+            image.quiesce_complete(handle, 0);
+        }) ;
 
         ASSERT_EQ(-ETIMEDOUT, image.snap_create("snap2"));
         timed_out = true;
@@ -12759,9 +12915,10 @@ TEST_F(TestLibRBD, QuiesceWatchTimeout)
         ASSERT_GE(watcher.quiesce_count, 1U);
         watcher.wait_for_unquiesce();
 
-        thread quiesce3([&image, handle, &watcher] () {
-                        watcher.wait_for_quiesce();
-                        image.quiesce_complete(handle, 0);});
+        thread quiesce3([&image, handle, &watcher]() {
+            watcher.wait_for_quiesce();
+            image.quiesce_complete(handle, 0);
+        });
 
         std::cerr << "test retry succeeds" << std::endl;
 
@@ -12811,7 +12968,10 @@ TEST_F(TestLibRBD, WriteZeroes)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 192}}};
+                0, 192
+            }
+        }
+    };
     ASSERT_EQ(expected_diff, diff);
 
     // zero an existing extent and truncate some off the end
@@ -12822,7 +12982,10 @@ TEST_F(TestLibRBD, WriteZeroes)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 192}}};
+                0, 192
+            }
+        }
+    };
     ASSERT_EQ(expected_diff, diff);
 
     bufferlist expected_bl;
@@ -12866,7 +13029,10 @@ TEST_F(TestLibRBD, WriteZeroesThickProvision)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 128}}};
+                0, 128
+            }
+        }
+    };
     ASSERT_EQ(expected_diff, diff);
 
     ASSERT_EQ(512,
@@ -12876,7 +13042,10 @@ TEST_F(TestLibRBD, WriteZeroesThickProvision)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 896}}};
+                0, 896
+            }
+        }
+    };
     ASSERT_EQ(expected_diff, diff);
 
     // prepend with write-same
@@ -12887,7 +13056,10 @@ TEST_F(TestLibRBD, WriteZeroesThickProvision)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 1536}}};
+                0, 1536
+            }
+        }
+    };
     ASSERT_EQ(expected_diff, diff);
 
     // write-same with append
@@ -12898,7 +13070,10 @@ TEST_F(TestLibRBD, WriteZeroesThickProvision)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 2176}}};
+                0, 2176
+            }
+        }
+    };
     ASSERT_EQ(expected_diff, diff);
 
     // prepend + write-same + append
@@ -12909,7 +13084,10 @@ TEST_F(TestLibRBD, WriteZeroesThickProvision)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 2944}}};
+                0, 2944
+            }
+        }
+    };
 
     // write-same
     ASSERT_EQ(1024,
@@ -12919,7 +13097,10 @@ TEST_F(TestLibRBD, WriteZeroesThickProvision)
     ASSERT_EQ(0, image.diff_iterate2(nullptr, 0, size, false, false,
                                      iterate_cb, (void *)&diff));
     expected_diff = interval_set < uint64_t > { { {
-    0, 4096}}};
+                0, 4096
+            }
+        }
+    };
 
     bufferlist expected_bl;
     expected_bl.append_zero(size);
@@ -12949,13 +13130,13 @@ TEST_F(TestLibRBD, ConcurentOperations)
     std::vector < librbd::Image > images(10);
     std::vector < librbd::RBD::AioCompletion * >comps;
 
-  for (auto & image:images) {
+    for (auto &image : images) {
         auto comp = new librbd::RBD::AioCompletion(NULL, NULL);
         ASSERT_EQ(0, rbd.aio_open(ioctx, image, name.c_str(), NULL, comp));
         comps.push_back(comp);
     }
 
-  for (auto & comp:comps) {
+    for (auto &comp : comps) {
         ASSERT_EQ(0, comp->wait_for_complete());
         ASSERT_EQ(1, comp->is_complete());
         ASSERT_EQ(0, comp->get_return_value());
@@ -12965,38 +13146,40 @@ TEST_F(TestLibRBD, ConcurentOperations)
 
     std::vector < std::thread > threads;
     int i = 0;
-  for (auto & image:images) {
+    for (auto &image : images) {
         std::string snap_name = "snap" + stringify(i++);
-        threads.emplace_back([&image, snap_name] () {
-                             int r = image.snap_create(snap_name.c_str());
-                             ceph_assert(r == 0);});
+        threads.emplace_back([&image, snap_name]() {
+            int r = image.snap_create(snap_name.c_str());
+            ceph_assert(r == 0);
+        });
     }
 
-  for (auto & t:threads) {
+    for (auto &t : threads) {
         t.join();
     }
     threads.clear();
 
     i = 0;
-  for (auto & image:images) {
+    for (auto &image : images) {
         std::string snap_name = "snap" + stringify(i++);
-        threads.emplace_back([&image, snap_name] () {
-                             int r = image.snap_remove(snap_name.c_str());
-                             ceph_assert(r == 0);});
+        threads.emplace_back([&image, snap_name]() {
+            int r = image.snap_remove(snap_name.c_str());
+            ceph_assert(r == 0);
+        });
     }
 
-  for (auto & t:threads) {
+    for (auto &t : threads) {
         t.join();
     }
     threads.clear();
 
-  for (auto & image:images) {
+    for (auto &image : images) {
         auto comp = new librbd::RBD::AioCompletion(NULL, NULL);
         ASSERT_EQ(0, image.aio_close(comp));
         comps.push_back(comp);
     }
 
-  for (auto & comp:comps) {
+    for (auto &comp : comps) {
         ASSERT_EQ(0, comp->wait_for_complete());
         ASSERT_EQ(1, comp->is_complete());
         ASSERT_EQ(0, comp->get_return_value());
@@ -13013,25 +13196,28 @@ TEST_F(TestLibRBD, ConcurentOperations)
 
         ASSERT_EQ(0, image1.lock_acquire(RBD_LOCK_MODE_EXCLUSIVE));
 
-        struct Watcher:public librbd::QuiesceWatchCtx {
+        struct Watcher: public librbd::QuiesceWatchCtx {
             size_t count = 0;
 
             ceph::mutex lock = ceph::make_mutex("lock");
             ceph::condition_variable cv;
 
-            void handle_quiesce() override {
+            void handle_quiesce() override
+            {
                 std::unique_lock locker(lock);
                 count++;
                 cv.notify_one();
-            } void handle_unquiesce() override {
+            } void handle_unquiesce() override
+            {
             }
 
-            bool wait_for_quiesce(size_t c) {
+            bool wait_for_quiesce(size_t c)
+            {
                 std::unique_lock locker(lock);
-                return cv.wait_for(locker, seconds(60),[this, c] () {
-                                   return count >= c;
-                                   }
-                );
+                return cv.wait_for(locker, seconds(60), [this, c]() {
+                    return count >= c;
+                }
+                                  );
             }
         }
         watcher;
@@ -13040,21 +13226,24 @@ TEST_F(TestLibRBD, ConcurentOperations)
 
         auto close1_comp = new librbd::RBD::AioCompletion(NULL, NULL);
 
-        std::thread create_snap1([&image1, close1_comp] () {
-                                 int r = image1.snap_create("snap1");
-                                 ceph_assert(r == 0);
-                                 r = image1.aio_close(close1_comp);
-                                 ceph_assert(r == 0);});
+        std::thread create_snap1([&image1, close1_comp]() {
+            int r = image1.snap_create("snap1");
+            ceph_assert(r == 0);
+            r = image1.aio_close(close1_comp);
+            ceph_assert(r == 0);
+        });
 
         ASSERT_TRUE(watcher.wait_for_quiesce(1));
 
-        std::thread create_snap2([&image2] () {
-                                 int r = image2.snap_create("snap2");
-                                 ceph_assert(r == 0);});
+        std::thread create_snap2([&image2]() {
+            int r = image2.snap_create("snap2");
+            ceph_assert(r == 0);
+        });
 
-        std::thread create_snap3([&image3] () {
-                                 int r = image3.snap_create("snap3");
-                                 ceph_assert(r == 0);});
+        std::thread create_snap3([&image3]() {
+            int r = image3.snap_create("snap3");
+            ceph_assert(r == 0);
+        });
 
         image2.quiesce_complete(handle, 0);
         create_snap1.join();
@@ -13084,10 +13273,13 @@ TEST_F(TestLibRBD, ConcurentOperations)
 }
 
 // poorman's ceph_assert()
-namespace ceph {
-    void __ceph_assert_fail(const char *assertion, const char *file, int line,
-                            const char *func) {
-        ceph_abort();
-}}
+namespace ceph
+{
+void __ceph_assert_fail(const char *assertion, const char *file, int line,
+                        const char *func)
+{
+    ceph_abort();
+}
+}
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic warning "-Wpragmas"

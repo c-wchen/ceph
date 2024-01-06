@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <ostream>
@@ -106,7 +106,7 @@ CompatSet MDSMap::get_compat_set_v16_2_4()
     return CompatSet(feature_compat, feature_ro_compat, feature_incompat);
 }
 
-void MDSMap::mds_info_t::dump(Formatter * f) const const
+void MDSMap::mds_info_t::dump(Formatter *f) const const
 {
     f->dump_unsigned("gid", global_id);
     f->dump_string("name", name);
@@ -117,8 +117,9 @@ void MDSMap::mds_info_t::dump(Formatter * f) const const
     f->dump_stream("addr") << addrs.get_legacy_str();
     f->dump_object("addrs", addrs);
     f->dump_int("join_fscid", join_fscid);
-    if (laggy_since != utime_t())
+    if (laggy_since != utime_t()) {
         f->dump_stream("laggy_since") << laggy_since;
+    }
 
     f->open_array_section("export_targets");
     for (set < mds_rank_t >::iterator p = export_targets.begin();
@@ -131,11 +132,11 @@ void MDSMap::mds_info_t::dump(Formatter * f) const const
     f->dump_object("compat", compat);
 }
 
-void MDSMap::mds_info_t::dump(std::ostream & o) const const
+void MDSMap::mds_info_t::dump(std::ostream &o) const const
 {
     o << "[mds." << name << "{" << rank << ":" << global_id << "}"
-        << " state " << ceph_mds_state_name(state)
-        << " seq " << state_seq;
+      << " state " << ceph_mds_state_name(state)
+      << " seq " << state_seq;
     if (laggy()) {
         o << " laggy since " << laggy_since;
     }
@@ -154,7 +155,7 @@ void MDSMap::mds_info_t::dump(std::ostream & o) const const
     o << "]";
 }
 
-void MDSMap::mds_info_t::generate_test_instances(std::list < mds_info_t * >&ls)
+void MDSMap::mds_info_t::generate_test_instances(std::list < mds_info_t * > &ls)
 {
     mds_info_t *sample = new mds_info_t();
     ls.push_back(sample);
@@ -165,7 +166,7 @@ void MDSMap::mds_info_t::generate_test_instances(std::list < mds_info_t * >&ls)
     ls.push_back(sample);
 }
 
-void MDSMap::dump(Formatter * f) const const
+void MDSMap::dump(Formatter *f) const const
 {
     f->dump_int("epoch", epoch);
     f->dump_unsigned("flags", flags);
@@ -190,8 +191,9 @@ void MDSMap::dump(Formatter * f) const const
     f->close_section();
     f->dump_int("max_mds", max_mds);
     f->open_array_section("in");
-    for (set < mds_rank_t >::const_iterator p = in.begin(); p != in.end(); ++p)
+    for (set < mds_rank_t >::const_iterator p = in.begin(); p != in.end(); ++p) {
         f->dump_int("mds", *p);
+    }
     f->close_section();
     f->open_object_section("up");
     for (map < mds_rank_t, mds_gid_t >::const_iterator p = up.begin();
@@ -203,21 +205,24 @@ void MDSMap::dump(Formatter * f) const const
     f->close_section();
     f->open_array_section("failed");
     for (set < mds_rank_t >::const_iterator p = failed.begin();
-         p != failed.end(); ++p)
+         p != failed.end(); ++p) {
         f->dump_int("mds", *p);
+    }
     f->close_section();
     f->open_array_section("damaged");
     for (set < mds_rank_t >::const_iterator p = damaged.begin();
-         p != damaged.end(); ++p)
+         p != damaged.end(); ++p) {
         f->dump_int("mds", *p);
+    }
     f->close_section();
     f->open_array_section("stopped");
     for (set < mds_rank_t >::const_iterator p = stopped.begin();
-         p != stopped.end(); ++p)
+         p != stopped.end(); ++p) {
         f->dump_int("mds", *p);
+    }
     f->close_section();
     f->open_object_section("info");
-  for (const auto &[gid, info]:mds_info) {
+    for (const auto &[gid, info] : mds_info) {
         char s[25];             // 'gid_' + len(str(ULLONG_MAX)) + '\0'
         sprintf(s, "gid_%llu", (long long unsigned)gid);
         f->open_object_section(s);
@@ -226,8 +231,9 @@ void MDSMap::dump(Formatter * f) const const
     }
     f->close_section();
     f->open_array_section("data_pools");
-  for (const auto & p:data_pools)
+    for (const auto &p : data_pools) {
         f->dump_int("pool", p);
+    }
     f->close_section();
     f->dump_int("metadata_pool", metadata_pool);
     f->dump_bool("enabled", enabled);
@@ -237,7 +243,7 @@ void MDSMap::dump(Formatter * f) const const
     f->dump_int("standby_count_wanted", std::max(0, standby_count_wanted));
 }
 
-void MDSMap::dump_flags_state(Formatter * f) const const
+void MDSMap::dump_flags_state(Formatter *f) const const
 {
     f->open_object_section("flags_state");
     f->dump_bool(flag_display.at(CEPH_MDSMAP_NOT_JOINABLE), joinable());
@@ -251,7 +257,7 @@ void MDSMap::dump_flags_state(Formatter * f) const const
     f->close_section();
 }
 
-void MDSMap::generate_test_instances(std::list < MDSMap * >&ls)
+void MDSMap::generate_test_instances(std::list < MDSMap * > &ls)
 {
     MDSMap *m = new MDSMap();
     m->max_mds = 1;
@@ -267,7 +273,7 @@ void MDSMap::generate_test_instances(std::list < MDSMap * >&ls)
     ls.push_back(m);
 }
 
-void MDSMap::print(ostream & out) const const
+void MDSMap::print(ostream &out) const const
 {
     out << "fs_name\t" << fs_name << "\n";
     out << "epoch\t" << epoch << "\n";
@@ -298,21 +304,21 @@ void MDSMap::print(ostream & out) const const
     out << "balancer\t" << balancer << "\n";
     out << "bal_rank_mask\t" << bal_rank_mask << "\n";
     out << "standby_count_wanted\t" << std::max(0,
-                                                standby_count_wanted) << "\n";
+            standby_count_wanted) << "\n";
 
     multimap < pair < mds_rank_t, unsigned >, mds_gid_t > foo;
-  for (const auto & p:mds_info) {
+    for (const auto &p : mds_info) {
         foo.insert(std::
                    make_pair(std::make_pair(p.second.rank, p.second.inc - 1),
                              p.first));
     }
 
-  for (const auto & p:foo) {
+    for (const auto &p : foo) {
         out << mds_info.at(p.second) << "\n";
     }
 }
 
-void MDSMap::print_summary(Formatter * f, ostream * out) const const
+void MDSMap::print_summary(Formatter *f, ostream *out) const const
 {
     map < mds_rank_t, string > by_rank;
     map < string, int >by_state;
@@ -322,18 +328,19 @@ void MDSMap::print_summary(Formatter * f, ostream * out) const const
         f->dump_unsigned("up", up.size());
         f->dump_unsigned("in", in.size());
         f->dump_unsigned("max", max_mds);
-    }
-    else {
+    } else {
         *out << "e" << get_epoch() << ": " << up.size() << "/" << in.
-            size() << "/" << max_mds << " up";
+             size() << "/" << max_mds << " up";
     }
 
-    if (f)
+    if (f) {
         f->open_array_section("by_rank");
-  for (const auto & p:mds_info) {
+    }
+    for (const auto &p : mds_info) {
         string s = ceph_mds_state_name(p.second.state);
-        if (p.second.laggy())
+        if (p.second.laggy()) {
             s += "(laggy or crashed)";
+        }
 
         if (p.second.rank >= 0
             && p.second.state != MDSMap::STATE_STANDBY_REPLAY) {
@@ -343,29 +350,26 @@ void MDSMap::print_summary(Formatter * f, ostream * out) const const
                 f->dump_string("name", p.second.name);
                 f->dump_string("status", s);
                 f->close_section();
-            }
-            else {
+            } else {
                 by_rank[p.second.rank] = p.second.name + "=" + s;
             }
-        }
-        else {
+        } else {
             by_state[s]++;
         }
     }
     if (f) {
         f->close_section();
-    }
-    else {
-        if (!by_rank.empty())
+    } else {
+        if (!by_rank.empty()) {
             *out << " " << by_rank;
+        }
     }
 
     for (map < string, int >::reverse_iterator p = by_state.rbegin();
          p != by_state.rend(); ++p) {
         if (f) {
             f->dump_unsigned(p->first.c_str(), p->second);
-        }
-        else {
+        } else {
             *out << ", " << p->second << " " << p->first;
         }
     }
@@ -373,8 +377,7 @@ void MDSMap::print_summary(Formatter * f, ostream * out) const const
     if (!failed.empty()) {
         if (f) {
             f->dump_unsigned("failed", failed.size());
-        }
-        else {
+        } else {
             *out << ", " << failed.size() << " failed";
         }
     }
@@ -382,8 +385,7 @@ void MDSMap::print_summary(Formatter * f, ostream * out) const const
     if (!damaged.empty()) {
         if (f) {
             f->dump_unsigned("damaged", damaged.size());
-        }
-        else {
+        } else {
             *out << ", " << damaged.size() << " damaged";
         }
     }
@@ -391,32 +393,37 @@ void MDSMap::print_summary(Formatter * f, ostream * out) const const
     //out << ", " << stopped.size() << " stopped";
 }
 
-void MDSMap::print_flags(std::ostream & out) const const
+void MDSMap::print_flags(std::ostream &out) const const
 {
-    if (joinable())
+    if (joinable()) {
         out << " " << flag_display.at(CEPH_MDSMAP_NOT_JOINABLE);
-    if (allows_snaps())
+    }
+    if (allows_snaps()) {
         out << " " << flag_display.at(CEPH_MDSMAP_ALLOW_SNAPS);
-    if (allows_multimds_snaps())
+    }
+    if (allows_multimds_snaps()) {
         out << " " << flag_display.at(CEPH_MDSMAP_ALLOW_MULTIMDS_SNAPS);
-    if (allows_standby_replay())
+    }
+    if (allows_standby_replay()) {
         out << " " << flag_display.at(CEPH_MDSMAP_ALLOW_STANDBY_REPLAY);
-    if (test_flag(CEPH_MDSMAP_REFUSE_CLIENT_SESSION))
+    }
+    if (test_flag(CEPH_MDSMAP_REFUSE_CLIENT_SESSION)) {
         out << " " << flag_display.at(CEPH_MDSMAP_REFUSE_CLIENT_SESSION);
+    }
 }
 
-void MDSMap::get_health(list < pair < health_status_t, string > >&summary,
+void MDSMap::get_health(list < pair < health_status_t, string > > &summary,
                         list < pair < health_status_t,
-                        string > >*detail) const const
+                        string > > *detail) const const
 {
     if (!failed.empty()) {
         CachedStackStringStream css;
         *css << "mds rank" << ((failed.size() > 1) ? "s " : " ")
-            << failed << ((failed.size() > 1) ? " have" : " has")
-            << " failed";
+             << failed << ((failed.size() > 1) ? " have" : " has")
+             << " failed";
         summary.push_back(make_pair(HEALTH_ERR, css->str()));
         if (detail) {
-          for (const auto & r:failed) {
+            for (const auto &r : failed) {
                 CachedStackStringStream css;
                 *css << "mds." << r << " has failed";
                 detail->push_back(make_pair(HEALTH_ERR, css->str()));
@@ -427,11 +434,11 @@ void MDSMap::get_health(list < pair < health_status_t, string > >&summary,
     if (!damaged.empty()) {
         CachedStackStringStream css;
         *css << "mds rank" << ((damaged.size() > 1) ? "s " : " ")
-            << damaged << ((damaged.size() > 1) ? " are" : " is")
-            << " damaged";
+             << damaged << ((damaged.size() > 1) ? " are" : " is")
+             << " damaged";
         summary.push_back(make_pair(HEALTH_ERR, css->str()));
         if (detail) {
-          for (const auto & r:damaged) {
+            for (const auto &r : damaged) {
                 CachedStackStringStream css;
                 *css << "mds." << r << " is damaged";
                 detail->push_back(make_pair(HEALTH_ERR, css->str()));
@@ -443,27 +450,29 @@ void MDSMap::get_health(list < pair < health_status_t, string > >&summary,
         summary.push_back(make_pair(HEALTH_WARN, "mds cluster is degraded"));
         if (detail) {
             detail->
-                push_back(make_pair(HEALTH_WARN, "mds cluster is degraded"));
+            push_back(make_pair(HEALTH_WARN, "mds cluster is degraded"));
             for (mds_rank_t i = mds_rank_t(0); i < get_max_mds(); i++) {
-                if (!is_up(i))
+                if (!is_up(i)) {
                     continue;
+                }
                 mds_gid_t gid = up.find(i)->second;
-                const auto & info = mds_info.at(gid);
+                const auto &info = mds_info.at(gid);
                 CachedStackStringStream css;
                 if (is_resolve(i))
                     *css << "mds." << info.name << " at " << info.addrs
-                        << " rank " << i << " is resolving";
+                         << " rank " << i << " is resolving";
                 if (is_replay(i))
                     *css << "mds." << info.name << " at " << info.addrs
-                        << " rank " << i << " is replaying journal";
+                         << " rank " << i << " is replaying journal";
                 if (is_rejoin(i))
                     *css << "mds." << info.name << " at " << info.addrs
-                        << " rank " << i << " is rejoining";
+                         << " rank " << i << " is rejoining";
                 if (is_reconnect(i))
                     *css << "mds." << info.name << " at " << info.addrs
-                        << " rank " << i << " is reconnecting to clients";
-                if (css->strv().length())
+                         << " rank " << i << " is reconnecting to clients";
+                if (css->strv().length()) {
                     detail->push_back(make_pair(HEALTH_WARN, css->str()));
+                }
             }
         }
     }
@@ -477,19 +486,19 @@ void MDSMap::get_health(list < pair < health_status_t, string > >&summary,
     if ((mds_rank_t) up.size() < max_mds) {
         CachedStackStringStream css;
         *css << fs_name << " has " << up.size()
-            << " active MDS(s), but has max_mds of " << max_mds;
+             << " active MDS(s), but has max_mds of " << max_mds;
         summary.push_back(make_pair(HEALTH_WARN, css->str()));
     }
 
     set < string > laggy;
-  for (const auto & u:up) {
-        const auto & info = mds_info.at(u.second);
+    for (const auto &u : up) {
+        const auto &info = mds_info.at(u.second);
         if (info.laggy()) {
             laggy.insert(info.name);
             if (detail) {
                 CachedStackStringStream css;
                 *css << "mds." << info.name << " at " << info.addrs
-                    << " is laggy/unresponsive";
+                     << " is laggy/unresponsive";
                 detail->push_back(make_pair(HEALTH_WARN, css->str()));
             }
         }
@@ -498,7 +507,7 @@ void MDSMap::get_health(list < pair < health_status_t, string > >&summary,
     if (!laggy.empty()) {
         CachedStackStringStream css;
         *css << "mds " << laggy << ((laggy.size() > 1) ? " are" : " is")
-            << " laggy";
+             << " laggy";
         summary.push_back(make_pair(HEALTH_WARN, css->str()));
     }
 
@@ -506,19 +515,19 @@ void MDSMap::get_health(list < pair < health_status_t, string > >&summary,
         was_snaps_ever_allowed() && !allows_multimds_snaps()) {
         CachedStackStringStream css;
         *css <<
-            "multi-active mds while there are snapshots possibly created by pre-mimic MDS";
+             "multi-active mds while there are snapshots possibly created by pre-mimic MDS";
         summary.push_back(make_pair(HEALTH_WARN, css->str()));
     }
 }
 
-void MDSMap::get_health_checks(health_check_map_t * checks) const const
+void MDSMap::get_health_checks(health_check_map_t *checks) const const
 {
     // MDS_DAMAGE
     if (!damaged.empty()) {
-        health_check_t & check = checks->get_or_add("MDS_DAMAGE", HEALTH_ERR,
-                                                    "%num% mds daemon%plurals% damaged",
-                                                    damaged.size());
-      for (const auto & p:damaged) {
+        health_check_t &check = checks->get_or_add("MDS_DAMAGE", HEALTH_ERR,
+                                "%num% mds daemon%plurals% damaged",
+                                damaged.size());
+        for (const auto &p : damaged) {
             CachedStackStringStream css;
             *css << "fs " << fs_name << " mds." << p << " is damaged";
             check.detail.push_back(css->str());
@@ -527,7 +536,7 @@ void MDSMap::get_health_checks(health_check_map_t * checks) const const
 
     // FS_DEGRADED
     if (is_degraded()) {
-        health_check_t & fscheck =
+        health_check_t &fscheck =
             checks->get_or_add("FS_DEGRADED", HEALTH_WARN,
                                "%num% filesystem%plurals% %isorare% degraded",
                                1);
@@ -537,74 +546,80 @@ void MDSMap::get_health_checks(health_check_map_t * checks) const const
 
         list < string > detail;
         for (mds_rank_t i = mds_rank_t(0); i < get_max_mds(); i++) {
-            if (!is_up(i))
+            if (!is_up(i)) {
                 continue;
+            }
             mds_gid_t gid = up.find(i)->second;
-            const auto & info = mds_info.at(gid);
+            const auto &info = mds_info.at(gid);
             CachedStackStringStream css;
             *css << "fs " << fs_name << " mds." << info.name << " at "
-                << info.addrs << " rank " << i;
-            if (is_resolve(i))
+                 << info.addrs << " rank " << i;
+            if (is_resolve(i)) {
                 *css << " is resolving";
-            if (is_replay(i))
+            }
+            if (is_replay(i)) {
                 *css << " is replaying journal";
-            if (is_rejoin(i))
+            }
+            if (is_rejoin(i)) {
                 *css << " is rejoining";
-            if (is_reconnect(i))
+            }
+            if (is_reconnect(i)) {
                 *css << " is reconnecting to clients";
-            if (css->strv().length())
+            }
+            if (css->strv().length()) {
                 detail.push_back(css->str());
+            }
         }
     }
 
     // MDS_UP_LESS_THAN_MAX
     if ((mds_rank_t) get_num_in_mds() < get_max_mds()) {
-        health_check_t & check =
+        health_check_t &check =
             checks->add("MDS_UP_LESS_THAN_MAX", HEALTH_WARN,
                         "%num% filesystem%plurals% %isorare% online with fewer MDS than max_mds",
                         1);
         CachedStackStringStream css;
         *css << "fs " << fs_name << " has " << get_num_in_mds()
-            << " MDS online, but wants " << get_max_mds();
+             << " MDS online, but wants " << get_max_mds();
         check.detail.push_back(css->str());
     }
 
     // MDS_ALL_DOWN
     if ((mds_rank_t) get_num_up_mds() == 0 && get_max_mds() > 0) {
-        health_check_t & check = checks->add("MDS_ALL_DOWN", HEALTH_ERR,
-                                             "%num% filesystem%plurals% %isorare% offline",
-                                             1);
+        health_check_t &check = checks->add("MDS_ALL_DOWN", HEALTH_ERR,
+                                            "%num% filesystem%plurals% %isorare% offline",
+                                            1);
         CachedStackStringStream css;
         *css << "fs " << fs_name <<
-            " is offline because no MDS is active for it.";
+             " is offline because no MDS is active for it.";
         check.detail.push_back(css->str());
     }
 
     if (get_max_mds() > 1 &&
         was_snaps_ever_allowed() && !allows_multimds_snaps()) {
-        health_check_t & check =
+        health_check_t &check =
             checks->add("MULTIMDS_WITH_OLDSNAPS", HEALTH_ERR,
                         "%num% filesystem%plurals% %isorare% multi-active mds with old snapshots",
                         1);
         CachedStackStringStream css;
         *css <<
-            "multi-active mds while there are snapshots possibly created by pre-mimic MDS";
+             "multi-active mds while there are snapshots possibly created by pre-mimic MDS";
         check.detail.push_back(css->str());
     }
 
     if (get_inline_data_enabled()) {
-        health_check_t & check =
+        health_check_t &check =
             checks->add("FS_INLINE_DATA_DEPRECATED", HEALTH_WARN,
                         "%num% filesystem%plurals% with deprecated feature inline_data",
                         1);
         CachedStackStringStream css;
         *css << "fs " << fs_name <<
-            " has deprecated feature inline_data enabled.";
+             " has deprecated feature inline_data enabled.";
         check.detail.push_back(css->str());
     }
 }
 
-void MDSMap::mds_info_t::encode_versioned(bufferlist & bl, uint64_t features) const const
+void MDSMap::mds_info_t::encode_versioned(bufferlist &bl, uint64_t features) const const
 {
     __u8 v = 10;
     if (!HAVE_FEATURE(features, SERVER_NAUTILUS)) {
@@ -619,8 +634,7 @@ void MDSMap::mds_info_t::encode_versioned(bufferlist & bl, uint64_t features) co
     encode(state_seq, bl);
     if (v < 8) {
         encode(addrs.legacy_addr(), bl, features);
-    }
-    else {
+    } else {
         encode(addrs, bl, features);
     }
     encode(laggy_since, bl);
@@ -639,7 +653,7 @@ void MDSMap::mds_info_t::encode_versioned(bufferlist & bl, uint64_t features) co
     ENCODE_FINISH(bl);
 }
 
-void MDSMap::mds_info_t::encode_unversioned(bufferlist & bl) const const
+void MDSMap::mds_info_t::encode_unversioned(bufferlist &bl) const const
 {
     __u8 struct_v = 3;
     using ceph::encode;
@@ -657,7 +671,7 @@ void MDSMap::mds_info_t::encode_unversioned(bufferlist & bl) const const
     encode(export_targets, bl);
 }
 
-void MDSMap::mds_info_t::decode(bufferlist::const_iterator & bl)
+void MDSMap::mds_info_t::decode(bufferlist::const_iterator &bl)
 {
     DECODE_START_LEGACY_COMPAT_LEN(10, 4, 4, bl);
     decode(global_id, bl);
@@ -678,10 +692,12 @@ void MDSMap::mds_info_t::decode(bufferlist::const_iterator & bl)
         std::string standby_for_name;
         decode(standby_for_name, bl);
     }
-    if (struct_v >= 2)
+    if (struct_v >= 2) {
         decode(export_targets, bl);
-    if (struct_v >= 5)
+    }
+    if (struct_v >= 5) {
         decode(mds_features, bl);
+    }
     if (struct_v >= 6) {
         decode(join_fscid, bl);
     }
@@ -694,27 +710,25 @@ void MDSMap::mds_info_t::decode(bufferlist::const_iterator & bl)
     }
     if (struct_v >= 10) {
         decode(compat, bl);
-    }
-    else {
+    } else {
         compat = MDSMap::get_compat_set_v16_2_4();
     }
     DECODE_FINISH(bl);
 }
 
-std::string MDSMap::mds_info_t::human_name() constconst
-{
+std::string MDSMap::mds_info_t::human_name() constconst {
     // Like "daemon mds.myhost restarted", "Activating daemon mds.myhost"
     CachedStackStringStream css;
     *css << "daemon mds." << name;
     return css->str();
 }
 
-void MDSMap::encode(bufferlist & bl, uint64_t features) const const
+void MDSMap::encode(bufferlist &bl, uint64_t features) const const
 {
     std::map < mds_rank_t, int32_t > inc;   // Legacy field, fake it so that
     // old-mon peers have something sane
     // during upgrade
-  for (const auto rank:in) {
+    for (const auto rank : in) {
         inc.insert(std::make_pair(rank, epoch));
     }
 
@@ -739,7 +753,7 @@ void MDSMap::encode(bufferlist & bl, uint64_t features) const const
         }
         n = data_pools.size();
         encode(n, bl);
-      for (const auto p:data_pools) {
+        for (const auto p : data_pools) {
             n = p;
             encode(n, bl);
         }
@@ -747,8 +761,7 @@ void MDSMap::encode(bufferlist & bl, uint64_t features) const const
         int32_t m = cas_pool;
         encode(m, bl);
         return;
-    }
-    else if ((features & CEPH_FEATURE_MDSENC) == 0) {
+    } else if ((features & CEPH_FEATURE_MDSENC) == 0) {
         __u16 v = 3;
         encode(v, bl);
         encode(epoch, bl);
@@ -839,16 +852,15 @@ void MDSMap::sanitize(const std::function < bool(int64_t pool) > &pool_exists)
     for (auto it = data_pools.begin(); it != data_pools.end();) {
         if (!pool_exists(*it)) {
             dout(0) << "removed non-existant data pool " << *it <<
-                " from MDSMap" << dendl;
+                    " from MDSMap" << dendl;
             it = data_pools.erase(it);
-        }
-        else {
+        } else {
             it++;
         }
     }
 }
 
-void MDSMap::decode(bufferlist::const_iterator & p)
+void MDSMap::decode(bufferlist::const_iterator &p)
 {
     std::map < mds_rank_t, int32_t > inc;   // Legacy field, parse and drop
 
@@ -874,26 +886,26 @@ void MDSMap::decode(bufferlist::const_iterator & p)
         __s32 s;
         decode(s, p);
         cas_pool = s;
-    }
-    else {
+    } else {
         decode(data_pools, p);
         decode(cas_pool, p);
     }
 
     // kclient ignores everything from here
     __u16 ev = 1;
-    if (struct_v >= 2)
+    if (struct_v >= 2) {
         decode(ev, p);
-    if (ev >= 3)
+    }
+    if (ev >= 3) {
         decode(compat, p);
-    else
+    } else {
         compat = get_compat_set_base();
+    }
     if (ev < 5) {
         __u32 n;
         decode(n, p);
         metadata_pool = n;
-    }
-    else {
+    } else {
         decode(metadata_pool, p);
     }
     decode(created, p);
@@ -904,8 +916,9 @@ void MDSMap::decode(bufferlist::const_iterator & p)
     decode(up, p);
     decode(failed, p);
     decode(stopped, p);
-    if (ev >= 4)
+    if (ev >= 4) {
         decode(last_failure_osd_epoch, p);
+    }
     if (ev >= 6) {
         if (ev < 10) {
             // previously this was a bool about snaps, not a flag map
@@ -914,31 +927,28 @@ void MDSMap::decode(bufferlist::const_iterator & p)
             ever_allowed_features = flag ? CEPH_MDSMAP_ALLOW_SNAPS : 0;
             decode(flag, p);
             explicitly_allowed_features = flag ? CEPH_MDSMAP_ALLOW_SNAPS : 0;
-        }
-        else {
+        } else {
             decode(ever_allowed_features, p);
             decode(explicitly_allowed_features, p);
         }
-    }
-    else {
+    } else {
         ever_allowed_features = 0;
         explicitly_allowed_features = 0;
     }
-    if (ev >= 7)
+    if (ev >= 7) {
         decode(inline_data_enabled, p);
+    }
 
     if (ev >= 8) {
         ceph_assert(struct_v >= 5);
         decode(enabled, p);
         decode(fs_name, p);
-    }
-    else {
+    } else {
         if (epoch > 1) {
             // If an MDS has ever been started, epoch will be greater than 1,
             // assume filesystem is enabled.
             enabled = true;
-        }
-        else {
+        } else {
             // Upgrading from a cluster that never used an MDS, switch off
             // filesystem until it's explicitly enabled.
             enabled = false;
@@ -968,19 +978,16 @@ void MDSMap::decode(bufferlist::const_iterator & p)
             decode(r, p);
             if (r < 0) {
                 min_compat_client = ceph_release_t::unknown;
-            }
-            else {
+            } else {
                 min_compat_client = ceph_release_t {
-                static_cast < uint8_t > (r)};
+                    static_cast < uint8_t >(r)};
             }
-        }
-        else if (ev >= 15) {
+        } else if (ev >= 15) {
             decode(min_compat_client, p);
         }
         if (ev >= 16) {
             decode(required_client_features, p);
-        }
-        else {
+        } else {
             set_min_compat_client(min_compat_client);
         }
     }
@@ -993,9 +1000,9 @@ void MDSMap::decode(bufferlist::const_iterator & p)
     /* TODO: remove after R is released */
     compat.incompat.insert(MDS_FEATURE_INCOMPAT_INLINE);
 
-  for (auto & p:mds_info) {
+    for (auto &p : mds_info) {
         static const CompatSet empty;
-        auto & info = p.second;
+        auto &info = p.second;
         if (empty.compare(info.compat) == 0) {
             /* bootstrap old compat; mds_info_t::decode does not have access to MDSMap */
             info.compat = compat;
@@ -1008,9 +1015,9 @@ void MDSMap::decode(bufferlist::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-MDSMap::availability_t MDSMap::is_cluster_available() constconst
-{
-    if (epoch == 0) {
+MDSMap::availability_t MDSMap::is_cluster_available() constconst {
+    if (epoch == 0)
+    {
         // If I'm a client, this means I'm looking at an MDSMap instance
         // that was never actually initialized from the mons.  Client should
         // wait.
@@ -1018,16 +1025,19 @@ MDSMap::availability_t MDSMap::is_cluster_available() constconst
     }
 
     // If a rank is marked damage (unavailable until operator intervenes)
-    if (damaged.size()) {
+    if (damaged.size())
+    {
         return STUCK_UNAVAILABLE;
     }
 
     // If no ranks are created (filesystem not initialized)
-    if (in.empty()) {
+    if (in.empty())
+    {
         return STUCK_UNAVAILABLE;
     }
 
-  for (const auto rank:in) {
+    for (const auto rank : in)
+    {
         if (up.count(rank) && mds_info.at(up.at(rank)).laggy()) {
             // This might only be transient, but because we can't see
             // standbys, we have no way of knowing whether there is a
@@ -1036,15 +1046,16 @@ MDSMap::availability_t MDSMap::is_cluster_available() constconst
         }
     }
 
-    if (get_num_mds(CEPH_MDS_STATE_ACTIVE) > 0) {
+    if (get_num_mds(CEPH_MDS_STATE_ACTIVE) > 0)
+    {
         // Nobody looks stuck, so indicate to client they should go ahead
         // and try mounting if anybody is active.  This may include e.g.
         // one MDS failing over and another active: the client should
         // proceed to start talking to the active one and let the
         // transiently-unavailable guy catch up later.
         return AVAILABLE;
-    }
-    else {
+    } else
+    {
         // Nothing indicating we were stuck, but nobody active (yet)
         //return TRANSIENT_UNAVAILABLE;
 
@@ -1057,29 +1068,26 @@ MDSMap::availability_t MDSMap::is_cluster_available() constconst
 
 bool MDSMap::state_transition_valid(DaemonState prev, DaemonState next)
 {
-    if (next == prev)
+    if (next == prev) {
         return true;
-    if (next == MDSMap::STATE_DAMAGED)
+    }
+    if (next == MDSMap::STATE_DAMAGED) {
         return true;
+    }
 
     if (prev == MDSMap::STATE_BOOT) {
         return next == MDSMap::STATE_STANDBY;
-    }
-    else if (prev == MDSMap::STATE_STANDBY) {
+    } else if (prev == MDSMap::STATE_STANDBY) {
         return next == MDSMap::STATE_STANDBY_REPLAY ||
-            next == MDSMap::STATE_REPLAY ||
-            next == MDSMap::STATE_CREATING || next == MDSMap::STATE_STARTING;
-    }
-    else if (prev == MDSMap::STATE_CREATING || prev == MDSMap::STATE_STARTING) {
+               next == MDSMap::STATE_REPLAY ||
+               next == MDSMap::STATE_CREATING || next == MDSMap::STATE_STARTING;
+    } else if (prev == MDSMap::STATE_CREATING || prev == MDSMap::STATE_STARTING) {
         return next == MDSMap::STATE_ACTIVE;
-    }
-    else if (prev == MDSMap::STATE_STANDBY_REPLAY) {
+    } else if (prev == MDSMap::STATE_STANDBY_REPLAY) {
         return next == MDSMap::STATE_REPLAY;
-    }
-    else if (prev == MDSMap::STATE_REPLAY) {
+    } else if (prev == MDSMap::STATE_REPLAY) {
         return next == MDSMap::STATE_RESOLVE || next == MDSMap::STATE_RECONNECT;
-    }
-    else if (prev >= MDSMap::STATE_RESOLVE && prev < MDSMap::STATE_ACTIVE) {
+    } else if (prev >= MDSMap::STATE_RESOLVE && prev < MDSMap::STATE_ACTIVE) {
         // Once I have entered replay, the only allowable transitions are to
         // the next next along in the sequence.
         // Except...
@@ -1088,16 +1096,13 @@ bool MDSMap::state_transition_valid(DaemonState prev, DaemonState next)
             return true;
         }
         return next == prev + 1;
-    }
-    else if (prev == MDSMap::STATE_ACTIVE) {
+    } else if (prev == MDSMap::STATE_ACTIVE) {
         return next == MDSMap::STATE_STOPPING;
-    }
-    else if (prev == MDSMap::STATE_STOPPING) {
+    } else if (prev == MDSMap::STATE_STOPPING) {
         return next == MDSMap::STATE_STOPPED;
-    }
-    else {
+    } else {
         derr << __func__ << ": Unknown prev state "
-            << ceph_mds_state_name(prev) << "(" << prev << ")" << dendl;
+             << ceph_mds_state_name(prev) << "(" << prev << ")" << dendl;
         return false;
     }
 }
@@ -1126,7 +1131,7 @@ bool MDSMap::check_health(mds_rank_t standby_daemon_count)
 
 mds_gid_t MDSMap::find_mds_gid_by_name(std::string_view s) const const
 {
-  for (const auto &[gid, info]:mds_info) {
+    for (const auto &[gid, info] : mds_info) {
         if (info.name == s) {
             return gid;
         }
@@ -1138,17 +1143,19 @@ unsigned MDSMap::get_num_mds(int state) const const
 {
     unsigned n = 0;
     for (std::map < mds_gid_t, mds_info_t >::const_iterator p =
-         mds_info.begin(); p != mds_info.end(); ++p)
-        if (p->second.state == state)
+             mds_info.begin(); p != mds_info.end(); ++p)
+        if (p->second.state == state) {
             ++n;
+        }
     return n;
 }
 
 void MDSMap::get_up_mds_set(std::set < mds_rank_t > &s) const const
 {
     for (std::map < mds_rank_t, mds_gid_t >::const_iterator p = up.begin();
-         p != up.end(); ++p)
+         p != up.end(); ++p) {
         s.insert(p->first);
+    }
 }
 
 uint64_t MDSMap::get_up_features()
@@ -1163,8 +1170,7 @@ uint64_t MDSMap::get_up_features()
             if (first) {
                 cached_up_features = q->second.mds_features;
                 first = false;
-            }
-            else {
+            } else {
                 cached_up_features &= q->second.mds_features;
             }
         }
@@ -1175,33 +1181,37 @@ uint64_t MDSMap::get_up_features()
 void MDSMap::get_recovery_mds_set(std::set < mds_rank_t > &s) const const
 {
     s = failed;
-  for (const auto & p:damaged)
+    for (const auto &p : damaged) {
         s.insert(p);
-  for (const auto & p:mds_info)
-        if (p.second.state >= STATE_REPLAY && p.second.state <= STATE_STOPPING)
+    }
+    for (const auto &p : mds_info)
+        if (p.second.state >= STATE_REPLAY && p.second.state <= STATE_STOPPING) {
             s.insert(p.second.rank);
+        }
 }
 
 void MDSMap::get_mds_set_lower_bound(std::set < mds_rank_t > &s,
                                      DaemonState first) const const
 {
     for (std::map < mds_gid_t, mds_info_t >::const_iterator p =
-         mds_info.begin(); p != mds_info.end(); ++p)
-        if (p->second.state >= first && p->second.state <= STATE_STOPPING)
+             mds_info.begin(); p != mds_info.end(); ++p)
+        if (p->second.state >= first && p->second.state <= STATE_STOPPING) {
             s.insert(p->second.rank);
+        }
 }
 
 void MDSMap::get_mds_set(std::set < mds_rank_t > &s, DaemonState state) const const
 {
     for (std::map < mds_gid_t, mds_info_t >::const_iterator p =
-         mds_info.begin(); p != mds_info.end(); ++p)
-        if (p->second.state == state)
+             mds_info.begin(); p != mds_info.end(); ++p)
+        if (p->second.state == state) {
             s.insert(p->second.rank);
+        }
 }
 
 mds_gid_t MDSMap::get_standby_replay(mds_rank_t r) const const
 {
-  for (auto &[gid, info]:mds_info) {
+    for (auto &[gid, info] : mds_info) {
         if (info.rank == r && info.state == STATE_STANDBY_REPLAY) {
             return gid;
         }
@@ -1211,11 +1221,13 @@ mds_gid_t MDSMap::get_standby_replay(mds_rank_t r) const const
 
 bool MDSMap::is_degraded() const const
 {
-    if (!failed.empty() || !damaged.empty())
+    if (!failed.empty() || !damaged.empty()) {
         return true;
-  for (const auto & p:mds_info) {
-        if (p.second.is_degraded())
+    }
+    for (const auto &p : mds_info) {
+        if (p.second.is_degraded()) {
             return true;
+        }
     }
     return false;
 }
@@ -1224,18 +1236,19 @@ void MDSMap::set_min_compat_client(ceph_release_t version)
 {
     vector < size_t > bits;
 
-    if (version >= ceph_release_t::octopus)
+    if (version >= ceph_release_t::octopus) {
         bits.push_back(CEPHFS_FEATURE_OCTOPUS);
-    else if (version >= ceph_release_t::nautilus)
+    } else if (version >= ceph_release_t::nautilus) {
         bits.push_back(CEPHFS_FEATURE_NAUTILUS);
-    else if (version >= ceph_release_t::mimic)
+    } else if (version >= ceph_release_t::mimic) {
         bits.push_back(CEPHFS_FEATURE_MIMIC);
-    else if (version >= ceph_release_t::luminous)
+    } else if (version >= ceph_release_t::luminous) {
         bits.push_back(CEPHFS_FEATURE_LUMINOUS);
-    else if (version >= ceph_release_t::kraken)
+    } else if (version >= ceph_release_t::kraken) {
         bits.push_back(CEPHFS_FEATURE_KRAKEN);
-    else if (version >= ceph_release_t::jewel)
+    } else if (version >= ceph_release_t::jewel) {
         bits.push_back(CEPHFS_FEATURE_JEWEL);
+    }
 
     std::sort(bits.begin(), bits.end());
     required_client_features = feature_bitset_t(bits);
@@ -1253,8 +1266,8 @@ void MDSMap::set_bal_rank_mask(std::string val)
 }
 
 const bool MDSMap::check_special_bal_rank_mask(std::string val,
-                                               bal_rank_mask_type_t type) const
-    const
+        bal_rank_mask_type_t type) const
+const
 {
     if ((type == BAL_RANK_MASK_TYPE_ANY || type == BAL_RANK_MASK_TYPE_ALL)
         && (val == "-1" || val == "all")) {
@@ -1282,8 +1295,7 @@ void MDSMap::update_num_mdss_in_rank_mask_bitset()
             auto _mds_bal_mask_bitset = std::bitset < MAX_MDS > (bin_string);
             bal_rank_mask_bitset = _mds_bal_mask_bitset;
             num_mdss_in_rank_mask_bitset = _mds_bal_mask_bitset.count();
-        }
-        else {
+        } else {
             dout(10) << css->str() << dendl;
         }
     }
@@ -1291,25 +1303,24 @@ void MDSMap::update_num_mdss_in_rank_mask_bitset()
     if (r == -EINVAL) {
         if (check_special_bal_rank_mask(bal_rank_mask, BAL_RANK_MASK_TYPE_NONE)) {
             dout(10) << "Balancer is disabled with bal_rank_mask " <<
-                bal_rank_mask << dendl;
+                     bal_rank_mask << dendl;
             bal_rank_mask_bitset.reset();
             num_mdss_in_rank_mask_bitset = 0;
-        }
-        else {
+        } else {
             dout(10) <<
-                "Balancer distributes mds workloads to all ranks as bal_rank_mask is empty or invalid"
-                << dendl;
+                     "Balancer distributes mds workloads to all ranks as bal_rank_mask is empty or invalid"
+                     << dendl;
             bal_rank_mask_bitset.set();
             num_mdss_in_rank_mask_bitset = get_max_mds();
         }
     }
 
     dout(10) << "update num_mdss_in_rank_mask_bitset to " <<
-        num_mdss_in_rank_mask_bitset << dendl;
+             num_mdss_in_rank_mask_bitset << dendl;
 }
 
-int MDSMap::hex2bin(std::string hex_string, std::string & bin_string,
-                    unsigned int max_bits, std::ostream & ss) const const
+int MDSMap::hex2bin(std::string hex_string, std::string &bin_string,
+                    unsigned int max_bits, std::ostream &ss) const const
 {
     static const unsigned int BITS_PER_QUARTET = CHAR_BIT / 2;
     static const unsigned int BITS_PER_ULLONG =
@@ -1319,7 +1330,7 @@ int MDSMap::hex2bin(std::string hex_string, std::string & bin_string,
     unsigned int offset = 0;
 
     std::transform(hex_string.begin(), hex_string.end(),
-                   hex_string.begin(),::tolower);
+                   hex_string.begin(), ::tolower);
 
     if (hex_string.substr(0, 2) == "0x") {
         offset = 2;
@@ -1331,7 +1342,7 @@ int MDSMap::hex2bin(std::string hex_string, std::string & bin_string,
         try {
             value =
                 stoull(hex_string.substr(i, QUARTETS_PER_ULLONG), nullptr, 16);
-        } catch(std::invalid_argument const &ex) {
+        } catch (std::invalid_argument const &ex) {
             ss << "invalid hex value ";
             return -EINVAL;
         }

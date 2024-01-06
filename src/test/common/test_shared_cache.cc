@@ -28,42 +28,50 @@
 
 using namespace std;
 
-class SharedLRUTest:public SharedLRU < unsigned int, int > {
-  public:
-    auto & get_lock() {
+class SharedLRUTest: public SharedLRU < unsigned int, int >
+{
+public:
+    auto &get_lock()
+    {
         return lock;
-    } auto & get_cond() {
+    } auto &get_cond()
+    {
         return cond;
     }
-    map < unsigned int, pair < std::weak_ptr < int >, int *>>&get_weak_refs() {
+    map < unsigned int, pair < std::weak_ptr < int >, int *>> &get_weak_refs()
+    {
         return weak_refs;
     }
 };
 
-class SharedLRU_all:public::testing::Test {
-  public:
+class SharedLRU_all: public::testing::Test
+{
+public:
 
-    class Thread_wait:public Thread {
-      public:
-        SharedLRUTest & cache;
+    class Thread_wait: public Thread
+    {
+    public:
+        SharedLRUTest &cache;
         unsigned int key;
         int value;
         std::shared_ptr < int >ptr;
         enum in_method_t { LOOKUP, LOWER_BOUND } in_method;
 
-        Thread_wait(SharedLRUTest & _cache, unsigned int _key,
-                    int _value, in_method_t _in_method):cache(_cache),
-            key(_key), value(_value), in_method(_in_method) {
-        } void *entry() override {
+        Thread_wait(SharedLRUTest &_cache, unsigned int _key,
+                    int _value, in_method_t _in_method): cache(_cache),
+            key(_key), value(_value), in_method(_in_method)
+        {
+        } void *entry() override
+        {
             switch (in_method) {
-            case LOWER_BOUND:
-                ptr = cache.lower_bound(key);
-                break;
-            case LOOKUP:
-                ptr = std::shared_ptr < int >(new int);
-                *ptr = value;
-                ptr = cache.lookup(key);
-                break;
+                case LOWER_BOUND:
+                    ptr = cache.lower_bound(key);
+                    break;
+                case LOOKUP:
+                    ptr = std::shared_ptr < int >(new int);
+                    *ptr = value;
+                    ptr = cache.lookup(key);
+                    break;
             }
             return NULL;
         }
@@ -72,26 +80,28 @@ class SharedLRU_all:public::testing::Test {
     static const useconds_t DELAY_MAX = 20 * 1000 * 1000;
     static useconds_t delay;
 
-    bool wait_for(SharedLRUTest & cache, int waitting) {
+    bool wait_for(SharedLRUTest &cache, int waitting)
+    {
         do {
             //
             // the delay variable is supposed to be initialized to zero. It would be fine
-            // to usleep(0) but we take this opportunity to test the loop. It will try 
+            // to usleep(0) but we take this opportunity to test the loop. It will try
             // again and therefore show that the logic ( increasing the delay ) actually
-            // works. 
+            // works.
             //
-            if (delay > 0)
+            if (delay > 0) {
                 usleep(delay);
+            }
             {
                 std::lock_guard l {
-                cache.get_lock()};
+                    cache.get_lock()};
                 if (cache.waiting == waitting) {
                     break;
                 }
             }
             if (delay > 0) {
                 cout << "delay " << delay <<
-                    "us, is not long enough, try again\n";
+                     "us, is not long enough, try again\n";
             }
         } while ((delay = delay * 2 + 1) < DELAY_MAX);
         return delay < DELAY_MAX;
@@ -192,7 +202,7 @@ TEST_F(SharedLRU_all, wait_lookup)
     EXPECT_FALSE(cache.lookup(key + 12345));
     {
         std::lock_guard l {
-        cache.get_lock()};
+            cache.get_lock()};
         cache.get_weak_refs().erase(key);
         cache.get_cond().notify_one();
     }
@@ -221,7 +231,7 @@ TEST_F(SharedLRU_all, wait_lookup_or_create)
     EXPECT_TRUE(cache.lookup_or_create(key + 12345).get());
     {
         std::lock_guard l {
-        cache.get_lock()};
+            cache.get_lock()};
         cache.get_weak_refs().erase(key);
         cache.get_cond().notify_one();
     }
@@ -269,7 +279,7 @@ TEST_F(SharedLRU_all, wait_lower_bound)
     EXPECT_TRUE(cache.lower_bound(other_key).get());
     {
         std::lock_guard l {
-        cache.get_lock()};
+            cache.get_lock()};
         cache.get_weak_refs().erase(key);
         cache.get_cond().notify_one();
     }
@@ -297,7 +307,7 @@ TEST_F(SharedLRU_all, get_next)
         // entries with expired pointers are silently ignored
         const unsigned int key_gone = 222;
         cache.get_weak_refs()[key_gone] =
-            make_pair(std::shared_ptr < int >(), (int *)0);
+                 make_pair(std::shared_ptr < int >(), (int *)0);
 
         const unsigned int key1 = 111;
         std::shared_ptr < int >ptr1 = cache.lookup_or_create(key1);
@@ -319,7 +329,7 @@ TEST_F(SharedLRU_all, get_next)
     {
         SharedLRUTest cache;
         const unsigned int key1 = 111;
-        std::shared_ptr < int >*ptr1 =
+        std::shared_ptr < int > *ptr1 =
             new shared_ptr < int >(cache.lookup_or_create(key1));
         const unsigned int key2 = 222;
         std::shared_ptr < int >ptr2 = cache.lookup_or_create(key2);

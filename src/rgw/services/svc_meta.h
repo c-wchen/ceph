@@ -22,24 +22,25 @@
 class RGWMetadataLog;
 class RGWCoroutine;
 
-class RGWSI_Meta:public RGWServiceInstance {
+class RGWSI_Meta: public RGWServiceInstance
+{
     RGWSI_SysObj *sysobj_svc {
-    nullptr};
+        nullptr};
     RGWSI_MDLog *mdlog_svc {
-    nullptr};
+        nullptr};
 
-     std::map < RGWSI_MetaBackend::Type, RGWSI_MetaBackend * >be_svc;
+    std::map < RGWSI_MetaBackend::Type, RGWSI_MetaBackend * >be_svc;
 
-     std::vector < std::unique_ptr < RGWSI_MetaBackend_Handler > >be_handlers;
+    std::vector < std::unique_ptr < RGWSI_MetaBackend_Handler > >be_handlers;
 
-  public:
-     RGWSI_Meta(CephContext * cct);
+public:
+    RGWSI_Meta(CephContext *cct);
     ~RGWSI_Meta();
 
-    void init(RGWSI_SysObj * _sysobj_svc,
-              RGWSI_MDLog * _mdlog_svc,
-              std::vector < RGWSI_MetaBackend * >&_be_svc);
+    void init(RGWSI_SysObj *_sysobj_svc,
+              RGWSI_MDLog *_mdlog_svc,
+              std::vector < RGWSI_MetaBackend * > &_be_svc);
 
     int create_be_handler(RGWSI_MetaBackend::Type be_type,
-                          RGWSI_MetaBackend_Handler ** phandler);
+                          RGWSI_MetaBackend_Handler **phandler);
 };

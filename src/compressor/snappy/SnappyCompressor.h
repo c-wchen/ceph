@@ -7,7 +7,7 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
  *
  */
@@ -21,18 +21,22 @@
 #include "compressor/Compressor.h"
 #include "include/buffer.h"
 
-class CEPH_BUFFER_API BufferlistSource:public snappy::Source {
+class CEPH_BUFFER_API BufferlistSource: public snappy::Source
+{
     ceph::bufferlist::const_iterator pb;
     size_t remaining;
 
-  public:
+public:
     explicit BufferlistSource(ceph::bufferlist::const_iterator _pb,
                               size_t _input_len)
-    :pb(_pb), remaining(_input_len) {
+        : pb(_pb), remaining(_input_len)
+    {
         remaining = std::min(remaining, (size_t) pb.get_remaining());
-    } size_t Available() const override {
+    } size_t Available() const override
+    {
         return remaining;
-    } const char *Peek(size_t * len) override {
+    } const char *Peek(size_t *len) override
+    {
         const char *data = NULL;
         *len = 0;
         size_t avail = Available();
@@ -42,58 +46,69 @@ class CEPH_BUFFER_API BufferlistSource:public snappy::Source {
         }
         return data;
     }
-    void Skip(size_t n) override {
+    void Skip(size_t n) override
+    {
         ceph_assert(n <= remaining);
         pb += n;
         remaining -= n;
     }
 
-    ceph::bufferlist::const_iterator get_pos()const {
+    ceph::bufferlist::const_iterator get_pos()const
+    {
         return pb;
-}};
+    }
+};
 
-class SnappyCompressor:public Compressor {
-  public:
-    SnappyCompressor(CephContext * cct):Compressor(COMP_ALG_SNAPPY, "snappy") {
+class SnappyCompressor: public Compressor
+{
+public:
+    SnappyCompressor(CephContext *cct): Compressor(COMP_ALG_SNAPPY, "snappy")
+    {
 #ifdef HAVE_QATZIP
-        if (cct->_conf->qat_compressor_enabled && qat_accel.init("snappy"))
+        if (cct->_conf->qat_compressor_enabled && qat_accel.init("snappy")) {
             qat_enabled = true;
-        else
+        } else {
             qat_enabled = false;
+        }
 #endif
-    } int compress(const ceph::bufferlist & src, ceph::bufferlist & dst,
-                   std::optional < int32_t > &compressor_message) override {
+    } int compress(const ceph::bufferlist &src, ceph::bufferlist &dst,
+                   std::optional < int32_t > &compressor_message) override
+    {
 #ifdef HAVE_QATZIP
-        if (qat_enabled)
+        if (qat_enabled) {
             return qat_accel.compress(src, dst, compressor_message);
+        }
 #endif
         BufferlistSource source(const_cast < ceph::bufferlist & >(src).begin(),
                                 src.length());
         ceph::bufferptr ptr =
             ceph::buffer::create_small_page_aligned(snappy::
-                                                    MaxCompressedLength(src.
-                                                                        length
-                                                                        ()));
+                MaxCompressedLength(src.
+                                    length
+                                    ()));
         snappy::UncheckedByteArraySink sink(ptr.c_str());
         snappy::Compress(&source, &sink);
         dst.append(ptr, 0, sink.CurrentDestination() - ptr.c_str());
         return 0;
     }
 
-    int decompress(const ceph::bufferlist & src, ceph::bufferlist & dst,
-                   std::optional < int32_t > compressor_message) override {
+    int decompress(const ceph::bufferlist &src, ceph::bufferlist &dst,
+                   std::optional < int32_t > compressor_message) override
+    {
 #ifdef HAVE_QATZIP
-        if (qat_enabled)
+        if (qat_enabled) {
             return qat_accel.decompress(src, dst, compressor_message);
+        }
 #endif
         auto i = src.begin();
         return decompress(i, src.length(), dst, compressor_message);
     }
 
-    int decompress(ceph::bufferlist::const_iterator & p,
+    int decompress(ceph::bufferlist::const_iterator &p,
                    size_t compressed_len,
-                   ceph::bufferlist & dst,
-                   std::optional < int32_t > compressor_message) override {
+                   ceph::bufferlist &dst,
+                   std::optional < int32_t > compressor_message) override
+    {
 #ifdef HAVE_QATZIP
         if (qat_enabled)
             return qat_accel.decompress(p, compressed_len, dst,

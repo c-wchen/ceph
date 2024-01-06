@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MOSDPGSCAN_H
@@ -17,35 +17,44 @@
 
 #include "MOSDFastDispatchOp.h"
 
-class MOSDPGScan final:public MOSDFastDispatchOp {
-  private:
+class MOSDPGScan final: public MOSDFastDispatchOp
+{
+private:
     static constexpr int HEAD_VERSION = 2;
     static constexpr int COMPAT_VERSION = 2;
 
-  public:
+public:
     enum {
         OP_SCAN_GET_DIGEST = 1, // just objects and versions
         OP_SCAN_DIGEST = 2,     // result
     };
-    const char *get_op_name(int o) const {
+    const char *get_op_name(int o) const
+    {
         switch (o) {
-        case OP_SCAN_GET_DIGEST:
-            return "get_digest";
-            case OP_SCAN_DIGEST:return "digest";
-            default:return "???";
-    }} __u32 op = 0;
+            case OP_SCAN_GET_DIGEST:
+                return "get_digest";
+            case OP_SCAN_DIGEST:
+                return "digest";
+            default:
+                return "???";
+        }
+    } __u32 op = 0;
     epoch_t map_epoch = 0, query_epoch = 0;
     pg_shard_t from;
     spg_t pgid;
     hobject_t begin, end;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } epoch_t get_min_epoch() const override {
+    } epoch_t get_min_epoch() const override
+    {
         return query_epoch;
-    } spg_t get_spg() const override {
+    } spg_t get_spg() const override
+    {
         return pgid;
-    } void decode_payload() override {
+    } void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(op, p);
@@ -56,16 +65,19 @@ class MOSDPGScan final:public MOSDFastDispatchOp {
         decode(end, p);
 
         // handle hobject_t format upgrade
-        if (!begin.is_max() && begin.pool == -1)
+        if (!begin.is_max() && begin.pool == -1) {
             begin.pool = pgid.pool();
-        if (!end.is_max() && end.pool == -1)
+        }
+        if (!end.is_max() && end.pool == -1) {
             end.pool = pgid.pool();
+        }
 
         decode(from, p);
         decode(pgid.shard, p);
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(op, payload);
         encode(map_epoch, payload);
@@ -79,31 +91,36 @@ class MOSDPGScan final:public MOSDFastDispatchOp {
     }
 
     MOSDPGScan()
-  :    MOSDFastDispatchOp {
-    MSG_OSD_PG_SCAN, HEAD_VERSION, COMPAT_VERSION} {
+        :    MOSDFastDispatchOp {
+        MSG_OSD_PG_SCAN, HEAD_VERSION, COMPAT_VERSION}
+    {
     }
     MOSDPGScan(__u32 o, pg_shard_t from,
                epoch_t e, epoch_t qe, spg_t p, hobject_t be, hobject_t en)
-  :    MOSDFastDispatchOp {
-    MSG_OSD_PG_SCAN, HEAD_VERSION, COMPAT_VERSION},
-        op(o),
-        map_epoch(e), query_epoch(qe), from(from), pgid(p), begin(be), end(en) {
+        :    MOSDFastDispatchOp {
+        MSG_OSD_PG_SCAN, HEAD_VERSION, COMPAT_VERSION},
+    op(o),
+    map_epoch(e), query_epoch(qe), from(from), pgid(p), begin(be), end(en)
+    {
     }
-  private:
-    ~MOSDPGScan()final {
+private:
+    ~MOSDPGScan()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "pg_scan";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "pg_scan(" << get_op_name(op)
-        << " " << pgid
+            << " " << pgid
             << " " << begin << "-" << end
             << " e " << map_epoch << "/" << query_epoch << ")";
-  } private:
-     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    } private:
+    template < class T, typename ... Args >
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

@@ -19,7 +19,7 @@
 
 #include "include/rados.h"
 
-const boost::system::error_category & osdc_category() noexcept;
+const boost::system::error_category &osdc_category() noexcept;
 
 enum class osdc_errc {
     pool_dne = 1,
@@ -33,25 +33,26 @@ enum class osdc_errc {
     pool_eio
 };
 
-namespace boost::system {
-    template <> struct is_error_code_enum <::osdc_errc > {
-        static const bool value = true;
-    };
+namespace boost::system
+{
+template <> struct is_error_code_enum <::osdc_errc > {
+    static const bool value = true;
+};
 
-    template <> struct is_error_condition_enum <::osdc_errc > {
-        static const bool value = false;
-    };
+template <> struct is_error_condition_enum <::osdc_errc > {
+    static const bool value = false;
+};
 }
 //  implicit conversion:
-    inline boost::system::error_code make_error_code(osdc_errc e) noexcept
+inline boost::system::error_code make_error_code(osdc_errc e) noexcept
 {
     return {
-    static_cast < int >(e), osdc_category()};
+        static_cast < int >(e), osdc_category()};
 }
 
 // explicit conversion:
 inline boost::system::error_condition make_error_condition(osdc_errc e) noexcept
 {
     return {
-    static_cast < int >(e), osdc_category()};
+        static_cast < int >(e), osdc_category()};
 }

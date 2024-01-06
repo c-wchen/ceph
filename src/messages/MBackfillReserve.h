@@ -19,12 +19,13 @@
 #include "messages/MOSDPeeringOp.h"
 #include "osd/PGPeeringEvent.h"
 
-class MBackfillReserve:public MOSDPeeringOp {
-  private:
+class MBackfillReserve: public MOSDPeeringOp
+{
+private:
     static constexpr int HEAD_VERSION = 5;
     static constexpr int COMPAT_VERSION = 4;
-  public:
-     spg_t pgid;
+public:
+    spg_t pgid;
     epoch_t query_epoch;
     enum {
         REQUEST = 0,            // primary->replica: please reserve a slot
@@ -40,81 +41,103 @@ class MBackfillReserve:public MOSDPeeringOp {
     int64_t primary_num_bytes;
     int64_t shard_num_bytes;
 
-    spg_t get_spg() const {
+    spg_t get_spg() const
+    {
         return pgid;
-    } epoch_t get_map_epoch() const {
+    } epoch_t get_map_epoch() const
+    {
         return query_epoch;
-    } epoch_t get_min_epoch() const {
+    } epoch_t get_min_epoch() const
+    {
         return query_epoch;
-    } PGPeeringEvent *get_event() override {
+    } PGPeeringEvent *get_event() override
+    {
         switch (type) {
-        case REQUEST:
-            return new PGPeeringEvent(query_epoch,
-                                      query_epoch,
-                                      RequestBackfillPrio(priority,
-                                                          primary_num_bytes,
-                                                          shard_num_bytes));
-            case GRANT:return new PGPeeringEvent(query_epoch, query_epoch,
-                                                 RemoteBackfillReserved());
+            case REQUEST:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          RequestBackfillPrio(priority,
+                                                  primary_num_bytes,
+                                                  shard_num_bytes));
+            case GRANT:
+                return new PGPeeringEvent(query_epoch, query_epoch,
+                                          RemoteBackfillReserved());
             case REJECT_TOOFULL:
                 // NOTE: this is replica -> primary "i reject your request"
                 //      and also primary -> replica "cancel my previously-granted request"
                 //                                  (for older peers)
                 //      and also replica -> primary "i revoke your reservation"
                 //                                  (for older peers)
-            return new PGPeeringEvent(query_epoch,
-                                      query_epoch,
-                                      RemoteReservationRejectedTooFull());
-            case RELEASE:return new PGPeeringEvent(query_epoch,
-                                                   query_epoch,
-                                                   RemoteReservationCanceled());
-            case REVOKE_TOOFULL:return new PGPeeringEvent(query_epoch,
-                                                          query_epoch,
-                                                          RemoteReservationRevokedTooFull
-                                                          ());
-            case REVOKE:return new PGPeeringEvent(query_epoch, query_epoch,
-                                                  RemoteReservationRevoked());
-            default:ceph_abort();
-    }} MBackfillReserve()
-    :MOSDPeeringOp {
-    MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION}
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          RemoteReservationRejectedTooFull());
+            case RELEASE:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          RemoteReservationCanceled());
+            case REVOKE_TOOFULL:
+                return new PGPeeringEvent(query_epoch,
+                                          query_epoch,
+                                          RemoteReservationRevokedTooFull
+                                          ());
+            case REVOKE:
+                return new PGPeeringEvent(query_epoch, query_epoch,
+                                          RemoteReservationRevoked());
+            default:
+                ceph_abort();
+        }
+    } MBackfillReserve()
+        : MOSDPeeringOp {
+        MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION}
     , query_epoch(0), type(-1), priority(-1), primary_num_bytes(0),
-        shard_num_bytes(0) {
+    shard_num_bytes(0)
+    {
     }
     MBackfillReserve(int type,
                      spg_t pgid,
                      epoch_t query_epoch, unsigned prio = -1,
                      int64_t primary_num_bytes = 0, int64_t shard_num_bytes = 0)
-  :    MOSDPeeringOp {
-    MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION},
-        pgid(pgid), query_epoch(query_epoch),
-        type(type), priority(prio), primary_num_bytes(primary_num_bytes),
-        shard_num_bytes(shard_num_bytes) {
+        :    MOSDPeeringOp {
+        MSG_OSD_BACKFILL_RESERVE, HEAD_VERSION, COMPAT_VERSION},
+    pgid(pgid), query_epoch(query_epoch),
+    type(type), priority(prio), primary_num_bytes(primary_num_bytes),
+    shard_num_bytes(shard_num_bytes)
+    {
     }
 
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "MBackfillReserve";
-    } void inner_print(std::ostream & out) const override {
+    } void inner_print(std::ostream &out) const override
+    {
         switch (type) {
-        case REQUEST:
-            out << "REQUEST";
-            break;
-            case GRANT:out << "GRANT";
-            break;
-            case REJECT_TOOFULL:out << "REJECT_TOOFULL";
-            break;
-            case RELEASE:out << "RELEASE";
-            break;
-            case REVOKE_TOOFULL:out << "REVOKE_TOOFULL";
-            break;
-            case REVOKE:out << "REVOKE";
-            break;
-        } if (type == REQUEST)
+            case REQUEST:
+                out << "REQUEST";
+                break;
+            case GRANT:
+                out << "GRANT";
+                break;
+            case REJECT_TOOFULL:
+                out << "REJECT_TOOFULL";
+                break;
+            case RELEASE:
+                out << "RELEASE";
+                break;
+            case REVOKE_TOOFULL:
+                out << "REVOKE_TOOFULL";
+                break;
+            case REVOKE:
+                out << "REVOKE";
+                break;
+        }
+        if (type == REQUEST) {
             out << " prio: " << priority;
+        }
         return;
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         auto p = payload.cbegin();
         using ceph::decode;
         decode(pgid.pgid, p);
@@ -125,14 +148,14 @@ class MBackfillReserve:public MOSDPeeringOp {
         if (header.version >= 5) {
             decode(primary_num_bytes, p);
             decode(shard_num_bytes, p);
-        }
-        else {
+        } else {
             primary_num_bytes = 0;
             shard_num_bytes = 0;
         }
     }
 
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         if (!HAVE_FEATURE(features, RECOVERY_RESERVATION_2)) {
             header.version = 3;

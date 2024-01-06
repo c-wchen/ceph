@@ -6,7 +6,7 @@
 #include "objclass/objclass.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(test_remote_reads)
+CLS_NAME(test_remote_reads)
 
 cls_handle_t h_class;
 cls_method_handle_t h_test_read;
@@ -15,8 +15,8 @@ cls_method_handle_t h_test_gather;
 /**
  * read data
  */
-static int test_read(cls_method_context_t hctx, bufferlist * in,
-                     bufferlist * out)
+static int test_read(cls_method_context_t hctx, bufferlist *in,
+                     bufferlist *out)
 {
     int r = cls_cxx_read(hctx, 0, 0, out);
     if (r < 0) {
@@ -29,8 +29,8 @@ static int test_read(cls_method_context_t hctx, bufferlist * in,
 /**
  * gather data from other objects using remote reads
  */
-static int test_gather(cls_method_context_t hctx, bufferlist * in,
-                       bufferlist * out)
+static int test_gather(cls_method_context_t hctx, bufferlist *in,
+                       bufferlist *out)
 {
     std::map < std::string, bufferlist > src_obj_buffs;
     int r = cls_cxx_get_gathered_data(hctx, &src_obj_buffs);
@@ -65,12 +65,11 @@ static int test_gather(cls_method_context_t hctx, bufferlist * in,
         }
         r = cls_cxx_gather(hctx, src_objects, pool, cls.c_str(), method.c_str(),
                            *in);
-    }
-    else {
+    } else {
         // write data gathered using remote reads
         int offset = 0;
         for (std::map < std::string, bufferlist >::iterator it =
-             src_obj_buffs.begin(); it != src_obj_buffs.end(); it++) {
+                 src_obj_buffs.begin(); it != src_obj_buffs.end(); it++) {
             bufferlist bl = it->second;
             r = cls_cxx_write(hctx, offset, bl.length(), &bl);
             offset += bl.length();

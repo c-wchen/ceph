@@ -108,10 +108,9 @@ int ErasureCodeBench::setup(int argc, char **argv)
             boost::split(strs, *i, boost::is_any_of("="));
             if (strs.size() != 2) {
                 cerr << "--parameter " << *i <<
-                    " ignored because it does not contain exactly one =" <<
-                    endl;
-            }
-            else {
+                     " ignored because it does not contain exactly one =" <<
+                     endl;
+            } else {
                 profile[strs[0]] = strs[1];
             }
         }
@@ -123,27 +122,28 @@ int ErasureCodeBench::setup(int argc, char **argv)
     workload = vm["workload"].as < string > ();
     erasures = vm["erasures"].as < int >();
     if (vm.count("erasures-generation") > 0 &&
-        vm["erasures-generation"].as < string > () == "exhaustive")
+        vm["erasures-generation"].as < string > () == "exhaustive") {
         exhaustive_erasures = true;
-    else
+    } else {
         exhaustive_erasures = false;
-    if (vm.count("erased") > 0)
+    }
+    if (vm.count("erased") > 0) {
         erased = vm["erased"].as < vector < int >>();
+    }
 
     try {
         k = stoi(profile["k"]);
         m = stoi(profile["m"]);
-    } catch(const std::logic_error & e) {
+    } catch (const std::logic_error &e) {
         cout << "Invalid k and/or m: k=" << profile["k"] << ", m=" <<
-            profile["m"]
-            << " (" << e.what() << ")" << endl;
+             profile["m"]
+             << " (" << e.what() << ")" << endl;
         return -EINVAL;
     }
     if (k <= 0) {
         cout << "parameter k is " << k << ". But k needs to be > 0." << endl;
         return -EINVAL;
-    }
-    else if (m < 0) {
+    } else if (m < 0) {
         cout << "parameter m is " << m << ". But m needs to be >= 0." << endl;
         return -EINVAL;
     }
@@ -155,19 +155,20 @@ int ErasureCodeBench::setup(int argc, char **argv)
 
 int ErasureCodeBench::run()
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     instance.disable_dlclose = true;
 
-    if (workload == "encode")
+    if (workload == "encode") {
         return encode();
-    else
+    } else {
         return decode();
+    }
 }
 
 int ErasureCodeBench::encode()
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     ErasureCodeInterfaceRef erasure_code;
     stringstream messages;
@@ -191,8 +192,9 @@ int ErasureCodeBench::encode()
     for (int i = 0; i < max_iterations; i++) {
         std::map < int, bufferlist > encoded;
         code = erasure_code->encode(want_to_encode, in, &encoded);
-        if (code)
+        if (code) {
             return code;
+        }
     }
     utime_t end_time = ceph_clock_now();
     cout << (end_time -
@@ -207,8 +209,7 @@ static void display_chunks(const map < int, bufferlist > &chunks,
     for (unsigned int chunk = 0; chunk < chunk_count; chunk++) {
         if (chunks.count(chunk) == 0) {
             cout << "(" << chunk << ")";
-        }
-        else {
+        } else {
             cout << " " << chunk << " ";
         }
         cout << " ";
@@ -225,32 +226,35 @@ int ErasureCodeBench::decode_erasures(const map < int, bufferlist > &all_chunks,
     int code = 0;
 
     if (want_erasures == 0) {
-        if (verbose)
+        if (verbose) {
             display_chunks(chunks, erasure_code->get_chunk_count());
+        }
         set < int >want_to_read;
         for (unsigned int chunk = 0; chunk < erasure_code->get_chunk_count();
              chunk++)
-            if (chunks.count(chunk) == 0)
+            if (chunks.count(chunk) == 0) {
                 want_to_read.insert(chunk);
+            }
 
         map < int, bufferlist > decoded;
         code = erasure_code->decode(want_to_read, chunks, &decoded, 0);
-        if (code)
+        if (code) {
             return code;
+        }
         for (set < int >::iterator chunk = want_to_read.begin();
              chunk != want_to_read.end(); ++chunk) {
             if (all_chunks.find(*chunk)->second.length() !=
                 decoded[*chunk].length()) {
                 cerr << "chunk " << *chunk << " length=" << all_chunks.
-                    find(*chunk)->second.length()
-                    << " decoded with length=" << decoded[*chunk].
-                    length() << endl;
+                     find(*chunk)->second.length()
+                     << " decoded with length=" << decoded[*chunk].
+                     length() << endl;
                 return -1;
             }
             bufferlist tmp = all_chunks.find(*chunk)->second;
             if (!tmp.contents_equal(decoded[*chunk])) {
                 cerr << "chunk " << *chunk
-                    << " content and recovered content are different" << endl;
+                     << " content and recovered content are different" << endl;
                 return -1;
             }
         }
@@ -263,8 +267,9 @@ int ErasureCodeBench::decode_erasures(const map < int, bufferlist > &all_chunks,
         code =
             decode_erasures(all_chunks, one_less, i + 1, want_erasures - 1,
                             erasure_code);
-        if (code)
+        if (code) {
             return code;
+        }
     }
 
     return 0;
@@ -272,7 +277,7 @@ int ErasureCodeBench::decode_erasures(const map < int, bufferlist > &all_chunks,
 
 int ErasureCodeBench::decode()
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     ErasureCodeInterfaceRef erasure_code;
     stringstream messages;
@@ -296,15 +301,17 @@ int ErasureCodeBench::decode()
 
     map < int, bufferlist > encoded;
     code = erasure_code->encode(want_to_encode, in, &encoded);
-    if (code)
+    if (code) {
         return code;
+    }
 
     set < int >want_to_read = want_to_encode;
 
     if (erased.size() > 0) {
         for (vector < int >::const_iterator i = erased.begin();
-             i != erased.end(); ++i)
+             i != erased.end(); ++i) {
             encoded.erase(*i);
+        }
         display_chunks(encoded, erasure_code->get_chunk_count());
     }
 
@@ -312,16 +319,16 @@ int ErasureCodeBench::decode()
     for (int i = 0; i < max_iterations; i++) {
         if (exhaustive_erasures) {
             code = decode_erasures(encoded, encoded, 0, erasures, erasure_code);
-            if (code)
+            if (code) {
                 return code;
-        }
-        else if (erased.size() > 0) {
+            }
+        } else if (erased.size() > 0) {
             map < int, bufferlist > decoded;
             code = erasure_code->decode(want_to_read, encoded, &decoded, 0);
-            if (code)
+            if (code) {
                 return code;
-        }
-        else {
+            }
+        } else {
             map < int, bufferlist > chunks = encoded;
             for (int j = 0; j < erasures; j++) {
                 int erasure;
@@ -332,8 +339,9 @@ int ErasureCodeBench::decode()
             }
             map < int, bufferlist > decoded;
             code = erasure_code->decode(want_to_read, chunks, &decoded, 0);
-            if (code)
+            if (code) {
                 return code;
+            }
         }
     }
     utime_t end_time = ceph_clock_now();
@@ -347,11 +355,11 @@ int main(int argc, char **argv)
     ErasureCodeBench ecbench;
     try {
         int err = ecbench.setup(argc, argv);
-        if (err)
+        if (err) {
             return err;
+        }
         return ecbench.run();
-    }
-    catch(po::error & e) {
+    } catch (po::error &e) {
         cerr << e.what() << endl;
         return 1;
     }

@@ -7,7 +7,7 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
  *
  */
@@ -23,17 +23,21 @@
 #include "include/encoding.h"
 #include "common/config.h"
 
-class LZ4Compressor:public Compressor {
-  public:
-    LZ4Compressor(CephContext * cct):Compressor(COMP_ALG_LZ4, "lz4") {
+class LZ4Compressor: public Compressor
+{
+public:
+    LZ4Compressor(CephContext *cct): Compressor(COMP_ALG_LZ4, "lz4")
+    {
 #ifdef HAVE_QATZIP
-        if (cct->_conf->qat_compressor_enabled && qat_accel.init("lz4"))
+        if (cct->_conf->qat_compressor_enabled && qat_accel.init("lz4")) {
             qat_enabled = true;
-        else
+        } else {
             qat_enabled = false;
+        }
 #endif
-    } int compress(const ceph::buffer::list & src, ceph::buffer::list & dst,
-                   std::optional < int32_t > &compressor_message) override {
+    } int compress(const ceph::buffer::list &src, ceph::buffer::list &dst,
+                   std::optional < int32_t > &compressor_message) override
+    {
         // older versions of liblz4 introduce bit errors when compressing
         // fragmented buffers.  this was fixed in lz4 commit
         // af127334670a5e7b710bbd6adb71aa7c3ef0cd72, which first
@@ -47,8 +51,9 @@ class LZ4Compressor:public Compressor {
         }
 
 #ifdef HAVE_QATZIP
-        if (qat_enabled)
+        if (qat_enabled) {
             return qat_accel.compress(src, dst, compressor_message);
+        }
 #endif
         ceph::buffer::ptr outptr =
             ceph::buffer::
@@ -70,8 +75,9 @@ class LZ4Compressor:public Compressor {
                 LZ4_compress_fast_continue(&lz4_stream, data,
                                            outptr.c_str() + pos, origin_len,
                                            outptr.length() - pos, 1);
-            if (compressed_len <= 0)
+            if (compressed_len <= 0) {
                 return -1;
+            }
             pos += compressed_len;
             left -= origin_len;
             encode(origin_len, dst);
@@ -83,20 +89,23 @@ class LZ4Compressor:public Compressor {
         return 0;
     }
 
-    int decompress(const ceph::buffer::list & src, ceph::buffer::list & dst,
-                   std::optional < int32_t > compressor_message) override {
+    int decompress(const ceph::buffer::list &src, ceph::buffer::list &dst,
+                   std::optional < int32_t > compressor_message) override
+    {
 #ifdef HAVE_QATZIP
-        if (qat_enabled)
+        if (qat_enabled) {
             return qat_accel.decompress(src, dst, compressor_message);
+        }
 #endif
         auto i = std::cbegin(src);
         return decompress(i, src.length(), dst, compressor_message);
     }
 
-    int decompress(ceph::buffer::list::const_iterator & p,
+    int decompress(ceph::buffer::list::const_iterator &p,
                    size_t compressed_len,
-                   ceph::buffer::list & dst,
-                   std::optional < int32_t > compressor_message) override {
+                   ceph::buffer::list &dst,
+                   std::optional < int32_t > compressor_message) override
+    {
 #ifdef HAVE_QATZIP
         if (qat_enabled)
             return qat_accel.decompress(p, compressed_len, dst,
@@ -107,7 +116,7 @@ class LZ4Compressor:public Compressor {
         decode(count, p);
         std::vector < std::pair < uint32_t, uint32_t > >compressed_pairs(count);
         uint32_t total_origin = 0;
-      for (auto &[dst_size, src_size]:compressed_pairs) {
+        for (auto &[dst_size, src_size] : compressed_pairs) {
             decode(dst_size, p);
             decode(src_size, p);
             total_origin += dst_size;
@@ -119,7 +128,7 @@ class LZ4Compressor:public Compressor {
         LZ4_setStreamDecode(&lz4_stream_decode, nullptr, 0);
 
         ceph::buffer::ptr cur_ptr = p.get_current_ptr();
-        ceph::buffer::ptr * ptr = &cur_ptr;
+        ceph::buffer::ptr *ptr = &cur_ptr;
         std::optional < ceph::buffer::ptr > data_holder;
         if (compressed_len != cur_ptr.length()) {
             data_holder.emplace(compressed_len);
@@ -137,11 +146,9 @@ class LZ4Compressor:public Compressor {
             if (r == (int)compressed_pairs[i].first) {
                 c_in += compressed_pairs[i].second;
                 c_out += compressed_pairs[i].first;
-            }
-            else if (r < 0) {
+            } else if (r < 0) {
                 return -1;
-            }
-            else {
+            } else {
                 return -2;
             }
         }

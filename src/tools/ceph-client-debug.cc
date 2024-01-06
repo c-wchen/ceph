@@ -30,7 +30,7 @@ using namespace std;
 void usage()
 {
     std::cout << "Usage: ceph-client-debug [options] <inode number>" << std::
-        endl;
+              endl;
     generic_client_usage();
 }
 
@@ -38,7 +38,7 @@ void usage()
  * Given an inode, look up the path from the Client cache: assumes
  * client cache is fully populated.
  */
-void traverse_dentries(Inode * ino, std::vector < Dentry * >&parts)
+void traverse_dentries(Inode *ino, std::vector < Dentry * > &parts)
 {
     if (ino->dentries.empty()) {
         return;
@@ -54,14 +54,13 @@ void traverse_dentries(Inode * ino, std::vector < Dentry * >&parts)
  * all its ancestors, such that the full trace will be
  * populated in client cache.
  */
-int lookup_trace(ceph_mount_info * client, inodeno_t const ino)
+int lookup_trace(ceph_mount_info *client, inodeno_t const ino)
 {
     Inode *inode;
     int r = ceph_ll_lookup_inode(client, ino, &inode);
     if (r != 0) {
         return r;
-    }
-    else {
+    } else {
         if (!inode->dentries.empty()) {
             Dentry *dn = *(inode->dentries.begin());
             ceph_assert(dn->dir);
@@ -70,8 +69,7 @@ int lookup_trace(ceph_mount_info * client, inodeno_t const ino)
             if (r) {
                 return r;
             }
-        }
-        else {
+        } else {
             // We reached the root of the tree
             ceph_assert(inode->ino == CEPH_INO_ROOT);
         }
@@ -131,7 +129,7 @@ int main(int argc, const char **argv)
     r = lookup_trace(client, inode);
     if (r) {
         derr << "Error looking up inode " << std::hex << inode << std::dec <<
-            ": " << cpp_strerror(r) << dendl;
+             ": " << cpp_strerror(r) << dendl;
         return -1;
     }
 

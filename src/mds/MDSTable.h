@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MDSTABLE_H
@@ -23,29 +23,38 @@
 
 class MDSRank;
 
-class MDSTable {
-  public:
+class MDSTable
+{
+public:
     friend class C_IO_MT_Load;
     friend class C_IO_MT_Save;
 
-     MDSTable(MDSRank * m, std::string_view n, bool is_per_mds):mds(m),
-        table_name(n), per_mds(is_per_mds) {
-    } virtual ~ MDSTable() {
+    MDSTable(MDSRank *m, std::string_view n, bool is_per_mds): mds(m),
+        table_name(n), per_mds(is_per_mds)
+    {
+    } virtual ~ MDSTable()
+    {
     }
 
-    void set_rank(mds_rank_t r) {
+    void set_rank(mds_rank_t r)
+    {
         rank = r;
     }
 
-    version_t get_version() const {
+    version_t get_version() const
+    {
         return version;
-    } version_t get_committed_version() const {
+    } version_t get_committed_version() const
+    {
         return committed_version;
-    } version_t get_committing_version() const {
+    } version_t get_committing_version() const
+    {
         return committing_version;
-    } version_t get_projected_version() const {
+    } version_t get_projected_version() const
+    {
         return projected_version;
-    } void force_replay_version(version_t v) {
+    } void force_replay_version(version_t v)
+    {
         version = projected_version = v;
     }
 
@@ -53,32 +62,37 @@ class MDSTable {
     //version_t inc_version() { return ++version; }
 
     // load/save from disk (hack)
-    bool is_undef() const {
+    bool is_undef() const
+    {
         return state == STATE_UNDEF;
-    } bool is_active() const {
+    } bool is_active() const
+    {
         return state == STATE_ACTIVE;
-    } bool is_opening() const {
+    } bool is_opening() const
+    {
         return state == STATE_OPENING;
     } void reset();
-    void save(MDSContext * onfinish = 0, version_t need = 0);
+    void save(MDSContext *onfinish = 0, version_t need = 0);
     void save_2(int r, version_t v);
 
-    void shutdown() {
-        if (is_active())
+    void shutdown()
+    {
+        if (is_active()) {
             save(0);
+        }
     }
 
     object_t get_object_name() const;
-    void load(MDSContext * onfinish);
-    void load_2(int, bufferlist &, Context * onfinish);
+    void load(MDSContext *onfinish);
+    void load_2(int, bufferlist &, Context *onfinish);
 
     // child must overload these
     virtual void reset_state() = 0;
-    virtual void decode_state(bufferlist::const_iterator & p) = 0;
-    virtual void encode_state(bufferlist & bl) const = 0;
+    virtual void decode_state(bufferlist::const_iterator &p) = 0;
+    virtual void encode_state(bufferlist &bl) const = 0;
 
     MDSRank *mds;
-  protected:
+protected:
     static const int STATE_UNDEF = 0;
     static const int STATE_OPENING = 1;
     static const int STATE_ACTIVE = 2;
@@ -91,7 +105,7 @@ class MDSTable {
     int state = STATE_UNDEF;
 
     version_t version = 0, committing_version = 0, committed_version =
-        0, projected_version = 0;
+                            0, projected_version = 0;
 
     std::map < version_t, MDSContext::vec > waitfor_save;
 };

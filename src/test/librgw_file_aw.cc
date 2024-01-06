@@ -32,146 +32,157 @@
 
 using namespace std;
 
-namespace {
-    librgw_t rgw = nullptr;
-    string userid("testuser");
-    string access_key("");
-    string secret_key("");
-    struct rgw_fs *fs = nullptr;
+namespace
+{
+librgw_t rgw = nullptr;
+string userid("testuser");
+string access_key("");
+string secret_key("");
+struct rgw_fs *fs = nullptr;
 
-    uint32_t owner_uid = 867;
-    uint32_t owner_gid = 5309;
-    uint32_t create_mask = RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
+uint32_t owner_uid = 867;
+uint32_t owner_gid = 5309;
+uint32_t create_mask = RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
 
-    bool do_create = false;
-    bool do_delete = false;
-    bool do_large = false;
-    bool do_verify = false;
-    bool do_hexdump = false;
+bool do_create = false;
+bool do_delete = false;
+bool do_large = false;
+bool do_verify = false;
+bool do_hexdump = false;
 
-    string bucket_name = "sorrydave";
-    string object_name = "jocaml";
+string bucket_name = "sorrydave";
+string object_name = "jocaml";
 
-    struct rgw_file_handle *bucket_fh = nullptr;
-    struct rgw_file_handle *object_fh = nullptr;
+struct rgw_file_handle *bucket_fh = nullptr;
+struct rgw_file_handle *object_fh = nullptr;
 
-    typedef std::tuple < string, uint64_t, struct rgw_file_handle *>fid_type;
-    std::vector < fid_type > fids;
+typedef std::tuple < string, uint64_t, struct rgw_file_handle *>fid_type;
+std::vector < fid_type > fids;
 
-    std::uniform_int_distribution < uint8_t > uint_dist;
-    std::mt19937 rng;
+std::uniform_int_distribution < uint8_t > uint_dist;
+std::mt19937 rng;
 
-    constexpr int iovcnt = 4;
-    constexpr int page_size = /* 65536 */ 4 * 1024 * 1024;
-    constexpr int seed = 8675309;
+constexpr int iovcnt = 4;
+constexpr int page_size = /* 65536 */ 4 * 1024 * 1024;
+constexpr int seed = 8675309;
 
-    struct ZPage {
-        char data[page_size];
+struct ZPage {
+    char data[page_size];
+    uint64_t cksum;
+};                          /* ZPage */
+
+struct ZPageSet {
+    std::vector < ZPage * >pages;
+    struct iovec *iovs;
+
+    explicit ZPageSet(int n)
+    {
+        pages.reserve(n);
+        iovs = (struct iovec *)calloc(n, sizeof(struct iovec));
+        for (int page_ix = 0; page_ix < n; ++page_ix) {
+            ZPage *p = new ZPage();
+            for (int data_ix = 0; data_ix < page_size; ++data_ix) {
+                p->data[data_ix] = uint_dist(rng);
+            } // data_ix p->cksum = XXH64(p->data, page_size, seed);
+            pages.emplace_back(p);
+            // and iovs
+            struct iovec *iov = &iovs[page_ix];
+            iov->iov_base = p->data;
+            iov->iov_len = page_size;
+        }                   // page_ix
+    }
+
+    int size()
+    {
+        return pages.size();
+    }
+
+    struct iovec *get_iovs()
+    {
+        return iovs;
+    }
+
+    bool operator==(const ZPageSet &rhs)
+    {
+        int n = size();
+        for (int page_ix = 0; page_ix < n; ++page_ix) {
+            ZPage *p1 = pages[page_ix];
+            ZPage *p2 = rhs.pages[page_ix];
+            if (p1->cksum != p2->cksum) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator==(const rgw_uio *uio)
+    {
         uint64_t cksum;
-    };                          /* ZPage */
+        int vix = 0, off = 0;
+        rgw_vio *vio = &uio->uio_vio[vix];
+        int vio_len = vio->vio_len;
+        char *data;
 
-    struct ZPageSet {
-        std::vector < ZPage * >pages;
-        struct iovec *iovs;
+        for (int ix = 0; ix < iovcnt; ++ix) {
+            ZPage *p1 = pages[ix];
+            data = static_cast < char *>(vio->vio_base) + off;
+            cksum = XXH64(data, page_size, seed);
 
-        explicit ZPageSet(int n) {
-            pages.reserve(n);
-            iovs = (struct iovec *)calloc(n, sizeof(struct iovec));
-            for (int page_ix = 0; page_ix < n; ++page_ix) {
-                ZPage *p = new ZPage();
-                for (int data_ix = 0; data_ix < page_size; ++data_ix) {
-                    p->data[data_ix] = uint_dist(rng);
-                } // data_ix p->cksum = XXH64(p->data, page_size, seed);
-                pages.emplace_back(p);
-                // and iovs
-                struct iovec *iov = &iovs[page_ix];
-                iov->iov_base = p->data;
-                iov->iov_len = page_size;
-            }                   // page_ix
-        }
-
-        int size() {
-            return pages.size();
-        }
-
-        struct iovec *get_iovs() {
-            return iovs;
-        }
-
-        bool operator==(const ZPageSet & rhs) {
-            int n = size();
-            for (int page_ix = 0; page_ix < n; ++page_ix) {
-                ZPage *p1 = pages[page_ix];
-                ZPage *p2 = rhs.pages[page_ix];
-                if (p1->cksum != p2->cksum)
-                    return false;
+            if (p1->cksum != cksum) {
+                int r = memcmp(data, p1->data, page_size);
+                std::cout << "problem at ix " << ix << " r " << r << std::
+                          endl;
+                return false;
             }
-            return true;
-        }
 
-        bool operator==(const rgw_uio * uio) {
-            uint64_t cksum;
-            int vix = 0, off = 0;
-            rgw_vio *vio = &uio->uio_vio[vix];
-            int vio_len = vio->vio_len;
-            char *data;
-
-            for (int ix = 0; ix < iovcnt; ++ix) {
-                ZPage *p1 = pages[ix];
-                data = static_cast < char *>(vio->vio_base) + off;
-                cksum = XXH64(data, page_size, seed);
-
-                if (p1->cksum != cksum) {
-                    int r = memcmp(data, p1->data, page_size);
-                    std::cout << "problem at ix " << ix << " r " << r << std::
-                        endl;
-                    return false;
-                }
-
-                off += page_size;
-                if (off >= vio_len) {
-                    vio = &uio->uio_vio[++vix];
-                    vio_len = vio->vio_len;
-                    off = 0;
-                }
-            }
-            return true;
-        }
-
-        void cksum() {
-            int n = size();
-            for (int page_ix = 0; page_ix < n; ++page_ix) {
-                ZPage *p = pages[page_ix];
-                p->cksum = XXH64(p->data, page_size, seed);
+            off += page_size;
+            if (off >= vio_len) {
+                vio = &uio->uio_vio[++vix];
+                vio_len = vio->vio_len;
+                off = 0;
             }
         }
+        return true;
+    }
 
-        void reset_iovs() {     // VOP_READ and VOP_WRITE update
-            int n = size();
-            for (int page_ix = 0; page_ix < n; ++page_ix) {
-                ZPage *p = pages[page_ix];
-                struct iovec *iov = &iovs[page_ix];
-                iov->iov_base = p->data;
-                iov->iov_len = page_size;
-            }
+    void cksum()
+    {
+        int n = size();
+        for (int page_ix = 0; page_ix < n; ++page_ix) {
+            ZPage *p = pages[page_ix];
+            p->cksum = XXH64(p->data, page_size, seed);
         }
+    }
 
-        ~ZPageSet() {
-            for (unsigned int ix = 0; ix < pages.size(); ++ix)
-                delete pages[ix];
-            free(iovs);
+    void reset_iovs()       // VOP_READ and VOP_WRITE update
+    {
+        int n = size();
+        for (int page_ix = 0; page_ix < n; ++page_ix) {
+            ZPage *p = pages[page_ix];
+            struct iovec *iov = &iovs[page_ix];
+            iov->iov_base = p->data;
+            iov->iov_len = page_size;
         }
-    };                          /* ZPageSet */
+    }
 
-    ZPageSet zp_set1 {
+    ~ZPageSet()
+    {
+        for (unsigned int ix = 0; ix < pages.size(); ++ix) {
+            delete pages[ix];
+        }
+        free(iovs);
+    }
+};                          /* ZPageSet */
+
+ZPageSet zp_set1 {
     iovcnt};                    // random data
-    ZPageSet zp_set2 {
+ZPageSet zp_set2 {
     iovcnt};                    // random data in 64K pages
 
-    struct {
-        int argc;
-        char **argv;
-    } saved_args;
+struct {
+    int argc;
+    char **argv;
+} saved_args;
 }
 
 TEST(LibRGW, INIT)
@@ -223,7 +234,7 @@ TEST(LibRGW, LOOKUP_OBJECT)
 #if 0
 TEST(LibRGW, OPEN1)
 {
-    int ret = rgw_open(fs, object_fh, 0 /* posix flags */ , RGW_OPEN_FLAG_NONE);
+    int ret = rgw_open(fs, object_fh, 0 /* posix flags */, RGW_OPEN_FLAG_NONE);
     ASSERT_EQ(ret, 0);
 }
 
@@ -232,8 +243,9 @@ TEST(LibRGW, PUT_OBJECT)
     size_t nbytes;
     struct iovec *iovs = zp_set1.get_iovs();
     off_t offset = 0;
-  for (int ix:{
-         0, 1}) {
+    for (int ix : {
+             0, 1
+         }) {
         struct iovec *iov = &iovs[ix];
         // quick check
         sprintf(static_cast < char *>(iov->iov_base), "::hi mom (%d)", ix);
@@ -254,7 +266,7 @@ TEST(LibRGW, CLOSE1)
 
 TEST(LibRGW, OPEN2)
 {
-    int ret = rgw_open(fs, object_fh, 0 /* posix flags */ , RGW_OPEN_FLAG_NONE);
+    int ret = rgw_open(fs, object_fh, 0 /* posix flags */, RGW_OPEN_FLAG_NONE);
     ASSERT_EQ(ret, 0);
 }
 
@@ -263,8 +275,9 @@ TEST(LibRGW, GET_OBJECT)
     size_t nread;
     off_t offset = 0;
     struct iovec *iovs = zp_set1.get_iovs();
-  for (int ix:{
-         2, 3}) {
+    for (int ix : {
+             2, 3
+         }) {
         struct iovec *iov = &iovs[ix];
         int ret = rgw_read(fs, object_fh, offset, iovs[ix - 2].iov_len, &nread,
                            iov->iov_base, RGW_READ_FLAG_NONE);
@@ -273,7 +286,7 @@ TEST(LibRGW, GET_OBJECT)
         ASSERT_EQ(ret, 0);
         ASSERT_EQ(nread, iovs[ix - 2].iov_len);
         std::cout << "read: " << static_cast <
-            char *>(iov->iov_base) << std::endl;
+                  char * >(iov->iov_base) << std::endl;
     }
 }
 
@@ -289,7 +302,7 @@ TEST(LibRGW, LARGE1)
     if (do_large) {
         int ret;
 
-        ret = rgw_open(fs, object_fh, 0 /* posix flags */ , RGW_OPEN_FLAG_NONE);
+        ret = rgw_open(fs, object_fh, 0 /* posix flags */, RGW_OPEN_FLAG_NONE);
         ASSERT_EQ(ret, 0);
 
         size_t nbytes;
@@ -317,7 +330,7 @@ TEST(LibRGW, LARGE2)
         int ret;
         if (do_verify) {
             ret =
-                rgw_open(fs, object_fh, 0 /* posix flags */ ,
+                rgw_open(fs, object_fh, 0 /* posix flags */,
                          RGW_OPEN_FLAG_NONE);
             ASSERT_EQ(ret, 0);
 
@@ -348,7 +361,7 @@ TEST(LibRGW, STAT_OBJECT)
     int ret = rgw_getattr(fs, object_fh, &st, RGW_GETATTR_FLAG_NONE);
     ASSERT_EQ(ret, 0);
     dout(15) << "rgw_getattr on " << object_name << " size = "
-        << st.st_size << dendl;
+             << st.st_size << dendl;
 }
 
 TEST(LibRGW, DELETE_OBJECT)
@@ -376,14 +389,15 @@ TEST(LibRGW, CLEANUP)
         ret = rgw_fh_rele(fs, object_fh, RGW_FH_RELE_FLAG_NONE);
         ASSERT_EQ(ret, 0);
     }
-    ret = rgw_fh_rele(fs, bucket_fh, 0 /* flags */ );
+    ret = rgw_fh_rele(fs, bucket_fh, 0 /* flags */);
     ASSERT_EQ(ret, 0);
 }
 
 TEST(LibRGW, UMOUNT)
 {
-    if (!fs)
+    if (!fs) {
         return;
+    }
 
     int ret = rgw_umount(fs, RGW_UMOUNT_FLAG_NONE);
     ASSERT_EQ(ret, 0);
@@ -415,47 +429,36 @@ int main(int argc, char *argv[])
         if (ceph_argparse_witharg(args, arg_iter, &val, "--access",
                                   (char *)nullptr)) {
             access_key = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--secret",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--secret",
+                                         (char *)nullptr)) {
             secret_key = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--userid",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--userid",
+                                         (char *)nullptr)) {
             userid = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--bn",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--bn",
+                                         (char *)nullptr)) {
             bucket_name = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--uid",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--uid",
+                                         (char *)nullptr)) {
             owner_uid = std::stoi(val);
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--gid",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--gid",
+                                         (char *)nullptr)) {
             owner_gid = std::stoi(val);
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--verify",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--verify",
+                                      (char *)nullptr)) {
             do_verify = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--create",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--create",
+                                      (char *)nullptr)) {
             do_create = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--delete",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--delete",
+                                      (char *)nullptr)) {
             do_delete = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--large", (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--large", (char *)nullptr)) {
             do_large = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--hexdump",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--hexdump",
+                                      (char *)nullptr)) {
             do_hexdump = true;
-        }
-        else {
+        } else {
             ++arg_iter;
         }
     }

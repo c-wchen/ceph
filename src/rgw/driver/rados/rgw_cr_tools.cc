@@ -18,7 +18,7 @@
 using namespace std;
 
 template <>
-    int RGWUserCreateCR::Request::_send_request(const DoutPrefixProvider * dpp)
+int RGWUserCreateCR::Request::_send_request(const DoutPrefixProvider *dpp)
 {
     CephContext *cct = store->ctx();
 
@@ -27,7 +27,7 @@ template <>
 
     RGWUserAdminOpState op_state(store);
 
-    auto & user = params.user;
+    auto &user = params.user;
 
     op_state.set_user_id(user);
     op_state.set_display_name(params.display_name);
@@ -96,37 +96,37 @@ template <>
 }
 
 template <>
-    int RGWGetUserInfoCR::Request::_send_request(const DoutPrefixProvider * dpp)
+int RGWGetUserInfoCR::Request::_send_request(const DoutPrefixProvider *dpp)
 {
     return store->ctl()->user->get_info_by_uid(dpp, params.user, result.get(),
-                                               null_yield);
+            null_yield);
 }
 
 template <>
-    int RGWGetBucketInfoCR::Request::_send_request(const DoutPrefixProvider *
-                                                   dpp)
+int RGWGetBucketInfoCR::Request::_send_request(const DoutPrefixProvider *
+        dpp)
 {
     return store->get_bucket(dpp, nullptr, params.tenant, params.bucket_name,
                              &result->bucket, null_yield);
 }
 
 template <>
-    int RGWBucketCreateLocalCR::Request::
-_send_request(const DoutPrefixProvider * dpp)
+int RGWBucketCreateLocalCR::Request::
+_send_request(const DoutPrefixProvider *dpp)
 {
     CephContext *cct = store->ctx();
-    auto & zone_svc = store->svc()->zone;
+    auto &zone_svc = store->svc()->zone;
 
-    const auto & user_info = params.user_info.get();
-    const auto & user = user_info->user_id;
-    const auto & bucket_name = params.bucket_name;
-    auto & placement_rule = params.placement_rule;
+    const auto &user_info = params.user_info.get();
+    const auto &user = user_info->user_id;
+    const auto &bucket_name = params.bucket_name;
+    auto &placement_rule = params.placement_rule;
 
     if (!placement_rule.empty() &&
         !zone_svc->get_zone_params().valid_placement(placement_rule)) {
         ldpp_dout(dpp, 0) << "placement target (" << placement_rule << ")"
-            << " doesn't exist in the placement targets of zonegroup"
-            << " (" << zone_svc->get_zonegroup().api_name << ")" << dendl;
+                          << " doesn't exist in the placement targets of zonegroup"
+                          << " (" << zone_svc->get_zonegroup().api_name << ")" << dendl;
         return -ERR_INVALID_LOCATION_CONSTRAINT;
     }
 
@@ -140,8 +140,9 @@ _send_request(const DoutPrefixProvider * dpp)
                                            bucket_name,
                                            bucket_info, nullptr, null_yield,
                                            dpp, &bucket_attrs);
-    if (ret < 0 && ret != -ENOENT)
+    if (ret < 0 && ret != -ENOENT) {
         return ret;
+    }
     bool bucket_exists = (ret != -ENOENT);
 
     RGWAccessControlPolicy old_policy(cct);
@@ -150,8 +151,8 @@ _send_request(const DoutPrefixProvider * dpp)
     bucket_owner.set_name(user_info->display_name);
     if (bucket_exists) {
         ret = rgw_op_get_bucket_policy_from_attr(dpp, cct, store, bucket_info,
-                                                 bucket_attrs, &old_policy,
-                                                 null_yield);
+              bucket_attrs, &old_policy,
+              null_yield);
         if (ret >= 0) {
             if (old_policy.get_owner().get_id().compare(user) != 0) {
                 return -EEXIST;
@@ -178,9 +179,9 @@ _send_request(const DoutPrefixProvider * dpp)
         if (selected_placement_rule != bucket_info.placement_rule) {
             ldpp_dout(dpp,
                       0) <<
-                "bucket already exists on a different placement rule: " <<
-                " selected_rule= " << selected_placement_rule <<
-                " existing_rule= " << bucket_info.placement_rule << dendl;
+                         "bucket already exists on a different placement rule: " <<
+                         " selected_rule= " << selected_placement_rule <<
+                         " existing_rule= " << bucket_info.placement_rule << dendl;
             return -EEXIST;
         }
     }
@@ -213,8 +214,9 @@ _send_request(const DoutPrefixProvider * dpp)
                                            pmaster_bucket, pmaster_num_shards,
                                            null_yield, dpp, true);
 
-    if (ret && ret != -EEXIST)
+    if (ret && ret != -EEXIST) {
         return ret;
+    }
 
     bool existed = (ret == -EEXIST);
 
@@ -222,9 +224,9 @@ _send_request(const DoutPrefixProvider * dpp)
         if (info.owner != user) {
             ldpp_dout(dpp,
                       20) <<
-                "NOTICE: bucket already exists under a different user (bucket="
-                << bucket << " user=" << user << " bucket_owner=" << info.
-                owner << dendl;
+                          "NOTICE: bucket already exists under a different user (bucket="
+                          << bucket << " user=" << user << " bucket_owner=" << info.
+                          owner << dendl;
             return -EEXIST;
         }
         bucket = info.bucket;
@@ -240,25 +242,24 @@ _send_request(const DoutPrefixProvider * dpp)
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "WARNING: failed to unlink bucket: ret=" << r <<
-                dendl;
+                         dendl;
         }
-    }
-    else if (ret == -EEXIST || (ret == 0 && existed)) {
+    } else if (ret == -EEXIST || (ret == 0 && existed)) {
         ret = -ERR_BUCKET_EXISTS;
     }
 
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: bucket creation (bucket=" << bucket <<
-            ") return ret=" << ret << dendl;
+                     ") return ret=" << ret << dendl;
     }
 
     return ret;
 }
 
 template <>
-    int RGWObjectSimplePutCR::Request::_send_request(const DoutPrefixProvider *
-                                                     dpp)
+int RGWObjectSimplePutCR::Request::_send_request(const DoutPrefixProvider *
+        dpp)
 {
     RGWDataAccess::ObjectRef obj;
 
@@ -267,7 +268,7 @@ template <>
     int ret = params.bucket->get_object(params.key, &obj);
     if (ret < 0) {
         lderr(cct) << "ERROR: failed to get object: " << cpp_strerror(-ret) <<
-            dendl;
+                   dendl;
         return -ret;
     }
 
@@ -279,15 +280,15 @@ template <>
     if (ret < 0) {
         ldpp_dout(dpp,
                   -1) << "ERROR: put object returned error: " <<
-            cpp_strerror(-ret) << dendl;
+                      cpp_strerror(-ret) << dendl;
     }
 
     return 0;
 }
 
 template <>
-    int RGWBucketLifecycleConfigCR::Request::
-_send_request(const DoutPrefixProvider * dpp)
+int RGWBucketLifecycleConfigCR::Request::
+_send_request(const DoutPrefixProvider *dpp)
 {
     CephContext *cct = store->ctx();
 
@@ -302,7 +303,7 @@ _send_request(const DoutPrefixProvider * dpp)
                                     &params.config);
     if (ret < 0) {
         lderr(cct) << "ERROR: failed to set lifecycle on bucke: " <<
-            cpp_strerror(-ret) << dendl;
+                   cpp_strerror(-ret) << dendl;
         return -ret;
     }
 
@@ -310,19 +311,19 @@ _send_request(const DoutPrefixProvider * dpp)
 }
 
 template <>
-    int RGWBucketGetSyncPolicyHandlerCR::Request::
-_send_request(const DoutPrefixProvider * dpp)
+int RGWBucketGetSyncPolicyHandlerCR::Request::
+_send_request(const DoutPrefixProvider *dpp)
 {
     int r = store->ctl()->bucket->get_sync_policy_handler(params.zone,
-                                                          params.bucket,
-                                                          &result->
-                                                          policy_handler,
-                                                          null_yield,
-                                                          dpp);
+            params.bucket,
+            &result->
+            policy_handler,
+            null_yield,
+            dpp);
     if (r < 0) {
         ldpp_dout(dpp,
                   -1) << "ERROR: " << __func__ <<
-            "(): get_sync_policy_handler() returned " << r << dendl;
+                      "(): get_sync_policy_handler() returned " << r << dendl;
         return r;
     }
 

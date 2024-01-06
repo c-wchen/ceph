@@ -16,10 +16,13 @@
 #define ISAL_CRYPTO_ACCEL_H
 #include "crypto/crypto_accel.h"
 
-class ISALCryptoAccel:public CryptoAccel {
-  public:
-    ISALCryptoAccel() {
-    } virtual ~ ISALCryptoAccel() {
+class ISALCryptoAccel: public CryptoAccel
+{
+public:
+    ISALCryptoAccel()
+    {
+    } virtual ~ ISALCryptoAccel()
+    {
     }
 
     bool cbc_encrypt(unsigned char *out, const unsigned char *in, size_t size,

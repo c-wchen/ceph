@@ -37,62 +37,53 @@ int OmapBench::setup(int argc, const char **argv)
         if (i < args.size() - 1) {
             if (strcmp(args[i], "-t") == 0) {
                 threads = atoi(args[i + 1]);
-            }
-            else if (strcmp(args[i], "-o") == 0) {
+            } else if (strcmp(args[i], "-o") == 0) {
                 objects = atoi(args[i + 1]);
-            }
-            else if (strcmp(args[i], "--entries") == 0) {
+            } else if (strcmp(args[i], "--entries") == 0) {
                 entries_per_omap = atoi(args[i + 1]);
-            }
-            else if (strcmp(args[i], "--keysize") == 0) {
+            } else if (strcmp(args[i], "--keysize") == 0) {
                 key_size = atoi(args[i + 1]);
-            }
-            else if (strcmp(args[i], "--valsize") == 0) {
+            } else if (strcmp(args[i], "--valsize") == 0) {
                 value_size = atoi(args[i + 1]);
-            }
-            else if (strcmp(args[i], "--inc") == 0) {
+            } else if (strcmp(args[i], "--inc") == 0) {
                 increment = atoi(args[i + 1]);
-            }
-            else if (strcmp(args[i], "--omaptype") == 0) {
+            } else if (strcmp(args[i], "--omaptype") == 0) {
                 if (strcmp("rand", args[i + 1]) == 0) {
                     omap_generator = OmapBench::generate_non_uniform_omap;
-                }
-                else if (strcmp("uniform", args[i + 1]) == 0) {
+                } else if (strcmp("uniform", args[i + 1]) == 0) {
                     omap_generator = OmapBench::generate_uniform_omap;
                 }
-            }
-            else if (strcmp(args[i], "--name") == 0) {
+            } else if (strcmp(args[i], "--name") == 0) {
                 rados_id = args[i + 1];
             }
-        }
-        else if (strcmp(args[i], "--help") == 0) {
+        } else if (strcmp(args[i], "--help") == 0) {
             cout << "\nUsage: ostorebench [options]\n"
-                << "Generate latency statistics for a configurable number of "
-                << "key value pair operations of\n"
-                << "configurable size.\n\n"
-                << "OPTIONS\n"
-                << "	-t              number of threads to use (default " <<
-                threads;
+                 << "Generate latency statistics for a configurable number of "
+                 << "key value pair operations of\n"
+                 << "configurable size.\n\n"
+                 << "OPTIONS\n"
+                 << "	-t              number of threads to use (default " <<
+                 threads;
             cout << ")\n" <<
-                "	-o              number of objects to write (default " <<
-                objects;
+                 "	-o              number of objects to write (default " <<
+                 objects;
             cout << ")\n" << "	--entries       number of entries per (default "
-                << entries_per_omap;
+                 << entries_per_omap;
             cout << ")\n" << "	--keysize       number of characters per key "
-                << "(default " << key_size;
+                 << "(default " << key_size;
             cout << ")\n" << "	--valsize       number of characters per value "
-                << "(default " << value_size;
+                 << "(default " << value_size;
             cout << ")\n" <<
-                "	--inc           specify the increment to use in the displayed "
-                << "histogram (default " << increment;
+                 "	--inc           specify the increment to use in the displayed "
+                 << "histogram (default " << increment;
             cout << ")\n" <<
-                "	--omaptype      specify how omaps should be generated - " <<
-                "rand for random sizes between\n" <<
-                "                        0 and max size, uniform for all sizes"
-                << " to be specified size.\n" <<
-                "                        (default uniform)\n";
+                 "	--omaptype      specify how omaps should be generated - " <<
+                 "rand for random sizes between\n" <<
+                 "                        0 and max size, uniform for all sizes"
+                 << " to be specified size.\n" <<
+                 "                        (default uniform)\n";
             cout << "	--name          the rados id to use (default " <<
-                rados_id << ")\n";
+                 rados_id << ")\n";
             exit(1);
         }
     }
@@ -131,7 +122,7 @@ int OmapBench::setup(int argc, const char **argv)
 }
 
 //Writer functions
-Writer::Writer(OmapBench * omap_bench):ob(omap_bench)
+Writer::Writer(OmapBench *omap_bench): ob(omap_bench)
 {
     stringstream name;
     ob->data_lock.lock();
@@ -166,18 +157,19 @@ std::map < std::string, bufferlist > &Writer::get_omap()
 }
 
 //AioWriter functions
-AioWriter::AioWriter(OmapBench * ob):Writer(ob)
+AioWriter::AioWriter(OmapBench *ob): Writer(ob)
 {
     aioc = NULL;
 }
 
 AioWriter::~AioWriter()
 {
-    if (aioc)
+    if (aioc) {
         aioc->release();
+    }
 }
 
-librados::AioCompletion * AioWriter::get_aioc()
+librados::AioCompletion *AioWriter::get_aioc()
 {
     return aioc;
 }
@@ -192,11 +184,11 @@ void OmapBench::aio_is_complete(rados_completion_t c, void *arg)
 {
     AioWriter *aiow = reinterpret_cast < AioWriter * >(arg);
     aiow->stop_time();
-    ceph::mutex * data_lock = &aiow->ob->data_lock;
-    ceph::mutex * thread_is_free_lock = &aiow->ob->thread_is_free_lock;
-    ceph::condition_variable * thread_is_free = &aiow->ob->thread_is_free;
+    ceph::mutex *data_lock = &aiow->ob->data_lock;
+    ceph::mutex *thread_is_free_lock = &aiow->ob->thread_is_free_lock;
+    ceph::condition_variable *thread_is_free = &aiow->ob->thread_is_free;
     int &busythreads_count = aiow->ob->busythreads_count;
-    o_bench_data & data = aiow->ob->data;
+    o_bench_data &data = aiow->ob->data;
     int INCREMENT = aiow->ob->increment;
     int err = aiow->get_aioc()->get_return_value();
     if (err < 0) {
@@ -207,7 +199,7 @@ void OmapBench::aio_is_complete(rados_completion_t c, void *arg)
     delete aiow;
     data_lock->lock();
     data.avg_latency = (data.avg_latency * data.completed_ops + time)
-        / (data.completed_ops + 1);
+                       / (data.completed_ops + 1);
     data.completed_ops++;
     if (time < data.min_latency) {
         data.min_latency = time;
@@ -233,7 +225,7 @@ string OmapBench::random_string(int len)
 {
     string ret;
     string alphanum = "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz";
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz";
 
     for (int i = 0; i < len; ++i) {
         ret.push_back(alphanum[rand() % (alphanum.size() - 1)]);
@@ -244,7 +236,7 @@ string OmapBench::random_string(int len)
 
 int OmapBench::run()
 {
-    return (((OmapBench *) this)->*OmapBench::test) (omap_generator);
+    return (((OmapBench *) this)->*OmapBench::test)(omap_generator);
 }
 
 int OmapBench::print_written_omap()
@@ -299,21 +291,22 @@ void OmapBench::print_results()
     cout << "ms\nMinimum latency:\t" << data.min_latency;
     cout << "ms\nMaximum latency:\t" << data.max_latency;
     cout << "ms\nMode latency:\t\t" << "between " << data.mode.first *
-        increment;
-    cout << " and " << data.mode.first * increment + increment;
+         increment;
+    cout << " and " << data.mode.first *increment + increment;
     cout << "ms\nTotal latency:\t\t" << data.total_latency;
     cout << "ms" << std::endl;
     cout << std::endl;
     cout << "Histogram:" << std::endl;
     for (int i = floor(data.min_latency / increment); i <
          ceil(data.max_latency / increment); i++) {
-        cout << ">= " << i * increment;
+        cout << ">= " << i *increment;
         cout << "ms";
         int spaces;
-        if (i == 0)
+        if (i == 0) {
             spaces = 4;
-        else
+        } else {
             spaces = 3 - floor(log10(i));
+        }
         for (int j = 0; j < spaces; j++) {
             cout << " ";
         }
@@ -324,12 +317,12 @@ void OmapBench::print_results()
         cout << std::endl;
     }
     cout << "\n========================================================"
-        << std::endl;
+         << std::endl;
 }
 
-int OmapBench::write_omap_asynchronously(AioWriter * aiow,
-                                         const std::map < std::string,
-                                         bufferlist > &omap)
+int OmapBench::write_omap_asynchronously(AioWriter *aiow,
+        const std::map < std::string,
+        bufferlist > &omap)
 {
     librados::ObjectWriteOperation owo;
     owo.create(false);
@@ -364,10 +357,10 @@ int OmapBench::generate_uniform_omap(const int omap_entries, const int key_size,
 }
 
 int OmapBench::generate_non_uniform_omap(const int omap_entries,
-                                         const int key_size,
-                                         const int value_size,
-                                         std::map < std::string,
-                                         bufferlist > *out_omap)
+        const int key_size,
+        const int value_size,
+        std::map < std::string,
+        bufferlist > *out_omap)
 {
     bufferlist bl;
 
@@ -386,10 +379,10 @@ int OmapBench::generate_non_uniform_omap(const int omap_entries,
 }
 
 int OmapBench::generate_small_non_random_omap(const int omap_entries,
-                                              const int key_size,
-                                              const int value_size,
-                                              std::map < std::string,
-                                              bufferlist > *out_omap)
+        const int key_size,
+        const int value_size,
+        std::map < std::string,
+        bufferlist > *out_omap)
 {
     bufferlist bl;
     stringstream key;
@@ -411,7 +404,7 @@ int OmapBench::test_write_objects_in_parallel(omap_generator_t omap_gen)
     AioWriter *this_aio_writer;
 
     std::unique_lock l {
-    thread_is_free_lock};
+        thread_is_free_lock};
     for (int i = 0; i < objects; i++) {
         ceph_assert(busythreads_count <= threads);
         //wait for a writer to be free
@@ -432,17 +425,17 @@ int OmapBench::test_write_objects_in_parallel(omap_generator_t omap_gen)
             return err;
         }
         err = OmapBench::write_omap_asynchronously(this_aio_writer,
-                                                   (this_aio_writer->
-                                                    get_omap()));
+              (this_aio_writer->
+               get_omap()));
 
         if (err < 0) {
             return err;
         }
     }
-    thread_is_free.wait(l,[this] {
-                        return busythreads_count <= 0;
-                        }
-    );
+    thread_is_free.wait(l, [this] {
+        return busythreads_count <= 0;
+    }
+                       );
     return 0;
 }
 

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "include/types.h"
@@ -37,12 +37,15 @@ void buf_to_hex(const unsigned char *buf, int len, char *str)
     }
 }
 
-class C_Watch:public WatchCtx {
-  public:
-    C_Watch() {
-    } void notify(uint8_t opcode, uint64_t ver, bufferlist & bl) override {
+class C_Watch: public WatchCtx
+{
+public:
+    C_Watch()
+    {
+    } void notify(uint8_t opcode, uint64_t ver, bufferlist &bl) override
+    {
         cout << "C_Watch::notify() opcode=" << (int)opcode << " ver=" << ver <<
-            std::endl;
+             std::endl;
     }
 };
 
@@ -51,8 +54,9 @@ void testradospp_milestone(void)
     int c;
     cout << "*** press enter to continue ***" << std::endl;
     while ((c = getchar()) != EOF) {
-        if (c == '\n')
+        if (c == '\n') {
             break;
+        }
     }
 }
 
@@ -119,13 +123,13 @@ int main(int argc, const char **argv)
     uint64_t objver = io_ctx.get_last_version();
     ceph_assert(objver > 0);
     cout << "io_ctx.write returned " << r << " last_ver=" << objver << std::
-        endl;
+         endl;
 
     uint64_t stat_size;
     time_t stat_mtime;
     r = io_ctx.stat(oid, &stat_size, &stat_mtime);
     cout << "io_ctx.stat returned " << r << " size = " << stat_size <<
-        " mtime = " << stat_mtime << std::endl;
+         " mtime = " << stat_mtime << std::endl;
 
     r = io_ctx.stat(oid, NULL, NULL);
     cout << "io_ctx.stat(does_not_exist) = " << r << std::endl;
@@ -233,8 +237,9 @@ int main(int argc, const char **argv)
 
     if (r > 0) {
         char *s = bl2.c_str();
-        for (int i = 0; i < r; i++, s += strlen(s) + 1)
+        for (int i = 0; i < r; i++, s += strlen(s) + 1) {
             cout << s << std::endl;
+        }
     }
 
     cout << "compound operation..." << std::endl;
@@ -262,7 +267,7 @@ int main(int argc, const char **argv)
         o.cmpxattr("foo", CEPH_OSD_CMPXATTR_OP_EQ, val);
         r = io_ctx.operate(oid, &o, &bl2);
         cout << " got " << r << " wanted " << -ECANCELED << " (-ECANCELED)" <<
-            std::endl;
+             std::endl;
         ceph_assert(r == -ECANCELED);
     }
 

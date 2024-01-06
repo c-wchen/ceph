@@ -23,8 +23,9 @@ int notify_sleep = 0;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-class LibRadosWatchNotifyPP:public RadosTestParamPP {
-  protected:
+class LibRadosWatchNotifyPP: public RadosTestParamPP
+{
+protected:
     bufferlist notify_bl;
     std::set < uint64_t > notify_cookies;
     rados_ioctx_t notify_io;
@@ -37,29 +38,34 @@ class LibRadosWatchNotifyPP:public RadosTestParamPP {
 
 IoCtx *notify_ioctx;
 
-class WatchNotifyTestCtx2:public WatchCtx2 {
+class WatchNotifyTestCtx2: public WatchCtx2
+{
     LibRadosWatchNotifyPP *notify;
 
-  public:
-     WatchNotifyTestCtx2(LibRadosWatchNotifyPP * notify)
-    :notify(notify) {
+public:
+    WatchNotifyTestCtx2(LibRadosWatchNotifyPP *notify)
+        : notify(notify)
+    {
     } void handle_notify(uint64_t notify_id, uint64_t cookie,
-                         uint64_t notifier_gid, bufferlist & bl) override {
+                         uint64_t notifier_gid, bufferlist &bl) override
+    {
         std::
-            cout << __func__ << " cookie " << cookie << " notify_id " <<
-            notify_id << " notifier_gid " << notifier_gid << std::endl;
+        cout << __func__ << " cookie " << cookie << " notify_id " <<
+             notify_id << " notifier_gid " << notifier_gid << std::endl;
         notify->notify_bl = bl;
         notify->notify_cookies.insert(cookie);
         bufferlist reply;
         reply.append("reply", 5);
-        if (notify_sleep)
+        if (notify_sleep) {
             sleep(notify_sleep);
+        }
         notify_ioctx->notify_ack(notify->notify_oid, notify_id, cookie, reply);
     }
 
-    void handle_error(uint64_t cookie, int err) override {
+    void handle_error(uint64_t cookie, int err) override
+    {
         std::cout << __func__ << " cookie " << cookie
-            << " err " << err << std::endl;
+                  << " err " << err << std::endl;
         ceph_assert(cookie > 1000);
         notify_ioctx->unwatch2(cookie);
         notify->notify_cookies.erase(cookie);
@@ -67,34 +73,39 @@ class WatchNotifyTestCtx2:public WatchCtx2 {
             notify_ioctx->watch2(notify->notify_oid, &cookie, this);
         if (notify->notify_err < err) {
             std::cout << "reconnect notify_err " << notify->
-                notify_err << " err " << err << std::endl;
+                      notify_err << " err " << err << std::endl;
         }
     }
 };
 
-class WatchNotifyTestCtx2TimeOut:public WatchCtx2 {
+class WatchNotifyTestCtx2TimeOut: public WatchCtx2
+{
     LibRadosWatchNotifyPP *notify;
 
-  public:
-     WatchNotifyTestCtx2TimeOut(LibRadosWatchNotifyPP * notify)
-    :notify(notify) {
+public:
+    WatchNotifyTestCtx2TimeOut(LibRadosWatchNotifyPP *notify)
+        : notify(notify)
+    {
     } void handle_notify(uint64_t notify_id, uint64_t cookie,
-                         uint64_t notifier_gid, bufferlist & bl) override {
+                         uint64_t notifier_gid, bufferlist &bl) override
+    {
         std::
-            cout << __func__ << " cookie " << cookie << " notify_id " <<
-            notify_id << " notifier_gid " << notifier_gid << std::endl;
+        cout << __func__ << " cookie " << cookie << " notify_id " <<
+             notify_id << " notifier_gid " << notifier_gid << std::endl;
         notify->notify_bl = bl;
         notify->notify_cookies.insert(cookie);
         bufferlist reply;
         reply.append("reply", 5);
-        if (notify_sleep)
+        if (notify_sleep) {
             sleep(notify_sleep);
+        }
         notify_ioctx->notify_ack(notify->notify_oid, notify_id, cookie, reply);
     }
 
-    void handle_error(uint64_t cookie, int err) override {
+    void handle_error(uint64_t cookie, int err) override
+    {
         std::cout << __func__ << " cookie " << cookie
-            << " err " << err << std::endl;
+                  << " err " << err << std::endl;
         ceph_assert(cookie > 1000);
         notify->notify_err = err;
     }
@@ -103,12 +114,15 @@ class WatchNotifyTestCtx2TimeOut:public WatchCtx2 {
 // notify
 static sem_t sem;
 
-class WatchNotifyTestCtx:public WatchCtx {
-  public:
-    void notify(uint8_t opcode, uint64_t ver, bufferlist & bl) override {
+class WatchNotifyTestCtx: public WatchCtx
+{
+public:
+    void notify(uint8_t opcode, uint64_t ver, bufferlist &bl) override
+    {
         std::cout << __func__ << std::endl;
         sem_post(&sem);
-}};
+    }
+};
 
 TEST_P(LibRadosWatchNotifyPP, WatchNotify)
 {
@@ -260,7 +274,7 @@ TEST_P(LibRadosWatchNotifyPP, AioWatchNotify2)
 
     uint64_t handle;
     WatchNotifyTestCtx2 ctx(this);
-    librados::AioCompletion * comp = cluster.aio_create_completion();
+    librados::AioCompletion *comp = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_watch(notify_oid, comp, &handle, &ctx));
     ASSERT_EQ(0, comp->wait_for_complete());
     ASSERT_EQ(0, comp->get_return_value());
@@ -309,7 +323,7 @@ TEST_P(LibRadosWatchNotifyPP, AioNotify)
     ASSERT_EQ(0, ioctx.list_watchers(notify_oid, &watches));
     ASSERT_EQ(watches.size(), 1u);
     bufferlist bl2, bl_reply;
-    librados::AioCompletion * comp = cluster.aio_create_completion();
+    librados::AioCompletion *comp = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_notify(notify_oid, comp, bl2, 300000, &bl_reply));
     ASSERT_EQ(0, comp->wait_for_complete());
     ASSERT_EQ(0, comp->get_return_value());
@@ -352,14 +366,14 @@ TEST_P(LibRadosWatchNotifyPP, WatchNotify2Timeout)
     ASSERT_EQ(0u, notify_cookies.size());
     bufferlist bl2, bl_reply;
     std::cout << " trying..." << std::endl;
-    ASSERT_EQ(-ETIMEDOUT, ioctx.notify2(notify_oid, bl2, 1000 /* 1s */ ,
+    ASSERT_EQ(-ETIMEDOUT, ioctx.notify2(notify_oid, bl2, 1000 /* 1s */,
                                         &bl_reply));
     std::cout << " timed out" << std::endl;
     ASSERT_GT(ioctx.watch_check(handle), 0);
     ioctx.unwatch2(handle);
 
     std::cout << " flushing" << std::endl;
-    librados::AioCompletion * comp = cluster.aio_create_completion();
+    librados::AioCompletion *comp = cluster.aio_create_completion();
     cluster.aio_watch_flush(comp);
     ASSERT_EQ(0, comp->wait_for_complete());
     ASSERT_EQ(0, comp->get_return_value());
@@ -418,4 +432,4 @@ TEST_P(LibRadosWatchNotifyPP, WatchNotify3)
 // --
 
 INSTANTIATE_TEST_SUITE_P(LibRadosWatchNotifyPPTests,
-                         LibRadosWatchNotifyPP,::testing::Values("", "cache"));
+                         LibRadosWatchNotifyPP, ::testing::Values("", "cache"));

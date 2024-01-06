@@ -25,7 +25,7 @@
 
 using namespace std;
 
-void print_credentials(ostringstream & Stream, PDOKAN_FILE_INFO DokanFileInfo)
+void print_credentials(ostringstream &Stream, PDOKAN_FILE_INFO DokanFileInfo)
 {
     UCHAR buffer[1024];
     DWORD returnLength;
@@ -62,7 +62,7 @@ void print_credentials(ostringstream & Stream, PDOKAN_FILE_INFO DokanFileInfo)
     }
 
     Stream << "\n\tAccountName: " << accountName << ", DomainName: " <<
-        domainName;
+           domainName;
 }
 
 void print_open_params(LPCSTR FilePath,
@@ -139,7 +139,7 @@ void print_open_params(LPCSTR FilePath,
     check_flag(o, FlagsAndAttributes, SECURITY_SQOS_PRESENT);
 
     o << "\n\tIsDirectory: " << static_cast < bool >
-        (DokanFileInfo->IsDirectory);
+      (DokanFileInfo->IsDirectory);
 
     o << "\n\tCreateOptions: " << hex << CreateOptions << " ";
     check_flag(o, CreateOptions, FILE_DIRECTORY_FILE);

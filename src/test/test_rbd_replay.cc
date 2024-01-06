@@ -21,18 +21,21 @@
 #include "rbd_replay/ios.hpp"
 #include "rbd_replay/rbd_loc.hpp"
 
-namespace rbd_replay {
-    std::ostream & operator<<(std::ostream & o, const rbd_loc & name) {
-        return o << "('" << name.pool << "', '" << name.image << "', '" << name.
-            snap << "')";
-}} using namespace rbd_replay;
+namespace rbd_replay
+{
+std::ostream &operator<<(std::ostream &o, const rbd_loc &name)
+{
+    return o << "('" << name.pool << "', '" << name.image << "', '" << name.
+           snap << "')";
+}
+} using namespace rbd_replay;
 
-static void add_mapping(ImageNameMap * map, std::string mapping_string)
+static void add_mapping(ImageNameMap *map, std::string mapping_string)
 {
     ImageNameMap::Mapping mapping;
     if (!map->parse_mapping(mapping_string, &mapping)) {
         ASSERT_TRUE(false) << "Failed to parse mapping string '" <<
-            mapping_string << "'";
+                           mapping_string << "'";
     }
     map->add_mapping(mapping);
 }

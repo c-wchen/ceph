@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 #include "common/ceph_mutex.h"
 #include "common/Cond.h"
 #include "include/rados/librados.hpp"
@@ -8,24 +8,29 @@
 
 class TestOp;
 
-class TestOpStat {
-  public:
+class TestOpStat
+{
+public:
     mutable ceph::mutex stat_lock = ceph::make_mutex("TestOpStat lock");
 
     TestOpStat() = default;
 
-    static uint64_t gettime() {
+    static uint64_t gettime()
+    {
         timeval t;
-         gettimeofday(&t, 0);
-         return (1000000 * t.tv_sec) + t.tv_usec;
-    } class TypeStatus {
-      public:
+        gettimeofday(&t, 0);
+        return (1000000 * t.tv_sec) + t.tv_usec;
+    } class TypeStatus
+    {
+    public:
         std::map < TestOp *, uint64_t > inflight;
         std::multiset < uint64_t > latencies;
-        void begin(TestOp * in) {
+        void begin(TestOp *in)
+        {
             ceph_assert(!inflight.count(in));
             inflight[in] = gettime();
-        } void end(TestOp * in) {
+        } void end(TestOp *in)
+        {
             ceph_assert(inflight.count(in));
             uint64_t curtime = gettime();
             latencies.insert(curtime - inflight[in]);
@@ -36,11 +41,11 @@ class TestOpStat {
     };
     std::map < std::string, TypeStatus > stats;
 
-    void begin(TestOp * in);
-    void end(TestOp * in);
-    friend std::ostream & operator<<(std::ostream &, const TestOpStat &);
+    void begin(TestOp *in);
+    void end(TestOp *in);
+    friend std::ostream &operator<<(std::ostream &, const TestOpStat &);
 };
 
-std::ostream & operator<<(std::ostream & out, const TestOpStat & rhs);
+std::ostream &operator<<(std::ostream &out, const TestOpStat &rhs);
 
 #endif

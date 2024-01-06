@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -21,8 +21,9 @@
 
 #include "include/ceph_assert.h"
 
-namespace ceph {
-    class Formatter;
+namespace ceph
+{
+class Formatter;
 };
 
 class CInode;
@@ -31,51 +32,67 @@ class CInode;
  * Externally input parameters for a scrub, associated with the root
  * of where we are doing a recursive scrub
  */
-class ScrubHeader {
-  public:
+class ScrubHeader
+{
+public:
     ScrubHeader(std::string_view tag_, bool is_tag_internal_, bool force_,
                 bool recursive_, bool repair_)
-    :tag(tag_), is_tag_internal(is_tag_internal_), force(force_),
-        recursive(recursive_), repair(repair_) {
+        : tag(tag_), is_tag_internal(is_tag_internal_), force(force_),
+          recursive(recursive_), repair(repair_)
+    {
     }
     // Set after construction because it won't be known until we've// started resolving path and locking
-        void set_origin(inodeno_t ino) {
+    void set_origin(inodeno_t ino)
+    {
         origin = ino;
     }
 
-    bool get_recursive() const {
+    bool get_recursive() const
+    {
         return recursive;
-    } bool get_repair() const {
+    } bool get_repair() const
+    {
         return repair;
-    } bool get_force() const {
+    } bool get_force() const
+    {
         return force;
-    } bool is_internal_tag() const {
+    } bool is_internal_tag() const
+    {
         return is_tag_internal;
-    } inodeno_t get_origin() const {
+    } inodeno_t get_origin() const
+    {
         return origin;
-    } const std::string & get_tag() const {
+    } const std::string &get_tag() const
+    {
         return tag;
-    } bool get_repaired() const {
+    } bool get_repaired() const
+    {
         return repaired;
-    } void set_repaired() {
+    } void set_repaired()
+    {
         repaired = true;
     }
 
-    void set_epoch_last_forwarded(unsigned epoch) {
+    void set_epoch_last_forwarded(unsigned epoch)
+    {
         epoch_last_forwarded = epoch;
     }
-    unsigned get_epoch_last_forwarded() const {
+    unsigned get_epoch_last_forwarded() const
+    {
         return epoch_last_forwarded;
-    } void inc_num_pending() {
+    } void inc_num_pending()
+    {
         ++num_pending;
     }
-    void dec_num_pending() {
+    void dec_num_pending()
+    {
         ceph_assert(num_pending > 0);
         --num_pending;
     }
-    unsigned get_num_pending() const {
+    unsigned get_num_pending() const
+    {
         return num_pending;
-  } protected:
+    } protected:
     const std::string tag;
     bool is_tag_internal;
     const bool force;

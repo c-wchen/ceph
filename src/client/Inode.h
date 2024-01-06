@@ -31,24 +31,28 @@ class MetaRequest;
 class filepath;
 class Fh;
 
-class Cap {
-  public:
+class Cap
+{
+public:
     Cap() = delete;
-    Cap(Inode & i, MetaSession * s):inode(i),
-        session(s), gen(s->cap_gen), cap_item(this) {
+    Cap(Inode &i, MetaSession *s): inode(i),
+        session(s), gen(s->cap_gen), cap_item(this)
+    {
         s->caps.push_back(&cap_item);
-    } ~Cap() {
+    } ~Cap()
+    {
         cap_item.remove_myself();
     }
 
-    void touch(void) {
+    void touch(void)
+    {
         // move to back of LRU
         session->caps.push_back(&cap_item);
     }
 
-    void dump(Formatter * f) const;
+    void dump(Formatter *f) const;
 
-    Inode & inode;
+    Inode &inode;
     MetaSession *session;
     uint64_t cap_id = 0;
     unsigned issued = 0;
@@ -60,7 +64,7 @@ class Cap {
     __u32 gen;
     UserPerm latest_perms;
 
-  private:
+private:
     /* Note that this Cap will not move (see Inode::caps):
      *
      * Section 23.1.2#8
@@ -84,7 +88,7 @@ struct CapSnap {
     uint32_t mode = 0;
     uid_t uid = 0;
     gid_t gid = 0;
-     std::map < std::string, bufferptr > xattrs;
+    std::map < std::string, bufferptr > xattrs;
     version_t xattr_version = 0;
 
     bufferlist inline_data;
@@ -96,20 +100,21 @@ struct CapSnap {
     int64_t cap_dirtier_uid = -1;
     int64_t cap_dirtier_gid = -1;
 
-    explicit CapSnap(Inode * i)
-    :in(i) {
-    } void dump(Formatter * f) const;
+    explicit CapSnap(Inode *i)
+        : in(i)
+    {
+    } void dump(Formatter *f) const;
 };
 
 // inode flags
-#define I_COMPLETE		(1 << 0)
-#define I_DIR_ORDERED		(1 << 1)
-#define I_SNAPDIR_OPEN		(1 << 2)
-#define I_KICK_FLUSH		(1 << 3)
-#define I_CAP_DROPPED		(1 << 4)
-#define I_ERROR_FILELOCK	(1 << 5)
+#define I_COMPLETE      (1 << 0)
+#define I_DIR_ORDERED       (1 << 1)
+#define I_SNAPDIR_OPEN      (1 << 2)
+#define I_KICK_FLUSH        (1 << 3)
+#define I_CAP_DROPPED       (1 << 4)
+#define I_ERROR_FILELOCK    (1 << 5)
 
-struct Inode:RefCountedObject {
+struct Inode: RefCountedObject {
     ceph::coarse_mono_time hold_caps_until;
     Client *client;
 
@@ -154,30 +159,38 @@ struct Inode:RefCountedObject {
     version_t version = 0;      // auth only
     version_t xattr_version = 0;
     utime_t snap_btime;         // snapshot creation (birth) time
-     std::map < std::string, std::string > snap_metadata;
+    std::map < std::string, std::string > snap_metadata;
 
     // inline data
     version_t inline_version = 0;
     bufferlist inline_data;
 
-     std::vector < uint8_t > fscrypt_auth;
-     std::vector < uint8_t > fscrypt_file;
-    bool is_fscrypt_enabled() {
+    std::vector < uint8_t > fscrypt_auth;
+    std::vector < uint8_t > fscrypt_file;
+    bool is_fscrypt_enabled()
+    {
         return ! !fscrypt_auth.size();
-    } bool is_root() const {
+    } bool is_root() const
+    {
         return ino == CEPH_INO_ROOT;
-    } bool is_symlink() const {
+    } bool is_symlink() const
+    {
         return (mode & S_IFMT) == S_IFLNK;
-    } bool is_dir() const {
+    } bool is_dir() const
+    {
         return (mode & S_IFMT) == S_IFDIR;
-    } bool is_file() const {
+    } bool is_file() const
+    {
         return (mode & S_IFMT) == S_IFREG;
-    } bool has_dir_layout() const {
+    } bool has_dir_layout() const
+    {
         return layout != file_layout_t();
-    } __u32 hash_dentry_name(const std::string & dn) {
+    } __u32 hash_dentry_name(const std::string &dn)
+    {
         int which = dir_layout.dl_dir_hash;
-        if (!which)
+        if (!which) {
             which = CEPH_STR_HASH_LINUX;
+        }
         ceph_assert(ceph_str_hash_valid(which));
         return ceph_str_hash(which, dn.data(), dn.length());
     }
@@ -186,7 +199,8 @@ struct Inode:RefCountedObject {
 
     quota_info_t quota;
 
-    bool is_complete_and_ordered() {
+    bool is_complete_and_ordered()
+    {
         static const unsigned wants = I_COMPLETE | I_DIR_ORDERED;
         return (flags & wants) == wants;
     }
@@ -239,30 +253,36 @@ struct Inode:RefCountedObject {
     std::list < ceph::condition_variable * >waitfor_commit;
     std::list < ceph::condition_variable * >waitfor_deleg;
 
-    Dentry *get_first_parent() {
+    Dentry *get_first_parent()
+    {
         ceph_assert(!dentries.empty());
         return *dentries.begin();
     }
 
-    void make_long_path(filepath & p);
-    void make_short_path(filepath & p);
-    void make_nosnap_relative_path(filepath & p);
+    void make_long_path(filepath &p);
+    void make_short_path(filepath &p);
+    void make_nosnap_relative_path(filepath &p);
 
     // The ref count. 1 for each dentry, fh, inode_map,
     // cwd that links to me.
-    void iget() {
+    void iget()
+    {
         get();
     }
-    void iput(int n = 1) {
+    void iput(int n = 1)
+    {
         ceph_assert(n >= 0);
-        while (n--)
+        while (n--) {
             put();
+        }
     }
 
-    void ll_get() {
+    void ll_get()
+    {
         ll_ref++;
     }
-    void ll_put(uint64_t n = 1) {
+    void ll_put(uint64_t n = 1)
+    {
         ceph_assert(ll_ref >= n);
         ll_ref -= n;
     }
@@ -271,7 +291,8 @@ struct Inode:RefCountedObject {
     std::unique_ptr < ceph_lock_state_t > fcntl_locks;
     std::unique_ptr < ceph_lock_state_t > flock_locks;
 
-    bool has_any_filelocks() {
+    bool has_any_filelocks()
+    {
         return
             (fcntl_locks && !fcntl_locks->empty()) ||
             (flock_locks && !flock_locks->empty());
@@ -286,25 +307,29 @@ struct Inode:RefCountedObject {
     mds_rank_t dir_pin = MDS_RANK_NONE;
 
     Inode() = delete;
-    Inode(Client * c, vinodeno_t vino, file_layout_t * newlayout)
-  :    
-    client(c), ino(vino.ino), snapid(vino.snapid), delay_cap_item(this),
-    dirty_cap_item(this), flushing_cap_item(this), snaprealm_item(this),
-    oset((void *)this, newlayout->pool_id, this->ino) {
+    Inode(Client *c, vinodeno_t vino, file_layout_t *newlayout)
+        :
+        client(c), ino(vino.ino), snapid(vino.snapid), delay_cap_item(this),
+        dirty_cap_item(this), flushing_cap_item(this), snaprealm_item(this),
+        oset((void *)this, newlayout->pool_id, this->ino)
+    {
     }
     ~Inode();
 
-    vinodeno_t vino() const {
+    vinodeno_t vino() const
+    {
         return vinodeno_t(ino, snapid);
     } struct Compare {
-        bool operator() (Inode * const &left, Inode * const &right) {
+        bool operator()(Inode *const &left, Inode *const &right)
+        {
             if (left->ino.val < right->ino.val) {
                 return (left->snapid.val < right->snapid.val);
-            } return false;
+            }
+            return false;
         }
     };
 
-    bool check_mode(const UserPerm & perms, unsigned want);
+    bool check_mode(const UserPerm &perms, unsigned want);
 
     // CAPS --------
     void get_open_ref(int mode);
@@ -313,7 +338,7 @@ struct Inode:RefCountedObject {
     void get_cap_ref(int cap);
     int put_cap_ref(int cap);
     bool is_any_caps();
-    bool cap_is_valid(const Cap & cap) const;
+    bool cap_is_valid(const Cap &cap) const;
     int caps_issued(int *implemented = 0) const;
     void try_touch_cap(mds_rank_t mds);
     bool caps_issued_mask(unsigned mask, bool allow_impl = false);
@@ -327,41 +352,46 @@ struct Inode:RefCountedObject {
     bool have_valid_size();
     Dir *open_dir();
 
-    void add_fh(Fh * f) {
+    void add_fh(Fh *f)
+    {
         fhs.insert(f);
     }
-    void rm_fh(Fh * f) {
+    void rm_fh(Fh *f)
+    {
         fhs.erase(f);
     }
     void set_async_err(int r);
-    void dump(Formatter * f) const;
+    void dump(Formatter *f) const;
 
-    void break_all_delegs() {
+    void break_all_delegs()
+    {
         break_deleg(false);
     };
 
     void recall_deleg(bool skip_read);
     bool has_recalled_deleg();
-    int set_deleg(Fh * fh, unsigned type, ceph_deleg_cb_t cb, void *priv);
-    void unset_deleg(Fh * fh);
+    int set_deleg(Fh *fh, unsigned type, ceph_deleg_cb_t cb, void *priv);
+    void unset_deleg(Fh *fh);
 
     void mark_caps_dirty(int caps);
     void mark_caps_clean();
-  private:
+private:
     // how many opens for write on this Inode?
-    long open_count_for_write() {
+    long open_count_for_write()
+    {
         return (long)(open_by_mode[CEPH_FILE_MODE_RDWR] +
                       open_by_mode[CEPH_FILE_MODE_WR]);
     };
 
     // how many opens of any sort on this inode?
-    long open_count() {
+    long open_count()
+    {
         return (long)std::accumulate(open_by_mode.begin(), open_by_mode.end(),
-                                     0,[](int value, const std::map < int,
-                                          int >::value_type & p) {
-                                     return value + p.second;
-                                     }
-        );
+                                     0, [](int value, const std::map < int,
+        int >::value_type & p) {
+            return value + p.second;
+        }
+                                    );
     };
 
     void break_deleg(bool skip_read);
@@ -369,6 +399,6 @@ struct Inode:RefCountedObject {
 
 };
 
-std::ostream & operator<<(std::ostream & out, const Inode & in);
+std::ostream &operator<<(std::ostream &out, const Inode &in);
 
 #endif

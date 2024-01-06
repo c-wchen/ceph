@@ -26,7 +26,7 @@ using namespace std;
 
 static string default_target_path = "rgw-${zonegroup}-${sid}/${bucket}";
 
-static string get_key_oid(const rgw_obj_key & key)
+static string get_key_oid(const rgw_obj_key &key)
 {
     string oid = key.name;
     if (!key.instance.empty() && !key.have_null_instance()) {
@@ -35,7 +35,7 @@ static string get_key_oid(const rgw_obj_key & key)
     return oid;
 }
 
-static string obj_to_aws_path(const rgw_obj & obj)
+static string obj_to_aws_path(const rgw_obj &obj)
 {
     return obj.bucket.name + "/" + get_key_oid(obj.key);
 }
@@ -55,9 +55,9 @@ static string obj_to_aws_path(const rgw_obj & obj)
                   "source_id": <source_id>,
                   "dest_id": <dest_id> } ... ],  # optional, acl mappings, no mappings if does not exist
       "target_path": <target_path>, # override default
-           
 
-      # anything below here is for non trivial configuration 
+
+      # anything below here is for non trivial configuration
       # can be used in conjuction with the above
 
       "default": {
@@ -119,25 +119,25 @@ owner: bucket owner
 
 struct ACLMapping {
     ACLGranteeTypeEnum type {
-    ACL_TYPE_CANON_USER};
+        ACL_TYPE_CANON_USER};
     string source_id;
     string dest_id;
 
-     ACLMapping() = default;
+    ACLMapping() = default;
 
-     ACLMapping(ACLGranteeTypeEnum t,
-                const string & s,
-                const string & d):type(t), source_id(s), dest_id(d) {
-    } void init(const JSONFormattable & config) {
-        const string & t = config["type"];
+    ACLMapping(ACLGranteeTypeEnum t,
+               const string &s,
+               const string &d): type(t), source_id(s), dest_id(d)
+    {
+    } void init(const JSONFormattable &config)
+    {
+        const string &t = config["type"];
 
         if (t == "email") {
             type = ACL_TYPE_EMAIL_USER;
-        }
-        else if (t == "uri") {
+        } else if (t == "uri") {
             type = ACL_TYPE_GROUP;
-        }
-        else {
+        } else {
             type = ACL_TYPE_CANON_USER;
         }
 
@@ -145,18 +145,22 @@ struct ACLMapping {
         dest_id = config["dest_id"];
     }
 
-    void dump_conf(CephContext * cct, JSONFormatter & jf) const {
+    void dump_conf(CephContext *cct, JSONFormatter &jf) const
+    {
         Formatter::ObjectSection os(jf, "acl_mapping");
         string s;
         switch (type) {
-        case ACL_TYPE_EMAIL_USER:
-            s = "email";
-            break;
-            case ACL_TYPE_GROUP:s = "uri";
-            break;
-            default:s = "id";
-            break;
-        } encode_json("type", s, &jf);
+            case ACL_TYPE_EMAIL_USER:
+                s = "email";
+                break;
+            case ACL_TYPE_GROUP:
+                s = "uri";
+                break;
+            default:
+                s = "id";
+                break;
+        }
+        encode_json("type", s, &jf);
         encode_json("source_id", source_id, &jf);
         encode_json("dest_id", dest_id, &jf);
     }
@@ -165,45 +169,55 @@ struct ACLMapping {
 struct ACLMappings {
     map < string, ACLMapping > acl_mappings;
 
-    void init(const JSONFormattable & config) {
-      for (auto & c:config.array()) {
+    void init(const JSONFormattable &config)
+    {
+        for (auto &c : config.array()) {
             ACLMapping m;
-             m.init(c);
+            m.init(c);
 
-             acl_mappings.emplace(std::make_pair(m.source_id, m));
-    }} void dump_conf(CephContext * cct, JSONFormatter & jf) const {
+            acl_mappings.emplace(std::make_pair(m.source_id, m));
+        }
+    } void dump_conf(CephContext *cct, JSONFormatter &jf) const
+    {
         Formatter::ArraySection os(jf, "acls");
 
-        for (auto & i:acl_mappings) {
+        for (auto &i : acl_mappings) {
             i.second.dump_conf(cct, jf);
-}}};
+        }
+    }
+};
 
 struct AWSSyncConfig_ACLProfiles {
     map < string, std::shared_ptr < ACLMappings > >acl_profiles;
 
-    void init(const JSONFormattable & config) {
-      for (auto & c:config.array()) {
-            const string & profile_id = c["id"];
+    void init(const JSONFormattable &config)
+    {
+        for (auto &c : config.array()) {
+            const string &profile_id = c["id"];
 
-             std::shared_ptr < ACLMappings > ap {
-            new ACLMappings};
+            std::shared_ptr < ACLMappings > ap {
+                new ACLMappings};
             ap->init(c["acls"]);
 
             acl_profiles[profile_id] = ap;
         }
     }
-    void dump_conf(CephContext * cct, JSONFormatter & jf) const {
+    void dump_conf(CephContext *cct, JSONFormatter &jf) const
+    {
         Formatter::ArraySection section(jf, "acl_profiles");
 
-        for (auto & p:acl_profiles) {
+        for (auto &p : acl_profiles) {
             Formatter::ObjectSection section(jf, "profile");
             encode_json("id", p.first, &jf);
             p.second->dump_conf(cct, jf);
-    }} bool find(const string & profile_id, ACLMappings * result) const {
+        }
+    } bool find(const string &profile_id, ACLMappings *result) const
+    {
         auto iter = acl_profiles.find(profile_id);
         if (iter == acl_profiles.end()) {
             return false;
-        } *result = *iter->second;
+        }
+        *result = *iter->second;
         return true;
     }
 };
@@ -212,18 +226,19 @@ struct AWSSyncConfig_Connection {
     string connection_id;
     string endpoint;
     RGWAccessKey key;
-     std::optional < string > region;
+    std::optional < string > region;
     HostStyle host_style {
-    PathStyle};
+        PathStyle};
 
     bool has_endpoint {
-    false};
+        false};
     bool has_key {
-    false};
+        false};
     bool has_host_style {
-    false};
+        false};
 
-    void init(const JSONFormattable & config) {
+    void init(const JSONFormattable &config)
+    {
         has_endpoint = config.exists("endpoint");
         has_key = config.exists("access_key") || config.exists("secret");
         has_host_style = config.exists("host_style");
@@ -235,37 +250,38 @@ struct AWSSyncConfig_Connection {
 
         if (config.exists("region")) {
             region = config["region"];
-        }
-        else {
+        } else {
             region.reset();
         }
 
         string host_style_str = config["host_style"];
         if (host_style_str != "virtual") {
             host_style = PathStyle;
-        }
-        else {
+        } else {
             host_style = VirtualStyle;
         }
     }
-    void dump_conf(CephContext * cct, JSONFormatter & jf) const {
+    void dump_conf(CephContext *cct, JSONFormatter &jf) const
+    {
         Formatter::ObjectSection section(jf, "connection");
         encode_json("id", connection_id, &jf);
         encode_json("endpoint", endpoint, &jf);
         string s = (host_style == PathStyle ? "path" : "virtual");
-         encode_json("region", region, &jf);
-         encode_json("host_style", s, &jf);
+        encode_json("region", region, &jf);
+        encode_json("host_style", s, &jf);
 
         {
             Formatter::ObjectSection os(jf, "key");
             encode_json("access_key", key.id, &jf);
-            string secret = (key.key.empty()? "" : "******");
-             encode_json("secret", secret, &jf);
-}}};
+            string secret = (key.key.empty() ? "" : "******");
+            encode_json("secret", secret, &jf);
+        }
+    }
+};
 
-static int conf_to_uint64(const DoutPrefixProvider * dpp, CephContext * cct,
-                          const JSONFormattable & config, const string & key,
-                          uint64_t * pval)
+static int conf_to_uint64(const DoutPrefixProvider *dpp, CephContext *cct,
+                          const JSONFormattable &config, const string &key,
+                          uint64_t *pval)
 {
     string sval;
     if (config.find(key, &sval)) {
@@ -274,8 +290,8 @@ static int conf_to_uint64(const DoutPrefixProvider * dpp, CephContext * cct,
         if (!err.empty()) {
             ldpp_dout(dpp,
                       0) <<
-                "ERROR: could not parse configurable value for cloud sync module: "
-                << key << ": " << sval << dendl;
+                         "ERROR: could not parse configurable value for cloud sync module: "
+                         << key << ": " << sval << dendl;
             return -EINVAL;
         }
         *pval = val;
@@ -285,18 +301,20 @@ static int conf_to_uint64(const DoutPrefixProvider * dpp, CephContext * cct,
 
 struct AWSSyncConfig_S3 {
     uint64_t multipart_sync_threshold {
-    DEFAULT_MULTIPART_SYNC_PART_SIZE};
+        DEFAULT_MULTIPART_SYNC_PART_SIZE};
     uint64_t multipart_min_part_size {
-    DEFAULT_MULTIPART_SYNC_PART_SIZE};
+        DEFAULT_MULTIPART_SYNC_PART_SIZE};
 
-    int init(const DoutPrefixProvider * dpp, CephContext * cct,
-             const JSONFormattable & config) {
+    int init(const DoutPrefixProvider *dpp, CephContext *cct,
+             const JSONFormattable &config)
+    {
         int r =
             conf_to_uint64(dpp, cct, config, "multipart_sync_threshold",
                            &multipart_sync_threshold);
         if (r < 0) {
             return r;
-        } r =
+        }
+        r =
             conf_to_uint64(dpp, cct, config, "multipart_min_part_size",
                            &multipart_min_part_size);
         if (r < 0) {
@@ -309,26 +327,29 @@ struct AWSSyncConfig_S3 {
         return 0;
     }
 
-    void dump_conf(CephContext * cct, JSONFormatter & jf) const {
+    void dump_conf(CephContext *cct, JSONFormatter &jf) const
+    {
         Formatter::ObjectSection section(jf, "s3");
         encode_json("multipart_sync_threshold", multipart_sync_threshold, &jf);
         encode_json("multipart_min_part_size", multipart_min_part_size, &jf);
-}};
+    }
+};
 
 struct AWSSyncConfig_Profile {
     string source_bucket;
     bool prefix {
-    false};
+        false};
     string target_path;
     string connection_id;
     string acls_id;
 
-     std::shared_ptr < AWSSyncConfig_Connection > conn_conf;
-     std::shared_ptr < ACLMappings > acls;
+    std::shared_ptr < AWSSyncConfig_Connection > conn_conf;
+    std::shared_ptr < ACLMappings > acls;
 
-     std::shared_ptr < RGWRESTConn > conn;
+    std::shared_ptr < RGWRESTConn > conn;
 
-    void init(const JSONFormattable & config) {
+    void init(const JSONFormattable &config)
+    {
         source_bucket = config["source_bucket"];
 
         prefix = (!source_bucket.empty()
@@ -336,7 +357,8 @@ struct AWSSyncConfig_Profile {
 
         if (prefix) {
             source_bucket = source_bucket.substr(0, source_bucket.size() - 1);
-        } target_path = config["target_path"];
+        }
+        target_path = config["target_path"];
         connection_id = config["connection_id"];
         acls_id = config["acls_id"];
 
@@ -351,14 +373,16 @@ struct AWSSyncConfig_Profile {
         }
     }
 
-    void dump_conf(CephContext * cct, JSONFormatter & jf, const char *section =
-                   "config") const {
+    void dump_conf(CephContext *cct, JSONFormatter &jf, const char *section =
+                       "config") const
+    {
         Formatter::ObjectSection config(jf, section);
         string sb {
-        source_bucket};
+            source_bucket};
         if (prefix) {
             sb.append("*");
-        } encode_json("source_bucket", sb, &jf);
+        }
+        encode_json("source_bucket", sb, &jf);
         encode_json("target_path", target_path, &jf);
         encode_json("connection_id", connection_id, &jf);
         encode_json("acls_id", acls_id, &jf);
@@ -371,8 +395,8 @@ struct AWSSyncConfig_Profile {
     }
 };
 
-static void find_and_replace(const string & src, const string & find,
-                             const string & replace, string * dest)
+static void find_and_replace(const string &src, const string &find,
+                             const string &replace, string *dest)
 {
     string s = src;
 
@@ -386,8 +410,8 @@ static void find_and_replace(const string & src, const string & find,
     *dest = s;
 }
 
-static void apply_meta_param(const string & src, const string & param,
-                             const string & val, string * dest)
+static void apply_meta_param(const string &src, const string &param,
+                             const string &val, string *dest)
 {
     string s = string("${") + param + "}";
     find_and_replace(src, s, val, dest);
@@ -395,36 +419,37 @@ static void apply_meta_param(const string & src, const string & param,
 
 struct AWSSyncConfig {
     AWSSyncConfig_Profile default_profile;
-     std::shared_ptr < AWSSyncConfig_Profile > root_profile;
+    std::shared_ptr < AWSSyncConfig_Profile > root_profile;
 
-     map < string, std::shared_ptr < AWSSyncConfig_Connection > >connections;
+    map < string, std::shared_ptr < AWSSyncConfig_Connection > >connections;
     AWSSyncConfig_ACLProfiles acl_profiles;
 
-     map < string, std::shared_ptr < AWSSyncConfig_Profile > >explicit_profiles;
+    map < string, std::shared_ptr < AWSSyncConfig_Profile > >explicit_profiles;
 
     AWSSyncConfig_S3 s3;
 
-    int init_profile(const DoutPrefixProvider * dpp, CephContext * cct,
-                     const JSONFormattable & profile_conf,
-                     AWSSyncConfig_Profile & profile,
-                     bool connection_must_exist) {
+    int init_profile(const DoutPrefixProvider *dpp, CephContext *cct,
+                     const JSONFormattable &profile_conf,
+                     AWSSyncConfig_Profile &profile,
+                     bool connection_must_exist)
+    {
         if (!profile.connection_id.empty()) {
             if (profile.conn_conf) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: ambiguous profile connection configuration, connection_id="
-                    << profile.connection_id << dendl;
+                             "ERROR: ambiguous profile connection configuration, connection_id="
+                             << profile.connection_id << dendl;
                 return -EINVAL;
-            } if (connections.find(profile.connection_id) == connections.end()) {
+            }
+            if (connections.find(profile.connection_id) == connections.end()) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: profile configuration reference non-existent connection_id="
-                    << profile.connection_id << dendl;
+                             "ERROR: profile configuration reference non-existent connection_id="
+                             << profile.connection_id << dendl;
                 return -EINVAL;
             }
             profile.conn_conf = connections[profile.connection_id];
-        }
-        else if (!profile.conn_conf) {
+        } else if (!profile.conn_conf) {
             profile.connection_id = default_profile.connection_id;
             auto i = connections.find(profile.connection_id);
             if (i != connections.end()) {
@@ -435,7 +460,7 @@ struct AWSSyncConfig {
         if (connection_must_exist && !profile.conn_conf) {
             ldpp_dout(dpp,
                       0) <<
-                "ERROR: remote connection undefined for sync profile" << dendl;
+                         "ERROR: remote connection undefined for sync profile" << dendl;
             return -EINVAL;
         }
 
@@ -459,13 +484,12 @@ struct AWSSyncConfig {
             if (!acl_profiles.find(profile.acls_id, &acl_mappings)) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: profile configuration reference non-existent acls id="
-                    << profile.acls_id << dendl;
+                             "ERROR: profile configuration reference non-existent acls id="
+                             << profile.acls_id << dendl;
                 return -EINVAL;
             }
             profile.acls = acl_profiles.acl_profiles[profile.acls_id];
-        }
-        else if (!profile.acls) {
+        } else if (!profile.acls) {
             if (default_profile.acls) {
                 profile.acls = default_profile.acls;
                 profile.acls_id = default_profile.acls_id;
@@ -482,9 +506,10 @@ struct AWSSyncConfig {
         return 0;
     }
 
-    int init_target(const DoutPrefixProvider * dpp, CephContext * cct,
-                    const JSONFormattable & profile_conf,
-                    std::shared_ptr < AWSSyncConfig_Profile > *ptarget) {
+    int init_target(const DoutPrefixProvider *dpp, CephContext *cct,
+                    const JSONFormattable &profile_conf,
+                    std::shared_ptr < AWSSyncConfig_Profile > *ptarget)
+    {
         std::shared_ptr < AWSSyncConfig_Profile > profile;
         profile.reset(new AWSSyncConfig_Profile);
         profile->init(profile_conf);
@@ -494,13 +519,13 @@ struct AWSSyncConfig {
             return ret;
         }
 
-        auto & sb = profile->source_bucket;
+        auto &sb = profile->source_bucket;
 
         if (explicit_profiles.find(sb) != explicit_profiles.end()) {
             ldpp_dout(dpp,
                       0) <<
-                "WARNING: duplicate target configuration in sync module" <<
-                dendl;
+                         "WARNING: duplicate target configuration in sync module" <<
+                         dendl;
         }
 
         explicit_profiles[sb] = profile;
@@ -511,8 +536,9 @@ struct AWSSyncConfig {
     }
 
     bool do_find_profile(const rgw_bucket bucket,
-                         std::shared_ptr < AWSSyncConfig_Profile > *result) {
-        const string & name = bucket.name;
+                         std::shared_ptr < AWSSyncConfig_Profile > *result)
+    {
+        const string &name = bucket.name;
         auto iter = explicit_profiles.upper_bound(name);
         if (iter == explicit_profiles.begin()) {
             return false;
@@ -537,29 +563,32 @@ struct AWSSyncConfig {
     }
 
     void find_profile(const rgw_bucket bucket,
-                      std::shared_ptr < AWSSyncConfig_Profile > *result) {
+                      std::shared_ptr < AWSSyncConfig_Profile > *result)
+    {
         if (!do_find_profile(bucket, result)) {
             *result = root_profile;
         }
     }
 
-    AWSSyncConfig() {
+    AWSSyncConfig()
+    {
     }
 
-    int init(const DoutPrefixProvider * dpp, CephContext * cct,
-             const JSONFormattable & config) {
-        auto & default_conf = config["default"];
+    int init(const DoutPrefixProvider *dpp, CephContext *cct,
+             const JSONFormattable &config)
+    {
+        auto &default_conf = config["default"];
 
         if (config.exists("default")) {
             default_profile.init(default_conf);
             init_profile(dpp, cct, default_conf, default_profile, false);
         }
 
-      for (auto & conn:config["connections"].array()) {
+        for (auto &conn : config["connections"].array()) {
             auto new_conn = conn;
 
             std::shared_ptr < AWSSyncConfig_Connection > c {
-            new AWSSyncConfig_Connection};
+                new AWSSyncConfig_Connection};
             c->init(new_conn);
 
             connections[new_conn["id"]] = c;
@@ -579,7 +608,7 @@ struct AWSSyncConfig {
             return r;
         }
 
-      for (auto target_conf:config["profiles"].array()) {
+        for (auto target_conf : config["profiles"].array()) {
             int r = init_target(dpp, cct, target_conf, nullptr);
             if (r < 0) {
                 return r;
@@ -593,53 +622,58 @@ struct AWSSyncConfig {
 
         ldpp_dout(dpp,
                   5) << "sync module config (parsed representation):\n" << ss.
-            str() << dendl;
+                     str() << dendl;
 
         return 0;
     }
 
-    void expand_target(RGWDataSyncCtx * sc, const string & sid,
-                       const string & path, string * dest) {
+    void expand_target(RGWDataSyncCtx *sc, const string &sid,
+                       const string &path, string *dest)
+    {
         apply_meta_param(path, "sid", sid, dest);
 
-        const RGWZoneGroup & zg = sc->env->svc->zone->get_zonegroup();
+        const RGWZoneGroup &zg = sc->env->svc->zone->get_zonegroup();
         apply_meta_param(path, "zonegroup", zg.get_name(), dest);
         apply_meta_param(path, "zonegroup_id", zg.get_id(), dest);
 
-        const RGWZone & zone = sc->env->svc->zone->get_zone();
+        const RGWZone &zone = sc->env->svc->zone->get_zone();
         apply_meta_param(path, "zone", zone.name, dest);
         apply_meta_param(path, "zone_id", zone.id, dest);
     }
 
-    void update_config(const DoutPrefixProvider * dpp, RGWDataSyncCtx * sc,
-                       const string & sid) {
+    void update_config(const DoutPrefixProvider *dpp, RGWDataSyncCtx *sc,
+                       const string &sid)
+    {
         expand_target(sc, sid, root_profile->target_path,
                       &root_profile->target_path);
         ldpp_dout(dpp,
                   20) << "updated target: (root) -> " << root_profile->
-            target_path << dendl;
-      for (auto & t:explicit_profiles) {
+                      target_path << dendl;
+        for (auto &t : explicit_profiles) {
             expand_target(sc, sid, t.second->target_path,
                           &t.second->target_path);
             ldpp_dout(dpp,
                       20) << "updated target: " << t.first << " -> " << t.
-                second->target_path << dendl;
+                          second->target_path << dendl;
         }
     }
 
-    void dump_conf(CephContext * cct, JSONFormatter & jf) const {
+    void dump_conf(CephContext *cct, JSONFormatter &jf) const
+    {
         Formatter::ObjectSection config(jf, "config");
         root_profile->dump_conf(cct, jf);
         jf.open_array_section("connections");
-        for (auto c:connections) {
+        for (auto c : connections) {
             c.second->dump_conf(cct, jf);
-        } jf.close_section();
+        }
+        jf.close_section();
 
         acl_profiles.dump_conf(cct, jf);
 
-        {                       // targets
+        {
+            // targets
             Formatter::ArraySection as(jf, "profiles");
-          for (auto & t:explicit_profiles) {
+            for (auto &t : explicit_profiles) {
                 Formatter::ObjectSection target_section(jf, "profile");
                 encode_json("name", t.first, &jf);
                 t.second->dump_conf(cct, jf);
@@ -648,8 +682,9 @@ struct AWSSyncConfig {
     }
 
     string get_path(std::shared_ptr < AWSSyncConfig_Profile > &profile,
-                    const RGWBucketInfo & bucket_info,
-                    const rgw_obj_key & obj) {
+                    const RGWBucketInfo &bucket_info,
+                    const rgw_obj_key &obj)
+    {
         string bucket_str;
         string owner;
         if (!bucket_info.owner.tenant.empty()) {
@@ -658,7 +693,7 @@ struct AWSSyncConfig {
         }
         bucket_str += bucket_info.bucket.name;
 
-        const string & path = profile->target_path;
+        const string &path = profile->target_path;
 
         string new_path;
         apply_meta_param(path, "bucket", bucket_str, &new_path);
@@ -670,9 +705,10 @@ struct AWSSyncConfig {
     }
 
     void get_target(std::shared_ptr < AWSSyncConfig_Profile > &profile,
-                    const RGWBucketInfo & bucket_info,
-                    const rgw_obj_key & obj,
-                    string * bucket_name, string * obj_name) {
+                    const RGWBucketInfo &bucket_info,
+                    const rgw_obj_key &obj,
+                    string *bucket_name, string *obj_name)
+    {
         string path = get_path(profile, bucket_info, obj);
         size_t pos = path.find('/');
 
@@ -680,31 +716,34 @@ struct AWSSyncConfig {
         *obj_name = path.substr(pos + 1);
     }
 
-    void init_conns(RGWDataSyncCtx * sc, const string & id) {
+    void init_conns(RGWDataSyncCtx *sc, const string &id)
+    {
         auto sync_env = sc->env;
 
         update_config(sync_env->dpp, sc, id);
 
-        auto & root_conf = root_profile->conn_conf;
+        auto &root_conf = root_profile->conn_conf;
 
         root_profile->conn.reset(new S3RESTConn(sc->cct, id, {
-                                                root_conf->endpoint},
-                                                root_conf->key,
-                                                sync_env->svc->zone->
-                                                get_zonegroup().get_id(),
-                                                root_conf->region,
-                                                root_conf->host_style));
+            root_conf->endpoint
+        },
+        root_conf->key,
+        sync_env->svc->zone->
+        get_zonegroup().get_id(),
+        root_conf->region,
+        root_conf->host_style));
 
-      for (auto i:explicit_profiles) {
-            auto & c = i.second;
+        for (auto i : explicit_profiles) {
+            auto &c = i.second;
 
             c->conn.reset(new S3RESTConn(sc->cct, id, {
-                                         c->conn_conf->endpoint}
-                                         ,
-                                         c->conn_conf->key,
-                                         sync_env->svc->zone->get_zonegroup().
-                                         get_id(), c->conn_conf->region,
-                                         c->conn_conf->host_style));
+                c->conn_conf->endpoint
+            }
+            ,
+            c->conn_conf->key,
+            sync_env->svc->zone->get_zonegroup().
+            get_id(), c->conn_conf->region,
+            c->conn_conf->host_style));
         }
     }
 };
@@ -713,8 +752,10 @@ struct AWSSyncInstanceEnv {
     AWSSyncConfig conf;
     string id;
 
-    explicit AWSSyncInstanceEnv(AWSSyncConfig & _conf):conf(_conf) {
-    } void init(RGWDataSyncCtx * sc, uint64_t instance_id) {
+    explicit AWSSyncInstanceEnv(AWSSyncConfig &_conf): conf(_conf)
+    {
+    } void init(RGWDataSyncCtx *sc, uint64_t instance_id)
+    {
         char buf[32];
         snprintf(buf, sizeof(buf), "%llx", (unsigned long long)instance_id);
         id = buf;
@@ -722,23 +763,23 @@ struct AWSSyncInstanceEnv {
         conf.init_conns(sc, id);
     }
 
-    void get_profile(const rgw_bucket & bucket,
-                     std::shared_ptr < AWSSyncConfig_Profile > *ptarget) {
+    void get_profile(const rgw_bucket &bucket,
+                     std::shared_ptr < AWSSyncConfig_Profile > *ptarget)
+    {
         conf.find_profile(bucket, ptarget);
         ceph_assert(ptarget);
     }
 };
 
-static int do_decode_rest_obj(const DoutPrefixProvider * dpp, CephContext * cct,
+static int do_decode_rest_obj(const DoutPrefixProvider *dpp, CephContext *cct,
                               map < string, bufferlist > &attrs, map < string,
-                              string > &headers, rgw_rest_obj * info)
+                              string > &headers, rgw_rest_obj *info)
 {
-  for (auto header:headers) {
-        const string & val = header.second;
+    for (auto header : headers) {
+        const string &val = header.second;
         if (header.first == "RGWX_OBJECT_SIZE") {
             info->content_len = atoi(val.c_str());
-        }
-        else {
+        } else {
             info->attrs[header.first] = val;
         }
     }
@@ -746,50 +787,51 @@ static int do_decode_rest_obj(const DoutPrefixProvider * dpp, CephContext * cct,
     info->acls.set_ctx(cct);
     auto aiter = attrs.find(RGW_ATTR_ACL);
     if (aiter != attrs.end()) {
-        bufferlist & bl = aiter->second;
+        bufferlist &bl = aiter->second;
         auto bliter = bl.cbegin();
         try {
             info->acls.decode(bliter);
-        }
-        catch(buffer::error & err) {
+        } catch (buffer::error &err) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to decode policy off attrs" << dendl;
             return -EIO;
         }
-    }
-    else {
+    } else {
         ldpp_dout(dpp, 0) << "WARNING: acl attrs not provided" << dendl;
     }
 
     return 0;
 }
 
-class RGWRESTStreamGetCRF:public RGWStreamReadHTTPResourceCRF {
+class RGWRESTStreamGetCRF: public RGWStreamReadHTTPResourceCRF
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *conn;
-    const rgw_obj & src_obj;
-     RGWRESTConn::get_obj_params req_params;
+    const rgw_obj &src_obj;
+    RGWRESTConn::get_obj_params req_params;
 
     rgw_sync_aws_src_obj_properties src_properties;
-  public:
-     RGWRESTStreamGetCRF(CephContext * _cct,
-                         RGWCoroutinesEnv * _env,
-                         RGWCoroutine * _caller,
-                         RGWDataSyncCtx * _sc,
-                         RGWRESTConn * _conn,
-                         const rgw_obj & _src_obj,
-                         const rgw_sync_aws_src_obj_properties &
-                         _src_properties):RGWStreamReadHTTPResourceCRF(_cct,
-                                                                       _env,
-                                                                       _caller,
-                                                                       _sc->
-                                                                       env->
-                                                                       http_manager,
-                                                                       _src_obj.
-                                                                       key),
+public:
+    RGWRESTStreamGetCRF(CephContext *_cct,
+                        RGWCoroutinesEnv *_env,
+                        RGWCoroutine *_caller,
+                        RGWDataSyncCtx *_sc,
+                        RGWRESTConn *_conn,
+                        const rgw_obj &_src_obj,
+                        const rgw_sync_aws_src_obj_properties &
+                        _src_properties): RGWStreamReadHTTPResourceCRF(_cct,
+                                    _env,
+                                    _caller,
+                                    _sc->
+                                    env->
+                                    http_manager,
+                                    _src_obj.
+                                    key),
         sc(_sc), conn(_conn), src_obj(_src_obj),
-        src_properties(_src_properties) {
-    } int init(const DoutPrefixProvider * dpp) override {
+        src_properties(_src_properties)
+    {
+    } int init(const DoutPrefixProvider *dpp) override
+    {
         /* init input connection */
 
         req_params.get_op = true;
@@ -808,11 +850,11 @@ class RGWRESTStreamGetCRF:public RGWStreamReadHTTPResourceCRF {
 
         RGWRESTStreamRWRequest *in_req;
         int ret =
-            conn->get_obj(dpp, src_obj, req_params, false /* send */ , &in_req);
+            conn->get_obj(dpp, src_obj, req_params, false /* send */, &in_req);
         if (ret < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: " << __func__ <<
-                "(): conn->get_obj() returned ret=" << ret << dendl;
+                         "(): conn->get_obj() returned ret=" << ret << dendl;
             return ret;
         }
 
@@ -821,22 +863,23 @@ class RGWRESTStreamGetCRF:public RGWStreamReadHTTPResourceCRF {
         return RGWStreamReadHTTPResourceCRF::init(dpp);
     }
 
-    int decode_rest_obj(const DoutPrefixProvider * dpp, map < string,
-                        string > &headers, bufferlist & extra_data) override {
+    int decode_rest_obj(const DoutPrefixProvider *dpp, map < string,
+                        string > &headers, bufferlist &extra_data) override
+    {
         map < string, bufferlist > src_attrs;
 
         ldpp_dout(dpp,
                   20) << __func__ << ":" << " headers=" << headers <<
-            " extra_data.length()=" << extra_data.length() << dendl;
+                      " extra_data.length()=" << extra_data.length() << dendl;
 
         if (extra_data.length() > 0) {
             JSONParser jp;
             if (!jp.parse(extra_data.c_str(), extra_data.length())) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: failed to parse response extra data. len=" <<
-                    extra_data.length() << " data=" << extra_data.
-                    c_str() << dendl;
+                             "ERROR: failed to parse response extra data. len=" <<
+                             extra_data.length() << " data=" << extra_data.
+                             c_str() << dendl;
                 return -EIO;
             }
 
@@ -845,7 +888,8 @@ class RGWRESTStreamGetCRF:public RGWStreamReadHTTPResourceCRF {
         return do_decode_rest_obj(dpp, sc->cct, src_attrs, headers, &rest_obj);
     }
 
-    bool need_extra_data() override {
+    bool need_extra_data() override
+    {
         return true;
     }
 };
@@ -856,44 +900,46 @@ static std::set < string > keep_headers = { "CONTENT_TYPE",
     "CONTENT_LANGUAGE"
 };
 
-class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
+class RGWAWSStreamPutCRF: public RGWStreamWriteHTTPResourceCRF
+{
     RGWDataSyncCtx *sc;
     rgw_sync_aws_src_obj_properties src_properties;
     std::shared_ptr < AWSSyncConfig_Profile > target;
-    const rgw_obj & dest_obj;
+    const rgw_obj &dest_obj;
     string etag;
-  public:
-    RGWAWSStreamPutCRF(CephContext * _cct,
-                       RGWCoroutinesEnv * _env,
-                       RGWCoroutine * _caller,
-                       RGWDataSyncCtx * _sc,
-                       const rgw_sync_aws_src_obj_properties & _src_properties,
+public:
+    RGWAWSStreamPutCRF(CephContext *_cct,
+                       RGWCoroutinesEnv *_env,
+                       RGWCoroutine *_caller,
+                       RGWDataSyncCtx *_sc,
+                       const rgw_sync_aws_src_obj_properties &_src_properties,
                        std::shared_ptr < AWSSyncConfig_Profile > &_target,
                        const rgw_obj &
-                       _dest_obj):RGWStreamWriteHTTPResourceCRF(_cct, _env,
-                                                                _caller,
-                                                                _sc->env->
-                                                                http_manager),
+                       _dest_obj): RGWStreamWriteHTTPResourceCRF(_cct, _env,
+                                   _caller,
+                                   _sc->env->
+                                   http_manager),
         sc(_sc), src_properties(_src_properties), target(_target),
-        dest_obj(_dest_obj) {
-    } int init() override {
+        dest_obj(_dest_obj)
+    {
+    } int init() override
+    {
         /* init output connection */
         RGWRESTStreamS3PutObj *out_req {
-        nullptr};
+            nullptr};
 
         if (multipart.is_multipart) {
             char buf[32];
             snprintf(buf, sizeof(buf), "%d", multipart.part_num);
-            rgw_http_param_pair params[] =
-                { {"uploadId", multipart.upload_id.c_str()}
-            ,
-            {"partNumber", buf}
-            ,
-            {nullptr, nullptr}
+            rgw_http_param_pair params[] = {
+                {"uploadId", multipart.upload_id.c_str()}
+                ,
+                {"partNumber", buf}
+                ,
+                {nullptr, nullptr}
             };
             target->conn->put_obj_send_init(dest_obj, params, &out_req);
-        }
-        else {
+        } else {
             target->conn->put_obj_send_init(dest_obj, nullptr, &out_req);
         }
 
@@ -902,23 +948,25 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
         return RGWStreamWriteHTTPResourceCRF::init();
     }
 
-    static bool keep_attr(const string & h) {
+    static bool keep_attr(const string &h)
+    {
         return (keep_headers.find(h) != keep_headers.end() ||
                 boost::algorithm::starts_with(h, "X_AMZ_"));
     }
 
-    static void init_send_attrs(const DoutPrefixProvider * dpp,
-                                CephContext * cct,
-                                const rgw_rest_obj & rest_obj,
+    static void init_send_attrs(const DoutPrefixProvider *dpp,
+                                CephContext *cct,
+                                const rgw_rest_obj &rest_obj,
                                 const rgw_sync_aws_src_obj_properties &
                                 src_properties,
-                                const AWSSyncConfig_Profile * target,
-                                map < string, string > *attrs) {
-        auto & new_attrs = *attrs;
+                                const AWSSyncConfig_Profile *target,
+                                map < string, string > *attrs)
+    {
+        auto &new_attrs = *attrs;
 
         new_attrs.clear();
 
-      for (auto & hi:rest_obj.attrs) {
+        for (auto &hi : rest_obj.attrs) {
             if (keep_attr(hi.first)) {
                 new_attrs.insert(hi);
             }
@@ -929,19 +977,19 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
         map < int, vector < string > >access_map;
 
         if (target->acls) {
-          for (auto & grant:acl.get_grant_map()) {
-                auto & orig_grantee = grant.first;
-                auto & perm = grant.second;
+            for (auto &grant : acl.get_grant_map()) {
+                auto &orig_grantee = grant.first;
+                auto &perm = grant.second;
 
                 string grantee;
 
-                const auto & am = target->acls->acl_mappings;
+                const auto &am = target->acls->acl_mappings;
 
                 auto iter = am.find(orig_grantee);
                 if (iter == am.end()) {
                     ldpp_dout(dpp,
                               20) << "acl_mappings: Could not find " <<
-                        orig_grantee << " .. ignoring" << dendl;
+                                  orig_grantee << " .. ignoring" << dendl;
                     continue;
                 }
 
@@ -950,17 +998,17 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
                 string type;
 
                 switch (iter->second.type) {
-                case ACL_TYPE_CANON_USER:
-                    type = "id";
-                    break;
-                case ACL_TYPE_EMAIL_USER:
-                    type = "emailAddress";
-                    break;
-                case ACL_TYPE_GROUP:
-                    type = "uri";
-                    break;
-                default:
-                    continue;
+                    case ACL_TYPE_CANON_USER:
+                        type = "id";
+                        break;
+                    case ACL_TYPE_EMAIL_USER:
+                        type = "emailAddress";
+                        break;
+                    case ACL_TYPE_GROUP:
+                        type = "uri";
+                        break;
+                    default:
+                        continue;
                 }
 
                 string tv = type + "=" + grantee;
@@ -979,32 +1027,32 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
             }
         }
 
-      for (auto aiter:access_map) {
+        for (auto aiter : access_map) {
             int grant_type = aiter.first;
 
             string header_str("x-amz-grant-");
 
             switch (grant_type) {
-            case RGW_PERM_READ:
-                header_str.append("read");
-                break;
-            case RGW_PERM_WRITE:
-                header_str.append("write");
-                break;
-            case RGW_PERM_READ_ACP:
-                header_str.append("read-acp");
-                break;
-            case RGW_PERM_WRITE_ACP:
-                header_str.append("write-acp");
-                break;
-            case RGW_PERM_FULL_CONTROL:
-                header_str.append("full-control");
-                break;
+                case RGW_PERM_READ:
+                    header_str.append("read");
+                    break;
+                case RGW_PERM_WRITE:
+                    header_str.append("write");
+                    break;
+                case RGW_PERM_READ_ACP:
+                    header_str.append("read-acp");
+                    break;
+                case RGW_PERM_WRITE_ACP:
+                    header_str.append("write-acp");
+                    break;
+                case RGW_PERM_FULL_CONTROL:
+                    header_str.append("full-control");
+                    break;
             }
 
             string s;
 
-          for (auto viter:aiter.second) {
+            for (auto viter : aiter.second) {
                 if (!s.empty()) {
                     s.append(", ");
                 }
@@ -1013,7 +1061,7 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
 
             ldpp_dout(dpp,
                       20) << "acl_mappings: set acl: " << header_str << "=" << s
-                << dendl;
+                          << dendl;
 
             new_attrs[header_str] = s;
         }
@@ -1036,8 +1084,9 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
         }
     }
 
-    void send_ready(const DoutPrefixProvider * dpp,
-                    const rgw_rest_obj & rest_obj) override {
+    void send_ready(const DoutPrefixProvider *dpp,
+                    const rgw_rest_obj &rest_obj) override
+    {
         RGWRESTStreamS3PutObj *r = static_cast < RGWRESTStreamS3PutObj * >(req);
 
         map < string, string > new_attrs;
@@ -1053,15 +1102,17 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
         r->send_ready(dpp, target->conn->get_key(), new_attrs, policy);
     }
 
-    void handle_headers(const map < string, string > &headers) {
-      for (auto h:headers) {
+    void handle_headers(const map < string, string > &headers)
+    {
+        for (auto h : headers) {
             if (h.first == "ETAG") {
                 etag = h.second;
             }
         }
     }
 
-    bool get_etag(string * petag) {
+    bool get_etag(string *petag)
+    {
         if (etag.empty()) {
             return false;
         }
@@ -1070,31 +1121,34 @@ class RGWAWSStreamPutCRF:public RGWStreamWriteHTTPResourceCRF {
     }
 };
 
-class RGWAWSStreamObjToCloudPlainCR:public RGWCoroutine {
+class RGWAWSStreamObjToCloudPlainCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *source_conn;
     std::shared_ptr < AWSSyncConfig_Profile > target;
-    const rgw_obj & src_obj;
-    const rgw_obj & dest_obj;
+    const rgw_obj &src_obj;
+    const rgw_obj &dest_obj;
 
     rgw_sync_aws_src_obj_properties src_properties;
 
     std::shared_ptr < RGWStreamReadHTTPResourceCRF > in_crf;
     std::shared_ptr < RGWStreamWriteHTTPResourceCRF > out_crf;
 
-  public:
-    RGWAWSStreamObjToCloudPlainCR(RGWDataSyncCtx * _sc,
-                                  RGWRESTConn * _source_conn,
-                                  const rgw_obj & _src_obj,
+public:
+    RGWAWSStreamObjToCloudPlainCR(RGWDataSyncCtx *_sc,
+                                  RGWRESTConn *_source_conn,
+                                  const rgw_obj &_src_obj,
                                   const rgw_sync_aws_src_obj_properties &
                                   _src_properties,
                                   std::shared_ptr < AWSSyncConfig_Profile >
                                   _target,
-                                  const rgw_obj & _dest_obj):RGWCoroutine(_sc->
-                                                                          cct),
+                                  const rgw_obj &_dest_obj): RGWCoroutine(_sc->
+                                              cct),
         sc(_sc), source_conn(_source_conn), target(_target), src_obj(_src_obj),
-        dest_obj(_dest_obj), src_properties(_src_properties) {
-    } int operate(const DoutPrefixProvider * dpp) override {
+        dest_obj(_dest_obj), src_properties(_src_properties)
+    {
+    } int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
             /* init input */
             in_crf.reset(new RGWRESTStreamGetCRF(cct, get_env(), this, sc,
@@ -1120,12 +1174,13 @@ class RGWAWSStreamObjToCloudPlainCR:public RGWCoroutine {
     }
 };
 
-class RGWAWSStreamObjToCloudMultipartPartCR:public RGWCoroutine {
+class RGWAWSStreamObjToCloudMultipartPartCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *source_conn;
     std::shared_ptr < AWSSyncConfig_Profile > target;
-    const rgw_obj & src_obj;
-    const rgw_obj & dest_obj;
+    const rgw_obj &src_obj;
+    const rgw_obj &dest_obj;
 
     rgw_sync_aws_src_obj_properties src_properties;
 
@@ -1138,24 +1193,26 @@ class RGWAWSStreamObjToCloudMultipartPartCR:public RGWCoroutine {
 
     string *petag;
 
-  public:
-    RGWAWSStreamObjToCloudMultipartPartCR(RGWDataSyncCtx * _sc,
-                                          RGWRESTConn * _source_conn,
-                                          const rgw_obj & _src_obj,
+public:
+    RGWAWSStreamObjToCloudMultipartPartCR(RGWDataSyncCtx *_sc,
+                                          RGWRESTConn *_source_conn,
+                                          const rgw_obj &_src_obj,
                                           std::shared_ptr <
                                           AWSSyncConfig_Profile > &_target,
-                                          const rgw_obj & _dest_obj,
+                                          const rgw_obj &_dest_obj,
                                           const rgw_sync_aws_src_obj_properties
                                           & _src_properties,
-                                          const string & _upload_id,
+                                          const string &_upload_id,
                                           const rgw_sync_aws_multipart_part_info
                                           & _part_info,
                                           string *
-                                          _petag):RGWCoroutine(_sc->cct),
+                                          _petag): RGWCoroutine(_sc->cct),
         sc(_sc), source_conn(_source_conn), target(_target), src_obj(_src_obj),
         dest_obj(_dest_obj), src_properties(_src_properties),
-        upload_id(_upload_id), part_info(_part_info), petag(_petag) {
-    } int operate(const DoutPrefixProvider * dpp) override {
+        upload_id(_upload_id), part_info(_part_info), petag(_petag)
+    {
+    } int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
             /* init input */
             in_crf.reset(new RGWRESTStreamGetCRF(cct, get_env(), this, sc,
@@ -1183,7 +1240,7 @@ class RGWAWSStreamObjToCloudMultipartPartCR:public RGWCoroutine {
                 get_etag(petag)) {
                 ldpp_dout(dpp,
                           0) << "ERROR: failed to get etag from PUT request" <<
-                    dendl;
+                             dendl;
                 return set_cr_error(-EIO);
             }
 
@@ -1194,26 +1251,29 @@ class RGWAWSStreamObjToCloudMultipartPartCR:public RGWCoroutine {
     }
 };
 
-class RGWAWSAbortMultipartCR:public RGWCoroutine {
+class RGWAWSAbortMultipartCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *dest_conn;
-    const rgw_obj & dest_obj;
+    const rgw_obj &dest_obj;
 
     string upload_id;
 
-  public:
-    RGWAWSAbortMultipartCR(RGWDataSyncCtx * _sc,
-                           RGWRESTConn * _dest_conn,
-                           const rgw_obj & _dest_obj,
-                           const string & _upload_id):RGWCoroutine(_sc->cct),
+public:
+    RGWAWSAbortMultipartCR(RGWDataSyncCtx *_sc,
+                           RGWRESTConn *_dest_conn,
+                           const rgw_obj &_dest_obj,
+                           const string &_upload_id): RGWCoroutine(_sc->cct),
         sc(_sc),
-        dest_conn(_dest_conn), dest_obj(_dest_obj), upload_id(_upload_id) {
-    } int operate(const DoutPrefixProvider * dpp) override {
+        dest_conn(_dest_conn), dest_obj(_dest_obj), upload_id(_upload_id)
+    {
+    } int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
 
             yield {
                 rgw_http_param_pair params[] =
-                    { {"uploadId", upload_id.c_str()}, {nullptr, nullptr} };
+                { {"uploadId", upload_id.c_str()}, {nullptr, nullptr} };
                 bufferlist bl;
                 call(new
                      RGWDeleteRESTResourceCR(sc->cct, dest_conn,
@@ -1225,8 +1285,8 @@ class RGWAWSAbortMultipartCR:public RGWCoroutine {
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: failed to abort multipart upload for dest object="
-                    << dest_obj << " (retcode=" << retcode << ")" << dendl;
+                             "ERROR: failed to abort multipart upload for dest object="
+                             << dest_obj << " (retcode=" << retcode << ")" << dendl;
                 return set_cr_error(retcode);
             }
 
@@ -1237,10 +1297,11 @@ class RGWAWSAbortMultipartCR:public RGWCoroutine {
     }
 };
 
-class RGWAWSInitMultipartCR:public RGWCoroutine {
+class RGWAWSInitMultipartCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *dest_conn;
-    const rgw_obj & dest_obj;
+    const rgw_obj &dest_obj;
 
     uint64_t obj_size;
     map < string, string > attrs;
@@ -1254,31 +1315,35 @@ class RGWAWSInitMultipartCR:public RGWCoroutine {
         string key;
         string upload_id;
 
-        void decode_xml(XMLObj * obj) {
+        void decode_xml(XMLObj *obj)
+        {
             RGWXMLDecoder::decode_xml("Bucket", bucket, obj);
             RGWXMLDecoder::decode_xml("Key", key, obj);
             RGWXMLDecoder::decode_xml("UploadId", upload_id, obj);
-    }} result;
+        }
+    } result;
 
-  public:
-    RGWAWSInitMultipartCR(RGWDataSyncCtx * _sc,
-                          RGWRESTConn * _dest_conn,
-                          const rgw_obj & _dest_obj,
+public:
+    RGWAWSInitMultipartCR(RGWDataSyncCtx *_sc,
+                          RGWRESTConn *_dest_conn,
+                          const rgw_obj &_dest_obj,
                           uint64_t _obj_size,
                           const map < string, string > &_attrs,
-                          string * _upload_id):RGWCoroutine(_sc->cct),
+                          string *_upload_id): RGWCoroutine(_sc->cct),
         sc(_sc),
         dest_conn(_dest_conn),
         dest_obj(_dest_obj),
-        obj_size(_obj_size), attrs(_attrs), upload_id(_upload_id) {
+        obj_size(_obj_size), attrs(_attrs), upload_id(_upload_id)
+    {
     }
 
-    int operate(const DoutPrefixProvider * dpp) override {
+    int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
 
             yield {
                 rgw_http_param_pair params[] =
-                    { {"uploads", nullptr}, {nullptr, nullptr} };
+                { {"uploads", nullptr}, {nullptr, nullptr} };
                 bufferlist bl;
                 call(new RGWPostRawRESTResourceCR < bufferlist >
                      (sc->cct, dest_conn, sc->env->http_manager,
@@ -1288,8 +1353,8 @@ class RGWAWSInitMultipartCR:public RGWCoroutine {
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: failed to initialize multipart upload for dest object="
-                    << dest_obj << dendl;
+                             "ERROR: failed to initialize multipart upload for dest object="
+                             << dest_obj << dendl;
                 return set_cr_error(retcode);
             }
             {
@@ -1302,8 +1367,8 @@ class RGWAWSInitMultipartCR:public RGWCoroutine {
                 if (!parser.init()) {
                     ldpp_dout(dpp,
                               0) <<
-                        "ERROR: failed to initialize xml parser for parsing multipart init response from server"
-                        << dendl;
+                                 "ERROR: failed to initialize xml parser for parsing multipart init response from server"
+                                 << dendl;
                     return set_cr_error(-EIO);
                 }
 
@@ -1311,15 +1376,14 @@ class RGWAWSInitMultipartCR:public RGWCoroutine {
                     string str(out_bl.c_str(), out_bl.length());
                     ldpp_dout(dpp,
                               5) << "ERROR: failed to parse xml: " << str <<
-                        dendl;
+                                 dendl;
                     return set_cr_error(-EIO);
                 }
 
                 try {
                     RGWXMLDecoder::decode_xml("InitiateMultipartUploadResult",
                                               result, &parser, true);
-                }
-                catch(RGWXMLDecoder::err & err) {
+                } catch (RGWXMLDecoder::err &err) {
                     string str(out_bl.c_str(), out_bl.length());
                     ldpp_dout(dpp,
                               5) << "ERROR: unexpected xml: " << str << dendl;
@@ -1329,8 +1393,8 @@ class RGWAWSInitMultipartCR:public RGWCoroutine {
 
             ldpp_dout(dpp,
                       20) << "init multipart result: bucket=" << result.
-                bucket << " key=" << result.key << " upload_id=" << result.
-                upload_id << dendl;
+                          bucket << " key=" << result.key << " upload_id=" << result.
+                          upload_id << dendl;
 
             *upload_id = result.upload_id;
 
@@ -1341,10 +1405,11 @@ class RGWAWSInitMultipartCR:public RGWCoroutine {
     }
 };
 
-class RGWAWSCompleteMultipartCR:public RGWCoroutine {
+class RGWAWSCompleteMultipartCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *dest_conn;
-    const rgw_obj & dest_obj;
+    const rgw_obj &dest_obj;
 
     bufferlist out_bl;
 
@@ -1355,15 +1420,18 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
 
         explicit CompleteMultipartReq(const map < int,
                                       rgw_sync_aws_multipart_part_info >
-                                      &_parts):parts(_parts) {
-        } void dump_xml(Formatter * f) const {
-            for (auto p:parts) {
+                                      &_parts): parts(_parts)
+        {
+        } void dump_xml(Formatter *f) const
+        {
+            for (auto p : parts) {
                 f->open_object_section("Part");
                 encode_xml("PartNumber", p.first, f);
                 encode_xml("ETag", p.second.etag, f);
                 f->close_section();
             };
-    }}
+        }
+    }
     req_enc;
 
     struct CompleteMultipartResult {
@@ -1372,31 +1440,35 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
         string key;
         string etag;
 
-        void decode_xml(XMLObj * obj) {
+        void decode_xml(XMLObj *obj)
+        {
             RGWXMLDecoder::decode_xml("Location", bucket, obj);
             RGWXMLDecoder::decode_xml("Bucket", bucket, obj);
             RGWXMLDecoder::decode_xml("Key", key, obj);
             RGWXMLDecoder::decode_xml("ETag", etag, obj);
-    }} result;
+        }
+    } result;
 
-  public:
-    RGWAWSCompleteMultipartCR(RGWDataSyncCtx * _sc,
-                              RGWRESTConn * _dest_conn,
-                              const rgw_obj & _dest_obj,
+public:
+    RGWAWSCompleteMultipartCR(RGWDataSyncCtx *_sc,
+                              RGWRESTConn *_dest_conn,
+                              const rgw_obj &_dest_obj,
                               string _upload_id,
                               const map < int,
                               rgw_sync_aws_multipart_part_info >
-                              &_parts):RGWCoroutine(_sc->cct), sc(_sc),
+                              &_parts): RGWCoroutine(_sc->cct), sc(_sc),
         dest_conn(_dest_conn), dest_obj(_dest_obj), upload_id(_upload_id),
-        req_enc(_parts) {
+        req_enc(_parts)
+    {
     }
 
-    int operate(const DoutPrefixProvider * dpp) override {
+    int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
 
             yield {
                 rgw_http_param_pair params[] =
-                    { {"uploadId", upload_id.c_str()}, {nullptr, nullptr} };
+                { {"uploadId", upload_id.c_str()}, {nullptr, nullptr} };
                 stringstream ss;
                 XMLFormatter formatter;
 
@@ -1415,8 +1487,8 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: failed to initialize multipart upload for dest object="
-                    << dest_obj << dendl;
+                             "ERROR: failed to initialize multipart upload for dest object="
+                             << dest_obj << dendl;
                 return set_cr_error(retcode);
             }
             {
@@ -1429,8 +1501,8 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
                 if (!parser.init()) {
                     ldpp_dout(dpp,
                               0) <<
-                        "ERROR: failed to initialize xml parser for parsing multipart init response from server"
-                        << dendl;
+                                 "ERROR: failed to initialize xml parser for parsing multipart init response from server"
+                                 << dendl;
                     return set_cr_error(-EIO);
                 }
 
@@ -1438,15 +1510,14 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
                     string str(out_bl.c_str(), out_bl.length());
                     ldpp_dout(dpp,
                               5) << "ERROR: failed to parse xml: " << str <<
-                        dendl;
+                                 dendl;
                     return set_cr_error(-EIO);
                 }
 
                 try {
                     RGWXMLDecoder::decode_xml("CompleteMultipartUploadResult",
                                               result, &parser, true);
-                }
-                catch(RGWXMLDecoder::err & err) {
+                } catch (RGWXMLDecoder::err &err) {
                     string str(out_bl.c_str(), out_bl.length());
                     ldpp_dout(dpp,
                               5) << "ERROR: unexpected xml: " << str << dendl;
@@ -1456,8 +1527,8 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
 
             ldpp_dout(dpp,
                       20) << "complete multipart result: location=" << result.
-                location << " bucket=" << result.bucket << " key=" << result.
-                key << " etag=" << result.etag << dendl;
+                          location << " bucket=" << result.bucket << " key=" << result.
+                          key << " etag=" << result.etag << dendl;
 
             return set_cr_done();
         }
@@ -1466,25 +1537,28 @@ class RGWAWSCompleteMultipartCR:public RGWCoroutine {
     }
 };
 
-class RGWAWSStreamAbortMultipartUploadCR:public RGWCoroutine {
+class RGWAWSStreamAbortMultipartUploadCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWRESTConn *dest_conn;
-    const rgw_obj & dest_obj;
+    const rgw_obj &dest_obj;
     const rgw_raw_obj status_obj;
 
     string upload_id;
 
-  public:
+public:
 
-    RGWAWSStreamAbortMultipartUploadCR(RGWDataSyncCtx * _sc,
-                                       RGWRESTConn * _dest_conn,
-                                       const rgw_obj & _dest_obj,
-                                       const rgw_raw_obj & _status_obj,
+    RGWAWSStreamAbortMultipartUploadCR(RGWDataSyncCtx *_sc,
+                                       RGWRESTConn *_dest_conn,
+                                       const rgw_obj &_dest_obj,
+                                       const rgw_raw_obj &_status_obj,
                                        const string &
-                                       _upload_id):RGWCoroutine(_sc->cct),
+                                       _upload_id): RGWCoroutine(_sc->cct),
         sc(_sc), dest_conn(_dest_conn), dest_obj(_dest_obj),
-        status_obj(_status_obj), upload_id(_upload_id) {
-    } int operate(const DoutPrefixProvider * dpp) override {
+        status_obj(_status_obj), upload_id(_upload_id)
+    {
+    } int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
             yield call(new
                        RGWAWSAbortMultipartCR(sc, dest_conn, dest_obj,
@@ -1492,16 +1566,16 @@ class RGWAWSStreamAbortMultipartUploadCR:public RGWCoroutine {
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: failed to abort multipart upload dest obj=" <<
-                    dest_obj << " upload_id=" << upload_id << " retcode=" <<
-                    retcode << dendl;
+                             "ERROR: failed to abort multipart upload dest obj=" <<
+                             dest_obj << " upload_id=" << upload_id << " retcode=" <<
+                             retcode << dendl;
                 /* ignore error, best effort */
             }
             yield call(new RGWRadosRemoveCR(sc->env->driver, status_obj));
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) << "ERROR: failed to remove sync status obj obj="
-                    << status_obj << " retcode=" << retcode << dendl;
+                             << status_obj << " retcode=" << retcode << dendl;
                 /* ignore error, best effort */
             }
             return set_cr_done();
@@ -1511,14 +1585,15 @@ class RGWAWSStreamAbortMultipartUploadCR:public RGWCoroutine {
     }
 };
 
-class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
+class RGWAWSStreamObjToCloudMultipartCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     RGWDataSyncEnv *sync_env;
-    AWSSyncConfig & conf;
+    AWSSyncConfig &conf;
     RGWRESTConn *source_conn;
     std::shared_ptr < AWSSyncConfig_Profile > target;
-    const rgw_obj & src_obj;
-    const rgw_obj & dest_obj;
+    const rgw_obj &src_obj;
+    const rgw_obj &dest_obj;
 
     uint64_t obj_size;
     string src_etag;
@@ -1530,47 +1605,49 @@ class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
     map < string, string > new_attrs;
 
     rgw_sync_aws_multipart_part_info *pcur_part_info {
-    nullptr};
+        nullptr};
 
     int ret_err {
-    0};
+        0};
 
     rgw_raw_obj status_obj;
 
-  public:
-    RGWAWSStreamObjToCloudMultipartCR(RGWDataSyncCtx * _sc,
-                                      rgw_bucket_sync_pipe & _sync_pipe,
-                                      AWSSyncConfig & _conf,
-                                      RGWRESTConn * _source_conn,
-                                      const rgw_obj & _src_obj,
+public:
+    RGWAWSStreamObjToCloudMultipartCR(RGWDataSyncCtx *_sc,
+                                      rgw_bucket_sync_pipe &_sync_pipe,
+                                      AWSSyncConfig &_conf,
+                                      RGWRESTConn *_source_conn,
+                                      const rgw_obj &_src_obj,
                                       std::shared_ptr < AWSSyncConfig_Profile >
-                                      &_target, const rgw_obj & _dest_obj,
+                                      &_target, const rgw_obj &_dest_obj,
                                       uint64_t _obj_size,
                                       const rgw_sync_aws_src_obj_properties &
                                       _src_properties,
                                       const rgw_rest_obj &
-                                      _rest_obj):RGWCoroutine(_sc->cct),
+                                      _rest_obj): RGWCoroutine(_sc->cct),
         sc(_sc), sync_env(_sc->env), conf(_conf), source_conn(_source_conn),
         target(_target), src_obj(_src_obj), dest_obj(_dest_obj),
         obj_size(_obj_size), src_properties(_src_properties),
         rest_obj(_rest_obj),
         status_obj(sync_env->svc->zone->get_zone_params().log_pool,
                    RGWBucketPipeSyncStatusManager::obj_status_oid(_sync_pipe,
-                                                                  sc->
-                                                                  source_zone,
-                                                                  src_obj)) {
-    } int operate(const DoutPrefixProvider * dpp) override {
+                           sc->
+                           source_zone,
+                           src_obj))
+    {
+    } int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
             yield call(new RGWSimpleRadosReadCR <
                        rgw_sync_aws_multipart_upload_info > (dpp,
-                                                             sync_env->driver,
-                                                             status_obj,
-                                                             &status, false));
+                               sync_env->driver,
+                               status_obj,
+                               &status, false));
 
             if (retcode < 0 && retcode != -ENOENT) {
                 ldpp_dout(dpp,
                           0) << "ERROR: failed to read sync status of object "
-                    << src_obj << " retcode=" << retcode << dendl;
+                             << src_obj << " retcode=" << retcode << dendl;
                 return retcode;
             }
 
@@ -1582,12 +1659,12 @@ class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
                     || status.src_properties.etag != src_properties.etag) {
                     yield call(new
                                RGWAWSStreamAbortMultipartUploadCR(sc,
-                                                                  target->conn.
-                                                                  get(),
-                                                                  dest_obj,
-                                                                  status_obj,
-                                                                  status.
-                                                                  upload_id));
+                                       target->conn.
+                                       get(),
+                                       dest_obj,
+                                       status_obj,
+                                       status.
+                                       upload_id));
                     retcode = -ENOENT;
                 }
             }
@@ -1620,68 +1697,68 @@ class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
             for (; (uint32_t) status.cur_part <= status.num_parts;
                  ++status.cur_part) {
                 yield {
-                    rgw_sync_aws_multipart_part_info & cur_part_info =
-                        status.parts[status.cur_part];
+                    rgw_sync_aws_multipart_part_info &cur_part_info =
+                    status.parts[status.cur_part];
                     cur_part_info.part_num = status.cur_part;
                     cur_part_info.ofs = status.cur_ofs;
                     cur_part_info.size =
-                        std::min((uint64_t) status.part_size,
-                                 status.obj_size - status.cur_ofs);
+                    std::min((uint64_t) status.part_size,
+                             status.obj_size - status.cur_ofs);
 
                     pcur_part_info = &cur_part_info;
 
                     status.cur_ofs += status.part_size;
 
                     call(new RGWAWSStreamObjToCloudMultipartPartCR(sc,
-                                                                   source_conn,
-                                                                   src_obj,
-                                                                   target,
-                                                                   dest_obj,
-                                                                   status.
-                                                                   src_properties,
-                                                                   status.
-                                                                   upload_id,
-                                                                   cur_part_info,
-                                                                   &cur_part_info.
-                                                                   etag));
+                            source_conn,
+                            src_obj,
+                            target,
+                            dest_obj,
+                            status.
+                            src_properties,
+                            status.
+                            upload_id,
+                            cur_part_info,
+                            &cur_part_info.
+                            etag));
                 }
 
                 if (retcode < 0) {
                     ldpp_dout(dpp,
                               0) << "ERROR: failed to sync obj=" << src_obj <<
-                        ", sync via multipart upload, upload_id=" << status.
-                        upload_id << " part number " << status.
-                        cur_part << " (error: " << cpp_strerror(-retcode) << ")"
-                        << dendl;
+                                 ", sync via multipart upload, upload_id=" << status.
+                                 upload_id << " part number " << status.
+                                 cur_part << " (error: " << cpp_strerror(-retcode) << ")"
+                                 << dendl;
                     ret_err = retcode;
                     yield call(new
                                RGWAWSStreamAbortMultipartUploadCR(sc,
-                                                                  target->conn.
-                                                                  get(),
-                                                                  dest_obj,
-                                                                  status_obj,
-                                                                  status.
-                                                                  upload_id));
+                                       target->conn.
+                                       get(),
+                                       dest_obj,
+                                       status_obj,
+                                       status.
+                                       upload_id));
                     return set_cr_error(ret_err);
                 }
 
                 yield call(new RGWSimpleRadosWriteCR <
                            rgw_sync_aws_multipart_upload_info > (dpp,
-                                                                 sync_env->
-                                                                 driver,
-                                                                 status_obj,
-                                                                 status));
+                                   sync_env->
+                                   driver,
+                                   status_obj,
+                                   status));
                 if (retcode < 0) {
                     ldpp_dout(dpp,
                               0) <<
-                        "ERROR: failed to store multipart upload state, retcode="
-                        << retcode << dendl;
+                                 "ERROR: failed to store multipart upload state, retcode="
+                                 << retcode << dendl;
                     /* continue with upload anyway */
                 }
                 ldpp_dout(dpp,
                           20) << "sync of object=" << src_obj <<
-                    " via multipart upload, finished sending part #" << status.
-                    cur_part << " etag=" << pcur_part_info->etag << dendl;
+                              " via multipart upload, finished sending part #" << status.
+                              cur_part << " etag=" << pcur_part_info->etag << dendl;
             }
 
             yield call(new
@@ -1691,17 +1768,17 @@ class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) <<
-                    "ERROR: failed to complete multipart upload of obj=" <<
-                    src_obj << " (error: " << cpp_strerror(-retcode) << ")" <<
-                    dendl;
+                             "ERROR: failed to complete multipart upload of obj=" <<
+                             src_obj << " (error: " << cpp_strerror(-retcode) << ")" <<
+                             dendl;
                 ret_err = retcode;
                 yield call(new
                            RGWAWSStreamAbortMultipartUploadCR(sc,
-                                                              target->conn.
-                                                              get(), dest_obj,
-                                                              status_obj,
-                                                              status.
-                                                              upload_id));
+                                   target->conn.
+                                   get(), dest_obj,
+                                   status_obj,
+                                   status.
+                                   upload_id));
                 return set_cr_error(ret_err);
             }
 
@@ -1710,9 +1787,9 @@ class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
             if (retcode < 0) {
                 ldpp_dout(dpp,
                           0) << "ERROR: failed to abort multipart upload obj="
-                    << src_obj << " upload_id=" << status.
-                    upload_id << " part number " << status.
-                    cur_part << " (" << cpp_strerror(-retcode) << ")" << dendl;
+                             << src_obj << " upload_id=" << status.
+                             upload_id << " part number " << status.
+                             cur_part << " (" << cpp_strerror(-retcode) << ")" << dendl;
                 /* ignore error, best effort */
             }
             return set_cr_done();
@@ -1723,15 +1800,15 @@ class RGWAWSStreamObjToCloudMultipartCR:public RGWCoroutine {
 };
 
 template < class T >
-    int decode_attr(map < string, bufferlist > &attrs, const char *attr_name,
-                    T * result, T def_val)
+int decode_attr(map < string, bufferlist > &attrs, const char *attr_name,
+                T *result, T def_val)
 {
     map < string, bufferlist >::iterator iter = attrs.find(attr_name);
     if (iter == attrs.end()) {
         *result = def_val;
         return 0;
     }
-    bufferlist & bl = iter->second;
+    bufferlist &bl = iter->second;
     if (bl.length() == 0) {
         *result = def_val;
         return 0;
@@ -1739,88 +1816,94 @@ template < class T >
     auto bliter = bl.cbegin();
     try {
         decode(*result, bliter);
-    }
-    catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         return -EIO;
     }
     return 0;
 }
 
 // maybe use Fetch Remote Obj instead?
-class RGWAWSHandleRemoteObjCBCR:public RGWStatRemoteObjCBCR {
+class RGWAWSHandleRemoteObjCBCR: public RGWStatRemoteObjCBCR
+{
     rgw_bucket_sync_pipe sync_pipe;
-    AWSSyncInstanceEnv & instance;
+    AWSSyncInstanceEnv &instance;
 
     uint64_t versioned_epoch {
-    0};
+        0};
 
     RGWRESTConn *source_conn {
-    nullptr};
+        nullptr};
     std::shared_ptr < AWSSyncConfig_Profile > target;
     bufferlist res;
     unordered_map < string, bool > bucket_created;
     rgw_rest_obj rest_obj;
     int ret {
-    0};
+        0};
 
     uint32_t src_zone_short_id {
-    0};
+        0};
     uint64_t src_pg_ver {
-    0};
+        0};
 
     bufferlist out_bl;
 
     struct CreateBucketResult {
         string code;
 
-        void decode_xml(XMLObj * obj) {
+        void decode_xml(XMLObj *obj)
+        {
             RGWXMLDecoder::decode_xml("Code", code, obj);
-    }} result;
+        }
+    } result;
 
     rgw_obj src_obj;
     rgw_obj dest_obj;
 
-  public:
-  RGWAWSHandleRemoteObjCBCR(RGWDataSyncCtx * _sc, rgw_bucket_sync_pipe & _sync_pipe, rgw_obj_key & _key, AWSSyncInstanceEnv & _instance, uint64_t _versioned_epoch):RGWStatRemoteObjCBCR(_sc, _sync_pipe.info.source_bs.bucket, _key),
+public:
+    RGWAWSHandleRemoteObjCBCR(RGWDataSyncCtx *_sc, rgw_bucket_sync_pipe &_sync_pipe, rgw_obj_key &_key,
+                              AWSSyncInstanceEnv  &_instance, uint64_t _versioned_epoch): RGWStatRemoteObjCBCR(_sc, _sync_pipe.info.source_bs.bucket,
+                                          _key),
         sync_pipe(_sync_pipe),
-        instance(_instance), versioned_epoch(_versioned_epoch) {
+        instance(_instance), versioned_epoch(_versioned_epoch)
+    {
     }
 
-    ~RGWAWSHandleRemoteObjCBCR() {
+    ~RGWAWSHandleRemoteObjCBCR()
+    {
     }
 
-    int operate(const DoutPrefixProvider * dpp) override {
+    int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
             ret =
                 decode_attr(attrs, RGW_ATTR_PG_VER, &src_pg_ver, (uint64_t) 0);
             if (ret < 0) {
                 ldpp_dout(dpp,
                           0) << "ERROR: failed to decode pg ver attr, ignoring"
-                    << dendl;
-            }
-            else {
+                             << dendl;
+            } else {
                 ret =
                     decode_attr(attrs, RGW_ATTR_SOURCE_ZONE, &src_zone_short_id,
                                 (uint32_t) 0);
                 if (ret < 0) {
                     ldpp_dout(dpp,
                               0) <<
-                        "ERROR: failed to decode source zone short_id attr, ignoring"
-                        << dendl;
+                                 "ERROR: failed to decode source zone short_id attr, ignoring"
+                                 << dendl;
                     src_pg_ver = 0; /* all or nothing */
                 }
             }
             ldpp_dout(dpp, 4) << "AWS: download begin: z=" << sc->source_zone
-                << " b=" << src_bucket << " k=" << key << " size=" << size
-                << " mtime=" << mtime << " etag=" << etag
-                << " zone_short_id=" << src_zone_short_id << " pg_ver=" <<
-                src_pg_ver << dendl;
+                              << " b=" << src_bucket << " k=" << key << " size=" << size
+                              << " mtime=" << mtime << " etag=" << etag
+                              << " zone_short_id=" << src_zone_short_id << " pg_ver=" <<
+                              src_pg_ver << dendl;
 
             source_conn = sync_env->svc->zone->get_zone_conn(sc->source_zone);
             if (!source_conn) {
                 ldpp_dout(dpp,
                           0) << "ERROR: cannot find http connection to zone " <<
-                    sc->source_zone << dendl;
+                             sc->source_zone << dendl;
                 return set_cr_error(-EINVAL);
             }
 
@@ -1833,7 +1916,7 @@ class RGWAWSHandleRemoteObjCBCR:public RGWStatRemoteObjCBCR {
                 yield {
                     ldpp_dout(dpp,
                               0) << "AWS: creating bucket " << dest_obj.bucket.
-                        name << dendl;
+                                 name << dendl;
                     bufferlist bl;
                     call(new RGWPutRawRESTResourceCR < bufferlist >
                          (sc->cct, target->conn.get(), sync_env->http_manager,
@@ -1844,8 +1927,8 @@ class RGWAWSHandleRemoteObjCBCR:public RGWStatRemoteObjCBCR {
                     if (!parser.init()) {
                         ldpp_dout(dpp,
                                   0) <<
-                            "ERROR: failed to initialize xml parser for parsing multipart init response from server"
-                            << dendl;
+                                     "ERROR: failed to initialize xml parser for parsing multipart init response from server"
+                                     << dendl;
                         return set_cr_error(retcode);
                     }
 
@@ -1853,19 +1936,18 @@ class RGWAWSHandleRemoteObjCBCR:public RGWStatRemoteObjCBCR {
                         string str(out_bl.c_str(), out_bl.length());
                         ldpp_dout(dpp,
                                   5) << "ERROR: failed to parse xml: " << str <<
-                            dendl;
+                                     dendl;
                         return set_cr_error(retcode);
                     }
 
                     try {
                         RGWXMLDecoder::decode_xml("Error", result, &parser,
                                                   true);
-                    }
-                    catch(RGWXMLDecoder::err & err) {
+                    } catch (RGWXMLDecoder::err &err) {
                         string str(out_bl.c_str(), out_bl.length());
                         ldpp_dout(dpp,
                                   5) << "ERROR: unexpected xml: " << str <<
-                            dendl;
+                                     dendl;
                         return set_cr_error(retcode);
                     }
 
@@ -1889,21 +1971,22 @@ class RGWAWSHandleRemoteObjCBCR:public RGWStatRemoteObjCBCR {
                 src_properties.pg_ver = src_pg_ver;
                 src_properties.versioned_epoch = versioned_epoch;
 
-                if (size < instance.conf.s3.multipart_sync_threshold) {
+                if (size < instance.conf.s3.multipart_sync_threshold)
+                {
                     call(new
                          RGWAWSStreamObjToCloudPlainCR(sc, source_conn, src_obj,
                                                        src_properties, target,
                                                        dest_obj));
-                }
-                else {
+                } else
+                {
                     rgw_rest_obj rest_obj;
                     rest_obj.init(key);
                     if (do_decode_rest_obj
                         (dpp, sc->cct, attrs, headers, &rest_obj)) {
                         ldpp_dout(dpp,
                                   0) <<
-                            "ERROR: failed to decode rest obj out of headers="
-                            << headers << ", attrs=" << attrs << dendl;
+                                     "ERROR: failed to decode rest obj out of headers="
+                                     << headers << ", attrs=" << attrs << dendl;
                         return set_cr_error(-EINVAL);
                     }
                     call(new
@@ -1926,66 +2009,73 @@ class RGWAWSHandleRemoteObjCBCR:public RGWStatRemoteObjCBCR {
     }
 };
 
-class RGWAWSHandleRemoteObjCR:public RGWCallStatRemoteObjCR {
+class RGWAWSHandleRemoteObjCR: public RGWCallStatRemoteObjCR
+{
     rgw_bucket_sync_pipe sync_pipe;
-    AWSSyncInstanceEnv & instance;
+    AWSSyncInstanceEnv &instance;
     uint64_t versioned_epoch;
-  public:
-    RGWAWSHandleRemoteObjCR(RGWDataSyncCtx * _sc,
-                            rgw_bucket_sync_pipe & _sync_pipe,
-                            rgw_obj_key & _key, AWSSyncInstanceEnv & _instance,
+public:
+    RGWAWSHandleRemoteObjCR(RGWDataSyncCtx *_sc,
+                            rgw_bucket_sync_pipe &_sync_pipe,
+                            rgw_obj_key &_key, AWSSyncInstanceEnv &_instance,
                             uint64_t
-                            _versioned_epoch):RGWCallStatRemoteObjCR(_sc,
-                                                                     _sync_pipe.
-                                                                     info.
-                                                                     source_bs.
-                                                                     bucket,
-                                                                     _key),
+                            _versioned_epoch): RGWCallStatRemoteObjCR(_sc,
+                                        _sync_pipe.
+                                        info.
+                                        source_bs.
+                                        bucket,
+                                        _key),
         sync_pipe(_sync_pipe), instance(_instance),
-        versioned_epoch(_versioned_epoch) {
-    } ~RGWAWSHandleRemoteObjCR() {
+        versioned_epoch(_versioned_epoch)
+    {
+    } ~RGWAWSHandleRemoteObjCR()
+    {
     }
 
-    RGWStatRemoteObjCBCR *allocate_callback() override {
+    RGWStatRemoteObjCBCR *allocate_callback() override
+    {
         return new RGWAWSHandleRemoteObjCBCR(sc, sync_pipe, key, instance,
                                              versioned_epoch);
     }
 };
 
-class RGWAWSRemoveRemoteObjCBCR:public RGWCoroutine {
+class RGWAWSRemoveRemoteObjCBCR: public RGWCoroutine
+{
     RGWDataSyncCtx *sc;
     std::shared_ptr < AWSSyncConfig_Profile > target;
     rgw_bucket_sync_pipe sync_pipe;
     rgw_obj_key key;
     ceph::real_time mtime;
-    AWSSyncInstanceEnv & instance;
+    AWSSyncInstanceEnv &instance;
     int ret {
-    0};
-  public:
-    RGWAWSRemoveRemoteObjCBCR(RGWDataSyncCtx * _sc,
-                              rgw_bucket_sync_pipe & _sync_pipe,
-                              rgw_obj_key & _key,
-                              const ceph::real_time & _mtime,
-                              AWSSyncInstanceEnv & _instance):RGWCoroutine(_sc->
-                                                                           cct),
+        0};
+public:
+    RGWAWSRemoveRemoteObjCBCR(RGWDataSyncCtx *_sc,
+                              rgw_bucket_sync_pipe &_sync_pipe,
+                              rgw_obj_key &_key,
+                              const ceph::real_time &_mtime,
+                              AWSSyncInstanceEnv &_instance): RGWCoroutine(_sc->
+                                          cct),
         sc(_sc), sync_pipe(_sync_pipe), key(_key), mtime(_mtime),
-        instance(_instance) {
-    } int operate(const DoutPrefixProvider * dpp) override {
+        instance(_instance)
+    {
+    } int operate(const DoutPrefixProvider *dpp) override
+    {
         reenter(this) {
             ldpp_dout(dpp, 0) << ": remove remote obj: z=" << sc->source_zone
-                << " b=" << sync_pipe.info.source_bs.
-                bucket << " k=" << key << " mtime=" << mtime << dendl;
+                              << " b=" << sync_pipe.info.source_bs.
+                              bucket << " k=" << key << " mtime=" << mtime << dendl;
             yield {
                 instance.get_profile(sync_pipe.info.source_bs.bucket, &target);
                 string path =
-                    instance.conf.get_path(target, sync_pipe.dest_bucket_info,
-                                           key);
+                instance.conf.get_path(target, sync_pipe.dest_bucket_info,
+                                       key);
                 ldpp_dout(dpp,
                           0) << "AWS: removing aws object at" << path << dendl;
 
                 call(new RGWDeleteRESTResourceCR(sc->cct, target->conn.get(),
                                                  sc->env->http_manager,
-                                                 path, nullptr /* params */ ));
+                                                 path, nullptr /* params */));
             }
             if (retcode < 0) {
                 return set_cr_error(retcode);
@@ -1997,77 +2087,87 @@ class RGWAWSRemoveRemoteObjCBCR:public RGWCoroutine {
 
 };
 
-class RGWAWSDataSyncModule:public RGWDataSyncModule {
+class RGWAWSDataSyncModule: public RGWDataSyncModule
+{
     CephContext *cct;
     AWSSyncInstanceEnv instance;
-  public:
-    RGWAWSDataSyncModule(CephContext * _cct, AWSSyncConfig & _conf):cct(_cct),
-        instance(_conf) {
-    } void init(RGWDataSyncCtx * sc, uint64_t instance_id) override {
+public:
+    RGWAWSDataSyncModule(CephContext *_cct, AWSSyncConfig &_conf): cct(_cct),
+        instance(_conf)
+    {
+    } void init(RGWDataSyncCtx *sc, uint64_t instance_id) override
+    {
         instance.init(sc, instance_id);
     }
 
-    ~RGWAWSDataSyncModule() {
+    ~RGWAWSDataSyncModule()
+    {
     }
 
-    RGWCoroutine *sync_object(const DoutPrefixProvider * dpp,
-                              RGWDataSyncCtx * sc,
-                              rgw_bucket_sync_pipe & sync_pipe,
-                              rgw_obj_key & key,
+    RGWCoroutine *sync_object(const DoutPrefixProvider *dpp,
+                              RGWDataSyncCtx *sc,
+                              rgw_bucket_sync_pipe &sync_pipe,
+                              rgw_obj_key &key,
                               std::optional < uint64_t > versioned_epoch,
-                              const rgw_zone_set_entry & source_trace_entry,
-                              rgw_zone_set * zones_trace) override {
+                              const rgw_zone_set_entry &source_trace_entry,
+                              rgw_zone_set *zones_trace) override
+    {
         ldout(sc->cct,
               0) << instance.id << ": sync_object: b=" << sync_pipe.info.
-            source_bs.
-            bucket << " k=" << key << " versioned_epoch=" << versioned_epoch.
-            value_or(0) << dendl;
+                 source_bs.
+                 bucket << " k=" << key << " versioned_epoch=" << versioned_epoch.
+                 value_or(0) << dendl;
         return new RGWAWSHandleRemoteObjCR(sc, sync_pipe, key, instance,
                                            versioned_epoch.value_or(0));
     }
-    RGWCoroutine *remove_object(const DoutPrefixProvider * dpp,
-                                RGWDataSyncCtx * sc,
-                                rgw_bucket_sync_pipe & sync_pipe,
-                                rgw_obj_key & key, real_time & mtime,
+    RGWCoroutine *remove_object(const DoutPrefixProvider *dpp,
+                                RGWDataSyncCtx *sc,
+                                rgw_bucket_sync_pipe &sync_pipe,
+                                rgw_obj_key &key, real_time &mtime,
                                 bool versioned, uint64_t versioned_epoch,
-                                rgw_zone_set * zones_trace)override {
+                                rgw_zone_set *zones_trace)override
+    {
         ldout(sc->cct,
               0) << "rm_object: b=" << sync_pipe.info.source_bs.
-            bucket << " k=" << key << " mtime=" << mtime << " versioned=" <<
-            versioned << " versioned_epoch=" << versioned_epoch << dendl;
+                 bucket << " k=" << key << " mtime=" << mtime << " versioned=" <<
+                 versioned << " versioned_epoch=" << versioned_epoch << dendl;
         return new RGWAWSRemoveRemoteObjCBCR(sc, sync_pipe, key, mtime,
                                              instance);
     }
-    RGWCoroutine *create_delete_marker(const DoutPrefixProvider * dpp,
-                                       RGWDataSyncCtx * sc,
-                                       rgw_bucket_sync_pipe & sync_pipe,
-                                       rgw_obj_key & key, real_time & mtime,
-                                       rgw_bucket_entry_owner & owner,
+    RGWCoroutine *create_delete_marker(const DoutPrefixProvider *dpp,
+                                       RGWDataSyncCtx *sc,
+                                       rgw_bucket_sync_pipe &sync_pipe,
+                                       rgw_obj_key &key, real_time &mtime,
+                                       rgw_bucket_entry_owner &owner,
                                        bool versioned, uint64_t versioned_epoch,
-                                       rgw_zone_set * zones_trace)override {
+                                       rgw_zone_set *zones_trace)override
+    {
         ldout(sc->cct,
               0) << "AWS Not implemented: create_delete_marker: b=" <<
-            sync_pipe.info.source_bs.
-            bucket << " k=" << key << " mtime=" << mtime << " versioned=" <<
-            versioned << " versioned_epoch=" << versioned_epoch << dendl;
+                 sync_pipe.info.source_bs.
+                 bucket << " k=" << key << " mtime=" << mtime << " versioned=" <<
+                 versioned << " versioned_epoch=" << versioned_epoch << dendl;
         return NULL;
     }
 };
 
-class RGWAWSSyncModuleInstance:public RGWSyncModuleInstance {
+class RGWAWSSyncModuleInstance: public RGWSyncModuleInstance
+{
     RGWAWSDataSyncModule data_handler;
-  public:
-    RGWAWSSyncModuleInstance(CephContext * cct,
-                             AWSSyncConfig & _conf):data_handler(cct, _conf) {
-    } RGWDataSyncModule *get_data_handler() override {
+public:
+    RGWAWSSyncModuleInstance(CephContext *cct,
+                             AWSSyncConfig &_conf): data_handler(cct, _conf)
+    {
+    } RGWDataSyncModule *get_data_handler() override
+    {
         return &data_handler;
     }
 };
 
-int RGWAWSSyncModule::create_instance(const DoutPrefixProvider * dpp,
-                                      CephContext * cct,
-                                      const JSONFormattable & config,
-                                      RGWSyncModuleInstanceRef * instance)
+int RGWAWSSyncModule::create_instance(const DoutPrefixProvider *dpp,
+                                      CephContext *cct,
+                                      const JSONFormattable &config,
+                                      RGWSyncModuleInstanceRef *instance)
 {
     AWSSyncConfig conf;
 

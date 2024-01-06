@@ -17,7 +17,7 @@
 #include "common/errno.h"
 #include "common/win32/registry.h"
 
-RegistryKey::RegistryKey(CephContext * cct_, HKEY hRootKey, LPCTSTR strKey, bool create_value):cct(cct_)
+RegistryKey::RegistryKey(CephContext *cct_, HKEY hRootKey, LPCTSTR strKey, bool create_value): cct(cct_)
 {
     DWORD status = RegOpenKeyEx(hRootKey, strKey, 0, KEY_ALL_ACCESS, &hKey);
 
@@ -31,42 +31,41 @@ RegistryKey::RegistryKey(CephContext * cct_, HKEY hRootKey, LPCTSTR strKey, bool
     if (ERROR_SUCCESS != status) {
         if (ERROR_FILE_NOT_FOUND == status) {
             missingKey = true;
-        }
-        else {
+        } else {
             lderr(cct_) << "Error: " << win32_strerror(status)
-                << ". Could not open registry key: " << strKey << dendl;
+                        << ". Could not open registry key: " << strKey << dendl;
         }
     }
 }
 
 RegistryKey::~RegistryKey()
 {
-    if (!hKey)
+    if (!hKey) {
         return;
+    }
 
     DWORD status = RegCloseKey(hKey);
     if (ERROR_SUCCESS != status) {
         derr << "Error: " << win32_strerror(status)
-            << ". Could not close registry key." << dendl;
-    }
-    else {
+             << ". Could not close registry key." << dendl;
+    } else {
         hKey = NULL;
     }
 }
 
-int RegistryKey::remove(CephContext * cct_, HKEY hRootKey, LPCTSTR strKey)
+int RegistryKey::remove(CephContext *cct_, HKEY hRootKey, LPCTSTR strKey)
 {
     DWORD status = RegDeleteKeyEx(hRootKey, strKey, KEY_WOW64_64KEY, 0);
 
     if (status == ERROR_FILE_NOT_FOUND) {
         ldout(cct_, 20) << "Registry key : " << strKey
-            << " does not exist." << dendl;
+                        << " does not exist." << dendl;
         return 0;
     }
 
     if (ERROR_SUCCESS != status) {
         lderr(cct_) << "Error: " << win32_strerror(status)
-            << ". Could not delete registry key: " << strKey << dendl;
+                    << ". Could not delete registry key: " << strKey << dendl;
         return -EINVAL;
     }
 
@@ -78,7 +77,7 @@ int RegistryKey::flush()
     DWORD status = RegFlushKey(hKey);
     if (ERROR_SUCCESS != status) {
         derr << "Error: " << win32_strerror(status)
-            << ". Could not flush registry key." << dendl;
+             << ". Could not flush registry key." << dendl;
         return -EINVAL;
     }
 
@@ -91,7 +90,7 @@ int RegistryKey::set(LPCTSTR lpValue, DWORD data)
                                  (LPBYTE) & data, sizeof(DWORD));
     if (ERROR_SUCCESS != status) {
         derr << "Error: " << win32_strerror(status)
-            << ". Could not set registry value: " << (char *)lpValue << dendl;
+             << ". Could not set registry value: " << (char *)lpValue << dendl;
         return -EINVAL;
     }
 
@@ -104,13 +103,13 @@ int RegistryKey::set(LPCTSTR lpValue, std::string data)
                                  (LPBYTE) data.c_str(), data.length());
     if (ERROR_SUCCESS != status) {
         derr << "Error: " << win32_strerror(status)
-            << ". Could not set registry value: " << (char *)lpValue << dendl;
+             << ". Could not set registry value: " << (char *)lpValue << dendl;
         return -EINVAL;
     }
     return 0;
 }
 
-int RegistryKey::get(LPCTSTR lpValue, bool & value)
+int RegistryKey::get(LPCTSTR lpValue, bool &value)
 {
     DWORD value_dw = 0;
     int r = get(lpValue, value_dw);
@@ -120,7 +119,7 @@ int RegistryKey::get(LPCTSTR lpValue, bool & value)
     return r;
 }
 
-int RegistryKey::get(LPCTSTR lpValue, DWORD & value)
+int RegistryKey::get(LPCTSTR lpValue, DWORD &value)
 {
     DWORD data;
     DWORD size = sizeof(data);
@@ -129,7 +128,7 @@ int RegistryKey::get(LPCTSTR lpValue, DWORD & value)
                                    &type, (LPBYTE) & data, &size);
     if (ERROR_SUCCESS != status) {
         derr << "Error: " << win32_strerror(status)
-            << ". Could not get registry value: " << (char *)lpValue << dendl;
+             << ". Could not get registry value: " << (char *)lpValue << dendl;
         return -EINVAL;
     }
     value = data;
@@ -137,10 +136,10 @@ int RegistryKey::get(LPCTSTR lpValue, DWORD & value)
     return 0;
 }
 
-int RegistryKey::get(LPCTSTR lpValue, std::string & value)
+int RegistryKey::get(LPCTSTR lpValue, std::string &value)
 {
     std::string data {
-    ""};
+        ""};
     DWORD size = 0;
     DWORD type = REG_SZ;
     DWORD status = RegQueryValueEx(hKey, lpValue, NULL, &type,
@@ -153,7 +152,7 @@ int RegistryKey::get(LPCTSTR lpValue, std::string & value)
 
     if (ERROR_SUCCESS != status) {
         derr << "Error: " << win32_strerror(status)
-            << ". Could not get registry value: " << (char *)lpValue << dendl;
+             << ". Could not get registry value: " << (char *)lpValue << dendl;
         return -EINVAL;
     }
     value.assign(data.c_str());

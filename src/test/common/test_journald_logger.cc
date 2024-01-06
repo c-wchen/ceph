@@ -11,13 +11,15 @@
 
 using namespace ceph::logging;
 
-class JournaldLoggerTest:public::testing::Test {
-  protected:
+class JournaldLoggerTest: public::testing::Test
+{
+protected:
     SubsystemMap subs;
     JournaldLogger journald = { &subs };
     MutableEntry entry = { 0, 0 };
 
-    void SetUp() override {
+    void SetUp() override
+    {
         struct stat buffer;
         if (stat("/run/systemd/journal/socket", &buffer) < 0) {
             if (errno == ENOENT) {

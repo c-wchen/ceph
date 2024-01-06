@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "msg/Message.h"
@@ -33,26 +33,27 @@ using ceph::ref_t;
 double DispatchQueue::get_max_age(utime_t now) const const
 {
     std::lock_guard l {
-    lock};
-    if (marrival.empty())
+        lock};
+    if (marrival.empty()) {
         return 0;
-    else
+    } else {
         return (now - marrival.begin()->first);
+    }
 }
 
 uint64_t DispatchQueue::pre_dispatch(const ref_t < Message > &m)
 {
     ldout(cct, 1) << "<== " << m->get_source_inst()
-        << " " << m->get_seq()
-        << " ==== " << *m << " ==== " << m->get_payload().length()
-        << "+" << m->get_middle().length()
-        << "+" << m->get_data().length()
-        << " (" << ceph_con_mode_name(m->get_connection()->get_con_mode())
-        << " " << m->get_footer().front_crc << " "
-        << m->get_footer().middle_crc
-        << " " << m->get_footer().data_crc << ")"
-        << " " << m << " con " << m->get_connection()
-        << dendl;
+                  << " " << m->get_seq()
+                  << " ==== " << *m << " ==== " << m->get_payload().length()
+                  << "+" << m->get_middle().length()
+                  << "+" << m->get_data().length()
+                  << " (" << ceph_con_mode_name(m->get_connection()->get_con_mode())
+                  << " " << m->get_footer().front_crc << " "
+                  << m->get_footer().middle_crc
+                  << " " << m->get_footer().data_crc << ")"
+                  << " " << m << " con " << m->get_connection()
+                  << dendl;
     uint64_t msize = m->get_dispatch_throttle_size();
     m->set_dispatch_throttle_size(0);   // clear it out, in case we requeue this message.
     return msize;
@@ -85,7 +86,7 @@ void DispatchQueue::enqueue(const ref_t < Message > &m, int priority,
                             uint64_t id)
 {
     std::lock_guard l {
-    lock};
+        lock};
     if (stop) {
         return;
     }
@@ -93,8 +94,7 @@ void DispatchQueue::enqueue(const ref_t < Message > &m, int priority,
     add_arrival(m);
     if (priority >= CEPH_MSG_PRIO_LOW) {
         mqueue.enqueue_strict(id, priority, QueueItem(m));
-    }
-    else {
+    } else {
         mqueue.enqueue(id, priority, m->get_cost(), QueueItem(m));
     }
     cond.notify_all();
@@ -107,9 +107,10 @@ void DispatchQueue::local_delivery(const ref_t < Message > &m, int priority)
     m->set_throttle_stamp(local_delivery_stamp);
     m->set_recv_complete_stamp(local_delivery_stamp);
     std::lock_guard l {
-    local_delivery_lock};
-    if (local_messages.empty())
+        local_delivery_lock};
+    if (local_messages.empty()) {
         local_delivery_cond.notify_all();
+    }
     local_messages.emplace(m, priority);
     return;
 }
@@ -117,10 +118,11 @@ void DispatchQueue::local_delivery(const ref_t < Message > &m, int priority)
 void DispatchQueue::run_local_delivery()
 {
     std::unique_lock l {
-    local_delivery_lock};
+        local_delivery_lock};
     while (true) {
-        if (stop_local_delivery)
+        if (stop_local_delivery) {
             break;
+        }
         if (local_messages.empty()) {
             local_delivery_cond.wait(l);
             continue;
@@ -133,8 +135,7 @@ void DispatchQueue::run_local_delivery()
         fast_preprocess(m);
         if (can_fast_dispatch(m)) {
             fast_dispatch(m);
-        }
-        else {
+        } else {
             enqueue(m, priority, 0);
         }
         l.lock();
@@ -145,8 +146,8 @@ void DispatchQueue::dispatch_throttle_release(uint64_t msize)
 {
     if (msize) {
         ldout(cct, 10) << __func__ << " " << msize << " to dispatch throttler "
-            << dispatch_throttler.get_current() << "/"
-            << dispatch_throttler.get_max() << dendl;
+                       << dispatch_throttler.get_current() << "/"
+                       << dispatch_throttler.get_max() << dendl;
         dispatch_throttler.put(msize);
     }
 }
@@ -163,12 +164,13 @@ void DispatchQueue::dispatch_throttle_release(uint64_t msize)
 void DispatchQueue::entry()
 {
     std::unique_lock l {
-    lock};
+        lock};
     while (true) {
         while (!mqueue.empty()) {
             QueueItem qitem = mqueue.dequeue();
-            if (!qitem.is_code())
+            if (!qitem.is_code()) {
                 remove_arrival(qitem.get_message());
+            }
             l.unlock();
 
             if (qitem.is_code()) {
@@ -180,38 +182,36 @@ void DispatchQueue::entry()
                     t.set_from_double(cct->_conf->ms_inject_internal_delays);
                     ldout(cct,
                           1) << "DispatchQueue::entry  inject delay of " << t <<
-                        dendl;
+                             dendl;
                     t.sleep();
                 }
                 switch (qitem.get_code()) {
-                case D_BAD_REMOTE_RESET:
-                    msgr->ms_deliver_handle_remote_reset(qitem.
-                                                         get_connection());
-                    break;
-                case D_CONNECT:
-                    msgr->ms_deliver_handle_connect(qitem.get_connection());
-                    break;
-                case D_ACCEPT:
-                    msgr->ms_deliver_handle_accept(qitem.get_connection());
-                    break;
-                case D_BAD_RESET:
-                    msgr->ms_deliver_handle_reset(qitem.get_connection());
-                    break;
-                case D_CONN_REFUSED:
-                    msgr->ms_deliver_handle_refused(qitem.get_connection());
-                    break;
-                default:
-                    ceph_abort();
+                    case D_BAD_REMOTE_RESET:
+                        msgr->ms_deliver_handle_remote_reset(qitem.
+                                                             get_connection());
+                        break;
+                    case D_CONNECT:
+                        msgr->ms_deliver_handle_connect(qitem.get_connection());
+                        break;
+                    case D_ACCEPT:
+                        msgr->ms_deliver_handle_accept(qitem.get_connection());
+                        break;
+                    case D_BAD_RESET:
+                        msgr->ms_deliver_handle_reset(qitem.get_connection());
+                        break;
+                    case D_CONN_REFUSED:
+                        msgr->ms_deliver_handle_refused(qitem.get_connection());
+                        break;
+                    default:
+                        ceph_abort();
                 }
-            }
-            else {
+            } else {
                 const ref_t < Message > &m = qitem.get_message();
                 if (stop) {
                     ldout(cct,
                           10) << " stop flag set, discarding " << m << " " << *m
-                        << dendl;
-                }
-                else {
+                              << dendl;
+                } else {
                     uint64_t msize = pre_dispatch(m);
                     msgr->ms_deliver_dispatch(m);
                     post_dispatch(m, msize);
@@ -220,8 +220,9 @@ void DispatchQueue::entry()
 
             l.lock();
         }
-        if (stop)
+        if (stop) {
             break;
+        }
 
         // wait for something to be put on queue
         cond.wait(l);
@@ -231,7 +232,7 @@ void DispatchQueue::entry()
 void DispatchQueue::discard_queue(uint64_t id)
 {
     std::lock_guard l {
-    lock};
+        lock};
     std::list < QueueItem > removed;
     mqueue.remove_by_class(id, &removed);
     for (auto i = removed.begin(); i != removed.end(); ++i) {
@@ -258,7 +259,7 @@ void DispatchQueue::wait()
 
 void DispatchQueue::discard_local()
 {
-    decltype(local_messages) ().swap(local_messages);
+    decltype(local_messages)().swap(local_messages);
 }
 
 void DispatchQueue::shutdown()
@@ -266,14 +267,14 @@ void DispatchQueue::shutdown()
     // stop my local delivery thread
     {
         std::scoped_lock l {
-        local_delivery_lock};
+            local_delivery_lock};
         stop_local_delivery = true;
         local_delivery_cond.notify_all();
     }
     // stop my dispatch thread
     {
         std::scoped_lock l {
-        lock};
+            lock};
         stop = true;
         cond.notify_all();
     }

@@ -88,12 +88,12 @@ int calc_determinant(int *matrix, int dim)
     }
 //  print_matrix(mat, dim);
 
-  out2:
+out2:
     free(row);
 
-  out1:
+out1:
     free(mat);
 
-  out0:
+out0:
     return det;
 }

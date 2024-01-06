@@ -11,24 +11,24 @@
 
 struct rgw_user_create_params {
     rgw_user user;
-     std::string display_name;
-     std::string email;
-     std::string access_key;
-     std::string secret_key;
-     std::string key_type;      /* "swift" or "s3" */
-     std::string caps;
+    std::string display_name;
+    std::string email;
+    std::string access_key;
+    std::string secret_key;
+    std::string key_type;      /* "swift" or "s3" */
+    std::string caps;
 
     bool generate_key {
-    true};
+        true};
     bool suspended {
-    false};
-     std::optional < int32_t > max_buckets;
+        false};
+    std::optional < int32_t > max_buckets;
     bool system {
-    false};
+        false};
     bool exclusive {
-    false};
+        false};
     bool apply_quota {
-    true};
+        true};
 };
 
 using RGWUserCreateCR = RGWSimpleWriteOnlyAsyncCR < rgw_user_create_params >;
@@ -65,15 +65,15 @@ struct rgw_object_simple_put_params {
     RGWDataAccess::BucketRef bucket;
     rgw_obj_key key;
     bufferlist data;
-     std::map < std::string, bufferlist > attrs;
-     std::optional < std::string > user_data;
+    std::map < std::string, bufferlist > attrs;
+    std::optional < std::string > user_data;
 };
 
 using RGWObjectSimplePutCR =
     RGWSimpleWriteOnlyAsyncCR < rgw_object_simple_put_params >;
 
 struct rgw_bucket_lifecycle_config_params {
-    rgw::sal::Bucket * bucket;
+    rgw::sal::Bucket *bucket;
     rgw::sal::Attrs bucket_attrs;
     RGWLifecycleConfiguration config;
 };

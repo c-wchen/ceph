@@ -25,7 +25,7 @@ TEST_F(TestClient, AlternateNameRemount)
 {
     auto altname = std::string("foo");
     auto dir =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     ASSERT_EQ(0, client->mkdir(dir.c_str(), 0777, myperm, altname));
 
@@ -46,7 +46,7 @@ TEST_F(TestClient, AlternateNameRemount)
 TEST_F(TestClient, AlternateNameMkdir)
 {
     auto dir =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     ASSERT_EQ(0, client->mkdir(dir.c_str(), 0777, myperm, "foo"));
 
@@ -63,7 +63,7 @@ TEST_F(TestClient, AlternateNameLong)
 {
     auto altname = std::string(4096 + 1024, '-');
     auto dir =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     ASSERT_EQ(0, client->mkdir(dir.c_str(), 0777, myperm, altname));
 
@@ -80,7 +80,7 @@ TEST_F(TestClient, AlternateNameCreat)
 {
     auto altname = std::string("foo");
     auto file =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     int fd =
         client->open(file.c_str(), O_CREAT | O_WRONLY, myperm, 0777, altname);
@@ -99,7 +99,7 @@ TEST_F(TestClient, AlternateNameSymlink)
 {
     auto altname = std::string("foo");
     auto file =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     int fd =
         client->open(file.c_str(), O_CREAT | O_WRONLY, myperm, 0777, altname);
@@ -125,7 +125,7 @@ TEST_F(TestClient, AlternateNameRename)
 {
     auto altname = std::string("foo");
     auto file =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     int fd =
         client->open(file.c_str(), O_CREAT | O_WRONLY, myperm, 0777, altname);
@@ -149,7 +149,7 @@ TEST_F(TestClient, AlternateNameRenameExistMatch)
 {
     auto altname = std::string("foo");
     auto file =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     int fd =
         client->open(file.c_str(), O_CREAT | O_WRONLY, myperm, 0777, altname);
@@ -179,7 +179,7 @@ TEST_F(TestClient, AlternateNameRenameExistMisMatch)
 {
     auto altname = std::string("foo");
     auto file =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     int fd =
         client->open(file.c_str(), O_CREAT | O_WRONLY, myperm, 0777, altname);
@@ -210,7 +210,7 @@ TEST_F(TestClient, AlternateNameLink)
 {
     auto altname = std::string("foo");
     auto file =
-        fmt::format("{}_{}",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_{}", ::testing::UnitTest::GetInstance()->
                     current_test_info()->name(), getpid());
     int fd =
         client->open(file.c_str(), O_CREAT | O_WRONLY, myperm, 0777, altname);

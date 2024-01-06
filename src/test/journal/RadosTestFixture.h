@@ -10,8 +10,9 @@
 
 class ThreadPool;
 
-class RadosTestFixture:public::testing::Test {
-  public:
+class RadosTestFixture: public::testing::Test
+{
+public:
     static void SetUpTestCase();
     static void TearDownTestCase();
 
@@ -21,32 +22,33 @@ class RadosTestFixture:public::testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-    int create(const std::string & oid, uint8_t order = 14,
+    int create(const std::string &oid, uint8_t order = 14,
                uint8_t splay_width = 2);
-    ceph::ref_t < journal::JournalMetadata >
-        create_metadata(const std::string & oid, const std::string & client_id =
-                        "client", double commit_internal =
-                        0.1, int max_concurrent_object_sets = 0);
-    int append(const std::string & oid, const bufferlist & bl);
+    ceph::ref_t < journal::JournalMetadata > create_metadata(const std::string &oid, const std::string &client_id =
+                "client", double commit_internal =
+                0.1, int max_concurrent_object_sets = 0);
+    int append(const std::string &oid, const bufferlist &bl);
 
-    int client_register(const std::string & oid, const std::string & id =
-                        "client", const std::string & description = "");
-    int client_commit(const std::string & oid, const std::string & id,
-                      const cls::journal::ObjectSetPosition & commit_position);
+    int client_register(const std::string &oid, const std::string &id =
+                            "client", const std::string &description = "");
+    int client_commit(const std::string &oid, const std::string &id,
+                      const cls::journal::ObjectSetPosition &commit_position);
 
-    bufferlist create_payload(const std::string & payload);
+    bufferlist create_payload(const std::string &payload);
 
-    struct Listener:public journal::JournalMetadataListener {
+    struct Listener: public journal::JournalMetadataListener {
         RadosTestFixture *test_fixture;
         ceph::mutex mutex = ceph::make_mutex("mutex");
         ceph::condition_variable cond;
         std::map < journal::JournalMetadata *, uint32_t > updates;
 
-        Listener(RadosTestFixture * _test_fixture)
-        :test_fixture(_test_fixture) {
-        } void handle_update(journal::JournalMetadata * metadata) override {
+        Listener(RadosTestFixture *_test_fixture)
+            : test_fixture(_test_fixture)
+        {
+        } void handle_update(journal::JournalMetadata *metadata) override
+        {
             std::lock_guard locker {
-            mutex};
+                mutex};
             ++updates[metadata];
             cond.notify_all();
         }

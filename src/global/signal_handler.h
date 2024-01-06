@@ -20,9 +20,10 @@
 #include <map>
 #include <string>
 
-typedef void (*signal_handler_t) (int);
-namespace ceph {
-    struct BackTrace;
+typedef void (*signal_handler_t)(int);
+namespace ceph
+{
+struct BackTrace;
 }
 #if defined(HAVE_SIGDESCR_NP)
 #define sig_str(signum) sigdescr_np(signum)
@@ -51,13 +52,13 @@ void queue_async_signal(int signum);
 /// install a safe, async, callback for the given signal
 void register_async_signal_handler(int signum, signal_handler_t handler);
 void register_async_signal_handler_oneshot(int signum,
-                                           signal_handler_t handler);
+        signal_handler_t handler);
 
 /// uninstall a safe async signal callback
 void unregister_async_signal_handler(int signum, signal_handler_t handler);
 
 void generate_crash_dump(char *base,
-                         const ceph::BackTrace & bt,
+                         const ceph::BackTrace &bt,
                          std::map < std::string, std::string > *extra = 0);
 
 #endif

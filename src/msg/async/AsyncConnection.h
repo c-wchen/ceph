@@ -50,13 +50,14 @@ static const int ASYNC_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
  * descriptor broken, AsyncConnection will maintain the message queue and
  * sequence, try to reconnect peer endpoint.
  */
-class AsyncConnection:public Connection {
+class AsyncConnection: public Connection
+{
     ssize_t read(unsigned len, char *buffer,
                  std::function < void (char *, ssize_t) > callback);
     ssize_t read_until(unsigned needed, char *p);
     ssize_t read_bulk(char *buf, unsigned len);
 
-    ssize_t write(ceph::buffer::list & bl,
+    ssize_t write(ceph::buffer::list &bl,
                   std::function < void (ssize_t) > callback, bool more = false);
     ssize_t _try_send(bool more = false);
 
@@ -69,13 +70,14 @@ class AsyncConnection:public Connection {
     bool is_queued() const;
     void shutdown_socket();
 
-   /**
-   * The DelayedDelivery is for injecting delays into Message delivery off
-   * the socket. It is only enabled if delays are requested, and if they
-   * are then it pulls Messages off the DelayQueue and puts them into the
-   * AsyncMessenger event queue.
-   */
-    class DelayedDelivery:public EventCallback {
+    /**
+    * The DelayedDelivery is for injecting delays into Message delivery off
+    * the socket. It is only enabled if delays are requested, and if they
+    * are then it pulls Messages off the DelayQueue and puts them into the
+    * AsyncMessenger event queue.
+    */
+    class DelayedDelivery: public EventCallback
+    {
         std::set < uint64_t > register_time_events; // need to delete it if stop
         std::deque < Message * >delay_queue;
         std::mutex delay_lock;
@@ -83,75 +85,84 @@ class AsyncConnection:public Connection {
         EventCenter *center;
         DispatchQueue *dispatch_queue;
         uint64_t conn_id;
-         std::atomic_bool stop_dispatch;
+        std::atomic_bool stop_dispatch;
 
-      public:
-         explicit DelayedDelivery(AsyncMessenger * omsgr, EventCenter * c,
-                                  DispatchQueue * q, uint64_t cid)
-        :msgr(omsgr), center(c), dispatch_queue(q), conn_id(cid),
-            stop_dispatch(false) {
-        } ~DelayedDelivery() override {
+    public:
+        explicit DelayedDelivery(AsyncMessenger *omsgr, EventCenter *c,
+                                 DispatchQueue *q, uint64_t cid)
+            : msgr(omsgr), center(c), dispatch_queue(q), conn_id(cid),
+              stop_dispatch(false)
+        {
+        } ~DelayedDelivery() override
+        {
             ceph_assert(register_time_events.empty());
             ceph_assert(delay_queue.empty());
-        } void set_center(EventCenter * c) {
+        } void set_center(EventCenter *c)
+        {
             center = c;
         }
         void do_request(uint64_t id) override;
-        void queue(double delay_period, Message * m) {
+        void queue(double delay_period, Message *m)
+        {
             std::lock_guard < std::mutex > l(delay_lock);
             delay_queue.push_back(m);
             register_time_events.insert(center->
                                         create_time_event(delay_period *
-                                                          1000000, this));
+                                                1000000, this));
         }
         void discard();
-        bool ready() const {
+        bool ready() const
+        {
             return !stop_dispatch && delay_queue.empty()
-                && register_time_events.empty();
+                   && register_time_events.empty();
         } void flush();
     } *delay_state;
 
-  private:
+private:
     FRIEND_MAKE_REF(AsyncConnection);
-    AsyncConnection(CephContext * cct, AsyncMessenger * m, DispatchQueue * q,
-                    Worker * w, bool is_msgr2, bool local);
+    AsyncConnection(CephContext *cct, AsyncMessenger *m, DispatchQueue *q,
+                    Worker *w, bool is_msgr2, bool local);
     ~AsyncConnection()override;
     bool unregistered = false;
-  public:
+public:
     void maybe_start_delay_thread();
 
-    std::ostream & _conn_prefix(std::ostream * _dout);
+    std::ostream &_conn_prefix(std::ostream *_dout);
 
     bool is_connected() override;
 
     // Only call when AsyncConnection first construct
-    void connect(const entity_addrvec_t & addrs, int type,
-                 entity_addr_t & target);
+    void connect(const entity_addrvec_t &addrs, int type,
+                 entity_addr_t &target);
 
     // Only call when AsyncConnection first construct
     void accept(ConnectedSocket socket,
-                const entity_addr_t & listen_addr,
-                const entity_addr_t & peer_addr);
-    int send_message(Message * m) override;
+                const entity_addr_t &listen_addr,
+                const entity_addr_t &peer_addr);
+    int send_message(Message *m) override;
 
     void send_keepalive() override;
     void mark_down() override;
-    void mark_disposable() override {
+    void mark_disposable() override
+    {
         std::lock_guard < std::mutex > l(lock);
         policy.lossy = true;
     }
 
-    entity_addr_t get_peer_socket_addr() const override {
+    entity_addr_t get_peer_socket_addr() const override
+    {
         return target_addr;
     } int get_con_mode() const override;
 
-    bool is_unregistered() const {
+    bool is_unregistered() const
+    {
         return unregistered;
-    } void unregister() {
+    } void unregister()
+    {
         unregistered = true;
     }
 
-  private:
+private:
     enum {
         STATE_NONE,
         STATE_CONNECTING,
@@ -162,14 +173,15 @@ class AsyncConnection:public Connection {
     };
 
     static const uint32_t TCP_PREFETCH_MIN_SIZE;
-    static const char *get_state_name(int state) {
+    static const char *get_state_name(int state)
+    {
         const char *const statenames[] = { "STATE_NONE",
-            "STATE_CONNECTING",
-            "STATE_CONNECTING_RE",
-            "STATE_ACCEPTING",
-            "STATE_CONNECTION_ESTABLISHED",
-            "STATE_CLOSED"
-        };
+                                           "STATE_CONNECTING",
+                                           "STATE_CONNECTING_RE",
+                                           "STATE_ACCEPTING",
+                                           "STATE_CONNECTION_ESTABLISHED",
+                                           "STATE_CLOSED"
+                                         };
         return statenames[state];
     }
 
@@ -179,11 +191,11 @@ class AsyncConnection:public Connection {
     int state;
     ConnectedSocket cs;
     int port;
-  public:
+public:
     Messenger::Policy policy;
-  private:
+private:
 
-    DispatchQueue * dispatch_queue;
+    DispatchQueue *dispatch_queue;
 
     // lockfree, only used in own thread
     ceph::buffer::list outgoing_bl;
@@ -214,9 +226,10 @@ class AsyncConnection:public Connection {
     // Accepting state
     bool msgr2 = false;
     entity_addr_t socket_addr;  ///< local socket addr
-    entity_addr_t target_addr;  ///< which of the peer_addrs we're connecting to (as clienet) or should reconnect to (as peer)
+    entity_addr_t
+    target_addr;  ///< which of the peer_addrs we're connecting to (as clienet) or should reconnect to (as peer)
 
-    entity_addr_t _infer_target_addr(const entity_addrvec_t & av);
+    entity_addr_t _infer_target_addr(const entity_addrvec_t &av);
 
     // used only by "read_until"
     uint64_t state_offset;
@@ -230,7 +243,7 @@ class AsyncConnection:public Connection {
     std::optional < unsigned >pendingReadLen;
     char *read_buffer;
 
-  public:
+public:
     // used by eventcallback
     void handle_write();
     void handle_write_callback();
@@ -239,7 +252,8 @@ class AsyncConnection:public Connection {
     void tick(uint64_t id);
     void stop(bool queue_reset);
     void cleanup();
-    PerfCounters *get_perf_counter() {
+    PerfCounters *get_perf_counter()
+    {
         return logger;
     }
 

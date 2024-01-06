@@ -38,8 +38,7 @@ int main(int argc, char *argv[])
             }
         }
         close(fd);
-    }
-    else {
+    } else {
         sleep(1);
         int fd = open(argv[2], O_RDONLY, 0644);
         if (fd < 0) {

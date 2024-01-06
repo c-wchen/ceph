@@ -8,13 +8,17 @@
 #include "crimson/os/seastore/transaction_manager.h"
 #include "test/crimson/seastore/test_block.h"
 
-class TMDriver final:public BlockDriver {
-  public:
-    TMDriver(config_t config):config(config) {
-    } ~TMDriver() final {
+class TMDriver final: public BlockDriver
+{
+public:
+    TMDriver(config_t config): config(config)
+    {
+    } ~TMDriver() final
+    {
     }
 
-    bufferptr get_buffer(size_t size) final {
+    bufferptr get_buffer(size_t size) final
+    {
         return ceph::buffer::create_page_aligned(size);
     }
 
@@ -28,7 +32,7 @@ class TMDriver final:public BlockDriver {
 
     seastar::future <> close()final;
 
-  private:
+private:
     const config_t config;
 
     using DeviceRef = crimson::os::seastore::DeviceRef;
@@ -44,9 +48,9 @@ class TMDriver final:public BlockDriver {
 
     using read_extents_iertr = TransactionManager::read_extent_iertr;
     using read_extents_ret = read_extents_iertr::future <
-        crimson::os::seastore::lextent_list_t <
-        crimson::os::seastore::TestBlock > >;
-    read_extents_ret read_extents(crimson::os::seastore::Transaction & t,
+                             crimson::os::seastore::lextent_list_t <
+                             crimson::os::seastore::TestBlock > >;
+    read_extents_ret read_extents(crimson::os::seastore::Transaction &t,
                                   crimson::os::seastore::laddr_t offset,
                                   crimson::os::seastore::extent_len_t length);
 };

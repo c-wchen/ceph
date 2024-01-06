@@ -35,16 +35,16 @@ int ggate_drv_req_cmd(ggate_drv_req_t req)
     struct g_gate_ctl_io *ggio = (struct g_gate_ctl_io *)req;
 
     switch (ggio->gctl_cmd) {
-    case BIO_WRITE:
-        return GGATE_DRV_CMD_WRITE;
-    case BIO_READ:
-        return GGATE_DRV_CMD_READ;
-    case BIO_FLUSH:
-        return GGATE_DRV_CMD_FLUSH;
-    case BIO_DELETE:
-        return GGATE_DRV_CMD_DISCARD;
-    default:
-        return GGATE_DRV_CMD_UNKNOWN;
+        case BIO_WRITE:
+            return GGATE_DRV_CMD_WRITE;
+        case BIO_READ:
+            return GGATE_DRV_CMD_READ;
+        case BIO_FLUSH:
+            return GGATE_DRV_CMD_FLUSH;
+        case BIO_DELETE:
+            return GGATE_DRV_CMD_DISCARD;
+        default:
+            return GGATE_DRV_CMD_UNKNOWN;
     }
 }
 
@@ -116,7 +116,7 @@ int ggate_drv_load()
 
 int ggate_drv_create(char *name, size_t namelen, size_t sectorsize,
                      size_t mediasize, bool readonly, const char *info,
-                     ggate_drv_t * drv_)
+                     ggate_drv_t *drv_)
 {
     struct ggate_drv *drv;
     struct g_gate_ctl_create ggiocreate;
@@ -159,8 +159,7 @@ int ggate_drv_create(char *name, size_t namelen, size_t sectorsize,
     if (*name != '\0') {
         ggiocreate.gctl_unit = G_GATE_NAME_GIVEN;
         strlcpy(ggiocreate.gctl_name, name, sizeof(ggiocreate.gctl_name));
-    }
-    else {
+    } else {
         ggiocreate.gctl_unit = G_GATE_UNIT_AUTO;
     }
     strlcpy(ggiocreate.gctl_info, info, sizeof(ggiocreate.gctl_info));
@@ -182,9 +181,9 @@ int ggate_drv_create(char *name, size_t namelen, size_t sectorsize,
 
     return 0;
 
-  fail:
+fail:
     free(drv);
-  fail_close:
+fail_close:
     close(fd);
     return -errno;
 }
@@ -266,7 +265,7 @@ int ggate_drv_kill(const char *devname)
     return r;
 }
 
-int ggate_drv_recv(ggate_drv_t drv_, ggate_drv_req_t * req)
+int ggate_drv_recv(ggate_drv_t drv_, ggate_drv_req_t *req)
 {
     struct ggate_drv *drv = (struct ggate_drv *)drv_;
     struct g_gate_ctl_io *ggio;
@@ -298,30 +297,30 @@ int ggate_drv_recv(ggate_drv_t drv_, ggate_drv_req_t * req)
 
     error = ggio->gctl_error;
     switch (error) {
-    case 0:
-        break;
-    case ECANCELED:
-        debug(10, "%s: canceled: exit gracefully", __func__);
-        r = -error;
-        goto fail;
-    case ENOMEM:
+        case 0:
+            break;
+        case ECANCELED:
+            debug(10, "%s: canceled: exit gracefully", __func__);
+            r = -error;
+            goto fail;
+        case ENOMEM:
         /*
          * Buffer too small? Impossible, we allocate MAXPHYS
          * bytes - request can't be bigger than that.
          */
         /* FALLTHROUGH */
-    case ENXIO:
-    default:
-        errno = error;
-        err("%s: G_GATE_CMD_START failed", __func__);
-        r = -error;
-        goto fail;
+        case ENXIO:
+        default:
+            errno = error;
+            err("%s: G_GATE_CMD_START failed", __func__);
+            r = -error;
+            goto fail;
     }
 
     *req = ggio;
     return 0;
 
-  fail:
+fail:
     free(ggio->gctl_data);
     free(ggio);
     return r;
@@ -354,13 +353,14 @@ static const char *get_conf(struct ggeom *gp, const char *name)
     struct gconfig *conf;
 
     LIST_FOREACH(conf, &gp->lg_config, lg_config) {
-        if (strcmp(conf->lg_name, name) == 0)
+        if (strcmp(conf->lg_name, name) == 0) {
             return (conf->lg_val);
+        }
     }
     return "";
 }
 
-int ggate_drv_list(struct ggate_drv_info *info, size_t * size)
+int ggate_drv_list(struct ggate_drv_info *info, size_t *size)
 {
     struct gmesh mesh;
     struct gclass *class;
@@ -394,7 +394,7 @@ int ggate_drv_list(struct ggate_drv_info *info, size_t * size)
         }
     }
 
-  done:
+done:
     geom_deletetree(&mesh);
     return r;
 }

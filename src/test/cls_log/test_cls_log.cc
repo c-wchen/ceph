@@ -19,31 +19,34 @@
 using namespace std;
 
 /// creates a temporary pool and initializes an IoCtx for each test
-class cls_log:public::testing::Test {
+class cls_log: public::testing::Test
+{
     librados::Rados rados;
     std::string pool_name;
-  protected:
+protected:
     librados::IoCtx ioctx;
 
-    void SetUp() {
+    void SetUp()
+    {
         pool_name = get_temp_pool_name();
         /* create pool */
         ASSERT_EQ("", create_one_pool_pp(pool_name, rados));
         ASSERT_EQ(0, rados.ioctx_create(pool_name.c_str(), ioctx));
-    } void TearDown() {
+    } void TearDown()
+    {
         /* remove pool */
         ioctx.close();
         ASSERT_EQ(0, destroy_one_pool_pp(pool_name, rados));
     }
 };
 
-static int read_bl(bufferlist & bl, int *i)
+static int read_bl(bufferlist &bl, int *i)
 {
     auto iter = bl.cbegin();
 
     try {
         decode(*i, iter);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         std::cout << "failed to decode buffer" << std::endl;
         return -EIO;
     }
@@ -51,8 +54,8 @@ static int read_bl(bufferlist & bl, int *i)
     return 0;
 }
 
-void add_log(librados::ObjectWriteOperation * op, utime_t & timestamp,
-             string & section, string & name, int i)
+void add_log(librados::ObjectWriteOperation *op, utime_t &timestamp,
+             string &section, string &name, int i)
 {
     bufferlist bl;
     encode(i, bl);
@@ -69,8 +72,8 @@ string get_name(int i)
     return name_prefix + buf;
 }
 
-void generate_log(librados::IoCtx & ioctx, string & oid, int max,
-                  utime_t & start_time, bool modify_time)
+void generate_log(librados::IoCtx &ioctx, string &oid, int max,
+                  utime_t &start_time, bool modify_time)
 {
     string section = "global";
 
@@ -80,8 +83,9 @@ void generate_log(librados::IoCtx & ioctx, string & oid, int max,
 
     for (i = 0; i < max; i++) {
         uint32_t secs = start_time.sec();
-        if (modify_time)
+        if (modify_time) {
             secs += i;
+        }
 
         utime_t ts(secs, start_time.nsec());
         string name = get_name(i);
@@ -92,15 +96,16 @@ void generate_log(librados::IoCtx & ioctx, string & oid, int max,
     ASSERT_EQ(0, ioctx.operate(oid, &op));
 }
 
-utime_t get_time(utime_t & start_time, int i, bool modify_time)
+utime_t get_time(utime_t &start_time, int i, bool modify_time)
 {
     uint32_t secs = start_time.sec();
-    if (modify_time)
+    if (modify_time) {
         secs += i;
+    }
     return utime_t(secs, start_time.nsec());
 }
 
-void check_entry(cls_log_entry & entry, utime_t & start_time, int i,
+void check_entry(cls_log_entry &entry, utime_t &start_time, int i,
                  bool modified_time)
 {
     string section = "global";
@@ -112,11 +117,11 @@ void check_entry(cls_log_entry & entry, utime_t & start_time, int i,
     ASSERT_EQ(ts, entry.timestamp);
 }
 
-static int log_list(librados::IoCtx & ioctx, const std::string & oid,
-                    utime_t & from, utime_t & to,
-                    const string & in_marker, int max_entries,
+static int log_list(librados::IoCtx &ioctx, const std::string &oid,
+                    utime_t &from, utime_t &to,
+                    const string &in_marker, int max_entries,
                     list < cls_log_entry > &entries,
-                    string * out_marker, bool * truncated)
+                    string *out_marker, bool *truncated)
 {
     librados::ObjectReadOperation rop;
     cls_log_list(rop, from, to, in_marker, max_entries,
@@ -125,21 +130,21 @@ static int log_list(librados::IoCtx & ioctx, const std::string & oid,
     return ioctx.operate(oid, &rop, &obl);
 }
 
-static int log_list(librados::IoCtx & ioctx, const std::string & oid,
-                    utime_t & from, utime_t & to, int max_entries,
-                    list < cls_log_entry > &entries, bool * truncated)
+static int log_list(librados::IoCtx &ioctx, const std::string &oid,
+                    utime_t &from, utime_t &to, int max_entries,
+                    list < cls_log_entry > &entries, bool *truncated)
 {
     std::string marker;
     return log_list(ioctx, oid, from, to, marker, max_entries,
                     entries, &marker, truncated);
 }
 
-static int log_list(librados::IoCtx & ioctx, const std::string & oid,
+static int log_list(librados::IoCtx &ioctx, const std::string &oid,
                     list < cls_log_entry > &entries)
 {
     utime_t from, to;
     bool truncated {
-    false};
+        false};
     return log_list(ioctx, oid, from, to, 0, entries, &truncated);
 }
 
@@ -172,7 +177,7 @@ TEST_F(cls_log, test_log_add_same_time)
     map < int, cls_log_entry > check_ents;
 
     for (iter = entries.begin(); iter != entries.end(); ++iter) {
-        cls_log_entry & entry = *iter;
+        cls_log_entry &entry = *iter;
 
         int num;
         ASSERT_EQ(0, read_bl(entry.data, &num));
@@ -189,7 +194,7 @@ TEST_F(cls_log, test_log_add_same_time)
     int i;
 
     for (i = 0, ei = check_ents.begin(); i < 10; i++, ++ei) {
-        cls_log_entry & entry = ei->second;
+        cls_log_entry &entry = ei->second;
 
         ASSERT_EQ(i, ei->first);
         check_entry(entry, start_time, i, false);
@@ -237,7 +242,7 @@ TEST_F(cls_log, test_log_add_different_time)
     int i;
 
     for (i = 0, iter = entries.begin(); iter != entries.end(); ++iter, ++i) {
-        cls_log_entry & entry = *iter;
+        cls_log_entry &entry = *iter;
 
         int num;
 
@@ -273,18 +278,18 @@ TEST_F(cls_log, test_log_add_different_time)
     ASSERT_EQ(10, i);
 }
 
-int do_log_trim(librados::IoCtx & ioctx, const std::string & oid,
-                const std::string & from_marker, const std::string & to_marker)
+int do_log_trim(librados::IoCtx &ioctx, const std::string &oid,
+                const std::string &from_marker, const std::string &to_marker)
 {
     librados::ObjectWriteOperation op;
     cls_log_trim(op, {
-                 }, {
-                 }, from_marker, to_marker);
+    }, {
+    }, from_marker, to_marker);
     return ioctx.operate(oid, &op);
 }
 
-int do_log_trim(librados::IoCtx & ioctx, const std::string & oid,
-                const utime_t & from_time, const utime_t & to_time)
+int do_log_trim(librados::IoCtx &ioctx, const std::string &oid,
+                const utime_t &from_time, const utime_t &to_time)
 {
     librados::ObjectWriteOperation op;
     cls_log_trim(op, from_time, to_time, "", "");

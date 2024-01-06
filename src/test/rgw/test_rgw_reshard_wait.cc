@@ -43,7 +43,8 @@ TEST(ReshardWait, stop_block)
 
     const auto start = Clock::now();
     std::thread thread([&long_waiter] {
-                       EXPECT_EQ(-ECANCELED, long_waiter.wait(null_yield));});
+        EXPECT_EQ(-ECANCELED, long_waiter.wait(null_yield));
+    });
 
     EXPECT_EQ(0, short_waiter.wait(null_yield));
 
@@ -63,9 +64,10 @@ TEST(ReshardWait, wait_yield)
     RGWReshardWait waiter(wait_duration);
 
     boost::asio::io_context context;
-    spawn::spawn(context,[&](yield_context yield) {
-                 EXPECT_EQ(0, waiter.wait(optional_yield {
-                                          context, yield}));});
+    spawn::spawn(context, [&](yield_context yield) {
+        EXPECT_EQ(0, waiter.wait(optional_yield {
+            context, yield}));
+    });
 
     const auto start = Clock::now();
     EXPECT_EQ(1u, context.poll());  // spawn
@@ -88,9 +90,10 @@ TEST(ReshardWait, stop_yield)
     RGWReshardWait short_waiter(short_duration);
 
     boost::asio::io_context context;
-    spawn::spawn(context,[&](yield_context yield) {
-                 EXPECT_EQ(-ECANCELED, long_waiter.wait(optional_yield {
-                                                        context, yield}));});
+    spawn::spawn(context, [&](yield_context yield) {
+        EXPECT_EQ(-ECANCELED, long_waiter.wait(optional_yield {
+            context, yield}));
+    });
 
     const auto start = Clock::now();
     EXPECT_EQ(1u, context.poll());  // spawn
@@ -121,7 +124,8 @@ TEST(ReshardWait, stop_multiple)
     std::vector < std::thread > threads;
     {
         auto sync_waiter([&long_waiter] {
-                         EXPECT_EQ(-ECANCELED, long_waiter.wait(null_yield));});
+            EXPECT_EQ(-ECANCELED, long_waiter.wait(null_yield));
+        });
         threads.emplace_back(sync_waiter);
         threads.emplace_back(sync_waiter);
         threads.emplace_back(sync_waiter);
@@ -130,7 +134,7 @@ TEST(ReshardWait, stop_multiple)
     // spawn 4 coroutines
     boost::asio::io_context context;
     {
-        auto async_waiter =[&](yield_context yield) {
+        auto async_waiter = [&](yield_context yield) {
             EXPECT_EQ(-ECANCELED,
                       long_waiter.wait(optional_yield {context, yield}));
         };
@@ -151,7 +155,7 @@ TEST(ReshardWait, stop_multiple)
     EXPECT_EQ(4u, context.run_for(short_duration)); // timeout
     EXPECT_TRUE(context.stopped());
 
-  for (auto & thread:threads) {
+    for (auto &thread : threads) {
         thread.join();
     }
     const ceph::timespan elapsed = Clock::now() - start;

@@ -30,22 +30,24 @@ inline int sync_filesystem(int fd)
      * have to fall back on sync(), which synchronizes every filesystem on the
      * computer. */
 #ifdef HAVE_SYS_SYNCFS
-    if (syncfs(fd) == 0)
+    if (syncfs(fd) == 0) {
         return 0;
+    }
 #elif defined(SYS_syncfs)
-    if (syscall(SYS_syncfs, fd) == 0)
+    if (syscall(SYS_syncfs, fd) == 0) {
         return 0;
+    }
 #elif defined(__NR_syncfs)
-    if (syscall(__NR_syncfs, fd) == 0)
+    if (syscall(__NR_syncfs, fd) == 0) {
         return 0;
+    }
 #endif
 
 #if defined(HAVE_SYS_SYNCFS) || defined(SYS_syncfs) || defined(__NR_syncfs)
     else if (errno == ENOSYS) {
         sync();
         return 0;
-    }
-    else {
+    } else {
         return -errno;
     }
 #else

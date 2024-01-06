@@ -42,7 +42,7 @@ TEST_F(LibRadosLock, LockExclusiveDur)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_exclusive =[this] (timeval * tv) {
+    auto lock_exclusive = [this](timeval * tv) {
         return rados_lock_exclusive(ioctx, "foo", "TestLock3", "Cookie", "", tv,
                                     0);
     };
@@ -57,7 +57,7 @@ TEST_F(LibRadosLock, LockSharedDur)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_shared =[this] (timeval * tv) {
+    auto lock_shared = [this](timeval * tv) {
         return rados_lock_shared(ioctx, "foo", "TestLock4", "Cookie", "Tag", "",
                                  tv, 0);
     };
@@ -198,7 +198,7 @@ TEST_F(LibRadosLockEC, LockExclusiveDur)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_exclusive =[this] (timeval * tv) {
+    auto lock_exclusive = [this](timeval * tv) {
         return rados_lock_exclusive(ioctx, "foo", "TestLockEC3", "Cookie", "",
                                     tv, 0);
     };
@@ -214,7 +214,7 @@ TEST_F(LibRadosLockEC, LockSharedDur)
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    auto lock_shared =[this] (timeval * tv) {
+    auto lock_shared = [this](timeval * tv) {
         return rados_lock_shared(ioctx, "foo", "TestLockEC4", "Cookie", "Tag",
                                  "", tv, 0);
     };

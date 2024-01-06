@@ -18,14 +18,18 @@
 
 #include "test/unit.cc"
 
-struct mydpp:public DoutPrefixProvider {
-    std::ostream & gen_prefix(std::ostream & out) const override {
+struct mydpp: public DoutPrefixProvider {
+    std::ostream &gen_prefix(std::ostream &out) const override
+    {
         return out << "foo";
-    } CephContext *get_cct() const override {
+    } CephContext *get_cct() const override
+    {
         return g_ceph_context;
-    } unsigned get_subsys() const override {
+    } unsigned get_subsys() const override
+    {
         return ceph_subsys_osd;
-}}
+    }
+}
 dpp;
 
 #define dout_context g_ceph_context
@@ -43,13 +47,14 @@ TEST(ectransaction, two_writes_separated)
 
     ECUtil::stripe_info_t sinfo(2, 8192);
     auto plan = ECTransaction::get_write_plan(sinfo,
-                                              std::move(t),
-                                              [&](const hobject_t & i){
-                                              ECUtil::
-                                              HashInfoRef ref(new ECUtil::
-                                                              HashInfo(1));
-                                              return ref;}
-                                              , &dpp);
+                std::move(t),
+    [&](const hobject_t &i) {
+        ECUtil::
+        HashInfoRef ref(new ECUtil::
+                        HashInfo(1));
+        return ref;
+    }
+    , &dpp);
     generic_derr << "to_read " << plan.to_read << dendl;
     generic_derr << "will_write " << plan.will_write << dendl;
 
@@ -72,13 +77,14 @@ TEST(ectransaction, two_writes_nearby)
     t->write(h, 569856, b.length(), b, 0);
 
     auto plan = ECTransaction::get_write_plan(sinfo,
-                                              std::move(t),
-                                              [&](const hobject_t & i){
-                                              ECUtil::
-                                              HashInfoRef ref(new ECUtil::
-                                                              HashInfo(1));
-                                              return ref;}
-                                              , &dpp);
+                std::move(t),
+    [&](const hobject_t &i) {
+        ECUtil::
+        HashInfoRef ref(new ECUtil::
+                        HashInfo(1));
+        return ref;
+    }
+    , &dpp);
     generic_derr << "to_read " << plan.to_read << dendl;
     generic_derr << "will_write " << plan.will_write << dendl;
 
@@ -113,13 +119,14 @@ TEST(ectransaction, many_writes)
     t->write(h, 2813952, b.length(), b, 0);
 
     auto plan = ECTransaction::get_write_plan(sinfo,
-                                              std::move(t),
-                                              [&](const hobject_t & i){
-                                              ECUtil::
-                                              HashInfoRef ref(new ECUtil::
-                                                              HashInfo(1));
-                                              return ref;}
-                                              , &dpp);
+                std::move(t),
+    [&](const hobject_t &i) {
+        ECUtil::
+        HashInfoRef ref(new ECUtil::
+                        HashInfo(1));
+        return ref;
+    }
+    , &dpp);
     generic_derr << "to_read " << plan.to_read << dendl;
     generic_derr << "will_write " << plan.will_write << dendl;
 

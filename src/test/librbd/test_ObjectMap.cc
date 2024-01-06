@@ -21,25 +21,28 @@ void register_test_object_map()
 {
 }
 
-class TestObjectMap:public TestFixture {
-  public:
+class TestObjectMap: public TestFixture
+{
+public:
 
-    int when_open_object_map(librbd::ImageCtx * ictx) {
+    int when_open_object_map(librbd::ImageCtx *ictx)
+    {
         C_SaferCond ctx;
-         librbd::ObjectMap <> *object_map =
+        librbd::ObjectMap <> *object_map =
             new librbd::ObjectMap <> (*ictx, ictx->snap_id);
-         object_map->open(&ctx);
+        object_map->open(&ctx);
         int r = ctx.wait();
-         object_map->put();
+        object_map->put();
 
-         return r;
-}};
+        return r;
+    }
+};
 
 TEST_F(TestObjectMap, RefreshInvalidatesWhenCorrupt)
 {
     REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
-    librbd::ImageCtx * ictx;
+    librbd::ImageCtx *ictx;
     ASSERT_EQ(0, open_image(m_image_name, &ictx));
     bool flags_set;
     ASSERT_EQ(0, ictx->test_flags(CEPH_NOSNAP, RBD_FLAG_OBJECT_MAP_INVALID,
@@ -49,7 +52,7 @@ TEST_F(TestObjectMap, RefreshInvalidatesWhenCorrupt)
     C_SaferCond lock_ctx;
     {
         std::unique_lock owner_locker {
-        ictx->owner_lock};
+            ictx->owner_lock};
         ictx->exclusive_lock->try_acquire_lock(&lock_ctx);
     }
     ASSERT_EQ(0, lock_ctx.wait());
@@ -70,7 +73,7 @@ TEST_F(TestObjectMap, RefreshInvalidatesWhenTooSmall)
 {
     REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
-    librbd::ImageCtx * ictx;
+    librbd::ImageCtx *ictx;
     ASSERT_EQ(0, open_image(m_image_name, &ictx));
     bool flags_set;
     ASSERT_EQ(0, ictx->test_flags(CEPH_NOSNAP, RBD_FLAG_OBJECT_MAP_INVALID,
@@ -80,7 +83,7 @@ TEST_F(TestObjectMap, RefreshInvalidatesWhenTooSmall)
     C_SaferCond lock_ctx;
     {
         std::unique_lock owner_locker {
-        ictx->owner_lock};
+            ictx->owner_lock};
         ictx->exclusive_lock->try_acquire_lock(&lock_ctx);
     }
     ASSERT_EQ(0, lock_ctx.wait());
@@ -102,7 +105,7 @@ TEST_F(TestObjectMap, InvalidateFlagOnDisk)
 {
     REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
-    librbd::ImageCtx * ictx;
+    librbd::ImageCtx *ictx;
     ASSERT_EQ(0, open_image(m_image_name, &ictx));
     bool flags_set;
     ASSERT_EQ(0, ictx->test_flags(CEPH_NOSNAP, RBD_FLAG_OBJECT_MAP_INVALID,
@@ -112,7 +115,7 @@ TEST_F(TestObjectMap, InvalidateFlagOnDisk)
     C_SaferCond lock_ctx;
     {
         std::unique_lock owner_locker {
-        ictx->owner_lock};
+            ictx->owner_lock};
         ictx->exclusive_lock->try_acquire_lock(&lock_ctx);
     }
     ASSERT_EQ(0, lock_ctx.wait());
@@ -138,7 +141,7 @@ TEST_F(TestObjectMap, AcquireLockInvalidatesWhenTooSmall)
 {
     REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
-    librbd::ImageCtx * ictx;
+    librbd::ImageCtx *ictx;
     ASSERT_EQ(0, open_image(m_image_name, &ictx));
     bool flags_set;
     ASSERT_EQ(0, ictx->test_flags(CEPH_NOSNAP, RBD_FLAG_OBJECT_MAP_INVALID,
@@ -155,7 +158,7 @@ TEST_F(TestObjectMap, AcquireLockInvalidatesWhenTooSmall)
     C_SaferCond lock_ctx;
     {
         std::unique_lock owner_locker {
-        ictx->owner_lock};
+            ictx->owner_lock};
         ictx->exclusive_lock->try_acquire_lock(&lock_ctx);
     }
     ASSERT_EQ(0, lock_ctx.wait());
@@ -178,7 +181,7 @@ TEST_F(TestObjectMap, DISABLED_StressTest)
     REQUIRE_FEATURE(RBD_FEATURE_OBJECT_MAP);
 
     uint64_t object_count = cls::rbd::MAX_OBJECT_MAP_OBJECT_COUNT;
-    librbd::ImageCtx * ictx;
+    librbd::ImageCtx *ictx;
     ASSERT_EQ(0, open_image(m_image_name, &ictx));
     ASSERT_EQ(0, resize(ictx, ictx->layout.object_size * object_count));
 
@@ -187,20 +190,20 @@ TEST_F(TestObjectMap, DISABLED_StressTest)
                                   &flags_set));
     ASSERT_FALSE(flags_set);
 
-    srand(time(NULL) % (unsigned long)-1);
+    srand(time(NULL) % (unsigned long) -1);
 
     coarse_mono_time start = coarse_mono_clock::now();
     chrono::duration < double >last = chrono::duration < double >::zero();
 
     const int WINDOW_SIZE = 5;
     typedef boost::accumulators::accumulator_set <
-        double, boost::accumulators::stats <
-        boost::accumulators::tag::rolling_sum > >RollingSum;
+    double, boost::accumulators::stats <
+    boost::accumulators::tag::rolling_sum > > RollingSum;
 
     RollingSum time_acc(boost::accumulators::tag::rolling_window::window_size =
-                        WINDOW_SIZE);
+                            WINDOW_SIZE);
     RollingSum ios_acc(boost::accumulators::tag::rolling_window::window_size =
-                       WINDOW_SIZE);
+                           WINDOW_SIZE);
 
     uint32_t io_threads = 16;
     uint64_t cur_ios = 0;
@@ -212,27 +215,27 @@ TEST_F(TestObjectMap, DISABLED_StressTest)
 
         throttle.start_op();
         uint64_t object_no = (rand() % object_count);
-        auto ctx = new LambdaContext([&throttle, object_no] (int r){
-                                     ASSERT_EQ(0,
-                                               r) << "object_no=" << object_no;
-                                     throttle.end_op(r);});
+        auto ctx = new LambdaContext([&throttle, object_no](int r) {
+            ASSERT_EQ(0,
+                      r) << "object_no=" << object_no;
+            throttle.end_op(r);
+        });
 
         std::shared_lock owner_locker {
-        ictx->owner_lock};
+            ictx->owner_lock};
         std::shared_lock image_locker {
-        ictx->image_lock};
+            ictx->image_lock};
         ASSERT_TRUE(ictx->object_map != nullptr);
 
         if (!ictx->object_map->aio_update <
             Context, &Context::complete > (CEPH_NOSNAP, object_no,
-                                           OBJECT_EXISTS, {
-                                           }
-                                           , {
-                                           }
-                                           , true, ctx)) {
+        OBJECT_EXISTS, {
+    }
+    , {
+    }
+    , true, ctx)) {
             ctx->complete(0);
-        }
-        else {
+        } else {
             ++cur_ios;
             ++ios;
         }
@@ -241,18 +244,17 @@ TEST_F(TestObjectMap, DISABLED_StressTest)
         chrono::duration < double >elapsed = now - start;
         if (last == chrono::duration < double >::zero()) {
             last = elapsed;
-        }
-        else if ((int)elapsed.count() != (int)last.count()) {
+        } else if ((int)elapsed.count() != (int)last.count()) {
             time_acc((elapsed - last).count());
             ios_acc(static_cast < double >(cur_ios));
             cur_ios = 0;
 
             double time_sum = boost::accumulators::rolling_sum(time_acc);
             std::cerr << std::setw(5) << (int)elapsed.count() << "\t"
-                << std::setw(8) << (int)ios << "\t"
-                << std::fixed << std::setw(8) << std::setprecision(2)
-                << boost::accumulators::rolling_sum(ios_acc) / time_sum
-                << std::endl;
+                      << std::setw(8) << (int)ios << "\t"
+                      << std::fixed << std::setw(8) << std::setprecision(2)
+                      << boost::accumulators::rolling_sum(ios_acc) / time_sum
+                      << std::endl;
             last = elapsed;
         }
     }

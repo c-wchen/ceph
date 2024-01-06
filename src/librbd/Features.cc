@@ -28,84 +28,85 @@ static const std::map < std::string, uint64_t > RBD_FEATURE_MAP = {
 static_assert((RBD_FEATURE_DIRTY_CACHE << 1) > RBD_FEATURES_ALL,
               "new RBD feature added");
 
-namespace librbd {
+namespace librbd
+{
 
-    std::string rbd_features_to_string(uint64_t features, std::ostream * err) {
-        std::string r;
-        for (auto & i:RBD_FEATURE_MAP) {
-            if (features & i.second) {
-                if (!r.empty()) {
-                    r += ",";
-                } r += i.first;
-                features &= ~i.second;
+std::string rbd_features_to_string(uint64_t features, std::ostream *err)
+{
+    std::string r;
+    for (auto &i : RBD_FEATURE_MAP) {
+        if (features & i.second) {
+            if (!r.empty()) {
+                r += ",";
             }
+            r += i.first;
+            features &= ~i.second;
         }
-        if (err && features) {
-            *err << "ignoring unknown feature mask 0x"
-                << std::hex << features << std::dec;
-        }
-        return r;
+    }
+    if (err && features) {
+        *err << "ignoring unknown feature mask 0x"
+             << std::hex << features << std::dec;
+    }
+    return r;
+}
+
+uint64_t rbd_features_from_string(const std::string &orig_value,
+                                  std::ostream *err)
+{
+    uint64_t features = 0;
+    std::string value = orig_value;
+    boost::trim(value);
+
+    // empty string means default features
+    if (!value.size()) {
+        return RBD_FEATURES_DEFAULT;
     }
 
-    uint64_t rbd_features_from_string(const std::string & orig_value,
-                                      std::ostream * err) {
-        uint64_t features = 0;
-        std::string value = orig_value;
-        boost::trim(value);
+    try {
+        // numeric?
+        features = boost::lexical_cast < uint64_t > (value);
 
-        // empty string means default features
-        if (!value.size()) {
-            return RBD_FEATURES_DEFAULT;
-        }
-
-        try {
-            // numeric?
-            features = boost::lexical_cast < uint64_t > (value);
-
-            // drop unrecognized bits
-            uint64_t unsupported_features = (features & ~RBD_FEATURES_ALL);
-            if (unsupported_features != 0ull) {
-                features &= RBD_FEATURES_ALL;
-                if (err) {
-                    *err << "ignoring unknown feature mask 0x"
-                        << std::hex << unsupported_features << std::dec;
-                }
-            }
-
-            uint64_t ignore_features_mask =
-                (RBD_FEATURES_INTERNAL | RBD_FEATURES_MUTABLE_INTERNAL);
-            uint64_t ignored_features = (features & ignore_features_mask);
-            if (ignored_features != 0ULL) {
-                features &= ~ignore_features_mask;
-                if (err) {
-                    *err << "ignoring feature mask 0x" << std::
-                        hex << ignored_features;
-                }
+        // drop unrecognized bits
+        uint64_t unsupported_features = (features & ~RBD_FEATURES_ALL);
+        if (unsupported_features != 0ull) {
+            features &= RBD_FEATURES_ALL;
+            if (err) {
+                *err << "ignoring unknown feature mask 0x"
+                     << std::hex << unsupported_features << std::dec;
             }
         }
-        catch(boost::bad_lexical_cast &) {
-            // feature name list?
-            bool errors = false;
-            std::vector < std::string > feature_names;
-            boost::split(feature_names, value, boost::is_any_of(","));
-          for (auto feature_name:feature_names) {
-                boost::trim(feature_name);
-                auto feature_it = RBD_FEATURE_MAP.find(feature_name);
-                if (feature_it != RBD_FEATURE_MAP.end()) {
-                    features += feature_it->second;
-                }
-                else if (err) {
-                    if (errors) {
-                        *err << ", ";
-                    }
-                    else {
-                        errors = true;
-                    }
-                    *err << "ignoring unknown feature " << feature_name;
-                }
+
+        uint64_t ignore_features_mask =
+            (RBD_FEATURES_INTERNAL | RBD_FEATURES_MUTABLE_INTERNAL);
+        uint64_t ignored_features = (features & ignore_features_mask);
+        if (ignored_features != 0ULL) {
+            features &= ~ignore_features_mask;
+            if (err) {
+                *err << "ignoring feature mask 0x" << std::
+                     hex << ignored_features;
             }
         }
-        return features;
+    } catch (boost::bad_lexical_cast &) {
+        // feature name list?
+        bool errors = false;
+        std::vector < std::string > feature_names;
+        boost::split(feature_names, value, boost::is_any_of(","));
+        for (auto feature_name : feature_names) {
+            boost::trim(feature_name);
+            auto feature_it = RBD_FEATURE_MAP.find(feature_name);
+            if (feature_it != RBD_FEATURE_MAP.end()) {
+                features += feature_it->second;
+            } else if (err) {
+                if (errors) {
+                    *err << ", ";
+                } else {
+                    errors = true;
+                }
+                *err << "ignoring unknown feature " << feature_name;
+            }
+        }
     }
+    return features;
+}
 
 }                               // namespace librbd

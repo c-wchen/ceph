@@ -4,9 +4,11 @@
 
 #include "common/tracer.h"
 
-namespace tracing {
-    namespace osd {
+namespace tracing
+{
+namespace osd
+{
 
-        extern tracing::Tracer tracer;
+extern tracing::Tracer tracer;
 
 } // namespace osd }            // namespace tracing

@@ -7,27 +7,29 @@
 
 #include "common/admin_socket.h"
 
-namespace librbd {
+namespace librbd
+{
 
-    struct ImageCtx;
-    class LibrbdAdminSocketCommand;
+struct ImageCtx;
+class LibrbdAdminSocketCommand;
 
-    class LibrbdAdminSocketHook:public AdminSocketHook {
-      public:
-        LibrbdAdminSocketHook(ImageCtx * ictx);
-        ~LibrbdAdminSocketHook() override;
+class LibrbdAdminSocketHook: public AdminSocketHook
+{
+public:
+    LibrbdAdminSocketHook(ImageCtx *ictx);
+    ~LibrbdAdminSocketHook() override;
 
-        int call(std::string_view command, const cmdmap_t & cmdmap,
-                 const bufferlist &,
-                 Formatter * f,
-                 std::ostream & errss, bufferlist & out) override;
+    int call(std::string_view command, const cmdmap_t &cmdmap,
+             const bufferlist &,
+             Formatter *f,
+             std::ostream &errss, bufferlist &out) override;
 
-      private:
-        typedef std::map < std::string, LibrbdAdminSocketCommand *,
+private:
+    typedef std::map < std::string, LibrbdAdminSocketCommand *,
             std::less <>> Commands;
 
-        AdminSocket *admin_socket;
-        Commands commands;
-    };
+    AdminSocket *admin_socket;
+    Commands commands;
+};
 }
 #endif

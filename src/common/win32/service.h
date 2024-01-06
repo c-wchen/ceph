@@ -13,15 +13,17 @@
 #include "include/compat.h"
 #include "common/ceph_context.h"
 
-class ServiceBase {
+class ServiceBase
+{
 
-  public:
-    ServiceBase(CephContext * cct_);
-    virtual ~ ServiceBase() {
+public:
+    ServiceBase(CephContext *cct_);
+    virtual ~ ServiceBase()
+    {
     };
 
-    static int initialize(ServiceBase * service);
-  protected:
+    static int initialize(ServiceBase *service);
+protected:
     static void run();
     static void control_handler(DWORD request);
 
@@ -39,7 +41,7 @@ class ServiceBase {
 
     CephContext *cct;
 
-  private:
+private:
     /* A handle used when reporting the current status. */
     SERVICE_STATUS_HANDLE hstatus;
     /* The current service status. */

@@ -12,40 +12,50 @@
 #define dout_prefix (*_dout << "rgw period history: ")
 
 /// an ordered history of consecutive periods
-class RGWPeriodHistory::History:public bi::avl_set_base_hook <> {
-  public:
+class RGWPeriodHistory::History: public bi::avl_set_base_hook <>
+{
+public:
     std::deque < RGWPeriod > periods;
 
-    epoch_t get_oldest_epoch() const {
+    epoch_t get_oldest_epoch() const
+    {
         return periods.front().get_realm_epoch();
-    } epoch_t get_newest_epoch() const {
+    } epoch_t get_newest_epoch() const
+    {
         return periods.back().get_realm_epoch();
-    } bool contains(epoch_t epoch) const {
+    } bool contains(epoch_t epoch) const
+    {
         return get_oldest_epoch() <= epoch && epoch <= get_newest_epoch();
-    } RGWPeriod & get(epoch_t epoch) {
+    } RGWPeriod &get(epoch_t epoch)
+    {
         return periods[epoch - get_oldest_epoch()];
-    } const RGWPeriod & get(epoch_t epoch) const {
+    } const RGWPeriod &get(epoch_t epoch) const
+    {
         return periods[epoch - get_oldest_epoch()];
-    } const std::string & get_predecessor_id() const {
+    } const std::string &get_predecessor_id() const
+    {
         return periods.front().get_predecessor();
-}};
+    }
+};
 
 /// value comparison for avl_set
-bool operator<(const RGWPeriodHistory::History & lhs,
-               const RGWPeriodHistory::History & rhs)
+bool operator<(const RGWPeriodHistory::History &lhs,
+               const RGWPeriodHistory::History &rhs)
 {
     return lhs.get_newest_epoch() < rhs.get_newest_epoch();
 }
 
 /// key-value comparison for avl_set
 struct NewestEpochLess {
-    bool operator() (const RGWPeriodHistory::History & value, epoch_t key)const {
+    bool operator()(const RGWPeriodHistory::History &value, epoch_t key)const
+    {
         return value.get_newest_epoch() < key;
-}};
+    }
+};
 
 using Cursor = RGWPeriodHistory::Cursor;
 
-const RGWPeriod & Cursor::get_period() const const
+const RGWPeriod &Cursor::get_period() const const
 {
     std::lock_guard < std::mutex > lock(*mutex);
     return history->get(epoch);
@@ -63,29 +73,31 @@ bool Cursor::has_next() const const
     return epoch < history->get_newest_epoch();
 }
 
-bool operator==(const Cursor & lhs, const Cursor & rhs)
+bool operator==(const Cursor &lhs, const Cursor &rhs)
 {
     return lhs.history == rhs.history && lhs.epoch == rhs.epoch;
 }
 
-bool operator!=(const Cursor & lhs, const Cursor & rhs)
+bool operator!=(const Cursor &lhs, const Cursor &rhs)
 {
     return !(lhs == rhs);
 }
 
-class RGWPeriodHistory::Impl final {
-  public:
-    Impl(CephContext * cct, Puller * puller, const RGWPeriod & current_period);
+class RGWPeriodHistory::Impl final
+{
+public:
+    Impl(CephContext *cct, Puller *puller, const RGWPeriod &current_period);
     ~Impl();
 
-    Cursor get_current() const {
+    Cursor get_current() const
+    {
         return current_cursor;
-    } Cursor attach(const DoutPrefixProvider * dpp, RGWPeriod
+    } Cursor attach(const DoutPrefixProvider *dpp, RGWPeriod
                     && period, optional_yield y);
     Cursor insert(RGWPeriod && period);
     Cursor lookup(epoch_t realm_epoch);
 
-  private:
+private:
     /// an intrusive set of histories, ordered by their newest epoch. although
     /// the newest epoch of each history is mutable, the ordering cannot change
     /// because we prevent the histories from overlapping
@@ -119,9 +131,9 @@ class RGWPeriodHistory::Impl final {
     Set::const_iterator current_history;
 };
 
-RGWPeriodHistory::Impl::Impl(CephContext * cct, Puller * puller,
-                             const RGWPeriod & current_period)
-:cct(cct), puller(puller)
+RGWPeriodHistory::Impl::Impl(CephContext *cct, Puller *puller,
+                             const RGWPeriod &current_period)
+    : cct(cct), puller(puller)
 {
     if (!current_period.get_id().empty()) {
         // copy the current period into a new history
@@ -134,8 +146,7 @@ RGWPeriodHistory::Impl::Impl(CephContext * cct, Puller * puller,
         // get a cursor to the current period
         current_cursor =
             make_cursor(current_history, current_period.get_realm_epoch());
-    }
-    else {
+    } else {
         current_history = histories.end();
     }
 }
@@ -144,16 +155,16 @@ RGWPeriodHistory::Impl::~Impl()
 {
     // clear the histories and delete each entry
     histories.clear_and_dispose(std::default_delete < History > {
-                                }
-    );
+    }
+                               );
 }
 
-Cursor RGWPeriodHistory::Impl::attach(const DoutPrefixProvider * dpp, RGWPeriod
+Cursor RGWPeriodHistory::Impl::attach(const DoutPrefixProvider *dpp, RGWPeriod
                                       && period, optional_yield y)
 {
     if (current_history == histories.end()) {
         return Cursor {
-        -EINVAL};
+            -EINVAL};
     }
 
     const auto epoch = period.get_realm_epoch();
@@ -175,8 +186,7 @@ Cursor RGWPeriodHistory::Impl::attach(const DoutPrefixProvider * dpp, RGWPeriod
             // take the predecessor id of the most recent history
             if (cursor.get_epoch() > current_cursor.get_epoch()) {
                 predecessor_id = cursor.history->get_predecessor_id();
-            }
-            else {
+            } else {
                 predecessor_id = current_history->get_predecessor_id();
             }
         }
@@ -184,16 +194,16 @@ Cursor RGWPeriodHistory::Impl::attach(const DoutPrefixProvider * dpp, RGWPeriod
         if (predecessor_id.empty()) {
             ldpp_dout(dpp,
                       -1) << "reached a period with an empty predecessor id" <<
-                dendl;
+                          dendl;
             return Cursor {
-            -EINVAL};
+                -EINVAL};
         }
 
         // pull the period outside of the lock
         int r = puller->pull(dpp, predecessor_id, period, y);
         if (r < 0) {
             return Cursor {
-            r};
+                r};
         }
     }
 
@@ -205,7 +215,7 @@ Cursor RGWPeriodHistory::Impl::insert(RGWPeriod && period)
 {
     if (current_history == histories.end()) {
         return Cursor {
-        -EINVAL};
+            -EINVAL};
     }
 
     std::lock_guard < std::mutex > lock(mutex);
@@ -241,7 +251,7 @@ Cursor RGWPeriodHistory::Impl::insert_locked(RGWPeriod && period)
 
     // find the first history whose newest epoch comes at or after this period
     auto i = histories.lower_bound(epoch, NewestEpochLess { }
-    );
+                                  );
 
     if (i == histories.end()) {
         // epoch is past the end of our newest history
@@ -264,15 +274,15 @@ Cursor RGWPeriodHistory::Impl::insert_locked(RGWPeriod && period)
 
     if (i->contains(epoch)) {
         // already resident in this history
-        auto & existing = i->get(epoch);
+        auto &existing = i->get(epoch);
         // verify that the period ids match; otherwise we've forked the history
         if (period.get_id() != existing.get_id()) {
             lderr(cct) << "Got two different periods, " << period.get_id()
-                << " and " << existing.
-                get_id() << ", with the same realm epoch " << epoch <<
-                "! This indicates a fork in the period history." << dendl;
+                       << " and " << existing.
+                       get_id() << ", with the same realm epoch " << epoch <<
+                       "! This indicates a fork in the period history." << dendl;
             return Cursor {
-            -EEXIST};
+                -EEXIST};
         }
         // update the existing period if we got a newer period epoch
         if (period.get_epoch() > existing.get_epoch()) {
@@ -313,8 +323,7 @@ Cursor RGWPeriodHistory::Impl::insert_locked(RGWPeriod && period)
     return make_cursor(i, epoch);
 }
 
-RGWPeriodHistory::Impl::Set::iterator
-    RGWPeriodHistory::Impl::merge(Set::iterator dst, Set::iterator src)
+RGWPeriodHistory::Impl::Set::iterator RGWPeriodHistory::Impl::merge(Set::iterator dst, Set::iterator src)
 {
     ceph_assert(dst->get_newest_epoch() + 1 == src->get_oldest_epoch());
 
@@ -325,8 +334,8 @@ RGWPeriodHistory::Impl::Set::iterator
                             std::make_move_iterator(dst->periods.begin()),
                             std::make_move_iterator(dst->periods.end()));
         histories.erase_and_dispose(dst, std::default_delete < History > {
-                                    }
-        );
+        }
+                                   );
         return src;
     }
 
@@ -335,21 +344,21 @@ RGWPeriodHistory::Impl::Set::iterator
                         std::make_move_iterator(src->periods.begin()),
                         std::make_move_iterator(src->periods.end()));
     histories.erase_and_dispose(src, std::default_delete < History > {
-                                }
-    );
+    }
+                               );
     return dst;
 }
 
 Cursor RGWPeriodHistory::Impl::make_cursor(Set::const_iterator history,
-                                           epoch_t epoch)
+        epoch_t epoch)
 {
     return Cursor {
-    &*history, &mutex, epoch};
+        & *history, &mutex, epoch};
 }
 
-RGWPeriodHistory::RGWPeriodHistory(CephContext * cct, Puller * puller,
-                                   const RGWPeriod & current_period)
-:  impl(new Impl(cct, puller, current_period))
+RGWPeriodHistory::RGWPeriodHistory(CephContext *cct, Puller *puller,
+                                   const RGWPeriod &current_period)
+    :  impl(new Impl(cct, puller, current_period))
 {
 }
 
@@ -360,7 +369,7 @@ Cursor RGWPeriodHistory::get_current() const const
     return impl->get_current();
 }
 
-Cursor RGWPeriodHistory::attach(const DoutPrefixProvider * dpp, RGWPeriod
+Cursor RGWPeriodHistory::attach(const DoutPrefixProvider *dpp, RGWPeriod
                                 && period, optional_yield y)
 {
     return impl->attach(dpp, std::move(period), y);

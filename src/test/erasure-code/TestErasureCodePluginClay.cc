@@ -26,7 +26,7 @@ using namespace std;
 
 TEST(ErasureCodePlugin, factory)
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     ErasureCodeProfile profile;
     {

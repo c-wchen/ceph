@@ -12,24 +12,24 @@
 const char *MetaSession::get_state_name() const const
 {
     switch (state) {
-    case STATE_NEW:
-        return "new";
-    case STATE_OPENING:
-        return "opening";
-    case STATE_OPEN:
-        return "open";
-    case STATE_CLOSING:
-        return "closing";
-    case STATE_CLOSED:
-        return "closed";
-    case STATE_STALE:
-        return "stale";
-    default:
-        return "unknown";
+        case STATE_NEW:
+            return "new";
+        case STATE_OPENING:
+            return "opening";
+        case STATE_OPEN:
+            return "open";
+        case STATE_CLOSING:
+            return "closing";
+        case STATE_CLOSED:
+            return "closed";
+        case STATE_STALE:
+            return "stale";
+        default:
+            return "unknown";
     }
 }
 
-void MetaSession::dump(Formatter * f, bool cap_dump) const const
+void MetaSession::dump(Formatter *f, bool cap_dump) const const
 {
     f->dump_int("mds", mds_num);
     f->dump_object("addrs", addrs);
@@ -41,7 +41,7 @@ void MetaSession::dump(Formatter * f, bool cap_dump) const const
     f->dump_int("num_caps", caps.size());
     if (cap_dump) {
         f->open_array_section("caps");
-      for (const auto & cap:caps) {
+        for (const auto &cap : caps) {
             f->dump_object("cap", *cap);
         }
         f->close_section();

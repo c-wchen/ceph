@@ -24,11 +24,13 @@
 #include "gtest/gtest.h"
 #include "crimson/common/shared_lru.h"
 
-class LRUTest:public SharedLRU < unsigned int, int > {
-  public:
-    auto add(unsigned int key, int value, bool * existed = nullptr) {
+class LRUTest: public SharedLRU < unsigned int, int >
+{
+public:
+    auto add(unsigned int key, int value, bool *existed = nullptr)
+    {
         auto pv = new int { value };
-        auto ptr = insert(key, std::unique_ptr < int >{ pv });
+        auto ptr = insert(key, std::unique_ptr < int > { pv });
         if (existed) {
             *existed = (ptr.get() != pv);
         }
@@ -168,7 +170,7 @@ TEST(LRU, clear)
 TEST(LRU, eviction)
 {
     LRUTest cache {
-    5};
+        5};
     bool existed;
     // add a bunch of elements, some of them will be evicted
     for (size_t i = 0; i < 2 * cache.capacity(); ++i) {
@@ -188,7 +190,7 @@ TEST(LRU, track_weak)
 {
     constexpr int SIZE = 5;
     LRUTest cache {
-    SIZE};
+        SIZE};
 
     bool existed = false;
     // strong reference to keep 0 alive

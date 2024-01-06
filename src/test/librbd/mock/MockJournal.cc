@@ -3,8 +3,9 @@
 
 #include "test/librbd/mock/MockJournal.h"
 
-namespace librbd {
+namespace librbd
+{
 
-    MockJournal *MockJournal::s_instance = nullptr;
+MockJournal *MockJournal::s_instance = nullptr;
 
 }                               // namespace librbd

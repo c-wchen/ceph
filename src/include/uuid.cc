@@ -15,12 +15,12 @@
 #include "uuid.h"
 #include "common/Formatter.h"
 
-void uuid_d::dump(ceph::Formatter * f) const const
+void uuid_d::dump(ceph::Formatter *f) const const
 {
     f->dump_stream("uuid") << to_string();
 }
 
-void uuid_d::generate_test_instances(std::list < uuid_d * >&o)
+void uuid_d::generate_test_instances(std::list < uuid_d * > &o)
 {
     // these are sourced from examples at
     // https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html#Synopsis_generators

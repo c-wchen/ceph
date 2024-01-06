@@ -24,50 +24,49 @@
 
 using std::ostringstream;
 
-bool strict_strtob(const char *str, std::string * err)
+bool strict_strtob(const char *str, std::string *err)
 {
     if (strcasecmp(str, "false") == 0) {
         return false;
-    }
-    else if (strcasecmp(str, "true") == 0) {
+    } else if (strcasecmp(str, "true") == 0) {
         return true;
-    }
-    else {
+    } else {
         int b = strict_strtol(str, 10, err);
         return (bool) ! !b;
     }
 }
 
-long long strict_strtoll(std::string_view str, int base, std::string * err)
+long long strict_strtoll(std::string_view str, int base, std::string *err)
 {
     char *endptr;
     errno = 0;                  /* To distinguish success/failure after call (see man page) */
     long long ret = strtoll(str.data(), &endptr, base);
     if (endptr == str.data() || endptr != str.data() + str.size()) {
         *err = (std::string {
-                "Expected option value to be integer, got '"}
-                +std::string {
-                str}
-                +"'");
+            "Expected option value to be integer, got '"}
+        +std::string {
+            str}
+        +"'");
         return 0;
     }
     if (errno) {
         *err = (std::string {
-                "The option value '"}
-                +std::string {
-                str}
-                +"' seems to be invalid");
+            "The option value '"}
+        +std::string {
+            str}
+        +"' seems to be invalid");
         return 0;
     }
     *err = "";
     return ret;
 }
 
-int strict_strtol(std::string_view str, int base, std::string * err)
+int strict_strtol(std::string_view str, int base, std::string *err)
 {
     long long ret = strict_strtoll(str, base, err);
-    if (!err->empty())
+    if (!err->empty()) {
         return 0;
+    }
     if ((ret < INT_MIN) || (ret > INT_MAX)) {
         ostringstream errStr;
         errStr << "The option value '" << str << "' seems to be invalid";
@@ -77,12 +76,12 @@ int strict_strtol(std::string_view str, int base, std::string * err)
     return static_cast < int >(ret);
 }
 
-int strict_strtol(const char *str, int base, std::string * err)
+int strict_strtol(const char *str, int base, std::string *err)
 {
     return strict_strtol(std::string_view(str), base, err);
 }
 
-double strict_strtod(std::string_view str, std::string * err)
+double strict_strtod(std::string_view str, std::string *err)
 {
     char *endptr;
     errno = 0;                  /* To distinguish success/failure after call (see man page) */
@@ -110,7 +109,7 @@ double strict_strtod(std::string_view str, std::string * err)
     return ret;
 }
 
-float strict_strtof(std::string_view str, std::string * err)
+float strict_strtof(std::string_view str, std::string *err)
 {
     char *endptr;
     errno = 0;                  /* To distinguish success/failure after call (see man page) */
@@ -139,7 +138,7 @@ float strict_strtof(std::string_view str, std::string * err)
 }
 
 template < typename T >
-    T strict_iec_cast(std::string_view str, std::string * err)
+T strict_iec_cast(std::string_view str, std::string *err)
 {
     if (str.empty()) {
         *err = "strict_iecstrtoll: value not specified";
@@ -167,29 +166,29 @@ template < typename T >
             return 0;
         }
         switch (unit.front()) {
-        case 'K':
-            m = 10;
-            break;
-        case 'M':
-            m = 20;
-            break;
-        case 'G':
-            m = 30;
-            break;
-        case 'T':
-            m = 40;
-            break;
-        case 'P':
-            m = 50;
-            break;
-        case 'E':
-            m = 60;
-            break;
-        case 'B':
-            break;
-        default:
-            *err = "strict_iecstrtoll: unit prefix not recognized";
-            return 0;
+            case 'K':
+                m = 10;
+                break;
+            case 'M':
+                m = 20;
+                break;
+            case 'G':
+                m = 30;
+                break;
+            case 'T':
+                m = 40;
+                break;
+            case 'P':
+                m = 50;
+                break;
+            case 'E':
+                m = 60;
+                break;
+            case 'B':
+                break;
+            default:
+                *err = "strict_iecstrtoll: unit prefix not recognized";
+                return 0;
         }
     }
 
@@ -205,35 +204,35 @@ template < typename T >
         return 0;
     }
     using promoted_t = typename std::common_type < decltype(ll), T >::type;
-    if (static_cast < promoted_t > (ll) <
-        static_cast < promoted_t > (std::numeric_limits < T >::min()) >> m) {
+    if (static_cast < promoted_t >(ll) <
+        static_cast < promoted_t >(std::numeric_limits < T >::min()) >> m) {
         *err = "strict_iecstrtoll: value seems to be too small";
         return 0;
     }
-    if (static_cast < promoted_t > (ll) >
-        static_cast < promoted_t > (std::numeric_limits < T >::max()) >> m) {
+    if (static_cast < promoted_t >(ll) >
+        static_cast < promoted_t >(std::numeric_limits < T >::max()) >> m) {
         *err = "strict_iecstrtoll: value seems to be too large";
         return 0;
     }
     return (ll << m);
 }
 
-template int strict_iec_cast < int >(std::string_view str, std::string * err);
-template long strict_iec_cast < long >(std::string_view str, std::string * err);
+template int strict_iec_cast < int >(std::string_view str, std::string *err);
+template long strict_iec_cast < long >(std::string_view str, std::string *err);
 template long long strict_iec_cast < long long >(std::string_view str,
-                                                 std::string * err);
+        std::string *err);
 template uint64_t strict_iec_cast < uint64_t > (std::string_view str,
-                                                std::string * err);
+        std::string *err);
 template uint32_t strict_iec_cast < uint32_t > (std::string_view str,
-                                                std::string * err);
+        std::string *err);
 
-uint64_t strict_iecstrtoll(std::string_view str, std::string * err)
+uint64_t strict_iecstrtoll(std::string_view str, std::string *err)
 {
     return strict_iec_cast < uint64_t > (str, err);
 }
 
 template < typename T >
-    T strict_si_cast(std::string_view str, std::string * err)
+T strict_si_cast(std::string_view str, std::string *err)
 {
     if (str.empty()) {
         *err = "strict_sistrtoll: value not specified";
@@ -244,25 +243,26 @@ template < typename T >
     // deal with unit prefix is there is one
     if (str.find_first_not_of("0123456789+-") != std::string_view::npos) {
         const char &u = str.back();
-        if (u == 'K')
+        if (u == 'K') {
             m = 3;
-        else if (u == 'M')
+        } else if (u == 'M') {
             m = 6;
-        else if (u == 'G')
+        } else if (u == 'G') {
             m = 9;
-        else if (u == 'T')
+        } else if (u == 'T') {
             m = 12;
-        else if (u == 'P')
+        } else if (u == 'P') {
             m = 15;
-        else if (u == 'E')
+        } else if (u == 'E') {
             m = 18;
-        else if (u != 'B') {
+        } else if (u != 'B') {
             *err = "strict_si_cast: unit prefix not recognized";
             return 0;
         }
 
-        if (m >= 3)
+        if (m >= 3) {
             n = str.substr(0, str.length() - 1);
+        }
     }
 
     long long ll = strict_strtoll(n, 10, err);
@@ -271,8 +271,8 @@ template < typename T >
         return 0;
     }
     using promoted_t = typename std::common_type < decltype(ll), T >::type;
-    auto v = static_cast < promoted_t > (ll);
-    auto coefficient = static_cast < promoted_t > (powl(10, m));
+    auto v = static_cast < promoted_t >(ll);
+    auto coefficient = static_cast < promoted_t >(powl(10, m));
     if (v != std::clamp(v,
                         (static_cast < promoted_t >
                          (std::numeric_limits < T >::min()) / coefficient),
@@ -284,11 +284,11 @@ template < typename T >
     return v * coefficient;
 }
 
-template int strict_si_cast < int >(std::string_view str, std::string * err);
-template long strict_si_cast < long >(std::string_view str, std::string * err);
+template int strict_si_cast < int >(std::string_view str, std::string *err);
+template long strict_si_cast < long >(std::string_view str, std::string *err);
 template long long strict_si_cast < long long >(std::string_view str,
-                                                std::string * err);
+        std::string *err);
 template uint64_t strict_si_cast < uint64_t > (std::string_view str,
-                                               std::string * err);
+        std::string *err);
 template uint32_t strict_si_cast < uint32_t > (std::string_view str,
-                                               std::string * err);
+        std::string *err);

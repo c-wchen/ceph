@@ -49,7 +49,7 @@ namespace fs = std::filesystem;
 using std::cerr;
 using std::string;
 
-static void global_init_set_globals(CephContext * cct)
+static void global_init_set_globals(CephContext *cct)
 {
     g_ceph_context = cct;
     get_process_name(g_process_name, sizeof(g_process_name));
@@ -64,16 +64,17 @@ static void output_ceph_version()
     generic_dout(0) << buf << dendl;
 }
 
-static const char *c_str_or_null(const std::string & str)
+static const char *c_str_or_null(const std::string &str)
 {
-    if (str.empty())
+    if (str.empty()) {
         return NULL;
+    }
     return str.c_str();
 }
 
-static int chown_path(const std::string & pathname, const uid_t owner,
-                      const gid_t group, const std::string & uid_str,
-                      const std::string & gid_str)
+static int chown_path(const std::string &pathname, const uid_t owner,
+                      const gid_t group, const std::string &uid_str,
+                      const std::string &gid_str)
 {
 #ifdef _WIN32
     return 0;
@@ -90,8 +91,8 @@ static int chown_path(const std::string & pathname, const uid_t owner,
     if (r < 0) {
         r = -errno;
         cerr << "warning: unable to chown() " << pathname << " as "
-            << uid_str << ":" << gid_str << ": " << cpp_strerror(r) << std::
-            endl;
+             << uid_str << ":" << gid_str << ": " << cpp_strerror(r) << std::
+             endl;
     }
 
     return r;
@@ -99,7 +100,7 @@ static int chown_path(const std::string & pathname, const uid_t owner,
 }
 
 void global_pre_init(const std::map < std::string, std::string > *defaults,
-                     std::vector < const char *>&args,
+                     std::vector < const char *> &args,
                      uint32_t module_type, code_environment_t code_env,
                      int flags)
 {
@@ -110,13 +111,13 @@ void global_pre_init(const std::map < std::string, std::string > *defaults,
     env_to_vec(args);
 
     CephInitParameters iparams = ceph_argparse_early_args(args, module_type,
-                                                          &cluster,
-                                                          &conf_file_list);
+                                 &cluster,
+                                 &conf_file_list);
 
     CephContext *cct = common_preinit(iparams, code_env, flags);
     cct->_conf->cluster = cluster;
     global_init_set_globals(cct);
-    auto & conf = cct->_conf;
+    auto &conf = cct->_conf;
 
     if (flags & (CINIT_FLAG_NO_DEFAULT_CONFIG_FILE | CINIT_FLAG_NO_MON_CONFIG)) {
         conf->no_mon_config = true;
@@ -124,7 +125,7 @@ void global_pre_init(const std::map < std::string, std::string > *defaults,
 
     // alternate defaults
     if (defaults) {
-      for (auto & i:*defaults) {
+        for (auto &i : *defaults) {
             conf.set_val_default(i.first, i.second);
         }
     }
@@ -139,26 +140,23 @@ void global_pre_init(const std::map < std::string, std::string > *defaults,
         cct->_log->flush();
         cerr << "global_init: error parsing config file." << std::endl;
         _exit(1);
-    }
-    else if (ret == -ENOENT) {
+    } else if (ret == -ENOENT) {
         if (!(flags & CINIT_FLAG_NO_DEFAULT_CONFIG_FILE)) {
             if (conf_file_list.length()) {
                 cct->_log->flush();
                 cerr <<
-                    "global_init: unable to open config file from search list "
-                    << conf_file_list << std::endl;
+                     "global_init: unable to open config file from search list "
+                     << conf_file_list << std::endl;
                 _exit(1);
-            }
-            else {
+            } else {
                 cerr << "did not load config file, using default settings."
-                    << std::endl;
+                     << std::endl;
             }
         }
-    }
-    else if (ret) {
+    } else if (ret) {
         cct->_log->flush();
         cerr << "global_init: error reading config file. "
-            << conf.get_parse_error() << std::endl;
+             << conf.get_parse_error() << std::endl;
         _exit(1);
     }
 
@@ -179,11 +177,10 @@ void global_pre_init(const std::map < std::string, std::string > *defaults,
     g_conf().complain_about_parse_error(g_ceph_context);
 }
 
-boost::intrusive_ptr < CephContext >
-global_init(const std::map < std::string, std::string > *defaults,
-            std::vector < const char *>&args,
-            uint32_t module_type, code_environment_t code_env,
-            int flags, bool run_pre_init)
+boost::intrusive_ptr < CephContext > global_init(const std::map < std::string, std::string > *defaults,
+        std::vector < const char *> &args,
+        uint32_t module_type, code_environment_t code_env,
+        int flags, bool run_pre_init)
 {
     // Ensure we're not calling the global init functions multiple times.
     static bool first_run = true;
@@ -191,8 +188,7 @@ global_init(const std::map < std::string, std::string > *defaults,
         // We will run pre_init from here (default).
         ceph_assert(!g_ceph_context && first_run);
         global_pre_init(defaults, args, module_type, code_env, flags);
-    }
-    else {
+    } else {
         // Caller should have invoked pre_init manually.
         ceph_assert(g_ceph_context && first_run);
     }
@@ -219,8 +215,9 @@ global_init(const std::map < std::string, std::string > *defaults,
     }
     ceph::register_assert_context(g_ceph_context);
 
-    if (g_conf()->log_flush_on_exit)
+    if (g_conf()->log_flush_on_exit) {
         g_ceph_context->_log->set_flush_on_exit();
+    }
 
     // drop privileges?
     std::ostringstream priv_ss;
@@ -230,14 +227,13 @@ global_init(const std::map < std::string, std::string > *defaults,
     if (getuid() != 0) {
         if (g_conf()->setuser.length()) {
             cerr << "ignoring --setuser " << g_conf()->
-                setuser << " since I am not root" << std::endl;
+                 setuser << " since I am not root" << std::endl;
         }
         if (g_conf()->setgroup.length()) {
             cerr << "ignoring --setgroup " << g_conf()->setgroup
-                << " since I am not root" << std::endl;
+                 << " since I am not root" << std::endl;
         }
-    }
-    else if (g_conf()->setgroup.length() || g_conf()->setuser.length()) {
+    } else if (g_conf()->setgroup.length() || g_conf()->setuser.length()) {
         uid_t uid = 0;          // zero means no change; we can only drop privs here.
         gid_t gid = 0;
         std::string uid_string;
@@ -251,13 +247,12 @@ global_init(const std::map < std::string, std::string > *defaults,
             uid = atoi(g_conf()->setuser.c_str());
             if (uid) {
                 getpwuid_r(uid, &pa, buf, sizeof(buf), &p);
-            }
-            else {
+            } else {
                 getpwnam_r(g_conf()->setuser.c_str(), &pa, buf, sizeof(buf),
                            &p);
                 if (!p) {
                     cerr << "unable to look up user '" << g_conf()->
-                        setuser << "'" << std::endl;
+                         setuser << "'" << std::endl;
                     exit(1);
                 }
 
@@ -280,8 +275,8 @@ global_init(const std::map < std::string, std::string > *defaults,
                            &g);
                 if (!g) {
                     cerr << "unable to look up group '" << g_conf()->
-                        setgroup << "'" << ": " << cpp_strerror(errno) << std::
-                        endl;
+                         setgroup << "'" << ": " << cpp_strerror(errno) << std::
+                         endl;
                     exit(1);
                 }
                 gid = g->gr_gid;
@@ -296,23 +291,22 @@ global_init(const std::map < std::string, std::string > *defaults,
             int r =::stat(match_path.c_str(), &st);
             if (r < 0) {
                 cerr << "unable to stat setuser_match_path "
-                    << g_conf()->setuser_match_path
-                    << ": " << cpp_strerror(errno) << std::endl;
+                     << g_conf()->setuser_match_path
+                     << ": " << cpp_strerror(errno) << std::endl;
                 exit(1);
             }
             if ((uid && uid != st.st_uid) || (gid && gid != st.st_gid)) {
                 cerr << "WARNING: will not setuid/gid: " << match_path
-                    << " owned by " << st.st_uid << ":" << st.st_gid
-                    << " and not requested " << uid << ":" << gid << std::endl;
+                     << " owned by " << st.st_uid << ":" << st.st_gid
+                     << " and not requested " << uid << ":" << gid << std::endl;
                 uid = 0;
                 gid = 0;
                 uid_string.erase();
                 gid_string.erase();
-            }
-            else {
+            } else {
                 priv_ss << "setuser_match_path "
-                    << match_path << " owned by "
-                    << st.st_uid << ":" << st.st_gid << ". ";
+                        << match_path << " owned by "
+                        << st.st_uid << ":" << st.st_gid << ". ";
             }
         }
         g_ceph_context->set_uid_gid(uid, gid);
@@ -320,34 +314,33 @@ global_init(const std::map < std::string, std::string > *defaults,
         if ((flags & CINIT_FLAG_DEFER_DROP_PRIVILEGES) == 0) {
             if (setgid(gid) != 0) {
                 cerr << "unable to setgid " << gid << ": " <<
-                    cpp_strerror(errno)
-                    << std::endl;
+                     cpp_strerror(errno)
+                     << std::endl;
                 exit(1);
             }
 #if defined(HAVE_SYS_PRCTL_H)
             if (g_conf().get_val < bool > ("set_keepcaps")) {
                 if (prctl(PR_SET_KEEPCAPS, 1) == -1) {
                     cerr << "warning: unable to set keepcaps flag: " <<
-                        cpp_strerror(errno) << std::endl;
+                         cpp_strerror(errno) << std::endl;
                 }
             }
 #endif
             if (setuid(uid) != 0) {
                 cerr << "unable to setuid " << uid << ": " <<
-                    cpp_strerror(errno)
-                    << std::endl;
+                     cpp_strerror(errno)
+                     << std::endl;
                 exit(1);
             }
             if (setenv("HOME", home_directory.c_str(), 1) != 0) {
                 cerr << "warning: unable to set HOME to " << home_directory <<
-                    ": " << cpp_strerror(errno) << std::endl;
+                     ": " << cpp_strerror(errno) << std::endl;
             }
             priv_ss << "set uid:gid to " << uid << ":" << gid << " (" <<
-                uid_string << ":" << gid_string << ")";
-        }
-        else {
+                    uid_string << ":" << gid_string << ")";
+        } else {
             priv_ss << "deferred set uid:gid to " << uid << ":" << gid << " ("
-                << uid_string << ":" << gid_string << ")";
+                    << uid_string << ":" << gid_string << ")";
         }
     }
 #endif /* _WIN32 */
@@ -355,13 +348,13 @@ global_init(const std::map < std::string, std::string > *defaults,
 #if defined(HAVE_SYS_PRCTL_H)
     if (prctl(PR_SET_DUMPABLE, 1) == -1) {
         cerr << "warning: unable to set dumpable flag: " << cpp_strerror(errno)
-            << std::endl;
+             << std::endl;
     }
 #if defined(PR_SET_THP_DISABLE)
     if (!g_conf().get_val < bool > ("thp")
         && prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0) == -1) {
         cerr << "warning: unable to disable THP: " << cpp_strerror(errno) <<
-            std::endl;
+             std::endl;
     }
 #endif
 #endif
@@ -385,7 +378,7 @@ global_init(const std::map < std::string, std::string > *defaults,
             cp.stop();
             g_ceph_context->_log->flush();
             cerr << "failed to fetch mon config (--no-mon-config to skip)"
-                << std::endl;
+                 << std::endl;
             _exit(1);
         }
         cp.stop();
@@ -402,7 +395,7 @@ global_init(const std::map < std::string, std::string > *defaults,
             std::error_code ec;
             if (!fs::create_directory(g_conf()->run_dir, ec)) {
                 cerr << "warning: unable to create " << g_conf()->run_dir
-                    << ec.message() << std::endl;
+                     << ec.message() << std::endl;
             }
             fs::permissions(g_conf()->run_dir.c_str(),
                             fs::perms::owner_all |
@@ -445,17 +438,19 @@ global_init(const std::map < std::string, std::string > *defaults,
     }
 
     if (code_env == CODE_ENVIRONMENT_DAEMON
-        && !(flags & CINIT_FLAG_NO_DAEMON_ACTIONS))
+        && !(flags & CINIT_FLAG_NO_DAEMON_ACTIONS)) {
         output_ceph_version();
+    }
 
     if (g_ceph_context->crush_location.init_on_startup()) {
         cerr << " failed to init_on_startup : " << cpp_strerror(errno) << std::
-            endl;
+             endl;
         exit(1);
     }
 
     return boost::intrusive_ptr < CephContext > {
-    g_ceph_context, false};
+        g_ceph_context, false
+    };
 }
 
 void global_print_banner(void)
@@ -463,16 +458,18 @@ void global_print_banner(void)
     output_ceph_version();
 }
 
-int global_init_prefork(CephContext * cct)
+int global_init_prefork(CephContext *cct)
 {
-    if (g_code_env != CODE_ENVIRONMENT_DAEMON)
+    if (g_code_env != CODE_ENVIRONMENT_DAEMON) {
         return -1;
+    }
 
-    const auto & conf = cct->_conf;
+    const auto &conf = cct->_conf;
     if (!conf->daemonize) {
 
-        if (pidfile_write(conf->pid_file) < 0)
+        if (pidfile_write(conf->pid_file) < 0) {
             exit(1);
+        }
 
         if ((cct->get_init_flags() & CINIT_FLAG_DEFER_DROP_PRIVILEGES) &&
             (cct->get_set_uid() || cct->get_set_gid())) {
@@ -490,17 +487,18 @@ int global_init_prefork(CephContext * cct)
     return 0;
 }
 
-void global_init_daemonize(CephContext * cct)
+void global_init_daemonize(CephContext *cct)
 {
-    if (global_init_prefork(cct) < 0)
+    if (global_init_prefork(cct) < 0) {
         return;
+    }
 
 #if !defined(_AIX) && !defined(_WIN32)
     int ret = daemon(1, 1);
     if (ret) {
         ret = errno;
         derr << "global_init_daemonize: BUG: daemon error: "
-            << cpp_strerror(ret) << dendl;
+             << cpp_strerror(ret) << dendl;
         exit(1);
     }
 
@@ -519,14 +517,14 @@ void global_init_daemonize(CephContext * cct)
  * guarantee that nobody ever writes to stdout, even though they're not
  * supposed to.
  */
-int reopen_as_null(CephContext * cct, int fd)
+int reopen_as_null(CephContext *cct, int fd)
 {
     int newfd = open(DEV_NULL, O_RDWR | O_CLOEXEC);
     if (newfd < 0) {
         int err = errno;
         lderr(cct) << __func__ << " failed to open /dev/null: " <<
-            cpp_strerror(err)
-            << dendl;
+                   cpp_strerror(err)
+                   << dendl;
         return -1;
     }
     // atomically dup newfd to target fd.  target fd is implicitly closed if
@@ -535,7 +533,7 @@ int reopen_as_null(CephContext * cct, int fd)
     if (r < 0) {
         int err = errno;
         lderr(cct) << __func__ << " failed to dup2 " << fd << ": "
-            << cpp_strerror(err) << dendl;
+                   << cpp_strerror(err) << dendl;
         return -1;
     }
     // close newfd (we cloned it to target fd)
@@ -544,7 +542,7 @@ int reopen_as_null(CephContext * cct, int fd)
     return 0;
 }
 
-void global_init_postfork_start(CephContext * cct)
+void global_init_postfork_start(CephContext *cct)
 {
     // reexpand the meta in child process
     cct->_conf.finalize_reexpand_meta();
@@ -555,9 +553,10 @@ void global_init_postfork_start(CephContext * cct)
 
     reopen_as_null(cct, STDIN_FILENO);
 
-    const auto & conf = cct->_conf;
-    if (pidfile_write(conf->pid_file) < 0)
+    const auto &conf = cct->_conf;
+    if (pidfile_write(conf->pid_file) < 0) {
         exit(1);
+    }
 
     if ((cct->get_init_flags() & CINIT_FLAG_DEFER_DROP_PRIVILEGES) &&
         (cct->get_set_uid() || cct->get_set_gid())) {
@@ -566,7 +565,7 @@ void global_init_postfork_start(CephContext * cct)
     }
 }
 
-void global_init_postfork_finish(CephContext * cct)
+void global_init_postfork_finish(CephContext *cct)
 {
     /* We only close stdout+stderr once the caller decides the daemonization
      * process is finished.  This way we can allow error or other messages to be
@@ -576,8 +575,8 @@ void global_init_postfork_finish(CephContext * cct)
         int ret = global_init_shutdown_stderr(cct);
         if (ret) {
             derr <<
-                "global_init_daemonize: global_init_shutdown_stderr failed with "
-                << "error code " << ret << dendl;
+                 "global_init_daemonize: global_init_shutdown_stderr failed with "
+                 << "error code " << ret << dendl;
             exit(1);
         }
     }
@@ -587,28 +586,29 @@ void global_init_postfork_finish(CephContext * cct)
     ldout(cct, 1) << "finished global_init_daemonize" << dendl;
 }
 
-void global_init_chdir(const CephContext * cct)
+void global_init_chdir(const CephContext *cct)
 {
-    const auto & conf = cct->_conf;
-    if (conf->chdir.empty())
+    const auto &conf = cct->_conf;
+    if (conf->chdir.empty()) {
         return;
+    }
     if (::chdir(conf->chdir.c_str())) {
         int err = errno;
         derr << "global_init_chdir: failed to chdir to directory: '"
-            << conf->chdir << "': " << cpp_strerror(err) << dendl;
+             << conf->chdir << "': " << cpp_strerror(err) << dendl;
     }
 }
 
-int global_init_shutdown_stderr(CephContext * cct)
+int global_init_shutdown_stderr(CephContext *cct)
 {
     reopen_as_null(cct, STDERR_FILENO);
     cct->_log->set_stderr_level(-2, -2);
     return 0;
 }
 
-int global_init_preload_erasure_code(const CephContext * cct)
+int global_init_preload_erasure_code(const CephContext *cct)
 {
-    const auto & conf = cct->_conf;
+    const auto &conf = cct->_conf;
     string plugins = conf->osd_erasure_code_plugins;
 
     // validate that this is a not a legacy plugin
@@ -622,31 +622,31 @@ int global_init_preload_erasure_code(const CephContext * cct)
             plugin_name == "jerasure_sse3" ||
             plugin_name == "jerasure_sse4" || plugin_name == "jerasure_neon") {
             replacement = "jerasure";
-        }
-        else if (plugin_name == "shec_generic" ||
-                 plugin_name == "shec_sse3" ||
-                 plugin_name == "shec_sse4" || plugin_name == "shec_neon") {
+        } else if (plugin_name == "shec_generic" ||
+                   plugin_name == "shec_sse3" ||
+                   plugin_name == "shec_sse4" || plugin_name == "shec_neon") {
             replacement = "shec";
         }
 
         if (replacement != "") {
             dout(0) << "WARNING: osd_erasure_code_plugins contains plugin "
-                << plugin_name <<
-                " that is now deprecated. Please modify the value " <<
-                "for osd_erasure_code_plugins to use " << replacement <<
-                " instead." << dendl;
+                    << plugin_name <<
+                    " that is now deprecated. Please modify the value " <<
+                    "for osd_erasure_code_plugins to use " << replacement <<
+                    " instead." << dendl;
         }
     }
 
     std::stringstream ss;
     int r = ceph::ErasureCodePluginRegistry::instance().preload(plugins,
-                                                                conf.get_val <
-                                                                std::string >
-                                                                ("erasure_code_dir"),
-                                                                &ss);
-    if (r)
+            conf.get_val <
+            std::string >
+            ("erasure_code_dir"),
+            &ss);
+    if (r) {
         derr << ss.str() << dendl;
-    else
+    } else {
         dout(0) << ss.str() << dendl;
+    }
     return r;
 }

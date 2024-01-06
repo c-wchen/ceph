@@ -35,16 +35,21 @@
 
 struct strict_str_convert {
     const char *str;
-     std::string * err;
-     strict_str_convert(const char *str, std::string * err)
-    :str(str), err(err) {
-    } inline operator  float () const {
+    std::string *err;
+    strict_str_convert(const char *str, std::string *err)
+        : str(str), err(err)
+    {
+    } inline operator  float () const
+    {
         return strict_strtof(str, err);
-    } inline operator  int () const {
+    } inline operator  int () const
+    {
         return strict_strtol(str, 10, err);
-    } inline operator  long long () const {
+    } inline operator  long long () const
+    {
         return strict_strtoll(str, 10, err);
-}};
+    }
+};
 
 void string_to_vec(std::vector < std::string > &args, std::string argstr)
 {
@@ -52,28 +57,30 @@ void string_to_vec(std::vector < std::string > &args, std::string argstr)
     while (iss) {
         std::string sub;
         iss >> sub;
-        if (sub == "")
+        if (sub == "") {
             break;
+        }
         args.push_back(sub);
     }
 }
 
-std::pair < std::vector < const char *>, std::vector < const char *>>
-split_dashdash(const std::vector < const char *>&args)
+std::pair < std::vector < const char *>, std::vector < const char *>> split_dashdash(
+            const std::vector < const char *> &args)
 {
     auto dashdash = std::find_if(args.begin(), args.end(),
-                                 [](const char *arg){
-                                 return strcmp(arg, "--") == 0;}
-    );
+    [](const char *arg) {
+        return strcmp(arg, "--") == 0;
+    }
+                                );
     std::vector < const char *>options {
-    args.begin(), dashdash};
+        args.begin(), dashdash};
     if (dashdash != args.end()) {
         ++dashdash;
     }
     std::vector < const char *>arguments {
-    dashdash, args.end()};
+        dashdash, args.end()};
     return {
-    std::move(options), std::move(arguments)};
+        std::move(options), std::move(arguments)};
 }
 
 static std::mutex g_str_vec_lock;
@@ -86,10 +93,11 @@ void clear_g_str_vec()
     g_str_vec_lock.unlock();
 }
 
-void env_to_vec(std::vector < const char *>&args, const char *name)
+void env_to_vec(std::vector < const char *> &args, const char *name)
 {
-    if (!name)
+    if (!name) {
         name = "CEPH_ARGS";
+    }
 
     /*
      * We can only populate str_vec once. Other threads could hold pointers into
@@ -106,7 +114,7 @@ void env_to_vec(std::vector < const char *>&args, const char *name)
     }
 
     std::vector < const char *>env;
-  for (const auto & s:g_str_vec) {
+    for (const auto &s : g_str_vec) {
         env.push_back(s.c_str());
     }
     g_str_vec_lock.unlock();
@@ -128,24 +136,26 @@ std::vector < const char *>argv_to_vec(int argc, const char *const *argv)
 {
     assert(argc > 0);
     return {
-    argv + 1, argv + argc};
+        argv + 1, argv + argc};
 }
 
-void vec_to_argv(const char *argv0, std::vector < const char *>&args,
+void vec_to_argv(const char *argv0, std::vector < const char *> &args,
                  int *argc, const char ***argv)
 {
     *argv = (const char **)malloc(sizeof(char *) * (args.size() + 1));
-    if (!*argv)
+    if (!*argv) {
         throw std::bad_alloc();
+    }
     *argc = 1;
     (*argv)[0] = argv0;
 
-    for (unsigned i = 0; i < args.size(); i++)
+    for (unsigned i = 0; i < args.size(); i++) {
         (*argv)[(*argc)++] = args[i];
+    }
 }
 
-void ceph_arg_value_type(const char *nextargstr, bool * bool_option,
-                         bool * bool_numeric)
+void ceph_arg_value_type(const char *nextargstr, bool *bool_option,
+                         bool *bool_numeric)
 {
     bool is_numeric = true;
     bool is_float = false;
@@ -157,8 +167,7 @@ void ceph_arg_value_type(const char *nextargstr, bool * bool_option,
 
     if (strlen(nextargstr) < 2) {
         is_option = false;
-    }
-    else {
+    } else {
         is_option = (nextargstr[0] == '-') && (nextargstr[1] == '-');
     }
 
@@ -166,8 +175,9 @@ void ceph_arg_value_type(const char *nextargstr, bool * bool_option,
         if (!(nextargstr[i] >= '0' && nextargstr[i] <= '9')) {
             // May be negative numeral value
             if ((i == 0) && (strlen(nextargstr) >= 2)) {
-                if (nextargstr[0] == '-')
+                if (nextargstr[0] == '-') {
                     continue;
+                }
             }
             if ((nextargstr[i] == '.') && (is_float == false)) {
                 is_float = true;
@@ -197,7 +207,7 @@ bool parse_ip_port_vec(const char *s, std::vector < entity_addrvec_t > &vec,
     std::list < std::string > items;
     get_str_list(s, " ;", items);
 
-  for (auto & i:items) {
+    for (auto &i : items) {
         const char *s = i.c_str();
         while (*s) {
             const char *end;
@@ -230,7 +240,7 @@ bool parse_ip_port_vec(const char *s, std::vector < entity_addrvec_t > &vec,
 
 // The defaults for CephInitParameters
 CephInitParameters::CephInitParameters(uint32_t module_type_)
-:  module_type(module_type_)
+    :  module_type(module_type_)
 {
     name.set(module_type, "admin");
 }
@@ -242,28 +252,31 @@ static void dashes_to_underscores(const char *input, char *output)
     const char *i = input;
     // first two characters are copied as-is
     *o = *i++;
-    if (*o++ == '\0')
+    if (*o++ == '\0') {
         return;
+    }
     *o = *i++;
-    if (*o++ == '\0')
+    if (*o++ == '\0') {
         return;
+    }
     for (; ((c = *i)); ++i) {
         if (c == '=') {
             strcpy(o, i);
             return;
         }
-        if (c == '-')
+        if (c == '-') {
             *o++ = '_';
-        else
+        } else {
             *o++ = c;
+        }
     }
     *o++ = '\0';
 }
 
 /** Once we see a standalone double dash, '--', we should remove it and stop
  * looking for any other options and flags. */
-bool ceph_argparse_double_dash(std::vector < const char *>&args,
-                               std::vector < const char *>::iterator & i)
+bool ceph_argparse_double_dash(std::vector < const char *> &args,
+                               std::vector < const char *>::iterator &i)
 {
     if (strcmp(*i, "--") == 0) {
         i = args.erase(i);
@@ -272,8 +285,8 @@ bool ceph_argparse_double_dash(std::vector < const char *>&args,
     return false;
 }
 
-bool ceph_argparse_flag(std::vector < const char *>&args,
-                        std::vector < const char *>::iterator & i, ...)
+bool ceph_argparse_flag(std::vector < const char *> &args,
+                        std::vector < const char *>::iterator &i, ...)
 {
     const char *first = *i;
     char tmp[strlen(first) + 1];
@@ -303,18 +316,17 @@ static bool check_bool_str(const char *val, int *ret)
     if ((strcmp(val, "true") == 0) || (strcmp(val, "1") == 0)) {
         *ret = 1;
         return true;
-    }
-    else if ((strcmp(val, "false") == 0) || (strcmp(val, "0") == 0)) {
+    } else if ((strcmp(val, "false") == 0) || (strcmp(val, "0") == 0)) {
         *ret = 0;
         return true;
     }
     return false;
 }
 
-static bool va_ceph_argparse_binary_flag(std::vector < const char *>&args,
-                                         std::vector <
-                                         const char *>::iterator & i, int *ret,
-                                         std::ostream * oss, va_list ap)
+static bool va_ceph_argparse_binary_flag(std::vector < const char *> &args,
+        std::vector <
+        const char * >::iterator &i, int *ret,
+        std::ostream *oss, va_list ap)
 {
     const char *first = *i;
     char tmp[strlen(first) + 1];
@@ -324,8 +336,9 @@ static bool va_ceph_argparse_binary_flag(std::vector < const char *>&args,
     // does this argument match any of the possibilities?
     while (1) {
         const char *a = va_arg(ap, char *);
-        if (a == NULL)
+        if (a == NULL) {
             return false;
+        }
         int strlen_a = strlen(a);
         char a2[strlen_a + 1];
         dashes_to_underscores(a, a2);
@@ -338,13 +351,12 @@ static bool va_ceph_argparse_binary_flag(std::vector < const char *>&args,
                 }
                 if (oss) {
                     (*oss) << "Parse error parsing binary flag  " << a
-                        << ". Expected true or false, but got '" << val <<
-                        "'\n";
+                           << ". Expected true or false, but got '" << val <<
+                           "'\n";
                 }
                 *ret = -EINVAL;
                 return true;
-            }
-            else if (first[strlen_a] == '\0') {
+            } else if (first[strlen_a] == '\0') {
                 auto next = i + 1;
                 if (next != args.end() && *next && (*next)[0] != '-') {
                     if (check_bool_str(*next, ret)) {
@@ -361,9 +373,9 @@ static bool va_ceph_argparse_binary_flag(std::vector < const char *>&args,
     }
 }
 
-bool ceph_argparse_binary_flag(std::vector < const char *>&args,
-                               std::vector < const char *>::iterator & i,
-                               int *ret, std::ostream * oss, ...)
+bool ceph_argparse_binary_flag(std::vector < const char *> &args,
+                               std::vector < const char *>::iterator &i,
+                               int *ret, std::ostream *oss, ...)
 {
     bool r;
     va_list ap;
@@ -373,9 +385,9 @@ bool ceph_argparse_binary_flag(std::vector < const char *>&args,
     return r;
 }
 
-static int va_ceph_argparse_witharg(std::vector < const char *>&args,
-                                    std::vector < const char *>::iterator & i,
-                                    std::string * ret, std::ostream & oss,
+static int va_ceph_argparse_witharg(std::vector < const char *> &args,
+                                    std::vector < const char *>::iterator &i,
+                                    std::string *ret, std::ostream &oss,
                                     va_list ap)
 {
     const char *first = *i;
@@ -386,8 +398,9 @@ static int va_ceph_argparse_witharg(std::vector < const char *>&args,
     // does this argument match any of the possibilities?
     while (1) {
         const char *a = va_arg(ap, char *);
-        if (a == NULL)
+        if (a == NULL) {
             return 0;
+        }
         int strlen_a = strlen(a);
         char a2[strlen_a + 1];
         dashes_to_underscores(a, a2);
@@ -396,8 +409,7 @@ static int va_ceph_argparse_witharg(std::vector < const char *>&args,
                 *ret = first + strlen_a + 1;
                 i = args.erase(i);
                 return 1;
-            }
-            else if (first[strlen_a] == '\0') {
+            } else if (first[strlen_a] == '\0') {
                 // find second part (or not)
                 if (i + 1 == args.end()) {
                     oss << "Option " << *i << " requires an argument." << std::
@@ -415,9 +427,9 @@ static int va_ceph_argparse_witharg(std::vector < const char *>&args,
 }
 
 template < class T >
-    bool ceph_argparse_witharg(std::vector < const char *>&args,
-                               std::vector < const char *>::iterator & i,
-                               T * ret, std::ostream & oss, ...)
+bool ceph_argparse_witharg(std::vector < const char *> &args,
+                           std::vector < const char *>::iterator &i,
+                           T *ret, std::ostream &oss, ...)
 {
     int r;
     va_list ap;
@@ -429,8 +441,7 @@ template < class T >
     va_end(ap);
     if (r == 0) {
         return false;
-    }
-    else if (r < 0) {
+    } else if (r < 0) {
         return true;
     }
 
@@ -439,8 +450,7 @@ template < class T >
         *ret = EXIT_FAILURE;
         if (is_option == true) {
             oss << "Missing option value";
-        }
-        else {
+        } else {
             oss << "The option value '" << str << "' is invalid";
         }
         return true;
@@ -455,27 +465,27 @@ template < class T >
     return true;
 }
 
-template bool ceph_argparse_witharg < int >(std::vector < const char *>&args,
-                                            std::vector <
-                                            const char *>::iterator & i,
-                                            int *ret, std::ostream & oss, ...);
+template bool ceph_argparse_witharg < int >(std::vector < const char *> &args,
+        std::vector <
+        const char * >::iterator &i,
+        int *ret, std::ostream &oss, ...);
 
 template bool ceph_argparse_witharg < long long >(std::vector <
-                                                  const char *>&args,
-                                                  std::vector <
-                                                  const char *>::iterator & i,
-                                                  long long *ret,
-                                                  std::ostream & oss, ...);
+        const char * > &args,
+        std::vector <
+        const char * >::iterator &i,
+        long long *ret,
+        std::ostream &oss, ...);
 
-template bool ceph_argparse_witharg < float >(std::vector < const char *>&args,
-                                              std::vector <
-                                              const char *>::iterator & i,
-                                              float *ret, std::ostream & oss,
-                                              ...);
+template bool ceph_argparse_witharg < float >(std::vector < const char *> &args,
+        std::vector <
+        const char * >::iterator &i,
+        float *ret, std::ostream &oss,
+        ...);
 
-bool ceph_argparse_witharg(std::vector < const char *>&args,
-                           std::vector < const char *>::iterator & i,
-                           std::string * ret, std::ostream & oss, ...)
+bool ceph_argparse_witharg(std::vector < const char *> &args,
+                           std::vector < const char *>::iterator &i,
+                           std::string *ret, std::ostream &oss, ...)
 {
     int r;
     va_list ap;
@@ -485,23 +495,25 @@ bool ceph_argparse_witharg(std::vector < const char *>&args,
     return r != 0;
 }
 
-bool ceph_argparse_witharg(std::vector < const char *>&args,
-                           std::vector < const char *>::iterator & i,
-                           std::string * ret, ...)
+bool ceph_argparse_witharg(std::vector < const char *> &args,
+                           std::vector < const char *>::iterator &i,
+                           std::string *ret, ...)
 {
     int r;
     va_list ap;
     va_start(ap, ret);
     r = va_ceph_argparse_witharg(args, i, ret, std::cerr, ap);
     va_end(ap);
-    if (r < 0)
+    if (r < 0) {
         _exit(1);
+    }
     return r != 0;
 }
 
 CephInitParameters ceph_argparse_early_args
-    (std::vector < const char *>&args, uint32_t module_type,
-     std::string * cluster, std::string * conf_file_list) {
+(std::vector < const char *> &args, uint32_t module_type,
+ std::string *cluster, std::string *conf_file_list)
+{
     CephInitParameters iparams(module_type);
     std::string val;
 
@@ -514,52 +526,44 @@ CephInitParameters ceph_argparse_early_args
              * function we *don't* want to remove the double dash, because later
              * argument parses will still need to see it. */
             break;
-        }
-        else if (ceph_argparse_flag(args, i, "--version", "-v", (char *)NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--version", "-v", (char *)NULL)) {
             std::cout << pretty_version_to_str() << std::endl;
             _exit(0);
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--conf", "-c", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--conf", "-c", (char *)NULL)) {
             *conf_file_list = val;
-        }
-        else if (ceph_argparse_flag(args, i, "--no-config-file", (char *)NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--no-config-file", (char *)NULL)) {
             iparams.no_config_file = true;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--cluster", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--cluster", (char *)NULL)) {
             *cluster = val;
-        }
-        else if ((module_type != CEPH_ENTITY_TYPE_CLIENT) &&
-                 (ceph_argparse_witharg(args, i, &val, "-i", (char *)NULL))) {
+        } else if ((module_type != CEPH_ENTITY_TYPE_CLIENT) &&
+                   (ceph_argparse_witharg(args, i, &val, "-i", (char *)NULL))) {
             iparams.name.set_id(val);
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--id", "--user", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--id", "--user", (char *)NULL)) {
             iparams.name.set_id(val);
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--name", "-n", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--name", "-n", (char *)NULL)) {
             if (!iparams.name.from_str(val)) {
                 std::
-                    cerr << "error parsing '" << val <<
-                    "': expected string of the form TYPE.ID, " <<
-                    "valid types are: " << EntityName::get_valid_types_as_str()
-                    << std::endl;
+                cerr << "error parsing '" << val <<
+                     "': expected string of the form TYPE.ID, " <<
+                     "valid types are: " << EntityName::get_valid_types_as_str()
+                     << std::endl;
                 _exit(1);
             }
-        }
-        else if (ceph_argparse_flag(args, i, "--show_args", (char *)NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--show_args", (char *)NULL)) {
             std::cout << "args: ";
             for (std::vector < const char *>::iterator ci = orig_args.begin();
                  ci != orig_args.end(); ++ci) {
-                if (ci != orig_args.begin())
+                if (ci != orig_args.begin()) {
                     std::cout << " ";
+                }
                 std::cout << *ci;
             }
             std::cout << std::endl;
-        }
-        else {
+        } else {
             // ignore
             ++i;
         }
@@ -570,37 +574,37 @@ CephInitParameters ceph_argparse_early_args
 static void generic_usage(bool is_server)
 {
     std::cout <<
-        "  --conf/-c FILE    read configuration from the given configuration file"
-        << std::
-        endl << (is_server ? "  --id/-i ID        set ID portion of my name" :
-                 "  --id ID           set ID portion of my name") << std::
-        endl << "  --name/-n TYPE.ID set name" << std::
-        endl << "  --cluster NAME    set cluster name (default: ceph)" << std::
-        endl <<
-        "  --setuser USER    set uid to user or uid (and gid to user's gid)" <<
-        std::endl << "  --setgroup GROUP  set gid to group or gid" << std::
-        endl << "  --version         show version and quit" << std::
-        endl << std::endl;
+              "  --conf/-c FILE    read configuration from the given configuration file"
+              << std::
+              endl << (is_server ? "  --id/-i ID        set ID portion of my name" :
+                       "  --id ID           set ID portion of my name") << std::
+              endl << "  --name/-n TYPE.ID set name" << std::
+              endl << "  --cluster NAME    set cluster name (default: ceph)" << std::
+              endl <<
+              "  --setuser USER    set uid to user or uid (and gid to user's gid)" <<
+              std::endl << "  --setgroup GROUP  set gid to group or gid" << std::
+              endl << "  --version         show version and quit" << std::
+              endl << std::endl;
 
     if (is_server) {
         std::cout <<
-            "  -d                run in foreground, log to stderr" << std::
-            endl <<
-            "  -f                run in foreground, log to usual location" <<
-            std::endl << std::
-            endl << "  --debug_ms N      set message debug level (e.g. 1)" <<
-            std::endl;
+                  "  -d                run in foreground, log to stderr" << std::
+                  endl <<
+                  "  -f                run in foreground, log to usual location" <<
+                  std::endl << std::
+                  endl << "  --debug_ms N      set message debug level (e.g. 1)" <<
+                  std::endl;
     }
 
     std::cout.flush();
 }
 
-bool ceph_argparse_need_usage(const std::vector < const char *>&args)
+bool ceph_argparse_need_usage(const std::vector < const char *> &args)
 {
     if (args.empty()) {
         return true;
     }
-  for (auto a:args) {
+    for (auto a : args) {
         if (strcmp(a, "-h") == 0 || strcmp(a, "--help") == 0) {
             return true;
         }

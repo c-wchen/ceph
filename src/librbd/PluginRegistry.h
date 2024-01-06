@@ -11,35 +11,39 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    struct ImageCtx;
+struct ImageCtx;
 
-    namespace cache {
-        class ImageWritebackInterface;
-    } namespace plugin {
-        template < typename > struct Api;
-    } template < typename ImageCtxT > class PluginRegistry {
-      public:
-        PluginRegistry(ImageCtxT * image_ctx);
-        ~PluginRegistry();
+namespace cache
+{
+class ImageWritebackInterface;
+} namespace plugin
+{
+template < typename > struct Api;
+} template < typename ImageCtxT > class PluginRegistry
+{
+public:
+    PluginRegistry(ImageCtxT *image_ctx);
+    ~PluginRegistry();
 
-        void init(const std::string & plugins, Context * on_finish);
+    void init(const std::string &plugins, Context *on_finish);
 
-        void acquired_exclusive_lock(Context * on_finish);
-        void prerelease_exclusive_lock(Context * on_finish);
-        void discard(Context * on_finish);
+    void acquired_exclusive_lock(Context *on_finish);
+    void prerelease_exclusive_lock(Context *on_finish);
+    void discard(Context *on_finish);
 
-      private:
-         ImageCtxT * m_image_ctx;
-         std::unique_ptr < plugin::Api < ImageCtxT >> m_plugin_api;
-         std::unique_ptr < cache::ImageWritebackInterface > m_image_writeback;
+private:
+    ImageCtxT *m_image_ctx;
+    std::unique_ptr < plugin::Api < ImageCtxT >> m_plugin_api;
+    std::unique_ptr < cache::ImageWritebackInterface > m_image_writeback;
 
-         std::string m_plugins;
+    std::string m_plugins;
 
-         plugin::PluginHookPoints m_plugin_hook_points;
+    plugin::PluginHookPoints m_plugin_hook_points;
 
-    };
+};
 
 }                               // namespace librbd
 

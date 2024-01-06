@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <sys/stat.h>
@@ -40,12 +40,15 @@ ceph::condition_variable cond;
 
 uint64_t received = 0;
 
-class Admin:public Dispatcher {
-  public:
+class Admin: public Dispatcher
+{
+public:
     Admin()
-    :Dispatcher(g_ceph_context) {
-  } private:
-     bool ms_dispatch(Message * m) {
+        : Dispatcher(g_ceph_context)
+    {
+    } private:
+    bool ms_dispatch(Message *m)
+    {
 
         //cerr << "got ping from " << m->get_source() << std::endl;
         dout(0) << "got ping from " << m->get_source() << dendl;
@@ -58,12 +61,15 @@ class Admin:public Dispatcher {
         return true;
     }
 
-    bool ms_handle_reset(Connection * con) {
+    bool ms_handle_reset(Connection *con)
+    {
         return false;
     }
-    void ms_handle_remote_reset(Connection * con) {
+    void ms_handle_remote_reset(Connection *con)
+    {
     }
-    bool ms_handle_refused(Connection * con) {
+    bool ms_handle_refused(Connection *con)
+    {
         return false;
     }
 
@@ -85,8 +91,9 @@ int main(int argc, const char **argv, const char *envp[])
 
     // get monmap
     MonClient mc(g_ceph_context);
-    if (mc.build_initial_monmap() < 0)
+    if (mc.build_initial_monmap() < 0) {
         return -1;
+    }
 
     // start up network
     int whoami = mc.monmap.get_rank(args[0]);
@@ -97,15 +104,16 @@ int main(int argc, const char **argv, const char *envp[])
     g_ceph_context->_conf.set_val("public_addr", sss.c_str());
     g_ceph_context->_conf.apply_changes(nullptr);
     std::string public_msgr_type =
-        g_conf()->ms_public_type.empty()? g_conf().get_val < std::string >
+        g_conf()->ms_public_type.empty() ? g_conf().get_val < std::string >
         ("ms_type") : g_conf()->ms_public_type;
     Messenger *rank = Messenger::create(g_ceph_context,
                                         public_msgr_type,
                                         entity_name_t::MON(whoami), "tester",
                                         getpid());
     int err = rank->bind(g_ceph_context->_conf->public_addr);
-    if (err < 0)
+    if (err < 0) {
         return 1;
+    }
 
     // start monitor
     messenger = rank;
@@ -115,23 +123,25 @@ int main(int argc, const char **argv, const char *envp[])
     rank->start();
 
     int isend = 0;
-    if (whoami == 0)
+    if (whoami == 0) {
         isend = 100;
+    }
 
     std::unique_lock l {
-    test_lock};
+        test_lock};
     uint64_t sent = 0;
     while (1) {
         while (received + isend <= sent) {
             //cerr << "wait r " << received << " s " << sent << " is " << isend << std::endl;
             dout(0) << "wait r " << received << " s " << sent << " is " << isend
-                << dendl;
+                    << dendl;
             cond.wait(l);
         }
 
         int t = rand() % mc.get_num_mon();
-        if (t == whoami)
+        if (t == whoami) {
             continue;
+        }
 
         if (rand() % 10 == 0) {
             //cerr << "mark_down " << t << std::endl;

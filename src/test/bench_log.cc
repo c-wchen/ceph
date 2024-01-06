@@ -13,19 +13,21 @@
 
 using namespace std;
 
-struct T:public Thread {
+struct T: public Thread {
     int num;
-     set < int >myset;
-     map < int, string > mymap;
-    explicit T(int n):num(n) {
+    set < int >myset;
+    map < int, string > mymap;
+    explicit T(int n): num(n)
+    {
         myset.insert(123);
         myset.insert(456);
         mymap[1] = "foo";
         mymap[10] = "bar";
-    } void *entry() override {
+    } void *entry() override
+    {
         while (num-- > 0)
             generic_dout(0) << "this is a typical log line.  set "
-                << myset << " and map " << mymap << dendl;
+                            << myset << " and map " << mymap << dendl;
         return 0;
     }
 };
@@ -33,8 +35,8 @@ struct T:public Thread {
 void usage(const char *name)
 {
     cout << name << " <threads> <lines>\n"
-        << "\t threads: the number of threads for this test.\n"
-        << "\t lines: the number of log entries per thread.\n";
+         << "\t threads: the number of threads for this test.\n"
+         << "\t lines: the number of log entries per thread.\n";
 }
 
 int main(int argc, const char **argv)

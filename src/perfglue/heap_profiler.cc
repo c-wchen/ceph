@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "acconfig.h"
@@ -62,7 +62,7 @@ void ceph_heap_set_release_rate(double val)
     MallocExtension::instance()->SetMemoryReleaseRate(val);
 }
 
-bool ceph_heap_get_numeric_property(const char *property, size_t * value)
+bool ceph_heap_get_numeric_property(const char *property, size_t *value)
 {
     return MallocExtension::instance()->GetNumericProperty(property, value);
 }
@@ -96,8 +96,7 @@ static void get_profile_name(char *profile_name, int profile_name_len)
     if (last_slash == NULL) {
         snprintf(profile_name, profile_name_len, "./%s.profile",
                  g_conf()->name.to_cstr());
-    }
-    else {
+    } else {
         last_slash[1] = '\0';
         snprintf(profile_name, profile_name_len, "%s/%s.profile",
                  path, g_conf()->name.to_cstr());
@@ -113,7 +112,7 @@ void ceph_heap_profiler_start()
     char profile_name[PATH_MAX];
     get_profile_name(profile_name, sizeof(profile_name));
     generic_dout(0) << "turning on heap profiler with prefix "
-        << profile_name << dendl;
+                    << profile_name << dendl;
     HeapProfilerStart(profile_name);
 #endif
 }
@@ -135,7 +134,7 @@ void ceph_heap_profiler_dump(const char *reason)
 #define HEAP_PROFILER_STATS_SIZE 2048
 
 void ceph_heap_profiler_handle_command(const std::vector < std::string > &cmd,
-                                       std::ostream & out)
+                                       std::ostream &out)
 {
 #ifdef HAVE_LIBTCMALLOC
     if (cmd.size() == 1 && cmd[0] == "dump") {
@@ -147,41 +146,34 @@ void ceph_heap_profiler_handle_command(const std::vector < std::string > &cmd,
         ceph_heap_profiler_stats(heap_stats, sizeof(heap_stats));
         out << g_conf()->name << " dumping heap profile now.\n" << heap_stats;
         ceph_heap_profiler_dump("admin request");
-    }
-    else if (cmd.size() == 1 && cmd[0] == "start_profiler") {
+    } else if (cmd.size() == 1 && cmd[0] == "start_profiler") {
         ceph_heap_profiler_start();
         out << g_conf()->name << " started profiler";
-    }
-    else if (cmd.size() == 1 && cmd[0] == "stop_profiler") {
+    } else if (cmd.size() == 1 && cmd[0] == "stop_profiler") {
         ceph_heap_profiler_stop();
         out << g_conf()->name << " stopped profiler";
-    }
-    else if (cmd.size() == 1 && cmd[0] == "release") {
+    } else if (cmd.size() == 1 && cmd[0] == "release") {
         ceph_heap_release_free_memory();
         out << g_conf()->name << " releasing free RAM back to system.";
-    }
-    else if (cmd.size() == 1 && cmd[0] == "get_release_rate") {
+    } else if (cmd.size() == 1 && cmd[0] == "get_release_rate") {
         out << g_conf()->name << " release rate: "
             << std::setprecision(4) << ceph_heap_get_release_rate() << "\n";
-    }
-    else if (cmd.size() == 2 && cmd[0] == "set_release_rate") {
+    } else if (cmd.size() == 2 && cmd[0] == "set_release_rate") {
         try {
             double val = std::stod(cmd[1]);
             ceph_heap_set_release_rate(val);
             out << g_conf()->name << " release rate changed to: "
                 << std::setprecision(4) << ceph_heap_get_release_rate() << "\n";
-        } catch( ...) {
+        } catch (...) {
             out << g_conf()->name << " *** need an numerical value. ";
         }
-    }
-    else
+    } else
 #endif
-    if (cmd.size() == 1 && cmd[0] == "stats") {
-        char heap_stats[HEAP_PROFILER_STATS_SIZE];
-        ceph_heap_profiler_stats(heap_stats, sizeof(heap_stats));
-        out << g_conf()->name << " tcmalloc heap stats:" << heap_stats;
-    }
-    else {
-        out << "unknown command " << cmd;
-    }
+        if (cmd.size() == 1 && cmd[0] == "stats") {
+            char heap_stats[HEAP_PROFILER_STATS_SIZE];
+            ceph_heap_profiler_stats(heap_stats, sizeof(heap_stats));
+            out << g_conf()->name << " tcmalloc heap stats:" << heap_stats;
+        } else {
+            out << "unknown command " << cmd;
+        }
 }

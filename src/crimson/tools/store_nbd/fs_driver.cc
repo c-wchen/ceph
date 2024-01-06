@@ -37,8 +37,8 @@ void add_log_entry(unsigned i,
     omap->emplace(std::make_pair(make_log_key(i), bl));
 }
 
-void populate_log(ceph::os::Transaction & t,
-                  FSDriver::pg_analogue_t & pg,
+void populate_log(ceph::os::Transaction &t,
+                  FSDriver::pg_analogue_t &pg,
                   unsigned entry_size, unsigned entries)
 {
     t.touch(pg.collection->get_cid(), pg.log_object);
@@ -55,8 +55,8 @@ void populate_log(ceph::os::Transaction & t,
     pg.log_head = entries;
 }
 
-void update_log(ceph::os::Transaction & t,
-                FSDriver::pg_analogue_t & pg,
+void update_log(ceph::os::Transaction &t,
+                FSDriver::pg_analogue_t &pg,
                 unsigned entry_size, unsigned entries)
 {
     ++pg.log_head;
@@ -77,13 +77,13 @@ FSDriver::offset_mapping_t FSDriver::map_offset(off_t offset)
     uint32_t objid = offset / config.object_size;
     uint32_t collid = objid % config.num_pgs;
     return offset_mapping_t {
-    collections[collid],
-            ghobject_t(shard_id_t::NO_SHARD,
-                           0,
-                           (collid << 16) | (objid + 1),
-                           "",
-                           "",
-                           0, ghobject_t::NO_GEN), offset % config.object_size};
+        collections[collid],
+        ghobject_t(shard_id_t::NO_SHARD,
+                   0,
+                   (collid << 16) | (objid + 1),
+                   "",
+                   "",
+                   0, ghobject_t::NO_GEN), offset % config.object_size};
 }
 
 seastar::future <> FSDriver::write(off_t offset, bufferptr ptr)
@@ -118,151 +118,177 @@ seastar::future < bufferlist > FSDriver::read(off_t offset, size_t size)
                             mapping.offset,
                             size,
                             0).
-        handle_error(crimson::ct_error::enoent::handle([size] (auto & e) {
-                                                       bufferlist bl;
-                                                       bl.append_zero(size);
-                                                       return seastar::
-                                                       make_ready_future <
-                                                       bufferlist >
-                                                       (std::move(bl));}
-                     ), crimson::ct_error::assert_all {
-                     "Unrecoverable error in FSDriver::read"}
-    ).then([size] (auto && bl) {
-           if (bl.length() < size) {
-           bl.append_zero(size - bl.length());}
-           return seastar::make_ready_future < bufferlist > (std::move(bl));}
-    ) ;
+    handle_error(crimson::ct_error::enoent::handle([size](auto & e) {
+        bufferlist bl;
+        bl.append_zero(size);
+        return seastar::
+               make_ready_future <
+               bufferlist >
+               (std::move(bl));
+    }
+                                                         ), crimson::ct_error::assert_all {
+        "Unrecoverable error in FSDriver::read"}
+    ).then([size](auto && bl) {
+        if (bl.length() < size) {
+            bl.append_zero(size - bl.length());
+        }
+        return seastar::make_ready_future < bufferlist > (std::move(bl));
+    }
+                             ) ;
 }
 
 seastar::future <> FSDriver::mkfs()
 {
     return init().then([this] {
-                       assert(fs);
-                       uuid_d uuid;
-                       uuid.generate_random();
-                       return fs->mkfs(uuid).
-                       handle_error(crimson::stateful_ec::
-                                    handle([](const auto & ec) {
-                                           crimson::get_logger(ceph_subsys_test)
-                                           .
-                                           error
-                                           ("error creating empty object store in {}: ({}) {}",
-                                            crimson::common::local_conf().
-                                            get_val < std::string >
-                                            ("osd_data"), ec.value(),
-                                            ec.message());
-                                           std::exit(EXIT_FAILURE);}));}).
-        then([this] {
-             return fs->stop();}
+        assert(fs);
+        uuid_d uuid;
+        uuid.generate_random();
+        return fs->mkfs(uuid).
+        handle_error(crimson::stateful_ec::
+        handle([](const auto & ec) {
+            crimson::get_logger(ceph_subsys_test)
+            .
+            error
+            ("error creating empty object store in {}: ({}) {}",
+             crimson::common::local_conf().
+             get_val < std::string >
+             ("osd_data"), ec.value(),
+             ec.message());
+            std::exit(EXIT_FAILURE);
+        }));
+    }).
+    then([this] {
+        return fs->stop();
+    }
     ).then([this] {
-           return init();}
+        return init();
+    }
     ).then([this] {
-           return fs->mount().
-           handle_error(crimson::stateful_ec::handle([](const auto & ec) {
-                                                     crimson::
-                                                     get_logger
-                                                     (ceph_subsys_test).
-                                                     error
-                                                     ("error mounting object store in {}: ({}) {}",
-                                                      crimson::common::
-                                                      local_conf().get_val <
-                                                      std::string >
-                                                      ("osd_data"), ec.value(),
-                                                      ec.message());
-                                                     std::
-                                                     exit(EXIT_FAILURE);}));}).
-        then([this] {
-             return seastar::do_for_each(boost::counting_iterator <
-                                         unsigned >(0),
-                                         boost::counting_iterator <
-                                         unsigned >(config.num_pgs),
-                                         [this] (auto i) {
-                                         return sharded_fs->
-                                         create_new_collection(get_coll(i)
-                                         ).then([this, i] (auto coll) {
-                                                ceph::os::Transaction t;
-                                                t.create_collection(get_coll(i),
-                                                                    0);
-                                                return sharded_fs->
-                                                do_transaction(coll,
-                                                               std::move(t));}
-                                         );}
-             );}
+        return fs->mount().
+        handle_error(crimson::stateful_ec::handle([](const auto & ec) {
+            crimson::
+            get_logger
+            (ceph_subsys_test).
+            error
+            ("error mounting object store in {}: ({}) {}",
+             crimson::common::
+             local_conf().get_val <
+             std::string >
+             ("osd_data"), ec.value(),
+             ec.message());
+            std::
+            exit(EXIT_FAILURE);
+        }));
+    }).
+    then([this] {
+        return seastar::do_for_each(boost::counting_iterator <
+                                    unsigned > (0),
+                                    boost::counting_iterator <
+                                    unsigned > (config.num_pgs),
+        [this](auto i) {
+            return sharded_fs->
+            create_new_collection(get_coll(i)
+            ).then([this, i](auto coll) {
+                ceph::os::Transaction t;
+                t.create_collection(get_coll(i),
+                                    0);
+                return sharded_fs->
+                do_transaction(coll,
+                               std::move(t));
+            }
+                                       );
+        }
+                                   );
+    }
     ).then([this] {
-           return fs->umount();}
+        return fs->umount();
+    }
     ).then([this] {
-           return fs->stop();}
+        return fs->stop();
+    }
     ).then([this] {
-           fs.reset(); return seastar::now();}
-    );
+        fs.reset(); return seastar::now();
+    }
+                          );
 }
 
 seastar::future <> FSDriver::mount()
 {
     ceph_assert(config.path);
     return (config.mkfs ? mkfs() : seastar::now()
-        ).then([this] {
-               return init();}
     ).then([this] {
-           return fs->mount().
-           handle_error(crimson::stateful_ec::handle([](const auto & ec) {
-                                                     crimson::
-                                                     get_logger
-                                                     (ceph_subsys_test).
-                                                     error
-                                                     ("error mounting object store in {}: ({}) {}",
-                                                      crimson::common::
-                                                      local_conf().get_val <
-                                                      std::string >
-                                                      ("osd_data"), ec.value(),
-                                                      ec.message());
-                                                     std::
-                                                     exit(EXIT_FAILURE);}));}).
-        then([this] {
-             return seastar::do_for_each(boost::counting_iterator <
-                                         unsigned >(0),
-                                         boost::counting_iterator <
-                                         unsigned >(config.num_pgs),
-                                         [this] (auto i) {
-                                         return sharded_fs->
-                                         open_collection(get_coll(i)
-                                         ).then([this, i] (auto ref) {
-                                                collections[i].collection = ref;
-                                                collections[i].log_object =
-                                                get_log_object(i);
-                                                if (config.log_enabled()) {
-                                                ceph::os::Transaction t;
-                                                if (config.
-                                                    prepopulate_log_enabled()) {
-                                                populate_log(t, collections[i],
-                                                             config.
-                                                             log_entry_size,
-                                                             config.log_size);}
-                                                return sharded_fs->
-                                                do_transaction(collections[i].
-                                                               collection,
-                                                               std::move(t));}
-                                                else {
-                                                return seastar::now();}
-                                                }
-                                         );}
-             );}
-    )
-        .then([this] {
-              return fs->stat();}
-    ).then([this] (auto s) {
-           size = s.total;}
-    );
+        return init();
+    }
+    ).then([this] {
+        return fs->mount().
+        handle_error(crimson::stateful_ec::handle([](const auto & ec) {
+            crimson::
+            get_logger
+            (ceph_subsys_test).
+            error
+            ("error mounting object store in {}: ({}) {}",
+             crimson::common::
+             local_conf().get_val <
+             std::string >
+             ("osd_data"), ec.value(),
+             ec.message());
+            std::
+            exit(EXIT_FAILURE);
+        }));
+    }).
+    then([this] {
+        return seastar::do_for_each(boost::counting_iterator <
+                                    unsigned > (0),
+                                    boost::counting_iterator <
+                                    unsigned > (config.num_pgs),
+        [this](auto i) {
+            return sharded_fs->
+            open_collection(get_coll(i)
+            ).then([this, i](auto ref) {
+                collections[i].collection = ref;
+                collections[i].log_object =
+                get_log_object(i);
+                if (config.log_enabled()) {
+                    ceph::os::Transaction t;
+                    if (config.
+                        prepopulate_log_enabled()) {
+                        populate_log(t, collections[i],
+                                     config.
+                                     log_entry_size,
+                                     config.log_size);
+                    }
+                    return sharded_fs->
+                           do_transaction(collections[i].
+                                          collection,
+                                          std::move(t));
+                } else {
+                    return seastar::now();
+                }
+            }
+                                 );
+        }
+                                   );
+    }
+        )
+    .then([this] {
+        return fs->stat();
+    }
+    ).then([this](auto s) {
+        size = s.total;
+    }
+               );
 };
 
 seastar::future <> FSDriver::close()
 {
     collections.clear();
     return fs->umount().then([this] {
-                             return fs->stop();}
+        return fs->stop();
+    }
     ).then([this] {
-           fs.reset(); return seastar::now();}
-    );
+        fs.reset(); return seastar::now();
+    }
+                                  );
 }
 
 seastar::future <> FSDriver::init()
@@ -272,8 +298,9 @@ seastar::future <> FSDriver::init()
                                 *config.path,
                                 crimson::common::local_conf().
                                 get_config_values()
-        );
+                               );
     return fs->start().then([this] {
-                            sharded_fs = &(fs->get_sharded_store());}
-    );
+        sharded_fs = &(fs->get_sharded_store());
+    }
+                           );
 }

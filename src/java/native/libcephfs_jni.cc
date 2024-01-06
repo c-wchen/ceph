@@ -104,19 +104,19 @@ static inline int fixup_open_flags(jint jflags)
     int ret = 0;
 
 #define FIXUP_OPEN_FLAG(name) \
-	if (jflags & JAVA_##name) \
-		ret |= name;
+    if (jflags & JAVA_##name) \
+        ret |= name;
 
     FIXUP_OPEN_FLAG(O_RDONLY)
-        FIXUP_OPEN_FLAG(O_RDWR)
-        FIXUP_OPEN_FLAG(O_APPEND)
-        FIXUP_OPEN_FLAG(O_CREAT)
-        FIXUP_OPEN_FLAG(O_TRUNC)
-        FIXUP_OPEN_FLAG(O_EXCL)
-        FIXUP_OPEN_FLAG(O_WRONLY)
-        FIXUP_OPEN_FLAG(O_DIRECTORY)
+    FIXUP_OPEN_FLAG(O_RDWR)
+    FIXUP_OPEN_FLAG(O_APPEND)
+    FIXUP_OPEN_FLAG(O_CREAT)
+    FIXUP_OPEN_FLAG(O_TRUNC)
+    FIXUP_OPEN_FLAG(O_EXCL)
+    FIXUP_OPEN_FLAG(O_WRONLY)
+    FIXUP_OPEN_FLAG(O_DIRECTORY)
 #undef FIXUP_OPEN_FLAG
-        return ret;
+    return ret;
 }
 
 /* Map JAVA_SETATTR_* to values in ceph lib */
@@ -125,16 +125,16 @@ static inline int fixup_attr_mask(jint jmask)
     int mask = 0;
 
 #define FIXUP_ATTR_MASK(name) \
-	if (jmask & JAVA_##name) \
-		mask |= CEPH_##name;
+    if (jmask & JAVA_##name) \
+        mask |= CEPH_##name;
 
     FIXUP_ATTR_MASK(SETATTR_MODE)
-        FIXUP_ATTR_MASK(SETATTR_UID)
-        FIXUP_ATTR_MASK(SETATTR_GID)
-        FIXUP_ATTR_MASK(SETATTR_MTIME)
-        FIXUP_ATTR_MASK(SETATTR_ATIME)
+    FIXUP_ATTR_MASK(SETATTR_UID)
+    FIXUP_ATTR_MASK(SETATTR_GID)
+    FIXUP_ATTR_MASK(SETATTR_MTIME)
+    FIXUP_ATTR_MASK(SETATTR_ATIME)
 #undef FIXUP_ATTR_MASK
-        return mask;
+    return mask;
 }
 
 /* Cached field IDs for com.ceph.fs.CephStat */
@@ -171,93 +171,93 @@ static jmethodID cephfileextent_ctor_fid;
  * org_apache_hadoop.h by adding the do {} while (0) construct.
  */
 #define THROW(env, exception_name, message) \
-	do { \
-		jclass ecls = env->FindClass(exception_name); \
-		if (ecls) { \
-			int ret = env->ThrowNew(ecls, message); \
-			if (ret < 0) { \
-				printf("(CephFS) Fatal Error\n"); \
-			} \
-			env->DeleteLocalRef(ecls); \
-		} \
-	} while (0)
+    do { \
+        jclass ecls = env->FindClass(exception_name); \
+        if (ecls) { \
+            int ret = env->ThrowNew(ecls, message); \
+            if (ret < 0) { \
+                printf("(CephFS) Fatal Error\n"); \
+            } \
+            env->DeleteLocalRef(ecls); \
+        } \
+    } while (0)
 
-static void cephThrowNullArg(JNIEnv * env, const char *msg)
+static void cephThrowNullArg(JNIEnv *env, const char *msg)
 {
     THROW(env, "java/lang/NullPointerException", msg);
 }
 
-static void cephThrowOutOfMemory(JNIEnv * env, const char *msg)
+static void cephThrowOutOfMemory(JNIEnv *env, const char *msg)
 {
     THROW(env, "java/lang/OutOfMemoryError", msg);
 }
 
-static void cephThrowInternal(JNIEnv * env, const char *msg)
+static void cephThrowInternal(JNIEnv *env, const char *msg)
 {
     THROW(env, "java/lang/InternalError", msg);
 }
 
-static void cephThrowIndexBounds(JNIEnv * env, const char *msg)
+static void cephThrowIndexBounds(JNIEnv *env, const char *msg)
 {
     THROW(env, "java/lang/IndexOutOfBoundsException", msg);
 }
 
-static void cephThrowIllegalArg(JNIEnv * env, const char *msg)
+static void cephThrowIllegalArg(JNIEnv *env, const char *msg)
 {
     THROW(env, "java/lang/IllegalArgumentException", msg);
 }
 
-static void cephThrowFNF(JNIEnv * env, const char *msg)
+static void cephThrowFNF(JNIEnv *env, const char *msg)
 {
     THROW(env, "java/io/FileNotFoundException", msg);
 }
 
-static void cephThrowFileExists(JNIEnv * env, const char *msg)
+static void cephThrowFileExists(JNIEnv *env, const char *msg)
 {
     THROW(env, CEPH_FILEEXISTS_CP, msg);
 }
 
-static void cephThrowNotDir(JNIEnv * env, const char *msg)
+static void cephThrowNotDir(JNIEnv *env, const char *msg)
 {
     THROW(env, CEPH_NOTDIR_CP, msg);
 }
 
-static void handle_error(JNIEnv * env, int rc)
+static void handle_error(JNIEnv *env, int rc)
 {
     switch (rc) {
-    case -ENOENT:
-        cephThrowFNF(env, "");
-        return;
-    case -EEXIST:
-        cephThrowFileExists(env, "");
-        return;
-    case -ENOTDIR:
-        cephThrowNotDir(env, "");
-        return;
-    default:
-        break;
+        case -ENOENT:
+            cephThrowFNF(env, "");
+            return;
+        case -EEXIST:
+            cephThrowFileExists(env, "");
+            return;
+        case -ENOTDIR:
+            cephThrowNotDir(env, "");
+            return;
+        default:
+            break;
     }
 
     THROW(env, "java/io/IOException", strerror(-rc));
 }
 
 #define CHECK_ARG_NULL(v, m, r) do { \
-	if (!(v)) { \
-		cephThrowNullArg(env, (m)); \
-		return (r); \
-	} } while (0)
+    if (!(v)) { \
+        cephThrowNullArg(env, (m)); \
+        return (r); \
+    } } while (0)
 
 #define CHECK_ARG_BOUNDS(c, m, r) do { \
-	if ((c)) { \
-		cephThrowIndexBounds(env, (m)); \
-		return (r); \
-	} } while (0)
+    if ((c)) { \
+        cephThrowIndexBounds(env, (m)); \
+        return (r); \
+    } } while (0)
 
 #define CHECK_MOUNTED(_c, _r) do { \
-	if (!ceph_is_mounted((_c))) { \
-		THROW(env, CEPH_NOTMOUNTED_CP, "not mounted"); \
-		return (_r); \
-	} } while (0)
+    if (!ceph_is_mounted((_c))) { \
+        THROW(env, CEPH_NOTMOUNTED_CP, "not mounted"); \
+        return (_r); \
+    } } while (0)
 
 /*
  * Cast a jlong to ceph_mount_info. Each JNI function is expected to pass in
@@ -272,36 +272,37 @@ static inline struct ceph_mount_info *get_ceph_mount(jlong j_mntp)
 /*
  * Setup cached field IDs
  */
-static void setup_field_ids(JNIEnv * env, jclass clz)
+static void setup_field_ids(JNIEnv *env, jclass clz)
 {
     jclass cephstat_cls;
     jclass cephstatvfs_cls;
     jclass tmp_cephfileextent_cls;
 
-/*
- * Get a fieldID from a class with a specific type
- *
- * clz: jclass
- * field: field in clz
- * type: integer, long, etc..
- *
- * This macro assumes some naming convention that is used
- * only in this file:
- *
- *   GETFID(cephstat, mode, I) gets translated into
- *     cephstat_mode_fid = env->GetFieldID(cephstat_cls, "mode", "I");
- */
+    /*
+     * Get a fieldID from a class with a specific type
+     *
+     * clz: jclass
+     * field: field in clz
+     * type: integer, long, etc..
+     *
+     * This macro assumes some naming convention that is used
+     * only in this file:
+     *
+     *   GETFID(cephstat, mode, I) gets translated into
+     *     cephstat_mode_fid = env->GetFieldID(cephstat_cls, "mode", "I");
+     */
 #define GETFID(clz, field, type) do { \
-	clz ## _ ## field ## _fid = env->GetFieldID(clz ## _cls, #field, #type); \
-	if ( ! clz ## _ ## field ## _fid ) \
-		return; \
-	} while (0)
+    clz ## _ ## field ## _fid = env->GetFieldID(clz ## _cls, #field, #type); \
+    if ( ! clz ## _ ## field ## _fid ) \
+        return; \
+    } while (0)
 
     /* Cache CephStat fields */
 
     cephstat_cls = env->FindClass(CEPH_STAT_CP);
-    if (!cephstat_cls)
+    if (!cephstat_cls) {
         return;
+    }
 
     GETFID(cephstat, mode, I);
     GETFID(cephstat, uid, I);
@@ -318,8 +319,9 @@ static void setup_field_ids(JNIEnv * env, jclass clz)
     /* Cache CephStatVFS fields */
 
     cephstatvfs_cls = env->FindClass(CEPH_STAT_VFS_CP);
-    if (!cephstatvfs_cls)
+    if (!cephstatvfs_cls) {
         return;
+    }
 
     GETFID(cephstatvfs, bsize, J);
     GETFID(cephstatvfs, frsize, J);
@@ -332,16 +334,18 @@ static void setup_field_ids(JNIEnv * env, jclass clz)
     /* Cache CephFileExtent fields */
 
     tmp_cephfileextent_cls = env->FindClass(CEPH_FILE_EXTENT_CP);
-    if (!tmp_cephfileextent_cls)
+    if (!tmp_cephfileextent_cls) {
         return;
+    }
 
     cephfileextent_cls = (jclass) env->NewGlobalRef(tmp_cephfileextent_cls);
     env->DeleteLocalRef(tmp_cephfileextent_cls);
 
     cephfileextent_ctor_fid =
         env->GetMethodID(cephfileextent_cls, "<init>", "(JJ[I)V");
-    if (!cephfileextent_ctor_fid)
+    if (!cephfileextent_ctor_fid) {
         return;
+    }
 
     JniConstants::init(env);
 
@@ -356,7 +360,8 @@ static void setup_field_ids(JNIEnv * env, jclass clz)
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_ceph_fs_CephMount_native_1initialize
-    (JNIEnv * env, jclass clz) {
+(JNIEnv *env, jclass clz)
+{
     setup_field_ids(env, clz);
 }
 
@@ -366,7 +371,8 @@ JNIEXPORT void JNICALL Java_com_ceph_fs_CephMount_native_1initialize
  * Signature: (Lcom/ceph/fs/CephMount;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1create
-    (JNIEnv * env, jclass clz, jobject j_cephmount, jstring j_id) {
+(JNIEnv *env, jclass clz, jobject j_cephmount, jstring j_id)
+{
     struct ceph_mount_info *cmount;
     const char *c_id = NULL;
     int ret;
@@ -383,8 +389,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1create
 
     ret = ceph_create(&cmount, c_id);
 
-    if (c_id)
+    if (c_id) {
         env->ReleaseStringUTFChars(j_id, c_id);
+    }
 
     if (ret) {
         THROW(env, "java/lang/RuntimeException",
@@ -403,7 +410,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1create
  * Signature: (JLjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mount
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_root) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_root)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_root = NULL;
@@ -432,11 +440,13 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mount
 
     ldout(cct, 10) << "jni: ceph_mount: exit ret " << ret << dendl;
 
-    if (c_root)
+    if (c_root) {
         env->ReleaseStringUTFChars(j_root, c_root);
+    }
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -447,7 +457,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mount
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1unmount
-    (JNIEnv * env, jclass clz, jlong j_mntp) {
+(JNIEnv *env, jclass clz, jlong j_mntp)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -460,8 +471,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1unmount
 
     ldout(cct, 10) << "jni: ceph_unmount exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -472,7 +484,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1unmount
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1release
-    (JNIEnv * env, jclass clz, jlong j_mntp) {
+(JNIEnv *env, jclass clz, jlong j_mntp)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -481,8 +494,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1release
 
     ret = ceph_release(cmount);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -493,7 +507,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1release
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1set
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_opt, jstring j_val) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_opt, jstring j_val)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_opt, *c_val;
@@ -525,8 +540,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1set
     env->ReleaseStringUTFChars(j_opt, c_opt);
     env->ReleaseStringUTFChars(j_val, c_val);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -537,7 +553,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1set
  * Signature: (JLjava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1get
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_opt) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_opt)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_opt;
@@ -554,7 +571,7 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1get
     }
 
     buflen = 128;
-    buf = new(std::nothrow) char[buflen];
+    buf = new (std::nothrow) char[buflen];
     if (!buf) {
         cephThrowOutOfMemory(env, "head allocation failed");
         goto out;
@@ -564,31 +581,32 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1get
         memset(buf, 0, sizeof(char) * buflen);
         ldout(cct,
               10) << "jni: conf_get: opt " << c_opt << " len " << buflen <<
-            dendl;
+                  dendl;
         ret = ceph_conf_get(cmount, c_opt, buf, buflen);
         if (ret == -ENAMETOOLONG) {
             buflen *= 2;
             delete[]buf;
-            buf = new(std::nothrow) char[buflen];
+            buf = new (std::nothrow) char[buflen];
             if (!buf) {
                 cephThrowOutOfMemory(env, "head allocation failed");
                 goto out;
             }
-        }
-        else
+        } else {
             break;
+        }
     }
 
     ldout(cct, 10) << "jni: conf_get: ret " << ret << dendl;
 
-    if (ret == 0)
+    if (ret == 0) {
         value = env->NewStringUTF(buf);
-    else if (ret != -ENOENT)
+    } else if (ret != -ENOENT) {
         handle_error(env, ret);
+    }
 
     delete[]buf;
 
-  out:
+out:
     env->ReleaseStringUTFChars(j_opt, c_opt);
     return value;
 }
@@ -599,7 +617,8 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1get
  * Signature: (JLjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1read_1file
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -621,8 +640,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1read_1file
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -633,8 +653,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1conf_1read_1file
  * Signature: (JLjava/lang/String;Lcom/ceph/fs/CephStatVFS;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1statfs
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path,
-     jobject j_cephstatvfs) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path,
+ jobject j_cephstatvfs)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -681,7 +702,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1statfs
  * Signature: (J)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1getcwd
-    (JNIEnv * env, jclass clz, jlong j_mntp) {
+(JNIEnv *env, jclass clz, jlong j_mntp)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_cwd;
@@ -707,7 +729,8 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1getcwd
  * Signature: (JLjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chdir
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -730,8 +753,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chdir
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -742,7 +766,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chdir
  * Signature: (JLjava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     struct ceph_dir_result *dirp;
@@ -778,7 +803,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
 
     /* buffer for ceph_getdnames() results */
     buflen = 256;
-    buf = new(std::nothrow) char[buflen];
+    buf = new (std::nothrow) char[buflen];
     if (!buf) {
         cephThrowOutOfMemory(env, "heap allocation failed");
         goto out;
@@ -790,7 +815,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
         if (ret == -ERANGE) {
             delete[]buf;
             buflen *= 2;
-            buf = new(std::nothrow) char[buflen];
+            buf = new (std::nothrow) char[buflen];
             if (!buf) {
                 cephThrowOutOfMemory(env, "heap allocation failed");
                 goto out;
@@ -800,13 +825,14 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
 
         ldout(cct, 10) << "jni: listdir: getdnames: exit ret " << ret << dendl;
 
-        if (ret <= 0)
+        if (ret <= 0) {
             break;
+        }
 
         /* got at least one name */
         bufpos = 0;
         while (bufpos < ret) {
-            ent = new(std::nothrow) string(buf + bufpos);
+            ent = new (std::nothrow) string(buf + bufpos);
             if (!ent) {
                 delete[]buf;
                 cephThrowOutOfMemory(env, "heap allocation failed");
@@ -835,8 +861,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
     dirlist =
         env->NewObjectArray(contents.size(), env->FindClass("java/lang/String"),
                             NULL);
-    if (!dirlist)
+    if (!dirlist) {
         goto out;
+    }
 
     /*
      * Fill directory listing array.
@@ -845,11 +872,13 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
      */
     for (i = 0, it = contents.begin(); it != contents.end(); ++it) {
         name = env->NewStringUTF(it->c_str());
-        if (!name)
+        if (!name) {
             goto out;
+        }
         env->SetObjectArrayElement(dirlist, i++, name);
-        if (env->ExceptionOccurred())
+        if (env->ExceptionOccurred()) {
             goto out;
+        }
         env->DeleteLocalRef(name);
     }
 
@@ -858,7 +887,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
 
     return dirlist;
 
-  out:
+out:
     env->ReleaseStringUTFChars(j_path, c_path);
     ceph_closedir(cmount, dirp);
     return NULL;
@@ -870,8 +899,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listdir
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1link
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_oldpath,
-     jstring j_newpath) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_oldpath,
+ jstring j_newpath)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_oldpath, *c_newpath;
@@ -895,7 +925,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1link
     }
 
     ldout(cct, 10) << "jni: link: oldpath " << c_oldpath <<
-        " newpath " << c_newpath << dendl;
+                   " newpath " << c_newpath << dendl;
 
     ret = ceph_link(cmount, c_oldpath, c_newpath);
 
@@ -904,8 +934,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1link
     env->ReleaseStringUTFChars(j_oldpath, c_oldpath);
     env->ReleaseStringUTFChars(j_newpath, c_newpath);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -916,7 +947,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1link
  * Signature: (JLjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1unlink
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -939,8 +971,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1unlink
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -951,7 +984,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1unlink
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1rename
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_from, jstring j_to) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_from, jstring j_to)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_from, *c_to;
@@ -983,8 +1017,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1rename
     env->ReleaseStringUTFChars(j_from, c_from);
     env->ReleaseStringUTFChars(j_to, c_to);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -995,7 +1030,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1rename
  * Signature: (JLjava/lang/String;I)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdir
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jint j_mode) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jint j_mode)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1012,7 +1048,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdir
 
     ldout(cct,
           10) << "jni: mkdir: path " << c_path << " mode " << (int)j_mode <<
-        dendl;
+              dendl;
 
     ret = ceph_mkdir(cmount, c_path, (int)j_mode);
 
@@ -1020,8 +1056,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdir
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1032,7 +1069,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdir
  * Signature: (JLjava/lang/String;I)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdirs
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jint j_mode) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jint j_mode)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1049,7 +1087,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdirs
 
     ldout(cct,
           10) << "jni: mkdirs: path " << c_path << " mode " << (int)j_mode <<
-        dendl;
+              dendl;
 
     ret = ceph_mkdirs(cmount, c_path, (int)j_mode);
 
@@ -1057,8 +1095,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdirs
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1069,7 +1108,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1mkdirs
  * Signature: (JLjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1rmdir
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1092,8 +1132,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1rmdir
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1104,7 +1145,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1rmdir
  * Signature: (JLjava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1readlink
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1132,7 +1174,7 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1readlink
             return NULL;
         }
 
-        linkname = new(std::nothrow) char[stx.stx_size + 1];
+        linkname = new (std::nothrow) char[stx.stx_size + 1];
         if (!linkname) {
             env->ReleaseStringUTFChars(j_path, c_path);
             cephThrowOutOfMemory(env, "head allocation failed");
@@ -1141,7 +1183,7 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1readlink
 
         ldout(cct,
               10) << "jni: readlink: size " << stx.
-            stx_size << " path " << c_path << dendl;
+                  stx_size << " path " << c_path << dendl;
 
         ret = ceph_readlink(cmount, c_path, linkname, stx.stx_size + 1);
 
@@ -1178,8 +1220,9 @@ JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1readlink
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1symlink
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_oldpath,
-     jstring j_newpath) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_oldpath,
+ jstring j_newpath)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_oldpath, *c_newpath;
@@ -1203,7 +1246,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1symlink
     }
 
     ldout(cct, 10) << "jni: symlink: oldpath " << c_oldpath <<
-        " newpath " << c_newpath << dendl;
+                   " newpath " << c_newpath << dendl;
 
     ret = ceph_symlink(cmount, c_oldpath, c_newpath);
 
@@ -1212,15 +1255,16 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1symlink
     env->ReleaseStringUTFChars(j_oldpath, c_oldpath);
     env->ReleaseStringUTFChars(j_newpath, c_newpath);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
 
 #define CEPH_J_CEPHSTAT_MASK (CEPH_STATX_UID|CEPH_STATX_GID|CEPH_STATX_SIZE|CEPH_STATX_BLOCKS|CEPH_STATX_MTIME|CEPH_STATX_ATIME)
 
-static void fill_cephstat(JNIEnv * env, jobject j_cephstat,
+static void fill_cephstat(JNIEnv *env, jobject j_cephstat,
                           struct ceph_statx *stx)
 {
     env->SetIntField(j_cephstat, cephstat_mode_fid, stx->stx_mode);
@@ -1256,7 +1300,7 @@ static void fill_cephstat(JNIEnv * env, jobject j_cephstat,
  * Signature: (JLjava/lang/String;Lcom/ceph/fs/CephStat;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lstat
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jobject j_cephstat)
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jobject j_cephstat)
 {
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
@@ -1300,7 +1344,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lstat
  * Signature: (JLjava/lang/String;Lcom/ceph/fs/CephStat;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1stat
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jobject j_cephstat)
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jobject j_cephstat)
 {
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
@@ -1342,8 +1386,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1stat
  * Signature: (JLjava/lang/String;Lcom/ceph/fs/CephStat;I)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jobject j_cephstat,
-     jint j_mask) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jobject j_cephstat,
+ jint j_mask)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1381,8 +1426,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setattr
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1393,7 +1439,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setattr
  * Signature: (JLjava/lang/String;I)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chmod
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jint j_mode) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jint j_mode)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1410,7 +1457,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chmod
 
     ldout(cct,
           10) << "jni: chmod: path " << c_path << " mode " << (int)j_mode <<
-        dendl;
+              dendl;
 
     ret = ceph_chmod(cmount, c_path, (int)j_mode);
 
@@ -1418,8 +1465,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chmod
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1430,7 +1478,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1chmod
  * Signature: (JII)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fchmod
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jint j_mode) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jint j_mode)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -1439,14 +1488,15 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fchmod
 
     ldout(cct,
           10) << "jni: fchmod: fd " << (int)j_fd << " mode " << (int)j_mode <<
-        dendl;
+              dendl;
 
     ret = ceph_fchmod(cmount, (int)j_fd, (int)j_mode);
 
     ldout(cct, 10) << "jni: fchmod: exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1457,7 +1507,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fchmod
  * Signature: (JLjava/lang/String;J)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1truncate
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jlong j_size) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jlong j_size)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1474,7 +1525,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1truncate
 
     ldout(cct,
           10) << "jni: truncate: path " << c_path << " size " << (loff_t) j_size
-        << dendl;
+              << dendl;
 
     ret = ceph_truncate(cmount, c_path, (loff_t) j_size);
 
@@ -1482,8 +1533,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1truncate
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1494,8 +1546,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1truncate
  * Signature: (JLjava/lang/String;II)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jint j_flags,
-     jint j_mode) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jint j_flags,
+ jint j_mode)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1511,7 +1564,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open
     }
 
     ldout(cct, 10) << "jni: open: path " << c_path << " flags " << flags
-        << " mode " << (int)j_mode << dendl;
+                   << " mode " << (int)j_mode << dendl;
 
     ret = ceph_open(cmount, c_path, flags, (int)j_mode);
 
@@ -1519,8 +1572,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open
 
     env->ReleaseStringUTFChars(j_path, c_path);
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1531,9 +1585,10 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open
  * Signature: (JLjava/lang/String;IIIIILjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open_1layout
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jint j_flags,
-     jint j_mode, jint stripe_unit, jint stripe_count, jint object_size,
-     jstring j_data_pool) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jint j_flags,
+ jint j_mode, jint stripe_unit, jint stripe_count, jint object_size,
+ jstring j_data_pool)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path, *c_data_pool = NULL;
@@ -1558,9 +1613,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open_1layout
     }
 
     ldout(cct, 10) << "jni: open_layout: path " << c_path << " flags " << flags
-        << " mode " << (int)j_mode << " stripe_unit " << stripe_unit
-        << " stripe_count " << stripe_count << " object_size " << object_size
-        << " data_pool " << (c_data_pool ? c_data_pool : "<NULL>") << dendl;
+                   << " mode " << (int)j_mode << " stripe_unit " << stripe_unit
+                   << " stripe_count " << stripe_count << " object_size " << object_size
+                   << " data_pool " << (c_data_pool ? c_data_pool : "<NULL>") << dendl;
 
     ret = ceph_open_layout(cmount, c_path, flags, (int)j_mode,
                            (int)stripe_unit, (int)stripe_count,
@@ -1569,11 +1624,13 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open_1layout
     ldout(cct, 10) << "jni: open_layout: exit ret " << ret << dendl;
 
     env->ReleaseStringUTFChars(j_path, c_path);
-    if (j_data_pool)
+    if (j_data_pool) {
         env->ReleaseStringUTFChars(j_data_pool, c_data_pool);
+    }
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1584,7 +1641,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1open_1layout
  * Signature: (JI)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1close
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -1597,8 +1655,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1close
 
     ldout(cct, 10) << "jni: close: ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1609,8 +1668,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1close
  * Signature: (JIJI)J
  */
 JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lseek
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jlong j_offset,
-     jint j_whence) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jlong j_offset,
+ jint j_whence)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int whence;
@@ -1619,29 +1679,30 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lseek
     CHECK_MOUNTED(cmount, -1);
 
     switch (j_whence) {
-    case JAVA_SEEK_SET:
-        whence = SEEK_SET;
-        break;
-    case JAVA_SEEK_CUR:
-        whence = SEEK_CUR;
-        break;
-    case JAVA_SEEK_END:
-        whence = SEEK_END;
-        break;
-    default:
-        cephThrowIllegalArg(env, "Unknown whence value");
-        return -1;
+        case JAVA_SEEK_SET:
+            whence = SEEK_SET;
+            break;
+        case JAVA_SEEK_CUR:
+            whence = SEEK_CUR;
+            break;
+        case JAVA_SEEK_END:
+            whence = SEEK_END;
+            break;
+        default:
+            cephThrowIllegalArg(env, "Unknown whence value");
+            return -1;
     }
 
     ldout(cct, 10) << "jni: lseek: fd " << (int)j_fd << " offset "
-        << (long)j_offset << " whence " << whence << dendl;
+                   << (long)j_offset << " whence " << whence << dendl;
 
     ret = ceph_lseek(cmount, (int)j_fd, (long)j_offset, whence);
 
     ldout(cct, 10) << "jni: lseek: exit ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1652,8 +1713,9 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lseek
  * Signature: (JI[BJJ)J
  */
 JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1read
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jbyteArray j_buf,
-     jlong j_size, jlong j_offset) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jbyteArray j_buf,
+ jlong j_size, jlong j_offset)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jsize buf_size;
@@ -1675,7 +1737,7 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1read
 
     ldout(cct,
           10) << "jni: read: fd " << (int)j_fd << " len " << (long)j_size <<
-        " offset " << (long)j_offset << dendl;
+              " offset " << (long)j_offset << dendl;
 
     ret =
         ceph_read(cmount, (int)j_fd, (char *)c_buf, (long)j_size,
@@ -1683,10 +1745,11 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1read
 
     ldout(cct, 10) << "jni: read: exit ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, (int)ret);
-    else
+    } else {
         env->ReleaseByteArrayElements(j_buf, c_buf, 0);
+    }
 
     return (jlong) ret;
 }
@@ -1697,8 +1760,9 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1read
  * Signature: (JI[BJJ)J
  */
 JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1write
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jbyteArray j_buf,
-     jlong j_size, jlong j_offset) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jbyteArray j_buf,
+ jlong j_size, jlong j_offset)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jsize buf_size;
@@ -1720,7 +1784,7 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1write
 
     ldout(cct,
           10) << "jni: write: fd " << (int)j_fd << " len " << (long)j_size <<
-        " offset " << (long)j_offset << dendl;
+              " offset " << (long)j_offset << dendl;
 
     ret =
         ceph_write(cmount, (int)j_fd, (char *)c_buf, (long)j_size,
@@ -1728,10 +1792,11 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1write
 
     ldout(cct, 10) << "jni: write: exit ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, (int)ret);
-    else
+    } else {
         env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
+    }
 
     return ret;
 }
@@ -1742,7 +1807,8 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1write
  * Signature: (JIJ)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1ftruncate
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jlong j_size) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jlong j_size)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -1750,14 +1816,15 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1ftruncate
     CHECK_MOUNTED(cmount, -1);
 
     ldout(cct, 10) << "jni: ftruncate: fd " << (int)j_fd <<
-        " size " << (loff_t) j_size << dendl;
+                   " size " << (loff_t) j_size << dendl;
 
     ret = ceph_ftruncate(cmount, (int)j_fd, (loff_t) j_size);
 
     ldout(cct, 10) << "jni: ftruncate: exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1768,20 +1835,22 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1ftruncate
  * Signature: (JIZ)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fsync
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jboolean j_dataonly) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jboolean j_dataonly)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
 
     ldout(cct, 10) << "jni: fsync: fd " << (int)j_fd <<
-        " dataonly " << (j_dataonly ? 1 : 0) << dendl;
+                   " dataonly " << (j_dataonly ? 1 : 0) << dendl;
 
     ret = ceph_fsync(cmount, (int)j_fd, j_dataonly ? 1 : 0);
 
     ldout(cct, 10) << "jni: fsync: exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1792,23 +1861,24 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fsync
  * Signature: (JIZ)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1flock
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jint j_operation,
-     jlong j_owner) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jint j_operation,
+ jlong j_owner)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
 
     ldout(cct, 10) << "jni: flock: fd " << (int)j_fd <<
-        " operation " << j_operation << " owner " << j_owner << dendl;
+                   " operation " << j_operation << " owner " << j_owner << dendl;
 
     int operation = 0;
 
-#define MAP_FLOCK_FLAG(JNI_MASK, NATIVE_MASK) do {	\
-	if ((j_operation & JNI_MASK) != 0) {		\
-		operation |= NATIVE_MASK; 		\
-		j_operation &= ~JNI_MASK;		\
-	} 						\
-	} while(0)
+#define MAP_FLOCK_FLAG(JNI_MASK, NATIVE_MASK) do {  \
+    if ((j_operation & JNI_MASK) != 0) {        \
+        operation |= NATIVE_MASK;       \
+        j_operation &= ~JNI_MASK;       \
+    }                       \
+    } while(0)
     MAP_FLOCK_FLAG(JAVA_LOCK_SH, LOCK_SH);
     MAP_FLOCK_FLAG(JAVA_LOCK_EX, LOCK_EX);
     MAP_FLOCK_FLAG(JAVA_LOCK_NB, LOCK_NB);
@@ -1823,8 +1893,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1flock
 
     ldout(cct, 10) << "jni: flock: exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1835,7 +1906,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1flock
  * Signature: (JILcom/ceph/fs/CephStat;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fstat
-    (JNIEnv * env, jclass clz, jlong j_mntp, jint j_fd, jobject j_cephstat) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jint j_fd, jobject j_cephstat)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     struct ceph_statx stx;
@@ -1866,7 +1938,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1fstat
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1sync_1fs
-    (JNIEnv * env, jclass clz, jlong j_mntp) {
+(JNIEnv *env, jclass clz, jlong j_mntp)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -1877,8 +1950,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1sync_1fs
 
     ldout(cct, 10) << "jni: sync_fs: exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -1889,8 +1963,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1sync_1fs
  * Signature: (JLjava/lang/String;Ljava/lang/String;[B)J
  */
 JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1getxattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
-     jbyteArray j_buf) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
+ jbyteArray j_buf)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -1932,24 +2007,27 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1getxattr
 
     buf_size = env->GetArrayLength(j_buf);
 
-  do_getxattr:
+do_getxattr:
 
     ldout(cct, 10) << "jni: getxattr: path " << c_path << " name " << c_name <<
-        " len " << buf_size << dendl;
+                   " len " << buf_size << dendl;
 
     ret = ceph_getxattr(cmount, c_path, c_name, c_buf, buf_size);
-    if (ret == -ERANGE)
+    if (ret == -ERANGE) {
         ret = ceph_getxattr(cmount, c_path, c_name, c_buf, 0);
+    }
 
     ldout(cct, 10) << "jni: getxattr: exit ret " << ret << dendl;
 
     env->ReleaseStringUTFChars(j_path, c_path);
     env->ReleaseStringUTFChars(j_name, c_name);
-    if (j_buf)
+    if (j_buf) {
         env->ReleaseByteArrayElements(j_buf, c_buf, 0);
+    }
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, (int)ret);
+    }
 
     return (jlong) ret;
 }
@@ -1960,8 +2038,9 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1getxattr
  * Signature: (JLjava/lang/String;Ljava/lang/String;[B)I
  */
 JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lgetxattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
-     jbyteArray j_buf) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
+ jbyteArray j_buf)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -2003,24 +2082,27 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lgetxattr
 
     buf_size = env->GetArrayLength(j_buf);
 
-  do_lgetxattr:
+do_lgetxattr:
 
     ldout(cct, 10) << "jni: lgetxattr: path " << c_path << " name " << c_name <<
-        " len " << buf_size << dendl;
+                   " len " << buf_size << dendl;
 
     ret = ceph_lgetxattr(cmount, c_path, c_name, c_buf, buf_size);
-    if (ret == -ERANGE)
+    if (ret == -ERANGE) {
         ret = ceph_lgetxattr(cmount, c_path, c_name, c_buf, 0);
+    }
 
     ldout(cct, 10) << "jni: lgetxattr: exit ret " << ret << dendl;
 
     env->ReleaseStringUTFChars(j_path, c_path);
     env->ReleaseStringUTFChars(j_name, c_name);
-    if (j_buf)
+    if (j_buf) {
         env->ReleaseByteArrayElements(j_buf, c_buf, 0);
+    }
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, (int)ret);
+    }
 
     return (jlong) ret;
 }
@@ -2030,10 +2112,10 @@ JNIEXPORT jlong JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lgetxattr
  * Method:    native_ceph_listxattr
  * Signature: (JLjava/lang/String;)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1listxattr(JNIEnv * env, jclass clz,
-                                                       jlong j_mntp,
-                                                       jstring j_path) {
+JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1listxattr(JNIEnv *env, jclass clz,
+        jlong j_mntp,
+        jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jobjectArray xattrlist;
@@ -2055,7 +2137,7 @@ JNIEXPORT jobjectArray JNICALL
     }
 
     buflen = 1024;
-    buf = new(std::nothrow) char[buflen];
+    buf = new (std::nothrow) char[buflen];
     if (!buf) {
         cephThrowOutOfMemory(env, "head allocation failed");
         goto out;
@@ -2064,12 +2146,12 @@ JNIEXPORT jobjectArray JNICALL
     while (1) {
         ldout(cct,
               10) << "jni: listxattr: path " << c_path << " len " << buflen <<
-            dendl;
+                  dendl;
         ret = ceph_listxattr(cmount, c_path, buf, buflen);
         if (ret == -ERANGE) {
             delete[]buf;
             buflen *= 2;
-            buf = new(std::nothrow) char[buflen];
+            buf = new (std::nothrow) char[buflen];
             if (!buf) {
                 cephThrowOutOfMemory(env, "heap allocation failed");
                 goto out;
@@ -2089,7 +2171,7 @@ JNIEXPORT jobjectArray JNICALL
 
     bufpos = 0;
     while (bufpos < ret) {
-        ent = new(std::nothrow) string(buf + bufpos);
+        ent = new (std::nothrow) string(buf + bufpos);
         if (!ent) {
             delete[]buf;
             cephThrowOutOfMemory(env, "heap allocation failed");
@@ -2105,23 +2187,26 @@ JNIEXPORT jobjectArray JNICALL
     xattrlist =
         env->NewObjectArray(contents.size(), env->FindClass("java/lang/String"),
                             NULL);
-    if (!xattrlist)
+    if (!xattrlist) {
         goto out;
+    }
 
     for (i = 0, it = contents.begin(); it != contents.end(); ++it) {
         name = env->NewStringUTF(it->c_str());
-        if (!name)
+        if (!name) {
             goto out;
+        }
         env->SetObjectArrayElement(xattrlist, i++, name);
-        if (env->ExceptionOccurred())
+        if (env->ExceptionOccurred()) {
             goto out;
+        }
         env->DeleteLocalRef(name);
     }
 
     env->ReleaseStringUTFChars(j_path, c_path);
     return xattrlist;
 
-  out:
+out:
     env->ReleaseStringUTFChars(j_path, c_path);
     return NULL;
 }
@@ -2131,11 +2216,11 @@ JNIEXPORT jobjectArray JNICALL
  * Method:    native_ceph_llistxattr
  * Signature: (JLjava/lang/String;)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1llistxattr(JNIEnv * env,
-                                                        jclass clz,
-                                                        jlong j_mntp,
-                                                        jstring j_path) {
+JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1llistxattr(JNIEnv *env,
+        jclass clz,
+        jlong j_mntp,
+        jstring j_path)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jobjectArray xattrlist;
@@ -2157,7 +2242,7 @@ JNIEXPORT jobjectArray JNICALL
     }
 
     buflen = 1024;
-    buf = new(std::nothrow) char[buflen];
+    buf = new (std::nothrow) char[buflen];
     if (!buf) {
         cephThrowOutOfMemory(env, "head allocation failed");
         goto out;
@@ -2166,12 +2251,12 @@ JNIEXPORT jobjectArray JNICALL
     while (1) {
         ldout(cct,
               10) << "jni: llistxattr: path " << c_path << " len " << buflen <<
-            dendl;
+                  dendl;
         ret = ceph_llistxattr(cmount, c_path, buf, buflen);
         if (ret == -ERANGE) {
             delete[]buf;
             buflen *= 2;
-            buf = new(std::nothrow) char[buflen];
+            buf = new (std::nothrow) char[buflen];
             if (!buf) {
                 cephThrowOutOfMemory(env, "heap allocation failed");
                 goto out;
@@ -2191,7 +2276,7 @@ JNIEXPORT jobjectArray JNICALL
 
     bufpos = 0;
     while (bufpos < ret) {
-        ent = new(std::nothrow) string(buf + bufpos);
+        ent = new (std::nothrow) string(buf + bufpos);
         if (!ent) {
             delete[]buf;
             cephThrowOutOfMemory(env, "heap allocation failed");
@@ -2207,23 +2292,26 @@ JNIEXPORT jobjectArray JNICALL
     xattrlist =
         env->NewObjectArray(contents.size(), env->FindClass("java/lang/String"),
                             NULL);
-    if (!xattrlist)
+    if (!xattrlist) {
         goto out;
+    }
 
     for (i = 0, it = contents.begin(); it != contents.end(); ++it) {
         name = env->NewStringUTF(it->c_str());
-        if (!name)
+        if (!name) {
             goto out;
+        }
         env->SetObjectArrayElement(xattrlist, i++, name);
-        if (env->ExceptionOccurred())
+        if (env->ExceptionOccurred()) {
             goto out;
+        }
         env->DeleteLocalRef(name);
     }
 
     env->ReleaseStringUTFChars(j_path, c_path);
     return xattrlist;
 
-  out:
+out:
     env->ReleaseStringUTFChars(j_path, c_path);
     return NULL;
 }
@@ -2234,7 +2322,8 @@ JNIEXPORT jobjectArray JNICALL
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1removexattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -2260,7 +2349,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1removexattr
 
     ldout(cct,
           10) << "jni: removexattr: path " << c_path << " name " << c_name <<
-        dendl;
+              dendl;
 
     ret = ceph_removexattr(cmount, c_path, c_name);
 
@@ -2269,8 +2358,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1removexattr
     env->ReleaseStringUTFChars(j_path, c_path);
     env->ReleaseStringUTFChars(j_name, c_name);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2281,7 +2371,8 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1removexattr
  * Signature: (JLjava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lremovexattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -2307,7 +2398,7 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lremovexattr
 
     ldout(cct,
           10) << "jni: lremovexattr: path " << c_path << " name " << c_name <<
-        dendl;
+              dendl;
 
     ret = ceph_lremovexattr(cmount, c_path, c_name);
 
@@ -2316,8 +2407,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lremovexattr
     env->ReleaseStringUTFChars(j_path, c_path);
     env->ReleaseStringUTFChars(j_name, c_name);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2328,8 +2420,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lremovexattr
  * Signature: (JLjava/lang/String;Ljava/lang/String;[BJI)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setxattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
-     jbyteArray j_buf, jlong j_size, jint j_flags) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
+ jbyteArray j_buf, jlong j_size, jint j_flags)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -2369,25 +2462,25 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setxattr
     }
 
     switch (j_flags) {
-    case JAVA_XATTR_CREATE:
-        flags = CEPH_XATTR_CREATE;
-        break;
-    case JAVA_XATTR_REPLACE:
-        flags = CEPH_XATTR_REPLACE;
-        break;
-    case JAVA_XATTR_NONE:
-        flags = 0;
-        break;
-    default:
-        env->ReleaseStringUTFChars(j_path, c_path);
-        env->ReleaseStringUTFChars(j_name, c_name);
-        env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
-        cephThrowIllegalArg(env, "setxattr flag");
-        return -1;
+        case JAVA_XATTR_CREATE:
+            flags = CEPH_XATTR_CREATE;
+            break;
+        case JAVA_XATTR_REPLACE:
+            flags = CEPH_XATTR_REPLACE;
+            break;
+        case JAVA_XATTR_NONE:
+            flags = 0;
+            break;
+        default:
+            env->ReleaseStringUTFChars(j_path, c_path);
+            env->ReleaseStringUTFChars(j_name, c_name);
+            env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
+            cephThrowIllegalArg(env, "setxattr flag");
+            return -1;
     }
 
     ldout(cct, 10) << "jni: setxattr: path " << c_path << " name " << c_name
-        << " len " << j_size << " flags " << flags << dendl;
+                   << " len " << j_size << " flags " << flags << dendl;
 
     ret = ceph_setxattr(cmount, c_path, c_name, c_buf, j_size, flags);
 
@@ -2397,8 +2490,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setxattr
     env->ReleaseStringUTFChars(j_name, c_name);
     env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2409,8 +2503,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1setxattr
  * Signature: (JLjava/lang/String;Ljava/lang/String;[BJI)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lsetxattr
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
-     jbyteArray j_buf, jlong j_size, jint j_flags) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring j_path, jstring j_name,
+ jbyteArray j_buf, jlong j_size, jint j_flags)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_path;
@@ -2450,25 +2545,25 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lsetxattr
     }
 
     switch (j_flags) {
-    case JAVA_XATTR_CREATE:
-        flags = CEPH_XATTR_CREATE;
-        break;
-    case JAVA_XATTR_REPLACE:
-        flags = CEPH_XATTR_REPLACE;
-        break;
-    case JAVA_XATTR_NONE:
-        flags = 0;
-        break;
-    default:
-        env->ReleaseStringUTFChars(j_path, c_path);
-        env->ReleaseStringUTFChars(j_name, c_name);
-        env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
-        cephThrowIllegalArg(env, "lsetxattr flag");
-        return -1;
+        case JAVA_XATTR_CREATE:
+            flags = CEPH_XATTR_CREATE;
+            break;
+        case JAVA_XATTR_REPLACE:
+            flags = CEPH_XATTR_REPLACE;
+            break;
+        case JAVA_XATTR_NONE:
+            flags = 0;
+            break;
+        default:
+            env->ReleaseStringUTFChars(j_path, c_path);
+            env->ReleaseStringUTFChars(j_name, c_name);
+            env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
+            cephThrowIllegalArg(env, "lsetxattr flag");
+            return -1;
     }
 
     ldout(cct, 10) << "jni: lsetxattr: path " << c_path << " name " << c_name
-        << " len " << j_size << " flags " << flags << dendl;
+                   << " len " << j_size << " flags " << flags << dendl;
 
     ret = ceph_lsetxattr(cmount, c_path, c_name, c_buf, j_size, flags);
 
@@ -2478,8 +2573,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lsetxattr
     env->ReleaseStringUTFChars(j_name, c_name);
     env->ReleaseByteArrayElements(j_buf, c_buf, JNI_ABORT);
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2489,13 +2585,12 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1lsetxattr
  * Method:    native_ceph_get_file_stripe_unit
  * Signature: (JI)I
  */
-JNIEXPORT jint JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1stripe_1unit(JNIEnv *
-                                                                     env,
-                                                                     jclass clz,
-                                                                     jlong
-                                                                     j_mntp,
-                                                                     jint j_fd)
+JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1stripe_1unit(JNIEnv *
+        env,
+        jclass clz,
+        jlong
+        j_mntp,
+        jint j_fd)
 {
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
@@ -2509,8 +2604,9 @@ JNIEXPORT jint JNICALL
 
     ldout(cct, 10) << "jni: get_file_stripe_unit: exit ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2520,13 +2616,13 @@ JNIEXPORT jint JNICALL
  * Method:    native_ceph_get_file_replication
  * Signature: (JI)I
  */
-JNIEXPORT jint JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1replication(JNIEnv *
-                                                                    env,
-                                                                    jclass clz,
-                                                                    jlong
-                                                                    j_mntp,
-                                                                    jint j_fd) {
+JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1replication(JNIEnv *
+        env,
+        jclass clz,
+        jlong
+        j_mntp,
+        jint j_fd)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -2539,8 +2635,9 @@ JNIEXPORT jint JNICALL
 
     ldout(cct, 10) << "jni: get_file_replication: exit ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2550,11 +2647,11 @@ JNIEXPORT jint JNICALL
  * Method:    native_ceph_get_file_pool_name
  * Signature: (JI)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1pool_1name(JNIEnv * env,
-                                                                   jclass clz,
-                                                                   jlong j_mntp,
-                                                                   jint j_fd) {
+JNIEXPORT jstring JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1pool_1name(JNIEnv *env,
+        jclass clz,
+        jlong j_mntp,
+        jint j_fd)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jstring pool = NULL;
@@ -2568,14 +2665,16 @@ JNIEXPORT jstring JNICALL
     for (;;) {
         /* get pool name length (len==0) */
         ret = ceph_get_file_pool_name(cmount, (int)j_fd, NULL, 0);
-        if (ret < 0)
+        if (ret < 0) {
             break;
+        }
 
         /* allocate buffer */
-        if (buf)
+        if (buf) {
             delete[]buf;
+        }
         buflen = ret;
-        buf = new(std::nothrow) char[buflen + 1];   /* +1 for '\0' */
+        buf = new (std::nothrow) char[buflen + 1];  /* +1 for '\0' */
         if (!buf) {
             cephThrowOutOfMemory(env, "head allocation failed");
             goto out;
@@ -2583,27 +2682,31 @@ JNIEXPORT jstring JNICALL
         memset(buf, 0, (buflen + 1) * sizeof(*buf));
 
         /* handle zero-length pool name!? */
-        if (buflen == 0)
+        if (buflen == 0) {
             break;
+        }
 
         /* fill buffer */
         ret = ceph_get_file_pool_name(cmount, (int)j_fd, buf, buflen);
-        if (ret == -ERANGE)     /* size changed! */
+        if (ret == -ERANGE) {   /* size changed! */
             continue;
-        else
+        } else {
             break;
+        }
     }
 
     ldout(cct, 10) << "jni: get_file_pool_name: ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
-    else
+    } else {
         pool = env->NewStringUTF(buf);
+    }
 
-  out:
-    if (buf)
+out:
+    if (buf) {
         delete[]buf;
+    }
 
     return pool;
 }
@@ -2614,8 +2717,9 @@ JNIEXPORT jstring JNICALL
  * Signature: (J)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1default_1data_1pool_1name
-    (JNIEnv * env, jclass clz, jlong j_mntp) {
+Java_com_ceph_fs_CephMount_native_1ceph_1get_1default_1data_1pool_1name
+(JNIEnv *env, jclass clz, jlong j_mntp)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jstring pool = NULL;
@@ -2627,10 +2731,11 @@ JNIEXPORT jstring JNICALL
     ldout(cct, 10) << "jni: get_default_data_pool_name" << dendl;
 
     ret = ceph_get_default_data_pool_name(cmount, NULL, 0);
-    if (ret < 0)
+    if (ret < 0) {
         goto out;
+    }
     buflen = ret;
-    buf = new(std::nothrow) char[buflen + 1];   /* +1 for '\0' */
+    buf = new (std::nothrow) char[buflen + 1];  /* +1 for '\0' */
     if (!buf) {
         cephThrowOutOfMemory(env, "head allocation failed");
         goto out;
@@ -2640,14 +2745,16 @@ JNIEXPORT jstring JNICALL
 
     ldout(cct, 10) << "jni: get_default_data_pool_name: ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
-    else
+    } else {
         pool = env->NewStringUTF(buf);
+    }
 
-  out:
-    if (buf)
+out:
+    if (buf) {
         delete[]buf;
+    }
 
     return pool;
 }
@@ -2658,7 +2765,8 @@ JNIEXPORT jstring JNICALL
  * Signature: (JZ)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1localize_1reads
-    (JNIEnv * env, jclass clz, jlong j_mntp, jboolean j_on) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jboolean j_on)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret, val = j_on ? 1 : 0;
@@ -2671,8 +2779,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1localize_1reads
 
     ldout(cct, 10) << "jni: localize_reads: exit ret " << ret << dendl;
 
-    if (ret)
+    if (ret) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2683,8 +2792,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1localize_1reads
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1stripe_1unit_1granularity
-    (JNIEnv * env, jclass clz, jlong j_mntp) {
+Java_com_ceph_fs_CephMount_native_1ceph_1get_1stripe_1unit_1granularity
+(JNIEnv *env, jclass clz, jlong j_mntp)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -2698,8 +2808,9 @@ JNIEXPORT jint JNICALL
     ldout(cct,
           10) << "jni: get_stripe_unit_granularity: exit ret " << ret << dendl;
 
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     return ret;
 }
@@ -2710,7 +2821,8 @@ JNIEXPORT jint JNICALL
  * Signature: (JLjava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1pool_1id
-    (JNIEnv * env, jclass clz, jlong j_mntp, jstring jname) {
+(JNIEnv *env, jclass clz, jlong j_mntp, jstring jname)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     const char *c_name;
@@ -2728,8 +2840,9 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1pool_1id
     ldout(cct, 10) << "jni: get_pool_id: name " << c_name << dendl;
 
     ret = ceph_get_pool_id(cmount, c_name);
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     ldout(cct, 10) << "jni: get_pool_id: ret " << ret << dendl;
 
@@ -2743,14 +2856,14 @@ JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1pool_1id
  * Method:    native_ceph_get_pool_replication
  * Signature: (JI)I
  */
-JNIEXPORT jint JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1pool_1replication(JNIEnv *
-                                                                    env,
-                                                                    jclass clz,
-                                                                    jlong
-                                                                    j_mntp,
-                                                                    jint
-                                                                    jpoolid) {
+JNIEXPORT jint JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1pool_1replication(JNIEnv *
+        env,
+        jclass clz,
+        jlong
+        j_mntp,
+        jint
+        jpoolid)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     int ret;
@@ -2760,8 +2873,9 @@ JNIEXPORT jint JNICALL
     ldout(cct, 10) << "jni: get_pool_replication: poolid " << jpoolid << dendl;
 
     ret = ceph_get_pool_replication(cmount, jpoolid);
-    if (ret < 0)
+    if (ret < 0) {
         handle_error(env, ret);
+    }
 
     ldout(cct, 10) << "jni: get_pool_replication: ret " << ret << dendl;
 
@@ -2773,13 +2887,12 @@ JNIEXPORT jint JNICALL
  * Method:    native_ceph_get_file_extent_osds
  * Signature: (JIJ)Lcom/ceph/fs/CephFileExtent;
  */
-JNIEXPORT jobject JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1extent_1osds(JNIEnv *
-                                                                     env,
-                                                                     jclass clz,
-                                                                     jlong mntp,
-                                                                     jint fd,
-                                                                     jlong off)
+JNIEXPORT jobject JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1file_1extent_1osds(JNIEnv *
+        env,
+        jclass clz,
+        jlong mntp,
+        jint fd,
+        jlong off)
 {
     struct ceph_mount_info *cmount = get_ceph_mount(mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
@@ -2792,26 +2905,29 @@ JNIEXPORT jobject JNICALL
 
     ldout(cct,
           10) << "jni: get_file_extent_osds: fd " << fd << " off " << off <<
-        dendl;
+              dendl;
 
     for (;;) {
         /* get pg size */
         ret = ceph_get_file_extent_osds(cmount, fd, off, NULL, NULL, 0);
-        if (ret < 0)
+        if (ret < 0) {
             break;
+        }
 
         /* alloc osd id array */
-        if (osds)
+        if (osds) {
             delete[]osds;
+        }
         nosds = ret;
         osds = new int[nosds];
 
         /* get osd ids */
         ret = ceph_get_file_extent_osds(cmount, fd, off, &len, osds, nosds);
-        if (ret == -ERANGE)
+        if (ret == -ERANGE) {
             continue;
-        else
+        } else {
             break;
+        }
     }
 
     ldout(cct, 10) << "jni: get_file_extent_osds: ret " << ret << dendl;
@@ -2824,22 +2940,26 @@ JNIEXPORT jobject JNICALL
     nosds = ret;
 
     osd_array = env->NewIntArray(nosds);
-    if (!osd_array)
+    if (!osd_array) {
         goto out;
+    }
 
     env->SetIntArrayRegion(osd_array, 0, nosds, osds);
-    if (env->ExceptionOccurred())
+    if (env->ExceptionOccurred()) {
         goto out;
+    }
 
     extent =
         env->NewObject(cephfileextent_cls, cephfileextent_ctor_fid, off, len,
                        osd_array);
-    if (!extent)
+    if (!extent) {
         goto out;
+    }
 
-  out:
-    if (osds)
+out:
+    if (osds) {
         delete[]osds;
+    }
 
     return extent;
 }
@@ -2849,15 +2969,15 @@ JNIEXPORT jobject JNICALL
  * Method:    native_ceph_get_osd_crush_location
  * Signature: (JI)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1osd_1crush_1location(JNIEnv *
-                                                                       env,
-                                                                       jclass
-                                                                       clz,
-                                                                       jlong
-                                                                       j_mntp,
-                                                                       jint
-                                                                       osdid) {
+JNIEXPORT jobjectArray JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1osd_1crush_1location(JNIEnv *
+        env,
+        jclass
+        clz,
+        jlong
+        j_mntp,
+        jint
+        osdid)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     jobjectArray path = NULL;
@@ -2872,26 +2992,30 @@ JNIEXPORT jobjectArray JNICALL
     for (;;) {
         /* get length of the location path */
         ret = ceph_get_osd_crush_location(cmount, osdid, NULL, 0);
-        if (ret < 0)
+        if (ret < 0) {
             break;
+        }
 
         /* alloc path buffer */
-        if (buf)
+        if (buf) {
             delete[]buf;
+        }
         buflen = ret;
         buf = new char[buflen + 1];
         memset(buf, 0, buflen * sizeof(*buf));
 
         /* empty path */
-        if (buflen == 0)
+        if (buflen == 0) {
             break;
+        }
 
         /* get the path */
         ret = ceph_get_osd_crush_location(cmount, osdid, buf, buflen);
-        if (ret == -ERANGE)
+        if (ret == -ERANGE) {
             continue;
-        else
+        } else {
             break;
+        }
     }
 
     ldout(cct, 10) << "jni: osd loc: osd " << osdid << " ret " << ret << dendl;
@@ -2914,22 +3038,26 @@ JNIEXPORT jobjectArray JNICALL
     path =
         env->NewObjectArray(str_path.size(), env->FindClass("java/lang/String"),
                             NULL);
-    if (!path)
+    if (!path) {
         goto out;
+    }
 
     for (unsigned i = 0; i < str_path.size(); i++) {
         jstring ent = env->NewStringUTF(str_path[i].c_str());
-        if (!ent)
+        if (!ent) {
             goto out;
+        }
         env->SetObjectArrayElement(path, i, ent);
-        if (env->ExceptionOccurred())
+        if (env->ExceptionOccurred()) {
             goto out;
+        }
         env->DeleteLocalRef(ent);
     }
 
-  out:
-    if (buf)
+out:
+    if (buf) {
         delete[]buf;
+    }
 
     return path;
 }
@@ -2954,19 +3082,19 @@ JNIEXPORT jobjectArray JNICALL
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-jobject sockaddrToInetAddress(JNIEnv * env, const sockaddr_storage & ss,
-                              jint * port)
+jobject sockaddrToInetAddress(JNIEnv *env, const sockaddr_storage &ss,
+                              jint *port)
 {
     // Convert IPv4-mapped IPv6 addresses to IPv4 addresses.
     // The RI states "Java will never return an IPv4-mapped address".
-    const sockaddr_in6 & sin6 = reinterpret_cast < const sockaddr_in6 & >(ss);
+    const sockaddr_in6 &sin6 = reinterpret_cast < const sockaddr_in6 & >(ss);
     if (ss.ss_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sin6.sin6_addr)) {
         // Copy the IPv6 address into the temporary sockaddr_storage.
         sockaddr_storage tmp;
         memset(&tmp, 0, sizeof(tmp));
         memcpy(&tmp, &ss, sizeof(sockaddr_in6));
         // Unmap it into an IPv4 address.
-        sockaddr_in & sin = reinterpret_cast < sockaddr_in & >(tmp);
+        sockaddr_in &sin = reinterpret_cast < sockaddr_in & >(tmp);
         sin.sin_family = AF_INET;
         sin.sin_port = sin6.sin6_port;
         memcpy(&sin.sin_addr.s_addr, &sin6.sin6_addr.s6_addr[12], 4);
@@ -2979,25 +3107,22 @@ jobject sockaddrToInetAddress(JNIEnv * env, const sockaddr_storage & ss,
     int sin_port = 0;
     int scope_id = 0;
     if (ss.ss_family == AF_INET) {
-        const sockaddr_in & sin = reinterpret_cast < const sockaddr_in & >(ss);
+        const sockaddr_in &sin = reinterpret_cast < const sockaddr_in & >(ss);
         rawAddress = &sin.sin_addr.s_addr;
         addressLength = 4;
         sin_port = ntohs(sin.sin_port);
-    }
-    else if (ss.ss_family == AF_INET6) {
-        const sockaddr_in6 & sin6 =
+    } else if (ss.ss_family == AF_INET6) {
+        const sockaddr_in6 &sin6 =
             reinterpret_cast < const sockaddr_in6 & >(ss);
         rawAddress = &sin6.sin6_addr.s6_addr;
         addressLength = 16;
         sin_port = ntohs(sin6.sin6_port);
         scope_id = sin6.sin6_scope_id;
-    }
-    else if (ss.ss_family == AF_UNIX) {
-        const sockaddr_un & sun = reinterpret_cast < const sockaddr_un & >(ss);
+    } else if (ss.ss_family == AF_UNIX) {
+        const sockaddr_un &sun = reinterpret_cast < const sockaddr_un & >(ss);
         rawAddress = &sun.sun_path;
         addressLength = strlen(sun.sun_path);
-    }
-    else {
+    } else {
         // We can't throw SocketException. We aren't meant to see bad addresses, so seeing one
         // really does imply an internal error.
         //jniThrowExceptionFmt(env, "java/lang/IllegalArgumentException",
@@ -3016,7 +3141,7 @@ jobject sockaddrToInetAddress(JNIEnv * env, const sockaddr_storage & ss,
     }
     env->SetByteArrayRegion(byteArray.get(), 0, addressLength,
                             reinterpret_cast < jbyte * >(const_cast <
-                                                         void *>(rawAddress)));
+                                    void * >(rawAddress)));
 
     if (ss.ss_family == AF_UNIX) {
         // Note that we get here for AF_UNIX sockets on accept(2). The unix(7) man page claims
@@ -3042,8 +3167,7 @@ jobject sockaddrToInetAddress(JNIEnv * env, const sockaddr_storage & ss,
         return env->CallStaticObjectMethod(JniConstants::inetAddressClass,
                                            getByAddressMethod, NULL,
                                            byteArray.get());
-    }
-    else if (addressLength == 16) {
+    } else if (addressLength == 16) {
         static jmethodID getByAddressMethod =
             env->GetStaticMethodID(JniConstants::inet6AddressClass,
                                    "getByAddress",
@@ -3054,8 +3178,7 @@ jobject sockaddrToInetAddress(JNIEnv * env, const sockaddr_storage & ss,
         return env->CallStaticObjectMethod(JniConstants::inet6AddressClass,
                                            getByAddressMethod, NULL,
                                            byteArray.get(), scope_id);
-    }
-    else {
+    } else {
         abort();
         return NULL;
     }
@@ -3066,11 +3189,11 @@ jobject sockaddrToInetAddress(JNIEnv * env, const sockaddr_storage & ss,
  * Method:    native_ceph_get_osd_addr
  * Signature: (JI)Ljava/net/InetAddress;
  */
-JNIEXPORT jobject JNICALL
-    Java_com_ceph_fs_CephMount_native_1ceph_1get_1osd_1addr(JNIEnv * env,
-                                                            jclass clz,
-                                                            jlong j_mntp,
-                                                            jint osd) {
+JNIEXPORT jobject JNICALL Java_com_ceph_fs_CephMount_native_1ceph_1get_1osd_1addr(JNIEnv *env,
+        jclass clz,
+        jlong j_mntp,
+        jint osd)
+{
     struct ceph_mount_info *cmount = get_ceph_mount(j_mntp);
     CephContext *cct = ceph_get_mount_context(cmount);
     struct sockaddr_storage addr;

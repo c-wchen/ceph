@@ -21,15 +21,15 @@
 #include <errno.h>
 
 StRadosDeleteObjs::StRadosDeleteObjs(int argc, const char **argv,
-                                     CrossProcessSem * setup_sem,
-                                     CrossProcessSem * deleted_sem,
+                                     CrossProcessSem *setup_sem,
+                                     CrossProcessSem *deleted_sem,
                                      int num_objs,
-                                     const std::string & pool_name,
-                                     const std::string & suffix)
-:SysTestRunnable(argc, argv),
-m_setup_sem(setup_sem),
-m_deleted_sem(deleted_sem),
-m_num_objs(num_objs), m_pool_name(pool_name), m_suffix(suffix)
+                                     const std::string &pool_name,
+                                     const std::string &suffix)
+    : SysTestRunnable(argc, argv),
+      m_setup_sem(setup_sem),
+      m_deleted_sem(deleted_sem),
+      m_num_objs(num_objs), m_pool_name(pool_name), m_suffix(suffix)
 {
 }
 
@@ -62,8 +62,9 @@ int StRadosDeleteObjs::run()
     }
 
     rados_ioctx_destroy(io_ctx);
-    if (m_deleted_sem)
+    if (m_deleted_sem) {
         m_deleted_sem->post();
+    }
     rados_shutdown(cl);
     return 0;
 }

@@ -6,16 +6,19 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    namespace journal {
+namespace journal
+{
 
-        struct Policy {
-            virtual ~ Policy() {
-            } virtual bool append_disabled() const = 0;
-            virtual bool journal_disabled() const = 0;
-            virtual void allocate_tag_on_lock(Context * on_finish) = 0;
-        };
+struct Policy {
+    virtual ~ Policy()
+    {
+    } virtual bool append_disabled() const = 0;
+    virtual bool journal_disabled() const = 0;
+    virtual void allocate_tag_on_lock(Context *on_finish) = 0;
+};
 
 } // namespace journal }        // namespace librbd
 #endif                          // CEPH_LIBRBD_JOURNAL_POLICY_H

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <stdlib.h>
@@ -32,22 +32,25 @@ void buf_to_hex(const unsigned char *buf, int len, char *str)
 
 #define ID_SIZE 8
 
-#define ACL_RD	0x1
-#define ACL_WR	0x2
+#define ACL_RD  0x1
+#define ACL_WR  0x2
 
 struct ACLID {
     char id[ID_SIZE + 1];
 
-    void encode(bufferlist & bl) const {
+    void encode(bufferlist &bl) const
+    {
         bl.append((const char *)id, ID_SIZE);
-    } void decode(bufferlist::const_iterator & iter) {
+    } void decode(bufferlist::const_iterator &iter)
+    {
         iter.copy(ID_SIZE, (char *)id);
-}};
+    }
+};
 WRITE_CLASS_ENCODER(ACLID)
 
 typedef __u32 ACLFlags;
 
-inline bool operator<(const ACLID & l, const ACLID & r)
+inline bool operator<(const ACLID &l, const ACLID &r)
 {
     return (memcmp(&l, &r, ID_SIZE) < 0);
 }
@@ -57,44 +60,50 @@ struct ACLPair {
     ACLFlags flags;
 };
 
-class ObjectACLs {
+class ObjectACLs
+{
     map < ACLID, ACLFlags > acls_map;
 
-  public:
+public:
 
-    void encode(bufferlist & bl) const {
+    void encode(bufferlist &bl) const
+    {
         using ceph::encode;
-         encode(acls_map, bl);
-    } void decode(bufferlist::const_iterator & bl) {
+        encode(acls_map, bl);
+    } void decode(bufferlist::const_iterator &bl)
+    {
         using ceph::decode;
-         decode(acls_map, bl);
-    } int read_acl(ACLID & id, ACLFlags * flags);
-    void set_acl(ACLID & id, ACLFlags flags);
+        decode(acls_map, bl);
+    } int read_acl(ACLID &id, ACLFlags *flags);
+    void set_acl(ACLID &id, ACLFlags flags);
 };
 
 WRITE_CLASS_ENCODER(ObjectACLs)
 
-int ObjectACLs::read_acl(ACLID & id, ACLFlags * flags)
+int ObjectACLs::read_acl(ACLID &id, ACLFlags *flags)
 {
-    if (!flags)
+    if (!flags) {
         return -EINVAL;
+    }
 
     map < ACLID, ACLFlags >::iterator iter = acls_map.find(id);
 
-    if (iter == acls_map.end())
+    if (iter == acls_map.end()) {
         return -ENOENT;
+    }
 
     *flags = iter->second;
 
     return 0;
 }
 
-void ObjectACLs::set_acl(ACLID & id, ACLFlags flags)
+void ObjectACLs::set_acl(ACLID &id, ACLFlags flags)
 {
     acls_map[id] = flags;
 }
 
-class ACLEntity {
+class ACLEntity
+{
     string name;
     map < ACLID, ACLEntity > groups;
 };
@@ -104,7 +113,7 @@ typedef map < ACLID, ACLEntity > tACLIDEntityMap;
 static map < ACLID, ACLEntity > users;
 static map < ACLID, ACLEntity > groups;
 
-void get_user(ACLID & aclid, ACLEntity * entity)
+void get_user(ACLID &aclid, ACLEntity *entity)
 {
     //users.find(aclid);
 }
@@ -138,7 +147,7 @@ int main(int argc, const char **argv)
     IoCtx io_ctx;
     int r = rados.ioctx_create("data", io_ctx);
     cout << "open io_ctx result = " << r << " pool = " << io_ctx.
-        get_pool_name() << std::endl;
+         get_pool_name() << std::endl;
 
     ACLID id;
 
@@ -147,7 +156,7 @@ int main(int argc, const char **argv)
 
     r = io_ctx.exec(oid, "acl", "get", bl, bl2);
     cout << "exec(acl get) returned " << r
-        << " len=" << bl2.length() << std::endl;
+         << " len=" << bl2.length() << std::endl;
     ObjectACLs oa;
     if (r >= 0) {
         auto iter = bl2.cbegin();
@@ -159,7 +168,7 @@ int main(int argc, const char **argv)
     oa.encode(bl);
     r = io_ctx.exec(oid, "acl", "set", bl, bl2);
     cout << "exec(acl set) returned " << r
-        << " len=" << bl2.length() << std::endl;
+         << " len=" << bl2.length() << std::endl;
 
     const unsigned char *md5 = (const unsigned char *)bl2.c_str();
     char md5_str[bl2.length() * 2 + 1];

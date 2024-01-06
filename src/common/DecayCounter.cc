@@ -17,7 +17,7 @@
 
 #include "include/encoding.h"
 
-void DecayCounter::encode(ceph::buffer::list & bl) const const
+void DecayCounter::encode(ceph::buffer::list &bl) const const
 {
     decay();
     ENCODE_START(5, 4, bl);
@@ -25,7 +25,7 @@ void DecayCounter::encode(ceph::buffer::list & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void DecayCounter::decode(ceph::buffer::list::const_iterator & p)
+void DecayCounter::decode(ceph::buffer::list::const_iterator &p)
 {
     DECODE_START_LEGACY_COMPAT_LEN(5, 4, 4, p);
     if (struct_v < 2) {
@@ -47,14 +47,14 @@ void DecayCounter::decode(ceph::buffer::list::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-void DecayCounter::dump(ceph::Formatter * f) const const
+void DecayCounter::dump(ceph::Formatter *f) const const
 {
     decay();
     f->dump_float("value", val);
     f->dump_float("halflife", rate.get_halflife());
 }
 
-void DecayCounter::generate_test_instances(std::list < DecayCounter * >&ls)
+void DecayCounter::generate_test_instances(std::list < DecayCounter * > &ls)
 {
     DecayCounter *counter = new DecayCounter();
     counter->val = 3.0;

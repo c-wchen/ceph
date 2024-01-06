@@ -31,14 +31,17 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-static rgw::sal::Driver * driver = NULL;
+static rgw::sal::Driver *driver = NULL;
 
-class StoreDestructor {
-    rgw::sal::Driver * driver;
+class StoreDestructor
+{
+    rgw::sal::Driver *driver;
 
-  public:
-    explicit StoreDestructor(rgw::sal::Driver * _s):driver(_s) {
-    } ~StoreDestructor() {
+public:
+    explicit StoreDestructor(rgw::sal::Driver *_s): driver(_s)
+    {
+    } ~StoreDestructor()
+    {
         if (driver) {
             DriverManager::close_storage(driver);
         }

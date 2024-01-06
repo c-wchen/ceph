@@ -46,16 +46,18 @@ struct otp_header {
     set < string > ids;
 
     otp_header()
-{
-} void encode(bufferlist & bl) const {
-    ENCODE_START(1, 1, bl);
-    encode(ids, bl);
-    ENCODE_FINISH(bl);
-} void decode(bufferlist::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(ids, bl);
-    DECODE_FINISH(bl);
-}
+    {
+    } void encode(bufferlist &bl) const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(ids, bl);
+        ENCODE_FINISH(bl);
+    } void decode(bufferlist::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(ids, bl);
+        DECODE_FINISH(bl);
+    }
 };
 
 WRITE_CLASS_ENCODER(otp_header)
@@ -65,34 +67,36 @@ struct otp_instance {
 
     list < otp_check_t > last_checks;
     uint64_t last_success {
-    0};                         /* otp counter/step of last successful check */
+        0};                         /* otp counter/step of last successful check */
 
     otp_instance()
-{
-} void encode(bufferlist & bl) const {
-    ENCODE_START(1, 1, bl);
-    encode(otp, bl);
-    encode(last_checks, bl);
-    encode(last_success, bl);
-    ENCODE_FINISH(bl);
-} void decode(bufferlist::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(otp, bl);
-    decode(last_checks, bl);
-    decode(last_success, bl);
-    DECODE_FINISH(bl);
-}
+    {
+    } void encode(bufferlist &bl) const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(otp, bl);
+        encode(last_checks, bl);
+        encode(last_success, bl);
+        ENCODE_FINISH(bl);
+    } void decode(bufferlist::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(otp, bl);
+        decode(last_checks, bl);
+        decode(last_success, bl);
+        DECODE_FINISH(bl);
+    }
 
-void trim_expired(const ceph::real_time & now);
-void check(const string & token, const string & val, bool * update);
-bool verify(const ceph::real_time & timestamp, const string & val);
+    void trim_expired(const ceph::real_time &now);
+    void check(const string &token, const string &val, bool *update);
+    bool verify(const ceph::real_time &timestamp, const string &val);
 
-void find(const string & token, otp_check_t * result);
+    void find(const string &token, otp_check_t *result);
 };
 
 WRITE_CLASS_ENCODER(otp_instance)
 
-void otp_instance::trim_expired(const ceph::real_time & now)
+void otp_instance::trim_expired(const ceph::real_time &now)
 {
     ceph::real_time window_start = now - std::chrono::seconds(otp.step_size);
 
@@ -101,8 +105,8 @@ void otp_instance::trim_expired(const ceph::real_time & now)
     }
 }
 
-void otp_instance::check(const string & token, const string & val,
-                         bool * update)
+void otp_instance::check(const string &token, const string &val,
+                         bool *update)
 {
     ceph::real_time now = ceph::real_clock::now();
     trim_expired(now);
@@ -123,14 +127,14 @@ void otp_instance::check(const string & token, const string & val,
     *update = true;
 }
 
-bool otp_instance::verify(const ceph::real_time & timestamp, const string & val)
+bool otp_instance::verify(const ceph::real_time &timestamp, const string &val)
 {
     uint64_t index;
     uint32_t secs = (uint32_t) ceph::real_clock::to_time_t(timestamp);
     int result =
         oath_totp_validate2(otp.seed_bin.c_str(), otp.seed_bin.length(),
                             secs, otp.step_size, otp.time_ofs, otp.window,
-                            nullptr /* otp pos */ ,
+                            nullptr /* otp pos */,
                             val.c_str());
     if (result == OATH_INVALID_OTP || result < 0) {
         CLS_LOG(20, "otp check failed, result=%d", result);
@@ -150,12 +154,12 @@ bool otp_instance::verify(const ceph::real_time & timestamp, const string & val)
     return true;
 }
 
-void otp_instance::find(const string & token, otp_check_t * result)
+void otp_instance::find(const string &token, otp_check_t *result)
 {
     auto now = real_clock::now();
     trim_expired(now);
 
-  for (auto & entry:boost::adaptors::reverse(last_checks)) {
+    for (auto &entry : boost::adaptors::reverse(last_checks)) {
         if (entry.token == token) {
             *result = entry;
             return;
@@ -166,8 +170,8 @@ void otp_instance::find(const string & token, otp_check_t * result)
     result->timestamp = now;
 }
 
-static int get_otp_instance(cls_method_context_t hctx, const string & id,
-                            otp_instance * instance)
+static int get_otp_instance(cls_method_context_t hctx, const string &id,
+                            otp_instance *instance)
 {
     bufferlist bl;
     string key = otp_key_prefix + id;
@@ -183,8 +187,7 @@ static int get_otp_instance(cls_method_context_t hctx, const string & id,
     try {
         auto it = bl.cbegin();
         decode(*instance, it);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: failed to decode %s", key.c_str());
         return -EIO;
     }
@@ -193,7 +196,7 @@ static int get_otp_instance(cls_method_context_t hctx, const string & id,
 }
 
 static int write_otp_instance(cls_method_context_t hctx,
-                              const otp_instance & instance)
+                              const otp_instance &instance)
 {
     string key = otp_key_prefix + instance.otp.id;
 
@@ -210,7 +213,7 @@ static int write_otp_instance(cls_method_context_t hctx,
     return 0;
 }
 
-static int remove_otp_instance(cls_method_context_t hctx, const string & id)
+static int remove_otp_instance(cls_method_context_t hctx, const string &id)
 {
     string key = otp_key_prefix + id;
 
@@ -224,7 +227,7 @@ static int remove_otp_instance(cls_method_context_t hctx, const string & id)
     return 0;
 }
 
-static int read_header(cls_method_context_t hctx, otp_header * h)
+static int read_header(cls_method_context_t hctx, otp_header *h)
 {
     bufferlist bl;
     encode(h, bl);
@@ -246,8 +249,7 @@ static int read_header(cls_method_context_t hctx, otp_header * h)
     auto iter = bl.cbegin();
     try {
         decode(*h, iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_ERR("failed to decode otp_header");
         return -EIO;
     }
@@ -255,7 +257,7 @@ static int read_header(cls_method_context_t hctx, otp_header * h)
     return 0;
 }
 
-static int write_header(cls_method_context_t hctx, const otp_header & h)
+static int write_header(cls_method_context_t hctx, const otp_header &h)
 {
     bufferlist bl;
     encode(h, bl);
@@ -269,8 +271,8 @@ static int write_header(cls_method_context_t hctx, const otp_header & h)
     return 0;
 }
 
-static int parse_seed(const string & seed, SeedType seed_type,
-                      bufferlist * seed_bin)
+static int parse_seed(const string &seed, SeedType seed_type,
+                      bufferlist *seed_bin)
 {
     size_t slen = seed.length();
     char secret[seed.length()];
@@ -281,13 +283,13 @@ static int parse_seed(const string & seed, SeedType seed_type,
     seed_bin->clear();
 
     switch (seed_type) {
-    case OTP_SEED_BASE32:
-        need_free = true;       /* oath_base32_decode allocates dest buffer */
-        result = oath_base32_decode(seed.c_str(), seed.length(),
-                                    &psecret, &slen);
-        break;
-    default:                   /* just assume hex is the default */
-        result = oath_hex2bin(seed.c_str(), psecret, &slen);
+        case OTP_SEED_BASE32:
+            need_free = true;       /* oath_base32_decode allocates dest buffer */
+            result = oath_base32_decode(seed.c_str(), seed.length(),
+                                        &psecret, &slen);
+            break;
+        default:                   /* just assume hex is the default */
+            result = oath_hex2bin(seed.c_str(), psecret, &slen);
     }
     if (result != OATH_OK) {
         CLS_LOG(20, "failed to parse seed");
@@ -304,14 +306,14 @@ static int parse_seed(const string & seed, SeedType seed_type,
 }
 
 static int otp_set_op(cls_method_context_t hctx,
-                      bufferlist * in, bufferlist * out)
+                      bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "%s", __func__);
     cls_otp_set_otp_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: %s(): failed to decode request", __func__);
         return -EINVAL;
     }
@@ -322,7 +324,7 @@ static int otp_set_op(cls_method_context_t hctx,
         return r;
     }
 
-  for (auto entry:op.entries) {
+    for (auto entry : op.entries) {
         otp_instance instance;
         r = get_otp_instance(hctx, entry.id, &instance);
         if (r < 0 && r != -ENOENT) {
@@ -353,14 +355,14 @@ static int otp_set_op(cls_method_context_t hctx,
 }
 
 static int otp_remove_op(cls_method_context_t hctx,
-                         bufferlist * in, bufferlist * out)
+                         bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "%s", __func__);
     cls_otp_remove_otp_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: %s(): failed to decode request", __func__);
         return -EINVAL;
     }
@@ -372,7 +374,7 @@ static int otp_remove_op(cls_method_context_t hctx,
         return r;
     }
 
-  for (auto id:op.ids) {
+    for (auto id : op.ids) {
         bool existed = (h.ids.find(id) != h.ids.end());
         removed_existing = (removed_existing || existed);
 
@@ -399,14 +401,14 @@ static int otp_remove_op(cls_method_context_t hctx,
 }
 
 static int otp_get_op(cls_method_context_t hctx,
-                      bufferlist * in, bufferlist * out)
+                      bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "%s", __func__);
     cls_otp_get_otp_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: %s(): failed to decode request", __func__);
         return -EINVAL;
     }
@@ -423,12 +425,12 @@ static int otp_get_op(cls_method_context_t hctx,
 
     if (op.get_all) {
         op.ids.clear();
-      for (auto id:h.ids) {
+        for (auto id : h.ids) {
             op.ids.push_back(id);
         }
     }
 
-  for (auto id:op.ids) {
+    for (auto id : op.ids) {
         bool exists = (h.ids.find(id) != h.ids.end());
 
         if (!exists) {
@@ -450,14 +452,14 @@ static int otp_get_op(cls_method_context_t hctx,
 }
 
 static int otp_check_op(cls_method_context_t hctx,
-                        bufferlist * in, bufferlist * out)
+                        bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "%s", __func__);
     cls_otp_check_otp_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: %s(): failed to decode request", __func__);
         return -EINVAL;
     }
@@ -473,7 +475,7 @@ static int otp_check_op(cls_method_context_t hctx,
     }
 
     bool update {
-    false};
+        false};
     instance.check(op.token, op.val, &update);
 
     if (update) {
@@ -487,14 +489,14 @@ static int otp_check_op(cls_method_context_t hctx,
 }
 
 static int otp_get_result(cls_method_context_t hctx,
-                          bufferlist * in, bufferlist * out)
+                          bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "%s", __func__);
     cls_otp_check_otp_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: %s(): failed to decode request", __func__);
         return -EINVAL;
     }
@@ -517,14 +519,14 @@ static int otp_get_result(cls_method_context_t hctx,
 }
 
 static int otp_get_current_time_op(cls_method_context_t hctx,
-                                   bufferlist * in, bufferlist * out)
+                                   bufferlist *in, bufferlist *out)
 {
     CLS_LOG(20, "%s", __func__);
     cls_otp_get_current_time_op op;
     try {
         auto iter = in->cbegin();
         decode(op, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_ERR("ERROR: %s(): failed to decode request", __func__);
         return -EINVAL;
     }

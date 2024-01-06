@@ -36,7 +36,7 @@
 
 #include "include/int_types.h"
 
-#define MAX_ITER	8
+#define MAX_ITER    8
 
 unsigned long crc32_table_iscsi_base[256] = {
     0x00000000, 0xF26B8303, 0xE13B70F7, 0x1350F3F4,
@@ -124,8 +124,7 @@ uint32_t ceph_crc32c_intel_baseline(uint32_t crc_init2,
                 (crc >> 8) ^ crc32_table_iscsi_base[(crc & 0x000000FF) ^
                                                     *p_buf++];
         }
-    }
-    else {
+    } else {
         crc = crc_init;
         while (len--) {
             crc = (crc >> 8) ^ crc32_table_iscsi_base[(crc & 0x000000FF)];

@@ -32,7 +32,7 @@
 
 using namespace std;
 
-static inline void frame_metadata_key(req_state * s, string & out)
+static inline void frame_metadata_key(req_state *s, string &out)
 {
     bool exists;
     string key = s->info.args.get("key", &exists);
@@ -40,8 +40,7 @@ static inline void frame_metadata_key(req_state * s, string & out)
     string section;
     if (!s->init_state.url_bucket.empty()) {
         section = s->init_state.url_bucket;
-    }
-    else {
+    } else {
         section = key;
         key.clear();
     }
@@ -67,7 +66,7 @@ void RGWOp_Metadata_Get::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(s,
                   5) << "ERROR: can't get key: " << cpp_strerror(op_ret) <<
-            dendl;
+                     dendl;
         return;
     }
 
@@ -88,8 +87,8 @@ void RGWOp_Metadata_List::execute(optional_yield y)
 {
     string marker;
     ldpp_dout(this, 16) << __func__
-        << " raw marker " << s->info.args.get("marker")
-        << dendl;
+                        << " raw marker " << s->info.args.get("marker")
+                        << dendl;
 
     try {
         marker = s->info.args.get("marker");
@@ -97,8 +96,7 @@ void RGWOp_Metadata_List::execute(optional_yield y)
             marker = rgw::from_base64(marker);
         }
         ldpp_dout(this, 16) << __func__ << " marker " << marker << dendl;
-    }
-    catch( ...) {
+    } catch (...) {
         marker = std::string("");
     }
 
@@ -117,7 +115,7 @@ void RGWOp_Metadata_List::execute(optional_yield y)
         if (!err.empty()) {
             ldpp_dout(this,
                       5) << "Error parsing max-entries " << max_entries_str <<
-                dendl;
+                         dendl;
             op_ret = -EINVAL;
             return;
         }
@@ -140,7 +138,7 @@ void RGWOp_Metadata_List::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   5) << "ERROR: can't get key: " << cpp_strerror(op_ret) <<
-            dendl;
+                     dendl;
         return;
     }
 
@@ -162,7 +160,7 @@ void RGWOp_Metadata_List::execute(optional_yield y)
         if (op_ret < 0) {
             ldpp_dout(this,
                       5) << "ERROR: lists_keys_next(): " << cpp_strerror(op_ret)
-                << dendl;
+                         << dendl;
             return;
         }
 
@@ -190,14 +188,15 @@ void RGWOp_Metadata_List::execute(optional_yield y)
     op_ret = 0;
 }
 
-int RGWOp_Metadata_Put::get_data(bufferlist & bl)
+int RGWOp_Metadata_Put::get_data(bufferlist &bl)
 {
     size_t cl = 0;
     char *data;
     int read_len;
 
-    if (s->length)
+    if (s->length) {
         cl = atoll(s->length);
+    }
     if (cl) {
         data = (char *)malloc(cl + 1);
         if (!data) {
@@ -212,8 +211,7 @@ int RGWOp_Metadata_Put::get_data(bufferlist & bl)
             return read_len;
         }
         bl.append(data, read_len);
-    }
-    else {
+    } else {
         int chunk_size = CEPH_PAGE_SIZE;
         const char *enc = s->info.env->get("HTTP_TRANSFER_ENCODING");
         if (!enc || strcmp(enc, "chunked")) {
@@ -237,17 +235,18 @@ int RGWOp_Metadata_Put::get_data(bufferlist & bl)
     return 0;
 }
 
-static bool string_to_sync_type(const string & sync_string,
-                                RGWMDLogSyncType & type)
+static bool string_to_sync_type(const string &sync_string,
+                                RGWMDLogSyncType &type)
 {
-    if (sync_string.compare("update-by-version") == 0)
+    if (sync_string.compare("update-by-version") == 0) {
         type = APPLY_UPDATES;
-    else if (sync_string.compare("update-by-timestamp") == 0)
+    } else if (sync_string.compare("update-by-timestamp") == 0) {
         type = APPLY_NEWER;
-    else if (sync_string.compare("always") == 0)
+    } else if (sync_string.compare("always") == 0) {
         type = APPLY_ALWAYS;
-    else
+    } else {
         return false;
+    }
     return true;
 }
 
@@ -284,27 +283,29 @@ void RGWOp_Metadata_Put::execute(optional_yield y)
     op_ret =
         static_cast <
         rgw::sal::RadosStore * >(driver)->ctl()->meta.mgr->put(metadata_key, bl,
-                                                               s->yield, s,
-                                                               sync_type, false,
-                                                               &ondisk_version);
+            s->yield, s,
+            sync_type, false,
+            &ondisk_version);
     if (op_ret < 0) {
         ldpp_dout(s,
                   5) << "ERROR: can't put key: " << cpp_strerror(op_ret) <<
-            dendl;
+                     dendl;
         return;
     }
     // translate internal codes into return header
-    if (op_ret == STATUS_NO_APPLY)
+    if (op_ret == STATUS_NO_APPLY) {
         update_status = "skipped";
-    else if (op_ret == STATUS_APPLIED)
+    } else if (op_ret == STATUS_APPLIED) {
         update_status = "applied";
+    }
 }
 
 void RGWOp_Metadata_Put::send_response()
 {
     int op_return_code = op_ret;
-    if ((op_ret == STATUS_NO_APPLY) || (op_ret == STATUS_APPLIED))
+    if ((op_ret == STATUS_NO_APPLY) || (op_ret == STATUS_APPLIED)) {
         op_return_code = STATUS_NO_CONTENT;
+    }
     set_req_state_err(s, op_return_code);
     dump_errno(s);
     stringstream ver_stream;
@@ -322,11 +323,11 @@ void RGWOp_Metadata_Delete::execute(optional_yield y)
     op_ret =
         static_cast <
         rgw::sal::RadosStore * >(driver)->ctl()->meta.mgr->remove(metadata_key,
-                                                                  s->yield, s);
+            s->yield, s);
     if (op_ret < 0) {
         ldpp_dout(s,
                   5) << "ERROR: can't remove key: " << cpp_strerror(op_ret) <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = 0;
@@ -334,12 +335,14 @@ void RGWOp_Metadata_Delete::execute(optional_yield y)
 
 RGWOp *RGWHandler_Metadata::op_get()
 {
-    if (s->info.args.exists("myself"))
+    if (s->info.args.exists("myself")) {
         return new RGWOp_Metadata_Get_Myself;
-    if (s->info.args.exists("key"))
+    }
+    if (s->info.args.exists("key")) {
         return new RGWOp_Metadata_Get;
-    else
+    } else {
         return new RGWOp_Metadata_List;
+    }
 }
 
 RGWOp *RGWHandler_Metadata::op_put()

@@ -56,14 +56,14 @@ void run_fallocate_test_case(int mode, int result, bool with_admin = false)
     ASSERT_EQ(0, ceph_fallocate(_cmount, fd, flags, 1024, 40960));
     ASSERT_EQ(ceph_statx(_cmount, filename, &stx, CEPH_STATX_MODE, 0), 0);
     std::cout << "After ceph_fallocate, mode: 0" << oct << mode << " -> 0"
-        << (stx.stx_mode & 07777) << dec << std::endl;
+              << (stx.stx_mode & 07777) << dec << std::endl;
     ASSERT_EQ(stx.stx_mode & (S_ISUID | S_ISGID), result);
     ceph_close(_cmount, fd);
 }
 
 rados_t cluster;
 
-int do_mon_command(string s, string * key)
+int do_mon_command(string s, string *key)
 {
     char *outs, *outbuf;
     size_t outs_len, outbuf_len;
@@ -83,8 +83,7 @@ int do_mon_command(string s, string * key)
         *key = k.get_str();
         std::cout << "key: " << *key << std::endl;
         free(outbuf);
-    }
-    else {
+    } else {
         return -CEPHFS_EINVAL;
     }
     if (outs_len) {
@@ -110,13 +109,13 @@ void run_write_test_case(int mode, int result, bool with_admin = false)
     ASSERT_EQ(ceph_write(_cmount, fd, "foo", 3, 0), 3);
     ASSERT_EQ(ceph_statx(_cmount, filename, &stx, CEPH_STATX_MODE, 0), 0);
     std::cout << "After ceph_write, mode: 0" << oct << mode << " -> 0"
-        << (stx.stx_mode & 07777) << dec << std::endl;
+              << (stx.stx_mode & 07777) << dec << std::endl;
     ASSERT_EQ(stx.stx_mode & (S_ISUID | S_ISGID), result);
     ceph_close(_cmount, fd);
 }
 
 void run_truncate_test_case(int mode, int result, size_t size, bool with_admin =
-                            false)
+                                false)
 {
     struct ceph_statx stx;
 
@@ -131,7 +130,7 @@ void run_truncate_test_case(int mode, int result, size_t size, bool with_admin =
     ASSERT_GE(ceph_ftruncate(_cmount, fd, size), 0);
     ASSERT_EQ(ceph_statx(_cmount, filename, &stx, CEPH_STATX_MODE, 0), 0);
     std::cout << "After ceph_truncate size " << size << " mode: 0" << oct
-        << mode << " -> 0" << (stx.stx_mode & 07777) << dec << std::endl;
+              << mode << " -> 0" << (stx.stx_mode & 07777) << dec << std::endl;
     ASSERT_EQ(stx.stx_mode & (S_ISUID | S_ISGID), result);
     ceph_close(_cmount, fd);
 }
@@ -305,16 +304,18 @@ static int update_root_mode()
 {
     struct ceph_mount_info *admin;
     int r = ceph_create(&admin, NULL);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     ceph_conf_read_file(admin, NULL);
     ceph_conf_parse_env(admin, NULL);
     ceph_conf_set(admin, "client_permissions", "false");
     r = ceph_mount(admin, "/");
-    if (r < 0)
+    if (r < 0) {
         goto out;
+    }
     r = ceph_chmod(admin, "/", 0777);
-  out:
+out:
     ceph_shutdown(admin);
     return r;
 }
@@ -322,25 +323,29 @@ static int update_root_mode()
 int main(int argc, char **argv)
 {
     int r = update_root_mode();
-    if (r < 0)
+    if (r < 0) {
         exit(1);
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
 
     srand(getpid());
 
     r = rados_create(&cluster, NULL);
-    if (r < 0)
+    if (r < 0) {
         exit(1);
+    }
 
     r = rados_conf_read_file(cluster, NULL);
-    if (r < 0)
+    if (r < 0) {
         exit(1);
+    }
 
     rados_conf_parse_env(cluster, NULL);
     r = rados_connect(cluster);
-    if (r < 0)
+    if (r < 0) {
         exit(1);
+    }
 
     r = RUN_ALL_TESTS();
 

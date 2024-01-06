@@ -18,19 +18,23 @@ using namespace std;
 
 typedef boost::mt11213b gen_type;
 
-class AllocTest:public::testing::TestWithParam < const char *> {
+class AllocTest: public::testing::TestWithParam < const char *>
+{
 
-  public:
+public:
     boost::scoped_ptr < Allocator > alloc;
-    AllocTest():alloc(0) {
-    } void init_alloc(int64_t size, uint64_t min_alloc_size) {
+    AllocTest(): alloc(0)
+    {
+    } void init_alloc(int64_t size, uint64_t min_alloc_size)
+    {
         std::cout << "Creating alloc type " << string(GetParam()) << " \n";
         alloc.reset(Allocator::create(g_ceph_context, GetParam(), size,
                                       min_alloc_size,
                                       256 * 1048576, 100 * 256 * 1048576ull));
     }
 
-    void init_close() {
+    void init_close()
+    {
         alloc.reset(0);
     }
 };
@@ -135,7 +139,7 @@ TEST_P(AllocTest, test_alloc_min_max_alloc)
                   alloc->allocate(4 * (uint64_t) block_size,
                                   (uint64_t) block_size, block_size,
                                   (int64_t) 0, &extents));
-      for (auto e:extents) {
+        for (auto e : extents) {
             EXPECT_EQ(e.length, block_size);
         }
         EXPECT_EQ(4u, extents.size());
@@ -154,7 +158,7 @@ TEST_P(AllocTest, test_alloc_min_max_alloc)
                                   (uint64_t) block_size, 2 * block_size,
                                   (int64_t) 0, &extents));
         EXPECT_EQ(2u, extents.size());
-      for (auto & e:extents) {
+        for (auto &e : extents) {
             EXPECT_EQ(e.length, block_size * 2);
         }
     }
@@ -170,7 +174,7 @@ TEST_P(AllocTest, test_alloc_min_max_alloc)
                   alloc->allocate(1024 * (uint64_t) block_size,
                                   (uint64_t) block_size * 4,
                                   block_size * 4, (int64_t) 0, &extents));
-      for (auto & e:extents) {
+        for (auto &e : extents) {
             EXPECT_EQ(e.length, block_size * 4);
         }
         EXPECT_EQ(1024u / 4, extents.size());
@@ -189,7 +193,7 @@ TEST_P(AllocTest, test_alloc_min_max_alloc)
                                   (int64_t) 0, &extents));
 
         EXPECT_EQ(extents.size(), 8u);
-      for (auto & e:extents) {
+        for (auto &e : extents) {
             EXPECT_EQ(e.length, 2 * block_size);
         }
     }
@@ -275,7 +279,7 @@ TEST_P(AllocTest, test_alloc_fragmentation)
 
     for (size_t i = 0; i < capacity / alloc_unit; ++i) {
         tmp.clear();
-        EXPECT_EQ(static_cast < int64_t > (want_size),
+        EXPECT_EQ(static_cast < int64_t >(want_size),
                   alloc->allocate(want_size, alloc_unit, 0, 0, &tmp));
         allocated.insert(allocated.end(), tmp.begin(), tmp.end());
 
@@ -291,8 +295,7 @@ TEST_P(AllocTest, test_alloc_fragmentation)
     if (GetParam() == string("avl")) {
         // AVL allocator uses a different allocating strategy
         GTEST_SKIP() << "skipping for AVL allocator";
-    }
-    else if (GetParam() == string("hybrid")) {
+    } else if (GetParam() == string("hybrid")) {
         // AVL allocator uses a different allocating strategy
         GTEST_SKIP() << "skipping for Hybrid allocator";
     }
@@ -313,8 +316,7 @@ TEST_P(AllocTest, test_alloc_fragmentation)
     if (bitmap_alloc) {
         // fragmentation = one l1 slot is free + one l1 slot is partial
         EXPECT_EQ(50U, uint64_t(alloc->get_fragmentation() * 100));
-    }
-    else {
+    } else {
         // fragmentation approx = 257 intervals / 768 max intervals
         EXPECT_EQ(33u, uint64_t(alloc->get_fragmentation() * 100));
     }
@@ -325,15 +327,14 @@ TEST_P(AllocTest, test_alloc_fragmentation)
         release_set.insert(allocated[i].offset, allocated[i].length);
         alloc->release(release_set);
     }
-    // doing some rounding trick as stupid allocator doesn't merge all the 
+    // doing some rounding trick as stupid allocator doesn't merge all the
     // extents that causes some minor fragmentation (minor bug or by-design behavior?).
-    // Hence leaving just two 
+    // Hence leaving just two
     // digits after decimal point due to this.
     EXPECT_EQ(0u, uint64_t(alloc->get_fragmentation() * 100));
     if (bitmap_alloc) {
         EXPECT_EQ(0u, uint64_t(alloc->get_fragmentation_score() * 100));
-    }
-    else {
+    } else {
         EXPECT_EQ(11u, uint64_t(alloc->get_fragmentation_score() * 100));
     }
 }
@@ -367,14 +368,14 @@ TEST_P(AllocTest, test_dump_fragmentation_score)
                 tmp.clear();
                 int64_t r = alloc->allocate(want_size, alloc_unit, 0, 0, &tmp);
                 if (r > 0) {
-                  for (auto & t:tmp) {
-                        if (t.length > 0)
+                    for (auto &t : tmp) {
+                        if (t.length > 0) {
                             allocated.push_back(t);
+                        }
                     }
                     allocated_cnt += r;
                 }
-            }
-            else {
+            } else {
                 //free
                 ceph_assert(allocated.size() > 0);
                 size_t item = rng() % allocated.size();
@@ -390,7 +391,7 @@ TEST_P(AllocTest, test_dump_fragmentation_score)
         }
 
         size_t free_sum = 0;
-        auto iterated_allocation =[&](size_t off, size_t len) {
+        auto iterated_allocation = [&](size_t off, size_t len) {
             ceph_assert(len > 0);
             free_sum += len;
         };
@@ -408,8 +409,9 @@ TEST_P(AllocTest, test_dump_fragmentation_score)
 
 TEST_P(AllocTest, test_alloc_bug_24598)
 {
-    if (string(GetParam()) != "bitmap")
+    if (string(GetParam()) != "bitmap") {
         return;
+    }
 
     uint64_t capacity = 0x2625a0000ull;
     uint64_t alloc_unit = 0x4000;
@@ -430,7 +432,7 @@ TEST_P(AllocTest, test_alloc_bug_24598)
     alloc->init_add_free(0x4900000, 0x100000);
     alloc->init_add_free(0x4b00000, 0x200000);
 
-    EXPECT_EQ(static_cast < int64_t > (want_size),
+    EXPECT_EQ(static_cast < int64_t >(want_size),
               alloc->allocate(want_size, 0x100000, 0, 0, &tmp));
     EXPECT_EQ(1u, tmp.size());
     EXPECT_EQ(0x4b00000u, tmp[0].offset);
@@ -560,5 +562,5 @@ TEST_P(AllocTest, test_alloc_50656_first_fit)
 }
 
 INSTANTIATE_TEST_SUITE_P(Allocator,
-                         AllocTest,::testing::Values("stupid", "bitmap", "avl",
-                                                     "hybrid"));
+                         AllocTest, ::testing::Values("stupid", "bitmap", "avl",
+                                 "hybrid"));

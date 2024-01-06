@@ -68,24 +68,28 @@ struct cmd_tattler {
     static thread_local bool moved;
     static thread_local bool destructed;
 
-    static void reset() {
+    static void reset()
+    {
         copied = false;
         moved = false;
         destructed = false;
     } cmd_tattler() noexcept = default;
-    ~cmd_tattler()noexcept {
+    ~cmd_tattler()noexcept
+    {
         if (destructed) {
             std::terminate();
         }
         destructed = true;
     }
-    cmd_tattler(const cmd_tattler &) noexcept {
+    cmd_tattler(const cmd_tattler &) noexcept
+    {
         if (copied) {
             std::terminate();
         }
         copied = true;
     }
-    cmd_tattler & operator =(const cmd_tattler &) noexcept {
+    cmd_tattler &operator =(const cmd_tattler &) noexcept
+    {
         if (copied) {
             std::terminate();
         }
@@ -93,13 +97,15 @@ struct cmd_tattler {
         return *this;
     }
 
-    cmd_tattler(cmd_tattler &&) noexcept {
+    cmd_tattler(cmd_tattler &&) noexcept
+    {
         if (moved) {
             std::terminate();
         }
         moved = true;
     }
-    cmd_tattler & operator =(cmd_tattler &&) noexcept {
+    cmd_tattler &operator =(cmd_tattler &&) noexcept
+    {
         if (moved) {
             std::terminate();
         }
@@ -115,23 +121,28 @@ thread_local bool cmd_tattler::destructed = false;
 struct not_noexcept {
     not_noexcept() = default;
 
-    not_noexcept(const not_noexcept &) noexcept(false) {
-    } not_noexcept & operator =(const not_noexcept &) noexcept(false) {
+    not_noexcept(const not_noexcept &) noexcept(false)
+    {
+    } not_noexcept &operator =(const not_noexcept &) noexcept(false)
+    {
         return *this;
     }
 
-    not_noexcept(not_noexcept &&) noexcept(false) {
+    not_noexcept(not_noexcept &&) noexcept(false)
+    {
     }
-    not_noexcept & operator =(not_noexcept &&) noexcept(false) {
+    not_noexcept &operator =(not_noexcept &&) noexcept(false)
+    {
         return *this;
     }
 
     template < typename ... Args >
-        explicit not_noexcept(Args && ...) noexcept(false) {
+    explicit not_noexcept(Args && ...) noexcept(false)
+    {
     }
 
-    template < typename U, typename ... Args >
-        not_noexcept(std::initializer_list < U >, Args && ...) noexcept(false) {
+    template < typename U, typename ... Args > not_noexcept(std::initializer_list < U >, Args && ...) noexcept(false)
+    {
     }
 };
 
@@ -198,7 +209,7 @@ template < typename A > static void test_value_CMD()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
         EXPECT_TRUE(cmd_tattler::moved);
         EXPECT_TRUE(cmd_tattler::destructed);
         EXPECT_TRUE(a.has_value());
@@ -308,7 +319,7 @@ template < typename A > static void test_move()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
 
         A b(5);
         EXPECT_TRUE(b.has_value());
@@ -364,7 +375,7 @@ template < typename A > static void test_copy()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
 
         const A b(5);
         EXPECT_TRUE(b.has_value());
@@ -399,26 +410,29 @@ TEST(Copy, Shared)
 struct unmoving {
     optional < int >a;
 
-    unmoving() noexcept {
+    unmoving() noexcept
+    {
     } template < typename ... Args >
-        explicit unmoving(Args && ... args) noexcept:a(sizeof ... (Args)) {
-    }
-
-  template < typename U, typename ... Args > explicit unmoving(std::initializer_list < U > l) noexcept:a(-l.
-      size())
+    explicit unmoving(Args && ... args) noexcept: a(sizeof ...(Args))
     {
     }
 
-  template < typename U, typename ... Args > unmoving(std::initializer_list < U > l, Args && ... args) noexcept:a(-l.size() *
-      sizeof ... (Args))
+    template < typename U, typename ... Args > explicit unmoving(std::initializer_list < U > l) noexcept: a(-l.
+                size())
+    {
+    }
+
+    template < typename U, typename ... Args > unmoving(std::initializer_list < U > l,
+            Args && ... args) noexcept: a(-l.size() *
+                                              sizeof ...(Args))
     {
     }
 
     unmoving(const unmoving &) = delete;
-    unmoving & operator =(const unmoving &) = delete;
+    unmoving &operator =(const unmoving &) = delete;
 
     unmoving(unmoving &&) = delete;
-    unmoving & operator =(unmoving &&) = delete;
+    unmoving &operator =(unmoving &&) = delete;
 };
 
 template < typename A > static void test_unmoving_pack_il()
@@ -433,7 +447,7 @@ template < typename A > static void test_unmoving_pack_il()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
 
         cmd_tattler::reset();
         a.template emplace < unmoving > ();
@@ -454,7 +468,7 @@ template < typename A > static void test_unmoving_pack_il()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
 
         cmd_tattler::reset();
         a.template emplace < unmoving > (nullptr, 5, 3.1);
@@ -467,7 +481,8 @@ template < typename A > static void test_unmoving_pack_il()
     // List!
     {
         const A a(std::in_place_type < unmoving >, {
-                  true, true, true, true});
+            true, true, true, true
+        });
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -476,11 +491,11 @@ template < typename A > static void test_unmoving_pack_il()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
 
         cmd_tattler::reset();
-        a.template emplace < unmoving > ( {
-                                         true, true, true, true});
+        a.template emplace < unmoving > ({
+            true, true, true, true});
         EXPECT_TRUE(cmd_tattler::destructed);
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
@@ -490,7 +505,8 @@ template < typename A > static void test_unmoving_pack_il()
     // List + pack!!
     {
         const A a(std::in_place_type < unmoving >, {
-                  true, true, true, true}, nullptr, 5, 3.1);
+            true, true, true, true
+        }, nullptr, 5, 3.1);
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -499,12 +515,12 @@ template < typename A > static void test_unmoving_pack_il()
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
 
         cmd_tattler::reset();
-        a.template emplace < unmoving > ( {
-                                         true, true, true, true}, nullptr, 5,
-                                         3.1);
+        a.template emplace < unmoving > ({
+            true, true, true, true}, nullptr, 5,
+        3.1);
         EXPECT_TRUE(cmd_tattler::destructed);
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
@@ -517,28 +533,28 @@ TEST(UmovingPackIl, Immobile)
     static_assert(std::is_nothrow_constructible_v < immobile_any < 1024 >,
                   std::in_place_type_t < unmoving >>);
     static_assert(noexcept(immobile_any < 1024 > {
-                           }.emplace < unmoving > ()));
+    }.emplace < unmoving > ()));
 
     static_assert(std::is_nothrow_constructible_v < immobile_any < 1024 >,
                   std::in_place_type_t < unmoving >, std::nullptr_t, int,
                   double >);
     static_assert(noexcept(immobile_any < 1024 > {
-                           }.emplace < unmoving > (nullptr, 5, 3.1)));
+    }.emplace < unmoving > (nullptr, 5, 3.1)));
 
     static_assert(std::is_nothrow_constructible_v < immobile_any < 1024 >,
                   std::in_place_type_t < unmoving >,
                   std::initializer_list < int >>);
     static_assert(noexcept(immobile_any < 1024 > {
-                           }.emplace < unmoving > ( {
-                                                   true, true, true, true})));
+    }.emplace < unmoving > ({
+        true, true, true, true})));
 
     static_assert(std::is_nothrow_constructible_v < immobile_any < 1024 >,
                   std::in_place_type_t < unmoving >,
                   std::initializer_list < int >, std::nullptr_t, int, double >);
     static_assert(noexcept(immobile_any < 1024 > {
-                           }.emplace < unmoving > ( {
-                                                   true, true, true, true},
-                                                   nullptr, 5, 3.1)));
+    }.emplace < unmoving > ({
+        true, true, true, true},
+    nullptr, 5, 3.1)));
 
     test_unmoving_pack_il < immobile_any < 1024 >> ();
 }
@@ -548,28 +564,28 @@ TEST(UmovingPackIl, Unique)
     static_assert(!std::is_nothrow_constructible_v < unique_any,
                   std::in_place_type_t < unmoving >>);
     static_assert(!noexcept(unique_any {
-                            }.emplace < unmoving > ()));
+    }.emplace < unmoving > ()));
 
     static_assert(!std::is_nothrow_constructible_v < unique_any,
                   std::in_place_type_t < unmoving >, std::nullptr_t, int,
                   double >);
     static_assert(!noexcept(unique_any {
-                            }.emplace < unmoving > (nullptr, 5, 3.1)));
+    }.emplace < unmoving > (nullptr, 5, 3.1)));
 
     static_assert(!std::is_nothrow_constructible_v < unique_any,
                   std::in_place_type_t < unmoving >,
                   std::initializer_list < int >>);
     static_assert(!noexcept(unique_any {
-                            }.emplace < unmoving > ( {
-                                                    true, true, true, true})));
+    }.emplace < unmoving > ({
+        true, true, true, true})));
 
     static_assert(!std::is_nothrow_constructible_v < unique_any,
                   std::in_place_type_t < unmoving >,
                   std::initializer_list < int >, std::nullptr_t, int, double >);
     static_assert(!noexcept(unique_any {
-                            }.emplace < unmoving > ( {
-                                                    true, true, true, true},
-                                                    nullptr, 5, 3.1)));
+    }.emplace < unmoving > ({
+        true, true, true, true},
+    nullptr, 5, 3.1)));
 
     test_unmoving_pack_il < unique_any > ();
 }
@@ -579,28 +595,28 @@ TEST(UmovingPackIl, Shared)
     static_assert(!std::is_nothrow_constructible_v < shared_any,
                   std::in_place_type_t < unmoving >>);
     static_assert(!noexcept(shared_any {
-                            }.emplace < unmoving > ()));
+    }.emplace < unmoving > ()));
 
     static_assert(!std::is_nothrow_constructible_v < shared_any,
                   std::in_place_type_t < unmoving >, std::nullptr_t, int,
                   double >);
     static_assert(!noexcept(shared_any {
-                            }.emplace < unmoving > (nullptr, 5, 3.1)));
+    }.emplace < unmoving > (nullptr, 5, 3.1)));
 
     static_assert(!std::is_nothrow_constructible_v < shared_any,
                   std::in_place_type_t < unmoving >,
                   std::initializer_list < int >>);
     static_assert(!noexcept(shared_any {
-                            }.emplace < unmoving > ( {
-                                                    true, true, true, true})));
+    }.emplace < unmoving > ({
+        true, true, true, true})));
 
     static_assert(!std::is_nothrow_constructible_v < shared_any,
                   std::in_place_type_t < unmoving >,
                   std::initializer_list < int >, std::nullptr_t, int, double >);
     static_assert(!noexcept(shared_any {
-                            }.emplace < unmoving > ( {
-                                                    true, true, true, true},
-                                                    nullptr, 5, 3.1)));
+    }.emplace < unmoving > ({
+        true, true, true, true},
+    nullptr, 5, 3.1)));
 
     test_unmoving_pack_il < shared_any > ();
 }
@@ -656,18 +672,18 @@ template < typename A > static void test_cast()
     {
         A a;
         EXPECT_EQ(nullptr, any_cast < int >(&a));
-        EXPECT_THROW( {
-                     any_cast < int >(a);
-                     }, bad_any_cast);
-        EXPECT_THROW( {
-                     any_cast < int &>(a);
-                     }, bad_any_cast);
-        EXPECT_THROW( {
-                     any_cast < int >(std::move(a));
-                     }, bad_any_cast);
-        EXPECT_THROW( {
-                     any_cast < int &&>(std::move(a));
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int >(a);
+        }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int &>(a);
+        }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int >(std::move(a));
+        }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int && > (std::move(a));
+        }, bad_any_cast);
     }
 
     // Constant Empty
@@ -675,12 +691,12 @@ template < typename A > static void test_cast()
         const A a {
         };
         EXPECT_EQ(nullptr, any_cast < int >(const_cast < const A * >(&a)));
-        EXPECT_THROW( {
-                     any_cast < int >(a);
-                     }, bad_any_cast);
-        EXPECT_THROW( {
-                     any_cast < const int &>(a);
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int >(a);
+        }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < const int &>(a);
+        }, bad_any_cast);
     }
 
     // Filled!
@@ -690,24 +706,24 @@ template < typename A > static void test_cast()
         EXPECT_EQ(nullptr, any_cast < int >(&a));
 
         EXPECT_TRUE(any_cast < bool > (a));
-        EXPECT_THROW( {
-                     any_cast < int >(a);
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int >(a);
+        }, bad_any_cast);
 
         EXPECT_TRUE(any_cast < bool & >(a));
-        EXPECT_THROW( {
-                     any_cast < int &>(a);
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int &>(a);
+        }, bad_any_cast);
 
         EXPECT_TRUE(any_cast < bool > (std::move(a)));
-        EXPECT_THROW( {
-                     any_cast < int >(std::move(a));
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int >(std::move(a));
+        }, bad_any_cast);
 
-        EXPECT_TRUE(any_cast < bool && >(std::move(a)));
-        EXPECT_THROW( {
-                     any_cast < int &&>(std::move(a));
-                     }, bad_any_cast);
+        EXPECT_TRUE(any_cast < bool && > (std::move(a)));
+        EXPECT_THROW({
+            any_cast < int && > (std::move(a));
+        }, bad_any_cast);
     }
 
     // Constant filled
@@ -717,21 +733,21 @@ template < typename A > static void test_cast()
         EXPECT_EQ(nullptr, any_cast < const int >(&a));
 
         EXPECT_TRUE(any_cast < bool > (a));
-        EXPECT_THROW( {
-                     any_cast < int >(a);
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < int >(a);
+        }, bad_any_cast);
 
         EXPECT_TRUE(any_cast < const bool & >(a));
-        EXPECT_THROW( {
-                     any_cast < const int &>(a);
-                     }, bad_any_cast);
+        EXPECT_THROW({
+            any_cast < const int &>(a);
+        }, bad_any_cast);
     }
 
     // Move!
     {
         cmd_tattler::reset();
         A a(cmd_tattler {
-            });
+        });
         cmd_tattler::reset();
 
         auto q = any_cast < cmd_tattler > (std::move(a));
@@ -771,7 +787,7 @@ TEST(Make, Immobile)
     // Nothing!
     {
         auto a {
-        make_immobile_any < unmoving, 1024 > ()};
+            make_immobile_any < unmoving, 1024 > ()};
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_FALSE(any_cast < const unmoving & >(a).a);
@@ -788,8 +804,8 @@ TEST(Make, Immobile)
 
     // List!
     {
-        auto a(make_immobile_any < unmoving, 1024 > ( {
-                                                     true, true, true, true}));
+        auto a(make_immobile_any < unmoving, 1024 > ({
+            true, true, true, true}));
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -799,9 +815,9 @@ TEST(Make, Immobile)
     // List + pack!!
     {
         auto a {
-            make_immobile_any < unmoving, 1024 > ( {
-                                                  true, true, true, true},
-                                                  nullptr, 5, 3.1)};
+            make_immobile_any < unmoving, 1024 > ({
+                true, true, true, true},
+            nullptr, 5, 3.1)};
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -814,7 +830,7 @@ TEST(Make, Unique)
     // Nothing!
     {
         auto a {
-        make_unique_any < unmoving > ()};
+            make_unique_any < unmoving > ()};
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_FALSE(any_cast < const unmoving & >(a).a);
@@ -831,8 +847,8 @@ TEST(Make, Unique)
 
     // List!
     {
-        auto a(make_unique_any < unmoving > ( {
-                                             true, true, true, true}));
+        auto a(make_unique_any < unmoving > ({
+            true, true, true, true}));
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -842,9 +858,9 @@ TEST(Make, Unique)
     // List + pack!!
     {
         auto a {
-            make_unique_any < unmoving > ( {
-                                          true, true, true, true},
-                                          nullptr, 5, 3.1)};
+            make_unique_any < unmoving > ({
+                true, true, true, true},
+            nullptr, 5, 3.1)};
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -857,7 +873,7 @@ TEST(Make, Shared)
     // Nothing!
     {
         auto a {
-        make_shared_any < unmoving > ()};
+            make_shared_any < unmoving > ()};
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_FALSE(any_cast < const unmoving & >(a).a);
@@ -874,8 +890,8 @@ TEST(Make, Shared)
 
     // List!
     {
-        auto a(make_shared_any < unmoving > ( {
-                                             true, true, true, true}));
+        auto a(make_shared_any < unmoving > ({
+            true, true, true, true}));
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);
@@ -885,9 +901,9 @@ TEST(Make, Shared)
     // List + pack!!
     {
         auto a {
-            make_shared_any < unmoving > ( {
-                                          true, true, true, true},
-                                          nullptr, 5, 3.1)};
+            make_shared_any < unmoving > ({
+                true, true, true, true},
+            nullptr, 5, 3.1)};
         EXPECT_TRUE(a.has_value());
         EXPECT_EQ(typeid(unmoving), a.type());
         EXPECT_TRUE(any_cast < const unmoving & >(a).a);

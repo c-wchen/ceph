@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "common/debug.h"
@@ -26,8 +26,7 @@
 #undef dout_prefix
 #define dout_prefix *_dout << objecter->messenger->get_myname() << ".journalpointer "
 
-std::string JournalPointer::get_object_id() constconst
-{
+std::string JournalPointer::get_object_id() constconst {
     inodeno_t const pointer_ino = MDS_INO_LOG_POINTER_OFFSET + node_id;
     char buf[32];
     snprintf(buf, sizeof(buf), "%llx.%08llx", (long long unsigned)pointer_ino,
@@ -39,7 +38,7 @@ std::string JournalPointer::get_object_id() constconst
 /**
  * Blocking read of JournalPointer for this MDS
  */
-int JournalPointer::load(Objecter * objecter)
+int JournalPointer::load(Objecter *objecter)
 {
     ceph_assert(objecter != NULL);
 
@@ -57,14 +56,12 @@ int JournalPointer::load(Objecter * objecter)
         auto q = data.cbegin();
         try {
             decode(q);
-        }
-        catch(const buffer::error & e) {
+        } catch (const buffer::error &e) {
             return -CEPHFS_EINVAL;
         }
-    }
-    else {
+    } else {
         dout(1) << "Journal pointer '" << object_id << "' read failed: " <<
-            cpp_strerror(r) << dendl;
+                cpp_strerror(r) << dendl;
     }
     return r;
 }
@@ -74,7 +71,7 @@ int JournalPointer::load(Objecter * objecter)
  *
  * @return objecter write op status code
  */
-int JournalPointer::save(Objecter * objecter) const const
+int JournalPointer::save(Objecter *objecter) const const
 {
     ceph_assert(objecter != NULL);
     // It is not valid to persist a null pointer
@@ -87,7 +84,7 @@ int JournalPointer::save(Objecter * objecter) const const
     // Write to RADOS and wait for durability
     std::string const object_id = get_object_id();
     dout(4) << "Writing pointer object '" << object_id << "': 0x"
-        << std::hex << front << ":0x" << back << std::dec << dendl;
+            << std::hex << front << ":0x" << back << std::dec << dendl;
 
     C_SaferCond waiter;
     objecter->write_full(object_t(object_id), object_locator_t(pool_id),
@@ -96,7 +93,7 @@ int JournalPointer::save(Objecter * objecter) const const
     int write_result = waiter.wait();
     if (write_result < 0) {
         derr << "Error writing pointer object '" << object_id << "': " <<
-            cpp_strerror(write_result) << dendl;
+             cpp_strerror(write_result) << dendl;
     }
     return write_result;
 }
@@ -105,7 +102,7 @@ int JournalPointer::save(Objecter * objecter) const const
  * Non-blocking variant of save() that assumes objecter lock already held by
  * caller
  */
-void JournalPointer::save(Objecter * objecter, Context * completion) const const
+void JournalPointer::save(Objecter *objecter, Context *completion) const const
 {
     ceph_assert(objecter != NULL);
 

@@ -10,10 +10,10 @@
 TEST(FairMutex, simple)
 {
     ceph::fair_mutex mutex {
-    "fair::simple"};
+        "fair::simple"};
     {
         std::unique_lock lock {
-        mutex};
+            mutex};
         ASSERT_TRUE(mutex.is_locked());
         // fair_mutex does not recursive ownership semantics
         ASSERT_FALSE(mutex.try_lock());
@@ -21,7 +21,7 @@ TEST(FairMutex, simple)
     // re-acquire the lock
     {
         std::unique_lock lock {
-        mutex};
+            mutex};
         ASSERT_TRUE(mutex.is_locked());
     }
     ASSERT_FALSE(mutex.is_locked());
@@ -35,15 +35,15 @@ TEST(FairMutex, fair)
     // - each team should have equal chance of being selected and scoring, assuming
     //   the runners in each team are distributed evenly in the waiting queue.
     ceph::fair_mutex mutex {
-    "fair::fair"};
+        "fair::fair"};
     const int NR_TEAMS = 2;
     std::array < unsigned, NR_TEAMS > scoreboard {
-    0, 0};
+        0, 0};
     const int NR_ROUNDS = 512;
-    auto play =[&](int team){
+    auto play = [&](int team) {
         for (int i = 0; i < NR_ROUNDS; i++) {
             std::unique_lock lock {
-            mutex};
+                mutex};
             // pretent that i am running.. and it takes time
             std::this_thread::sleep_for(std::chrono::microseconds(20));
             // score!
@@ -52,7 +52,7 @@ TEST(FairMutex, fair)
             unsigned total = std::accumulate(scoreboard.begin(),
                                              scoreboard.end(),
                                              0);
-          for (unsigned score:scoreboard) {
+            for (unsigned score : scoreboard) {
                 if (total < NR_ROUNDS) {
                     // not quite statistically significant. to reduce the false positive,
                     // just consider it fair

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MCLIENTCAPS_H
@@ -19,13 +19,14 @@
 #include "mds/mdstypes.h"
 #include "include/ceph_features.h"
 
-class MClientCaps final:public SafeMessage {
-  private:
+class MClientCaps final: public SafeMessage
+{
+private:
 
     static constexpr int HEAD_VERSION = 12;
     static constexpr int COMPAT_VERSION = 1;
 
-  public:
+public:
     static constexpr unsigned FLAG_SYNC = (1 << 0);
     static constexpr unsigned FLAG_NO_CAPSNAP = (1 << 1);   // unused
     static constexpr unsigned FLAG_PENDING_CAPSNAP = (1 << 2);
@@ -44,11 +45,11 @@ class MClientCaps final:public SafeMessage {
 
     struct ceph_mds_cap_peer peer;
 
-     ceph::buffer::list snapbl;
-     ceph::buffer::list xattrbl;
-     ceph::buffer::list flockbl;
+    ceph::buffer::list snapbl;
+    ceph::buffer::list xattrbl;
+    ceph::buffer::list flockbl;
     version_t inline_version = 0;
-     ceph::buffer::list inline_data;
+    ceph::buffer::list inline_data;
 
     // Receivers may not use their new caps until they have this OSD map
     epoch_t osd_epoch_barrier = 0;
@@ -59,106 +60,146 @@ class MClientCaps final:public SafeMessage {
     /* advisory CLIENT_CAPS_* flags to send to mds */
     unsigned flags = 0;
 
-     std::vector < uint8_t > fscrypt_auth;
-     std::vector < uint8_t > fscrypt_file;
+    std::vector < uint8_t > fscrypt_auth;
+    std::vector < uint8_t > fscrypt_file;
 
-    int get_caps() const {
+    int get_caps() const
+    {
         return head.caps;
-    } int get_wanted() const {
+    } int get_wanted() const
+    {
         return head.wanted;
-    } int get_dirty() const {
+    } int get_dirty() const
+    {
         return head.dirty;
-    } ceph_seq_t get_seq() const {
+    } ceph_seq_t get_seq() const
+    {
         return head.seq;
-    } ceph_seq_t get_issue_seq() const {
+    } ceph_seq_t get_issue_seq() const
+    {
         return head.issue_seq;
-    } ceph_seq_t get_mseq() const {
+    } ceph_seq_t get_mseq() const
+    {
         return head.migrate_seq;
-    } inodeno_t get_ino() const {
+    } inodeno_t get_ino() const
+    {
         return inodeno_t(head.ino);
-    } inodeno_t get_realm() const {
+    } inodeno_t get_realm() const
+    {
         return inodeno_t(head.realm);
-    } uint64_t get_cap_id() const {
+    } uint64_t get_cap_id() const
+    {
         return head.cap_id;
-    } uint64_t get_size() const {
+    } uint64_t get_size() const
+    {
         return size;
-    } uint64_t get_max_size() const {
+    } uint64_t get_max_size() const
+    {
         return max_size;
-    } __u32 get_truncate_seq() const {
+    } __u32 get_truncate_seq() const
+    {
         return truncate_seq;
-    } uint64_t get_truncate_size() const {
+    } uint64_t get_truncate_size() const
+    {
         return truncate_size;
-    } utime_t get_ctime() const {
+    } utime_t get_ctime() const
+    {
         return ctime;
-    } utime_t get_btime() const {
+    } utime_t get_btime() const
+    {
         return btime;
-    } utime_t get_mtime() const {
+    } utime_t get_mtime() const
+    {
         return mtime;
-    } utime_t get_atime() const {
+    } utime_t get_atime() const
+    {
         return atime;
-    } __u64 get_change_attr() const {
+    } __u64 get_change_attr() const
+    {
         return change_attr;
-    } __u32 get_time_warp_seq() const {
+    } __u32 get_time_warp_seq() const
+    {
         return time_warp_seq;
-    } uint64_t get_nfiles() const {
+    } uint64_t get_nfiles() const
+    {
         return nfiles;
-    } uint64_t get_nsubdirs() const {
+    } uint64_t get_nsubdirs() const
+    {
         return nsubdirs;
-    } bool dirstat_is_valid() const {
+    } bool dirstat_is_valid() const
+    {
         return nfiles != -1 || nsubdirs != -1;
-    } const file_layout_t & get_layout() const {
+    } const file_layout_t &get_layout() const
+    {
         return layout;
-    } void set_layout(const file_layout_t & l) {
+    } void set_layout(const file_layout_t &l)
+    {
         layout = l;
-    } int get_migrate_seq() const {
+    } int get_migrate_seq() const
+    {
         return head.migrate_seq;
-    } int get_op() const {
+    } int get_op() const
+    {
         return head.op;
-    } uint64_t get_client_tid() const {
+    } uint64_t get_client_tid() const
+    {
         return get_tid();
-    } void set_client_tid(uint64_t s) {
+    } void set_client_tid(uint64_t s)
+    {
         set_tid(s);
     }
 
-    snapid_t get_snap_follows() const {
+    snapid_t get_snap_follows() const
+    {
         return snapid_t(head.snap_follows);
-    } void set_snap_follows(snapid_t s) {
+    } void set_snap_follows(snapid_t s)
+    {
         head.snap_follows = s;
     }
 
-    void set_caps(int c) {
+    void set_caps(int c)
+    {
         head.caps = c;
     }
-    void set_wanted(int w) {
+    void set_wanted(int w)
+    {
         head.wanted = w;
     }
 
-    void set_max_size(uint64_t ms) {
+    void set_max_size(uint64_t ms)
+    {
         max_size = ms;
     }
 
-    void set_migrate_seq(unsigned m) {
+    void set_migrate_seq(unsigned m)
+    {
         head.migrate_seq = m;
     }
-    void set_op(int o) {
+    void set_op(int o)
+    {
         head.op = o;
     }
 
-    void set_size(loff_t s) {
+    void set_size(loff_t s)
+    {
         size = s;
     }
-    void set_mtime(const utime_t & t) {
+    void set_mtime(const utime_t &t)
+    {
         mtime = t;
     }
-    void set_ctime(const utime_t & t) {
+    void set_ctime(const utime_t &t)
+    {
         ctime = t;
     }
-    void set_atime(const utime_t & t) {
+    void set_atime(const utime_t &t)
+    {
         atime = t;
     }
 
     void set_cap_peer(uint64_t id, ceph_seq_t seq, ceph_seq_t mseq, int mds,
-                      int flags) {
+                      int flags)
+    {
         peer.cap_id = id;
         peer.seq = seq;
         peer.mseq = mseq;
@@ -166,19 +207,23 @@ class MClientCaps final:public SafeMessage {
         peer.flags = flags;
     }
 
-    void set_oldest_flush_tid(ceph_tid_t tid) {
+    void set_oldest_flush_tid(ceph_tid_t tid)
+    {
         oldest_flush_tid = tid;
     }
-    ceph_tid_t get_oldest_flush_tid() const {
+    ceph_tid_t get_oldest_flush_tid() const
+    {
         return oldest_flush_tid;
-    } void clear_dirty() {
+    } void clear_dirty()
+    {
         head.dirty = 0;
     }
 
-  protected:
+protected:
     MClientCaps()
-  :    SafeMessage {
-    CEPH_MSG_CLIENT_CAPS, HEAD_VERSION, COMPAT_VERSION} {
+        :    SafeMessage {
+        CEPH_MSG_CLIENT_CAPS, HEAD_VERSION, COMPAT_VERSION}
+    {
     }
     MClientCaps(int op,
                 inodeno_t ino,
@@ -186,8 +231,9 @@ class MClientCaps final:public SafeMessage {
                 uint64_t id,
                 long seq,
                 int caps, int wanted, int dirty, int mseq, epoch_t oeb)
-    :SafeMessage {
-    CEPH_MSG_CLIENT_CAPS, HEAD_VERSION, COMPAT_VERSION}, osd_epoch_barrier(oeb) {
+        : SafeMessage {
+        CEPH_MSG_CLIENT_CAPS, HEAD_VERSION, COMPAT_VERSION}, osd_epoch_barrier(oeb)
+    {
         memset(&head, 0, sizeof(head));
         head.op = op;
         head.ino = ino;
@@ -203,8 +249,9 @@ class MClientCaps final:public SafeMessage {
     MClientCaps(int op,
                 inodeno_t ino, inodeno_t realm,
                 uint64_t id, int mseq, epoch_t oeb)
-    :SafeMessage {
-    CEPH_MSG_CLIENT_CAPS, HEAD_VERSION, COMPAT_VERSION}, osd_epoch_barrier(oeb) {
+        : SafeMessage {
+        CEPH_MSG_CLIENT_CAPS, HEAD_VERSION, COMPAT_VERSION}, osd_epoch_barrier(oeb)
+    {
         memset(&head, 0, sizeof(head));
         head.op = op;
         head.ino = ino;
@@ -213,42 +260,50 @@ class MClientCaps final:public SafeMessage {
         head.migrate_seq = mseq;
         memset(&peer, 0, sizeof(peer));
     }
-    ~MClientCaps()final {
+    ~MClientCaps()final
+    {
     }
 
-  private:
+private:
     file_layout_t layout;
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "Cfcap";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "client_caps(" << ceph_cap_op_name(head.op)
-        << " ino " << inodeno_t(head.ino)
-        << " " << head.cap_id << " seq " << head.seq;
-        if (get_tid())
+            << " ino " << inodeno_t(head.ino)
+            << " " << head.cap_id << " seq " << head.seq;
+        if (get_tid()) {
             out << " tid " << get_tid();
+        }
         out << " caps=" << ccap_string(head.caps)
-        << " dirty=" << ccap_string(head.dirty)
-        << " wanted=" << ccap_string(head.wanted);
+            << " dirty=" << ccap_string(head.dirty)
+            << " wanted=" << ccap_string(head.wanted);
         out << " follows " << snapid_t(head.snap_follows);
-        if (head.migrate_seq)
+        if (head.migrate_seq) {
             out << " mseq " << head.migrate_seq;
+        }
 
         out << " size " << size << "/" << max_size;
-        if (truncate_seq)
+        if (truncate_seq) {
             out << " ts " << truncate_seq << "/" << truncate_size;
+        }
         out << " mtime " << mtime
             << " ctime " << ctime << " change_attr " << change_attr;
-        if (time_warp_seq)
+        if (time_warp_seq) {
             out << " tws " << time_warp_seq;
+        }
 
         if (head.xattr_version)
             out << " xattrs(v=" << head.xattr_version << " l=" << xattrbl.
                 length() << ")";
 
         out << ")";
-    } void decode_payload() override {
+    } void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(head, p);
@@ -258,8 +313,7 @@ class MClientCaps final:public SafeMessage {
             peer = body.peer;
             p += (sizeof(ceph_mds_caps_non_export_body) -
                   sizeof(ceph_mds_caps_export_body));
-        }
-        else {
+        } else {
             ceph_mds_caps_non_export_body body;
             decode(body, p);
             size = body.size;
@@ -275,23 +329,25 @@ class MClientCaps final:public SafeMessage {
         ceph::decode_nohead(head.snap_trace_len, snapbl, p);
 
         ceph_assert(middle.length() == head.xattr_len);
-        if (head.xattr_len)
+        if (head.xattr_len) {
             xattrbl = middle;
+        }
 
         // conditionally decode flock metadata
-        if (header.version >= 2)
+        if (header.version >= 2) {
             decode(flockbl, p);
+        }
 
         if (header.version >= 3) {
-            if (head.op == CEPH_CAP_OP_IMPORT)
+            if (head.op == CEPH_CAP_OP_IMPORT) {
                 decode(peer, p);
+            }
         }
 
         if (header.version >= 4) {
             decode(inline_version, p);
             decode(inline_data, p);
-        }
-        else {
+        } else {
             inline_version = CEPH_INLINE_NONE;
         }
 
@@ -324,7 +380,8 @@ class MClientCaps final:public SafeMessage {
             decode(fscrypt_file, p);
         }
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         header.version = HEAD_VERSION;
         head.snap_trace_len = snapbl.length();
@@ -339,8 +396,7 @@ class MClientCaps final:public SafeMessage {
             encode(body, payload);
             payload.append_zero(sizeof(ceph_mds_caps_non_export_body) -
                                 sizeof(ceph_mds_caps_export_body));
-        }
-        else {
+        } else {
             ceph_mds_caps_non_export_body body;
             body.size = size;
             body.max_size = max_size;
@@ -360,17 +416,16 @@ class MClientCaps final:public SafeMessage {
         // conditionally include flock metadata
         if (features & CEPH_FEATURE_FLOCK) {
             encode(flockbl, payload);
-        }
-        else {
+        } else {
             header.version = 1;
             return;
         }
 
         if (features & CEPH_FEATURE_EXPORT_PEER) {
-            if (head.op == CEPH_CAP_OP_IMPORT)
+            if (head.op == CEPH_CAP_OP_IMPORT) {
                 encode(peer, payload);
-        }
-        else {
+            }
+        } else {
             header.version = 2;
             return;
         }
@@ -378,8 +433,7 @@ class MClientCaps final:public SafeMessage {
         if (features & CEPH_FEATURE_MDS_INLINE_DATA) {
             encode(inline_version, payload);
             encode(inline_data, payload);
-        }
-        else {
+        } else {
             encode(inline_version, payload);
             encode(ceph::buffer::list(), payload);
         }
@@ -398,11 +452,11 @@ class MClientCaps final:public SafeMessage {
         encode(fscrypt_auth, payload);
         encode(fscrypt_file, payload);
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
     template < class T, typename ... Args >
-        friend MURef < T > crimson::make_message(Args && ... args);
+    friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

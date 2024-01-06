@@ -4,22 +4,22 @@
 
 #define dout_subsys ceph_subsys_auth
 
-bool CephxAuthorizeHandler::verify_authorizer(CephContext * cct,
-                                              const KeyStore & keys,
-                                              const ceph::
-                                              bufferlist & authorizer_data,
-                                              size_t
-                                              connection_secret_required_len,
-                                              ceph::bufferlist *
-                                              authorizer_reply,
-                                              EntityName * entity_name,
-                                              uint64_t * global_id,
-                                              AuthCapsInfo * caps_info,
-                                              CryptoKey * session_key,
-                                              std::string * connection_secret,
-                                              std::unique_ptr <
-                                              AuthAuthorizerChallenge >
-                                              *challenge)
+bool CephxAuthorizeHandler::verify_authorizer(CephContext *cct,
+        const KeyStore &keys,
+        const ceph::
+        bufferlist &authorizer_data,
+        size_t
+        connection_secret_required_len,
+        ceph::bufferlist *
+        authorizer_reply,
+        EntityName *entity_name,
+        uint64_t *global_id,
+        AuthCapsInfo *caps_info,
+        CryptoKey *session_key,
+        std::string *connection_secret,
+        std::unique_ptr <
+        AuthAuthorizerChallenge >
+        *challenge)
 {
     auto iter = authorizer_data.cbegin();
 

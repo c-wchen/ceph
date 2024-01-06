@@ -12,13 +12,13 @@
 
 using namespace std;
 
-void RGWLoadGenRequestEnv::set_date(utime_t & tm)
+void RGWLoadGenRequestEnv::set_date(utime_t &tm)
 {
     date_str = rgw_to_asctime(tm);
 }
 
-int RGWLoadGenRequestEnv::sign(const DoutPrefixProvider * dpp,
-                               RGWAccessKey & access_key)
+int RGWLoadGenRequestEnv::sign(const DoutPrefixProvider *dpp,
+                               RGWAccessKey &access_key)
 {
     meta_map_t meta_map;
     map < string, string > sub_resources;
@@ -28,10 +28,10 @@ int RGWLoadGenRequestEnv::sign(const DoutPrefixProvider * dpp,
 
     rgw_create_s3_canonical_header(dpp, request_method.c_str(), nullptr,    /* const char *content_md5 */
                                    content_type.c_str(),
-                                   date_str.c_str(), meta_map, meta_map_t {
-                                   },
-                                   uri.c_str(),
-                                   sub_resources, canonical_header);
+    date_str.c_str(), meta_map, meta_map_t {
+    },
+    uri.c_str(),
+       sub_resources, canonical_header);
 
     headers["HTTP_DATE"] = date_str;
     try {
@@ -42,7 +42,7 @@ int RGWLoadGenRequestEnv::sign(const DoutPrefixProvider * dpp,
                                              access_key.key));
         headers["HTTP_AUTHORIZATION"] =
             std::string("AWS ") + access_key.id + ":" + signature;
-    } catch(int ret) {
+    } catch (int ret) {
         return ret;
     }
 
@@ -57,7 +57,7 @@ size_t RGWLoadGenIO::write_data(const char *const buf, const size_t len)
 size_t RGWLoadGenIO::read_data(char *const buf, const size_t len)
 {
     const size_t read_len = std::min(left_to_read,
-                                     static_cast < uint64_t > (len));
+                                     static_cast < uint64_t >(len));
     left_to_read -= read_len;
     return read_len;
 }
@@ -71,7 +71,7 @@ size_t RGWLoadGenIO::complete_request()
     return 0;
 }
 
-int RGWLoadGenIO::init_env(CephContext * cct)
+int RGWLoadGenIO::init_env(CephContext *cct)
 {
     env.init(cct);
 
@@ -111,8 +111,8 @@ size_t RGWLoadGenIO::send_100_continue()
     return 0;
 }
 
-size_t RGWLoadGenIO::send_header(const std::string_view & name,
-                                 const std::string_view & value)
+size_t RGWLoadGenIO::send_header(const std::string_view &name,
+                                 const std::string_view &value)
 {
     return 0;
 }

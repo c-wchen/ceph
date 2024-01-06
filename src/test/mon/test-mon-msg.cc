@@ -50,34 +50,39 @@
 
 using namespace std;
 
-class MonClientHelper:public Dispatcher {
-  protected:
-    CephContext * cct;
+class MonClientHelper: public Dispatcher
+{
+protected:
+    CephContext *cct;
     ceph::async::io_context_pool poolctx;
     Messenger *msg;
     MonClient monc;
 
-     ceph::mutex lock = ceph::make_mutex("mon-msg-test::lock");
+    ceph::mutex lock = ceph::make_mutex("mon-msg-test::lock");
 
-     set < int >wanted;
+    set < int >wanted;
 
-  public:
+public:
 
-     explicit MonClientHelper(CephContext * cct_)
-    :Dispatcher(cct_), cct(cct_), poolctx(1), msg(NULL), monc(cct_, poolctx) {
-    } int post_init() {
+    explicit MonClientHelper(CephContext *cct_)
+        : Dispatcher(cct_), cct(cct_), poolctx(1), msg(NULL), monc(cct_, poolctx)
+    {
+    } int post_init()
+    {
         dout(1) << __func__ << dendl;
-        if (!msg)
+        if (!msg) {
             return -EINVAL;
+        }
         msg->add_dispatcher_tail(this);
         return 0;
     }
 
-    int init_messenger() {
+    int init_messenger()
+    {
         dout(1) << __func__ << dendl;
 
         std::string public_msgr_type =
-            cct->_conf->ms_public_type.empty()? cct->_conf.get_val <
+            cct->_conf->ms_public_type.empty() ? cct->_conf.get_val <
             std::string > ("ms_type") : cct->_conf->ms_public_type;
         msg =
             Messenger::create(cct, public_msgr_type, entity_name_t::CLIENT(-1),
@@ -85,18 +90,19 @@ class MonClientHelper:public Dispatcher {
         ceph_assert(msg != NULL);
         msg->set_default_policy(Messenger::Policy::lossy_client(0));
         dout(0) << __func__ << " starting messenger at "
-            << msg->get_myaddrs() << dendl;
+                << msg->get_myaddrs() << dendl;
         msg->start();
         return 0;
     }
 
-    int init_monc() {
+    int init_monc()
+    {
         dout(1) << __func__ << dendl;
         ceph_assert(msg != NULL);
         int err = monc.build_initial_monmap();
         if (err < 0) {
             derr << __func__ << " error building monmap: "
-                << cpp_strerror(err) << dendl;
+                 << cpp_strerror(err) << dendl;
             return err;
         }
 
@@ -107,14 +113,14 @@ class MonClientHelper:public Dispatcher {
         err = monc.init();
         if (err < 0) {
             derr << __func__ << " monc init failed: "
-                << cpp_strerror(err) << dendl;
+                 << cpp_strerror(err) << dendl;
             goto fail;
         }
 
         err = monc.authenticate();
         if (err < 0) {
             derr << __func__ << " monc auth failed: "
-                << cpp_strerror(err) << dendl;
+                 << cpp_strerror(err) << dendl;
             goto fail_monc;
         }
         monc.wait_auth_rotating(30.0);
@@ -122,57 +128,67 @@ class MonClientHelper:public Dispatcher {
         dout(0) << __func__ << " finished" << dendl;
         return 0;
 
-      fail_monc:
+fail_monc:
         derr << __func__ << " failing monc" << dendl;
         monc.shutdown();
-      fail:
+fail:
         return err;
     }
 
-    void shutdown_messenger() {
+    void shutdown_messenger()
+    {
         dout(0) << __func__ << dendl;
         msg->shutdown();
         msg->wait();
     }
 
-    void shutdown_monc() {
+    void shutdown_monc()
+    {
         dout(0) << __func__ << dendl;
         monc.shutdown();
     }
 
-    void shutdown() {
+    void shutdown()
+    {
         dout(0) << __func__ << dendl;
         shutdown_monc();
         shutdown_messenger();
     }
 
-    MonMap *get_monmap() {
+    MonMap *get_monmap()
+    {
         return &monc.monmap;
     }
 
-    int init() {
+    int init()
+    {
         int err = init_messenger();
-        if (err < 0)
+        if (err < 0) {
             goto fail;
+        }
         err = init_monc();
-        if (err < 0)
+        if (err < 0) {
             goto fail_msgr;
+        }
         err = post_init();
-        if (err < 0)
+        if (err < 0) {
             goto fail_monc;
+        }
         return 0;
-      fail_monc:
+fail_monc:
         shutdown_monc();
-      fail_msgr:
+fail_msgr:
         shutdown_messenger();
-      fail:
+fail:
         return err;
     }
 
-    virtual void handle_wanted(Message * m) {
+    virtual void handle_wanted(Message *m)
+    {
     }
 
-    bool handle_message(Message * m) {
+    bool handle_message(Message *m)
+    {
         dout(1) << __func__ << " " << *m << dendl;
         if (!is_wanted(m)) {
             dout(10) << __func__ << " not wanted" << dendl;
@@ -184,55 +200,68 @@ class MonClientHelper:public Dispatcher {
         return true;
     }
 
-    bool ms_dispatch(Message * m) override {
+    bool ms_dispatch(Message *m) override
+    {
         return handle_message(m);
     }
-    void ms_handle_connect(Connection * con) override {
+    void ms_handle_connect(Connection *con) override
+    {
     }
-    void ms_handle_remote_reset(Connection * con) override {
+    void ms_handle_remote_reset(Connection *con) override
+    {
     }
-    bool ms_handle_reset(Connection * con) override {
+    bool ms_handle_reset(Connection *con) override
+    {
         return false;
     }
-    bool ms_handle_refused(Connection * con) override {
+    bool ms_handle_refused(Connection *con) override
+    {
         return false;
     }
 
-    bool is_wanted(Message * m) {
+    bool is_wanted(Message *m)
+    {
         dout(20) << __func__ << " " << *m << " type " << m->get_type() << dendl;
         return (wanted.find(m->get_type()) != wanted.end());
     }
 
-    void add_wanted(int t) {
+    void add_wanted(int t)
+    {
         dout(20) << __func__ << " type " << t << dendl;
         wanted.insert(t);
     }
 
-    void rm_wanted(int t) {
+    void rm_wanted(int t)
+    {
         dout(20) << __func__ << " type " << t << dendl;
         wanted.erase(t);
     }
 
-    void send_message(Message * m) {
+    void send_message(Message *m)
+    {
         dout(15) << __func__ << " " << *m << dendl;
         monc.send_mon_message(m);
     }
 
-    void wait() {
+    void wait()
+    {
         msg->wait();
     }
 };
 
-class MonMsgTest:public MonClientHelper, public::testing::Test {
-  protected:
+class MonMsgTest: public MonClientHelper, public::testing::Test
+{
+protected:
     int reply_type = 0;
     Message *reply_msg = nullptr;
     ceph::mutex lock = ceph::make_mutex("lock");
     ceph::condition_variable cond;
 
-    MonMsgTest(): MonClientHelper(g_ceph_context) {
-  } public:
-    void SetUp() override {
+    MonMsgTest(): MonClientHelper(g_ceph_context)
+    {
+    } public:
+    void SetUp() override
+    {
         reply_type = -1;
         if (reply_msg) {
             reply_msg->put();
@@ -241,7 +270,8 @@ class MonMsgTest:public MonClientHelper, public::testing::Test {
         ASSERT_EQ(init(), 0);
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         shutdown();
         if (reply_msg) {
             reply_msg->put();
@@ -249,18 +279,20 @@ class MonMsgTest:public MonClientHelper, public::testing::Test {
         }
     }
 
-    void handle_wanted(Message * m) override {
+    void handle_wanted(Message *m) override
+    {
         std::lock_guard l {
-        lock};
+            lock};
         // caller will put() after they call us, so hold on to a ref
         m->get();
         reply_msg = m;
         cond.notify_all();
     }
 
-    Message *send_wait_reply(Message * m, int t, double timeout = 30.0) {
+    Message *send_wait_reply(Message *m, int t, double timeout = 30.0)
+    {
         std::unique_lock l {
-        lock};
+            lock};
         reply_type = t;
         add_wanted(t);
         send_message(m);
@@ -271,22 +303,22 @@ class MonMsgTest:public MonClientHelper, public::testing::Test {
             status = cond.wait_for(l, ceph::make_timespan(timeout));
             utime_t e = ceph_clock_now();
             dout(20) << __func__ << " took " << (e - s) << " seconds" << dendl;
-        }
-        else {
+        } else {
             cond.wait(l);
         }
         rm_wanted(t);
         l.unlock();
         if (status == std::cv_status::timeout) {
             dout(20) << __func__ << " error: " << cpp_strerror(ETIMEDOUT) <<
-                dendl;
-            return (Message *) ((long)-ETIMEDOUT);
+                     dendl;
+            return (Message *)((long) - ETIMEDOUT);
         }
 
-        if (!reply_msg)
+        if (!reply_msg) {
             dout(20) << __func__ << " reply_msg is nullptr" << dendl;
-        else
+        } else {
             dout(20) << __func__ << " reply_msg " << *reply_msg << dendl;
+        }
         return reply_msg;
     }
 };

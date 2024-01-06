@@ -23,6 +23,6 @@
 bool test_config_get_admin_socket(std::string& output);
 */
 
-bool test_dump_pgstate_history(std::string & output);
+bool test_dump_pgstate_history(std::string &output);
 
 #endif // CEPH_ADMIN_SOCKET_OUTPUT_TESTS_H

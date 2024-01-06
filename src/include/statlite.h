@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 #ifndef CEPH_STATLITE_H
 #define CEPH_STATLITE_H
@@ -22,8 +22,8 @@ extern "C" {
         gid_t st_gid;           /* group ID of owner */
         dev_t st_rdev;          /* device type (if inode device) */
         unsigned long st_litemask;  /* bit mask for optional fields */
-  /***************************************************************/
-  /**** Remaining fields are optional according to st_litemask ***/
+        /***************************************************************/
+        /**** Remaining fields are optional according to st_litemask ***/
         off_t st_size;          /* total size, in bytes         */
         blksize_t st_blksize;   /* blocksize for filesystem I/O */
         blkcnt_t st_blocks;     /* number of blocks allocated   */

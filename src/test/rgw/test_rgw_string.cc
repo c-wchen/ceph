@@ -16,15 +16,15 @@
 #include <gtest/gtest.h>
 
 const std::string abc {
-"abc"};
+    "abc"};
 const char *def {
-"def"};                         // const char*
+    "def"};                         // const char*
 char ghi_arr[] = { 'g', 'h', 'i', '\0' };
 
 char *ghi {
-ghi_arr};                       // char*
+    ghi_arr};                       // char*
 constexpr std::string_view jkl {
-"jkl", 3};
+    "jkl", 3};
 #define mno "mno"               // string literal (char[4])
 char pqr[] = { 'p', 'q', 'r', '\0' };
 
@@ -78,5 +78,5 @@ TEST(string_join_reserve, delim)
     ASSERT_EQ("abc def", string_join_reserve(' ', abc, def));
     ASSERT_EQ("abc\ndef", string_join_reserve('\n', abc, def));
     ASSERT_EQ("abcfoodef", string_join_reserve(std::string {
-                                               "foo"}, abc, def));
+        "foo"}, abc, def));
 }

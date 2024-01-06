@@ -20,12 +20,15 @@
  * Since pool creation and deletion is slow, this allows many tests to
  * run faster.
  */
-class StriperTest:public::testing::Test {
-  public:
-    StriperTest() {
-    } ~StriperTest() override {
+class StriperTest: public::testing::Test
+{
+public:
+    StriperTest()
+    {
+    } ~StriperTest() override
+    {
     }
-  protected:
+protected:
     static void SetUpTestCase();
     static void TearDownTestCase();
     static rados_t s_cluster;
@@ -38,19 +41,22 @@ class StriperTest:public::testing::Test {
     rados_striper_t striper = NULL;
 };
 
-class StriperTestPP:public::testing::Test {
-  public:
-    StriperTestPP():cluster(s_cluster) {
-    } ~StriperTestPP() override {
+class StriperTestPP: public::testing::Test
+{
+public:
+    StriperTestPP(): cluster(s_cluster)
+    {
+    } ~StriperTestPP() override
+    {
     }
     static void SetUpTestCase();
     static void TearDownTestCase();
-  protected:
+protected:
     static librados::Rados s_cluster;
     static std::string pool_name;
 
     void SetUp() override;
-    librados::Rados & cluster;
+    librados::Rados &cluster;
     librados::IoCtx ioctx;
     libradosstriper::RadosStriper striper;
 };
@@ -65,19 +71,22 @@ struct TestData {
 // but for the inheritance from TestWithParam
 // with gtest >= 1.6, we couldd avoid this by using
 // inheritance from WithParamInterface
-class StriperTestParam:public::testing::TestWithParam < TestData > {
-  public:
-    StriperTestParam():cluster(s_cluster) {
-    } ~StriperTestParam() override {
+class StriperTestParam: public::testing::TestWithParam < TestData >
+{
+public:
+    StriperTestParam(): cluster(s_cluster)
+    {
+    } ~StriperTestParam() override
+    {
     }
     static void SetUpTestCase();
     static void TearDownTestCase();
-  protected:
+protected:
     static librados::Rados s_cluster;
     static std::string pool_name;
 
     void SetUp() override;
-    librados::Rados & cluster;
+    librados::Rados &cluster;
     librados::IoCtx ioctx;
     libradosstriper::RadosStriper striper;
 };

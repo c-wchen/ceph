@@ -183,8 +183,7 @@ void bench_num_bytes(bool legacy)
 
     if (legacy) {
         cout << "get_encoded_bytes_test: ";
-    }
-    else {
+    } else {
         cout << "get_encoded_bytes: ";
     }
 
@@ -193,8 +192,7 @@ void bench_num_bytes(bool legacy)
         for (int i = 0; i < max; ++i) {
             a.get_encoded_bytes_test();
         }
-    }
-    else {
+    } else {
         for (int i = 0; i < max; ++i) {
             a.get_encoded_bytes();
         }

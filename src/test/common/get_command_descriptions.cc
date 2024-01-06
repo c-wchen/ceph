@@ -27,7 +27,7 @@
 
 using namespace std;
 
-static void usage(ostream & out)
+static void usage(ostream &out)
 {
     out << "usage: get_command_descriptions [options ...]" << std::endl;
     out << "print on stdout the result of JSON formatted options\n";
@@ -60,7 +60,7 @@ static void all()
 #undef COMMAND_WITH_FLAG
     std::vector < MonCommand > mon_commands = {
 #define FLAG(f) (MonCommand::FLAG_##f)
-#define COMMAND(parsesig, helptext, modulename, req_perms)	\
+#define COMMAND(parsesig, helptext, modulename, req_perms)  \
     {parsesig, helptext, modulename, req_perms, 0},
 #define COMMAND_WITH_FLAG(parsesig, helptext, modulename, req_perms, flags) \
     {parsesig, helptext, modulename, req_perms, flags},
@@ -68,7 +68,7 @@ static void all()
 #undef COMMAND
 #undef COMMAND_WITH_FLAG
 
-#define COMMAND(parsesig, helptext, modulename, req_perms)	\
+#define COMMAND(parsesig, helptext, modulename, req_perms)  \
   {parsesig, helptext, modulename, req_perms, FLAG(MGR)},
 #define COMMAND_WITH_FLAG(parsesig, helptext, modulename, req_perms, flags) \
   {parsesig, helptext, modulename, req_perms, flags | FLAG(MGR)},
@@ -86,8 +86,9 @@ static void pull585()
     std::vector < MonCommand > mon_commands = {
         {
             "osd pool create " "name=pool,type=CephPoolname " "name=pg_num,type=CephInt,range=0,req=false " "name=pgp_num,type=CephInt,range=0,req=false"   // !!! missing trailing space
-        "name=properties,type=CephString,n=N,req=false,goodchars=[A-Za-z0-9-_.=]",
-                "create pool", "osd", "rw"}
+            "name=properties,type=CephString,n=N,req=false,goodchars=[A-Za-z0-9-_.=]",
+            "create pool", "osd", "rw"
+        }
     };
 
     json_print(mon_commands);
@@ -114,11 +115,9 @@ int main(int argc, char **argv)
             || *i == string("--help")) {
             usage(cout);
             exit(0);
-        }
-        else if (*i == string("--all")) {
+        } else if (*i == string("--all")) {
             all();
-        }
-        else if (*i == string("--pull585")) {
+        } else if (*i == string("--pull585")) {
             pull585();
         }
     }
@@ -126,8 +125,8 @@ int main(int argc, char **argv)
 
 /*
  * Local Variables:
- * compile-command: "cd ../.. ; 
- *   make get_command_descriptions && 
+ * compile-command: "cd ../.. ;
+ *   make get_command_descriptions &&
  *   ./get_command_descriptions --all --pull585"
  * End:
  */

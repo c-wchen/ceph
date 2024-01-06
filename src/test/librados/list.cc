@@ -61,7 +61,7 @@ TEST_F(LibRadosList, ListObjectsZeroInName)
 }
 
 static void check_list(std::set < std::string > &myset,
-                       rados_list_ctx_t & ctx, const std::string & check_nspace)
+                       rados_list_ctx_t &ctx, const std::string &check_nspace)
 {
     const char *entry, *nspace;
     cout << "myset " << myset << std::endl;
@@ -71,8 +71,7 @@ static void check_list(std::set < std::string > &myset,
         std::string test_name;
         if (check_nspace == all_nspaces) {
             test_name = std::string(nspace) + ":" + std::string(entry);
-        }
-        else {
+        } else {
             ASSERT_TRUE(std::string(nspace) == check_nspace);
             test_name = std::string(entry);
         }
@@ -182,7 +181,7 @@ TEST_F(LibRadosList, ListObjectsStart)
         ASSERT_EQ((uint32_t) p->first, rados_nobjects_list_seek(ctx, p->first));
         ASSERT_EQ(0, rados_nobjects_list_next(ctx, &entry, NULL, NULL));
         std::cout << "have " << entry << " expect one of " << p->
-            second << std::endl;
+                  second << std::endl;
         ASSERT_TRUE(p->second.count(entry));
         ++p;
     }
@@ -192,13 +191,12 @@ TEST_F(LibRadosList, ListObjectsStart)
 // this function replicates
 // librados::operator<<(std::ostream& os, const librados::ObjectCursor& oc)
 // because we don't want to use librados in librados client.
-std::ostream & operator<<(std::ostream & os,
-                          const rados_object_list_cursor & oc)
+std::ostream &operator<<(std::ostream &os,
+                         const rados_object_list_cursor &oc)
 {
     if (oc) {
         os << *(hobject_t *) oc;
-    }
-    else {
+    } else {
         os << hobject_t {
         };
     }
@@ -233,7 +231,7 @@ TEST_F(LibRadosList, ListObjectsCursor)
         rados_nobjects_list_seek_cursor(ctx, first_cursor);
         ASSERT_EQ(rados_nobjects_list_next(ctx, &entry, NULL, NULL), 0);
         cout << "FIRST> seek to " << first_cursor << " oid=" << string(entry) <<
-            std::endl;
+             std::endl;
     }
     rados_list_ctx_t ctx;
     ASSERT_EQ(0, rados_nobjects_list_open(ioctx, &ctx));
@@ -393,7 +391,7 @@ TEST_F(LibRadosListEC, ListObjectsStart)
         ASSERT_EQ((uint32_t) p->first, rados_nobjects_list_seek(ctx, p->first));
         ASSERT_EQ(0, rados_nobjects_list_next(ctx, &entry, NULL, NULL));
         std::cout << "have " << entry << " expect one of " << p->
-            second << std::endl;
+                  second << std::endl;
         ASSERT_TRUE(p->second.count(entry));
         ++p;
     }
@@ -418,8 +416,8 @@ TEST_F(LibRadosListNP, ListObjectsError)
         char *buf, *st;
         size_t buflen, stlen;
         string c = "{\"prefix\":\"osd pool rm\",\"pool\": \"" + pool_name +
-            "\",\"pool2\":\"" + pool_name +
-            "\",\"yes_i_really_really_mean_it_not_faking\": true}";
+                   "\",\"pool2\":\"" + pool_name +
+                   "\",\"yes_i_really_really_mean_it_not_faking\": true}";
         const char *cmd[2] = { c.c_str(), 0 };
         ASSERT_EQ(0,
                   rados_mon_command(cluster, (const char **)cmd, 1, "", 0, &buf,
@@ -525,8 +523,8 @@ TEST_F(LibRadosList, EnumerateObjectsSplit)
         rados_object_list_slice(ioctx,
                                 begin, end, n, m, &shard_start, &shard_end);
         std::cout << "split " << n << "/" << m << " -> "
-            << *(hobject_t *) shard_start << " "
-            << *(hobject_t *) shard_end << std::endl;
+                  << *(hobject_t *) shard_start << " "
+                  << *(hobject_t *) shard_end << std::endl;
 
         rados_object_list_cursor c = shard_start;
         //while(c < shard_end)

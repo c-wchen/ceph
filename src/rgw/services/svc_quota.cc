@@ -6,12 +6,12 @@
 
 #include "rgw_zone.h"
 
-const RGWQuotaInfo & RGWSI_Quota::get_bucket_quota() const const
+const RGWQuotaInfo &RGWSI_Quota::get_bucket_quota() const const
 {
     return zone_svc->get_current_period().get_config().quota.bucket_quota;
 }
 
-const RGWQuotaInfo & RGWSI_Quota::get_user_quota() const const
+const RGWQuotaInfo &RGWSI_Quota::get_user_quota() const const
 {
     return zone_svc->get_current_period().get_config().quota.user_quota;
 }

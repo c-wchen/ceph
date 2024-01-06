@@ -10,17 +10,20 @@
 #include "include/utime.h"
 
 template <> struct fmt::formatter < utime_t > {
-    template < typename ParseContext > constexpr auto parse(ParseContext & ctx) {
+    template < typename ParseContext > constexpr auto parse(ParseContext &ctx)
+    {
         auto it = ctx.begin();
         if (it != ctx.end() && *it == 's') {
             short_format = true;
             ++it;
-        } return it;
+        }
+        return it;
     }
 
     template < typename FormatContext >
-        auto format(const utime_t & utime, FormatContext & ctx) {
-        if (utime.sec() < ((time_t) (60 * 60 * 24 * 365 * 10))) {
+    auto format(const utime_t &utime, FormatContext &ctx)
+    {
+        if (utime.sec() < ((time_t)(60 * 60 * 24 * 365 * 10))) {
             // raw seconds.  this looks like a relative time.
             return fmt::format_to(ctx.out(), "{}.{:06}", (long)utime.sec(),
                                   utime.usec());
@@ -39,5 +42,5 @@ template <> struct fmt::formatter < utime_t > {
     }
 
     bool short_format {
-    false};
+        false};
 };

@@ -16,7 +16,7 @@
 #define CEPH_UNIT_TEST_H
 
 #include "include/types.h"      // FIXME: ordering shouldn't be important, but right
-                           // now, this include has to come before the others.
+// now, this include has to come before the others.
 
 #include "common/ceph_argparse.h"
 #include "common/code_environment.h"

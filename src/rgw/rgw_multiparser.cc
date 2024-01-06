@@ -18,8 +18,9 @@ int main(int argc, char **argv)
 {
     RGWMultiXMLParser parser;
 
-    if (!parser.init())
+    if (!parser.init()) {
         exit(1);
+    }
 
     char buf[1024];
 
@@ -39,8 +40,9 @@ int main(int argc, char **argv)
             cerr << "failed to parse!" << std::endl;
         }
 
-        if (done)
+        if (done) {
             break;
+        }
     }
 
     exit(0);

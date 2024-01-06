@@ -47,8 +47,9 @@ static int high_bits_set(int c)
 {
     int ret = 0;
     while (1) {
-        if ((c & 0x80) != 0x080)
+        if ((c & 0x80) != 0x080) {
             break;
+        }
         c <<= 1;
         ++ret;
     }
@@ -65,26 +66,22 @@ int encode_utf8(unsigned long u, unsigned char *buf)
     if (u <= 0x0000007F) {
         buf[0] = u;
         return 1;
-    }
-    else if (u <= 0x000007FF) {
+    } else if (u <= 0x000007FF) {
         buf[0] = 0xC0 | (u >> 6);
         buf[1] = 0x80 | (u & 0x3F);
         return 2;
-    }
-    else if (u <= 0x0000FFFF) {
+    } else if (u <= 0x0000FFFF) {
         buf[0] = 0xE0 | (u >> 12);
         buf[1] = 0x80 | ((u >> 6) & 0x3F);
         buf[2] = 0x80 | (u & 0x3F);
         return 3;
-    }
-    else if (u <= 0x001FFFFF) {
+    } else if (u <= 0x001FFFFF) {
         buf[0] = 0xF0 | (u >> 18);
         buf[1] = 0x80 | ((u >> 12) & 0x3F);
         buf[2] = 0x80 | ((u >> 6) & 0x3F);
         buf[3] = 0x80 | (u & 0x3F);
         return 4;
-    }
-    else {
+    } else {
         /* Rare/illegal code points */
         if (u <= 0x03FFFFFF) {
             for (int i = 4; i >= 1; --i) {
@@ -93,8 +90,7 @@ int encode_utf8(unsigned long u, unsigned char *buf)
             }
             buf[0] = 0xF8 | u;
             return 5;
-        }
-        else if (u <= 0x7FFFFFFF) {
+        } else if (u <= 0x7FFFFFFF) {
             for (int i = 5; i >= 1; --i) {
                 buf[i] = 0x80 | (u & 0x3F);
                 u >>= 6;
@@ -115,32 +111,39 @@ unsigned long decode_utf8(unsigned char *buf, int nbytes)
     unsigned long code;
     int i, j;
 
-    if (nbytes <= 0)
+    if (nbytes <= 0) {
         return INVALID_UTF8_CHAR;
+    }
 
     if (nbytes == 1) {
-        if (buf[0] >= 0x80)
+        if (buf[0] >= 0x80) {
             return INVALID_UTF8_CHAR;
+        }
         return buf[0];
     }
 
     i = high_bits_set(buf[0]);
-    if (i != nbytes)
+    if (i != nbytes) {
         return INVALID_UTF8_CHAR;
+    }
     code = buf[0] & (0xff >> i);
     for (j = 1; j < nbytes; ++j) {
-        if ((buf[j] & 0xc0) != 0x80)
+        if ((buf[j] & 0xc0) != 0x80) {
             return INVALID_UTF8_CHAR;
+        }
         code = (code << 6) | (buf[j] & 0x3f);
     }
 
     // Check for invalid code points
-    if (code == 0xFFFE)
+    if (code == 0xFFFE) {
         return INVALID_UTF8_CHAR;
-    if (code == 0xFFFF)
+    }
+    if (code == 0xFFFF) {
         return INVALID_UTF8_CHAR;
-    if (code >= 0xD800 && code <= 0xDFFF)
+    }
+    if (code >= 0xD800 && code <= 0xDFFF) {
         return INVALID_UTF8_CHAR;
+    }
 
     return code;
 }
@@ -163,12 +166,10 @@ int check_utf8(const char *buf, int len)
         if (byte1 <= 0x7F) {
             nbytes = 1;
             /* C2..DF, 80..BF */
-        }
-        else if (len >= 2 && byte1 >= 0xC2 && byte1 <= 0xDF &&
-                 (signed char)bufu[1] <= (signed char)0xBF) {
+        } else if (len >= 2 && byte1 >= 0xC2 && byte1 <= 0xDF &&
+                   (signed char)bufu[1] <= (signed char)0xBF) {
             nbytes = 2;
-        }
-        else if (len >= 3) {
+        } else if (len >= 3) {
             unsigned char byte2 = bufu[1];
 
             /* Is byte2, byte3 between 0x80 ~ 0xBF */
@@ -185,8 +186,7 @@ int check_utf8(const char *buf, int len)
                  /* EE..EF, 80..BF, 80..BF */
                  (byte1 >= 0xEE && byte1 <= 0xEF))) {
                 nbytes = 3;
-            }
-            else if (len >= 4) {
+            } else if (len >= 4) {
                 /* Is byte4 between 0x80 ~ 0xBF */
                 int byte4_ok = (signed char)bufu[3] <= (signed char)0xBF;
 
@@ -198,16 +198,13 @@ int check_utf8(const char *buf, int len)
                      /* F4, 80..8F, 80..BF, 80..BF */
                      (byte1 == 0xF4 && byte2 <= 0x8F))) {
                     nbytes = 4;
-                }
-                else {
+                } else {
                     return err_pos;
                 }
-            }
-            else {
+            } else {
                 return err_pos;
             }
-        }
-        else {
+        } else {
             return err_pos;
         }
 

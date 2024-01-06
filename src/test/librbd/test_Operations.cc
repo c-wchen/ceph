@@ -10,8 +10,9 @@ void register_test_operations()
 {
 }
 
-class TestOperations:public TestFixture {
-  public:
+class TestOperations: public TestFixture
+{
+public:
 
 };
 
@@ -19,9 +20,9 @@ TEST_F(TestOperations, DisableJournalingCorrupt)
 {
     REQUIRE_FEATURE(RBD_FEATURE_JOURNALING);
 
-    librbd::ImageCtx * ictx;
+    librbd::ImageCtx *ictx;
     ASSERT_EQ(0, open_image(m_image_name, &ictx));
     ASSERT_EQ(0, m_ioctx.remove("journal." + ictx->id));
     ASSERT_EQ(0, ictx->operations->update_features(RBD_FEATURE_JOURNALING,
-                                                   false));
+              false));
 }

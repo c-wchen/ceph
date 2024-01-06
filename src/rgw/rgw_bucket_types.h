@@ -35,12 +35,14 @@ struct rgw_bucket_key {
     std::string name;
     std::string bucket_id;
 
-    rgw_bucket_key(const std::string & _tenant,
-                   const std::string & _name,
-                   const std::string & _bucket_id):tenant(_tenant),
-        name(_name), bucket_id(_bucket_id) {
-    } rgw_bucket_key(const std::string & _tenant,
-                     const std::string & _name):tenant(_tenant), name(_name) {
+    rgw_bucket_key(const std::string &_tenant,
+                   const std::string &_name,
+                   const std::string &_bucket_id): tenant(_tenant),
+        name(_name), bucket_id(_bucket_id)
+    {
+    } rgw_bucket_key(const std::string &_tenant,
+                     const std::string &_name): tenant(_tenant), name(_name)
+    {
     }
 };
 
@@ -51,45 +53,52 @@ struct rgw_bucket {
     std::string bucket_id;
     rgw_data_placement_target explicit_placement;
 
-     rgw_bucket() {
+    rgw_bucket()
+    {
     }
     // cppcheck-suppress noExplicitConstructor
-        explicit rgw_bucket(const rgw_user & u, const cls_user_bucket & b);
+    explicit rgw_bucket(const rgw_user &u, const cls_user_bucket &b);
 
-    rgw_bucket(const std::string & _tenant,
-               const std::string & _name,
-               const std::string & _bucket_id):tenant(_tenant),
-        name(_name), bucket_id(_bucket_id) {
+    rgw_bucket(const std::string &_tenant,
+               const std::string &_name,
+               const std::string &_bucket_id): tenant(_tenant),
+        name(_name), bucket_id(_bucket_id)
+    {
     }
-    rgw_bucket(const rgw_bucket_key & bk):tenant(bk.tenant),
-        name(bk.name), bucket_id(bk.bucket_id) {
+    rgw_bucket(const rgw_bucket_key &bk): tenant(bk.tenant),
+        name(bk.name), bucket_id(bk.bucket_id)
+    {
     }
     rgw_bucket(const rgw_bucket &) = default;
     rgw_bucket(rgw_bucket &&) = default;
 
-    bool match(const rgw_bucket & b) const {
+    bool match(const rgw_bucket &b) const
+    {
         return (tenant == b.tenant &&
                 name == b.name &&
                 (bucket_id == b.bucket_id ||
                  bucket_id.empty() || b.bucket_id.empty()));
-    } void convert(cls_user_bucket * b) const;
+    } void convert(cls_user_bucket *b) const;
 
-    void encode(ceph::buffer::list & bl) const {
+    void encode(ceph::buffer::list &bl) const
+    {
         ENCODE_START(10, 10, bl);
         encode(name, bl);
         encode(marker, bl);
         encode(bucket_id, bl);
         encode(tenant, bl);
         bool encode_explicit = !explicit_placement.data_pool.empty();
-         encode(encode_explicit, bl);
+        encode(encode_explicit, bl);
         if (encode_explicit) {
             encode(explicit_placement.data_pool, bl);
             encode(explicit_placement.data_extra_pool, bl);
             encode(explicit_placement.index_pool, bl);
-        } ENCODE_FINISH(bl);
+        }
+        ENCODE_FINISH(bl);
     }
 
-    void decode(ceph::buffer::list::const_iterator & bl) {
+    void decode(ceph::buffer::list::const_iterator &bl)
+    {
         DECODE_START_LEGACY_COMPAT_LEN(10, 3, 3, bl);
         decode(name, bl);
         if (struct_v < 10) {
@@ -103,16 +112,14 @@ struct rgw_bucket {
                 char buf[16];
                 snprintf(buf, sizeof(buf), "%" PRIu64, id);
                 bucket_id = buf;
-            }
-            else {
+            } else {
                 decode(bucket_id, bl);
             }
         }
         if (struct_v < 10) {
             if (struct_v >= 5) {
                 decode(explicit_placement.index_pool.name, bl);
-            }
-            else {
+            } else {
                 explicit_placement.index_pool = explicit_placement.data_pool;
             }
             if (struct_v >= 7) {
@@ -134,7 +141,8 @@ struct rgw_bucket {
         DECODE_FINISH(bl);
     }
 
-    void update_bucket_id(const std::string & new_bucket_id) {
+    void update_bucket_id(const std::string &new_bucket_id)
+    {
         bucket_id = new_bucket_id;
     }
 
@@ -142,42 +150,45 @@ struct rgw_bucket {
     std::string get_key(char tenant_delim = '/',
                         char id_delim = ':', size_t reserve = 0) const;
 
-    const rgw_pool & get_data_extra_pool() const {
+    const rgw_pool &get_data_extra_pool() const
+    {
         return explicit_placement.get_data_extra_pool();
-    } void dump(ceph::Formatter * f) const;
-    void decode_json(JSONObj * obj);
-    static void generate_test_instances(std::list < rgw_bucket * >&o);
+    } void dump(ceph::Formatter *f) const;
+    void decode_json(JSONObj *obj);
+    static void generate_test_instances(std::list < rgw_bucket * > &o);
 
-    rgw_bucket & operator=(const rgw_bucket &) = default;
+    rgw_bucket &operator=(const rgw_bucket &) = default;
 
-    bool operator<(const rgw_bucket & b) const {
+    bool operator<(const rgw_bucket &b) const
+    {
         if (tenant < b.tenant) {
             return true;
-        }
-        else if (tenant > b.tenant) {
+        } else if (tenant > b.tenant) {
             return false;
         }
 
         if (name < b.name) {
             return true;
-        }
-        else if (name > b.name) {
+        } else if (name > b.name) {
             return false;
         }
 
         return (bucket_id < b.bucket_id);
     }
 
-    bool operator==(const rgw_bucket & b)const {
+    bool operator==(const rgw_bucket &b)const
+    {
         return (tenant == b.tenant) && (name == b.name) &&
-            (bucket_id == b.bucket_id);
-    } bool operator!=(const rgw_bucket & b)const {
+               (bucket_id == b.bucket_id);
+    } bool operator!=(const rgw_bucket &b)const
+    {
         return (tenant != b.tenant) || (name != b.name) ||
-            (bucket_id != b.bucket_id);
-}};
+               (bucket_id != b.bucket_id);
+    }
+};
 WRITE_CLASS_ENCODER(rgw_bucket)
 
-inline std::ostream & operator<<(std::ostream & out, const rgw_bucket & b)
+inline std::ostream &operator<<(std::ostream &out, const rgw_bucket &b)
 {
     out << b.tenant << ":" << b.name << "[" << b.bucket_id << "])";
     return out;
@@ -187,39 +198,45 @@ struct rgw_bucket_placement {
     rgw_placement_rule placement_rule;
     rgw_bucket bucket;
 
-    void dump(Formatter * f) const;
+    void dump(Formatter *f) const;
 };                              /* rgw_bucket_placement */
 
 struct rgw_bucket_shard {
     rgw_bucket bucket;
     int shard_id;
 
-    rgw_bucket_shard():shard_id(-1) {
-    } rgw_bucket_shard(const rgw_bucket & _b, int _sid):bucket(_b),
-        shard_id(_sid) {
+    rgw_bucket_shard(): shard_id(-1)
+    {
+    } rgw_bucket_shard(const rgw_bucket &_b, int _sid): bucket(_b),
+        shard_id(_sid)
+    {
     }
 
     std::string get_key(char tenant_delim = '/', char id_delim = ':',
                         char shard_delim = ':', size_t reserve = 0) const;
 
-    bool operator<(const rgw_bucket_shard & b) const {
+    bool operator<(const rgw_bucket_shard &b) const
+    {
         if (bucket < b.bucket) {
             return true;
-        } if (b.bucket < bucket) {
+        }
+        if (b.bucket < bucket) {
             return false;
         }
         return shard_id < b.shard_id;
     }
 
-    bool operator==(const rgw_bucket_shard & b)const {
+    bool operator==(const rgw_bucket_shard &b)const
+    {
         return (bucket == b.bucket && shard_id == b.shard_id);
-}};                             /* rgw_bucket_shard */
+    }
+};                             /* rgw_bucket_shard */
 
-void encode(const rgw_bucket_shard & b, bufferlist & bl, uint64_t f = 0);
-void decode(rgw_bucket_shard & b, bufferlist::const_iterator & bl);
+void encode(const rgw_bucket_shard &b, bufferlist &bl, uint64_t f = 0);
+void decode(rgw_bucket_shard &b, bufferlist::const_iterator &bl);
 
-inline std::ostream & operator<<(std::ostream & out,
-                                 const rgw_bucket_shard & bs)
+inline std::ostream &operator<<(std::ostream &out,
+                                const rgw_bucket_shard &bs)
 {
     if (bs.shard_id <= 0) {
         return out << bs.bucket;

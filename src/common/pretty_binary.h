@@ -5,21 +5,22 @@
 
 #include <string>
 
-template < typename S > static std::string pretty_binary_string(const S & bin)
+template < typename S > static std::string pretty_binary_string(const S &bin)
 {
     std::string pretty;
-    if (bin.empty())
+    if (bin.empty()) {
         return pretty;
+    }
     pretty.reserve(bin.length() * 3);
-    auto printable =[](unsigned char c)->bool {
+    auto printable = [](unsigned char c)->bool {
         return (c >= 32) && (c <= 126);
     };
-    auto append_hex =[&](unsigned char c){
+    auto append_hex = [&](unsigned char c) {
         static const char hex[16] = { '0', '1', '2', '3',
-            '4', '5', '6', '7',
-            '8', '9', 'A', 'B',
-            'C', 'D', 'E', 'F'
-        };
+                                      '4', '5', '6', '7',
+                                      '8', '9', 'A', 'B',
+                                      'C', 'D', 'E', 'F'
+                                    };
         pretty.push_back(hex[c / 16]);
         pretty.push_back(hex[c % 16]);
     };
@@ -27,8 +28,7 @@ template < typename S > static std::string pretty_binary_string(const S & bin)
     bool strmode = printable(bin[0]);
     if (strmode) {
         pretty.push_back('\'');
-    }
-    else {
+    } else {
         pretty.push_back('0');
         pretty.push_back('x');
     }
@@ -41,8 +41,7 @@ template < typename S > static std::string pretty_binary_string(const S & bin)
                 pretty.push_back('x');
                 strmode = false;
             }
-        }
-        else {
+        } else {
             if (i + 2 < bin.length() &&
                 printable(bin[i]) &&
                 printable(bin[i + 1]) && printable(bin[i + 2])) {
@@ -51,11 +50,11 @@ template < typename S > static std::string pretty_binary_string(const S & bin)
             }
         }
         if (strmode) {
-            if (bin[i] == '\'')
+            if (bin[i] == '\'') {
                 pretty.push_back('\'');
+            }
             pretty.push_back(bin[i]);
-        }
-        else {
+        } else {
             append_hex(bin[i]);
         }
     }
@@ -66,4 +65,4 @@ template < typename S > static std::string pretty_binary_string(const S & bin)
     return pretty;
 }
 
-std::string pretty_binary_string_reverse(const std::string & pretty);
+std::string pretty_binary_string_reverse(const std::string &pretty);

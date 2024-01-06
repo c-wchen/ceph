@@ -8,15 +8,15 @@
 // a, b = random bits, c = input and output
 
 #define hashmix(a,b,c) \
-	a=a-b;  a=a-c;  a=a^(c>>13); \
-	b=b-c;  b=b-a;  b=b^(a<<8);  \
-	c=c-a;  c=c-b;  c=c^(b>>13); \
-	a=a-b;  a=a-c;  a=a^(c>>12); \
-	b=b-c;  b=b-a;  b=b^(a<<16); \
-	c=c-a;  c=c-b;  c=c^(b>>5);  \
-	a=a-b;  a=a-c;  a=a^(c>>3); \
-	b=b-c;  b=b-a;  b=b^(a<<10); \
-	c=c-a;  c=c-b;  c=c^(b>>15);
+    a=a-b;  a=a-c;  a=a^(c>>13); \
+    b=b-c;  b=b-a;  b=b^(a<<8);  \
+    c=c-a;  c=c-b;  c=c^(b>>13); \
+    a=a-b;  a=a-c;  a=a^(c>>12); \
+    b=b-c;  b=b-a;  b=b^(a<<16); \
+    c=c-a;  c=c-b;  c=c^(b>>5);  \
+    a=a-b;  a=a-c;  a=a^(c>>3); \
+    b=b-c;  b=b-a;  b=b^(a<<10); \
+    c=c-a;  c=c-b;  c=c^(b>>15);
 
 //namespace ceph {
 
@@ -47,14 +47,18 @@ inline uint32_t rjhash32(uint32_t a)
 }
 
 template <> struct rjhash <uint32_t > {
-    inline size_t operator() (const uint32_t x)const {
+    inline size_t operator()(const uint32_t x)const
+    {
         return rjhash32(x);
-}};
+    }
+};
 
 template <> struct rjhash <uint64_t > {
-    inline size_t operator() (const uint64_t x)const {
+    inline size_t operator()(const uint64_t x)const
+    {
         return rjhash64(x);
-}};
+    }
+};
 
 //}
 

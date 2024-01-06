@@ -59,11 +59,11 @@ using ceph::make_timespan;
 using ceph::mono_clock;
 using ceph::operator <<;
 
-KernelDevice::KernelDevice(CephContext * cct, aio_callback_t cb, void *cbpriv,
+KernelDevice::KernelDevice(CephContext *cct, aio_callback_t cb, void *cbpriv,
                            aio_callback_t d_cb, void *d_cbpriv)
-:BlockDevice(cct, cb, cbpriv), aio(false), dio(false), discard_callback(d_cb),
-discard_callback_priv(d_cbpriv), aio_stop(false), discard_started(false),
-discard_stop(false), aio_thread(this), discard_thread(this), injecting_crash(0)
+    : BlockDevice(cct, cb, cbpriv), aio(false), dio(false), discard_callback(d_cb),
+      discard_callback_priv(d_cbpriv), aio_stop(false), discard_started(false),
+      discard_stop(false), aio_thread(this), discard_thread(this), injecting_crash(0)
 {
     fd_directs.resize(WRITE_LIFE_MAX, -1);
     fd_buffereds.resize(WRITE_LIFE_MAX, -1);
@@ -78,14 +78,13 @@ discard_stop(false), aio_thread(this), discard_thread(this), injecting_crash(0)
             cct->_conf.get_val < bool > ("bdev_ioring_sqthread_poll");
         io_queue =
             std::make_unique < ioring_queue_t > (iodepth, use_ioring_hipri,
-                                                 use_ioring_sqthread_poll);
-    }
-    else {
+                use_ioring_sqthread_poll);
+    } else {
         static bool once;
         if (use_ioring && !once) {
             derr <<
-                "WARNING: io_uring API is not supported! Fallback to libaio!" <<
-                dendl;
+                 "WARNING: io_uring API is not supported! Fallback to libaio!" <<
+                 dendl;
             once = true;
         }
         io_queue = std::make_unique < aio_queue_t > (iodepth);
@@ -102,7 +101,7 @@ int KernelDevice::_lock()
     uint64_t nr_tries = 0;
     for (;;) {
         struct flock fl = {.l_type = F_WRLCK,
-            .l_whence = SEEK_SET
+                   .l_whence = SEEK_SET
         };
         int r =::fcntl(fd, F_OFD_SETLK, &fl);
         if (r < 0) {
@@ -118,7 +117,7 @@ int KernelDevice::_lock()
         }
         dout(1) << __func__ << " flock busy on " << path << dendl;
         if (const uint64_t max_retry =
-            cct->_conf.get_val < uint64_t > ("bdev_flock_retry");
+                cct->_conf.get_val < uint64_t > ("bdev_flock_retry");
             max_retry > 0 && nr_tries++ == max_retry) {
             return -EAGAIN;
         }
@@ -128,7 +127,7 @@ int KernelDevice::_lock()
     }
 }
 
-int KernelDevice::open(const string & p)
+int KernelDevice::open(const string &p)
 {
     path = p;
     int r = 0, i = 0;
@@ -186,7 +185,7 @@ int KernelDevice::open(const string & p)
     if (i != WRITE_LIFE_MAX) {
         enable_wrt = false;
         dout(0) << "ioctl(F_SET_FILE_RW_HINT) on " << path << " failed: " <<
-            cpp_strerror(r) << dendl;
+                cpp_strerror(r) << dendl;
     }
 #endif
 
@@ -214,8 +213,8 @@ int KernelDevice::open(const string & p)
         r = _lock();
         if (r < 0) {
             derr << __func__ << " failed to lock " << path << ": " <<
-                cpp_strerror(r)
-                << dendl;
+                 cpp_strerror(r)
+                 << dendl;
             goto out_fail;
         }
     }
@@ -235,8 +234,8 @@ int KernelDevice::open(const string & p)
     block_size = cct->_conf->bdev_block_size;
     if (block_size != (unsigned)st.st_blksize) {
         dout(1) << __func__ << " backing device/file reports st_blksize "
-            << st.st_blksize << ", using bdev_block_size "
-            << block_size << " anyway" << dendl;
+                << st.st_blksize << ", using bdev_block_size "
+                << block_size << " anyway" << dendl;
     }
 
     {
@@ -250,8 +249,7 @@ int KernelDevice::open(const string & p)
                 goto out_fail;
             }
             size = s;
-        }
-        else {
+        } else {
             size = st.st_size;
         }
 
@@ -259,10 +257,9 @@ int KernelDevice::open(const string & p)
         if ((r = blkdev_buffered.partition(partition, PATH_MAX)) ||
             (r = blkdev_buffered.wholedisk(devname, PATH_MAX))) {
             derr << "unable to get device name for " << path << ": "
-                << cpp_strerror(r) << dendl;
+                 << cpp_strerror(r) << dendl;
             rotational = true;
-        }
-        else {
+        } else {
             dout(20) << __func__ << " devname " << devname << dendl;
             rotational = blkdev_buffered.is_rotational();
             support_discard = blkdev_buffered.support_discard();
@@ -273,7 +270,7 @@ int KernelDevice::open(const string & p)
             int rc = extblkdev::detect_device(cct, devname, ebd_impl);
             if (rc != 0) {
                 dout(20) << __func__ << " no plugin volume maps to " << devname
-                    << dendl;
+                         << dendl;
             }
         }
     }
@@ -296,30 +293,28 @@ int KernelDevice::open(const string & p)
     size &= ~(block_size - 1);
 
     dout(1) << __func__
-        << " size " << size
-        << " (0x" << std::hex << size << std::dec << ", "
-        << byte_u_t(size) << ")"
-        << " block_size " << block_size
-        << " (" << byte_u_t(block_size) << ")"
-        << " " << (rotational ? "rotational device," : "non-rotational device,")
-        << " discard " << (support_discard ? "supported" : "not supported")
-        << dendl;
+            << " size " << size
+            << " (0x" << std::hex << size << std::dec << ", "
+            << byte_u_t(size) << ")"
+            << " block_size " << block_size
+            << " (" << byte_u_t(block_size) << ")"
+            << " " << (rotational ? "rotational device," : "non-rotational device,")
+            << " discard " << (support_discard ? "supported" : "not supported")
+            << dendl;
     return 0;
 
-  out_fail:
+out_fail:
     for (i = 0; i < WRITE_LIFE_MAX; i++) {
         if (fd_directs[i] >= 0) {
             VOID_TEMP_FAILURE_RETRY(::close(fd_directs[i]));
             fd_directs[i] = -1;
-        }
-        else {
+        } else {
             break;
         }
         if (fd_buffereds[i] >= 0) {
             VOID_TEMP_FAILURE_RETRY(::close(fd_buffereds[i]));
             fd_buffereds[i] = -1;
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -358,7 +353,7 @@ void KernelDevice::close()
     path.clear();
 }
 
-int KernelDevice::collect_metadata(const string & prefix, map < string,
+int KernelDevice::collect_metadata(const string &prefix, map < string,
                                    string > *pm) const const
 {
     (*pm)[prefix + "support_discard"] = stringify((int)(bool) support_discard);
@@ -369,8 +364,7 @@ int KernelDevice::collect_metadata(const string & prefix, map < string,
     (*pm)[prefix + "driver"] = "KernelDevice";
     if (rotational) {
         (*pm)[prefix + "type"] = "hdd";
-    }
-    else {
+    } else {
         (*pm)[prefix + "type"] = "ssd";
     }
     // if compression device detected, collect meta data for device
@@ -383,7 +377,7 @@ int KernelDevice::collect_metadata(const string & prefix, map < string,
         string res_names;
         std::set < std::string > devnames;
         if (get_devices(&devnames) == 0) {
-          for (auto & dev:devnames) {
+            for (auto &dev : devnames) {
                 if (!res_names.empty()) {
                     res_names += ",";
                 }
@@ -397,25 +391,24 @@ int KernelDevice::collect_metadata(const string & prefix, map < string,
 
     struct stat st;
     int r =::fstat(fd_buffereds[WRITE_LIFE_NOT_SET], &st);
-    if (r < 0)
+    if (r < 0) {
         return -errno;
+    }
     if (S_ISBLK(st.st_mode)) {
         (*pm)[prefix + "access_mode"] = "blk";
 
         char buffer[1024] = { 0 };
         BlkDev blkdev {
-        fd_buffereds[WRITE_LIFE_NOT_SET]};
+            fd_buffereds[WRITE_LIFE_NOT_SET]};
         if (r = blkdev.partition(buffer, sizeof(buffer)); r) {
             (*pm)[prefix + "partition_path"] = "unknown";
-        }
-        else {
+        } else {
             (*pm)[prefix + "partition_path"] = buffer;
         }
         buffer[0] = '\0';
         if (r = blkdev.partition(buffer, sizeof(buffer)); r) {
             (*pm)[prefix + "dev_node"] = "unknown";
-        }
-        else {
+        } else {
             (*pm)[prefix + "dev_node"] = buffer;
         }
         if (!r) {
@@ -440,15 +433,14 @@ int KernelDevice::collect_metadata(const string & prefix, map < string,
         if (r >= 0) {
             (*pm)[prefix + "numa_node"] = stringify(node);
         }
-    }
-    else {
+    } else {
         (*pm)[prefix + "access_mode"] = "file";
         (*pm)[prefix + "path"] = path;
     }
     return 0;
 }
 
-int KernelDevice::get_ebd_state(ExtBlkDevState & state) const const
+int KernelDevice::get_ebd_state(ExtBlkDevState &state) const const
 {
     // use compression driver plugin to determine physical size and availability
     // VDO specific get_thin_utilization has moved into VDO plugin
@@ -461,8 +453,9 @@ int KernelDevice::get_ebd_state(ExtBlkDevState & state) const const
 int KernelDevice::choose_fd(bool buffered, int write_hint) const const
 {
 #if defined(F_SET_FILE_RW_HINT)
-    if (!enable_wrt)
+    if (!enable_wrt) {
         write_hint = WRITE_LIFE_NOT_SET;
+    }
 #else
     // Without WRITE_LIFE capabilities, only one file is used.
     // And rocksdb sets this value also to > 0, so we need to catch this here
@@ -487,7 +480,7 @@ int KernelDevice::flush()
     bool expect = true;
     if (!io_since_flush.compare_exchange_strong(expect, false)) {
         dout(10) << __func__ << " no-op (no ios since last flush), flag is "
-            << (int)io_since_flush.load() << dendl;
+                 << (int)io_since_flush.load() << dendl;
         return 0;
     }
 
@@ -523,11 +516,10 @@ int KernelDevice::_aio_start()
         if (r < 0) {
             if (r == -EAGAIN) {
                 derr << __func__ << " io_setup(2) failed with EAGAIN; "
-                    << "try increasing /proc/sys/fs/aio-max-nr" << dendl;
-            }
-            else {
+                     << "try increasing /proc/sys/fs/aio-max-nr" << dendl;
+            } else {
                 derr << __func__ << " io_setup(2) failed: " << cpp_strerror(r)
-                    << dendl;
+                     << dendl;
             }
             return r;
         }
@@ -591,7 +583,7 @@ static bool is_expected_ioerr(const int r)
 #elif defined(__FreeBSD__)
             r == -BSM_ERRNO_EREMCHG || r == -BSM_ERRNO_EBADE
 #endif
-        );
+           );
 }
 
 void KernelDevice::_aio_thread()
@@ -629,14 +621,13 @@ void KernelDevice::_aio_thread()
                 long r = aio[i]->get_return_value();
                 if (r < 0) {
                     derr << __func__ << " got r=" << r << " (" <<
-                        cpp_strerror(r) << ")" << dendl;
+                         cpp_strerror(r) << ")" << dendl;
                     if (ioc->allow_eio && is_expected_ioerr(r)) {
                         derr << __func__ <<
-                            " translating the error to EIO for upper layer" <<
-                            dendl;
+                             " translating the error to EIO for upper layer" <<
+                             dendl;
                         ioc->set_return_value(-EIO);
-                    }
-                    else {
+                    } else {
                         if (is_expected_ioerr(r)) {
                             note_io_error_event(devname.c_str(),
                                                 path.c_str(), r,
@@ -654,19 +645,18 @@ void KernelDevice::_aio_thread()
                         ceph_abort_msg("Unexpected IO error. "
                                        "This may suggest HW issue. Please check your dmesg!");
                     }
-                }
-                else if (aio[i]->length != (uint64_t) r) {
+                } else if (aio[i]->length != (uint64_t) r) {
                     derr << "aio to 0x" << std::hex << aio[i]->offset
-                        << "~" << aio[i]->length << std::dec
-                        << " but returned: " << r << dendl;
+                         << "~" << aio[i]->length << std::dec
+                         << " but returned: " << r << dendl;
                     ceph_abort_msg
-                        ("unexpected aio return value: does not match length");
+                    ("unexpected aio return value: does not match length");
                 }
 
                 dout(10) << __func__ << " finished aio " << aio[i] << " r " << r
-                    << " ioc " << ioc
-                    << " with " << (ioc->num_running.load() - 1)
-                    << " aios left" << dendl;
+                         << " ioc " << ioc
+                         << " with " << (ioc->num_running.load() - 1)
+                         << " aios left" << dendl;
 
                 // NOTE: once num_running and we either call the callback or
                 // call aio_wake we cannot touch ioc or aio[] as the caller
@@ -675,8 +665,7 @@ void KernelDevice::_aio_thread()
                     if (--ioc->num_running == 0) {
                         aio_callback(aio_callback_priv, ioc->priv);
                     }
-                }
-                else {
+                } else {
                     ioc->try_aio_wake();
                 }
             }
@@ -687,19 +676,18 @@ void KernelDevice::_aio_thread()
             if (debug_oldest) {
                 if (debug_stall_since == utime_t()) {
                     debug_stall_since = now;
-                }
-                else {
+                } else {
                     if (cct->_conf->bdev_debug_aio_suicide_timeout) {
                         utime_t cutoff = now;
                         cutoff -= cct->_conf->bdev_debug_aio_suicide_timeout;
                         if (debug_stall_since < cutoff) {
                             derr << __func__ << " stalled aio " << debug_oldest
-                                << " since " << debug_stall_since <<
-                                ", timeout is " << cct->_conf->
-                                bdev_debug_aio_suicide_timeout << "s, suicide"
-                                << dendl;
+                                 << " since " << debug_stall_since <<
+                                 ", timeout is " << cct->_conf->
+                                 bdev_debug_aio_suicide_timeout << "s, suicide"
+                                 << dendl;
                             ceph_abort_msg
-                                ("stalled aio... buggy kernel or bad device?");
+                            ("stalled aio... buggy kernel or bad device?");
                         }
                     }
                 }
@@ -711,7 +699,7 @@ void KernelDevice::_aio_thread()
                 cct->_conf->bdev_inject_crash +
                 cct->_conf->bdev_inject_crash_flush_delay) {
                 derr << __func__ << " bdev_inject_crash trigger from aio thread"
-                    << dendl;
+                     << dendl;
                 cct->_log->flush();
                 _exit(1);
             }
@@ -729,14 +717,14 @@ void KernelDevice::_discard_thread()
     while (true) {
         ceph_assert(discard_finishing.empty());
         if (discard_queued.empty()) {
-            if (discard_stop)
+            if (discard_stop) {
                 break;
+            }
             dout(20) << __func__ << " sleep" << dendl;
             discard_cond.notify_all();  // for the thread trying to drain...
             discard_cond.wait(l);
             dout(20) << __func__ << " wake" << dendl;
-        }
-        else {
+        } else {
             discard_finishing.swap(discard_queued);
             discard_running = true;
             l.unlock();
@@ -760,11 +748,13 @@ void KernelDevice::_discard_thread()
 int KernelDevice::_queue_discard(interval_set < uint64_t > &to_release)
 {
     // if bdev_async_discard enabled on the fly, discard_thread is not started here, fallback to sync discard
-    if (!discard_thread.is_started())
+    if (!discard_thread.is_started()) {
         return -1;
+    }
 
-    if (to_release.empty())
+    if (to_release.empty()) {
         return 0;
+    }
 
     std::lock_guard l(discard_lock);
     discard_queued.insert(to_release);
@@ -777,13 +767,13 @@ int KernelDevice::_queue_discard(interval_set < uint64_t > &to_release)
 bool KernelDevice::try_discard(interval_set < uint64_t > &to_release,
                                bool async)
 {
-    if (!support_discard || !cct->_conf->bdev_enable_discard)
+    if (!support_discard || !cct->_conf->bdev_enable_discard) {
         return false;
+    }
 
     if (async && discard_thread.is_started()) {
         return 0 == _queue_discard(to_release);
-    }
-    else {
+    } else {
         for (auto p = to_release.begin(); p != to_release.end(); ++p) {
             _discard(p.get_start(), p.get_len());
         }
@@ -791,25 +781,25 @@ bool KernelDevice::try_discard(interval_set < uint64_t > &to_release,
     return false;
 }
 
-void KernelDevice::_aio_log_start(IOContext * ioc,
+void KernelDevice::_aio_log_start(IOContext *ioc,
                                   uint64_t offset, uint64_t length)
 {
     dout(20) << __func__ << " 0x" << std::hex << offset << "~" << length
-        << std::dec << dendl;
+             << std::dec << dendl;
     if (cct->_conf->bdev_debug_inflight_ios) {
         std::lock_guard l(debug_lock);
         if (debug_inflight.intersects(offset, length)) {
             derr << __func__ << " inflight overlap of 0x"
-                << std::hex
-                << offset << "~" << length << std::dec
-                << " with " << debug_inflight << dendl;
+                 << std::hex
+                 << offset << "~" << length << std::dec
+                 << " with " << debug_inflight << dendl;
             ceph_abort();
         }
         debug_inflight.insert(offset, length);
     }
 }
 
-void KernelDevice::debug_aio_link(aio_t & aio)
+void KernelDevice::debug_aio_link(aio_t &aio)
 {
     if (debug_queue.empty()) {
         debug_oldest = &aio;
@@ -817,7 +807,7 @@ void KernelDevice::debug_aio_link(aio_t & aio)
     debug_queue.push_back(aio);
 }
 
-void KernelDevice::debug_aio_unlink(aio_t & aio)
+void KernelDevice::debug_aio_unlink(aio_t &aio)
 {
     if (aio.queue_item.is_linked()) {
         debug_queue.erase(debug_queue.iterator_to(aio));
@@ -828,15 +818,14 @@ void KernelDevice::debug_aio_unlink(aio_t & aio)
                 cutoff -= age;
                 if (debug_stall_since < cutoff) {
                     derr << __func__ << " stalled aio " << debug_oldest
-                        << " since " << debug_stall_since << ", timeout is "
-                        << age << "s" << dendl;
+                         << " since " << debug_stall_since << ", timeout is "
+                         << age << "s" << dendl;
                 }
             }
 
             if (debug_queue.empty()) {
                 debug_oldest = nullptr;
-            }
-            else {
+            } else {
                 debug_oldest = &debug_queue.front();
             }
             debug_stall_since = utime_t();
@@ -844,23 +833,23 @@ void KernelDevice::debug_aio_unlink(aio_t & aio)
     }
 }
 
-void KernelDevice::_aio_log_finish(IOContext * ioc,
+void KernelDevice::_aio_log_finish(IOContext *ioc,
                                    uint64_t offset, uint64_t length)
 {
     dout(20) << __func__ << " " << aio << " 0x"
-        << std::hex << offset << "~" << length << std::dec << dendl;
+             << std::hex << offset << "~" << length << std::dec << dendl;
     if (cct->_conf->bdev_debug_inflight_ios) {
         std::lock_guard l(debug_lock);
         debug_inflight.erase(offset, length);
     }
 }
 
-void KernelDevice::aio_submit(IOContext * ioc)
+void KernelDevice::aio_submit(IOContext *ioc)
 {
     dout(20) << __func__ << " ioc " << ioc
-        << " pending " << ioc->num_pending.load()
-        << " running " << ioc->num_running.load()
-        << dendl;
+             << " pending " << ioc->num_pending.load()
+             << " running " << ioc->num_running.load()
+             << dendl;
 
     if (ioc->num_pending.load() == 0) {
         return;
@@ -894,24 +883,25 @@ void KernelDevice::aio_submit(IOContext * ioc)
     r = io_queue->submit_batch(ioc->running_aios.begin(), e,
                                pending, priv, &retries);
 
-    if (retries)
+    if (retries) {
         derr << __func__ << " retries " << retries << dendl;
+    }
     if (r < 0) {
         derr << " aio submit got " << cpp_strerror(r) << dendl;
         ceph_assert(r == 0);
     }
 }
 
-int KernelDevice::_sync_write(uint64_t off, bufferlist & bl, bool buffered,
+int KernelDevice::_sync_write(uint64_t off, bufferlist &bl, bool buffered,
                               int write_hint)
 {
     uint64_t len = bl.length();
     dout(5) << __func__ << " 0x" << std::hex << off << "~" << len
-        << std::dec << " " << buffermode(buffered) << dendl;
+            << std::dec << " " << buffermode(buffered) << dendl;
     if (cct->_conf->bdev_inject_crash &&
         rand() % cct->_conf->bdev_inject_crash == 0) {
         derr << __func__ << " bdev_inject_crash: dropping io 0x" << std::hex
-            << off << "~" << len << std::dec << dendl;
+             << off << "~" << len << std::dec << dendl;
         ++injecting_crash;
         return 0;
     }
@@ -960,7 +950,7 @@ int KernelDevice::_sync_write(uint64_t off, bufferlist & bl, bool buffered,
         if (r < 0) {
             r = -errno;
             derr << __func__ << " sync_file_range error: " << cpp_strerror(r) <<
-                dendl;
+                 dendl;
             return r;
         }
     }
@@ -972,16 +962,16 @@ int KernelDevice::_sync_write(uint64_t off, bufferlist & bl, bool buffered,
 }
 
 int KernelDevice::write(uint64_t off,
-                        bufferlist & bl, bool buffered, int write_hint)
+                        bufferlist &bl, bool buffered, int write_hint)
 {
     uint64_t len = bl.length();
     dout(20) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-        << " " << buffermode(buffered)
-        << dendl;
+             << " " << buffermode(buffered)
+             << dendl;
     ceph_assert(is_valid_io(off, len));
     if (cct->_conf->objectstore_blackhole) {
         lderr(cct) << __func__ << " objectstore_blackhole=true, throwing out IO"
-            << dendl;
+                   << dendl;
         return 0;
     }
 
@@ -997,17 +987,17 @@ int KernelDevice::write(uint64_t off,
 }
 
 int KernelDevice::aio_write(uint64_t off,
-                            bufferlist & bl,
-                            IOContext * ioc, bool buffered, int write_hint)
+                            bufferlist &bl,
+                            IOContext *ioc, bool buffered, int write_hint)
 {
     uint64_t len = bl.length();
     dout(20) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-        << " " << buffermode(buffered)
-        << dendl;
+             << " " << buffermode(buffered)
+             << dendl;
     ceph_assert(is_valid_io(off, len));
     if (cct->_conf->objectstore_blackhole) {
         lderr(cct) << __func__ << " objectstore_blackhole=true, throwing out IO"
-            << dendl;
+                   << dendl;
         return 0;
     }
 
@@ -1026,69 +1016,66 @@ int KernelDevice::aio_write(uint64_t off,
         if (cct->_conf->bdev_inject_crash &&
             rand() % cct->_conf->bdev_inject_crash == 0) {
             derr << __func__ << " bdev_inject_crash: dropping io 0x" << std::hex
-                << off << "~" << len << std::dec << dendl;
+                 << off << "~" << len << std::dec << dendl;
             // generate a real io so that aio_wait behaves properly, but make it
             // a read instead of write, and toss the result.
             ioc->pending_aios.
-                push_back(aio_t(ioc, choose_fd(false, write_hint)));
+            push_back(aio_t(ioc, choose_fd(false, write_hint)));
             ++ioc->num_pending;
-            auto & aio = ioc->pending_aios.back();
+            auto &aio = ioc->pending_aios.back();
             aio.bl.
-                push_back(ceph::buffer::ptr_node::
-                          create(ceph::buffer::create_small_page_aligned(len)));
+            push_back(ceph::buffer::ptr_node::
+                      create(ceph::buffer::create_small_page_aligned(len)));
             aio.bl.prepare_iov(&aio.iov);
             aio.preadv(off, len);
             ++injecting_crash;
-        }
-        else {
+        } else {
             if (bl.length() <= RW_IO_MAX) {
                 // fast path (non-huge write)
                 ioc->pending_aios.
-                    push_back(aio_t(ioc, choose_fd(false, write_hint)));
+                push_back(aio_t(ioc, choose_fd(false, write_hint)));
                 ++ioc->num_pending;
-                auto & aio = ioc->pending_aios.back();
+                auto &aio = ioc->pending_aios.back();
                 bl.prepare_iov(&aio.iov);
                 aio.bl.claim_append(bl);
                 aio.pwritev(off, len);
                 dout(30) << aio << dendl;
                 dout(5) << __func__ << " 0x" << std::hex << off << "~" << len
-                    << std::dec << " aio " << &aio << dendl;
-            }
-            else {
+                        << std::dec << " aio " << &aio << dendl;
+            } else {
                 // write in RW_IO_MAX-sized chunks
                 uint64_t prev_len = 0;
                 while (prev_len < bl.length()) {
                     bufferlist tmp;
                     if (prev_len + RW_IO_MAX < bl.length()) {
                         tmp.substr_of(bl, prev_len, RW_IO_MAX);
-                    }
-                    else {
+                    } else {
                         tmp.substr_of(bl, prev_len, bl.length() - prev_len);
                     }
                     auto len = tmp.length();
                     ioc->pending_aios.
-                        push_back(aio_t(ioc, choose_fd(false, write_hint)));
+                    push_back(aio_t(ioc, choose_fd(false, write_hint)));
                     ++ioc->num_pending;
-                    auto & aio = ioc->pending_aios.back();
+                    auto &aio = ioc->pending_aios.back();
                     tmp.prepare_iov(&aio.iov);
                     aio.bl.claim_append(tmp);
                     aio.pwritev(off + prev_len, len);
                     dout(30) << aio << dendl;
                     dout(5) << __func__ << " 0x" << std::hex << off + prev_len
-                        << "~" << len
-                        << std::dec << " aio " << &aio << " (piece)" << dendl;
+                            << "~" << len
+                            << std::dec << " aio " << &aio << " (piece)" << dendl;
                     prev_len += len;
                 }
             }
         }
-    }
-    else
+    } else
 #endif
     {
         int r = _sync_write(off, bl, buffered, write_hint);
         _aio_log_finish(ioc, off, len);
-        if (r < 0)
+        if (r < 0) {
             return r;
+        }
     }
     return 0;
 }
@@ -1098,13 +1085,13 @@ int KernelDevice::_discard(uint64_t offset, uint64_t len)
     int r = 0;
     if (cct->_conf->objectstore_blackhole) {
         lderr(cct) << __func__ << " objectstore_blackhole=true, throwing out IO"
-            << dendl;
+                   << dendl;
         return 0;
     }
     dout(10) << __func__
-        << " 0x" << std::hex << offset << "~" << len << std::dec << dendl;
+             << " 0x" << std::hex << offset << "~" << len << std::dec << dendl;
     r = BlkDev {
-    fd_directs[WRITE_LIFE_NOT_SET]}
+        fd_directs[WRITE_LIFE_NOT_SET]}
     .discard((int64_t) offset, (int64_t) len);
     return r;
 }
@@ -1112,22 +1099,26 @@ int KernelDevice::_discard(uint64_t offset, uint64_t len)
 struct ExplicitHugePagePool {
     using region_queue_t = boost::lockfree::queue < void *>;
     using instrumented_raw = ceph::buffer_instrumentation::instrumented_raw <
-        BlockDevice::hugepaged_raw_marker_t >;
+                             BlockDevice::hugepaged_raw_marker_t >;
 
-    struct mmaped_buffer_raw:public instrumented_raw {
-        region_queue_t & region_q;  // for recycling
+    struct mmaped_buffer_raw: public instrumented_raw {
+        region_queue_t &region_q;   // for recycling
 
-        mmaped_buffer_raw(void *mmaped_region, ExplicitHugePagePool & parent)
-        :instrumented_raw(static_cast < char *>(mmaped_region),
-                          parent.buffer_size), region_q(parent.region_q) {
+        mmaped_buffer_raw(void *mmaped_region, ExplicitHugePagePool &parent)
+            : instrumented_raw(static_cast < char *>(mmaped_region),
+                               parent.buffer_size), region_q(parent.region_q)
+        {
             // the `mmaped_region` has been passed to `raw` as the buffer's `data`
-        } ~mmaped_buffer_raw() override {
+        } ~mmaped_buffer_raw() override
+        {
             // don't delete nor unmmap; recycle the region instead
             region_q.push(data);
-    }};
+        }
+    };
 
     ExplicitHugePagePool(const size_t buffer_size, size_t buffers_in_pool)
-    :buffer_size(buffer_size), region_q(buffers_in_pool) {
+        : buffer_size(buffer_size), region_q(buffers_in_pool)
+    {
         while (buffers_in_pool--) {
             void *const mmaped_region =::mmap(nullptr,
                                               buffer_size,
@@ -1151,78 +1142,84 @@ struct ExplicitHugePagePool {
             if (mmaped_region == MAP_FAILED) {
                 ceph_abort("can't allocate huge buffer;"
                            " /proc/sys/vm/nr_hugepages misconfigured?");
-            }
-            else {
+            } else {
                 region_q.push(mmaped_region);
             }
         }
     }
-    ~ExplicitHugePagePool() {
+    ~ExplicitHugePagePool()
+    {
         void *mmaped_region;
         while (region_q.pop(mmaped_region)) {
             ::munmap(mmaped_region, buffer_size);
         }
     }
 
-    ceph::unique_leakable_ptr < buffer::raw > try_create() {
+    ceph::unique_leakable_ptr < buffer::raw > try_create()
+    {
         if (void *mmaped_region; region_q.pop(mmaped_region)) {
             return ceph::unique_leakable_ptr < buffer::raw > {
                 new mmaped_buffer_raw(mmaped_region, *this)
             };
-        }
-        else {
+        } else {
             // oops, empty queue.
             return nullptr;
         }
     }
 
-    size_t get_buffer_size() const {
+    size_t get_buffer_size() const
+    {
         return buffer_size;
-  } private:
+    } private:
     const size_t buffer_size;
     region_queue_t region_q;
 };
 
 struct HugePagePoolOfPools {
     HugePagePoolOfPools(const std::map < size_t, size_t > conf)
-    :pools(conf.size(),[conf] (size_t index, auto emplacer) {
-           ceph_assert(index < conf.size());
-           // it could be replaced with a state-mutating lambda and
-           // `conf::erase()` but performance is not a concern here.
-           const auto[buffer_size, buffers_in_pool] =
-           *std::next(std::begin(conf), index);
-           emplacer.emplace(buffer_size, buffers_in_pool);}) {
+        : pools(conf.size(), [conf](size_t index, auto emplacer)
+    {
+        ceph_assert(index < conf.size());
+        // it could be replaced with a state-mutating lambda and
+        // `conf::erase()` but performance is not a concern here.
+        const auto[buffer_size, buffers_in_pool] =
+            *std::next(std::begin(conf), index);
+        emplacer.emplace(buffer_size, buffers_in_pool);
+    })
+    {
     }
 
-    ceph::unique_leakable_ptr < buffer::raw > try_create(const size_t size) {
+    ceph::unique_leakable_ptr < buffer::raw > try_create(const size_t size)
+    {
         // thankfully to `conf` being a `std::map` we store the pools
         // sorted by buffer sizes. this would allow to clamp to log(n)
         // but I doubt admins want to have dozens of accelerated buffer
         // size. let's keep this simple for now.
         if (auto iter = std::find_if(std::begin(pools), std::end(pools),
-                                     [size] (const auto & pool) {
-                                     return size == pool.get_buffer_size();}
-            ); iter != std::end(pools)) {
+        [size](const auto & pool) {
+        return size == pool.get_buffer_size();
+        }
+                                    ); iter != std::end(pools)) {
             return iter->try_create();
         }
         return nullptr;
     }
 
-    static HugePagePoolOfPools from_desc(const std::string & conf);
+    static HugePagePoolOfPools from_desc(const std::string &conf);
 
-  private:
+private:
     // let's have some space inside (for 2 MB and 4 MB perhaps?)
     // NOTE: we need tiny_vector as the boost::lockfree queue inside
     // pool is not-movable.
     ceph::containers::tiny_vector < ExplicitHugePagePool, 2 > pools;
 };
 
-HugePagePoolOfPools HugePagePoolOfPools::from_desc(const std::string & desc)
+HugePagePoolOfPools HugePagePoolOfPools::from_desc(const std::string &desc)
 {
     std::map < size_t, size_t > conf;   // buffer_size -> buffers_in_pool
     std::map < std::string, std::string > exploded_str_conf;
     get_str_map(desc, &exploded_str_conf);
-  for (const auto &[buffer_size_s, buffers_in_pool_s]:exploded_str_conf) {
+    for (const auto &[buffer_size_s, buffers_in_pool_s] : exploded_str_conf) {
         size_t buffer_size, buffers_in_pool;
         if (sscanf(buffer_size_s.c_str(), "%zu", &buffer_size) != 1) {
             ceph_abort("can't parse a key in the configuration");
@@ -1233,35 +1230,33 @@ HugePagePoolOfPools HugePagePoolOfPools::from_desc(const std::string & desc)
         conf[buffer_size] = buffers_in_pool;
     }
     return HugePagePoolOfPools {
-    std::move(conf)};
+        std::move(conf)};
 }
 
 // create a buffer basing on user-configurable. it's intended to make
 // our buffers THP-able.
-ceph::unique_leakable_ptr < buffer::raw >
-    KernelDevice::create_custom_aligned(const size_t len,
-                                        IOContext * const ioc) constconst
-{
+ceph::unique_leakable_ptr < buffer::raw > KernelDevice::create_custom_aligned(const size_t len,
+        IOContext *const ioc) constconst {
     // just to preserve the logic of create_small_page_aligned().
-    if (len < CEPH_PAGE_SIZE) {
+    if (len < CEPH_PAGE_SIZE)
+    {
         return ceph::buffer::create_small_page_aligned(len);
-    }
-    else {
+    } else
+    {
         static HugePagePoolOfPools hp_pools =
-            HugePagePoolOfPools::from_desc(cct->_conf.get_val < std::string >
-                                           ("bdev_read_preallocated_huge_buffers")
-            );
+        HugePagePoolOfPools::from_desc(cct->_conf.get_val < std::string >
+                                       ("bdev_read_preallocated_huge_buffers")
+                                      );
         if (auto lucky_raw = hp_pools.try_create(len); lucky_raw) {
             dout(20) << __func__ << " allocated from huge pool"
-                << " lucky_raw.data=" << (void *)lucky_raw->get_data()
-                << " bdev_read_preallocated_huge_buffers="
-                << cct->_conf.get_val < std::string >
-                ("bdev_read_preallocated_huge_buffers")
-                << dendl;
+                     << " lucky_raw.data=" << (void *)lucky_raw->get_data()
+                     << " bdev_read_preallocated_huge_buffers="
+                     << cct->_conf.get_val < std::string >
+                     ("bdev_read_preallocated_huge_buffers")
+                     << dendl;
             ioc->flags |= IOContext::FLAG_DONT_CACHE;
             return lucky_raw;
-        }
-        else {
+        } else {
             // fallthrough due to empty buffer pool. this can happen also
             // when the configurable was explicitly set to 0.
             dout(20) << __func__ << " cannot allocate from huge pool" << dendl;
@@ -1269,16 +1264,16 @@ ceph::unique_leakable_ptr < buffer::raw >
     }
     const size_t custom_alignment = cct->_conf->bdev_read_buffer_alignment;
     dout(20) << __func__ << " with the custom alignment;"
-        << " len=" << len << " custom_alignment=" << custom_alignment << dendl;
+             << " len=" << len << " custom_alignment=" << custom_alignment << dendl;
     return ceph::buffer::create_aligned(len, custom_alignment);
 }
 
-int KernelDevice::read(uint64_t off, uint64_t len, bufferlist * pbl,
-                       IOContext * ioc, bool buffered)
+int KernelDevice::read(uint64_t off, uint64_t len, bufferlist *pbl,
+                       IOContext *ioc, bool buffered)
 {
     dout(5) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-        << " " << buffermode(buffered)
-        << dendl;
+            << " " << buffermode(buffered)
+            << dendl;
     ceph_assert(is_valid_io(off, len));
 
     _aio_log_start(ioc, off, len);
@@ -1291,19 +1286,18 @@ int KernelDevice::read(uint64_t off, uint64_t len, bufferlist * pbl,
     auto age = cct->_conf->bdev_debug_aio_log_age;
     if (mono_clock::now() - start1 >= make_timespan(age)) {
         derr << __func__ << " stalled read "
-            << " 0x" << std::hex << off << "~" << len << std::dec
-            << " " << buffermode(buffered)
-            << " since " << start1 << ", timeout is " << age << "s" << dendl;
+             << " 0x" << std::hex << off << "~" << len << std::dec
+             << " " << buffermode(buffered)
+             << " since " << start1 << ", timeout is " << age << "s" << dendl;
     }
     if (r < 0) {
         if (ioc->allow_eio && is_expected_ioerr(-errno)) {
             r = -EIO;
-        }
-        else {
+        } else {
             r = -errno;
         }
         derr << __func__ << " 0x" << std::hex << off << "~" << std::left
-            << std::dec << " error: " << cpp_strerror(r) << dendl;
+             << std::dec << " error: " << cpp_strerror(r) << dendl;
         goto out;
     }
     ceph_assert((uint64_t) r == len);
@@ -1313,16 +1307,16 @@ int KernelDevice::read(uint64_t off, uint64_t len, bufferlist * pbl,
     pbl->hexdump(*_dout);
     *_dout << dendl;
 
-  out:
+out:
     _aio_log_finish(ioc, off, len);
     return r < 0 ? r : 0;
 }
 
 int KernelDevice::aio_read(uint64_t off,
-                           uint64_t len, bufferlist * pbl, IOContext * ioc)
+                           uint64_t len, bufferlist *pbl, IOContext *ioc)
 {
     dout(5) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-        << dendl;
+            << dendl;
 
     int r = 0;
 #ifdef HAVE_LIBAIO
@@ -1331,18 +1325,17 @@ int KernelDevice::aio_read(uint64_t off,
         _aio_log_start(ioc, off, len);
         ioc->pending_aios.push_back(aio_t(ioc, fd_directs[WRITE_LIFE_NOT_SET]));
         ++ioc->num_pending;
-        aio_t & aio = ioc->pending_aios.back();
+        aio_t &aio = ioc->pending_aios.back();
         aio.bl.
-            push_back(ceph::buffer::ptr_node::
-                      create(create_custom_aligned(len, ioc)));
+        push_back(ceph::buffer::ptr_node::
+                  create(create_custom_aligned(len, ioc)));
         aio.bl.prepare_iov(&aio.iov);
         aio.preadv(off, len);
         dout(30) << aio << dendl;
         pbl->append(aio.bl);
         dout(5) << __func__ << " 0x" << std::hex << off << "~" << len
-            << std::dec << " aio " << &aio << dendl;
-    }
-    else
+                << std::dec << " aio " << &aio << dendl;
+    } else
 #endif
     {
         r = read(off, len, pbl, ioc, false);
@@ -1364,14 +1357,14 @@ int KernelDevice::direct_read_unaligned(uint64_t off, uint64_t len, char *buf)
     auto age = cct->_conf->bdev_debug_aio_log_age;
     if (mono_clock::now() - start1 >= make_timespan(age)) {
         derr << __func__ << " stalled read "
-            << " 0x" << std::hex << off << "~" << len << std::dec
-            << " since " << start1 << ", timeout is " << age << "s" << dendl;
+             << " 0x" << std::hex << off << "~" << len << std::dec
+             << " since " << start1 << ", timeout is " << age << "s" << dendl;
     }
 
     if (r < 0) {
         r = -errno;
         derr << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-            << " error: " << cpp_strerror(r) << dendl;
+             << " error: " << cpp_strerror(r) << dendl;
         goto out;
     }
     ceph_assert((uint64_t) r == aligned_len);
@@ -1383,7 +1376,7 @@ int KernelDevice::direct_read_unaligned(uint64_t off, uint64_t len, char *buf)
     bl.hexdump(*_dout);
     *_dout << dendl;
 
-  out:
+out:
     return r < 0 ? r : 0;
 }
 
@@ -1391,7 +1384,7 @@ int KernelDevice::read_random(uint64_t off, uint64_t len, char *buf,
                               bool buffered)
 {
     dout(5) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-        << "buffered " << buffered << dendl;
+            << "buffered " << buffered << dendl;
     ceph_assert(len > 0);
     ceph_assert(off < size);
     ceph_assert(off + len <= size);
@@ -1401,8 +1394,9 @@ int KernelDevice::read_random(uint64_t off, uint64_t len, char *buf,
     //if it's direct io and unaligned, we have to use a internal buffer
     if (!buffered && ((off % block_size != 0)
                       || (len % block_size != 0)
-                      || (uintptr_t(buf) % CEPH_PAGE_SIZE != 0)))
+                      || (uintptr_t(buf) % CEPH_PAGE_SIZE != 0))) {
         return direct_read_unaligned(off, len, buf);
+    }
 
     auto start1 = mono_clock::now();
     if (buffered) {
@@ -1415,7 +1409,7 @@ int KernelDevice::read_random(uint64_t off, uint64_t len, char *buf,
             if (r < 0) {
                 r = -errno;
                 derr << __func__ << " 0x" << std::hex << off << "~" << left
-                    << std::dec << " error: " << cpp_strerror(r) << dendl;
+                     << std::dec << " error: " << cpp_strerror(r) << dendl;
                 goto out;
             }
             off += r;
@@ -1424,26 +1418,25 @@ int KernelDevice::read_random(uint64_t off, uint64_t len, char *buf,
         }
         if (mono_clock::now() - start1 >= make_timespan(age)) {
             derr << __func__ << " stalled read "
-                << " 0x" << std::hex << off0 << "~" << len << std::dec
-                << " (buffered) since " << start1 << ", timeout is "
-                << age << "s" << dendl;
+                 << " 0x" << std::hex << off0 << "~" << len << std::dec
+                 << " (buffered) since " << start1 << ", timeout is "
+                 << age << "s" << dendl;
         }
-    }
-    else {
+    } else {
         //direct and aligned read
         r =::pread(fd_directs[WRITE_LIFE_NOT_SET], buf, len, off);
         if (mono_clock::now() - start1 >= make_timespan(age)) {
             derr << __func__ << " stalled read "
-                << " 0x" << std::hex << off << "~" << len << std::dec
-                << " (direct) since " << start1 << ", timeout is "
-                << age << "s" << dendl;
+                 << " 0x" << std::hex << off << "~" << len << std::dec
+                 << " (direct) since " << start1 << ", timeout is "
+                 << age << "s" << dendl;
         }
         if (r < 0) {
             r = -errno;
             derr << __func__ << " direct_aligned_read" << " 0x" << std::hex
-                << off << "~" << std::left << std::
-                dec << " error: " << cpp_strerror(r)
-                << dendl;
+                 << off << "~" << std::left << std::
+                 dec << " error: " << cpp_strerror(r)
+                 << dendl;
             goto out;
         }
         ceph_assert((uint64_t) r == len);
@@ -1455,14 +1448,14 @@ int KernelDevice::read_random(uint64_t off, uint64_t len, char *buf,
     bl.hexdump(*_dout);
     *_dout << dendl;
 
-  out:
+out:
     return r < 0 ? r : 0;
 }
 
 int KernelDevice::invalidate_cache(uint64_t off, uint64_t len)
 {
     dout(5) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-        << dendl;
+            << dendl;
     ceph_assert(off % block_size == 0);
     ceph_assert(len % block_size == 0);
     int r =
@@ -1471,7 +1464,7 @@ int KernelDevice::invalidate_cache(uint64_t off, uint64_t len)
     if (r) {
         r = -r;
         derr << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-            << " error: " << cpp_strerror(r) << dendl;
+             << " error: " << cpp_strerror(r) << dendl;
     }
     return r;
 }

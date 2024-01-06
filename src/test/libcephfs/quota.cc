@@ -121,8 +121,9 @@ TEST(LibCephFS, SnapQuota)
     char *p = xattrlist;
     int found = 0;
     while (len > 0) {
-        if (strcmp(p, "ceph.quota.max_bytes") == 0)
+        if (strcmp(p, "ceph.quota.max_bytes") == 0) {
             found++;
+        }
         len -= strlen(p) + 1;
         p += strlen(p) + 1;
     }

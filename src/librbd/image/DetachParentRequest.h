@@ -11,50 +11,55 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    class ImageCtx;
+class ImageCtx;
 
-    namespace image {
+namespace image
+{
 
-        template < typename ImageCtxT = ImageCtx > class DetachParentRequest {
-          public:
-            static DetachParentRequest *create(ImageCtxT & image_ctx,
-                                               Context * on_finish) {
-                return new DetachParentRequest(image_ctx, on_finish);
-            } DetachParentRequest(ImageCtxT & image_ctx, Context * on_finish)
-            :m_image_ctx(image_ctx), m_on_finish(on_finish) {
-            } void send();
+template < typename ImageCtxT = ImageCtx > class DetachParentRequest
+{
+public:
+    static DetachParentRequest *create(ImageCtxT &image_ctx,
+                                       Context *on_finish)
+    {
+        return new DetachParentRequest(image_ctx, on_finish);
+    } DetachParentRequest(ImageCtxT &image_ctx, Context *on_finish)
+        : m_image_ctx(image_ctx), m_on_finish(on_finish)
+    {
+    } void send();
 
-          private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |    * * * * * *
-   *    |    *         * -EOPNOTSUPP
-   *    v    v         *
-   * DETACH_PARENT * * *
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   */
+private:
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |    * * * * * *
+     *    |    *         * -EOPNOTSUPP
+     *    v    v         *
+     * DETACH_PARENT * * *
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     */
 
-            ImageCtxT & m_image_ctx;
-            Context *m_on_finish;
+    ImageCtxT &m_image_ctx;
+    Context *m_on_finish;
 
-            bool m_legacy_parent = false;
+    bool m_legacy_parent = false;
 
-            void detach_parent();
-            void handle_detach_parent(int r);
+    void detach_parent();
+    void handle_detach_parent(int r);
 
-            void finish(int r);
+    void finish(int r);
 
-        };
+};
 
-    }                           // namespace image
+}                           // namespace image
 }                               // namespace librbd
 
 extern template class librbd::image::DetachParentRequest < librbd::ImageCtx >;

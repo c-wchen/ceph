@@ -36,8 +36,9 @@ TEST(Arch, all)
     if (f == NULL || fgets(flags, FLAGS_SIZE - 1, f) == NULL) {
         // silently do nothing if /proc/cpuinfo does exist, is not
         // readable or does not contain the expected information
-        if (f)
+        if (f) {
             pclose(f);
+        }
         return;
     }
     pclose(f);

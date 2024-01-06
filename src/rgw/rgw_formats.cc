@@ -28,7 +28,7 @@
 using namespace std;
 
 RGWFormatter_Plain::RGWFormatter_Plain(const bool ukv)
-:use_kv(ukv)
+    : use_kv(ukv)
 {
 }
 
@@ -37,10 +37,11 @@ RGWFormatter_Plain::~RGWFormatter_Plain()
     free(buf);
 }
 
-void RGWFormatter_Plain::flush(ostream & os)
+void RGWFormatter_Plain::flush(ostream &os)
 {
-    if (!buf)
+    if (!buf) {
         return;
+    }
 
     if (len) {
         os << buf;
@@ -74,15 +75,16 @@ void RGWFormatter_Plain::open_array_section(std::string_view name)
     if (use_kv && min_stack_level > 0 && !stack.empty()) {
         struct plain_stack_entry &entry = stack.back();
 
-        if (!entry.is_array)
+        if (!entry.is_array) {
             dump_format(name, "");
+        }
     }
 
     stack.push_back(new_entry);
 }
 
 void RGWFormatter_Plain::open_array_section_in_ns(std::string_view name,
-                                                  const char *ns)
+        const char *ns)
 {
     ostringstream oss;
     oss << name << " " << ns;
@@ -95,14 +97,15 @@ void RGWFormatter_Plain::open_object_section(std::string_view name)
     new_entry.is_array = false;
     new_entry.size = 0;
 
-    if (use_kv && min_stack_level > 0)
+    if (use_kv && min_stack_level > 0) {
         dump_format(name, "");
+    }
 
     stack.push_back(new_entry);
 }
 
 void RGWFormatter_Plain::open_object_section_in_ns(std::string_view name,
-                                                   const char *ns)
+        const char *ns)
 {
     ostringstream oss;
     oss << name << " " << ns;
@@ -134,7 +137,7 @@ void RGWFormatter_Plain::dump_string(std::string_view name, std::string_view s)
     dump_format(name, "%.*s", s.size(), s.data());
 }
 
-std::ostream & RGWFormatter_Plain::dump_stream(std::string_view name)
+std::ostream &RGWFormatter_Plain::dump_stream(std::string_view name)
 {
     // TODO: implement this!
     ceph_abort();
@@ -148,34 +151,38 @@ void RGWFormatter_Plain::dump_format_va(std::string_view name, const char *ns,
 
     struct plain_stack_entry &entry = stack.back();
 
-    if (!min_stack_level)
+    if (!min_stack_level) {
         min_stack_level = stack.size();
+    }
 
     bool should_print = ((stack.size() == min_stack_level && !entry.size)
                          || use_kv);
 
     entry.size++;
 
-    if (!should_print)
+    if (!should_print) {
         return;
+    }
 
     vsnprintf(buf, LARGE_SIZE, fmt, ap);
 
     const char *eol;
     if (wrote_something) {
-        if (use_kv && entry.is_array && entry.size > 1)
+        if (use_kv && entry.is_array && entry.size > 1) {
             eol = ", ";
-        else
+        } else {
             eol = "\n";
-    }
-    else
+        }
+    } else {
         eol = "";
+    }
     wrote_something = true;
 
-    if (use_kv && !entry.is_array)
+    if (use_kv && !entry.is_array) {
         write_data("%s%.*s: %s", eol, name.size(), name.data(), buf);
-    else
+    } else {
         write_data("%s%s", eol, buf);
+    }
 }
 
 int RGWFormatter_Plain::get_len() const const
@@ -207,30 +214,34 @@ void RGWFormatter_Plain::write_data(const char *fmt, ...)
         n = vsnprintf(p, size, fmt, ap);
         va_end(ap);
 
-        if (n > -1 && n < size)
+        if (n > -1 && n < size) {
             goto done;
+        }
         /* Else try again with more space. */
-        if (n > -1)             /* glibc 2.1 */
-            size = n + 1;       /* precisely what is needed */
-        else                    /* glibc 2.0 */
-            size *= 2;          /* twice the old size */
-        if (p_on_stack)
+        if (n > -1) {           /* glibc 2.1 */
+            size = n + 1;    /* precisely what is needed */
+        } else {                /* glibc 2.0 */
+            size *= 2;    /* twice the old size */
+        }
+        if (p_on_stack) {
             np = (char *)malloc(size + 8);
-        else
+        } else {
             np = (char *)realloc(p, size + 8);
-        if (!np)
+        }
+        if (!np) {
             goto done_free;
+        }
         p = np;
         p_on_stack = false;
     }
-  done:
+done:
 #define LARGE_ENOUGH_BUF 4096
     if (!buf) {
         max_len = std::max(LARGE_ENOUGH_BUF, size);
         buf = (char *)malloc(max_len);
         if (!buf) {
             cerr << "ERROR: RGWFormatter_Plain::write_data: failed allocating "
-                << max_len << " bytes" << std::endl;
+                 << max_len << " bytes" << std::endl;
             goto done_free;
         }
     }
@@ -240,22 +251,23 @@ void RGWFormatter_Plain::write_data(const char *fmt, ...)
         void *_realloc = NULL;
         if ((_realloc = realloc(buf, max_len)) == NULL) {
             cerr << "ERROR: RGWFormatter_Plain::write_data: failed allocating "
-                << max_len << " bytes" << std::endl;
+                 << max_len << " bytes" << std::endl;
             goto done_free;
-        }
-        else {
+        } else {
             buf = (char *)_realloc;
         }
     }
 
     pos = len;
-    if (len)
-        pos--;                  // squash null termination
+    if (len) {
+        pos--;    // squash null termination
+    }
     strcpy(buf + pos, p);
     len = pos + strlen(p) + 1;
-  done_free:
-    if (!p_on_stack)
+done_free:
+    if (!p_on_stack) {
         free(p);
+    }
 }
 
 void RGWFormatter_Plain::dump_value_int(std::string_view name, const char *fmt,
@@ -264,8 +276,9 @@ void RGWFormatter_Plain::dump_value_int(std::string_view name, const char *fmt,
     char buf[LARGE_SIZE];
     va_list ap;
 
-    if (!min_stack_level)
+    if (!min_stack_level) {
         min_stack_level = stack.size();
+    }
 
     struct plain_stack_entry &entry = stack.back();
     bool should_print = ((stack.size() == min_stack_level && !entry.size)
@@ -273,8 +286,9 @@ void RGWFormatter_Plain::dump_value_int(std::string_view name, const char *fmt,
 
     entry.size++;
 
-    if (!should_print)
+    if (!should_print) {
         return;
+    }
 
     va_start(ap, fmt);
     vsnprintf(buf, LARGE_SIZE, fmt, ap);
@@ -283,45 +297,49 @@ void RGWFormatter_Plain::dump_value_int(std::string_view name, const char *fmt,
     const char *eol;
     if (wrote_something) {
         eol = "\n";
-    }
-    else
+    } else {
         eol = "";
+    }
     wrote_something = true;
 
-    if (use_kv && !entry.is_array)
+    if (use_kv && !entry.is_array) {
         write_data("%s%.*s: %s", eol, name.size(), name.data(), buf);
-    else
+    } else {
         write_data("%s%s", eol, buf);
+    }
 
 }
 
 /* An utility class that serves as a mean to access the protected static
  * methods of XMLFormatter. */
-class HTMLHelper:public XMLFormatter {
-  public:
-    static std::string escape(const std::string & unescaped_str) {
+class HTMLHelper: public XMLFormatter
+{
+public:
+    static std::string escape(const std::string &unescaped_str)
+    {
         int len = escape_xml_attr_len(unescaped_str.c_str());
         std::string escaped(len, 0);
         escape_xml_attr(unescaped_str.c_str(), escaped.data());
         return escaped;
-}};
+    }
+};
 
 void RGWSwiftWebsiteListingFormatter::generate_header(const std::
-                                                      string & dir_path,
-                                                      const std::
-                                                      string & css_path)
+        string &dir_path,
+        const std::
+        string &css_path)
 {
     ss << R "(<!DOCTYPE HTML PUBLIC " - //W3C//DTD HTML 4.01 )"
-        <<R "(Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd" >) ";
+       << R "(Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd" >) ";
 
-  ss << " < html >< head >< title > Listing of " << xml_stream_escaper(dir_path)
-     << " < /title > ";
+    ss << " < html >< head >< title > Listing of " << xml_stream_escaper(dir_path)
+       << " < /title > ";
 
-  if (! css_path.empty()) {
-    ss << boost::format(R"(<link rel = "stylesheet" type = "text/css" href = "%s" / >)")
-                                % url_encode(css_path);
-  } else {
-    ss << R"(<style type = "text/css" >) "
+    if (! css_path.empty()) {
+        ss << boost::format(R"(<link rel = "stylesheet" type = "text/css" href = "%s" / >)")
+           % url_encode(css_path);
+    } else {
+        ss << R"(<style type = "text/css" >) "
        << R"(h1 {
       font - size:                                                                                                                                                                                                                                                                                                                                                                                                                     1em;
       font - weight:                                                                                                                                                                                                                                                                                                                                                                                                                   bold;

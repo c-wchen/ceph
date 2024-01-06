@@ -71,7 +71,7 @@ TEST(Rabin, test_cdc)
     ASSERT_EQ(chunks[4].second, cmp_chunks[4].second);
 }
 
-void generate_buffer(int size, bufferlist * outbl)
+void generate_buffer(int size, bufferlist *outbl)
 {
     outbl->clear();
     outbl->append_zero(size);
@@ -115,21 +115,21 @@ this fails ! TEST(Rabin, shifts)
 }
 #endif
 
-void do_size_histogram(RabinChunk & rabin, bufferlist & bl, map < int, int >*h)
+void do_size_histogram(RabinChunk &rabin, bufferlist &bl, map < int, int > *h)
 {
     vector < pair < uint64_t, uint64_t >> chunks;
     rabin.do_rabin_chunks(bl, chunks);
-  for (auto & i:chunks) {
+    for (auto &i : chunks) {
         unsigned b = i.second & 0xfffff000;
         //unsigned b = 1 << cbits(i.second);
         (*h)[b]++;
     }
 }
 
-void print_histogram(map < int, int >&h)
+void print_histogram(map < int, int > &h)
 {
     cout << "size\tcount" << std::endl;
-  for (auto i:h) {
+    for (auto i : h) {
         cout << i.first << "\t" << i.second << std::endl;
     }
 }

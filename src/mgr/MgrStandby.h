@@ -30,17 +30,18 @@ class MMgrMap;
 class Mgr;
 class PyModuleConfig;
 
-class MgrStandby:public Dispatcher, public md_config_obs_t {
-  public:
+class MgrStandby: public Dispatcher, public md_config_obs_t
+{
+public:
     // config observer bits
     const char **get_tracked_conf_keys() const override;
-    void handle_conf_change(const ConfigProxy & conf,
+    void handle_conf_change(const ConfigProxy &conf,
                             const std::set < std::string > &changed) override;
 
-  protected:
-     ceph::async::io_context_pool poolctx;
+protected:
+    ceph::async::io_context_pool poolctx;
     MonClient monc;
-     std::unique_ptr < Messenger > client_messenger;
+    std::unique_ptr < Messenger > client_messenger;
     Objecter objecter;
     Client client;
 
@@ -49,17 +50,17 @@ class MgrStandby:public Dispatcher, public md_config_obs_t {
     LogClient log_client;
     LogChannelRef clog, audit_clog;
 
-     ceph::mutex lock = ceph::make_mutex("MgrStandby::lock");
+    ceph::mutex lock = ceph::make_mutex("MgrStandby::lock");
     Finisher finisher;
     SafeTimer timer;
 
     PyModuleRegistry py_module_registry;
-     std::shared_ptr < Mgr > active_mgr;
+    std::shared_ptr < Mgr > active_mgr;
 
     int orig_argc;
     const char **orig_argv;
 
-     std::string state_str();
+    std::string state_str();
 
     void handle_mgr_map(ceph::ref_t < MMgrMap > m);
     void _update_log_config();
@@ -67,16 +68,18 @@ class MgrStandby:public Dispatcher, public md_config_obs_t {
 
     bool available_in_map;
 
-  public:
-     MgrStandby(int argc, const char **argv);
+public:
+    MgrStandby(int argc, const char **argv);
     ~MgrStandby() override;
 
     bool ms_dispatch2(const ceph::ref_t < Message > &m) override;
-    bool ms_handle_reset(Connection * con) override {
+    bool ms_handle_reset(Connection *con) override
+    {
         return false;
-    } void ms_handle_remote_reset(Connection * con) override {
+    } void ms_handle_remote_reset(Connection *con) override
+    {
     }
-    bool ms_handle_refused(Connection * con) override;
+    bool ms_handle_refused(Connection *con) override;
 
     int init();
     void shutdown();

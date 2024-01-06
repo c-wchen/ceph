@@ -14,49 +14,57 @@
 // reinclude our assert to clobber the system one
 #include "include/ceph_assert.h"
 
-class TestJournaler:public RadosTestFixture {
-  public:
+class TestJournaler: public RadosTestFixture
+{
+public:
 
     static const std::string CLIENT_ID;
 
-    static std::string get_temp_journal_id() {
+    static std::string get_temp_journal_id()
+    {
         return stringify(++_journal_id);
-    } void SetUp() override {
+    } void SetUp() override
+    {
         RadosTestFixture::SetUp();
         m_journal_id = get_temp_journal_id();
         m_journaler =
             new journal::Journaler(m_work_queue, m_timer, &m_timer_lock,
-                                   m_ioctx, m_journal_id, CLIENT_ID, {
-                                   }, nullptr);
+        m_ioctx, m_journal_id, CLIENT_ID, {
+        }, nullptr);
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         delete m_journaler;
         RadosTestFixture::TearDown();
     }
 
-    int create_journal(uint8_t order, uint8_t splay_width) {
+    int create_journal(uint8_t order, uint8_t splay_width)
+    {
         C_SaferCond cond;
         m_journaler->create(order, splay_width, -1, &cond);
         return cond.wait();
     }
 
-    int init_journaler() {
+    int init_journaler()
+    {
         C_SaferCond cond;
         m_journaler->init(&cond);
         return cond.wait();
     }
 
-    int shut_down_journaler() {
+    int shut_down_journaler()
+    {
         C_SaferCond ctx;
         m_journaler->shut_down(&ctx);
         return ctx.wait();
     }
 
-    int register_client(const std::string & client_id, const std::string & desc) {
+    int register_client(const std::string &client_id, const std::string &desc)
+    {
         journal::Journaler journaler(m_work_queue, m_timer, &m_timer_lock,
-                                     m_ioctx, m_journal_id, client_id, {
-                                     }, nullptr);
+        m_ioctx, m_journal_id, client_id, {
+        }, nullptr);
         bufferlist data;
         data.append(desc);
         C_SaferCond cond;
@@ -64,10 +72,11 @@ class TestJournaler:public RadosTestFixture {
         return cond.wait();
     }
 
-    int update_client(const std::string & client_id, const std::string & desc) {
+    int update_client(const std::string &client_id, const std::string &desc)
+    {
         journal::Journaler journaler(m_work_queue, m_timer, &m_timer_lock,
-                                     m_ioctx, m_journal_id, client_id, {
-                                     }, nullptr);
+        m_ioctx, m_journal_id, client_id, {
+        }, nullptr);
         bufferlist data;
         data.append(desc);
         C_SaferCond cond;
@@ -75,10 +84,11 @@ class TestJournaler:public RadosTestFixture {
         return cond.wait();
     }
 
-    int unregister_client(const std::string & client_id) {
+    int unregister_client(const std::string &client_id)
+    {
         journal::Journaler journaler(m_work_queue, m_timer, &m_timer_lock,
-                                     m_ioctx, m_journal_id, client_id, {
-                                     }, nullptr);
+        m_ioctx, m_journal_id, client_id, {
+        }, nullptr);
         C_SaferCond cond;
         journaler.unregister_client(&cond);
         return cond.wait();
@@ -87,7 +97,7 @@ class TestJournaler:public RadosTestFixture {
     static uint64_t _journal_id;
 
     std::string m_journal_id;
-    journal::Journaler * m_journaler;
+    journal::Journaler *m_journaler;
 };
 
 const std::string TestJournaler::CLIENT_ID = "client1";
@@ -194,8 +204,7 @@ TEST_F(TestJournaler, GetTags)
         cls::journal::Tag tag;
         if (i < 2) {
             m_journaler->allocate_tag(bufferlist(), &tag, &ctx);
-        }
-        else {
+        } else {
             m_journaler->allocate_tag(i % 2, bufferlist(), &tag, &ctx);
         }
         ASSERT_EQ(0, ctx.wait());

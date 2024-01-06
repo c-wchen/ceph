@@ -9,53 +9,54 @@
 class ProtocolV1;
 using CtPtr = Ct < ProtocolV1 > *;
 
-class ProtocolV1:public Protocol {
-/*
- *  ProtocolV1 State Machine
- *
+class ProtocolV1: public Protocol
+{
+    /*
+     *  ProtocolV1 State Machine
+     *
 
-    send_server_banner                             send_client_banner
-            |                                              |
-            v                                              v
-    wait_client_banner                              wait_server_banner
-            |                                              |
-            |                                              v
-            v                                 handle_server_banner_and_identify
-    wait_connect_message <---------\                       |
-      |     |                      |                       v
-      |  wait_connect_message_auth |           send_connect_message <----------\
-      |     |                      |                       |                   |
-      v     v                      |                       |                   |
-handle_connect_message_2           |                       v                   |
-        |           |              |            wait_connect_reply             |
-        v           v              |              |        |                   |
-     replace -> send_connect_message_reply        |        V                   |
-        |                                         |   wait_connect_reply_auth  |
-        |                                         |        |                   |
-        v                                         v        v                   |
-      open ---\                                 handle_connect_reply_2 --------/
-        |     |                                            |
-        |     v                                            v
-        |   wait_seq                                  wait_ack_seq
-        |     |                                            |
-        v     v                                            v
-    server_ready                                      client_ready
-            |                                              |
-            \------------------> wait_message <------------/
-                                 |  ^   |  ^
-        /------------------------/  |   |  |
-        |                           |   |  \----------------- ------------\
-        v                /----------/   v                                 |
-handle_keepalive2        |        handle_message_header      read_message_footer
-handle_keepalive2_ack    |              |                                 ^
-handle_tag_ack           |              v                                 |
-        |                |        throttle_message             read_message_data
-        \----------------/              |                                 ^
-                                        v                                 |
-                             read_message_front --> read_message_middle --/
-*/
+        send_server_banner                             send_client_banner
+                |                                              |
+                v                                              v
+        wait_client_banner                              wait_server_banner
+                |                                              |
+                |                                              v
+                v                                 handle_server_banner_and_identify
+        wait_connect_message <---------\                       |
+          |     |                      |                       v
+          |  wait_connect_message_auth |           send_connect_message <----------\
+          |     |                      |                       |                   |
+          v     v                      |                       |                   |
+    handle_connect_message_2           |                       v                   |
+            |           |              |            wait_connect_reply             |
+            v           v              |              |        |                   |
+         replace -> send_connect_message_reply        |        V                   |
+            |                                         |   wait_connect_reply_auth  |
+            |                                         |        |                   |
+            v                                         v        v                   |
+          open ---\                                 handle_connect_reply_2 --------/
+            |     |                                            |
+            |     v                                            v
+            |   wait_seq                                  wait_ack_seq
+            |     |                                            |
+            v     v                                            v
+        server_ready                                      client_ready
+                |                                              |
+                \------------------> wait_message <------------/
+                                     |  ^   |  ^
+            /------------------------/  |   |  |
+            |                           |   |  \----------------- ------------\
+            v                /----------/   v                                 |
+    handle_keepalive2        |        handle_message_header      read_message_footer
+    handle_keepalive2_ack    |              |                                 ^
+    handle_tag_ack           |              v                                 |
+            |                |        throttle_message             read_message_data
+            \----------------/              |                                 ^
+                                            v                                 |
+                                 read_message_front --> read_message_middle --/
+    */
 
-  protected:
+protected:
 
     enum State {
         NONE = 0,
@@ -78,26 +79,27 @@ handle_tag_ack           |              v                                 |
         STANDBY
     };
 
-    static const char *get_state_name(int state) {
+    static const char *get_state_name(int state)
+    {
         const char *const statenames[] = { "NONE",
-            "START_CONNECT",
-            "CONNECTING",
-            "CONNECTING_WAIT_BANNER_AND_IDENTIFY",
-            "CONNECTING_SEND_CONNECT_MSG",
-            "START_ACCEPT",
-            "ACCEPTING",
-            "ACCEPTING_WAIT_CONNECT_MSG_AUTH",
-            "ACCEPTING_HANDLED_CONNECT_MSG",
-            "OPENED",
-            "THROTTLE_MESSAGE",
-            "THROTTLE_BYTES",
-            "THROTTLE_DISPATCH_QUEUE",
-            "READ_MESSAGE_FRONT",
-            "READ_FOOTER_AND_DISPATCH",
-            "CLOSED",
-            "WAIT",
-            "STANDBY"
-        };
+                                           "START_CONNECT",
+                                           "CONNECTING",
+                                           "CONNECTING_WAIT_BANNER_AND_IDENTIFY",
+                                           "CONNECTING_SEND_CONNECT_MSG",
+                                           "START_ACCEPT",
+                                           "ACCEPTING",
+                                           "ACCEPTING_WAIT_CONNECT_MSG_AUTH",
+                                           "ACCEPTING_HANDLED_CONNECT_MSG",
+                                           "OPENED",
+                                           "THROTTLE_MESSAGE",
+                                           "THROTTLE_BYTES",
+                                           "THROTTLE_DISPATCH_QUEUE",
+                                           "READ_MESSAGE_FRONT",
+                                           "READ_FOOTER_AND_DISPATCH",
+                                           "CLOSED",
+                                           "WAIT",
+                                           "STANDBY"
+                                         };
         return statenames[state];
     }
 
@@ -114,11 +116,11 @@ handle_tag_ack           |              v                                 |
 
     __u32 connect_seq, peer_global_seq;
     std::atomic < uint64_t > in_seq {
-    0};
+        0};
     std::atomic < uint64_t > out_seq {
-    0};
+        0};
     std::atomic < uint64_t > ack_left {
-    0};
+        0};
 
     std::shared_ptr < AuthSessionHandler > session_security;
 
@@ -153,8 +155,9 @@ handle_tag_ack           |              v                                 |
     CtPtr read(CONTINUATION_RX_TYPE < ProtocolV1 > &next, int len,
                char *buffer = nullptr);
     CtPtr write(CONTINUATION_TX_TYPE < ProtocolV1 > &next,
-                ceph::buffer::list & bl);
-    inline CtPtr _fault() {     // helper fault method that stops continuation
+                ceph::buffer::list &bl);
+    inline CtPtr _fault()       // helper fault method that stops continuation
+    {
         fault();
         return nullptr;
     }
@@ -179,7 +182,7 @@ handle_tag_ack           |              v                                 |
     CtPtr handle_message(char *buffer, int r);
 
     CtPtr handle_keepalive2(char *buffer, int r);
-    void append_keepalive_or_ack(bool ack = false, utime_t * t = nullptr);
+    void append_keepalive_or_ack(bool ack = false, utime_t *t = nullptr);
     CtPtr handle_keepalive2_ack(char *buffer, int r);
     CtPtr handle_tag_ack(char *buffer, int r);
 
@@ -200,11 +203,11 @@ handle_tag_ack           |              v                                 |
     void session_reset();
     void randomize_out_seq();
 
-    Message *_get_next_outgoing(ceph::buffer::list * bl);
+    Message *_get_next_outgoing(ceph::buffer::list *bl);
 
-    void prepare_send_message(uint64_t features, Message * m,
-                              ceph::buffer::list & bl);
-    ssize_t write_message(Message * m, ceph::buffer::list & bl, bool more);
+    void prepare_send_message(uint64_t features, Message *m,
+                              ceph::buffer::list &bl);
+    ssize_t write_message(Message *m, ceph::buffer::list &bl, bool more);
 
     void requeue_sent();
     uint64_t discard_requeued_up_to(uint64_t out_seq, uint64_t seq);
@@ -213,10 +216,10 @@ handle_tag_ack           |              v                                 |
     void reset_recv_state();
     void reset_security();
 
-    std::ostream & _conn_prefix(std::ostream * _dout);
+    std::ostream &_conn_prefix(std::ostream *_dout);
 
-  public:
-    ProtocolV1(AsyncConnection * connection);
+public:
+    ProtocolV1(AsyncConnection *connection);
     virtual ~ ProtocolV1();
 
     virtual void connect() override;
@@ -224,7 +227,7 @@ handle_tag_ack           |              v                                 |
     virtual bool is_connected() override;
     virtual void stop() override;
     virtual void fault() override;
-    virtual void send_message(Message * m) override;
+    virtual void send_message(Message *m) override;
     virtual void send_keepalive() override;
 
     virtual void read_event() override;
@@ -232,7 +235,7 @@ handle_tag_ack           |              v                                 |
     virtual bool is_queued() override;
 
     // Client Protocol
-  private:
+private:
     int global_seq;
 
     CONTINUATION_DECL(ProtocolV1, send_client_banner);
@@ -265,7 +268,7 @@ handle_tag_ack           |              v                                 |
     CtPtr client_ready();
 
     // Server Protocol
-  protected:
+protected:
     bool wait_for_seq;
 
     CONTINUATION_DECL(ProtocolV1, send_server_banner);
@@ -289,24 +292,27 @@ handle_tag_ack           |              v                                 |
     CtPtr wait_connect_message_auth();
     CtPtr handle_connect_message_auth(char *buffer, int r);
     CtPtr handle_connect_message_2();
-    CtPtr send_connect_message_reply(char tag, ceph_msg_connect_reply & reply,
-                                     ceph::buffer::list & authorizer_reply);
+    CtPtr send_connect_message_reply(char tag, ceph_msg_connect_reply &reply,
+                                     ceph::buffer::list &authorizer_reply);
     CtPtr handle_connect_message_reply_write(int r);
-    CtPtr replace(const AsyncConnectionRef & existing,
-                  ceph_msg_connect_reply & reply,
-                  ceph::buffer::list & authorizer_reply);
-    CtPtr open(ceph_msg_connect_reply & reply,
-               ceph::buffer::list & authorizer_reply);
+    CtPtr replace(const AsyncConnectionRef &existing,
+                  ceph_msg_connect_reply &reply,
+                  ceph::buffer::list &authorizer_reply);
+    CtPtr open(ceph_msg_connect_reply &reply,
+               ceph::buffer::list &authorizer_reply);
     CtPtr handle_ready_connect_message_reply_write(int r);
     CtPtr wait_seq();
     CtPtr handle_seq(char *buffer, int r);
     CtPtr server_ready();
 };
 
-class LoopbackProtocolV1:public ProtocolV1 {
-  public:
-    LoopbackProtocolV1(AsyncConnection * connection):ProtocolV1(connection) {
+class LoopbackProtocolV1: public ProtocolV1
+{
+public:
+    LoopbackProtocolV1(AsyncConnection *connection): ProtocolV1(connection)
+    {
         this->can_write = WriteStatus::CANWRITE;
-}};
+    }
+};
 
 #endif /* _MSG_ASYNC_PROTOCOL_V1_ */

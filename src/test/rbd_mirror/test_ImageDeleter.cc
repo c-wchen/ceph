@@ -50,22 +50,24 @@ void register_test_rbd_mirror_image_deleter()
 {
 }
 
-class TestImageDeleter:public TestFixture {
-  public:
+class TestImageDeleter: public TestFixture
+{
+public:
     const std::string m_local_mirror_uuid = "local mirror uuid";
     const std::string m_remote_mirror_uuid = "remote mirror uuid";
 
-    void SetUp() override {
+    void SetUp() override
+    {
         TestFixture::SetUp();
 
         m_image_deletion_throttler.
-            reset(new rbd::mirror::
-                  Throttler <> (g_ceph_context,
-                                "rbd_mirror_concurrent_image_deletions"));
+        reset(new rbd::mirror::
+              Throttler <> (g_ceph_context,
+                            "rbd_mirror_concurrent_image_deletions"));
 
         m_service_daemon.
-            reset(new rbd::mirror::
-                  ServiceDaemon <> (g_ceph_context, _rados, m_threads));
+        reset(new rbd::mirror::
+              ServiceDaemon <> (g_ceph_context, _rados, m_threads));
 
         librbd::api::Mirror <>::mode_set(m_local_io_ctx, RBD_MIRROR_MODE_IMAGE);
 
@@ -90,7 +92,8 @@ class TestImageDeleter:public TestFixture {
         EXPECT_EQ(0,
                   cls_client::mirror_image_set(&m_local_io_ctx,
                                                m_local_image_id, mirror_image));
-    } void TearDown() override {
+    } void TearDown() override
+    {
         remove_image();
 
         C_SaferCond ctx;
@@ -103,13 +106,15 @@ class TestImageDeleter:public TestFixture {
         TestFixture::TearDown();
     }
 
-    void init_image_deleter() {
+    void init_image_deleter()
+    {
         C_SaferCond ctx;
         m_deleter->init(&ctx);
         ASSERT_EQ(0, ctx.wait());
     }
 
-    void remove_image() {
+    void remove_image()
+    {
         cls::rbd::MirrorImage mirror_image;
         int r = cls_client::mirror_image_get(&m_local_io_ctx, m_local_image_id,
                                              &mirror_image);
@@ -117,8 +122,8 @@ class TestImageDeleter:public TestFixture {
         if (r != -ENOENT) {
             mirror_image.state = MirrorImageState::MIRROR_IMAGE_STATE_ENABLED;
             EXPECT_EQ(0, cls_client::mirror_image_set(&m_local_io_ctx,
-                                                      m_local_image_id,
-                                                      mirror_image));
+                      m_local_image_id,
+                      mirror_image));
         }
         promote_image();
 
@@ -127,7 +132,8 @@ class TestImageDeleter:public TestFixture {
         EXPECT_EQ(1, r == 0 || r == -ENOENT);
     }
 
-    void promote_image(ImageCtx * ictx = nullptr) {
+    void promote_image(ImageCtx *ictx = nullptr)
+    {
         bool close = false;
         int r = 0;
         if (!ictx) {
@@ -149,7 +155,8 @@ class TestImageDeleter:public TestFixture {
         }
     }
 
-    void demote_image(ImageCtx * ictx = nullptr) {
+    void demote_image(ImageCtx *ictx = nullptr)
+    {
         bool close = false;
         if (!ictx) {
             ictx = new ImageCtx("", m_local_image_id, "", m_local_io_ctx,
@@ -165,13 +172,14 @@ class TestImageDeleter:public TestFixture {
         }
     }
 
-    void create_snapshot(std::string snap_name = "snap1", bool protect = false) {
+    void create_snapshot(std::string snap_name = "snap1", bool protect = false)
+    {
         ImageCtx *ictx = new ImageCtx("", m_local_image_id, "", m_local_io_ctx,
                                       false);
         EXPECT_EQ(0, ictx->state->open(0));
         {
             std::unique_lock image_locker {
-            ictx->image_lock};
+                ictx->image_lock};
             ictx->set_journal_policy(new librbd::journal::DisabledPolicy());
         }
 
@@ -191,13 +199,14 @@ class TestImageDeleter:public TestFixture {
         EXPECT_EQ(0, ictx->state->close());
     }
 
-    std::string create_clone() {
+    std::string create_clone()
+    {
         ImageCtx *ictx = new ImageCtx("", m_local_image_id, "", m_local_io_ctx,
                                       false);
         EXPECT_EQ(0, ictx->state->open(0));
         {
             std::unique_lock image_locker {
-            ictx->image_lock};
+                ictx->image_lock};
             ictx->set_journal_policy(new librbd::journal::DisabledPolicy());
         }
 
@@ -211,9 +220,9 @@ class TestImageDeleter:public TestFixture {
                   snap_protect(cls::rbd::UserSnapshotNamespace(), "snap1"));
         EXPECT_EQ(0,
                   librbd::api::Image <>::snap_set(ictx,
-                                                  cls::rbd::
-                                                  UserSnapshotNamespace(),
-                                                  "snap1"));
+                          cls::rbd::
+                          UserSnapshotNamespace(),
+                          "snap1"));
 
         std::string clone_id = librbd::util::generate_image_id(m_local_io_ctx);
         librbd::ImageOptions clone_opts;
@@ -236,22 +245,24 @@ class TestImageDeleter:public TestFixture {
         return clone_id;
     }
 
-    void check_image_deleted() {
+    void check_image_deleted()
+    {
         ImageCtx *ictx = new ImageCtx("", m_local_image_id, "", m_local_io_ctx,
                                       false);
         EXPECT_EQ(-ENOENT, ictx->state->open(0));
 
         cls::rbd::MirrorImage mirror_image;
         EXPECT_EQ(-ENOENT, cls_client::mirror_image_get(&m_local_io_ctx,
-                                                        m_local_image_id,
-                                                        &mirror_image));
+                  m_local_image_id,
+                  &mirror_image));
     }
 
-    int trash_move(const std::string & global_image_id) {
+    int trash_move(const std::string &global_image_id)
+    {
         C_SaferCond ctx;
         rbd::mirror::ImageDeleter <>::trash_move(m_local_io_ctx,
-                                                 global_image_id, true,
-                                                 m_threads->work_queue, &ctx);
+                global_image_id, true,
+                m_threads->work_queue, &ctx);
         return ctx.wait();
     }
 

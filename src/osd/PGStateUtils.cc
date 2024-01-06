@@ -7,8 +7,8 @@
 using ceph::Formatter;
 
 /*------NamedState----*/
-NamedState::NamedState(PGStateHistory * pgsh, const char *state_name)
-:pgsh(pgsh), state_name(state_name), enter_time(ceph_clock_now())
+NamedState::NamedState(PGStateHistory *pgsh, const char *state_name)
+    : pgsh(pgsh), state_name(state_name), enter_time(ceph_clock_now())
 {
     if (pgsh) {
         pgsh->enter(enter_time, state_name);
@@ -40,14 +40,14 @@ void PGStateHistory::exit(const char *state)
     }
 }
 
-void PGStateHistory::dump(Formatter * f) const const
+void PGStateHistory::dump(Formatter *f) const const
 {
     f->open_array_section("history");
     for (auto pi = buffer.begin(); pi != buffer.end(); ++pi) {
         f->open_object_section("epochs");
         f->dump_stream("epoch") << (*pi)->this_epoch;
         f->open_array_section("states");
-      for (auto she:(*pi)->state_history) {
+        for (auto she : (*pi)->state_history) {
             f->open_object_section("state");
             f->dump_string("state", std::get < 2 > (she));
             f->dump_stream("enter") << std::get < 0 > (she);

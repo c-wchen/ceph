@@ -34,7 +34,7 @@ int RadosDump::read_super()
     return 0;
 }
 
-int RadosDump::get_header(header * h)
+int RadosDump::get_header(header *h)
 {
     assert(h != NULL);
 
@@ -53,7 +53,7 @@ int RadosDump::get_header(header * h)
     return 0;
 }
 
-int RadosDump::get_footer(footer * f)
+int RadosDump::get_footer(footer *f)
 {
     ceph_assert(f != NULL);
 
@@ -77,14 +77,15 @@ int RadosDump::get_footer(footer * f)
     return 0;
 }
 
-int RadosDump::read_section(sectiontype_t * type, bufferlist * bl)
+int RadosDump::read_section(sectiontype_t *type, bufferlist *bl)
 {
     header hdr;
     ssize_t bytes;
 
     int ret = get_header(&hdr);
-    if (ret)
+    if (ret) {
         return ret;
+    }
 
     *type = hdr.type;
 
@@ -98,42 +99,44 @@ int RadosDump::read_section(sectiontype_t * type, bufferlist * bl)
     if (hdr.size > 0) {
         footer ft;
         ret = get_footer(&ft);
-        if (ret)
+        if (ret) {
             return ret;
+        }
     }
 
     return 0;
 }
 
-int RadosDump::skip_object(bufferlist & bl)
+int RadosDump::skip_object(bufferlist &bl)
 {
     bufferlist ebl;
     bool done = false;
     while (!done) {
         sectiontype_t type;
         int ret = read_section(&type, &ebl);
-        if (ret)
+        if (ret) {
             return ret;
+        }
 
         if (type >= END_OF_TYPES) {
             cout << "Skipping unknown object section type" << std::endl;
             continue;
         }
         switch (type) {
-        case TYPE_DATA:
-        case TYPE_ATTRS:
-        case TYPE_OMAP_HDR:
-        case TYPE_OMAP:
+            case TYPE_DATA:
+            case TYPE_ATTRS:
+            case TYPE_OMAP_HDR:
+            case TYPE_OMAP:
 #ifdef DIAGNOSTIC
-            cerr << "Skip type " << (int)type << std::endl;
+                cerr << "Skip type " << (int)type << std::endl;
 #endif
-            break;
-        case TYPE_OBJECT_END:
-            done = true;
-            break;
-        default:
-            cerr << "Can't skip unknown type: " << type << std::endl;
-            return -EFAULT;
+                break;
+            case TYPE_OBJECT_END:
+                done = true;
+                break;
+            default:
+                cerr << "Can't skip unknown type: " << type << std::endl;
+                return -EFAULT;
         }
     }
     return 0;

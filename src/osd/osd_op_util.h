@@ -10,38 +10,43 @@
 
 #include "messages/MOSDOp.h"
 
-class OpInfo {
-  public:
+class OpInfo
+{
+public:
     struct ClassInfo {
         ClassInfo(std::string && class_name, std::string && method_name,
                   bool read, bool write,
-                  bool allowed):class_name(std::move(class_name)),
+                  bool allowed): class_name(std::move(class_name)),
             method_name(std::move(method_name)), read(read), write(write),
-            allowed(allowed) {
+            allowed(allowed)
+        {
         } const std::string class_name;
         const std::string method_name;
         const bool read, write, allowed;
     };
 
-  private:
+private:
     uint64_t rmw_flags = 0;
     std::vector < ClassInfo > classes;
 
     void set_rmw_flags(int flags);
 
     void add_class(std::string && class_name, std::string && method_name,
-                   bool read, bool write, bool allowed) {
+                   bool read, bool write, bool allowed)
+    {
         classes.emplace_back(std::move(class_name), std::move(method_name),
                              read, write, allowed);
     }
 
-  public:
+public:
 
-    void clear() {
+    void clear()
+    {
         rmw_flags = 0;
     }
 
-    uint64_t get_flags() const {
+    uint64_t get_flags() const
+    {
         return rmw_flags;
     } bool check_rmw(int flag)const;
     bool may_read() const;
@@ -69,12 +74,14 @@ class OpInfo {
     void set_force_rwordered();
     void set_returnvec();
 
-    int set_from_op(const MOSDOp * m, const OSDMap & osdmap);
+    int set_from_op(const MOSDOp *m, const OSDMap &osdmap);
     int set_from_op(const std::vector < OSDOp > &ops,
-                    const pg_t & pg, const OSDMap & osdmap);
+                    const pg_t &pg, const OSDMap &osdmap);
 
-    std::vector < ClassInfo > get_classes()const {
+    std::vector < ClassInfo > get_classes()const
+    {
         return classes;
-}};
+    }
+};
 
-std::ostream & operator<<(std::ostream & out, const OpInfo::ClassInfo & i);
+std::ostream &operator<<(std::ostream &out, const OpInfo::ClassInfo &i);

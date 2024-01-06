@@ -10,18 +10,22 @@
 #include <atomic>
 #include <vector>
 
-template < class T > class QueueRing {
+template < class T > class QueueRing
+{
     struct QueueBucket {
         ceph::mutex lock = ceph::make_mutex("QueueRing::QueueBucket::lock");
         ceph::condition_variable cond;
         typename std::list < T > entries;
 
-         QueueBucket() {
-        } QueueBucket(const QueueBucket & rhs) {
+        QueueBucket()
+        {
+        } QueueBucket(const QueueBucket &rhs)
+        {
             entries = rhs.entries;
         }
 
-        void enqueue(const T & entry) {
+        void enqueue(const T &entry)
+        {
             lock.lock();
             if (entries.empty()) {
                 cond.notify_all();
@@ -30,7 +34,8 @@ template < class T > class QueueRing {
             lock.unlock();
         }
 
-        void dequeue(T * entry) {
+        void dequeue(T *entry)
+        {
             std::unique_lock l(lock);
             while (entries.empty()) {
                 cond.wait(l);
@@ -45,19 +50,24 @@ template < class T > class QueueRing {
     int num_buckets;
 
     std::atomic < int64_t > cur_read_bucket = {
-    0};
+        0
+    };
     std::atomic < int64_t > cur_write_bucket = {
-    0};
+        0
+    };
 
-  public:
-    QueueRing(int n):buckets(n), num_buckets(n) {
+public:
+    QueueRing(int n): buckets(n), num_buckets(n)
+    {
     }
 
-    void enqueue(const T & entry) {
+    void enqueue(const T &entry)
+    {
         buckets[++cur_write_bucket % num_buckets].enqueue(entry);
     };
 
-    void dequeue(T * entry) {
+    void dequeue(T *entry)
+    {
         buckets[++cur_read_bucket % num_buckets].dequeue(entry);
     }
 };

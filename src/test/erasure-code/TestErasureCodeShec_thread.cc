@@ -34,8 +34,9 @@ using namespace std;
 
 void *thread1(void *pParam);
 
-class TestParam {
-  public:
+class TestParam
+{
+public:
     string k, m, c, w;
 };
 
@@ -92,13 +93,13 @@ void *thread1(void *pParam)
 
     time_t start, end;
 
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
 
     instance.disable_dlclose = true;
     {
         std::lock_guard l {
-        instance.lock};
+            instance.lock};
         __erasure_code_init((char *)"shec", (char *)"");
     }
     std::cout << "__erasure_code_init finish " << std::endl;
@@ -112,7 +113,7 @@ void *thread1(void *pParam)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "012345"          //192
-        );
+             );
 
     //decode
     int want_to_decode[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -129,8 +130,8 @@ void *thread1(void *pParam)
         int r;
         ErasureCodeShec *shec =
             new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                      ErasureCodeShec::
-                                                      MULTIPLE);
+                ErasureCodeShec::
+                MULTIPLE);
         ErasureCodeProfile *profile = new ErasureCodeProfile();
         (*profile)["plugin"] = "shec";
         (*profile)["technique"] = "multiple";

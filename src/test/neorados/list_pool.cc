@@ -59,7 +59,7 @@ std::string_view hostname()
         len = std::strlen(hostname);
     }
     return {
-    hostname, len};
+        hostname, len};
 }
 
 std::string temp_pool_name(const std::string_view prefix)
@@ -75,7 +75,7 @@ std::string temp_pool_name(const std::string_view prefix)
                         .time_since_epoch()).count(), num++);
 }
 
-bs::error_code noisy_list(R::RADOS & r, int64_t p)
+bs::error_code noisy_list(R::RADOS &r, int64_t p)
 {
     auto b = R::Cursor::begin();
     auto e = R::Cursor::end();
@@ -84,8 +84,8 @@ bs::error_code noisy_list(R::RADOS & r, int64_t p)
     std::cout << "end = " << e.to_str() << std::endl;
     try {
         auto[v, next] = r.enumerate_objects(p, b, e, 1000, {
-                                            }
-                                            , ca::use_blocked, R::all_nspaces);
+        }
+        , ca::use_blocked, R::all_nspaces);
 
         std::cout << "Got " << v.size() << " entries." << std::endl;
         std::cout << "next cursor = " << next.to_str() << std::endl;
@@ -95,12 +95,12 @@ bs::error_code noisy_list(R::RADOS & r, int64_t p)
         auto o = v.cbegin();
         while (o != v.cend()) {
             std::cout << *o;
-            if (++o != v.cend())
+            if (++o != v.cend()) {
                 std::cout << " ";
+            }
         }
         std::cout << "]" << std::endl;
-    }
-    catch(const bs::system_error & e) {
+    } catch (const bs::system_error &e) {
         std::cerr << "RADOS::enumerate_objects: " << e.what() << std::endl;
         return e.code();
     }
@@ -108,20 +108,20 @@ bs::error_code noisy_list(R::RADOS & r, int64_t p)
     };
 }
 
-bs::error_code create_several(R::RADOS & r, const R::IOContext & i,
+bs::error_code create_several(R::RADOS &r, const R::IOContext &i,
                               std::initializer_list < std::string > l)
 {
-  for (const auto & o:l)
+    for (const auto &o : l)
         try {
-        R::WriteOp op;
-        std::cout << "Creating " << o << std::endl;
-        ceph::bufferlist bl;
-        bl.append("My bologna has no name.");
-        op.write_full(std::move(bl));
-        r.execute(o, i, std::move(op), ca::use_blocked);
-        } catch(const bs::system_error & e) {
-        std::cerr << "RADOS::execute: " << e.what() << std::endl;
-        return e.code();
+            R::WriteOp op;
+            std::cout << "Creating " << o << std::endl;
+            ceph::bufferlist bl;
+            bl.append("My bologna has no name.");
+            op.write_full(std::move(bl));
+            r.execute(o, i, std::move(op), ca::use_blocked);
+        } catch (const bs::system_error &e) {
+            std::cerr << "RADOS::execute: " << e.what() << std::endl;
+            return e.code();
         }
     return {
     };
@@ -144,8 +144,9 @@ int main(int argc, char **argv)
 
         auto pool_name = get_temp_pool_name("ceph_test_RADOS_list_pool" sv);
         r.create_pool(pool_name, std::nullopt, ca::use_blocked);
-        auto pd = make_scope_guard([&pool_name, &r] (){
-                                   r.delete_pool(pool_name, ca::use_blocked);});
+        auto pd = make_scope_guard([&pool_name, &r]() {
+            r.delete_pool(pool_name, ca::use_blocked);
+        });
         auto pool = r.lookup_pool(pool_name, ca::use_blocked);
         R::IOContext i(pool);
 
@@ -153,16 +154,16 @@ int main(int argc, char **argv)
             return 1;
         }
         if (create_several(r, i, {
-                           "meow", "woof", "squeak"}
-            )) {
+        "meow", "woof", "squeak"
+    }
+                      )) {
             return 1;
         }
         if (noisy_list(r, pool)) {
             return 1;
         }
 
-    }
-    catch(const bs::system_error & e) {
+    } catch (const bs::system_error &e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }

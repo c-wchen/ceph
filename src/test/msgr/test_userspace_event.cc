@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -21,15 +21,19 @@
 #include "msg/async/dpdk/UserspaceEvent.h"
 #include "global/global_context.h"
 
-class UserspaceManagerTest:public::testing::Test {
-  public:
-    UserspaceEventManager * manager;
+class UserspaceManagerTest: public::testing::Test
+{
+public:
+    UserspaceEventManager *manager;
 
-    UserspaceManagerTest() {
-    } virtual void SetUp() {
+    UserspaceManagerTest()
+    {
+    } virtual void SetUp()
+    {
         manager = new UserspaceEventManager(g_ceph_context);
     }
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         delete manager;
     }
 };
@@ -87,17 +91,17 @@ TEST_F(UserspaceManagerTest, StressTest)
     }
     int r = 0;
     int fd = manager->get_eventfd();
-    auto get_activate_count =[](std::vector < std::pair < int, int > >&m){
+    auto get_activate_count = [](std::vector < std::pair < int, int > > &m) {
         std::vector < int >fds;
         int mask = 0;
         size_t idx = 0;
-      for (auto && p:m) {
+        for (auto && p : m) {
             mask = p.first & p.second;
             if (p.first != -1 && mask) {
                 p.second &= (~mask);
                 fds.push_back(idx);
                 std::cerr << " activate " << idx << " mask " << mask << std::
-                    endl;
+                          endl;
             }
             ++idx;
         }
@@ -106,51 +110,45 @@ TEST_F(UserspaceManagerTest, StressTest)
     for (int i = 0; i < 10000; ++i) {
         int value = dist(rng);
         fd = dist(rng) % mappings.size();
-        auto & p = mappings[fd];
+        auto &p = mappings[fd];
         int mask = dist(rng) % 2 + 1;
         if (value > 55) {
             r = manager->notify(fd, mask);
             if (p.first == -1) {
                 ASSERT_EQ(p.second, -1);
                 ASSERT_EQ(r, -ENOENT);
-            }
-            else {
+            } else {
                 p.second |= mask;
                 ASSERT_EQ(r, 0);
             }
             std::
-                cerr << " notify fd " << fd << " mask " << mask << " r " << r <<
-                std::endl;
-        }
-        else if (value > 45) {
+            cerr << " notify fd " << fd << " mask " << mask << " r " << r <<
+                 std::endl;
+        } else if (value > 45) {
             r = manager->listen(fd, mask);
             std::
-                cerr << " listen fd " << fd << " mask " << mask << " r " << r <<
-                std::endl;
+            cerr << " listen fd " << fd << " mask " << mask << " r " << r <<
+                 std::endl;
             if (p.first == -1) {
                 ASSERT_EQ(p.second, -1);
                 ASSERT_EQ(r, -ENOENT);
-            }
-            else {
+            } else {
                 p.first |= mask;
                 ASSERT_EQ(r, 0);
             }
-        }
-        else if (value > 35) {
+        } else if (value > 35) {
             r = manager->unlisten(fd, mask);
             std::
-                cerr << " unlisten fd " << fd << " mask " << mask << " r " << r
-                << std::endl;
+            cerr << " unlisten fd " << fd << " mask " << mask << " r " << r
+                 << std::endl;
             if (p.first == -1) {
                 ASSERT_EQ(p.second, -1);
                 ASSERT_EQ(r, -ENOENT);
-            }
-            else {
+            } else {
                 p.first &= ~mask;
                 ASSERT_EQ(r, 0);
             }
-        }
-        else if (value > 20) {
+        } else if (value > 20) {
             std::set < int >actual, expected;
             do {
                 r = manager->poll(events, masks, 3, nullptr);
@@ -162,19 +160,19 @@ TEST_F(UserspaceManagerTest, StressTest)
             } while (r == 3);
             std::cerr << std::endl;
             auto fds = get_activate_count(mappings);
-          for (auto && d:fds)
+            for (auto && d : fds) {
                 expected.insert(d);
+            }
             ASSERT_EQ(expected, actual);
-        }
-        else if (value > 10) {
+        } else if (value > 10) {
             r = manager->get_eventfd();
             std::cerr << " open fd " << r << std::endl;
             ASSERT_TRUE(r > 0);
-            if ((size_t) r >= mappings.size())
+            if ((size_t) r >= mappings.size()) {
                 mappings.resize(r + 1);
+            }
             mappings[r] = std::make_pair(0, 0);
-        }
-        else {
+        } else {
             manager->close(fd);
             std::cerr << " close fd " << fd << std::endl;
             mappings[fd] = std::make_pair(-1, -1);

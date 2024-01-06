@@ -40,565 +40,557 @@
 
 using namespace std;
 
-namespace rgw::auth::sts {
+namespace rgw::auth::sts
+{
 
-    bool WebTokenEngine::is_applicable(const std::string & token)const noexcept {
-        return !token.empty();
-    } std::string WebTokenEngine::get_role_tenant(const string & role_arn)const {
-        string tenant;
-        auto r_arn = rgw::ARN::parse(role_arn);
-        if (r_arn) {
-            tenant = r_arn->account;
-        } return tenant;
-    } std::string WebTokenEngine::get_role_name(const string & role_arn)const {
-        string role_name;
-        auto r_arn = rgw::ARN::parse(role_arn);
-        if (r_arn) {
-            role_name = r_arn->resource;
-        } if (!role_name.empty()) {
-            auto pos = role_name.find_last_of('/');
-            if (pos != string::npos) {
-                role_name = role_name.substr(pos + 1);
-            }
-        }
-        return role_name;
+bool WebTokenEngine::is_applicable(const std::string &token)const noexcept
+{
+    return !token.empty();
+} std::string WebTokenEngine::get_role_tenant(const string &role_arn)const
+{
+    string tenant;
+    auto r_arn = rgw::ARN::parse(role_arn);
+    if (r_arn) {
+        tenant = r_arn->account;
     }
+    return tenant;
+} std::string WebTokenEngine::get_role_name(const string &role_arn)const
+{
+    string role_name;
+    auto r_arn = rgw::ARN::parse(role_arn);
+    if (r_arn) {
+        role_name = r_arn->resource;
+    }
+    if (!role_name.empty()) {
+        auto pos = role_name.find_last_of('/');
+        if (pos != string::npos) {
+            role_name = role_name.substr(pos + 1);
+        }
+    }
+    return role_name;
+}
 
-    std::unique_ptr < rgw::sal::RGWOIDCProvider >
-        WebTokenEngine::get_provider(const DoutPrefixProvider * dpp,
-                                     const string & role_arn,
-                                     const string & iss)const {
-        string tenant = get_role_tenant(role_arn);
+std::unique_ptr < rgw::sal::RGWOIDCProvider > WebTokenEngine::get_provider(const DoutPrefixProvider *dpp,
+        const string &role_arn,
+        const string &iss)const
+{
+    string tenant = get_role_tenant(role_arn);
 
-        string idp_url = iss;
-        auto pos = idp_url.find("http://");
-        if (pos == std::string::npos) {
-            pos = idp_url.find("https://");
+    string idp_url = iss;
+    auto pos = idp_url.find("http://");
+    if (pos == std::string::npos) {
+        pos = idp_url.find("https://");
+        if (pos != std::string::npos) {
+            idp_url.erase(pos, 8);
+        } else {
+            pos = idp_url.find("www.");
             if (pos != std::string::npos) {
-                idp_url.erase(pos, 8);
-            }
-            else {
-                pos = idp_url.find("www.");
-                if (pos != std::string::npos) {
-                    idp_url.erase(pos, 4);
-                }
+                idp_url.erase(pos, 4);
             }
         }
-        else {
-            idp_url.erase(pos, 7);
-        }
-        auto provider_arn = rgw::ARN(idp_url, "oidc-provider", tenant);
-        string p_arn = provider_arn.to_string();
-        std::unique_ptr < rgw::sal::RGWOIDCProvider > provider =
-            driver->get_oidc_provider();
-        provider->set_arn(p_arn);
-        provider->set_tenant(tenant);
-        auto ret = provider->get(dpp);
-        if (ret < 0) {
-            return nullptr;
-        }
-        return provider;
+    } else {
+        idp_url.erase(pos, 7);
     }
-
-    bool WebTokenEngine::is_client_id_valid(vector < string > &client_ids,
-                                            const string & client_id)const {
-        for (auto it:client_ids) {
-            if (it == client_id) {
-                return true;
-        }} return false;
+    auto provider_arn = rgw::ARN(idp_url, "oidc-provider", tenant);
+    string p_arn = provider_arn.to_string();
+    std::unique_ptr < rgw::sal::RGWOIDCProvider > provider =
+        driver->get_oidc_provider();
+    provider->set_arn(p_arn);
+    provider->set_tenant(tenant);
+    auto ret = provider->get(dpp);
+    if (ret < 0) {
+        return nullptr;
     }
+    return provider;
+}
 
-    bool WebTokenEngine::is_cert_valid(const vector < string > &thumbprints,
-                                       const string & cert)const {
-        //calculate thumbprint of cert
-        std::unique_ptr < BIO,
-            decltype(&BIO_free_all) >
-            certbio(BIO_new_mem_buf(cert.data(), cert.size()), BIO_free_all);
-        std::unique_ptr < BIO,
-            decltype(&BIO_free_all) > keybio(BIO_new(BIO_s_mem()),
-                                             BIO_free_all);
-        string pw = "";
-        std::unique_ptr < X509,
-            decltype(&X509_free) >
-            x_509cert(PEM_read_bio_X509
-                      (certbio.get(), nullptr, nullptr,
-                       const_cast < char *>(pw.c_str())), X509_free);
-        const EVP_MD *fprint_type = EVP_sha1();
-        unsigned int fprint_size;
-        unsigned char fprint[EVP_MAX_MD_SIZE];
-
-        if (!X509_digest(x_509cert.get(), fprint_type, fprint, &fprint_size)) {
-            return false;
-        } stringstream ss;
-        for (unsigned int i = 0; i < fprint_size; i++) {
-            ss << std::setfill('0') << std::setw(2) << std::
-                hex << (0xFF & (unsigned int)fprint[i]);
+bool WebTokenEngine::is_client_id_valid(vector < string > &client_ids,
+                                        const string &client_id)const
+{
+    for (auto it : client_ids) {
+        if (it == client_id) {
+            return true;
         }
-        std::string digest = ss.str();
+    }
+    return false;
+}
 
-      for (auto & it:thumbprints) {
-            if (boost::iequals(it, digest)) {
-                return true;
-            }
-        }
+bool WebTokenEngine::is_cert_valid(const vector < string > &thumbprints,
+                                   const string &cert)const
+{
+    //calculate thumbprint of cert
+    std::unique_ptr < BIO,
+        decltype(&BIO_free_all) >
+        certbio(BIO_new_mem_buf(cert.data(), cert.size()), BIO_free_all);
+    std::unique_ptr < BIO,
+        decltype(&BIO_free_all) > keybio(BIO_new(BIO_s_mem()),
+                                         BIO_free_all);
+    string pw = "";
+    std::unique_ptr < X509,
+        decltype(&X509_free) >
+        x_509cert(PEM_read_bio_X509
+                  (certbio.get(), nullptr, nullptr,
+                   const_cast < char *>(pw.c_str())), X509_free);
+    const EVP_MD *fprint_type = EVP_sha1();
+    unsigned int fprint_size;
+    unsigned char fprint[EVP_MAX_MD_SIZE];
+
+    if (!X509_digest(x_509cert.get(), fprint_type, fprint, &fprint_size)) {
         return false;
     }
+    stringstream ss;
+    for (unsigned int i = 0; i < fprint_size; i++) {
+        ss << std::setfill('0') << std::setw(2) << std::
+           hex << (0xFF & (unsigned int)fprint[i]);
+    }
+    std::string digest = ss.str();
 
-    template < typename T > void
-     WebTokenEngine::recurse_and_insert(const string & key,
-                                        const jwt::claim & c, T & t) const {
-        string s_val;
-        jwt::claim::type c_type = c.get_type();
-        switch (c_type) {
+    for (auto &it : thumbprints) {
+        if (boost::iequals(it, digest)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template < typename T > void WebTokenEngine::recurse_and_insert(const string &key,
+        const jwt::claim &c, T &t) const
+{
+    string s_val;
+    jwt::claim::type c_type = c.get_type();
+    switch (c_type) {
         case jwt::claim::type::null:
             break;
-            case jwt::claim::type::boolean:case jwt::claim::type::
-                number:case jwt::claim::type::int64: {
-                s_val = c.to_json().serialize();
-                t.emplace(std::make_pair(key, s_val));
-                break;
-            } case jwt::claim::type::string: {
-                s_val = c.to_json().to_str();
-                t.emplace(std::make_pair(key, s_val));
-                break;
-            }
-        case jwt::claim::type::array:
-            {
-                const picojson::array & arr = c.as_array();
-              for (auto & a:arr) {
-                    recurse_and_insert(key, jwt::claim(a), t);
-                }
-                break;
-            }
-        case jwt::claim::type::object:
-            {
-                const picojson::object & obj = c.as_object();
-              for (auto & m:obj) {
-                    recurse_and_insert(m.first, jwt::claim(m.second), t);
-                }
-                break;
-            }
+        case jwt::claim::type::boolean:
+        case jwt::claim::type::
+                number:
+        case jwt::claim::type::int64: {
+            s_val = c.to_json().serialize();
+            t.emplace(std::make_pair(key, s_val));
+            break;
         }
-        return;
+        case jwt::claim::type::string: {
+            s_val = c.to_json().to_str();
+            t.emplace(std::make_pair(key, s_val));
+            break;
+        }
+        case jwt::claim::type::array: {
+            const picojson::array &arr = c.as_array();
+            for (auto &a : arr) {
+                recurse_and_insert(key, jwt::claim(a), t);
+            }
+            break;
+        }
+        case jwt::claim::type::object: {
+            const picojson::object &obj = c.as_object();
+            for (auto &m : obj) {
+                recurse_and_insert(m.first, jwt::claim(m.second), t);
+            }
+            break;
+        }
     }
+    return;
+}
 
 //Extract all token claims so that they can be later used in the Condition element of Role's trust policy
-    WebTokenEngine::token_t
-        WebTokenEngine::get_token_claims(const jwt::decoded_jwt & decoded)const
-    {
-        WebTokenEngine::token_t token;
-        const auto & claims = decoded.get_payload_claims();
+WebTokenEngine::token_t WebTokenEngine::get_token_claims(const jwt::decoded_jwt &decoded)const
+{
+    WebTokenEngine::token_t token;
+    const auto &claims = decoded.get_payload_claims();
 
-        for (auto & c:claims) {
-            if (c.first == string(princTagsNamespace)) {
-                continue;
-            } recurse_and_insert(c.first, c.second, token);
+    for (auto &c : claims) {
+        if (c.first == string(princTagsNamespace)) {
+            continue;
         }
-        return token;
+        recurse_and_insert(c.first, c.second, token);
     }
+    return token;
+}
 
 //Offline validation of incoming Web Token which is a signed JWT (JSON Web Token)
-    std::tuple < boost::optional < WebTokenEngine::token_t >,
-        boost::optional <
-        WebTokenEngine::principal_tags_t >> WebTokenEngine::
-        get_from_jwt(const DoutPrefixProvider * dpp, const std::string & token,
-                     const req_state * const s, optional_yield y)const {
-        WebTokenEngine::token_t t;
-        WebTokenEngine::principal_tags_t principal_tags;
-        try {
-            const auto & decoded = jwt::decode(token);
+std::tuple < boost::optional < WebTokenEngine::token_t >,
+    boost::optional <
+    WebTokenEngine::principal_tags_t >> WebTokenEngine::
+    get_from_jwt(const DoutPrefixProvider *dpp, const std::string &token,
+                 const req_state *const s, optional_yield y)const
+{
+    WebTokenEngine::token_t t;
+    WebTokenEngine::principal_tags_t principal_tags;
+    try {
+        const auto &decoded = jwt::decode(token);
 
-            auto & payload = decoded.get_payload();
-            ldpp_dout(dpp, 20) << " payload = " << payload << dendl;
+        auto &payload = decoded.get_payload();
+        ldpp_dout(dpp, 20) << " payload = " << payload << dendl;
 
-            t = get_token_claims(decoded);
+        t = get_token_claims(decoded);
 
-            string iss;
-            if (decoded.has_issuer()) {
-                iss = decoded.get_issuer();
-            } set < string > aud;
-            if (decoded.has_audience()) {
-                aud = decoded.get_audience();
+        string iss;
+        if (decoded.has_issuer()) {
+            iss = decoded.get_issuer();
+        }
+        set < string > aud;
+        if (decoded.has_audience()) {
+            aud = decoded.get_audience();
+        }
+
+        string client_id;
+        if (decoded.has_payload_claim("client_id")) {
+            client_id = decoded.get_payload_claim("client_id").as_string();
+        }
+        if (client_id.empty() && decoded.has_payload_claim("clientId")) {
+            client_id = decoded.get_payload_claim("clientId").as_string();
+        }
+        string azp;
+        if (decoded.has_payload_claim("azp")) {
+            azp = decoded.get_payload_claim("azp").as_string();
+        }
+
+        string role_arn = s->info.args.get("RoleArn");
+        auto provider = get_provider(dpp, role_arn, iss);
+        if (!provider) {
+            ldpp_dout(dpp,
+                      0) <<
+                         "Couldn't get oidc provider info using input iss" << iss <<
+                         dendl;
+            throw - EACCES;
+        }
+        if (decoded.has_payload_claim(string(princTagsNamespace))) {
+            auto &cl =
+                decoded.get_payload_claim(string(princTagsNamespace));
+            if (cl.get_type() == jwt::claim::type::object
+                || cl.get_type() == jwt::claim::type::array) {
+                recurse_and_insert("dummy", cl, principal_tags);
+                for (auto it : principal_tags) {
+                    ldpp_dout(dpp,
+                              5) << "Key: " << it.first << " Value: " << it.
+                                 second << dendl;
+                }
+            } else {
+                ldpp_dout(dpp,
+                          0) << "Malformed principal tags" << cl.
+                             as_string() << dendl;
+                throw - EINVAL;
             }
-
-            string client_id;
-            if (decoded.has_payload_claim("client_id")) {
-                client_id = decoded.get_payload_claim("client_id").as_string();
+        }
+        vector < string > client_ids = provider->get_client_ids();
+        vector < string > thumbprints = provider->get_thumbprints();
+        if (!client_ids.empty()) {
+            bool found = false;
+            for (auto &it : aud) {
+                if (is_client_id_valid(client_ids, it)) {
+                    found = true;
+                    break;
+                }
             }
-            if (client_id.empty() && decoded.has_payload_claim("clientId")) {
-                client_id = decoded.get_payload_claim("clientId").as_string();
-            }
-            string azp;
-            if (decoded.has_payload_claim("azp")) {
-                azp = decoded.get_payload_claim("azp").as_string();
-            }
-
-            string role_arn = s->info.args.get("RoleArn");
-            auto provider = get_provider(dpp, role_arn, iss);
-            if (!provider) {
+            if (!found && !is_client_id_valid(client_ids, client_id)
+                && !is_client_id_valid(client_ids, azp)) {
                 ldpp_dout(dpp,
                           0) <<
-                    "Couldn't get oidc provider info using input iss" << iss <<
-                    dendl;
+                             "Client id in token doesn't match with that registered with oidc provider"
+                             << dendl;
                 throw - EACCES;
             }
-            if (decoded.has_payload_claim(string(princTagsNamespace))) {
-                auto & cl =
-                    decoded.get_payload_claim(string(princTagsNamespace));
-                if (cl.get_type() == jwt::claim::type::object
-                    || cl.get_type() == jwt::claim::type::array) {
-                    recurse_and_insert("dummy", cl, principal_tags);
-                  for (auto it:principal_tags) {
-                        ldpp_dout(dpp,
-                                  5) << "Key: " << it.first << " Value: " << it.
-                            second << dendl;
-                    }
-                }
-                else {
-                    ldpp_dout(dpp,
-                              0) << "Malformed principal tags" << cl.
-                        as_string() << dendl;
-                    throw - EINVAL;
-                }
+        }
+        //Validate signature
+        if (decoded.has_algorithm()) {
+            auto &algorithm = decoded.get_algorithm();
+            try {
+                validate_signature(dpp, decoded, algorithm, iss,
+                                   thumbprints, y);
+            } catch (...) {
+                throw - EACCES;
             }
-            vector < string > client_ids = provider->get_client_ids();
-            vector < string > thumbprints = provider->get_thumbprints();
-            if (!client_ids.empty()) {
-                bool found = false;
-              for (auto & it:aud) {
-                    if (is_client_id_valid(client_ids, it)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found && !is_client_id_valid(client_ids, client_id)
-                    && !is_client_id_valid(client_ids, azp)) {
-                    ldpp_dout(dpp,
-                              0) <<
-                        "Client id in token doesn't match with that registered with oidc provider"
-                        << dendl;
-                    throw - EACCES;
-                }
-            }
-            //Validate signature
-            if (decoded.has_algorithm()) {
-                auto & algorithm = decoded.get_algorithm();
-                try {
-                    validate_signature(dpp, decoded, algorithm, iss,
-                                       thumbprints, y);
-                }
-                catch( ...) {
-                    throw - EACCES;
-                }
-            }
-            else {
-                return {
+        } else {
+            return {
                 boost::none, boost::none};
-            }
         }
-        catch(int error) {
-            if (error == -EACCES) {
-                throw - EACCES;
-            }
-            ldpp_dout(dpp, 5) << "Invalid JWT token" << dendl;
-            return {
-            boost::none, boost::none};
+    } catch (int error) {
+        if (error == -EACCES) {
+            throw - EACCES;
         }
-        catch( ...) {
-            ldpp_dout(dpp, 5) << "Invalid JWT token" << dendl;
-            return {
-            boost::none, boost::none};
-        }
+        ldpp_dout(dpp, 5) << "Invalid JWT token" << dendl;
         return {
+            boost::none, boost::none};
+    } catch (...) {
+        ldpp_dout(dpp, 5) << "Invalid JWT token" << dendl;
+        return {
+            boost::none, boost::none};
+    }
+    return {
         t, principal_tags};
+}
+
+std::string WebTokenEngine::get_cert_url(const string &iss,
+        const DoutPrefixProvider *dpp,
+        optional_yield y)const
+{
+    string cert_url;
+    string openidc_wellknown_url = iss;
+    bufferlist openidc_resp;
+
+    if (openidc_wellknown_url.back() == '/') {
+        openidc_wellknown_url.pop_back();
+    }
+    openidc_wellknown_url.append("/.well-known/openid-configuration");
+
+    RGWHTTPTransceiver openidc_req(cct, "GET", openidc_wellknown_url,
+                                   &openidc_resp);
+
+    //Headers
+    openidc_req.append_header("Content-Type",
+                              "application/x-www-form-urlencoded");
+
+    int res = openidc_req.process(y);
+    if (res < 0) {
+        ldpp_dout(dpp, 10) << "HTTP request res: " << res << dendl;
+        throw - EINVAL;
     }
 
-    std::string
-        WebTokenEngine::get_cert_url(const string & iss,
-                                     const DoutPrefixProvider * dpp,
-                                     optional_yield y)const {
-        string cert_url;
-        string openidc_wellknown_url = iss;
-        bufferlist openidc_resp;
+    //Debug only
+    ldpp_dout(dpp,
+              20) << "HTTP status: " << openidc_req.
+                  get_http_status() << dendl;
+    ldpp_dout(dpp,
+              20) << "JSON Response is: " << openidc_resp.c_str() << dendl;
 
-        if (openidc_wellknown_url.back() == '/') {
-            openidc_wellknown_url.pop_back();
-        } openidc_wellknown_url.append("/.well-known/openid-configuration");
+    JSONParser parser;
+    if (parser.parse(openidc_resp.c_str(), openidc_resp.length())) {
+        JSONObj::data_val val;
+        if (parser.get_data("jwks_uri", &val)) {
+            cert_url = val.str.c_str();
+            ldpp_dout(dpp,
+                      20) << "Cert URL is: " << cert_url.c_str() << dendl;
+        } else {
+            ldpp_dout(dpp,
+                      0) <<
+                         "Malformed json returned while fetching openidc url" <<
+                         dendl;
+        }
+    }
+    return cert_url;
+}
 
-        RGWHTTPTransceiver openidc_req(cct, "GET", openidc_wellknown_url,
-                                       &openidc_resp);
-
+void WebTokenEngine::validate_signature(const DoutPrefixProvider *dpp,
+                                        const jwt::decoded_jwt &decoded,
+                                        const string &algorithm,
+                                        const string &iss,
+                                        const vector < string > &thumbprints,
+                                        optional_yield y) const
+{
+    if (algorithm != "HS256" && algorithm != "HS384"
+        && algorithm != "HS512") {
+        string cert_url = get_cert_url(iss, dpp, y);
+        if (cert_url.empty()) {
+            throw - EINVAL;
+        }
+        // Get certificate bufferlist cert_resp;
+        RGWHTTPTransceiver cert_req(cct, "GET", cert_url, &cert_resp);
         //Headers
-        openidc_req.append_header("Content-Type",
-                                  "application/x-www-form-urlencoded");
+        cert_req.append_header("Content-Type",
+                               "application/x-www-form-urlencoded");
 
-        int res = openidc_req.process(y);
+        int res = cert_req.process(y);
         if (res < 0) {
             ldpp_dout(dpp, 10) << "HTTP request res: " << res << dendl;
             throw - EINVAL;
         }
-
         //Debug only
         ldpp_dout(dpp,
-                  20) << "HTTP status: " << openidc_req.
-            get_http_status() << dendl;
+                  20) << "HTTP status: " << cert_req.
+                      get_http_status() << dendl;
         ldpp_dout(dpp,
-                  20) << "JSON Response is: " << openidc_resp.c_str() << dendl;
+                  20) << "JSON Response is: " << cert_resp.c_str() << dendl;
 
         JSONParser parser;
-        if (parser.parse(openidc_resp.c_str(), openidc_resp.length())) {
+        if (parser.parse(cert_resp.c_str(), cert_resp.length())) {
             JSONObj::data_val val;
-            if (parser.get_data("jwks_uri", &val)) {
-                cert_url = val.str.c_str();
-                ldpp_dout(dpp,
-                          20) << "Cert URL is: " << cert_url.c_str() << dendl;
-            }
-            else {
-                ldpp_dout(dpp,
-                          0) <<
-                    "Malformed json returned while fetching openidc url" <<
-                    dendl;
-            }
-        }
-        return cert_url;
-    }
-
-    void
-     WebTokenEngine::validate_signature(const DoutPrefixProvider * dpp,
-                                        const jwt::decoded_jwt & decoded,
-                                        const string & algorithm,
-                                        const string & iss,
-                                        const vector < string > &thumbprints,
-                                        optional_yield y) const {
-        if (algorithm != "HS256" && algorithm != "HS384"
-            && algorithm != "HS512") {
-            string cert_url = get_cert_url(iss, dpp, y);
-            if (cert_url.empty()) {
-                throw - EINVAL;
-            }
-            // Get certificate bufferlist cert_resp;
-            RGWHTTPTransceiver cert_req(cct, "GET", cert_url, &cert_resp);
-            //Headers
-            cert_req.append_header("Content-Type",
-                                   "application/x-www-form-urlencoded");
-
-            int res = cert_req.process(y);
-            if (res < 0) {
-                ldpp_dout(dpp, 10) << "HTTP request res: " << res << dendl;
-                throw - EINVAL;
-            }
-            //Debug only
-            ldpp_dout(dpp,
-                      20) << "HTTP status: " << cert_req.
-                get_http_status() << dendl;
-            ldpp_dout(dpp,
-                      20) << "JSON Response is: " << cert_resp.c_str() << dendl;
-
-            JSONParser parser;
-            if (parser.parse(cert_resp.c_str(), cert_resp.length())) {
-                JSONObj::data_val val;
-                if (parser.get_data("keys", &val)) {
-                    if (val.str[0] == '[') {
-                        val.str.erase(0, 1);
-                    }
-                    if (val.str[val.str.size() - 1] == ']') {
-                        val.str = val.str.erase(val.str.size() - 1, 1);
-                    }
-                    if (parser.parse(val.str.c_str(), val.str.size())) {
-                        vector < string > x5c;
-                        if (JSONDecoder::decode_json("x5c", x5c, &parser)) {
-                            string cert;
-                            bool found_valid_cert = false;
-                          for (auto & it:x5c) {
-                                cert =
-                                    "-----BEGIN CERTIFICATE-----\n" + it +
-                                    "\n-----END CERTIFICATE-----";
-                                ldpp_dout(dpp,
-                                          20) << "Certificate is: " << cert.
-                                    c_str() << dendl;
-                                if (is_cert_valid(thumbprints, cert)) {
-                                    found_valid_cert = true;
-                                    break;
-                                }
+            if (parser.get_data("keys", &val)) {
+                if (val.str[0] == '[') {
+                    val.str.erase(0, 1);
+                }
+                if (val.str[val.str.size() - 1] == ']') {
+                    val.str = val.str.erase(val.str.size() - 1, 1);
+                }
+                if (parser.parse(val.str.c_str(), val.str.size())) {
+                    vector < string > x5c;
+                    if (JSONDecoder::decode_json("x5c", x5c, &parser)) {
+                        string cert;
+                        bool found_valid_cert = false;
+                        for (auto &it : x5c) {
+                            cert =
+                                "-----BEGIN CERTIFICATE-----\n" + it +
+                                "\n-----END CERTIFICATE-----";
+                            ldpp_dout(dpp,
+                                      20) << "Certificate is: " << cert.
+                                          c_str() << dendl;
+                            if (is_cert_valid(thumbprints, cert)) {
                                 found_valid_cert = true;
+                                break;
                             }
-                            if (!found_valid_cert) {
-                                ldpp_dout(dpp,
-                                          0) <<
-                                    "Cert doesn't match that with the thumbprints registered with oidc provider: "
-                                    << cert.c_str() << dendl;
-                                throw - EINVAL;
-                            }
-                            try {
-                                //verify method takes care of expired tokens also
-                                if (algorithm == "RS256") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            rs256 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "RS384") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            rs384 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "RS512") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            rs512 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "ES256") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            es256 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "ES384") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            es384 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "ES512") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            es512 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "PS256") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            ps256 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "PS384") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            ps384 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                                else if (algorithm == "PS512") {
-                                    auto verifier = jwt::verify()
-                                    .
-                                        allow_algorithm(jwt::algorithm::
-                                                            ps512 { cert }
-                                    );
-
-                                    verifier.verify(decoded);
-                                }
-                            }
-                            catch(std::runtime_error & e) {
-                                ldpp_dout(dpp,
-                                          0) << "Signature validation failed: "
-                                    << e.what() << dendl;
-                                throw;
-                            }
-                            catch( ...) {
-                                ldpp_dout(dpp,
-                                          0) << "Signature validation failed" <<
-                                    dendl;
-                                throw;
-                            }
+                            found_valid_cert = true;
                         }
-                        else {
-                            ldpp_dout(dpp, 0) << "x5c not present" << dendl;
+                        if (!found_valid_cert) {
+                            ldpp_dout(dpp,
+                                      0) <<
+                                         "Cert doesn't match that with the thumbprints registered with oidc provider: "
+                                         << cert.c_str() << dendl;
                             throw - EINVAL;
                         }
-                    }
-                    else {
-                        ldpp_dout(dpp,
-                                  0) << "Malformed JSON object for keys" <<
-                            dendl;
+                        try {
+                            //verify method takes care of expired tokens also
+                            if (algorithm == "RS256") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                rs256 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "RS384") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                rs384 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "RS512") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                rs512 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "ES256") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                es256 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "ES384") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                es384 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "ES512") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                es512 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "PS256") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                ps256 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "PS384") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                ps384 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            } else if (algorithm == "PS512") {
+                                auto verifier = jwt::verify()
+                                                .
+                                                allow_algorithm(jwt::algorithm::
+                                                                ps512 { cert }
+                                                               );
+
+                                verifier.verify(decoded);
+                            }
+                        } catch (std::runtime_error &e) {
+                            ldpp_dout(dpp,
+                                      0) << "Signature validation failed: "
+                                         << e.what() << dendl;
+                            throw;
+                        } catch (...) {
+                            ldpp_dout(dpp,
+                                      0) << "Signature validation failed" <<
+                                         dendl;
+                            throw;
+                        }
+                    } else {
+                        ldpp_dout(dpp, 0) << "x5c not present" << dendl;
                         throw - EINVAL;
                     }
-                }
-                else {
-                    ldpp_dout(dpp, 0) << "keys not present in JSON" << dendl;
-                    throw - EINVAL;
-                }               //if-else get-data
-            }
-            else {
-                ldpp_dout(dpp,
-                          0) << "Malformed json returned while fetching cert" <<
-                    dendl;
-                throw - EINVAL;
-            }                   //if-else parser cert_resp
-        }
-        else {
-            ldpp_dout(dpp,
-                      0) <<
-                "JWT signed by HMAC algos are currently not supported" << dendl;
-            throw - EINVAL;
-        }
-    }
-
-    WebTokenEngine::result_t
-        WebTokenEngine::authenticate(const DoutPrefixProvider * dpp,
-                                     const std::string & token,
-                                     const req_state * const s,
-                                     optional_yield y) const {
-        if (!is_applicable(token)) {
-            return result_t::deny();
-        } try {
-            auto[t, princ_tags] = get_from_jwt(dpp, token, s, y);
-            if (t) {
-                string role_session = s->info.args.get("RoleSessionName");
-                if (role_session.empty()) {
-                    ldout(s->cct, 0) << "Role Session Name is empty " << dendl;
-                    return result_t::deny(-EACCES);
-                }
-                string role_arn = s->info.args.get("RoleArn");
-                string role_tenant = get_role_tenant(role_arn);
-                string role_name = get_role_name(role_arn);
-                std::unique_ptr < rgw::sal::RGWRole > role =
-                    driver->get_role(role_name, role_tenant);
-                int ret = role->get(dpp, y);
-                if (ret < 0) {
+                } else {
                     ldpp_dout(dpp,
-                              0) << "Role not found: name:" << role_name <<
-                        " tenant: " << role_tenant << dendl;
-                    return result_t::deny(-EACCES);
+                              0) << "Malformed JSON object for keys" <<
+                                 dendl;
+                    throw - EINVAL;
                 }
-                boost::optional < multimap < string, string >> role_tags =
-                    role->get_tags();
-                auto apl =
-                    apl_factory->create_apl_web_identity(cct, s, role_session,
-                                                         role_tenant, *t,
-                                                         role_tags, princ_tags);
-                return result_t::grant(std::move(apl));
-            }
-            return result_t::deny(-EACCES);
-        }
-        catch( ...) {
-            return result_t::deny(-EACCES);
-        }
+            } else {
+                ldpp_dout(dpp, 0) << "keys not present in JSON" << dendl;
+                throw - EINVAL;
+            }               //if-else get-data
+        } else {
+            ldpp_dout(dpp,
+                      0) << "Malformed json returned while fetching cert" <<
+                         dendl;
+            throw - EINVAL;
+        }                   //if-else parser cert_resp
+    } else {
+        ldpp_dout(dpp,
+                  0) <<
+                     "JWT signed by HMAC algos are currently not supported" << dendl;
+        throw - EINVAL;
     }
+}
+
+WebTokenEngine::result_t WebTokenEngine::authenticate(const DoutPrefixProvider *dpp,
+        const std::string &token,
+        const req_state *const s,
+        optional_yield y) const
+{
+    if (!is_applicable(token)) {
+        return result_t::deny();
+    }
+    try {
+        auto[t, princ_tags] = get_from_jwt(dpp, token, s, y);
+        if (t) {
+            string role_session = s->info.args.get("RoleSessionName");
+            if (role_session.empty()) {
+                ldout(s->cct, 0) << "Role Session Name is empty " << dendl;
+                return result_t::deny(-EACCES);
+            }
+            string role_arn = s->info.args.get("RoleArn");
+            string role_tenant = get_role_tenant(role_arn);
+            string role_name = get_role_name(role_arn);
+            std::unique_ptr < rgw::sal::RGWRole > role =
+                driver->get_role(role_name, role_tenant);
+            int ret = role->get(dpp, y);
+            if (ret < 0) {
+                ldpp_dout(dpp,
+                          0) << "Role not found: name:" << role_name <<
+                             " tenant: " << role_tenant << dendl;
+                return result_t::deny(-EACCES);
+            }
+            boost::optional < multimap < string, string >> role_tags =
+                        role->get_tags();
+            auto apl =
+                apl_factory->create_apl_web_identity(cct, s, role_session,
+                    role_tenant, *t,
+                    role_tags, princ_tags);
+            return result_t::grant(std::move(apl));
+        }
+        return result_t::deny(-EACCES);
+    } catch (...) {
+        return result_t::deny(-EACCES);
+    }
+}
 
 }                               // namespace rgw::auth::sts
 
@@ -613,7 +605,7 @@ int RGWREST_STS::verify_permission(optional_yield y)
     if (ret < 0) {
         ldpp_dout(this,
                   0) << "failed to get role info using role arn: " << rArn <<
-            dendl;
+                     dendl;
         return ret;
     }
     string policy = role->get_assume_role_policy();
@@ -630,16 +622,15 @@ int RGWREST_STS::verify_permission(optional_yield y)
             if (res != rgw::IAM::Effect::Allow) {
                 ldout(s->cct,
                       0) <<
-                    "evaluating policy for stsTagSession returned deny/pass" <<
-                    dendl;
+                         "evaluating policy for stsTagSession returned deny/pass" <<
+                         dendl;
                 return -EPERM;
             }
         }
         uint64_t op;
         if (get_type() == RGW_STS_ASSUME_ROLE_WEB_IDENTITY) {
             op = rgw::IAM::stsAssumeRoleWithWebIdentity;
-        }
-        else {
+        } else {
             op = rgw::IAM::stsAssumeRole;
         }
 
@@ -647,11 +638,10 @@ int RGWREST_STS::verify_permission(optional_yield y)
         if (res != rgw::IAM::Effect::Allow) {
             ldout(s->cct,
                   0) << "evaluating policy for op: " << op <<
-                " returned deny/pass" << dendl;
+                     " returned deny/pass" << dendl;
             return -EPERM;
         }
-    }
-    catch(rgw::IAM::PolicyParseException & e) {
+    } catch (rgw::IAM::PolicyParseException &e) {
         ldpp_dout(this, 0) << "failed to parse policy: " << e.what() << dendl;
         return -EPERM;
     }
@@ -679,7 +669,7 @@ int RGWSTSGetSessionToken::verify_permission(optional_yield y)
                                 rgw::IAM::stsGetSessionToken)) {
         ldpp_dout(this,
                   0) <<
-            "User does not have permssion to perform GetSessionToken" << dendl;
+                     "User does not have permssion to perform GetSessionToken" << dendl;
         return -EACCES;
     }
 
@@ -698,7 +688,7 @@ int RGWSTSGetSessionToken::get_params()
         if (!err.empty()) {
             ldpp_dout(this,
                       0) << "Invalid value of input duration: " << duration <<
-                dendl;
+                         dendl;
             return -EINVAL;
         }
 
@@ -706,7 +696,7 @@ int RGWSTSGetSessionToken::get_params()
             duration_in_secs > s->cct->_conf->rgw_sts_max_session_duration) {
             ldpp_dout(this,
                       0) << "Invalid duration in secs: " << duration_in_secs <<
-                dendl;
+                         dendl;
             return -EINVAL;
         }
     }
@@ -753,8 +743,8 @@ int RGWSTSAssumeRoleWithWebIdentity::get_params()
         || aud.empty()) {
         ldpp_dout(this,
                   0) <<
-            "ERROR: one of role arn or role session name or token is empty" <<
-            dendl;
+                     "ERROR: one of role arn or role session name or token is empty" <<
+                     dendl;
         return -EINVAL;
     }
 
@@ -764,11 +754,10 @@ int RGWSTSAssumeRoleWithWebIdentity::get_params()
             const rgw::IAM::Policy p(s->cct, s->user->get_tenant(), bl,
                                      s->cct->_conf.get_val < bool >
                                      ("rgw_policy_reject_invalid_principals"));
-        }
-        catch(rgw::IAM::PolicyParseException & e) {
+        } catch (rgw::IAM::PolicyParseException &e) {
             ldpp_dout(this,
                       5) << "failed to parse policy: " << e.
-                what() << "policy" << policy << dendl;
+                         what() << "policy" << policy << dendl;
             s->err.message = e.what();
             return -ERR_MALFORMED_DOC;
         }
@@ -784,8 +773,8 @@ void RGWSTSAssumeRoleWithWebIdentity::execute(optional_yield y)
     }
 
     STS::AssumeRoleWithWebIdentityRequest req(s->cct, duration, providerId,
-                                              policy, roleArn, roleSessionName,
-                                              iss, sub, aud, s->principal_tags);
+            policy, roleArn, roleSessionName,
+            iss, sub, aud, s->principal_tags);
     STS::AssumeRoleWithWebIdentityResponse response =
         sts.assumeRoleWithWebIdentity(this, req);
     op_ret = std::move(response.assumeRoleResp.retCode);
@@ -823,7 +812,7 @@ int RGWSTSAssumeRole::get_params()
     if (roleArn.empty() || roleSessionName.empty()) {
         ldpp_dout(this,
                   0) << "ERROR: one of role arn or role session name is empty"
-            << dendl;
+                     << dendl;
         return -EINVAL;
     }
 
@@ -833,11 +822,10 @@ int RGWSTSAssumeRole::get_params()
             const rgw::IAM::Policy p(s->cct, s->user->get_tenant(), bl,
                                      s->cct->_conf.get_val < bool >
                                      ("rgw_policy_reject_invalid_principals"));
-        }
-        catch(rgw::IAM::PolicyParseException & e) {
+        } catch (rgw::IAM::PolicyParseException &e) {
             ldpp_dout(this,
                       0) << "failed to parse policy: " << e.
-                what() << "policy" << policy << dendl;
+                         what() << "policy" << policy << dendl;
             s->err.message = e.what();
             return -ERR_MALFORMED_DOC;
         }
@@ -873,89 +861,104 @@ void RGWSTSAssumeRole::execute(optional_yield y)
     }
 }
 
-int RGW_Auth_STS::authorize(const DoutPrefixProvider * dpp,
-                            rgw::sal::Driver * driver,
-                            const rgw::auth::StrategyRegistry & auth_registry,
-                            req_state * s, optional_yield y)
+int RGW_Auth_STS::authorize(const DoutPrefixProvider *dpp,
+                            rgw::sal::Driver *driver,
+                            const rgw::auth::StrategyRegistry &auth_registry,
+                            req_state *s, optional_yield y)
 {
     return rgw::auth::Strategy::apply(dpp, auth_registry.get_sts(), s, y);
 }
 
 using op_generator = RGWOp * (*)();
 static const std::unordered_map < std::string_view,
-    op_generator > op_generators = {
-    {"AssumeRole",[]()->RGWOp * {return new RGWSTSAssumeRole;
-                                 }
-                                 }
-                                 , {
-                                 "GetSessionToken",[]()->RGWOp * {
-                                 return new RGWSTSGetSessionToken;
-                                 }
-                                 }
-                                 , {
-                                 "AssumeRoleWithWebIdentity",[]()->RGWOp * {
-                                 return new RGWSTSAssumeRoleWithWebIdentity;
-                                 }
-                                 }
-                                 };
-                                 bool RGWHandler_REST_STS::
-                                 action_exists(const req_state * s) {
-                                 if (s->info.args.exists("Action")) {
-                                 const std::string action_name =
-                                 s->info.args.get("Action");
-                                 return op_generators.contains(action_name);}
-                                 return false;}
+op_generator > op_generators = {
+    {
+        "AssumeRole", []()->RGWOp * {
+            return new RGWSTSAssumeRole;
+        }
+    }
+    , {
+        "GetSessionToken", []()->RGWOp * {
+            return new RGWSTSGetSessionToken;
+        }
+    }
+    , {
+        "AssumeRoleWithWebIdentity", []()->RGWOp * {
+            return new RGWSTSAssumeRoleWithWebIdentity;
+        }
+    }
+};
+bool RGWHandler_REST_STS::
+action_exists(const req_state *s)
+{
+    if (s->info.args.exists("Action")) {
+        const std::string action_name =
+            s->info.args.get("Action");
+        return op_generators.contains(action_name);
+    }
+    return false;
+}
 
-                                 RGWOp * RGWHandler_REST_STS::op_post() {
-                                 if (s->info.args.exists("Action")) {
-                                 const std::string action_name =
-                                 s->info.args.get("Action");
-                                 const auto action_it =
-                                 op_generators.find(action_name);
-                                 if (action_it != op_generators.end()) {
-                                 return action_it->second();}
-                                 ldpp_dout(s,
-                                           10) << "unknown action '" <<
-                                 action_name << "' for STS handler" << dendl;}
-                                 else {
-                                 ldpp_dout(s,
-                                           10) <<
-                                 "missing action argument in STS handler" <<
-                                 dendl;}
-                                 return nullptr;}
+RGWOp *RGWHandler_REST_STS::op_post()
+{
+    if (s->info.args.exists("Action")) {
+        const std::string action_name =
+            s->info.args.get("Action");
+        const auto action_it =
+            op_generators.find(action_name);
+        if (action_it != op_generators.end()) {
+            return action_it->second();
+        }
+        ldpp_dout(s,
+                  10) << "unknown action '" <<
+                      action_name << "' for STS handler" << dendl;
+    } else {
+        ldpp_dout(s,
+                  10) <<
+                      "missing action argument in STS handler" <<
+                      dendl;
+    }
+    return nullptr;
+}
 
-                                 int RGWHandler_REST_STS::init(rgw::sal::
-                                                               Driver * driver,
-                                                               req_state * s,
-                                                               rgw::io::
-                                                               BasicClient *
-                                                               cio) {
-                                 s->dialect = "sts";
-                                 s->prot_flags = RGW_REST_STS;
-                                 return RGWHandler_REST::init(driver, s, cio);}
+int RGWHandler_REST_STS::init(rgw::sal::
+                              Driver *driver,
+                              req_state *s,
+                              rgw::io::
+                              BasicClient *
+                              cio)
+{
+    s->dialect = "sts";
+    s->prot_flags = RGW_REST_STS;
+    return RGWHandler_REST::init(driver, s, cio);
+}
 
-                                 int RGWHandler_REST_STS::
-                                 authorize(const DoutPrefixProvider * dpp,
-                                           optional_yield y) {
-                                 if (s->info.args.exists("Action")
-                                     && s->info.args.get("Action") ==
-                                     "AssumeRoleWithWebIdentity") {
-                                 return RGW_Auth_STS::authorize(dpp, driver,
-                                                                auth_registry,
-                                                                s, y);}
-                                 return RGW_Auth_S3::authorize(dpp, driver,
-                                                               auth_registry, s,
-                                                               y);}
+int RGWHandler_REST_STS::
+authorize(const DoutPrefixProvider *dpp,
+          optional_yield y)
+{
+    if (s->info.args.exists("Action")
+        && s->info.args.get("Action") ==
+        "AssumeRoleWithWebIdentity") {
+        return RGW_Auth_STS::authorize(dpp, driver,
+                                       auth_registry,
+                                       s, y);
+    }
+    return RGW_Auth_S3::authorize(dpp, driver,
+                                  auth_registry, s,
+                                  y);
+}
 
-                                 RGWHandler_REST *
-                                 RGWRESTMgr_STS::get_handler(rgw::sal::Driver *
-                                                             driver,
-                                                             req_state *
-                                                             const s,
-                                                             const rgw::auth::
-                                                             StrategyRegistry &
-                                                             auth_registry,
-                                                             const std::
-                                                             string &
-                                                             frontend_prefix) {
-                                 return new RGWHandler_REST_STS(auth_registry);}
+RGWHandler_REST *RGWRESTMgr_STS::get_handler(rgw::sal::Driver *
+        driver,
+        req_state *
+        const s,
+        const rgw::auth::
+        StrategyRegistry &
+        auth_registry,
+        const std::
+        string &
+        frontend_prefix)
+{
+    return new RGWHandler_REST_STS(auth_registry);
+}

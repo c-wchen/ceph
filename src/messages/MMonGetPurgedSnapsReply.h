@@ -7,33 +7,40 @@
 #include "osd/osd_types.h"
 #include "include/types.h"
 
-class MMonGetPurgedSnapsReply final:public PaxosServiceMessage {
-  public:
+class MMonGetPurgedSnapsReply final: public PaxosServiceMessage
+{
+public:
     epoch_t start, last;
     std::map < epoch_t, mempool::osdmap::map < int64_t,
         snap_interval_set_t >> purged_snaps;
 
     MMonGetPurgedSnapsReply(epoch_t s = 0, epoch_t l = 0)
-  :    PaxosServiceMessage {
-    MSG_MON_GET_PURGED_SNAPS_REPLY, 0}, start(s), last(l) {
+        :    PaxosServiceMessage {
+        MSG_MON_GET_PURGED_SNAPS_REPLY, 0}, start(s), last(l)
+    {
     }
-  private:
-    ~MMonGetPurgedSnapsReply()final {
+private:
+    ~MMonGetPurgedSnapsReply()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "mon_get_purged_snaps_reply";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "mon_get_purged_snaps_reply([" << start << "," << last << "])";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         paxos_encode();
         encode(start, payload);
         encode(last, payload);
         encode(purged_snaps, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         paxos_decode(p);
@@ -42,7 +49,7 @@ class MMonGetPurgedSnapsReply final:public PaxosServiceMessage {
         decode(purged_snaps, p);
     }
 
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };

@@ -36,6 +36,6 @@ struct notify_timeout_t {
  * before calling rados_nobjects_list_open() to return
  * all objects in all namespaces.
  */
-#define	LIBRADOS_ALL_NSPACES "\001"
+#define LIBRADOS_ALL_NSPACES "\001"
 
 #endif

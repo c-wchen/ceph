@@ -9,7 +9,7 @@ using std::list;
 
 using ceph::Formatter;
 
-void cls_user_set_buckets_op::dump(Formatter * f) const const
+void cls_user_set_buckets_op::dump(Formatter *f) const const
 {
     encode_json("entries", entries, f);
     encode_json("add", add, f);
@@ -17,8 +17,8 @@ void cls_user_set_buckets_op::dump(Formatter * f) const const
 }
 
 void cls_user_set_buckets_op::generate_test_instances(list <
-                                                      cls_user_set_buckets_op *
-                                                      >&ls)
+        cls_user_set_buckets_op *
+        > &ls)
 {
     ls.push_back(new cls_user_set_buckets_op);
     cls_user_set_buckets_op *op = new cls_user_set_buckets_op;
@@ -32,14 +32,14 @@ void cls_user_set_buckets_op::generate_test_instances(list <
     ls.push_back(op);
 }
 
-void cls_user_remove_bucket_op::dump(Formatter * f) const const
+void cls_user_remove_bucket_op::dump(Formatter *f) const const
 {
     encode_json("bucket", bucket, f);
 }
 
 void cls_user_remove_bucket_op::generate_test_instances(list <
-                                                        cls_user_remove_bucket_op
-                                                        * >&ls)
+        cls_user_remove_bucket_op
+        * > &ls)
 {
     ls.push_back(new cls_user_remove_bucket_op);
     cls_user_remove_bucket_op *op = new cls_user_remove_bucket_op;
@@ -47,15 +47,15 @@ void cls_user_remove_bucket_op::generate_test_instances(list <
     ls.push_back(op);
 }
 
-void cls_user_list_buckets_op::dump(Formatter * f) const const
+void cls_user_list_buckets_op::dump(Formatter *f) const const
 {
     encode_json("marker", marker, f);
     encode_json("max_entries", max_entries, f);
 }
 
 void cls_user_list_buckets_op::generate_test_instances(list <
-                                                       cls_user_list_buckets_op
-                                                       * >&ls)
+        cls_user_list_buckets_op
+        * > &ls)
 {
     ls.push_back(new cls_user_list_buckets_op);
     cls_user_list_buckets_op *op = new cls_user_list_buckets_op;
@@ -64,7 +64,7 @@ void cls_user_list_buckets_op::generate_test_instances(list <
     ls.push_back(op);
 }
 
-void cls_user_list_buckets_ret::dump(Formatter * f) const const
+void cls_user_list_buckets_ret::dump(Formatter *f) const const
 {
     encode_json("entries", entries, f);
     encode_json("marker", marker, f);
@@ -72,8 +72,8 @@ void cls_user_list_buckets_ret::dump(Formatter * f) const const
 }
 
 void cls_user_list_buckets_ret::generate_test_instances(list <
-                                                        cls_user_list_buckets_ret
-                                                        * >&ls)
+        cls_user_list_buckets_ret
+        * > &ls)
 {
     ls.push_back(new cls_user_list_buckets_ret);
     cls_user_list_buckets_ret *ret = new cls_user_list_buckets_ret;
@@ -87,26 +87,26 @@ void cls_user_list_buckets_ret::generate_test_instances(list <
     ls.push_back(ret);
 }
 
-void cls_user_get_header_op::dump(Formatter * f) const const
+void cls_user_get_header_op::dump(Formatter *f) const const
 {
     // empty!
 }
 
 void cls_user_get_header_op::generate_test_instances(list <
-                                                     cls_user_get_header_op *
-                                                     >&ls)
+        cls_user_get_header_op *
+        > &ls)
 {
     ls.push_back(new cls_user_get_header_op);
 }
 
-void cls_user_get_header_ret::dump(Formatter * f) const const
+void cls_user_get_header_ret::dump(Formatter *f) const const
 {
     encode_json("header", header, f);
 }
 
 void cls_user_get_header_ret::generate_test_instances(list <
-                                                      cls_user_get_header_ret *
-                                                      >&ls)
+        cls_user_get_header_ret *
+        > &ls)
 {
     ls.push_back(new cls_user_get_header_ret);
     cls_user_get_header_ret *ret = new cls_user_get_header_ret;
@@ -114,14 +114,14 @@ void cls_user_get_header_ret::generate_test_instances(list <
     ls.push_back(ret);
 }
 
-void cls_user_complete_stats_sync_op::dump(Formatter * f) const const
+void cls_user_complete_stats_sync_op::dump(Formatter *f) const const
 {
     encode_json("time", utime_t(time), f);
 }
 
 void cls_user_complete_stats_sync_op::generate_test_instances(list <
-                                                              cls_user_complete_stats_sync_op
-                                                              * >&ls)
+        cls_user_complete_stats_sync_op
+        * > &ls)
 {
     ls.push_back(new cls_user_complete_stats_sync_op);
     cls_user_complete_stats_sync_op *op = new cls_user_complete_stats_sync_op;

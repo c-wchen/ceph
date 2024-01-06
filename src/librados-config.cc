@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -27,7 +27,7 @@ namespace po = boost::program_options;
 int main(int argc, const char **argv)
 {
     po::options_description desc {
-    "usage: librados-config [option]"};
+        "usage: librados-config [option]"};
     desc.add_options()
         ("help,h", "print this help message")
         ("version", "library version")
@@ -42,20 +42,16 @@ int main(int argc, const char **argv)
 
     if (vm.count("help")) {
         std::cout << desc << std::endl;
-    }
-    else if (vm.count("version")) {
+    } else if (vm.count("version")) {
         int maj, min, ext;
         rados_version(&maj, &min, &ext);
         std::cout << maj << "." << min << "." << ext << std::endl;
-    }
-    else if (vm.count("vernum")) {
+    } else if (vm.count("vernum")) {
         std::cout << std::hex << LIBRADOS_VERSION_CODE << std::dec << std::endl;
-    }
-    else if (vm.count("release")) {
+    } else if (vm.count("release")) {
         std::cout << CEPH_RELEASE_NAME << ' '
-            << '(' << CEPH_RELEASE_TYPE << ')' << std::endl;
-    }
-    else {
+                  << '(' << CEPH_RELEASE_TYPE << ')' << std::endl;
+    } else {
         std::cerr << argv[0] << ": -h or --help for usage" << std::endl;
         return 1;
     }

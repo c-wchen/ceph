@@ -22,19 +22,19 @@ void usage()
     std::cout << "usage: cephfs-mirror [options...]" << std::endl;
     std::cout << "options:\n";
     std::
-        cout <<
-        "  --mon-host monaddress[:port]  connect to specified monitor\n";
+    cout <<
+         "  --mon-host monaddress[:port]  connect to specified monitor\n";
     std::
-        cout <<
-        "  --keyring=<path>              path to keyring for local cluster\n";
+    cout <<
+         "  --keyring=<path>              path to keyring for local cluster\n";
     std::cout << "  --log-file=<logfile>          file to log debug output\n";
     std::
-        cout <<
-        "  --debug-cephfs-mirror=<log-level>/<memory-level>  set cephfs-mirror debug level\n";
+    cout <<
+         "  --debug-cephfs-mirror=<log-level>/<memory-level>  set cephfs-mirror debug level\n";
     generic_server_usage();
 }
 
-cephfs::mirror::Mirror * mirror = nullptr;
+cephfs::mirror::Mirror *mirror = nullptr;
 
 static void handle_signal(int signum)
 {
@@ -112,16 +112,16 @@ int main(int argc, const char **argv)
     r = mirror->init(reason);
     if (r < 0) {
         std::cerr << "failed to initialize cephfs-mirror: " << reason << std::
-            endl;
+                  endl;
         goto cleanup;
     }
 
     mirror->run();
     delete mirror;
 
-  cleanup:
+cleanup:
     monc.shutdown();
-  cleanup_messenger:
+cleanup_messenger:
     msgr->shutdown();
     msgr->wait();
     delete msgr;

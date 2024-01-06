@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -24,31 +24,37 @@
 
 #include "Stack.h"
 
-class PosixWorker:public Worker {
+class PosixWorker: public Worker
+{
     ceph::NetHandler net;
     void initialize() override;
-  public:
-     PosixWorker(CephContext * c, unsigned i)
-    :Worker(c, i), net(c) {
-    } int listen(entity_addr_t & sa,
+public:
+    PosixWorker(CephContext *c, unsigned i)
+        : Worker(c, i), net(c)
+    {
+    } int listen(entity_addr_t &sa,
                  unsigned addr_slot,
-                 const SocketOptions & opt, ServerSocket * socks) override;
-    int connect(const entity_addr_t & addr, const SocketOptions & opts,
-                ConnectedSocket * socket) override;
+                 const SocketOptions &opt, ServerSocket *socks) override;
+    int connect(const entity_addr_t &addr, const SocketOptions &opts,
+                ConnectedSocket *socket) override;
 };
 
-class PosixNetworkStack:public NetworkStack {
+class PosixNetworkStack: public NetworkStack
+{
     std::vector < std::thread > threads;
 
-    virtual Worker *create_worker(CephContext * c, unsigned worker_id) override {
+    virtual Worker *create_worker(CephContext *c, unsigned worker_id) override
+    {
         return new PosixWorker(c, worker_id);
-  } public:
-     explicit PosixNetworkStack(CephContext * c);
+    } public:
+    explicit PosixNetworkStack(CephContext *c);
 
-    void spawn_worker(std::function < void () > &&func) override {
+    void spawn_worker(std::function < void () > &&func) override
+    {
         threads.emplace_back(std::move(func));
     }
-    void join_worker(unsigned i) override {
+    void join_worker(unsigned i) override
+    {
         ceph_assert(threads.size() > i && threads[i].joinable());
         threads[i].join();
     }

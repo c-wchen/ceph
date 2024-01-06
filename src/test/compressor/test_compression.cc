@@ -27,14 +27,16 @@
 
 using namespace std;
 
-class CompressorTest:public::testing::Test,
-    public::testing::WithParamInterface < const char *> {
-  public:
+class CompressorTest: public::testing::Test,
+    public::testing::WithParamInterface < const char *>
+{
+public:
     std::string plugin;
     CompressorRef compressor;
     bool old_zlib_isal;
 
-    CompressorTest() {
+    CompressorTest()
+    {
         // note for later
         old_zlib_isal = g_conf()->compressor_zlib_isal;
 
@@ -46,28 +48,29 @@ class CompressorTest:public::testing::Test,
             if (isal == "isal") {
                 g_conf().set_val("compressor_zlib_isal", "true");
                 g_ceph_context->_conf.apply_changes(nullptr);
-            }
-            else if (isal == "noisal") {
+            } else if (isal == "noisal") {
                 g_conf().set_val("compressor_zlib_isal", "false");
                 g_ceph_context->_conf.apply_changes(nullptr);
-            }
-            else {
+            } else {
                 ceph_abort_msg("bad option");
             }
         }
         cout << "[plugin " << plugin << " (" << GetParam() << ")]" << std::endl;
     }
-    ~CompressorTest()override {
+    ~CompressorTest()override
+    {
         g_conf().set_val("compressor_zlib_isal",
                          old_zlib_isal ? "true" : "false");
         g_ceph_context->_conf.apply_changes(nullptr);
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         compressor = Compressor::create(g_ceph_context, plugin);
         ASSERT_TRUE(compressor);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         compressor.reset();
     }
 };
@@ -80,8 +83,8 @@ TEST_P(CompressorTest, small_round_trip)
 {
     bufferlist orig;
     orig.
-        append
-        ("This is a short string.  There are many strings like it but this one is mine.");
+    append
+    ("This is a short string.  There are many strings like it but this one is mine.");
     bufferlist compressed;
     std::optional < int32_t > compressor_message;
     int r = compressor->compress(orig, compressed, compressor_message);
@@ -92,7 +95,7 @@ TEST_P(CompressorTest, small_round_trip)
     ASSERT_EQ(decompressed.length(), orig.length());
     ASSERT_TRUE(decompressed.contents_equal(orig));
     cout << "orig " << orig.length() << " compressed " << compressed.length()
-        << " with " << GetParam() << std::endl;
+         << " with " << GetParam() << std::endl;
 }
 
 TEST_P(CompressorTest, big_round_trip_repeated)
@@ -101,8 +104,8 @@ TEST_P(CompressorTest, big_round_trip_repeated)
     bufferlist orig;
     while (orig.length() < len) {
         orig.
-            append
-            ("This is a short string.  There are many strings like it but this one is mine.");
+        append
+        ("This is a short string.  There are many strings like it but this one is mine.");
     }
     bufferlist compressed;
     std::optional < int32_t > compressor_message;
@@ -114,7 +117,7 @@ TEST_P(CompressorTest, big_round_trip_repeated)
     ASSERT_EQ(decompressed.length(), orig.length());
     ASSERT_TRUE(decompressed.contents_equal(orig));
     cout << "orig " << orig.length() << " compressed " << compressed.length()
-        << " with " << GetParam() << std::endl;
+         << " with " << GetParam() << std::endl;
 }
 
 TEST_P(CompressorTest, big_round_trip_randomish)
@@ -126,8 +129,7 @@ TEST_P(CompressorTest, big_round_trip_randomish)
         while (orig.length() < len) {
             orig.append(alphabet[rand() % 10]);
         }
-    }
-    else {
+    } else {
         bufferptr bp(len);
         char *p = bp.c_str();
         for (unsigned i = 0; i < len; ++i) {
@@ -145,7 +147,7 @@ TEST_P(CompressorTest, big_round_trip_randomish)
     ASSERT_EQ(decompressed.length(), orig.length());
     ASSERT_TRUE(decompressed.contents_equal(orig));
     cout << "orig " << orig.length() << " compressed " << compressed.length()
-        << " with " << GetParam() << std::endl;
+         << " with " << GetParam() << std::endl;
 }
 
 #if 0
@@ -166,7 +168,7 @@ TEST_P(CompressorTest, big_round_trip_file)
     ASSERT_EQ(decompressed.length(), orig.length());
     ASSERT_TRUE(decompressed.contents_equal(orig));
     cout << "orig " << orig.length() << " compressed " << compressed.length()
-        << " with " << GetParam() << std::endl;
+         << " with " << GetParam() << std::endl;
 }
 #endif
 
@@ -203,9 +205,9 @@ TEST_P(CompressorTest, round_trip_osdmap)
             ASSERT_TRUE(decompressed.contents_equal(chunk));
         }
         cout << "chunk " << chunk.length()
-            << " compressed " << compressed.length()
-            << " decompressed " << decompressed.length()
-            << " with " << plugin << std::endl;
+             << " compressed " << compressed.length()
+             << " decompressed " << decompressed.length()
+             << " with " << plugin << std::endl;
     }
     delete o;
 }
@@ -237,8 +239,9 @@ TEST_P(CompressorTest, compress_decompress)
     //large block and non-begin iterator for continuous block
     std::string data;
     data.resize(0x10000 * 1);
-    for (size_t i = 0; i < data.size(); i++)
+    for (size_t i = 0; i < data.size(); i++) {
         data[i] = i / 256;
+    }
     in.clear();
     out.clear();
     in.append(data);
@@ -378,19 +381,19 @@ TEST_P(CompressorTest, decompress_16384)
     test_decompress(compressor, 16384);
 }
 
-INSTANTIATE_TEST_SUITE_P(Compressor, CompressorTest,::testing::Values(
+INSTANTIATE_TEST_SUITE_P(Compressor, CompressorTest, ::testing::Values(
 #ifdef HAVE_LZ4
-                                                                         "lz4",
+                             "lz4",
 #endif
 #if defined(__x86_64__) || defined(__aarch64__)
-                                                                         "zlib/isal",
+                             "zlib/isal",
 #endif
-                                                                         "zlib/noisal",
-                                                                         "snappy",
+                             "zlib/noisal",
+                             "snappy",
 #ifdef HAVE_BROTLI
-                                                                         "brotli",
+                             "brotli",
 #endif
-                                                                         "zstd"));
+                             "zstd"));
 
 #if defined(__x86_64__) || defined(__aarch64__)
 
@@ -408,8 +411,9 @@ TEST(ZlibCompressor, zlib_isal_compatibility)
     CompressorRef zlib = Compressor::create(g_ceph_context, "zlib");
     char test[101];
     srand(time(0));
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         test[i] = 'a' + rand() % 26;
+    }
     test[100] = '\0';
     int len = strlen(test);
     bufferlist in, out;
@@ -482,8 +486,9 @@ TEST(ZlibCompressor, isal_compress_zlib_decompress_random)
         int size = (rand() % (1 << log2)) + 1;
 
         char test[size];
-        for (int i = 0; i < size; ++i)
+        for (int i = 0; i < size; ++i) {
             test[i] = rand() % 256;
+        }
         bufferlist in, out;
         in.append(test, size);
 
@@ -521,8 +526,9 @@ TEST(ZlibCompressor, isal_compress_zlib_decompress_walk)
 
         char test[size];
         test[0] = rand() % 256;
-        for (int i = 1; i < size; ++i)
+        for (int i = 1; i < size; ++i) {
             test[i] = test[i - 1] + rand() % (range * 2 + 1) - range;
+        }
         bufferlist in, out;
         in.append(test, size);
 
@@ -548,7 +554,7 @@ TEST(QAT, enc_qat_dec_noqat)
 #else
     const char *alg_collection[] = { "zlib", "snappy" };
 #endif
-  for (auto alg:alg_collection) {
+    for (auto alg : alg_collection) {
         g_conf().set_val("qat_compressor_enabled", "true");
         CompressorRef q = Compressor::create(g_ceph_context, alg);
         g_conf().set_val("qat_compressor_enabled", "false");
@@ -561,8 +567,9 @@ TEST(QAT, enc_qat_dec_noqat)
             int size = (rand() % (1 << log2)) + 1;
 
             char test[size];
-            for (int i = 0; i < size; ++i)
+            for (int i = 0; i < size; ++i) {
                 test[i] = rand() % 256;
+            }
             bufferlist in, out;
             in.append(test, size);
 
@@ -586,7 +593,7 @@ TEST(QAT, enc_noqat_dec_qat)
 #else
     const char *alg_collection[] = { "zlib", "snappy" };
 #endif
-  for (auto alg:alg_collection) {
+    for (auto alg : alg_collection) {
         g_conf().set_val("qat_compressor_enabled", "true");
         CompressorRef q = Compressor::create(g_ceph_context, alg);
         g_conf().set_val("qat_compressor_enabled", "false");
@@ -599,8 +606,9 @@ TEST(QAT, enc_noqat_dec_qat)
             int size = (rand() % (1 << log2)) + 1;
 
             char test[size];
-            for (int i = 0; i < size; ++i)
+            for (int i = 0; i < size; ++i) {
                 test[i] = rand() % 256;
+            }
             bufferlist in, out;
             in.append(test, size);
 

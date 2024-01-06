@@ -63,7 +63,7 @@ using ceph::Formatter;
  */
 
 template < typename F, typename ... Args >
-    inline int retry_sys_call(F f, Args ... args)
+inline int retry_sys_call(F f, Args ... args)
 {
     int r;
     do {
@@ -90,7 +90,7 @@ static void remove_cleanup_file(std::string_view file)
 void remove_all_cleanup_files()
 {
     std::unique_lock l(cleanup_lock);
-  for (const auto & s:cleanup_files) {
+    for (const auto &s : cleanup_files) {
         retry_sys_call(::unlink, s.c_str());
     }
     cleanup_files.clear();
@@ -106,8 +106,8 @@ static void add_cleanup_file(std::string file)
     }
 }
 
-AdminSocket::AdminSocket(CephContext * cct)
-:  m_cct(cct)
+AdminSocket::AdminSocket(CephContext *cct)
+    :  m_cct(cct)
 {
 }
 
@@ -172,7 +172,7 @@ std::string AdminSocket::destroy_wakeup_pipe()
     return "";
 }
 
-std::string AdminSocket::bind_and_listen(const std::string & sock_path, int *fd)
+std::string AdminSocket::bind_and_listen(const std::string &sock_path, int *fd)
 {
     ldout(m_cct, 5) << "bind_and_listen " << sock_path << dendl;
 
@@ -209,15 +209,13 @@ std::string AdminSocket::bind_and_listen(const std::string & sock_path, int *fd)
                 ldout(m_cct,
                       20) << "socket " << sock_path << " is in use" << dendl;
                 err = EEXIST;
-            }
-            else {
+            } else {
                 ldout(m_cct, 20) << "unlink stale file " << sock_path << dendl;
                 retry_sys_call(::unlink, sock_path.c_str());
                 if (::bind(sock_fd, (struct sockaddr *)&address,
                            sizeof(struct sockaddr_un)) == 0) {
                     err = 0;
-                }
-                else {
+                } else {
                     err = ceph_sock_errno();
                 }
             }
@@ -264,7 +262,7 @@ void AdminSocket::entry() noexcept
                 continue;
             }
             lderr(m_cct) << "AdminSocket: poll(2) error: '"
-                << cpp_strerror(err) << dendl;
+                         << cpp_strerror(err) << dendl;
             return;
         }
         ldout(m_cct, 20) << __func__ << " awake" << dendl;
@@ -280,7 +278,7 @@ void AdminSocket::entry() noexcept
             if (s == -1) {
                 int e = ceph_sock_errno();
                 ldout(m_cct, 5) << "AdminSocket: (ignoring) read(2) error: '"
-                    << cpp_strerror(e) << dendl;
+                                << cpp_strerror(e) << dendl;
             }
             do_tell_queue();
         }
@@ -299,7 +297,7 @@ void AdminSocket::chown(uid_t uid, gid_t gid)
         if (r < 0) {
             r = -errno;
             lderr(m_cct) << "AdminSocket: failed to chown socket: "
-                << cpp_strerror(r) << dendl;
+                         << cpp_strerror(r) << dendl;
         }
     }
 }
@@ -311,7 +309,7 @@ void AdminSocket::chmod(mode_t mode)
         if (r < 0) {
             r = -errno;
             lderr(m_cct) << "AdminSocket: failed to chmod socket: "
-                << cpp_strerror(r) << dendl;
+                         << cpp_strerror(r) << dendl;
         }
     }
 }
@@ -326,7 +324,7 @@ void AdminSocket::do_accept()
     if (connection_fd < 0) {
         int err = ceph_sock_errno();
         lderr(m_cct) << "AdminSocket: do_accept error: '"
-            << cpp_strerror(err) << dendl;
+                     << cpp_strerror(err) << dendl;
         return;
     }
     ldout(m_cct, 30) << "AdminSocket: finished accept" << dendl;
@@ -339,7 +337,7 @@ void AdminSocket::do_accept()
         if (ret <= 0) {
             if (ret < 0) {
                 lderr(m_cct) << "AdminSocket: error reading request code: "
-                    << cpp_strerror(ret) << dendl;
+                             << cpp_strerror(ret) << dendl;
             }
             retry_sys_call(::compat_closesocket, connection_fd);
             return;
@@ -348,25 +346,24 @@ void AdminSocket::do_accept()
             // old protocol: __be32
             if (pos == 3 && cmd[0] == '\0') {
                 switch (cmd[3]) {
-                case 0:
-                    c = "0";
-                    break;
-                case 1:
-                    c = "perfcounters_dump";
-                    break;
-                case 2:
-                    c = "perfcounters_schema";
-                    break;
-                default:
-                    c = "foo";
-                    break;
+                    case 0:
+                        c = "0";
+                        break;
+                    case 1:
+                        c = "perfcounters_dump";
+                        break;
+                    case 2:
+                        c = "perfcounters_schema";
+                        break;
+                    default:
+                        c = "foo";
+                        break;
                 }
                 //wrap command with new protocol
                 c = "{\"prefix\": \"" + c + "\"}";
                 break;
             }
-        }
-        else {
+        } else {
             // new protocol: null or \n terminated string
             if (cmd[pos] == '\n' || cmd[pos] == '\0') {
                 cmd[pos] = '\0';
@@ -376,17 +373,18 @@ void AdminSocket::do_accept()
         }
         if (++pos >= sizeof(cmd)) {
             lderr(m_cct) << "AdminSocket: error reading request too long" <<
-                dendl;
+                         dendl;
             retry_sys_call(::compat_closesocket, connection_fd);
             return;
         }
     }
 
     std::vector < std::string > cmdvec = {
-    c};
+        c
+    };
     bufferlist empty, out;
     ostringstream err;
-    int rval = execute_command(cmdvec, empty /* inbl */ , err, &out);
+    int rval = execute_command(cmdvec, empty /* inbl */, err, &out);
 
     // Unfortunately, the asok wire protocol does not let us pass an error code,
     // and many asok command implementations return helpful error strings.  So,
@@ -404,13 +402,12 @@ void AdminSocket::do_accept()
     int ret = safe_send(connection_fd, &len, sizeof(len));
     if (ret < 0) {
         lderr(m_cct) << "AdminSocket: error writing response length "
-            << cpp_strerror(ret) << dendl;
-    }
-    else {
+                     << cpp_strerror(ret) << dendl;
+    } else {
         int r = out.send_fd(connection_fd);
         if (r < 0) {
             lderr(m_cct) << "AdminSocket: error writing response payload "
-                << cpp_strerror(ret) << dendl;
+                         << cpp_strerror(ret) << dendl;
         }
     }
     retry_sys_call(::compat_closesocket, connection_fd);
@@ -426,41 +423,43 @@ void AdminSocket::do_tell_queue()
         q.swap(tell_queue);
         lq.swap(tell_legacy_queue);
     }
-  for (auto & m:q) {
+    for (auto &m : q) {
         bufferlist outbl;
         execute_command(m->cmd,
                         m->get_data(),
-                        [m] (int r, const std::string & err,
-                             bufferlist & outbl) {
-                        auto reply = new MCommandReply(r, err);
-                        reply->set_tid(m->get_tid()); reply->set_data(outbl);
+                        [m](int r, const std::string & err,
+        bufferlist & outbl) {
+            auto reply = new MCommandReply(r, err);
+            reply->set_tid(m->get_tid());
+            reply->set_data(outbl);
 #ifdef WITH_SEASTAR
-                        // TODO: crimson: handle asok commmand from alien thread
+            // TODO: crimson: handle asok commmand from alien thread
 #else
-                        m->get_connection()->send_message(reply);
+            m->get_connection()->send_message(reply);
 #endif
-                        });
+        });
     }
-  for (auto & m:lq) {
+    for (auto &m : lq) {
         bufferlist outbl;
         execute_command(m->cmd,
                         m->get_data(),
-                        [m] (int r, const std::string & err,
-                             bufferlist & outbl) {
-                        auto reply = new MMonCommandAck(m->cmd, r, err, 0);
-                        reply->set_tid(m->get_tid()); reply->set_data(outbl);
+                        [m](int r, const std::string & err,
+        bufferlist & outbl) {
+            auto reply = new MMonCommandAck(m->cmd, r, err, 0);
+            reply->set_tid(m->get_tid());
+            reply->set_data(outbl);
 #ifdef WITH_SEASTAR
-                        // TODO: crimson: handle asok commmand from alien thread
+            // TODO: crimson: handle asok commmand from alien thread
 #else
-                        m->get_connection()->send_message(reply);
+            m->get_connection()->send_message(reply);
 #endif
-                        });
+        });
     }
 }
 
 int AdminSocket::execute_command(const std::vector < std::string > &cmd,
-                                 const bufferlist & inbl,
-                                 std::ostream & errss, bufferlist * outbl)
+                                 const bufferlist &inbl,
+                                 std::ostream &errss, bufferlist *outbl)
 {
 #ifdef WITH_SEASTAR
     // TODO: crimson: blocking execute_command() in alien thread
@@ -474,26 +473,29 @@ int AdminSocket::execute_command(const std::vector < std::string > &cmd,
     C_SafeCond fin(mylock, mycond, &done, &rval);
     execute_command(cmd,
                     inbl,
-                    [&errss, outbl, &fin] (int r, const std::string & err,
-                                           bufferlist & out) {
-                    errss << err; *outbl = std::move(out); fin.finish(r);});
+                    [&errss, outbl, &fin](int r, const std::string & err,
+    bufferlist & out) {
+        errss << err;
+        *outbl = std::move(out);
+        fin.finish(r);
+    });
     {
         std::unique_lock l {
-        mylock};
-        mycond.wait(l,[&done] {
-                    return done;
-                    }
-        );
+            mylock};
+        mycond.wait(l, [&done] {
+            return done;
+        }
+                   );
     }
     return rval;
 #endif
 }
 
 void AdminSocket::execute_command(const std::vector < std::string > &cmdvec,
-                                  const bufferlist & inbl,
+                                  const bufferlist &inbl,
                                   std::function < void (int,
-                                                        const std::string &,
-                                                        bufferlist &) >
+                                          const std::string &,
+                                          bufferlist &) >
                                   on_finish)
 {
     cmdmap_t cmdmap;
@@ -509,8 +511,7 @@ void AdminSocket::execute_command(const std::vector < std::string > &cmdvec,
     try {
         cmd_getval(cmdmap, "format", format);
         cmd_getval(cmdmap, "prefix", prefix);
-    }
-    catch(const bad_cmd_get & e) {
+    } catch (const bad_cmd_get &e) {
         return on_finish(-EINVAL, "invalid json, missing format and/or prefix",
                          empty);
     }
@@ -519,35 +520,37 @@ void AdminSocket::execute_command(const std::vector < std::string > &cmdvec,
 
     auto[retval, hook] = find_matched_hook(prefix, cmdmap);
     switch (retval) {
-    case ENOENT:
-        lderr(m_cct) << "AdminSocket: request '" << cmdvec
-            << "' not defined" << dendl;
-        delete f;
-        return on_finish(-EINVAL, "unknown command prefix " s + prefix, empty);
-    case EINVAL:
-        delete f;
-        return on_finish(-EINVAL, "invalid command json", empty);
-    default:
-        assert(retval == 0);
+        case ENOENT:
+            lderr(m_cct) << "AdminSocket: request '" << cmdvec
+                         << "' not defined" << dendl;
+            delete f;
+            return on_finish(-EINVAL, "unknown command prefix " s + prefix, empty);
+        case EINVAL:
+            delete f;
+            return on_finish(-EINVAL, "invalid command json", empty);
+        default:
+            assert(retval == 0);
     }
 
     hook->call_async(prefix, cmdmap, f, inbl,
-                     [f, on_finish] (int r, const std::string & err,
-                                     bufferlist & out) {
-                     // handle either existing output in bufferlist *or* via formatter
-                     if (r >= 0 && out.length() == 0) {
-                     f->flush(out);}
-                     delete f; on_finish(r, err, out);}
-    ) ;
+                     [f, on_finish](int r, const std::string & err,
+    bufferlist & out) {
+        // handle either existing output in bufferlist *or* via formatter
+        if (r >= 0 && out.length() == 0) {
+            f->flush(out);
+        }
+        delete f;
+        on_finish(r, err, out);
+    }
+                    ) ;
 
     std::unique_lock l(lock);
     in_hook = false;
     in_hook_cond.notify_all();
 }
 
-std::pair < int, AdminSocketHook * >
-    AdminSocket::find_matched_hook(std::string & prefix,
-                                   const cmdmap_t & cmdmap)
+std::pair < int, AdminSocketHook * > AdminSocket::find_matched_hook(std::string &prefix,
+        const cmdmap_t &cmdmap)
 {
     std::unique_lock l(lock);
     // Drop lock after done with the lookup to avoid cycles in cases where the
@@ -557,7 +560,7 @@ std::pair < int, AdminSocketHook * >
     auto[hooks_begin, hooks_end] = hooks.equal_range(prefix);
     if (hooks_begin == hooks_end) {
         return {
-        ENOENT, nullptr};
+            ENOENT, nullptr};
     }
     // make sure one of the registered commands with this prefix validates.
     stringstream errss;
@@ -565,11 +568,11 @@ std::pair < int, AdminSocketHook * >
         if (validate_cmd(hook->second.desc, cmdmap, errss)) {
             in_hook = true;
             return {
-            0, hook->second.hook};
+                0, hook->second.hook};
         }
     }
     return {
-    EINVAL, nullptr};
+        EINVAL, nullptr};
 }
 
 void AdminSocket::queue_tell_command(cref_t < MCommand > m)
@@ -589,7 +592,7 @@ void AdminSocket::queue_tell_command(cref_t < MMonCommand > m)
 }
 
 int AdminSocket::register_command(std::string_view cmddesc,
-                                  AdminSocketHook * hook, std::string_view help)
+                                  AdminSocketHook *hook, std::string_view help)
 {
     int ret;
     std::unique_lock l(lock);
@@ -597,12 +600,11 @@ int AdminSocket::register_command(std::string_view cmddesc,
     auto i = hooks.find(prefix);
     if (i != hooks.cend() && i->second.desc == cmddesc) {
         ldout(m_cct, 5) << "register_command " << prefix
-            << " cmddesc " << cmddesc << " hook " << hook << " EEXIST" << dendl;
+                        << " cmddesc " << cmddesc << " hook " << hook << " EEXIST" << dendl;
         ret = -EEXIST;
-    }
-    else {
+    } else {
         ldout(m_cct, 5) << "register_command " << prefix << " hook " << hook
-            << dendl;
+                        << dendl;
         hooks.emplace_hint(i,
                            std::piecewise_construct,
                            std::forward_as_tuple(prefix),
@@ -612,7 +614,7 @@ int AdminSocket::register_command(std::string_view cmddesc,
     return ret;
 }
 
-void AdminSocket::unregister_commands(const AdminSocketHook * hook)
+void AdminSocket::unregister_commands(const AdminSocketHook *hook)
 {
     std::unique_lock l(lock);
     auto i = hooks.begin();
@@ -623,34 +625,33 @@ void AdminSocket::unregister_commands(const AdminSocketHook * hook)
             // If we are currently processing a command, wait for it to
             // complete in case it referenced the hook that we are
             // unregistering.
-            in_hook_cond.wait(l,[this] () {
-                              return !in_hook;
-                              }
-            );
+            in_hook_cond.wait(l, [this]() {
+                return !in_hook;
+            }
+                             );
             hooks.erase(i++);
-        }
-        else {
+        } else {
             i++;
         }
     }
 }
 
-class VersionHook:public AdminSocketHook {
-  public:
-    int call(std::string_view command, const cmdmap_t & cmdmap,
+class VersionHook: public AdminSocketHook
+{
+public:
+    int call(std::string_view command, const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & errss, bufferlist & out) override {
+             Formatter *f, std::ostream &errss, bufferlist &out) override
+    {
         if (command == "0" sv) {
             out.append(CEPH_ADMIN_SOCK_VERSION);
-        }
-        else {
+        } else {
             f->open_object_section("version");
             if (command == "version") {
                 f->dump_string("version", ceph_version_to_str());
                 f->dump_string("release", ceph_release_to_str());
                 f->dump_string("release_type", ceph_release_type());
-            }
-            else if (command == "git_version") {
+            } else if (command == "git_version") {
                 f->dump_string("git_version", git_version_to_str());
             }
             ostringstream ss;
@@ -660,33 +661,40 @@ class VersionHook:public AdminSocketHook {
     }
 };
 
-class HelpHook:public AdminSocketHook {
+class HelpHook: public AdminSocketHook
+{
     AdminSocket *m_as;
-  public:
-    explicit HelpHook(AdminSocket * as):m_as(as) {
-    } int call(std::string_view command, const cmdmap_t & cmdmap,
+public:
+    explicit HelpHook(AdminSocket *as): m_as(as)
+    {
+    } int call(std::string_view command, const cmdmap_t &cmdmap,
                const bufferlist &,
-               Formatter * f, std::ostream & errss, bufferlist & out) override {
+               Formatter *f, std::ostream &errss, bufferlist &out) override
+    {
         f->open_object_section("help");
-      for (const auto &[command, info]:m_as->hooks) {
-            if (info.help.length())
+        for (const auto &[command, info] : m_as->hooks) {
+            if (info.help.length()) {
                 f->dump_string(command.c_str(), info.help);
+            }
         }
         f->close_section();
         return 0;
     }
 };
 
-class GetdescsHook:public AdminSocketHook {
+class GetdescsHook: public AdminSocketHook
+{
     AdminSocket *m_as;
-  public:
-    explicit GetdescsHook(AdminSocket * as):m_as(as) {
-    } int call(std::string_view command, const cmdmap_t & cmdmap,
+public:
+    explicit GetdescsHook(AdminSocket *as): m_as(as)
+    {
+    } int call(std::string_view command, const cmdmap_t &cmdmap,
                const bufferlist &,
-               Formatter * f, std::ostream & errss, bufferlist & out) override {
+               Formatter *f, std::ostream &errss, bufferlist &out) override
+    {
         int cmdnum = 0;
         f->open_object_section("command_descriptions");
-      for (const auto &[command, info]:m_as->hooks) {
+        for (const auto &[command, info] : m_as->hooks) {
             // GCC 8 actually has [[maybe_unused]] on a structured binding
             // do what you'd expect. GCC 7 does not.
             (void)command;
@@ -703,7 +711,7 @@ class GetdescsHook:public AdminSocketHook {
     }
 };
 
-bool AdminSocket::init(const std::string & path)
+bool AdminSocket::init(const std::string &path)
 {
     ldout(m_cct, 5) << "init " << path << dendl;
 
@@ -715,7 +723,7 @@ bool AdminSocket::init(const std::string & path)
     if (std::tie(ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber) <
         std::make_tuple(10, 0, 17063)) {
         ldout(m_cct, 5) << "Unix sockets require Windows 10.0.17063 or later. "
-            << "The admin socket will not be available." << dendl;
+                        << "The admin socket will not be available." << dendl;
         return false;
     }
 #endif
@@ -763,8 +771,9 @@ void AdminSocket::shutdown()
     // Under normal operation this is unlikely to occur.  However for some unit
     // tests, some object members are not initialized and so cannot be deleted
     // without fault.
-    if (m_wakeup_wr_fd < 0)
+    if (m_wakeup_wr_fd < 0) {
         return;
+    }
 
     ldout(m_cct, 5) << "shutdown" << dendl;
     m_shutdown = true;

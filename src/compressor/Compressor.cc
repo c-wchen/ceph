@@ -7,7 +7,7 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
  *
  */
@@ -24,45 +24,51 @@
 #include "common/debug.h"
 #include "common/dout.h"
 
-namespace TOPNSPC {
+namespace TOPNSPC
+{
 
 #ifdef HAVE_QATZIP
-    QatAccel Compressor::qat_accel;
+QatAccel Compressor::qat_accel;
 #endif
 
-    const char *Compressor::get_comp_alg_name(int a) {
+const char *Compressor::get_comp_alg_name(int a)
+{
 
-        auto p =
-            std::find_if(std::cbegin(compression_algorithms),
-                         std::cend(compression_algorithms),
-                         [a] (const auto & kv){ return kv.second == a;
-                         }
-        );
+    auto p =
+        std::find_if(std::cbegin(compression_algorithms),
+                     std::cend(compression_algorithms),
+    [a](const auto & kv) {
+        return kv.second == a;
+    }
+                    );
 
-        if (std::cend(compression_algorithms) == p)
-            return "???";       // It would be nice to revise this...
-
-        return p->first;
+    if (std::cend(compression_algorithms) == p) {
+        return "???";    // It would be nice to revise this...
     }
 
-    std::optional < Compressor::CompressionAlgorithm >
-        Compressor::get_comp_alg_type(std::string_view s) {
+    return p->first;
+}
 
-        auto p =
-            std::find_if(std::cbegin(compression_algorithms),
-                         std::cend(compression_algorithms),
-                         [&s] (const auto & kv){ return kv.first == s;
-                         }
-        );
-        if (std::cend(compression_algorithms) == p)
-            return {
-            };
+std::optional < Compressor::CompressionAlgorithm > Compressor::get_comp_alg_type(std::string_view s)
+{
 
-        return p->second;
+    auto p =
+        std::find_if(std::cbegin(compression_algorithms),
+                     std::cend(compression_algorithms),
+    [&s](const auto & kv) {
+        return kv.first == s;
     }
+                    );
+    if (std::cend(compression_algorithms) == p)
+        return {
+    };
 
-    const char *Compressor::get_comp_mode_name(int m) {
-        switch (m) {
+    return p->second;
+}
+
+const char *Compressor::get_comp_mode_name(int m)
+{
+    switch (m) {
         case COMP_NONE:
             return "none";
         case COMP_PASSIVE:
@@ -73,58 +79,65 @@ namespace TOPNSPC {
             return "force";
         default:
             return "???";
-        }
     }
-    std::optional < Compressor::CompressionMode >
-        Compressor::get_comp_mode_type(std::string_view s) {
-        if (s == "force")
-            return COMP_FORCE;
-        if (s == "aggressive")
-            return COMP_AGGRESSIVE;
-        if (s == "passive")
-            return COMP_PASSIVE;
-        if (s == "none")
-            return COMP_NONE;
-        return {
-        };
+}
+std::optional < Compressor::CompressionMode > Compressor::get_comp_mode_type(std::string_view s)
+{
+    if (s == "force") {
+        return COMP_FORCE;
+    }
+    if (s == "aggressive") {
+        return COMP_AGGRESSIVE;
+    }
+    if (s == "passive") {
+        return COMP_PASSIVE;
+    }
+    if (s == "none") {
+        return COMP_NONE;
+    }
+    return {
+    };
+}
+
+CompressorRef Compressor::create(CephContext *cct,
+                                 const std::string &type)
+{
+    // support "random" for teuthology testing
+    if (type == "random") {
+        int alg = ceph::util::generate_random_number(0, COMP_ALG_LAST - 1);
+        if (alg == COMP_ALG_NONE) {
+            return nullptr;
+        }
+        return create(cct, alg);
     }
 
-    CompressorRef Compressor::create(CephContext * cct,
-                                     const std::string & type) {
-        // support "random" for teuthology testing
-        if (type == "random") {
-            int alg = ceph::util::generate_random_number(0, COMP_ALG_LAST - 1);
-            if (alg == COMP_ALG_NONE) {
-                return nullptr;
-            }
-            return create(cct, alg);
-        }
-
-        CompressorRef cs_impl = NULL;
-        std::stringstream ss;
-        auto reg = cct->get_plugin_registry();
-        auto factory =
-            dynamic_cast <
-            ceph::CompressionPlugin * >(reg->get_with_load("compressor", type));
-        if (factory == NULL) {
-            lderr(cct) << __func__ << " cannot load compressor of type " << type
-                << dendl;
-            return NULL;
-        }
-        int err = factory->factory(&cs_impl, &ss);
-        if (err)
-            lderr(cct) << __func__ << " factory return error " << err << dendl;
-        return cs_impl;
+    CompressorRef cs_impl = NULL;
+    std::stringstream ss;
+    auto reg = cct->get_plugin_registry();
+    auto factory =
+        dynamic_cast <
+        ceph::CompressionPlugin * >(reg->get_with_load("compressor", type));
+    if (factory == NULL) {
+        lderr(cct) << __func__ << " cannot load compressor of type " << type
+                   << dendl;
+        return NULL;
     }
-
-    CompressorRef Compressor::create(CephContext * cct, int alg) {
-        if (alg < 0 || alg >= COMP_ALG_LAST) {
-            lderr(cct) << __func__ << " invalid algorithm value:" << alg <<
-                dendl;
-            return CompressorRef();
-        }
-        std::string type_name = get_comp_alg_name(alg);
-        return create(cct, type_name);
+    int err = factory->factory(&cs_impl, &ss);
+    if (err) {
+        lderr(cct) << __func__ << " factory return error " << err << dendl;
     }
+    return cs_impl;
+}
+
+CompressorRef Compressor::create(CephContext *cct, int alg)
+{
+    if (alg < 0 || alg >= COMP_ALG_LAST) {
+        lderr(cct) << __func__ << " invalid algorithm value:" << alg <<
+                   dendl;
+        return CompressorRef();
+    }
+    std::string type_name = get_comp_alg_name(alg);
+    return create(cct, type_name);
+}
 
 }                               // namespace TOPNSPC

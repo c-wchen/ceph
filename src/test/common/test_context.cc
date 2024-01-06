@@ -44,7 +44,7 @@ TEST(CephContext, do_command)
         stringstream ss;
         bufferlist out;
         std::unique_ptr < Formatter > f {
-        Formatter::create_unique("xml", "xml")};
+            Formatter::create_unique("xml", "xml")};
         cct->do_command("config get", cmdmap, f.get(), ss, &out);
         f->flush(out);
         string s(out.c_str(), out.length());
@@ -56,7 +56,7 @@ TEST(CephContext, do_command)
         bufferlist out;
         cmdmap_t bad_cmdmap;    // no 'var' field
         std::unique_ptr < Formatter > f {
-        Formatter::create_unique("xml", "xml")};
+            Formatter::create_unique("xml", "xml")};
         int r = cct->do_command("config get", bad_cmdmap, f.get(), ss, &out);
         if (r >= 0) {
             f->flush(out);
@@ -72,7 +72,7 @@ TEST(CephContext, do_command)
         cmdmap_t bad_cmdmap;
         bad_cmdmap["var"] = string("doesnotexist123");
         std::unique_ptr < Formatter > f {
-        Formatter::create_unique("xml", "xml")};
+            Formatter::create_unique("xml", "xml")};
         int r = cct->do_command("config help", bad_cmdmap, f.get(), ss, &out);
         if (r >= 0) {
             f->flush(out);
@@ -87,7 +87,7 @@ TEST(CephContext, do_command)
         stringstream ss;
         bufferlist out;
         std::unique_ptr < Formatter > f {
-        Formatter::create_unique("xml", "xml")};
+            Formatter::create_unique("xml", "xml")};
         cct->do_command("config diff get", cmdmap, f.get(), ss, &out);
         f->flush(out);
         string s(out.c_str(), out.length());
@@ -110,32 +110,32 @@ TEST(CephContext, experimental_features)
     ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
 
     cct->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "foo,bar");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "foo,bar");
     cct->_conf.apply_changes(&cout);
     ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
     ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
     ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
 
     cct->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "foo bar");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "foo bar");
     cct->_conf.apply_changes(&cout);
     ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
     ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));
     ASSERT_FALSE(cct->check_experimental_feature_enabled("baz"));
 
     cct->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "baz foo");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "baz foo");
     cct->_conf.apply_changes(&cout);
     ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
     ASSERT_FALSE(cct->check_experimental_feature_enabled("bar"));
     ASSERT_TRUE(cct->check_experimental_feature_enabled("baz"));
 
     cct->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "*");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "*");
     cct->_conf.apply_changes(&cout);
     ASSERT_TRUE(cct->check_experimental_feature_enabled("foo"));
     ASSERT_TRUE(cct->check_experimental_feature_enabled("bar"));

@@ -79,8 +79,9 @@ TEST(EscapeXml, Utf8)
 
 static std::string escape_json_attrs(const char *str, size_t src_len = 0)
 {
-    if (!src_len)
+    if (!src_len) {
         src_len = strlen(str);
+    }
     int len = escape_json_attr_len(str, src_len);
     char out[len];
     escape_json_attr(str, src_len, out);
@@ -89,8 +90,9 @@ static std::string escape_json_attrs(const char *str, size_t src_len = 0)
 
 static std::string escape_json_stream(const char *str, size_t src_len = 0)
 {
-    if (!src_len)
+    if (!src_len) {
         src_len = strlen(str);
+    }
     std::stringstream ss;
     ss << json_stream_escaper(std::string_view(str, src_len));
     return ss.str();

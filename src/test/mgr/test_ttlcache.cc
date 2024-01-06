@@ -8,7 +8,7 @@ using namespace std;
 TEST(TTLCache, Get)
 {
     TTLCache < string, int >c {
-    100};
+        100};
     c.insert("foo", 1);
     int foo = c.get("foo");
     ASSERT_EQ(foo, 1);
@@ -17,7 +17,7 @@ TEST(TTLCache, Get)
 TEST(TTLCache, Erase)
 {
     TTLCache < string, int >c {
-    100};
+        100};
     c.insert("foo", 1);
     int foo = c.get("foo");
     ASSERT_EQ(foo, 1);
@@ -25,7 +25,7 @@ TEST(TTLCache, Erase)
     try {
         foo = c.get("foo");
         FAIL();
-    } catch(std::out_of_range & e) {
+    } catch (std::out_of_range &e) {
         SUCCEED();
     }
 }
@@ -33,7 +33,7 @@ TEST(TTLCache, Erase)
 TEST(TTLCache, Clear)
 {
     TTLCache < string, int >c {
-    100};
+        100};
     c.insert("foo", 1);
     c.insert("foo2", 2);
     c.clear();
@@ -43,7 +43,7 @@ TEST(TTLCache, Clear)
 TEST(TTLCache, NoTTL)
 {
     TTLCache < string, int >c {
-    100};
+        100};
     c.insert("foo", 1);
     int foo = c.get("foo");
     ASSERT_EQ(foo, 1);
@@ -52,7 +52,7 @@ TEST(TTLCache, NoTTL)
     try {
         foo = c.get("foo2");
         FAIL();
-    } catch(std::out_of_range & e) {
+    } catch (std::out_of_range &e) {
         SUCCEED();
     }
 }
@@ -60,7 +60,7 @@ TEST(TTLCache, NoTTL)
 TEST(TTLCache, SizeLimit)
 {
     TTLCache < string, int >c {
-    100, 2};
+        100, 2};
     c.insert("foo", 1);
     c.insert("foo2", 2);
     c.insert("foo3", 3);
@@ -70,7 +70,7 @@ TEST(TTLCache, SizeLimit)
 TEST(TTLCache, HitRatio)
 {
     TTLCache < string, int >c {
-    100};
+        100};
     c.insert("foo", 1);
     c.insert("foo2", 2);
     c.insert("foo3", 3);

@@ -36,7 +36,8 @@
 namespace po = boost::program_options;
 using namespace std;
 
-class ErasureCodeNonRegression {
+class ErasureCodeNonRegression
+{
     unsigned stripe_width;
     string plugin;
     bool create;
@@ -45,7 +46,7 @@ class ErasureCodeNonRegression {
     string directory;
     ErasureCodeProfile profile;
     boost::intrusive_ptr < CephContext > cct;
-  public:
+public:
     int setup(int argc, char **argv);
     int run();
     int run_create();
@@ -114,7 +115,7 @@ int ErasureCodeNonRegression::setup(int argc, char **argv)
     {
         stringstream path;
         path << base << "/" << "plugin=" << plugin << " stripe-width=" <<
-            stripe_width;
+             stripe_width;
         directory = path.str();
     }
 
@@ -125,10 +126,9 @@ int ErasureCodeNonRegression::setup(int argc, char **argv)
             boost::split(strs, *i, boost::is_any_of("="));
             if (strs.size() != 2) {
                 cerr << "--parameter " << *i <<
-                    " ignored because it does not contain exactly one =" <<
-                    endl;
-            }
-            else {
+                     " ignored because it does not contain exactly one =" <<
+                     endl;
+            } else {
                 profile[strs[0]] = strs[1];
             }
             directory += " " + *i;
@@ -141,16 +141,18 @@ int ErasureCodeNonRegression::setup(int argc, char **argv)
 int ErasureCodeNonRegression::run()
 {
     int ret = 0;
-    if (create && (ret = run_create()))
+    if (create && (ret = run_create())) {
         return ret;
-    if (check && (ret = run_check()))
+    }
+    if (check && (ret = run_check())) {
         return ret;
+    }
     return ret;
 }
 
 int ErasureCodeNonRegression::run_create()
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     ErasureCodeInterfaceRef erasure_code;
     stringstream messages;
@@ -169,27 +171,33 @@ int ErasureCodeNonRegression::run_create()
     }
     unsigned payload_chunk_size = 37;
     string payload;
-    for (unsigned j = 0; j < payload_chunk_size; ++j)
+    for (unsigned j = 0; j < payload_chunk_size; ++j) {
         payload.push_back('a' + (rand() % 26));
+    }
     bufferlist in;
-    for (unsigned j = 0; j < stripe_width; j += payload_chunk_size)
+    for (unsigned j = 0; j < stripe_width; j += payload_chunk_size) {
         in.append(payload);
-    if (stripe_width < in.length())
+    }
+    if (stripe_width < in.length()) {
         in.splice(stripe_width, in.length() - stripe_width);
-    if (in.write_file(content_path().c_str()))
+    }
+    if (in.write_file(content_path().c_str())) {
         return 1;
+    }
     set < int >want_to_encode;
     for (unsigned int i = 0; i < erasure_code->get_chunk_count(); i++) {
         want_to_encode.insert(i);
     }
     map < int, bufferlist > encoded;
     code = erasure_code->encode(want_to_encode, in, &encoded);
-    if (code)
+    if (code) {
         return code;
+    }
     for (map < int, bufferlist >::iterator chunk = encoded.begin();
          chunk != encoded.end(); ++chunk) {
-        if (chunk->second.write_file(chunk_path(chunk->first).c_str()))
+        if (chunk->second.write_file(chunk_path(chunk->first).c_str())) {
             return 1;
+        }
     }
     return 0;
 }
@@ -201,16 +209,18 @@ decode_erasures(ErasureCodeInterfaceRef erasure_code, set < int >erasures,
     map < int, bufferlist > available;
     for (map < int, bufferlist >::iterator chunk = chunks.begin();
          chunk != chunks.end(); ++chunk) {
-        if (erasures.count(chunk->first) == 0)
+        if (erasures.count(chunk->first) == 0) {
             available[chunk->first] = chunk->second;
+        }
 
     }
     map < int, bufferlist > decoded;
     int code =
         erasure_code->decode(erasures, available, &decoded,
                              available.begin()->second.length());
-    if (code)
+    if (code) {
         return code;
+    }
     for (set < int >::iterator erasure = erasures.begin();
          erasure != erasures.end(); ++erasure) {
         if (!chunks[*erasure].contents_equal(decoded[*erasure])) {
@@ -223,7 +233,7 @@ decode_erasures(ErasureCodeInterfaceRef erasure_code, set < int >erasures,
 
 int ErasureCodeNonRegression::run_check()
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     ErasureCodeInterfaceRef erasure_code;
     stringstream messages;
@@ -248,8 +258,9 @@ int ErasureCodeNonRegression::run_check()
 
     map < int, bufferlist > encoded;
     code = erasure_code->encode(want_to_encode, in, &encoded);
-    if (code)
+    if (code) {
         return code;
+    }
 
     for (map < int, bufferlist >::iterator chunk = encoded.begin();
          chunk != encoded.end(); ++chunk) {
@@ -258,7 +269,7 @@ int ErasureCodeNonRegression::run_check()
             cerr << errors << endl;
             return 1;
         }
-        bufferlist & old = chunk->second;
+        bufferlist &old = chunk->second;
         if (existing.length() != old.length() ||
             memcmp(existing.c_str(), old.c_str(), old.length())) {
             cerr << "chunk " << chunk->first << " encodes differently" << endl;
@@ -271,8 +282,9 @@ int ErasureCodeNonRegression::run_check()
     erasures.clear();
     erasures.insert(0);
     code = decode_erasures(erasure_code, erasures, encoded);
-    if (code)
+    if (code) {
         return code;
+    }
 
     if (erasure_code->get_chunk_count() - erasure_code->get_data_chunk_count() >
         1) {
@@ -281,8 +293,9 @@ int ErasureCodeNonRegression::run_check()
         erasures.insert(0);
         erasures.insert(erasure_code->get_chunk_count() - 1);
         code = decode_erasures(erasure_code, erasures, encoded);
-        if (code)
+        if (code) {
             return code;
+        }
     }
 
     return 0;
@@ -306,8 +319,9 @@ int main(int argc, char **argv)
 {
     ErasureCodeNonRegression non_regression;
     int err = non_regression.setup(argc, argv);
-    if (err)
+    if (err) {
         return err;
+    }
     return non_regression.run();
 }
 

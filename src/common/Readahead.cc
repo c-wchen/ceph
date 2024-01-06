@@ -7,16 +7,16 @@
 using std::vector;
 
 Readahead::Readahead()
-:  
-m_trigger_requests(10),
-m_readahead_min_bytes(0),
-m_readahead_max_bytes(NO_LIMIT),
-m_alignments(),
-m_nr_consec_read(0),
-m_consec_read_bytes(0),
-m_last_pos(0),
-m_readahead_pos(0),
-m_readahead_trigger_pos(0), m_readahead_size(0), m_pending(0)
+    :
+    m_trigger_requests(10),
+    m_readahead_min_bytes(0),
+    m_readahead_max_bytes(NO_LIMIT),
+    m_alignments(),
+    m_nr_consec_read(0),
+    m_consec_read_bytes(0),
+    m_last_pos(0),
+    m_readahead_pos(0),
+    m_readahead_trigger_pos(0), m_readahead_size(0), m_pending(0)
 {
 }
 
@@ -60,8 +60,7 @@ void Readahead::_observe_read(uint64_t offset, uint64_t length)
     if (offset == m_last_pos) {
         m_nr_consec_read++;
         m_consec_read_bytes += length;
-    }
-    else {
+    } else {
         m_nr_consec_read = 0;
         m_consec_read_bytes = 0;
         m_readahead_trigger_pos = 0;
@@ -83,8 +82,7 @@ Readahead::extent_t Readahead::_compute_readahead(uint64_t limit)
                 // initial readahead trigger
                 m_readahead_size = m_consec_read_bytes;
                 m_readahead_pos = m_last_pos;
-            }
-            else {
+            } else {
                 // continuing readahead trigger
                 m_readahead_size *= 2;
                 if (m_last_pos > m_readahead_pos) {
@@ -113,8 +111,7 @@ Readahead::extent_t Readahead::_compute_readahead(uint64_t limit)
                     ceph_assert(align_prev > readahead_offset);
                     readahead_length = align_prev - readahead_offset;
                     break;
-                }
-                else if (dist_next < readahead_length / 2) {
+                } else if (dist_next < readahead_length / 2) {
                     // we can snap to the next alignment point by a less than 50% increase in size
                     ceph_assert(align_next > readahead_offset);
                     readahead_length = align_next - readahead_offset;
@@ -152,11 +149,10 @@ void Readahead::dec_pending(int count)
         std::list < Context * >pending_waiting(std::move(m_pending_waiting));
         m_pending_lock.unlock();
 
-      for (auto ctx:pending_waiting) {
+        for (auto ctx : pending_waiting) {
             ctx->complete(0);
         }
-    }
-    else {
+    } else {
         m_pending_lock.unlock();
     }
 }
@@ -168,7 +164,7 @@ void Readahead::wait_for_pending()
     ctx.wait();
 }
 
-void Readahead::wait_for_pending(Context * ctx)
+void Readahead::wait_for_pending(Context *ctx)
 {
     m_pending_lock.lock();
     if (m_pending > 0) {

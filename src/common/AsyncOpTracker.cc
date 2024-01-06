@@ -36,7 +36,7 @@ void AsyncOpTracker::finish_op()
     }
 }
 
-void AsyncOpTracker::wait_for_ops(Context * on_finish)
+void AsyncOpTracker::wait_for_ops(Context *on_finish)
 {
     {
         std::lock_guard locker(m_lock);

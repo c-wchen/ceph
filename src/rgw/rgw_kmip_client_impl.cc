@@ -40,7 +40,8 @@ struct RGWKmipHandle {
     uint8 *encoding;
 
     explicit RGWKmipHandle():
-        uses(0), ctx(0), ssl(0), bio(0), need_to_free_kmip(0), encoding(0) {
+        uses(0), ctx(0), ssl(0), bio(0), need_to_free_kmip(0), encoding(0)
+    {
         memset(kmip_ctx, 0, sizeof kmip_ctx);
         memset(textstrings, 0, sizeof textstrings);
         memset(upc, 0, sizeof upc);
@@ -48,35 +49,41 @@ struct RGWKmipHandle {
     };
 };
 
-struct RGWKmipWorker:public Thread {
-    RGWKMIPManagerImpl & m;
-    RGWKmipWorker(RGWKMIPManagerImpl & m):m(m) {
+struct RGWKmipWorker: public Thread {
+    RGWKMIPManagerImpl &m;
+    RGWKmipWorker(RGWKMIPManagerImpl &m): m(m)
+    {
     } void *entry() override;
-    void signal() {
+    void signal()
+    {
         std::lock_guard l {
-        m.lock};
+            m.lock};
         m.cond.notify_all();
     }
 };
 
-static void kmip_free_handle_stuff(RGWKmipHandle * kmip)
+static void kmip_free_handle_stuff(RGWKmipHandle *kmip)
 {
     if (kmip->encoding) {
         kmip_free_buffer(kmip->kmip_ctx,
                          kmip->encoding, kmip->buffer_total_size);
         kmip_set_buffer(kmip->kmip_ctx, NULL, 0);
     }
-    if (kmip->need_to_free_kmip)
+    if (kmip->need_to_free_kmip) {
         kmip_destroy(kmip->kmip_ctx);
-    if (kmip->bio)
+    }
+    if (kmip->bio) {
         BIO_free_all(kmip->bio);
-    if (kmip->ctx)
+    }
+    if (kmip->ctx) {
         SSL_CTX_free(kmip->ctx);
+    }
 }
 
-class RGWKmipHandleBuilder {
-  private:
-    CephContext * cct;
+class RGWKmipHandleBuilder
+{
+private:
+    CephContext *cct;
     const char *clientcert = 0;
     const char *clientkey = 0;
     const char *capath = 0;
@@ -84,46 +91,54 @@ class RGWKmipHandleBuilder {
     const char *portstring = 0;
     const char *username = 0;
     const char *password = 0;
-  public:
-     RGWKmipHandleBuilder(CephContext * cct):cct(cct) {
+public:
+    RGWKmipHandleBuilder(CephContext *cct): cct(cct)
+    {
     };
-    RGWKmipHandleBuilder & set_clientcert(const std::string & v) {
+    RGWKmipHandleBuilder &set_clientcert(const std::string &v)
+    {
         const char *s = v.c_str();
         if (*s) {
             clientcert = s;
         }
         return *this;
     }
-    RGWKmipHandleBuilder & set_clientkey(const std::string & v) {
+    RGWKmipHandleBuilder &set_clientkey(const std::string &v)
+    {
         const char *s = v.c_str();
         if (*s) {
             clientkey = s;
         }
         return *this;
     }
-    RGWKmipHandleBuilder & set_capath(const std::string & v) {
+    RGWKmipHandleBuilder &set_capath(const std::string &v)
+    {
         const char *s = v.c_str();
         if (*s) {
             capath = s;
         }
         return *this;
     }
-    RGWKmipHandleBuilder & set_host(const char *v) {
+    RGWKmipHandleBuilder &set_host(const char *v)
+    {
         host = v;
         return *this;
     }
-    RGWKmipHandleBuilder & set_portstring(const char *v) {
+    RGWKmipHandleBuilder &set_portstring(const char *v)
+    {
         portstring = v;
         return *this;
     }
-    RGWKmipHandleBuilder & set_username(const std::string & v) {
+    RGWKmipHandleBuilder &set_username(const std::string &v)
+    {
         const char *s = v.c_str();
         if (*s) {
             username = s;
         }
         return *this;
     }
-    RGWKmipHandleBuilder & set_password(const std::string & v) {
+    RGWKmipHandleBuilder &set_password(const std::string &v)
+    {
         const char *s = v.c_str();
         if (*s) {
             password = s;
@@ -141,7 +156,7 @@ static int kmip_write_an_error_helper(const char *s, size_t l, void *u)
     return l;
 }
 
-void ERR_print_errors_ceph(CephContext * cct)
+void ERR_print_errors_ceph(CephContext *cct)
 {
     ERR_print_errors_cb(kmip_write_an_error_helper, cct);
 }
@@ -159,7 +174,7 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
     else if (SSL_CTX_use_certificate_file(r->ctx, clientcert, SSL_FILETYPE_PEM)
              != 1) {
         lderr(cct) << "ERROR: can't load client cert from " << clientcert <<
-            dendl;
+                   dendl;
         ERR_print_errors_ceph(cct);
         goto Done;
     }
@@ -168,7 +183,7 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
     else if (SSL_CTX_use_PrivateKey_file(r->ctx, clientkey,
                                          SSL_FILETYPE_PEM) != 1) {
         lderr(cct) << "ERROR: can't load client key from "
-            << clientkey << dendl;
+                   << clientkey << dendl;
         ERR_print_errors_ceph(cct);
         goto Done;
     }
@@ -191,7 +206,7 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
     BIO_set_conn_port(r->bio, portstring);
     if (BIO_do_connect(r->bio) != 1) {
         lderr(cct) << "BIO_do_connect failed to " << host
-            << ":" << portstring << dendl;
+                   << ":" << portstring << dendl;
         ERR_print_errors_ceph(cct);
         goto Done;
     }
@@ -210,7 +225,7 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
                       r->buffer_block_size));
     if (!r->encoding) {
         lderr(cct) << "kmip buffer alloc failed: "
-            << r->buffer_blocks << " * " << r->buffer_block_size << dendl;
+                   << r->buffer_blocks << " * " << r->buffer_block_size << dendl;
         goto Done;
     }
     ns = r->buffer_blocks * r->buffer_block_size;
@@ -219,7 +234,7 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
 
     up = r->textstrings;
     if (username) {
-        memset(r->upc, 0, sizeof *r->upc);
+        memset(r->upc, 0, sizeof * r->upc);
         up->value = (char *)username;
         up->size = strlen(username);
         r->upc->username = up++;
@@ -238,7 +253,7 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
     }
 
     failed = 0;
-  Done:
+Done:
     if (!failed) ;
     else if (!r) ;
     else {
@@ -249,21 +264,22 @@ RGWKmipHandle *RGWKmipHandleBuilder::build() const const
     return r;
 }
 
-struct RGWKmipHandles:public Thread {
+struct RGWKmipHandles: public Thread {
     CephContext *cct;
     ceph::mutex cleaner_lock = ceph::make_mutex("RGWKmipHandles::cleaner_lock");
     std::vector < RGWKmipHandle * >saved_kmip;
     int cleaner_shutdown;
     bool cleaner_active = false;
     ceph::condition_variable cleaner_cond;
-    RGWKmipHandles(CephContext * cct): cct(cct), cleaner_shutdown {
-    0} {
+    RGWKmipHandles(CephContext *cct): cct(cct), cleaner_shutdown {
+        0}
+    {
     }
     RGWKmipHandle *get_kmip_handle();
-    void release_kmip_handle_now(RGWKmipHandle * kmip);
-    void release_kmip_handle(RGWKmipHandle * kmip);
+    void release_kmip_handle_now(RGWKmipHandle *kmip);
+    void release_kmip_handle(RGWKmipHandle *kmip);
     void flush_kmip_handles();
-    int do_one_entry(RGWKMIPTransceiver & element);
+    int do_one_entry(RGWKMIPTransceiver &element);
     void *entry();
     void start();
     void stop();
@@ -275,7 +291,7 @@ RGWKmipHandle *RGWKmipHandles::get_kmip_handle()
     const char *hostaddr = cct->_conf->rgw_crypt_kmip_addr.c_str();
     {
         std::lock_guard lock {
-        cleaner_lock};
+            cleaner_lock};
         if (!saved_kmip.empty()) {
             kmip = *saved_kmip.begin();
             saved_kmip.erase(saved_kmip.begin());
@@ -284,38 +300,38 @@ RGWKmipHandle *RGWKmipHandles::get_kmip_handle()
     if (!kmip && hostaddr) {
         char *hosttemp = strdup(hostaddr);
         char *port = strchr(hosttemp, ':');
-        if (port)
+        if (port) {
             *port++ = 0;
+        }
         kmip = RGWKmipHandleBuilder {
-        cct}
+            cct}
         .set_clientcert(cct->_conf->rgw_crypt_kmip_client_cert)
-            .set_clientkey(cct->_conf->rgw_crypt_kmip_client_key)
-            .set_capath(cct->_conf->rgw_crypt_kmip_ca_path)
-            .set_host(hosttemp)
-            .set_portstring(port ? port : "5696")
-            .set_username(cct->_conf->rgw_crypt_kmip_username)
-            .set_password(cct->_conf->rgw_crypt_kmip_password)
-            .build();
+        .set_clientkey(cct->_conf->rgw_crypt_kmip_client_key)
+        .set_capath(cct->_conf->rgw_crypt_kmip_ca_path)
+        .set_host(hosttemp)
+        .set_portstring(port ? port : "5696")
+        .set_username(cct->_conf->rgw_crypt_kmip_username)
+        .set_password(cct->_conf->rgw_crypt_kmip_password)
+        .build();
         free(hosttemp);
     }
     return kmip;
 }
 
-void RGWKmipHandles::release_kmip_handle_now(RGWKmipHandle * kmip)
+void RGWKmipHandles::release_kmip_handle_now(RGWKmipHandle *kmip)
 {
     kmip_free_handle_stuff(kmip);
     delete kmip;
 }
 
 #define MAXIDLE 5
-void RGWKmipHandles::release_kmip_handle(RGWKmipHandle * kmip)
+void RGWKmipHandles::release_kmip_handle(RGWKmipHandle *kmip)
 {
     if (cleaner_shutdown) {
         release_kmip_handle_now(kmip);
-    }
-    else {
+    } else {
         std::lock_guard lock {
-        cleaner_lock};
+            cleaner_lock};
         kmip->lastuse = mono_clock::now();
         saved_kmip.insert(saved_kmip.begin(), 1, kmip);
     }
@@ -325,14 +341,14 @@ void *RGWKmipHandles::entry()
 {
     RGWKmipHandle *kmip;
     std::unique_lock lock {
-    cleaner_lock};
+        cleaner_lock};
 
     for (;;) {
         if (cleaner_shutdown) {
-            if (saved_kmip.empty())
+            if (saved_kmip.empty()) {
                 break;
-        }
-        else {
+            }
+        } else {
             cleaner_cond.wait_for(lock, std::chrono::seconds(MAXIDLE));
         }
         mono_time now = mono_clock::now();
@@ -341,8 +357,9 @@ void *RGWKmipHandles::entry()
             --cend;
             kmip = *cend;
             if (!cleaner_shutdown && now - kmip->lastuse
-                < std::chrono::seconds(MAXIDLE))
+                < std::chrono::seconds(MAXIDLE)) {
                 break;
+            }
             saved_kmip.erase(cend);
             release_kmip_handle_now(kmip);
         }
@@ -353,7 +370,7 @@ void *RGWKmipHandles::entry()
 void RGWKmipHandles::start()
 {
     std::lock_guard lock {
-    cleaner_lock};
+        cleaner_lock};
     if (!cleaner_active) {
         cleaner_active = true;
         this->create("KMIPcleaner");    // len<16!!!
@@ -363,7 +380,7 @@ void RGWKmipHandles::start()
 void RGWKmipHandles::stop()
 {
     std::unique_lock lock {
-    cleaner_lock};
+        cleaner_lock};
     cleaner_shutdown = 1;
     cleaner_cond.notify_all();
     if (cleaner_active) {
@@ -406,26 +423,28 @@ void RGWKMIPManagerImpl::stop()
     }
 }
 
-int RGWKMIPManagerImpl::add_request(RGWKMIPTransceiver * req)
+int RGWKMIPManagerImpl::add_request(RGWKMIPTransceiver *req)
 {
     std::unique_lock l {
-    lock};
-    if (going_down)
+        lock};
+    if (going_down) {
         return -ECANCELED;
+    }
     requests.push_back(*new Request {
-                       *req}
-    );
+        *req}
+                      );
     l.unlock();
-    if (worker)
+    if (worker) {
         worker->signal();
+    }
     return 0;
 }
 
-int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
+int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver &element)
 {
     auto h = get_kmip_handle();
     std::unique_lock l {
-    element.lock};
+        element.lock};
     Attribute a[8], *ap;
     TextString nvalue[1], uvalue[1];
     Name nattr[1];
@@ -459,30 +478,31 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
         element.ret = -ERR_SERVICE_UNAVAILABLE;
         return element.ret;
     }
-    memset(a, 0, sizeof *a);
-    for (i = 0; i < (int)(sizeof a / sizeof *a); ++i)
+    memset(a, 0, sizeof * a);
+    for (i = 0; i < (int)(sizeof a / sizeof * a); ++i) {
         kmip_init_attribute(a + i);
+    }
     ap = a;
     switch (element.operation) {
-    case RGWKMIPTransceiver::CREATE:
-        ap->type = KMIP_ATTR_CRYPTOGRAPHIC_ALGORITHM;
-        ap->value = &alg;
-        ++ap;
-        ap->type = KMIP_ATTR_CRYPTOGRAPHIC_LENGTH;
-        ap->value = &length;
-        ++ap;
-        ap->type = KMIP_ATTR_CRYPTOGRAPHIC_USAGE_MASK;
-        ap->value = &mask;
-        ++ap;
-        break;
-    default:
-        break;
+        case RGWKMIPTransceiver::CREATE:
+            ap->type = KMIP_ATTR_CRYPTOGRAPHIC_ALGORITHM;
+            ap->value = &alg;
+            ++ap;
+            ap->type = KMIP_ATTR_CRYPTOGRAPHIC_LENGTH;
+            ap->value = &length;
+            ++ap;
+            ap->type = KMIP_ATTR_CRYPTOGRAPHIC_USAGE_MASK;
+            ap->value = &mask;
+            ++ap;
+            break;
+        default:
+            break;
     }
     if (element.name) {
-        memset(nvalue, 0, sizeof *nvalue);
+        memset(nvalue, 0, sizeof * nvalue);
         nvalue->value = element.name;
         nvalue->size = strlen(element.name);
-        memset(nattr, 0, sizeof *nattr);
+        memset(nattr, 0, sizeof * nattr);
         nattr->value = nvalue;
         nattr->type = KMIP_NAME_UNINTERPRETED_TEXT_STRING;
         ap->type = KMIP_ATTR_NAME;
@@ -490,57 +510,58 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
         ++ap;
     }
     if (element.unique_id) {
-        memset(uvalue, 0, sizeof *uvalue);
+        memset(uvalue, 0, sizeof * uvalue);
         uvalue->value = element.unique_id;
         uvalue->size = strlen(element.unique_id);
     }
-    memset(pv, 0, sizeof *pv);
-    memset(rh, 0, sizeof *rh);
-    memset(rm, 0, sizeof *rm);
-    memset(auth, 0, sizeof *auth);
-    memset(resp_m, 0, sizeof *resp_m);
+    memset(pv, 0, sizeof * pv);
+    memset(rh, 0, sizeof * rh);
+    memset(rm, 0, sizeof * rm);
+    memset(auth, 0, sizeof * auth);
+    memset(resp_m, 0, sizeof * resp_m);
     kmip_init_protocol_version(pv, h->kmip_ctx->version);
     kmip_init_request_header(rh);
     rh->protocol_version = pv;
     rh->maximum_response_size = h->kmip_ctx->max_message_size;
     rh->time_stamp = time(NULL);
     rh->batch_count = 1;
-    memset(rbi, 0, sizeof *rbi);
+    memset(rbi, 0, sizeof * rbi);
     kmip_init_request_batch_item(rbi);
-    memset(u, 0, sizeof *u);
+    memset(u, 0, sizeof * u);
     rbi->request_payload = u;
     switch (element.operation) {
-    case RGWKMIPTransceiver::CREATE:
-        memset(ta, 0, sizeof *ta);
-        ta->attributes = a;
-        ta->attribute_count = ap - a;
-        u->create_req->object_type = KMIP_OBJTYPE_SYMMETRIC_KEY;
-        u->create_req->template_attribute = ta;
-        rbi->operation = KMIP_OP_CREATE;
-        what = "create";
-        break;
-    case RGWKMIPTransceiver::GET:
-        if (element.unique_id)
-            u->get_req->unique_identifier = uvalue;
-        rbi->operation = KMIP_OP_GET;
-        what = "get";
-        break;
-    case RGWKMIPTransceiver::LOCATE:
-        if (ap > a) {
-            u->locate_req->attributes = a;
-            u->locate_req->attribute_count = ap - a;
-        }
-        rbi->operation = KMIP_OP_LOCATE;
-        what = "locate";
-        break;
-    case RGWKMIPTransceiver::GET_ATTRIBUTES:
-    case RGWKMIPTransceiver::GET_ATTRIBUTE_LIST:
-    case RGWKMIPTransceiver::DESTROY:
-    default:
-        lderr(cct) << "Missing operation logic op=" << element.
-            operation << dendl;
-        element.ret = -EINVAL;
-        goto Done;
+        case RGWKMIPTransceiver::CREATE:
+            memset(ta, 0, sizeof * ta);
+            ta->attributes = a;
+            ta->attribute_count = ap - a;
+            u->create_req->object_type = KMIP_OBJTYPE_SYMMETRIC_KEY;
+            u->create_req->template_attribute = ta;
+            rbi->operation = KMIP_OP_CREATE;
+            what = "create";
+            break;
+        case RGWKMIPTransceiver::GET:
+            if (element.unique_id) {
+                u->get_req->unique_identifier = uvalue;
+            }
+            rbi->operation = KMIP_OP_GET;
+            what = "get";
+            break;
+        case RGWKMIPTransceiver::LOCATE:
+            if (ap > a) {
+                u->locate_req->attributes = a;
+                u->locate_req->attribute_count = ap - a;
+            }
+            rbi->operation = KMIP_OP_LOCATE;
+            what = "locate";
+            break;
+        case RGWKMIPTransceiver::GET_ATTRIBUTES:
+        case RGWKMIPTransceiver::GET_ATTRIBUTE_LIST:
+        case RGWKMIPTransceiver::DESTROY:
+        default:
+            lderr(cct) << "Missing operation logic op=" << element.
+                       operation << dendl;
+            element.ret = -EINVAL;
+            goto Done;
     }
     rm->request_header = rh;
     rm->batch_items = rbi;
@@ -554,8 +575,9 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
     }
     for (;;) {
         i = kmip_encode_request_message(h->kmip_ctx, rm);
-        if (i != KMIP_ERROR_BUFFER_FULL)
+        if (i != KMIP_ERROR_BUFFER_FULL) {
             break;
+        }
         h->kmip_ctx->free_func(h->kmip_ctx->state, h->encoding);
         h->encoding = 0;
         ++h->buffer_blocks;
@@ -567,7 +589,7 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
                           h->buffer_block_size));
         if (!h->encoding) {
             lderr(cct) << "kmip buffer alloc failed: "
-                << h->buffer_blocks << " * " << h->buffer_block_size << dendl;
+                       << h->buffer_blocks << " * " << h->buffer_block_size << dendl;
             element.ret = -ENOMEM;
             goto Done;
         }
@@ -577,8 +599,8 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
     }
     if (i != KMIP_OK) {
         lderr(cct) << " Failed to encode " << what
-            << " request; err=" << i
-            << " ctx error message " << h->kmip_ctx->error_message << dendl;
+                   << " request; err=" << i
+                   << " ctx error message " << h->kmip_ctx->error_message << dendl;
         element.ret = -EINVAL;
         goto Done;
     }
@@ -588,7 +610,7 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
                                        &response, &response_size);
     if (i < 0) {
         lderr(cct) << "Problem sending request to " << what << " " << i <<
-            " context error message " << h->kmip_ctx->error_message << dendl;
+                   " context error message " << h->kmip_ctx->error_message << dendl;
         element.ret = -EINVAL;
         goto Done;
     }
@@ -599,13 +621,13 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
     i = kmip_decode_response_message(h->kmip_ctx, resp_m);
     if (i != KMIP_OK) {
         lderr(cct) << "Failed to decode " << what << " " << i <<
-            " context error message " << h->kmip_ctx->error_message << dendl;
+                   " context error message " << h->kmip_ctx->error_message << dendl;
         element.ret = -EINVAL;
         goto Done;
     }
     if (resp_m->batch_count != 1) {
         lderr(cct) << "Failed; weird response count doing " << what << " " <<
-            resp_m->batch_count << dendl;
+                   resp_m->batch_count << dendl;
         element.ret = -EINVAL;
         goto Done;
     }
@@ -618,12 +640,12 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
     }
     if (req->operation != rbi->operation) {
         lderr(cct) << "Failed; response operation mismatch, got " << req->
-            operation << " expected " << rbi->operation << dendl;
+                   operation << " expected " << rbi->operation << dendl;
         element.ret = -EINVAL;
         goto Done;
     }
     switch (req->operation) {
-    case KMIP_OP_CREATE:{
+        case KMIP_OP_CREATE: {
             CreateResponsePayload *pld =
                 (CreateResponsePayload *) req->response_payload;
             element.out =
@@ -631,19 +653,20 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             memcpy(element.out, pld->unique_identifier->value,
                    pld->unique_identifier->size);
             element.out[pld->unique_identifier->size] = 0;
-        } break;
-    case KMIP_OP_LOCATE:{
+        }
+        break;
+        case KMIP_OP_LOCATE: {
             LocateResponsePayload *pld =
                 (LocateResponsePayload *) req->response_payload;
             char **list =
                 static_cast <
                 char
-                **>(malloc
-                    (sizeof(char *) * (1 + pld->unique_identifiers_count)));
+                ** >(malloc
+                     (sizeof(char *) * (1 + pld->unique_identifiers_count)));
             for (i = 0; i < pld->unique_identifiers_count; ++i) {
                 list[i] =
                     static_cast <
-                    char *>(malloc(pld->unique_identifiers[i].size + 1));
+                    char * >(malloc(pld->unique_identifiers[i].size + 1));
                 memcpy(list[i], pld->unique_identifiers[i].value,
                        pld->unique_identifiers[i].size);
                 list[i][pld->unique_identifiers[i].size] = 0;
@@ -651,8 +674,9 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             list[i] = 0;
             element.outlist->strings = list;
             element.outlist->string_count = pld->unique_identifiers_count;
-        } break;
-    case KMIP_OP_GET:{
+        }
+        break;
+        case KMIP_OP_GET: {
             GetResponsePayload *pld =
                 (GetResponsePayload *) req->response_payload;
             element.out =
@@ -662,7 +686,7 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             element.out[pld->unique_identifier->size] = 0;
             if (pld->object_type != KMIP_OBJTYPE_SYMMETRIC_KEY) {
                 lderr(cct) << "get: expected symmetric key got " << pld->
-                    object_type << dendl;
+                           object_type << dendl;
                 element.ret = -EINVAL;
                 goto Done;
             }
@@ -671,7 +695,7 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             ByteString *bp;
             if (kp->key_format_type != KMIP_KEYFORMAT_RAW) {
                 lderr(cct) << "get: expected raw key fromat got  " << kp->
-                    key_format_type << dendl;
+                           key_format_type << dendl;
                 element.ret = -EINVAL;
                 goto Done;
             }
@@ -681,8 +705,9 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
                 static_cast < unsigned char *>(malloc(bp->size));
             element.outkey->keylen = bp->size;
             memcpy(element.outkey->data, bp->value, bp->size);
-        } break;
-    case KMIP_OP_GET_ATTRIBUTES:{
+        }
+        break;
+        case KMIP_OP_GET_ATTRIBUTES: {
             GetAttributesResponsePayload *pld =
                 (GetAttributesResponsePayload *) req->response_payload;
             element.out =
@@ -690,8 +715,9 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             memcpy(element.out, pld->unique_identifier->value,
                    pld->unique_identifier->size);
             element.out[pld->unique_identifier->size] = 0;
-        } break;
-    case KMIP_OP_GET_ATTRIBUTE_LIST:{
+        }
+        break;
+        case KMIP_OP_GET_ATTRIBUTE_LIST: {
             GetAttributeListResponsePayload *pld =
                 (GetAttributeListResponsePayload *) req->response_payload;
             element.out =
@@ -699,8 +725,9 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             memcpy(element.out, pld->unique_identifier->value,
                    pld->unique_identifier->size);
             element.out[pld->unique_identifier->size] = 0;
-        } break;
-    case KMIP_OP_DESTROY:{
+        }
+        break;
+        case KMIP_OP_DESTROY: {
             DestroyResponsePayload *pld =
                 (DestroyResponsePayload *) req->response_payload;
             element.out =
@@ -708,17 +735,19 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
             memcpy(element.out, pld->unique_identifier->value,
                    pld->unique_identifier->size);
             element.out[pld->unique_identifier->size] = 0;
-        } break;
-    default:
-        lderr(cct) << "Missing response logic op=" << element.
-            operation << dendl;
-        element.ret = -EINVAL;
-        goto Done;
+        }
+        break;
+        default:
+            lderr(cct) << "Missing response logic op=" << element.
+                       operation << dendl;
+            element.ret = -EINVAL;
+            goto Done;
     }
     element.ret = 0;
-  Done:
-    if (need_to_free_response)
+Done:
+    if (need_to_free_response) {
         kmip_free_response_message(h->kmip_ctx, resp_m);
+    }
     element.done = true;
     element.cond.notify_all();
     release_kmip_handle(h);
@@ -728,10 +757,10 @@ int RGWKmipHandles::do_one_entry(RGWKMIPTransceiver & element)
 void *RGWKmipWorker::entry()
 {
     std::unique_lock entry_lock {
-    m.lock};
+        m.lock};
     ldout(m.cct, 10) << __func__ << " start" << dendl;
     RGWKmipHandles handles {
-    m.cct};
+        m.cct};
     handles.start();
     while (!m.going_down) {
         if (m.requests.empty()) {
@@ -746,8 +775,9 @@ void *RGWKmipWorker::entry()
         entry_lock.lock();
     }
     for (;;) {
-        if (m.requests.empty())
+        if (m.requests.empty()) {
             break;
+        }
         auto iter = m.requests.begin();
         auto element = std::move(*iter);
         m.requests.erase(iter);

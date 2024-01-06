@@ -103,7 +103,7 @@ TEST_F(LibRadosSnapshotsPP, SnapCreateRemovePP)
     ASSERT_EQ(0, ioctx.snap_create("snapbar"));
 
     std::unique_ptr < librados::ObjectWriteOperation >
-        op(new librados::ObjectWriteOperation());
+    op(new librados::ObjectWriteOperation());
     op->create(false);
     op->remove();
     ASSERT_EQ(0, ioctx.operate("foo", op.get()));
@@ -129,7 +129,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, SnapPP)
     ASSERT_EQ(0, ioctx.write("foo", bl1, sizeof(buf), 0));
 
     my_snaps.push_back(-2);
-    librados::AioCompletion * completion = cluster.aio_create_completion();
+    librados::AioCompletion *completion = cluster.aio_create_completion();
     ioctx.aio_selfmanaged_snap_create(&my_snaps.back(), completion);
     ASSERT_EQ(0, completion->wait_for_complete());
     completion->release();
@@ -401,7 +401,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, Bug11677)
     ::std::reverse(my_snaps.begin(), my_snaps.end());
 
     std::unique_ptr < librados::ObjectWriteOperation >
-        op(new librados::ObjectWriteOperation());
+    op(new librados::ObjectWriteOperation());
     op->assert_exists();
     op->remove();
     ASSERT_EQ(0, ioctx.operate("foo", op.get()));
@@ -431,7 +431,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, OrderSnap)
     ::std::reverse(my_snaps.begin(), my_snaps.end());
     ObjectWriteOperation op1;
     op1.write(0, bl);
-    librados::AioCompletion * comp1 = cluster.aio_create_completion();
+    librados::AioCompletion *comp1 = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_operate("foo", comp1, &op1, flags));
     ASSERT_EQ(0, comp1->wait_for_complete());
     ASSERT_EQ(0, comp1->get_return_value());
@@ -444,7 +444,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, OrderSnap)
     ::std::reverse(my_snaps.begin(), my_snaps.end());
     ObjectWriteOperation op2;
     op2.write(0, bl);
-    librados::AioCompletion * comp2 = cluster.aio_create_completion();
+    librados::AioCompletion *comp2 = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_operate("foo", comp2, &op2, flags));
     ASSERT_EQ(0, comp2->wait_for_complete());
     ASSERT_EQ(0, comp2->get_return_value());
@@ -456,7 +456,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, OrderSnap)
     ::std::reverse(my_snaps.begin(), my_snaps.end());
     ObjectWriteOperation op3;
     op3.write(0, bl);
-    librados::AioCompletion * comp3 = cluster.aio_create_completion();
+    librados::AioCompletion *comp3 = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_operate("foo", comp3, &op3, flags));
     ASSERT_EQ(0, comp3->wait_for_complete());
     ASSERT_EQ(-EOLDSNAPC, comp3->get_return_value());
@@ -464,7 +464,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, OrderSnap)
 
     ObjectWriteOperation op4;
     op4.write(0, bl);
-    librados::AioCompletion * comp4 = cluster.aio_create_completion();
+    librados::AioCompletion *comp4 = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_operate("foo", comp4, &op4, 0));
     ASSERT_EQ(0, comp4->wait_for_complete());
     ASSERT_EQ(0, comp4->get_return_value());
@@ -493,7 +493,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, WriteRollback)
     ObjectWriteOperation op_write1;
     op_write1.write(0, bl);
     // Operate
-    librados::AioCompletion * comp_write = cluster.aio_create_completion();
+    librados::AioCompletion *comp_write = cluster.aio_create_completion();
     ASSERT_EQ(0, ioctx.aio_operate("foo", comp_write, &op_write1, 0));
     ASSERT_EQ(0, comp_write->wait_for_complete());
     ASSERT_EQ(0, comp_write->get_return_value());
@@ -507,7 +507,7 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, WriteRollback)
     op_write2_snap_rollback.write(0, bl2);
     op_write2_snap_rollback.selfmanaged_snap_rollback(snapid);
     // Operate
-    librados::AioCompletion * comp_write2 = cluster.aio_create_completion();
+    librados::AioCompletion *comp_write2 = cluster.aio_create_completion();
     ASSERT_EQ(0,
               ioctx.aio_operate("foo", comp_write2, &op_write2_snap_rollback,
                                 0));
@@ -537,13 +537,13 @@ TEST_F(LibRadosSnapshotsSelfManagedPP, ReusePurgedSnap)
     ASSERT_EQ(0, ioctx.write("foo", bl1, sizeof(buf), 0));
 
     my_snaps.push_back(-2);
-    librados::AioCompletion * completion = cluster.aio_create_completion();
+    librados::AioCompletion *completion = cluster.aio_create_completion();
     ioctx.aio_selfmanaged_snap_create(&my_snaps.back(), completion);
     ASSERT_EQ(0, completion->wait_for_complete());
     completion->release();
 
     std::cout << "deleting snap " << my_snaps.back() << " in pool "
-        << ioctx.get_pool_name() << std::endl;
+              << ioctx.get_pool_name() << std::endl;
     completion = cluster.aio_create_completion();
     ioctx.aio_selfmanaged_snap_remove(my_snaps.back(), completion);
     ASSERT_EQ(0, completion->wait_for_complete());
@@ -657,7 +657,7 @@ TEST_F(LibRadosSnapshotsSelfManagedECPP, SnapPP)
     ASSERT_EQ(0, ioctx.write("foo", bl1, bsize, 0));
 
     my_snaps.push_back(-2);
-    librados::AioCompletion * completion = cluster.aio_create_completion();
+    librados::AioCompletion *completion = cluster.aio_create_completion();
     ioctx.aio_selfmanaged_snap_create(&my_snaps.back(), completion);
     ASSERT_EQ(0, completion->wait_for_complete());
     completion->release();
@@ -801,7 +801,7 @@ TEST_F(LibRadosSnapshotsSelfManagedECPP, Bug11677)
     ::std::reverse(my_snaps.begin(), my_snaps.end());
 
     std::unique_ptr < librados::ObjectWriteOperation >
-        op(new librados::ObjectWriteOperation());
+    op(new librados::ObjectWriteOperation());
     op->assert_exists();
     op->remove();
     ASSERT_EQ(0, ioctx.operate("foo", op.get()));

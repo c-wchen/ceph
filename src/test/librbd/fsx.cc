@@ -1,18 +1,18 @@
 // -*- mode:C++; tab-width:8; c-basic-offset:8; indent-tabs-mode:t -*-
 // vim: ts=8 sw=8 smarttab
 /*
- *	Copyright (C) 1991, NeXT Computer, Inc.  All Rights Reserverd.
+ *  Copyright (C) 1991, NeXT Computer, Inc.  All Rights Reserverd.
  *
- *	File:	fsx.cc
- *	Author:	Avadis Tevanian, Jr.
+ *  File:   fsx.cc
+ *  Author: Avadis Tevanian, Jr.
  *
- *	File system exerciser.
+ *  File system exerciser.
  *
- *	Rewritten 8/98 by Conrad Minshall.
+ *  Rewritten 8/98 by Conrad Minshall.
  *
- *	Small changes to work under Linux -- davej.
+ *  Small changes to work under Linux -- davej.
  *
- *	Checks for mmap last-page zero fill.
+ *  Checks for mmap last-page zero fill.
  */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@
 #define NUMPRINTCOLUMNS 32      /* # columns of data to print on each line */
 
 /*
- *	A log entry is an operation and a bunch of arguments.
+ *  A log entry is an operation and a bunch of arguments.
  */
 
 struct log_entry {
@@ -77,7 +77,7 @@ struct log_entry {
     int args[3];
 };
 
-#define	LOGSIZE	1000
+#define LOGSIZE 1000
 
 struct log_entry oplog[LOGSIZE];    /* the log */
 int logptr = 0;                 /* current position in log */
@@ -89,16 +89,16 @@ int logcount = 0;               /* total ops */
  * be careful in how we select the different operations. The active operations
  * are mapped to numbers as follows:
  *
- *		lite	!lite
- * READ:	0	0
- * WRITE:	1	1
- * MAPREAD:	2	2
- * MAPWRITE:	3	3
- * TRUNCATE:	-	4
- * FALLOCATE:	-	5
- * PUNCH HOLE:	-	6
- * WRITESAME:	-	7
- * COMPAREANDWRITE:	-	8
+ *      lite    !lite
+ * READ:    0   0
+ * WRITE:   1   1
+ * MAPREAD: 2   2
+ * MAPWRITE:    3   3
+ * TRUNCATE:    -   4
+ * FALLOCATE:   -   5
+ * PUNCH HOLE:  -   6
+ * WRITESAME:   -   7
+ * COMPAREANDWRITE: -   8
  *
  * When mapped read/writes are disabled, they are simply converted to normal
  * reads and writes. When fallocate/fpunch calls are disabled, they are
@@ -112,26 +112,26 @@ int logcount = 0;               /* total ops */
  */
 
 /* common operations */
-#define	OP_READ		0
-#define OP_WRITE	1
-#define OP_MAPREAD	2
-#define OP_MAPWRITE	3
-#define OP_MAX_LITE	4
+#define OP_READ     0
+#define OP_WRITE    1
+#define OP_MAPREAD  2
+#define OP_MAPWRITE 3
+#define OP_MAX_LITE 4
 
 /* !lite operations */
-#define OP_TRUNCATE	4
-#define OP_FALLOCATE	5
-#define OP_PUNCH_HOLE	6
-#define OP_WRITESAME	7
-#define OP_COMPARE_AND_WRITE	8
+#define OP_TRUNCATE 4
+#define OP_FALLOCATE    5
+#define OP_PUNCH_HOLE   6
+#define OP_WRITESAME    7
+#define OP_COMPARE_AND_WRITE    8
 /* rbd-specific operations */
 #define OP_CLONE        9
-#define OP_FLATTEN	10
-#define OP_MAX_FULL	11
+#define OP_FLATTEN  10
+#define OP_MAX_FULL 11
 
 /* operation modifiers */
-#define OP_CLOSEOPEN	100
-#define OP_SKIPPED	101
+#define OP_CLOSEOPEN    100
+#define OP_SKIPPED  101
 
 #undef PAGE_SIZE
 #define PAGE_SIZE       get_page_size()
@@ -226,8 +226,9 @@ void prt(const char *fmt, ...)
     vsnprintf(buffer, BUF_SIZE, fmt, args);
     va_end(args);
     fprintf(stdout, "%s", buffer);
-    if (fsxlogf)
+    if (fsxlogf) {
         fprintf(fsxlogf, "%s", buffer);
+    }
 }
 
 void prterr(const char *prefix)
@@ -255,249 +256,258 @@ uint_fast32_t get_random(void)
     return random_generator();
 }
 
-int get_features(uint64_t * features);
+int get_features(uint64_t *features);
 void replay_imagename(char *buf, size_t len, int clones);
 
-namespace {
+namespace
+{
 
-    static const std::string JOURNAL_CLIENT_ID("fsx");
+static const std::string JOURNAL_CLIENT_ID("fsx");
 
-    struct ReplayHandler:public journal::ReplayHandler {
-        journal::Journaler * journaler;
-        journal::Journaler * replay_journaler;
-        Context *on_finish;
+struct ReplayHandler: public journal::ReplayHandler {
+    journal::Journaler *journaler;
+    journal::Journaler *replay_journaler;
+    Context *on_finish;
 
-         ReplayHandler(journal::Journaler * journaler,
-                       journal::Journaler * replay_journaler,
-                       Context * on_finish)
-        :journaler(journaler), replay_journaler(replay_journaler),
-            on_finish(on_finish) {
-        } void handle_entries_available() override {
-            while (true) {
-                journal::ReplayEntry replay_entry;
-                if (!journaler->try_pop_front(&replay_entry)) {
-                    return;
-                }
-
-                replay_journaler->append(0, replay_entry.get_data());
+    ReplayHandler(journal::Journaler *journaler,
+                  journal::Journaler *replay_journaler,
+                  Context *on_finish)
+        : journaler(journaler), replay_journaler(replay_journaler),
+          on_finish(on_finish)
+    {
+    } void handle_entries_available() override
+    {
+        while (true) {
+            journal::ReplayEntry replay_entry;
+            if (!journaler->try_pop_front(&replay_entry)) {
+                return;
             }
-        }
 
-        void handle_complete(int r) override {
-            on_finish->complete(r);
+            replay_journaler->append(0, replay_entry.get_data());
         }
+    }
+
+    void handle_complete(int r) override
+    {
+        on_finish->complete(r);
+    }
+};
+
+int get_image_id(librados::IoCtx &io_ctx, const char *image_name,
+                 std::string *image_id)
+{
+    librbd::RBD rbd;
+    librbd::Image image;
+    int r = rbd.open(io_ctx, image, image_name);
+    if (r < 0) {
+        simple_err("failed to open image", r);
+        return r;
+    }
+
+    rbd_image_info_t info;
+    r = image.stat(info, sizeof(info));
+    if (r < 0) {
+        simple_err("failed to stat image", r);
+        return r;
+    }
+
+    *image_id =
+        std::string(&info.block_name_prefix[strlen(RBD_DATA_PREFIX)]);
+    return 0;
+}
+
+int register_journal(rados_ioctx_t ioctx, const char *image_name)
+{
+    librados::IoCtx io_ctx;
+    librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
+
+    std::string image_id;
+    int r = get_image_id(io_ctx, image_name, &image_id);
+    if (r < 0) {
+        return r;
+    }
+
+    journal::Journaler journaler(io_ctx, image_id, JOURNAL_CLIENT_ID, {
+    }
+    , nullptr);
+    r = journaler.register_client(bufferlist());
+    if (r < 0) {
+        simple_err("failed to register journal client", r);
+        return r;
+    }
+    return 0;
+}
+
+int unregister_journal(rados_ioctx_t ioctx, const char *image_name)
+{
+    librados::IoCtx io_ctx;
+    librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
+
+    std::string image_id;
+    int r = get_image_id(io_ctx, image_name, &image_id);
+    if (r < 0) {
+        return r;
+    }
+
+    journal::Journaler journaler(io_ctx, image_id, JOURNAL_CLIENT_ID, {
+    }
+    , nullptr);
+    r = journaler.unregister_client();
+    if (r < 0) {
+        simple_err("failed to unregister journal client", r);
+        return r;
+    }
+    return 0;
+}
+
+int create_replay_image(rados_ioctx_t ioctx, int order,
+                        uint64_t stripe_unit, int stripe_count,
+                        const char *replay_image_name,
+                        const char *last_replay_image_name)
+{
+    librados::IoCtx io_ctx;
+    librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
+
+    uint64_t features;
+    int r = get_features(&features);
+    if (r < 0) {
+        return r;
+    }
+
+    librbd::RBD rbd;
+    if (last_replay_image_name == nullptr) {
+        r = rbd.create2(io_ctx, replay_image_name, 0, features, &order);
+    } else {
+        r = rbd.clone2(io_ctx, last_replay_image_name, "snap",
+                       io_ctx, replay_image_name, features, &order,
+                       stripe_unit, stripe_count);
+    }
+
+    if (r < 0) {
+        simple_err("failed to create replay image", r);
+        return r;
+    }
+
+    return 0;
+}
+
+int replay_journal(rados_ioctx_t ioctx, const char *image_name,
+                   const char *replay_image_name)
+{
+    librados::IoCtx io_ctx;
+    librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
+
+    std::string image_id;
+    int r = get_image_id(io_ctx, image_name, &image_id);
+    if (r < 0) {
+        return r;
+    }
+
+    std::string replay_image_id;
+    r = get_image_id(io_ctx, replay_image_name, &replay_image_id);
+    if (r < 0) {
+        return r;
+    }
+
+    journal::Journaler journaler(io_ctx, image_id, JOURNAL_CLIENT_ID, {
+    }
+    , nullptr);
+    C_SaferCond init_ctx;
+    journaler.init(&init_ctx);
+    BOOST_SCOPE_EXIT_ALL((&journaler)) {
+        journaler.shut_down();
     };
 
-    int get_image_id(librados::IoCtx & io_ctx, const char *image_name,
-                     std::string * image_id) {
-        librbd::RBD rbd;
-        librbd::Image image;
-        int r = rbd.open(io_ctx, image, image_name);
-        if (r < 0) {
-            simple_err("failed to open image", r);
-            return r;
-        }
-
-        rbd_image_info_t info;
-        r = image.stat(info, sizeof(info));
-        if (r < 0) {
-            simple_err("failed to stat image", r);
-            return r;
-        }
-
-        *image_id =
-            std::string(&info.block_name_prefix[strlen(RBD_DATA_PREFIX)]);
-        return 0;
+    r = init_ctx.wait();
+    if (r < 0) {
+        simple_err("failed to initialize journal", r);
+        return r;
     }
 
-    int register_journal(rados_ioctx_t ioctx, const char *image_name) {
-        librados::IoCtx io_ctx;
-        librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
+    journal::Journaler replay_journaler(io_ctx, replay_image_id, "", {
+    }
+    , nullptr);
 
-        std::string image_id;
-        int r = get_image_id(io_ctx, image_name, &image_id);
-        if (r < 0) {
-            return r;
-        }
+    C_SaferCond replay_init_ctx;
+    replay_journaler.init(&replay_init_ctx);
+    BOOST_SCOPE_EXIT_ALL((&replay_journaler)) {
+        replay_journaler.shut_down();
+    };
 
-        journal::Journaler journaler(io_ctx, image_id, JOURNAL_CLIENT_ID, {
-                                     }
-                                     , nullptr);
-        r = journaler.register_client(bufferlist());
-        if (r < 0) {
-            simple_err("failed to register journal client", r);
-            return r;
-        }
-        return 0;
+    r = replay_init_ctx.wait();
+    if (r < 0) {
+        simple_err("failed to initialize replay journal", r);
+        return r;
     }
 
-    int unregister_journal(rados_ioctx_t ioctx, const char *image_name) {
-        librados::IoCtx io_ctx;
-        librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
+    replay_journaler.start_append(0);
 
-        std::string image_id;
-        int r = get_image_id(io_ctx, image_name, &image_id);
-        if (r < 0) {
-            return r;
-        }
+    C_SaferCond replay_ctx;
+    ReplayHandler replay_handler(&journaler, &replay_journaler,
+                                 &replay_ctx);
 
-        journal::Journaler journaler(io_ctx, image_id, JOURNAL_CLIENT_ID, {
-                                     }
-                                     , nullptr);
-        r = journaler.unregister_client();
-        if (r < 0) {
-            simple_err("failed to unregister journal client", r);
-            return r;
-        }
-        return 0;
+    // copy journal events from source image to replay image
+    journaler.start_replay(&replay_handler);
+    r = replay_ctx.wait();
+
+    journaler.stop_replay();
+
+    C_SaferCond stop_ctx;
+    replay_journaler.stop_append(&stop_ctx);
+    int stop_r = stop_ctx.wait();
+    if (r == 0 && stop_r < 0) {
+        r = stop_r;
     }
 
-    int create_replay_image(rados_ioctx_t ioctx, int order,
-                            uint64_t stripe_unit, int stripe_count,
-                            const char *replay_image_name,
-                            const char *last_replay_image_name) {
-        librados::IoCtx io_ctx;
-        librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
-
-        uint64_t features;
-        int r = get_features(&features);
-        if (r < 0) {
-            return r;
-        }
-
-        librbd::RBD rbd;
-        if (last_replay_image_name == nullptr) {
-            r = rbd.create2(io_ctx, replay_image_name, 0, features, &order);
-        }
-        else {
-            r = rbd.clone2(io_ctx, last_replay_image_name, "snap",
-                           io_ctx, replay_image_name, features, &order,
-                           stripe_unit, stripe_count);
-        }
-
-        if (r < 0) {
-            simple_err("failed to create replay image", r);
-            return r;
-        }
-
-        return 0;
+    if (r < 0) {
+        simple_err("failed to replay journal", r);
+        return r;
     }
 
-    int replay_journal(rados_ioctx_t ioctx, const char *image_name,
-                       const char *replay_image_name) {
-        librados::IoCtx io_ctx;
-        librados::IoCtx::from_rados_ioctx_t(ioctx, io_ctx);
-
-        std::string image_id;
-        int r = get_image_id(io_ctx, image_name, &image_id);
-        if (r < 0) {
-            return r;
-        }
-
-        std::string replay_image_id;
-        r = get_image_id(io_ctx, replay_image_name, &replay_image_id);
-        if (r < 0) {
-            return r;
-        }
-
-        journal::Journaler journaler(io_ctx, image_id, JOURNAL_CLIENT_ID, {
-                                     }
-                                     , nullptr);
-        C_SaferCond init_ctx;
-        journaler.init(&init_ctx);
-        BOOST_SCOPE_EXIT_ALL((&journaler)) {
-            journaler.shut_down();
-        };
-
-        r = init_ctx.wait();
-        if (r < 0) {
-            simple_err("failed to initialize journal", r);
-            return r;
-        }
-
-        journal::Journaler replay_journaler(io_ctx, replay_image_id, "", {
-                                            }
-                                            , nullptr);
-
-        C_SaferCond replay_init_ctx;
-        replay_journaler.init(&replay_init_ctx);
-        BOOST_SCOPE_EXIT_ALL((&replay_journaler)) {
-            replay_journaler.shut_down();
-        };
-
-        r = replay_init_ctx.wait();
-        if (r < 0) {
-            simple_err("failed to initialize replay journal", r);
-            return r;
-        }
-
-        replay_journaler.start_append(0);
-
-        C_SaferCond replay_ctx;
-        ReplayHandler replay_handler(&journaler, &replay_journaler,
-                                     &replay_ctx);
-
-        // copy journal events from source image to replay image
-        journaler.start_replay(&replay_handler);
-        r = replay_ctx.wait();
-
-        journaler.stop_replay();
-
-        C_SaferCond stop_ctx;
-        replay_journaler.stop_append(&stop_ctx);
-        int stop_r = stop_ctx.wait();
-        if (r == 0 && stop_r < 0) {
-            r = stop_r;
-        }
-
-        if (r < 0) {
-            simple_err("failed to replay journal", r);
-            return r;
-        }
-
-        librbd::RBD rbd;
-        librbd::Image image;
-        r = rbd.open(io_ctx, image, replay_image_name);
-        if (r < 0) {
-            simple_err("failed to open replay image", r);
-            return r;
-        }
-
-        // perform an IO op to initiate the journal replay
-        bufferlist bl;
-        r = static_cast < ssize_t > (image.write(0, 0, bl));
-        if (r < 0) {
-            simple_err("failed to write to replay image", r);
-            return r;
-        }
-        return 0;
+    librbd::RBD rbd;
+    librbd::Image image;
+    r = rbd.open(io_ctx, image, replay_image_name);
+    if (r < 0) {
+        simple_err("failed to open replay image", r);
+        return r;
     }
 
-    int finalize_journal(rados_ioctx_t ioctx, const char *imagename, int clones,
-                         int order, uint64_t stripe_unit, int stripe_count) {
-        char replayimagename[1024];
-        replay_imagename(replayimagename, sizeof(replayimagename), clones);
-
-        char lastreplayimagename[1024];
-        if (clones > 0) {
-            replay_imagename(lastreplayimagename,
-                             sizeof(lastreplayimagename), clones - 1);
-        }
-
-        int ret = create_replay_image(ioctx, order, stripe_unit,
-                                      stripe_count, replayimagename,
-                                      clones > 0 ? lastreplayimagename :
-                                      nullptr);
-        if (ret < 0) {
-            exit(EXIT_FAILURE);
-        }
-
-        ret = replay_journal(ioctx, imagename, replayimagename);
-        if (ret < 0) {
-            exit(EXIT_FAILURE);
-        }
-        return 0;
+    // perform an IO op to initiate the journal replay
+    bufferlist bl;
+    r = static_cast < ssize_t >(image.write(0, 0, bl));
+    if (r < 0) {
+        simple_err("failed to write to replay image", r);
+        return r;
     }
+    return 0;
+}
+
+int finalize_journal(rados_ioctx_t ioctx, const char *imagename, int clones,
+                     int order, uint64_t stripe_unit, int stripe_count)
+{
+    char replayimagename[1024];
+    replay_imagename(replayimagename, sizeof(replayimagename), clones);
+
+    char lastreplayimagename[1024];
+    if (clones > 0) {
+        replay_imagename(lastreplayimagename,
+                         sizeof(lastreplayimagename), clones - 1);
+    }
+
+    int ret = create_replay_image(ioctx, order, stripe_unit,
+                                  stripe_count, replayimagename,
+                                  clones > 0 ? lastreplayimagename :
+                                  nullptr);
+    if (ret < 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    ret = replay_journal(ioctx, imagename, replayimagename);
+    if (ret < 0) {
+        exit(EXIT_FAILURE);
+    }
+    return 0;
+}
 
 }                               // anonymous namespace
 
@@ -512,27 +522,27 @@ struct rbd_ctx {
     int krbd_fd;                /* image /dev/rbd<id> fd *//* reused for nbd test */
 };
 
-#define RBD_CTX_INIT	(struct rbd_ctx) { NULL, NULL, NULL, -1}
+#define RBD_CTX_INIT    (struct rbd_ctx) { NULL, NULL, NULL, -1}
 
 struct rbd_operations {
-    int (*open) (const char *name, struct rbd_ctx * ctx);
-    int (*close) (struct rbd_ctx * ctx);
-     ssize_t(*read) (struct rbd_ctx * ctx, uint64_t off, size_t len, char *buf);
-     ssize_t(*write) (struct rbd_ctx * ctx, uint64_t off, size_t len,
-                      const char *buf);
-    int (*flush) (struct rbd_ctx * ctx);
-    int (*discard) (struct rbd_ctx * ctx, uint64_t off, uint64_t len);
-    int (*get_size) (struct rbd_ctx * ctx, uint64_t * size);
-    int (*resize) (struct rbd_ctx * ctx, uint64_t size);
-    int (*clone) (struct rbd_ctx * ctx, const char *src_snapname,
-                  const char *dst_imagename, int *order, int stripe_unit,
-                  int stripe_count);
-    int (*flatten) (struct rbd_ctx * ctx);
-     ssize_t(*writesame) (struct rbd_ctx * ctx, uint64_t off, size_t len,
-                          const char *buf, size_t data_len);
-     ssize_t(*compare_and_write) (struct rbd_ctx * ctx, uint64_t off,
-                                  size_t len, const char *cmp_buf,
-                                  const char *buf);
+    int (*open)(const char *name, struct rbd_ctx *ctx);
+    int (*close)(struct rbd_ctx *ctx);
+    ssize_t(*read)(struct rbd_ctx *ctx, uint64_t off, size_t len, char *buf);
+    ssize_t(*write)(struct rbd_ctx *ctx, uint64_t off, size_t len,
+                    const char *buf);
+    int (*flush)(struct rbd_ctx *ctx);
+    int (*discard)(struct rbd_ctx *ctx, uint64_t off, uint64_t len);
+    int (*get_size)(struct rbd_ctx *ctx, uint64_t *size);
+    int (*resize)(struct rbd_ctx *ctx, uint64_t size);
+    int (*clone)(struct rbd_ctx *ctx, const char *src_snapname,
+                 const char *dst_imagename, int *order, int stripe_unit,
+                 int stripe_count);
+    int (*flatten)(struct rbd_ctx *ctx);
+    ssize_t(*writesame)(struct rbd_ctx *ctx, uint64_t off, size_t len,
+                        const char *buf, size_t data_len);
+    ssize_t(*compare_and_write)(struct rbd_ctx *ctx, uint64_t off,
+                                size_t len, const char *cmp_buf,
+                                const char *buf);
 };
 
 char *pool;                     /* name of the pool our test image is in */
@@ -544,7 +554,7 @@ struct krbd_ctx *krbd;          /* handle for libkrbd */
 #endif
 bool skip_partial_discard;      /* rbd_skip_partial_discard config value */
 
-int get_features(uint64_t * features)
+int get_features(uint64_t *features)
 {
     char buf[1024];
     int r = rados_conf_get(cluster, "rbd_default_features", buf,
@@ -639,19 +649,19 @@ int librbd_verify_object_map(struct rbd_ctx *ctx)
     return 0;
 }
 
-ssize_t librbd_read(struct rbd_ctx * ctx, uint64_t off, size_t len, char *buf)
+ssize_t librbd_read(struct rbd_ctx *ctx, uint64_t off, size_t len, char *buf)
 {
     ssize_t n;
 
     n = rbd_read(ctx->image, off, len, buf);
-    if (n < 0)
+    if (n < 0) {
         prt("rbd_read(%llu, %zu) failed\n", off, len);
+    }
 
     return n;
 }
 
-ssize_t
-librbd_write(struct rbd_ctx * ctx, uint64_t off, size_t len, const char *buf)
+ssize_t librbd_write(struct rbd_ctx *ctx, uint64_t off, size_t len, const char *buf)
 {
     ssize_t n;
     int ret;
@@ -695,9 +705,8 @@ int librbd_discard(struct rbd_ctx *ctx, uint64_t off, uint64_t len)
     return librbd_verify_object_map(ctx);
 }
 
-ssize_t
-librbd_writesame(struct rbd_ctx * ctx, uint64_t off, size_t len,
-                 const char *buf, size_t data_len)
+ssize_t librbd_writesame(struct rbd_ctx *ctx, uint64_t off, size_t len,
+                         const char *buf, size_t data_len)
 {
     ssize_t n;
     int ret;
@@ -715,9 +724,8 @@ librbd_writesame(struct rbd_ctx * ctx, uint64_t off, size_t len,
     return n;
 }
 
-ssize_t
-librbd_compare_and_write(struct rbd_ctx * ctx, uint64_t off, size_t len,
-                         const char *cmp_buf, const char *buf)
+ssize_t librbd_compare_and_write(struct rbd_ctx *ctx, uint64_t off, size_t len,
+                                 const char *cmp_buf, const char *buf)
 {
     ssize_t n;
     int ret;
@@ -727,8 +735,7 @@ librbd_compare_and_write(struct rbd_ctx * ctx, uint64_t off, size_t len,
                               0);
     if (n == -EINVAL) {
         return n;
-    }
-    else if (n < 0) {
+    } else if (n < 0) {
         prt("rbd_compare_and_write mismatch(%llu, %zu, %llu) failed\n",
             off, len, mismatch_off);
         return n;
@@ -742,7 +749,7 @@ librbd_compare_and_write(struct rbd_ctx * ctx, uint64_t off, size_t len,
 
 }
 
-int librbd_get_size(struct rbd_ctx *ctx, uint64_t * size)
+int librbd_get_size(struct rbd_ctx *ctx, uint64_t *size)
 {
     int ret;
 
@@ -773,10 +780,9 @@ int librbd_resize(struct rbd_ctx *ctx, uint64_t size)
     return __librbd_resize(ctx, size);
 }
 
-int
-__librbd_deep_copy(struct rbd_ctx *ctx, const char *src_snapname,
-                   const char *dst_imagename, uint64_t features, int *order,
-                   int stripe_unit, int stripe_count)
+int __librbd_deep_copy(struct rbd_ctx *ctx, const char *src_snapname,
+                       const char *dst_imagename, uint64_t features, int *order,
+                       int stripe_unit, int stripe_count)
 {
     int ret;
 
@@ -844,10 +850,9 @@ __librbd_deep_copy(struct rbd_ctx *ctx, const char *src_snapname,
     return 0;
 }
 
-int
-__librbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
-               const char *dst_imagename, int *order, int stripe_unit,
-               int stripe_count)
+int __librbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
+                   const char *dst_imagename, int *order, int stripe_unit,
+                   int stripe_count)
 {
     int ret;
 
@@ -877,8 +882,7 @@ __librbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
                 src_snapname, dst_imagename);
             return ret;
         }
-    }
-    else {
+    } else {
         ret = rbd_clone2(ioctx, ctx->name, src_snapname, ioctx,
                          dst_imagename, features, order,
                          stripe_unit, stripe_count);
@@ -892,10 +896,9 @@ __librbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
     return 0;
 }
 
-int
-librbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
-             const char *dst_imagename, int *order, int stripe_unit,
-             int stripe_count)
+int librbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
+                 const char *dst_imagename, int *order, int stripe_unit,
+                 int stripe_count)
 {
     return __librbd_clone(ctx, src_snapname, dst_imagename, order,
                           stripe_unit, stripe_count);
@@ -943,8 +946,9 @@ int krbd_open(const char *name, struct rbd_ctx *ctx)
     int ret;
 
     ret = __librbd_open(name, ctx);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     ret = rados_conf_get(cluster, "rbd_default_map_options", buf, sizeof(buf));
     if (ret < 0) {
@@ -999,7 +1003,7 @@ int krbd_close(struct rbd_ctx *ctx)
 #endif // WITH_KRBD
 
 #if defined(__linux__)
-ssize_t krbd_read(struct rbd_ctx * ctx, uint64_t off, size_t len, char *buf)
+ssize_t krbd_read(struct rbd_ctx *ctx, uint64_t off, size_t len, char *buf)
 {
     ssize_t n;
 
@@ -1013,8 +1017,7 @@ ssize_t krbd_read(struct rbd_ctx * ctx, uint64_t off, size_t len, char *buf)
     return n;
 }
 
-ssize_t
-krbd_write(struct rbd_ctx * ctx, uint64_t off, size_t len, const char *buf)
+ssize_t krbd_write(struct rbd_ctx *ctx, uint64_t off, size_t len, const char *buf)
 {
     ssize_t n;
 
@@ -1032,8 +1035,9 @@ int __krbd_flush(struct rbd_ctx *ctx, bool invalidate)
 {
     int ret;
 
-    if (o_direct)
+    if (o_direct) {
         return 0;
+    }
 
     /*
      * BLKFLSBUF will sync the filesystem on top of the device (we
@@ -1049,10 +1053,11 @@ int __krbd_flush(struct rbd_ctx *ctx, bool invalidate)
      * Given that, for our purposes, fsync is a flush, while
      * BLKFLSBUF is a flush+invalidate.
      */
-    if (invalidate)
+    if (invalidate) {
         ret = ioctl(ctx->krbd_fd, BLKFLSBUF, NULL);
-    else
+    } else {
         ret = fsync(ctx->krbd_fd);
+    }
     if (ret < 0) {
         ret = -errno;
         prt("%s failed\n", invalidate ? "BLKFLSBUF" : "fsync");
@@ -1092,8 +1097,9 @@ int krbd_discard(struct rbd_ctx *ctx, uint64_t off, uint64_t len)
      * in recent kernels.
      */
     ret = __krbd_flush(ctx, true);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     /*
      * off and len must be 512-byte aligned, otherwise BLKZEROOUT
@@ -1109,7 +1115,7 @@ int krbd_discard(struct rbd_ctx *ctx, uint64_t off, uint64_t len)
     return 0;
 }
 
-int krbd_get_size(struct rbd_ctx *ctx, uint64_t * size)
+int krbd_get_size(struct rbd_ctx *ctx, uint64_t *size)
 {
     uint64_t bytes;
 
@@ -1145,22 +1151,23 @@ int krbd_resize(struct rbd_ctx *ctx, uint64_t size)
      * returns "0000 0000" rather than "data 0000".
      */
     ret = __krbd_flush(ctx, false);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return __librbd_resize(ctx, size);
 }
 
-int
-krbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
-           const char *dst_imagename, int *order, int stripe_unit,
-           int stripe_count)
+int krbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
+               const char *dst_imagename, int *order, int stripe_unit,
+               int stripe_count)
 {
     int ret;
 
     ret = __krbd_flush(ctx, false);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return __librbd_clone(ctx, src_snapname, dst_imagename, order,
                           stripe_unit, stripe_count);
@@ -1171,8 +1178,9 @@ int krbd_flatten(struct rbd_ctx *ctx)
     int ret;
 
     ret = __krbd_flush(ctx, false);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return __librbd_flatten(ctx);
 }
@@ -1213,8 +1221,9 @@ int nbd_open(const char *name, struct rbd_ctx *ctx)
     process.add_cmd_arg(img.c_str());
 
     r = __librbd_open(name, ctx);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     r = process.spawn();
     if (r < 0) {
@@ -1228,8 +1237,9 @@ int nbd_open(const char *name, struct rbd_ctx *ctx)
         return r;
     }
     for (int i = 0; i < r; ++i)
-        if (dev[i] == 10 || dev[i] == 13)
+        if (dev[i] == 10 || dev[i] == 13) {
             dev[i] = 0;
+        }
     dev[r] = 0;
     r = process.join();
     if (r) {
@@ -1238,8 +1248,9 @@ int nbd_open(const char *name, struct rbd_ctx *ctx)
     }
 
     devnode = strdup(dev);
-    if (!devnode)
+    if (!devnode) {
         return -ENOMEM;
+    }
 
     fd = open(devnode, O_RDWR | o_direct);
     if (fd < 0) {
@@ -1290,16 +1301,16 @@ int nbd_close(struct rbd_ctx *ctx)
     return __librbd_close(ctx);
 }
 
-int
-nbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
-          const char *dst_imagename, int *order, int stripe_unit,
-          int stripe_count)
+int nbd_clone(struct rbd_ctx *ctx, const char *src_snapname,
+              const char *dst_imagename, int *order, int stripe_unit,
+              int stripe_count)
 {
     int ret;
 
     ret = __krbd_flush(ctx, false);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return __librbd_clone(ctx, src_snapname, dst_imagename, order,
                           stripe_unit, stripe_count);
@@ -1423,7 +1434,7 @@ int ggate_close(struct rbd_ctx *ctx)
     return __librbd_close(ctx);
 }
 
-ssize_t ggate_read(struct rbd_ctx * ctx, uint64_t off, size_t len, char *buf)
+ssize_t ggate_read(struct rbd_ctx *ctx, uint64_t off, size_t len, char *buf)
 {
     ssize_t n;
 
@@ -1437,8 +1448,7 @@ ssize_t ggate_read(struct rbd_ctx * ctx, uint64_t off, size_t len, char *buf)
     return n;
 }
 
-ssize_t
-ggate_write(struct rbd_ctx * ctx, uint64_t off, size_t len, const char *buf)
+ssize_t ggate_write(struct rbd_ctx *ctx, uint64_t off, size_t len, const char *buf)
 {
     ssize_t n;
 
@@ -1462,8 +1472,7 @@ int __ggate_flush(struct rbd_ctx *ctx, bool invalidate)
 
     if (invalidate) {
         ret = ioctl(ctx->krbd_fd, DIOCGFLUSH, NULL);
-    }
-    else {
+    } else {
         ret = fsync(ctx->krbd_fd);
     }
     if (ret < 0) {
@@ -1483,7 +1492,7 @@ int ggate_flush(struct rbd_ctx *ctx)
 int ggate_discard(struct rbd_ctx *ctx, uint64_t off, uint64_t len)
 {
     off_t range[2] =
-        { static_cast < off_t > (off), static_cast < off_t > (len) };
+    { static_cast < off_t >(off), static_cast < off_t >(len) };
     int ret;
 
     ret = __ggate_flush(ctx, true);
@@ -1500,7 +1509,7 @@ int ggate_discard(struct rbd_ctx *ctx, uint64_t off, uint64_t len)
     return 0;
 }
 
-int ggate_get_size(struct rbd_ctx *ctx, uint64_t * size)
+int ggate_get_size(struct rbd_ctx *ctx, uint64_t *size)
 {
     off_t bytes;
 
@@ -1529,10 +1538,9 @@ int ggate_resize(struct rbd_ctx *ctx, uint64_t size)
     return __librbd_resize(ctx, size);
 }
 
-int
-ggate_clone(struct rbd_ctx *ctx, const char *src_snapname,
-            const char *dst_imagename, int *order, int stripe_unit,
-            int stripe_count)
+int ggate_clone(struct rbd_ctx *ctx, const char *src_snapname,
+                const char *dst_imagename, int *order, int stripe_unit,
+                int stripe_count)
 {
     int ret;
 
@@ -1602,15 +1610,17 @@ void log4(int operation, int arg0, int arg1, int arg2)
 
     le = &oplog[logptr];
     le->operation = operation;
-    if (closeopen)
+    if (closeopen) {
         le->operation = ~le->operation;
+    }
     le->args[0] = arg0;
     le->args[1] = arg1;
     le->args[2] = arg2;
     logptr++;
     logcount++;
-    if (logptr >= LOGSIZE)
+    if (logptr >= LOGSIZE) {
         logptr = 0;
+    }
 }
 
 void logdump(void)
@@ -1623,8 +1633,7 @@ void logdump(void)
     if (logcount < LOGSIZE) {
         i = 0;
         count = logcount;
-    }
-    else {
+    } else {
         i = logptr;
         count = LOGSIZE;
     }
@@ -1634,96 +1643,110 @@ void logdump(void)
         opnum = i + 1 + (logcount / LOGSIZE) * LOGSIZE;
         prt("%d(%3d mod 256): ", opnum, opnum % 256);
         lp = &oplog[i];
-        if ((closeopen = lp->operation < 0))
+        if ((closeopen = lp->operation < 0)) {
             lp->operation = ~lp->operation;
+        }
 
         switch (lp->operation) {
-        case OP_MAPREAD:
-            prt("MAPREAD  0x%x thru 0x%x\t(0x%x bytes)",
-                lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
-            if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1])
-                prt("\t***RRRR***");
-            break;
-        case OP_MAPWRITE:
-            prt("MAPWRITE 0x%x thru 0x%x\t(0x%x bytes)",
-                lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
-            if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1])
-                prt("\t******WWWW");
-            break;
-        case OP_READ:
-            prt("READ     0x%x thru 0x%x\t(0x%x bytes)",
-                lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
-            if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1])
-                prt("\t***RRRR***");
-            break;
-        case OP_WRITE:
-            prt("WRITE    0x%x thru 0x%x\t(0x%x bytes)",
-                lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
-            if (lp->args[0] > lp->args[2])
-                prt(" HOLE");
-            else if (lp->args[0] + lp->args[1] > lp->args[2])
-                prt(" EXTEND");
-            if ((badoff >= lp->args[0] || badoff >= lp->args[2]) &&
-                badoff < lp->args[0] + lp->args[1])
-                prt("\t***WWWW");
-            break;
-        case OP_TRUNCATE:
-            down = lp->args[0] < lp->args[1];
-            prt("TRUNCATE %s\tfrom 0x%x to 0x%x",
-                down ? "DOWN" : "UP", lp->args[1], lp->args[0]);
-            if (badoff >= lp->args[!down] && badoff < lp->args[! !down])
-                prt("\t******WWWW");
-            break;
-        case OP_FALLOCATE:
-            /* 0: offset 1: length 2: where alloced */
-            prt("FALLOC   0x%x thru 0x%x\t(0x%x bytes) %s",
-                lp->args[0], lp->args[0] + lp->args[1],
-                lp->args[1], falloc_type[lp->args[2]]);
-            if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1])
-                prt("\t******FFFF");
-            break;
-        case OP_PUNCH_HOLE:
-            prt("PUNCH    0x%x thru 0x%x\t(0x%x bytes)",
-                lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
-            if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1])
-                prt("\t******PPPP");
-            break;
-        case OP_WRITESAME:
-            prt("WRITESAME    0x%x thru 0x%x\t(0x%x bytes) data_size 0x%x",
-                lp->args[0], lp->args[0] + lp->args[1] - 1,
-                lp->args[1], lp->args[2]);
-            if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1])
-                prt("\t***WSWSWSWS");
-            break;
-        case OP_COMPARE_AND_WRITE:
-            prt("COMPARE_AND_WRITE    0x%x thru 0x%x\t(0x%x bytes)",
-                lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
-            if (lp->args[0] > lp->args[2])
-                prt(" HOLE");
-            else if (lp->args[0] + lp->args[1] > lp->args[2])
-                prt(" EXTEND");
-            if ((badoff >= lp->args[0] || badoff >= lp->args[2]) &&
-                badoff < lp->args[0] + lp->args[1])
-                prt("\t***WWWW");
-            break;
-        case OP_CLONE:
-            prt("CLONE");
-            break;
-        case OP_FLATTEN:
-            prt("FLATTEN");
-            break;
-        case OP_SKIPPED:
-            prt("SKIPPED (no operation)");
-            break;
-        default:
-            prt("BOGUS LOG ENTRY (operation code = %d)!", lp->operation);
+            case OP_MAPREAD:
+                prt("MAPREAD  0x%x thru 0x%x\t(0x%x bytes)",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
+                if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t***RRRR***");
+                }
+                break;
+            case OP_MAPWRITE:
+                prt("MAPWRITE 0x%x thru 0x%x\t(0x%x bytes)",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
+                if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t******WWWW");
+                }
+                break;
+            case OP_READ:
+                prt("READ     0x%x thru 0x%x\t(0x%x bytes)",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
+                if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t***RRRR***");
+                }
+                break;
+            case OP_WRITE:
+                prt("WRITE    0x%x thru 0x%x\t(0x%x bytes)",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
+                if (lp->args[0] > lp->args[2]) {
+                    prt(" HOLE");
+                } else if (lp->args[0] + lp->args[1] > lp->args[2]) {
+                    prt(" EXTEND");
+                }
+                if ((badoff >= lp->args[0] || badoff >= lp->args[2]) &&
+                    badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t***WWWW");
+                }
+                break;
+            case OP_TRUNCATE:
+                down = lp->args[0] < lp->args[1];
+                prt("TRUNCATE %s\tfrom 0x%x to 0x%x",
+                    down ? "DOWN" : "UP", lp->args[1], lp->args[0]);
+                if (badoff >= lp->args[!down] && badoff < lp->args[! !down]) {
+                    prt("\t******WWWW");
+                }
+                break;
+            case OP_FALLOCATE:
+                /* 0: offset 1: length 2: where alloced */
+                prt("FALLOC   0x%x thru 0x%x\t(0x%x bytes) %s",
+                    lp->args[0], lp->args[0] + lp->args[1],
+                    lp->args[1], falloc_type[lp->args[2]]);
+                if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t******FFFF");
+                }
+                break;
+            case OP_PUNCH_HOLE:
+                prt("PUNCH    0x%x thru 0x%x\t(0x%x bytes)",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
+                if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t******PPPP");
+                }
+                break;
+            case OP_WRITESAME:
+                prt("WRITESAME    0x%x thru 0x%x\t(0x%x bytes) data_size 0x%x",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1,
+                    lp->args[1], lp->args[2]);
+                if (badoff >= lp->args[0] && badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t***WSWSWSWS");
+                }
+                break;
+            case OP_COMPARE_AND_WRITE:
+                prt("COMPARE_AND_WRITE    0x%x thru 0x%x\t(0x%x bytes)",
+                    lp->args[0], lp->args[0] + lp->args[1] - 1, lp->args[1]);
+                if (lp->args[0] > lp->args[2]) {
+                    prt(" HOLE");
+                } else if (lp->args[0] + lp->args[1] > lp->args[2]) {
+                    prt(" EXTEND");
+                }
+                if ((badoff >= lp->args[0] || badoff >= lp->args[2]) &&
+                    badoff < lp->args[0] + lp->args[1]) {
+                    prt("\t***WWWW");
+                }
+                break;
+            case OP_CLONE:
+                prt("CLONE");
+                break;
+            case OP_FLATTEN:
+                prt("FLATTEN");
+                break;
+            case OP_SKIPPED:
+                prt("SKIPPED (no operation)");
+                break;
+            default:
+                prt("BOGUS LOG ENTRY (operation code = %d)!", lp->operation);
         }
-        if (closeopen)
+        if (closeopen) {
             prt("\n\t\tCLOSE/OPEN");
+        }
         prt("\n");
         i++;
-        if (i == LOGSIZE)
+        if (i == LOGSIZE) {
             i = 0;
+        }
     }
 }
 
@@ -1732,8 +1755,9 @@ void save_buffer(char *buffer, off_t bufferlength, int fd)
     off_t ret;
     ssize_t byteswritten;
 
-    if (fd <= 0 || bufferlength == 0)
+    if (fd <= 0 || bufferlength == 0) {
         return;
+    }
 
     if (bufferlength > SSIZE_MAX) {
         prt("fsx flaw: overflow in save_buffer\n");
@@ -1741,14 +1765,15 @@ void save_buffer(char *buffer, off_t bufferlength, int fd)
     }
 
     ret = lseek(fd, (off_t) 0, SEEK_SET);
-    if (ret == (off_t) - 1)
+    if (ret == (off_t) - 1) {
         prterr("save_buffer: lseek 0");
+    }
 
     byteswritten = write(fd, buffer, (size_t) bufferlength);
     if (byteswritten != bufferlength) {
-        if (byteswritten == -1)
+        if (byteswritten == -1) {
             prterr("save_buffer write");
-        else
+        } else
             warn("save_buffer: short write, 0x%x bytes instead of 0x%llx\n",
                  (unsigned)byteswritten, (unsigned long long)bufferlength);
     }
@@ -1771,7 +1796,7 @@ void report_failure(int status)
 }
 
 #define short_at(cp) ((unsigned short)((*((unsigned char *)(cp)) << 8) | \
-				        *(((unsigned char *)(cp)) + 1)))
+                        *(((unsigned char *)(cp)) + 1)))
 
 int fsxcmp(char *good_buf, char *temp_buf, unsigned size)
 {
@@ -1787,8 +1812,7 @@ int fsxcmp(char *good_buf, char *temp_buf, unsigned size)
     return 0;
 }
 
-void
-check_buffers(char *good_buf, char *temp_buf, unsigned offset, unsigned size)
+void check_buffers(char *good_buf, char *temp_buf, unsigned offset, unsigned size)
 {
     if (fsxcmp(good_buf + offset, temp_buf, size) != 0) {
         unsigned i = 0;
@@ -1832,8 +1856,9 @@ void check_size(void)
     int ret;
 
     ret = ops->get_size(&ctx, &size);
-    if (ret < 0)
+    if (ret < 0) {
         prterrcode("check_size: ops->get_size", ret);
+    }
 
     if ((uint64_t) file_size != size) {
         prt("Size error: expected 0x%llx stat 0x%llx\n",
@@ -1842,7 +1867,7 @@ void check_size(void)
     }
 }
 
-#define TRUNC_HACK_SIZE	(200ULL << 9)   /* 512-byte aligned for krbd */
+#define TRUNC_HACK_SIZE (200ULL << 9)   /* 512-byte aligned for krbd */
 
 void check_trunc_hack(void)
 {
@@ -1850,16 +1875,19 @@ void check_trunc_hack(void)
     int ret;
 
     ret = ops->resize(&ctx, 0ULL);
-    if (ret < 0)
+    if (ret < 0) {
         prterrcode("check_trunc_hack: ops->resize pre", ret);
+    }
 
     ret = ops->resize(&ctx, TRUNC_HACK_SIZE);
-    if (ret < 0)
+    if (ret < 0) {
         prterrcode("check_trunc_hack: ops->resize actual", ret);
+    }
 
     ret = ops->get_size(&ctx, &size);
-    if (ret < 0)
+    if (ret < 0) {
         prterrcode("check_trunc_hack: ops->get_size", ret);
+    }
 
     if (size != TRUNC_HACK_SIZE) {
         prt("no extend on truncate! not posix!\n");
@@ -1867,8 +1895,9 @@ void check_trunc_hack(void)
     }
 
     ret = ops->resize(&ctx, 0ULL);
-    if (ret < 0)
+    if (ret < 0) {
         prterrcode("check_trunc_hack: ops->resize post", ret);
+    }
 }
 
 int create_image()
@@ -1924,8 +1953,7 @@ int create_image()
         }
 
         r = rbd_create2(ioctx, iname, file_size, features, &order);
-    }
-    else {
+    } else {
         r = rbd_create(ioctx, iname, file_size, &order);
     }
     if (r < 0) {
@@ -1949,13 +1977,13 @@ int create_image()
 
     return 0;
 
-  failed_open:
+failed_open:
     rados_ioctx_destroy(ioctx);
-  failed_krbd:
+failed_krbd:
 #if defined(WITH_KRBD)
     krbd_destroy(krbd);
 #endif
-  failed_shutdown:
+failed_shutdown:
     rados_shutdown(cluster);
     return r;
 }
@@ -1964,12 +1992,14 @@ void doflush(unsigned offset, unsigned size)
 {
     int ret;
 
-    if (o_direct)
+    if (o_direct) {
         return;
+    }
 
     ret = ops->flush(&ctx);
-    if (ret < 0)
+    if (ret < 0) {
         prterrcode("doflush: ops->flush", ret);
+    }
 }
 
 void doread(unsigned offset, unsigned size)
@@ -1977,25 +2007,29 @@ void doread(unsigned offset, unsigned size)
     int ret;
 
     offset -= offset % readbdy;
-    if (o_direct)
+    if (o_direct) {
         size -= size % readbdy;
+    }
     if (size == 0) {
-        if (!quiet && testcalls > simulatedopcount && !o_direct)
+        if (!quiet && testcalls > simulatedopcount && !o_direct) {
             prt("skipping zero size read\n");
+        }
         log4(OP_SKIPPED, OP_READ, offset, size);
         return;
     }
     if (size + offset > file_size) {
-        if (!quiet && testcalls > simulatedopcount)
+        if (!quiet && testcalls > simulatedopcount) {
             prt("skipping seek/read past end of file\n");
+        }
         log4(OP_SKIPPED, OP_READ, offset, size);
         return;
     }
 
     log4(OP_READ, offset, size, 0);
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     if (!quiet &&
         ((progressinterval && testcalls % progressinterval == 0) ||
@@ -2009,10 +2043,11 @@ void doread(unsigned offset, unsigned size)
 
     ret = ops->read(&ctx, offset, size, temp_buf);
     if (ret != (int)size) {
-        if (ret < 0)
+        if (ret < 0) {
             prterrcode("doread: ops->read", ret);
-        else
+        } else {
             prt("short read: 0x%x bytes instead of 0x%x\n", ret, size);
+        }
         report_failure(141);
     }
 
@@ -2023,11 +2058,12 @@ void check_eofpage(char *s, unsigned offset, char *p, int size)
 {
     unsigned long last_page, should_be_zero;
 
-    if (offset + size <= (file_size & ~page_mask))
+    if (offset + size <= (file_size & ~page_mask)) {
         return;
+    }
     /*
      * we landed in the last page of the file
-     * test to make sure the VM system provided 0's 
+     * test to make sure the VM system provided 0's
      * beyond the true end of the file mapping
      * (as required by mmap def in 1996 posix 1003.1)
      */
@@ -2036,7 +2072,8 @@ void check_eofpage(char *s, unsigned offset, char *p, int size)
     for (should_be_zero = last_page + (file_size & page_mask);
          should_be_zero < last_page + page_size; should_be_zero++)
         if (*(char *)should_be_zero) {
-            prt("Mapped %s: non-zero data past EOF (0x%llx) page offset 0x%x is 0x%04x\n", s, file_size - 1, should_be_zero & page_mask, short_at(should_be_zero));
+            prt("Mapped %s: non-zero data past EOF (0x%llx) page offset 0x%x is 0x%04x\n", s, file_size - 1,
+                should_be_zero & page_mask, short_at(should_be_zero));
             report_failure(205);
         }
 }
@@ -2045,8 +2082,9 @@ void gendata(char *original_buf, char *good_buf, unsigned offset, unsigned size)
 {
     while (size--) {
         good_buf[offset] = testcalls % 256;
-        if (offset % 2)
+        if (offset % 2) {
             good_buf[offset] += original_buf[offset];
+        }
         offset++;
     }
 }
@@ -2057,11 +2095,13 @@ void dowrite(unsigned offset, unsigned size)
     off_t newsize;
 
     offset -= offset % writebdy;
-    if (o_direct)
+    if (o_direct) {
         size -= size % writebdy;
+    }
     if (size == 0) {
-        if (!quiet && testcalls > simulatedopcount && !o_direct)
+        if (!quiet && testcalls > simulatedopcount && !o_direct) {
             prt("skipping zero size write\n");
+        }
         log4(OP_SKIPPED, OP_WRITE, offset, size);
         return;
     }
@@ -2071,8 +2111,9 @@ void dowrite(unsigned offset, unsigned size)
     gendata(original_buf, good_buf, offset, size);
     if (file_size < offset + size) {
         newsize = ceil(((double)offset + size) / truncbdy) * truncbdy;
-        if (file_size < newsize)
+        if (file_size < newsize) {
             memset(good_buf + file_size, '\0', newsize - file_size);
+        }
         file_size = newsize;
         if (lite) {
             warn("Lite file size bug in fsx!");
@@ -2085,8 +2126,9 @@ void dowrite(unsigned offset, unsigned size)
         }
     }
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     if (!quiet &&
         ((progressinterval && testcalls % progressinterval == 0) ||
@@ -2100,15 +2142,17 @@ void dowrite(unsigned offset, unsigned size)
 
     ret = ops->write(&ctx, offset, size, good_buf + offset);
     if (ret != (ssize_t) size) {
-        if (ret < 0)
+        if (ret < 0) {
             prterrcode("dowrite: ops->write", ret);
-        else
+        } else {
             prt("short write: 0x%x bytes instead of 0x%x\n", ret, size);
+        }
         report_failure(151);
     }
 
-    if (flush_enabled)
+    if (flush_enabled) {
         doflush(offset, size);
+    }
 }
 
 void dotruncate(unsigned size)
@@ -2119,25 +2163,29 @@ void dotruncate(unsigned size)
     size -= size % truncbdy;
     if (size > biggest) {
         biggest = size;
-        if (!quiet && testcalls > simulatedopcount)
+        if (!quiet && testcalls > simulatedopcount) {
             prt("truncating to largest ever: 0x%x\n", size);
+        }
     }
 
     log4(OP_TRUNCATE, size, (unsigned)file_size, 0);
 
-    if (size > file_size)
+    if (size > file_size) {
         memset(good_buf + file_size, '\0', size - file_size);
-    else if (size < file_size)
+    } else if (size < file_size) {
         memset(good_buf + size, '\0', file_size - size);
+    }
     file_size = size;
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     if ((progressinterval && testcalls % progressinterval == 0) ||
         (debug && (monitorstart == -1 || monitorend == -1 ||
-                   (long)size <= monitorend)))
+                   (long)size <= monitorend))) {
         prt("%lu trunc\tfrom 0x%x to 0x%x\n", testcalls, oldsize, size);
+    }
 
     ret = ops->resize(&ctx, size);
     if (ret < 0) {
@@ -2156,15 +2204,17 @@ void do_punch_hole(unsigned offset, unsigned length)
     offset -= offset % holebdy;
     length -= length % holebdy;
     if (length == 0) {
-        if (!quiet && testcalls > simulatedopcount)
+        if (!quiet && testcalls > simulatedopcount) {
             prt("skipping zero length punch hole\n");
+        }
         log4(OP_SKIPPED, OP_PUNCH_HOLE, offset, length);
         return;
     }
 
     if (file_size <= (loff_t) offset) {
-        if (!quiet && testcalls > simulatedopcount)
+        if (!quiet && testcalls > simulatedopcount) {
             prt("skipping hole punch off the end of the file\n");
+        }
         log4(OP_SKIPPED, OP_PUNCH_HOLE, offset, length);
         return;
     }
@@ -2173,8 +2223,9 @@ void do_punch_hole(unsigned offset, unsigned length)
 
     log4(OP_PUNCH_HOLE, offset, length, 0);
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     if ((progressinterval && testcalls % progressinterval == 0) ||
         (debug && (monitorstart == -1 || monitorend == -1 ||
@@ -2192,7 +2243,7 @@ void do_punch_hole(unsigned offset, unsigned length)
 
     max_offset = offset < file_size ? offset : file_size;
     max_len = max_offset + length <= file_size ? length :
-        file_size - max_offset;
+              file_size - max_offset;
     memset(good_buf + max_offset, '\0', max_len);
 }
 
@@ -2213,8 +2264,9 @@ unsigned get_data_size(unsigned size)
         }
     }
 
-    if (curr == hint)
+    if (curr == hint) {
         good = curr;
+    }
 
     return good;
 }
@@ -2228,11 +2280,13 @@ void dowritesame(unsigned offset, unsigned size)
     int n;
 
     offset -= offset % writebdy;
-    if (o_direct)
+    if (o_direct) {
         size -= size % writebdy;
+    }
     if (size == 0) {
-        if (!quiet && testcalls > simulatedopcount && !o_direct)
+        if (!quiet && testcalls > simulatedopcount && !o_direct) {
             prt("skipping zero size writesame\n");
+        }
         log4(OP_SKIPPED, OP_WRITESAME, offset, size);
         return;
     }
@@ -2244,8 +2298,9 @@ void dowritesame(unsigned offset, unsigned size)
     gendata(original_buf, good_buf, offset, data_size);
     if (file_size < offset + size) {
         newsize = ceil(((double)offset + size) / truncbdy) * truncbdy;
-        if (file_size < newsize)
+        if (file_size < newsize) {
             memset(good_buf + file_size, '\0', newsize - file_size);
+        }
         file_size = newsize;
         if (lite) {
             warn("Lite file size bug in fsx!");
@@ -2263,8 +2318,9 @@ void dowritesame(unsigned offset, unsigned size)
         buf_off += data_size;
     }
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     if (!quiet &&
         ((progressinterval && testcalls % progressinterval == 0) ||
@@ -2278,15 +2334,17 @@ void dowritesame(unsigned offset, unsigned size)
 
     ret = ops->writesame(&ctx, offset, size, good_buf + offset, data_size);
     if (ret != (ssize_t) size) {
-        if (ret < 0)
+        if (ret < 0) {
             prterrcode("dowritesame: ops->writesame", ret);
-        else
+        } else {
             prt("short writesame: 0x%x bytes instead of 0x%x\n", ret, size);
+        }
         report_failure(164);
     }
 
-    if (flush_enabled)
+    if (flush_enabled) {
         doflush(offset, size);
+    }
 }
 
 void docompareandwrite(unsigned offset, unsigned size)
@@ -2294,26 +2352,30 @@ void docompareandwrite(unsigned offset, unsigned size)
     int ret;
 
     if (skip_partial_discard) {
-        if (!quiet && testcalls > simulatedopcount)
+        if (!quiet && testcalls > simulatedopcount) {
             prt("compare and write disabled\n");
+        }
         log4(OP_SKIPPED, OP_COMPARE_AND_WRITE, offset, size);
         return;
     }
 
     offset -= offset % writebdy;
-    if (o_direct)
+    if (o_direct) {
         size -= size % writebdy;
+    }
 
     if (size == 0) {
-        if (!quiet && testcalls > simulatedopcount && !o_direct)
+        if (!quiet && testcalls > simulatedopcount && !o_direct) {
             prt("skipping zero size read\n");
+        }
         log4(OP_SKIPPED, OP_READ, offset, size);
         return;
     }
 
     if (size + offset > file_size) {
-        if (!quiet && testcalls > simulatedopcount)
+        if (!quiet && testcalls > simulatedopcount) {
             prt("skipping seek/compare past end of file\n");
+        }
         log4(OP_SKIPPED, OP_COMPARE_AND_WRITE, offset, size);
         return;
     }
@@ -2322,8 +2384,9 @@ void docompareandwrite(unsigned offset, unsigned size)
     gendata(original_buf, good_buf, offset, size);
     log4(OP_COMPARE_AND_WRITE, offset, size, 0);
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     if (!quiet &&
         ((progressinterval && testcalls % progressinterval == 0) ||
@@ -2342,16 +2405,18 @@ void docompareandwrite(unsigned offset, unsigned size)
             memcpy(good_buf + offset, temp_buf + offset, size);
             return;
         }
-        if (ret < 0)
+        if (ret < 0) {
             prterrcode("docompareandwrite: ops->compare_and_write", ret);
-        else
+        } else {
             prt("short write: 0x%x bytes instead of 0x%x\n", ret, size);
+        }
         report_failure(151);
         return;
     }
 
-    if (flush_enabled)
+    if (flush_enabled) {
         doflush(offset, size);
+    }
 }
 
 void clone_filename(char *buf, size_t len, int clones)
@@ -2370,8 +2435,7 @@ void clone_imagename(char *buf, size_t len, int clones)
 {
     if (clones > 0) {
         snprintf(buf, len, "%s-clone%d", iname, clones);
-    }
-    else {
+    } else {
         strncpy(buf, iname, len - 1);
         buf[len - 1] = '\0';
     }
@@ -2433,8 +2497,7 @@ void do_clone()
             if (rand < 10) {    // 9/16
                 newsize = overlap * ((double)rand / 10);
                 newsize -= newsize % truncbdy;
-            }
-            else {              // 3/16
+            } else {            // 3/16
                 newsize = 0;
             }
 
@@ -2447,8 +2510,7 @@ void do_clone()
                 prterrcode("do_clone: ops->resize", ret);
                 exit(1);
             }
-        }
-        else if (rand < 15) {   // 2/16
+        } else if (rand < 15) { // 2/16
             prt("flattening image %s\n", ctx.name);
 
             ret = ops->flatten(&ctx);
@@ -2456,8 +2518,7 @@ void do_clone()
                 prterrcode("do_clone: ops->flatten", ret);
                 exit(1);
             }
-        }
-        else {                  // 2/16
+        } else {                // 2/16
             prt("leaving image %s intact\n", ctx.name);
         }
     }
@@ -2521,8 +2582,7 @@ void check_clone(int clonenum, bool replay_image)
 
     if (replay_image) {
         replay_imagename(imagename, sizeof(imagename), clonenum);
-    }
-    else {
+    } else {
         clone_imagename(imagename, sizeof(imagename), clonenum);
     }
 
@@ -2591,9 +2651,9 @@ void writefileimage()
 
     ret = ops->write(&ctx, 0, file_size, good_buf);
     if (ret != file_size) {
-        if (ret < 0)
+        if (ret < 0) {
             prterrcode("writefileimage: ops->write", ret);
-        else
+        } else
             prt("short write: 0x%x bytes instead of 0x%llx\n",
                 ret, (unsigned long long)file_size);
         report_failure(172);
@@ -2631,13 +2691,15 @@ void docloseopen(void)
     char *name;
     int ret;
 
-    if (testcalls <= simulatedopcount)
+    if (testcalls <= simulatedopcount) {
         return;
+    }
 
     name = strdup(ctx.name);
 
-    if (debug)
+    if (debug) {
         prt("%lu close/open\n", testcalls);
+    }
 
     ret = ops->close(&ctx);
     if (ret < 0) {
@@ -2654,14 +2716,14 @@ void docloseopen(void)
     free(name);
 }
 
-#define TRIM_OFF_LEN(off, len, size)	\
-do {					\
-	if (size)			\
-		(off) %= (size);	\
-	else				\
-		(off) = 0;		\
-	if ((unsigned)(off) + (unsigned)(len) > (unsigned)(size))	\
-		(len) = (size) - (off);	\
+#define TRIM_OFF_LEN(off, len, size)    \
+do {                    \
+    if (size)           \
+        (off) %= (size);    \
+    else                \
+        (off) = 0;      \
+    if ((unsigned)(off) + (unsigned)(len) > (unsigned)(size))   \
+        (len) = (size) - (off); \
 } while (0)
 
 void test(void)
@@ -2671,147 +2733,159 @@ void test(void)
     unsigned long rv = get_random();
     unsigned long op;
 
-    if (simulatedopcount > 0 && testcalls == simulatedopcount)
+    if (simulatedopcount > 0 && testcalls == simulatedopcount) {
         writefileimage();
+    }
 
     testcalls++;
 
-    if (closeprob)
+    if (closeprob) {
         closeopen = (rv >> 3) < (1u << 28) / (unsigned)closeprob;
+    }
 
-    if (debugstart > 0 && testcalls >= debugstart)
+    if (debugstart > 0 && testcalls >= debugstart) {
         debug = 1;
+    }
 
-    if (!quiet && testcalls < simulatedopcount && testcalls % 100000 == 0)
+    if (!quiet && testcalls < simulatedopcount && testcalls % 100000 == 0) {
         prt("%lu...\n", testcalls);
+    }
 
     offset = get_random();
-    if (randomoplen)
+    if (randomoplen) {
         size = get_random() % (maxoplen + 1);
+    }
 
     /* calculate appropriate op to run */
-    if (lite)
+    if (lite) {
         op = rv % OP_MAX_LITE;
-    else
+    } else {
         op = rv % OP_MAX_FULL;
-
-    switch (op) {
-    case OP_MAPREAD:
-        if (!mapped_reads)
-            op = OP_READ;
-        break;
-    case OP_MAPWRITE:
-        if (!mapped_writes)
-            op = OP_WRITE;
-        break;
-    case OP_FALLOCATE:
-        if (!fallocate_calls) {
-            log4(OP_SKIPPED, OP_FALLOCATE, offset, size);
-            goto out;
-        }
-        break;
-    case OP_PUNCH_HOLE:
-        if (!punch_hole_calls) {
-            log4(OP_SKIPPED, OP_PUNCH_HOLE, offset, size);
-            goto out;
-        }
-        break;
-    case OP_CLONE:
-        /* clone, 8% chance */
-        if (!clone_calls || file_size == 0 || get_random() % 100 >= 8) {
-            log4(OP_SKIPPED, OP_CLONE, 0, 0);
-            goto out;
-        }
-        break;
-    case OP_FLATTEN:
-        /* flatten four times as rarely as clone, 2% chance */
-        if (get_random() % 100 >= 2) {
-            log4(OP_SKIPPED, OP_FLATTEN, 0, 0);
-            goto out;
-        }
-        break;
-    case OP_WRITESAME:
-        /* writesame not implemented */
-        if (!ops->writesame) {
-            log4(OP_SKIPPED, OP_WRITESAME, offset, size);
-            goto out;
-        }
-        break;
-    case OP_COMPARE_AND_WRITE:
-        /* compare_and_write not implemented */
-        if (!ops->compare_and_write) {
-            log4(OP_SKIPPED, OP_COMPARE_AND_WRITE, offset, size);
-            goto out;
-        }
-        break;
     }
 
     switch (op) {
-    case OP_READ:
-        TRIM_OFF_LEN(offset, size, file_size);
-        doread(offset, size);
-        break;
-
-    case OP_WRITE:
-        TRIM_OFF_LEN(offset, size, maxfilelen);
-        dowrite(offset, size);
-        break;
-
-    case OP_MAPREAD:
-        TRIM_OFF_LEN(offset, size, file_size);
-        exit(183);
-        break;
-
-    case OP_MAPWRITE:
-        TRIM_OFF_LEN(offset, size, maxfilelen);
-        exit(182);
-        break;
-
-    case OP_TRUNCATE:
-        if (!style)
-            size = get_random() % maxfilelen;
-        dotruncate(size);
-        break;
-
-    case OP_PUNCH_HOLE:
-        TRIM_OFF_LEN(offset, size, file_size);
-        do_punch_hole(offset, size);
-        break;
-
-    case OP_WRITESAME:
-        TRIM_OFF_LEN(offset, size, maxfilelen);
-        dowritesame(offset, size);
-        break;
-    case OP_COMPARE_AND_WRITE:
-        TRIM_OFF_LEN(offset, size, file_size);
-        docompareandwrite(offset, size);
-        break;
-
-    case OP_CLONE:
-        do_clone();
-        break;
-
-    case OP_FLATTEN:
-        do_flatten();
-        break;
-
-    default:
-        prterr("test: unknown operation");
-        report_failure(42);
-        break;
+        case OP_MAPREAD:
+            if (!mapped_reads) {
+                op = OP_READ;
+            }
+            break;
+        case OP_MAPWRITE:
+            if (!mapped_writes) {
+                op = OP_WRITE;
+            }
+            break;
+        case OP_FALLOCATE:
+            if (!fallocate_calls) {
+                log4(OP_SKIPPED, OP_FALLOCATE, offset, size);
+                goto out;
+            }
+            break;
+        case OP_PUNCH_HOLE:
+            if (!punch_hole_calls) {
+                log4(OP_SKIPPED, OP_PUNCH_HOLE, offset, size);
+                goto out;
+            }
+            break;
+        case OP_CLONE:
+            /* clone, 8% chance */
+            if (!clone_calls || file_size == 0 || get_random() % 100 >= 8) {
+                log4(OP_SKIPPED, OP_CLONE, 0, 0);
+                goto out;
+            }
+            break;
+        case OP_FLATTEN:
+            /* flatten four times as rarely as clone, 2% chance */
+            if (get_random() % 100 >= 2) {
+                log4(OP_SKIPPED, OP_FLATTEN, 0, 0);
+                goto out;
+            }
+            break;
+        case OP_WRITESAME:
+            /* writesame not implemented */
+            if (!ops->writesame) {
+                log4(OP_SKIPPED, OP_WRITESAME, offset, size);
+                goto out;
+            }
+            break;
+        case OP_COMPARE_AND_WRITE:
+            /* compare_and_write not implemented */
+            if (!ops->compare_and_write) {
+                log4(OP_SKIPPED, OP_COMPARE_AND_WRITE, offset, size);
+                goto out;
+            }
+            break;
     }
 
-  out:
-    if (sizechecks && testcalls > simulatedopcount)
+    switch (op) {
+        case OP_READ:
+            TRIM_OFF_LEN(offset, size, file_size);
+            doread(offset, size);
+            break;
+
+        case OP_WRITE:
+            TRIM_OFF_LEN(offset, size, maxfilelen);
+            dowrite(offset, size);
+            break;
+
+        case OP_MAPREAD:
+            TRIM_OFF_LEN(offset, size, file_size);
+            exit(183);
+            break;
+
+        case OP_MAPWRITE:
+            TRIM_OFF_LEN(offset, size, maxfilelen);
+            exit(182);
+            break;
+
+        case OP_TRUNCATE:
+            if (!style) {
+                size = get_random() % maxfilelen;
+            }
+            dotruncate(size);
+            break;
+
+        case OP_PUNCH_HOLE:
+            TRIM_OFF_LEN(offset, size, file_size);
+            do_punch_hole(offset, size);
+            break;
+
+        case OP_WRITESAME:
+            TRIM_OFF_LEN(offset, size, maxfilelen);
+            dowritesame(offset, size);
+            break;
+        case OP_COMPARE_AND_WRITE:
+            TRIM_OFF_LEN(offset, size, file_size);
+            docompareandwrite(offset, size);
+            break;
+
+        case OP_CLONE:
+            do_clone();
+            break;
+
+        case OP_FLATTEN:
+            do_flatten();
+            break;
+
+        default:
+            prterr("test: unknown operation");
+            report_failure(42);
+            break;
+    }
+
+out:
+    if (sizechecks && testcalls > simulatedopcount) {
         check_size();
-    if (closeopen)
+    }
+    if (closeopen) {
         docloseopen();
+    }
 }
 
 void cleanup(int sig)
 {
-    if (sig)
+    if (sig) {
         prt("signal %d\n", sig);
+    }
     prt("testcalls = %lu\n", testcalls);
     exit(sig);
 }
@@ -2877,26 +2951,26 @@ int getnum(char *s, char **e)
     ret = strtol(s, e, 0);
     if (*e)
         switch (**e) {
-        case 'b':
-        case 'B':
-            ret *= 512;
-            *e = *e + 1;
-            break;
-        case 'k':
-        case 'K':
-            ret *= 1024;
-            *e = *e + 1;
-            break;
-        case 'm':
-        case 'M':
-            ret *= 1024 * 1024;
-            *e = *e + 1;
-            break;
-        case 'w':
-        case 'W':
-            ret *= 4;
-            *e = *e + 1;
-            break;
+            case 'b':
+            case 'B':
+                ret *= 512;
+                *e = *e + 1;
+                break;
+            case 'k':
+            case 'K':
+                ret *= 1024;
+                *e = *e + 1;
+                break;
+            case 'm':
+            case 'M':
+                ret *= 1024 * 1024;
+                *e = *e + 1;
+                break;
+            case 'w':
+            case 'W':
+                ret *= 4;
+                *e = *e + 1;
+                break;
         }
     return (ret);
 }
@@ -2906,11 +2980,11 @@ void test_fallocate()
 #ifdef FALLOCATE
     if (!lite && fallocate_calls) {
         if (fallocate(fd, 0, 0, 1) && errno == EOPNOTSUPP) {
-            if (!quiet)
+            if (!quiet) {
                 warn("main: filesystem does not support fallocate, disabling\n");
+            }
             fallocate_calls = 0;
-        }
-        else {
+        } else {
             ftruncate(fd, 0);
         }
     }
@@ -2991,212 +3065,232 @@ int main(int argc, char **argv)
 
     while ((ch = getopt_long(argc, argv, optstring, longopts, NULL)) != EOF) {
         switch (ch) {
-        case LONG_OPT_CLUSTER:
-            cluster_name = optarg;
-            break;
-        case LONG_OPT_ID:
-            client_id = optarg;
-            break;
-        case 'b':
-            simulatedopcount = getnum(optarg, &endp);
-            if (!quiet)
-                fprintf(stdout, "Will begin at operation %lu\n",
-                        simulatedopcount);
-            if (simulatedopcount == 0)
-                usage();
-            simulatedopcount -= 1;
-            break;
-        case 'c':
-            closeprob = getnum(optarg, &endp);
-            if (!quiet)
-                fprintf(stdout, "Chance of close/open is 1 in %d\n", closeprob);
-            if (closeprob <= 0)
-                usage();
-            break;
-        case 'd':
-            debug = 1;
-            break;
-        case 'f':
-            flush_enabled = 1;
-            break;
-        case 'g':
-            deep_copy = 1;
-            break;
-        case 'h':
-            holebdy = getnum(optarg, &endp);
-            if (holebdy <= 0)
-                usage();
-            break;
-        case 'j':
-            journal_replay = true;
-            break;
-        case 'k':
-            keep_on_success = 1;
-            break;
-        case 'l':
-            {
-                int _num = getnum(optarg, &endp);
-                if (_num <= 0)
+            case LONG_OPT_CLUSTER:
+                cluster_name = optarg;
+                break;
+            case LONG_OPT_ID:
+                client_id = optarg;
+                break;
+            case 'b':
+                simulatedopcount = getnum(optarg, &endp);
+                if (!quiet)
+                    fprintf(stdout, "Will begin at operation %lu\n",
+                            simulatedopcount);
+                if (simulatedopcount == 0) {
                     usage();
+                }
+                simulatedopcount -= 1;
+                break;
+            case 'c':
+                closeprob = getnum(optarg, &endp);
+                if (!quiet) {
+                    fprintf(stdout, "Chance of close/open is 1 in %d\n", closeprob);
+                }
+                if (closeprob <= 0) {
+                    usage();
+                }
+                break;
+            case 'd':
+                debug = 1;
+                break;
+            case 'f':
+                flush_enabled = 1;
+                break;
+            case 'g':
+                deep_copy = 1;
+                break;
+            case 'h':
+                holebdy = getnum(optarg, &endp);
+                if (holebdy <= 0) {
+                    usage();
+                }
+                break;
+            case 'j':
+                journal_replay = true;
+                break;
+            case 'k':
+                keep_on_success = 1;
+                break;
+            case 'l': {
+                int _num = getnum(optarg, &endp);
+                if (_num <= 0) {
+                    usage();
+                }
                 maxfilelen = _num;
             }
             break;
-        case 'm':
-            monitorstart = getnum(optarg, &endp);
-            if (monitorstart < 0)
-                usage();
-            if (!endp || *endp++ != ':')
-                usage();
-            monitorend = getnum(endp, &endp);
-            if (monitorend < 0)
-                usage();
-            if (monitorend == 0)
-                monitorend = -1;    /* aka infinity */
-            debug = 1;
-            break;
-        case 'n':
-            sizechecks = 0;
-            break;
-        case 'o':
-            maxoplen = getnum(optarg, &endp);
-            if (maxoplen <= 0)
-                usage();
-            break;
-        case 'p':
-            progressinterval = getnum(optarg, &endp);
-            if (progressinterval == 0)
-                usage();
-            break;
-        case 'q':
-            quiet = 1;
-            break;
-        case 'r':
-            readbdy = getnum(optarg, &endp);
-            if (readbdy <= 0)
-                usage();
-            break;
-        case 's':
-            style = getnum(optarg, &endp);
-            if (style < 0 || style > 1)
-                usage();
-            break;
-        case 't':
-            truncbdy = getnum(optarg, &endp);
-            if (truncbdy <= 0)
-                usage();
-            break;
-        case 'w':
-            writebdy = getnum(optarg, &endp);
-            if (writebdy <= 0)
-                usage();
-            break;
-        case 'x':
-            prealloc = 1;
-            break;
-        case 'y':
-            do_fsync = 1;
-            break;
-        case 'C':
-            clone_calls = 0;
-            break;
-        case 'D':
-            debugstart = getnum(optarg, &endp);
-            if (debugstart < 1)
-                usage();
-            break;
-        case 'F':
-            fallocate_calls = 0;
-            break;
+            case 'm':
+                monitorstart = getnum(optarg, &endp);
+                if (monitorstart < 0) {
+                    usage();
+                }
+                if (!endp || *endp++ != ':') {
+                    usage();
+                }
+                monitorend = getnum(endp, &endp);
+                if (monitorend < 0) {
+                    usage();
+                }
+                if (monitorend == 0) {
+                    monitorend = -1;    /* aka infinity */
+                }
+                debug = 1;
+                break;
+            case 'n':
+                sizechecks = 0;
+                break;
+            case 'o':
+                maxoplen = getnum(optarg, &endp);
+                if (maxoplen <= 0) {
+                    usage();
+                }
+                break;
+            case 'p':
+                progressinterval = getnum(optarg, &endp);
+                if (progressinterval == 0) {
+                    usage();
+                }
+                break;
+            case 'q':
+                quiet = 1;
+                break;
+            case 'r':
+                readbdy = getnum(optarg, &endp);
+                if (readbdy <= 0) {
+                    usage();
+                }
+                break;
+            case 's':
+                style = getnum(optarg, &endp);
+                if (style < 0 || style > 1) {
+                    usage();
+                }
+                break;
+            case 't':
+                truncbdy = getnum(optarg, &endp);
+                if (truncbdy <= 0) {
+                    usage();
+                }
+                break;
+            case 'w':
+                writebdy = getnum(optarg, &endp);
+                if (writebdy <= 0) {
+                    usage();
+                }
+                break;
+            case 'x':
+                prealloc = 1;
+                break;
+            case 'y':
+                do_fsync = 1;
+                break;
+            case 'C':
+                clone_calls = 0;
+                break;
+            case 'D':
+                debugstart = getnum(optarg, &endp);
+                if (debugstart < 1) {
+                    usage();
+                }
+                break;
+            case 'F':
+                fallocate_calls = 0;
+                break;
 #if defined(__FreeBSD__)
-        case 'G':
-            prt("rbd-ggate mode enabled\n");
-            ops = &ggate_operations;
-            break;
+            case 'G':
+                prt("rbd-ggate mode enabled\n");
+                ops = &ggate_operations;
+                break;
 #endif
-        case 'H':
-            punch_hole_calls = 0;
-            break;
+            case 'H':
+                punch_hole_calls = 0;
+                break;
 #if defined(WITH_KRBD)
-        case 'K':
-            prt("krbd mode enabled\n");
-            ops = &krbd_operations;
-            break;
+            case 'K':
+                prt("krbd mode enabled\n");
+                ops = &krbd_operations;
+                break;
 #endif
 #if defined(__linux__)
-        case 'M':
-            prt("rbd-nbd mode enabled\n");
-            ops = &nbd_operations;
-            break;
+            case 'M':
+                prt("rbd-nbd mode enabled\n");
+                ops = &nbd_operations;
+                break;
 #endif
-        case 'L':
-            lite = 1;
-            break;
-        case 'N':
-            numops = getnum(optarg, &endp);
-            if (numops < 0)
-                usage();
-            break;
-        case 'O':
-            randomoplen = 0;
-            break;
-        case 'P':
-            strncpy(dirpath, optarg, sizeof(dirpath) - 1);
-            dirpath[sizeof(dirpath) - 1] = '\0';
-            strncpy(goodfile, dirpath, sizeof(goodfile) - 1);
-            goodfile[sizeof(goodfile) - 1] = '\0';
-            if (strlen(goodfile) < sizeof(goodfile) - 2) {
-                strcat(goodfile, "/");
-            }
-            else {
-                prt("file name to long\n");
-                exit(1);
-            }
-            strncpy(logfile, dirpath, sizeof(logfile) - 1);
-            logfile[sizeof(logfile) - 1] = '\0';
-            if (strlen(logfile) < sizeof(logfile) - 2) {
-                strcat(logfile, "/");
-            }
-            else {
-                prt("file path to long\n");
-                exit(1);
-            }
-            break;
-        case 'R':
-            mapped_reads = 0;
-            if (!quiet)
-                fprintf(stdout, "mapped reads DISABLED\n");
-            break;
-        case 'S':
-            seed = getnum(optarg, &endp);
-            if (seed == 0)
-                seed = std::random_device()() % 10000;
-            if (!quiet)
-                fprintf(stdout, "Seed set to %d\n", seed);
-            if (seed < 0)
-                usage();
-            break;
-        case 'U':
-            randomize_striping = 0;
-            break;
-        case 'W':
-            mapped_writes = 0;
-            if (!quiet)
-                fprintf(stdout, "mapped writes DISABLED\n");
-            break;
-        case 'Z':
+            case 'L':
+                lite = 1;
+                break;
+            case 'N':
+                numops = getnum(optarg, &endp);
+                if (numops < 0) {
+                    usage();
+                }
+                break;
+            case 'O':
+                randomoplen = 0;
+                break;
+            case 'P':
+                strncpy(dirpath, optarg, sizeof(dirpath) - 1);
+                dirpath[sizeof(dirpath) - 1] = '\0';
+                strncpy(goodfile, dirpath, sizeof(goodfile) - 1);
+                goodfile[sizeof(goodfile) - 1] = '\0';
+                if (strlen(goodfile) < sizeof(goodfile) - 2) {
+                    strcat(goodfile, "/");
+                } else {
+                    prt("file name to long\n");
+                    exit(1);
+                }
+                strncpy(logfile, dirpath, sizeof(logfile) - 1);
+                logfile[sizeof(logfile) - 1] = '\0';
+                if (strlen(logfile) < sizeof(logfile) - 2) {
+                    strcat(logfile, "/");
+                } else {
+                    prt("file path to long\n");
+                    exit(1);
+                }
+                break;
+            case 'R':
+                mapped_reads = 0;
+                if (!quiet) {
+                    fprintf(stdout, "mapped reads DISABLED\n");
+                }
+                break;
+            case 'S':
+                seed = getnum(optarg, &endp);
+                if (seed == 0) {
+                    seed = std::random_device()() % 10000;
+                }
+                if (!quiet) {
+                    fprintf(stdout, "Seed set to %d\n", seed);
+                }
+                if (seed < 0) {
+                    usage();
+                }
+                break;
+            case 'U':
+                randomize_striping = 0;
+                break;
+            case 'W':
+                mapped_writes = 0;
+                if (!quiet) {
+                    fprintf(stdout, "mapped writes DISABLED\n");
+                }
+                break;
+            case 'Z':
 #ifdef O_DIRECT
-            o_direct = O_DIRECT;
+                o_direct = O_DIRECT;
 #endif
-            break;
-        default:
-            usage();
-            /* NOTREACHED */
+                break;
+            default:
+                usage();
+                /* NOTREACHED */
         }
     }
     argc -= optind;
     argv += optind;
-    if (argc != 2)
+    if (argc != 2) {
         usage();
+    }
     pool = argv[0];
     iname = argv[1];
 
@@ -3229,8 +3323,9 @@ int main(int argc, char **argv)
         simple_err("Error opening image", ret);
         exit(91);
     }
-    if (!dirpath[0])
+    if (!dirpath[0]) {
         strcat(dirpath, ".");
+    }
     strncat(goodfile, iname, 256);
     strcat(goodfile, ".fsxgood");
     fsxgoodfd = open(goodfile, O_RDWR | O_CREAT | O_TRUNC, 0666);
@@ -3247,16 +3342,18 @@ int main(int argc, char **argv)
     }
 
     original_buf = (char *)malloc(maxfilelen);
-    for (i = 0; i < (int)maxfilelen; i++)
+    for (i = 0; i < (int)maxfilelen; i++) {
         original_buf[i] = get_random() % 256;
+    }
 
     ret = posix_memalign((void **)&good_buf,
                          std::max(writebdy, (int)sizeof(void *)), maxfilelen);
     if (ret > 0) {
-        if (ret == EINVAL)
+        if (ret == EINVAL) {
             prt("writebdy is not a suitable power of two\n");
-        else
+        } else {
             prterrcode("main: posix_memalign(good_buf)", -ret);
+        }
         exit(94);
     }
     memset(good_buf, '\0', maxfilelen);
@@ -3264,10 +3361,11 @@ int main(int argc, char **argv)
     ret = posix_memalign((void **)&temp_buf,
                          std::max(readbdy, (int)sizeof(void *)), maxfilelen);
     if (ret > 0) {
-        if (ret == EINVAL)
+        if (ret == EINVAL) {
             prt("readbdy is not a suitable power of two\n");
-        else
+        } else {
             prterrcode("main: posix_memalign(temp_buf)", -ret);
+        }
         exit(95);
     }
     memset(temp_buf, '\0', maxfilelen);
@@ -3280,20 +3378,20 @@ int main(int argc, char **argv)
             if (written < 0) {
                 prterrcode(iname, written);
                 warn("main: error on write");
-            }
-            else
+            } else
                 warn("main: short write, 0x%x bytes instead "
                      "of 0x%lx\n", (unsigned)written, maxfilelen);
             exit(98);
         }
-    }
-    else
+    } else {
         check_trunc_hack();
+    }
 
     //test_fallocate();
 
-    while (numops == -1 || numops--)
+    while (numops == -1 || numops--) {
         test();
+    }
 
     ret = ops->close(&ctx);
     if (ret < 0) {

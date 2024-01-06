@@ -16,7 +16,8 @@ void register_test_groups()
 {
 }
 
-class TestGroup:public TestFixture {
+class TestGroup: public TestFixture
+{
 
 };
 
@@ -26,7 +27,8 @@ TEST_F(TestGroup, group_create)
     rados_ioctx_create(_cluster, _pool_name.c_str(), &ioctx);
     BOOST_SCOPE_EXIT(ioctx) {
         rados_ioctx_destroy(ioctx);
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     librbd::RBD rbd;
     ASSERT_EQ(0, rbd_group_create(ioctx, "mygroup"));
@@ -79,7 +81,8 @@ TEST_F(TestGroup, add_image)
     rados_ioctx_create(_cluster, _pool_name.c_str(), &ioctx);
     BOOST_SCOPE_EXIT(ioctx) {
         rados_ioctx_destroy(ioctx);
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     const char *group_name = "mycg";
     ASSERT_EQ(0, rbd_group_create(ioctx, group_name));
@@ -88,7 +91,8 @@ TEST_F(TestGroup, add_image)
     ASSERT_EQ(0, rbd_open(ioctx, m_image_name.c_str(), &image, NULL));
     BOOST_SCOPE_EXIT(image) {
         EXPECT_EQ(0, rbd_close(image));
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     uint64_t features;
     ASSERT_EQ(0, rbd_get_features(image, &features));
@@ -134,8 +138,8 @@ TEST_F(TestGroup, add_image)
     ASSERT_EQ(rados_ioctx_get_id(ioctx), images[0].pool);
 
     ASSERT_EQ(0, rbd_group_image_list_cleanup(images,
-                                              sizeof(rbd_group_image_info_t),
-                                              num_images));
+              sizeof(rbd_group_image_info_t),
+              num_images));
     ASSERT_EQ(0, rbd_group_image_remove(ioctx, group_name, ioctx,
                                         m_image_name.c_str()));
 
@@ -238,7 +242,8 @@ TEST_F(TestGroup, add_snapshot)
     ASSERT_EQ(0, rbd_open(ioctx, m_image_name.c_str(), &image, NULL));
     BOOST_SCOPE_EXIT(image) {
         EXPECT_EQ(0, rbd_close(image));
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
 
     ASSERT_EQ(10, rbd_write(image, 0, 10, orig_data));
     ASSERT_EQ(10, rbd_read(image, 0, 10, read_data));
@@ -250,15 +255,17 @@ TEST_F(TestGroup, add_snapshot)
                                      m_image_name.c_str()));
 
     struct Watcher {
-        static void quiesce_cb(void *arg) {
+        static void quiesce_cb(void *arg)
+        {
             Watcher *watcher = static_cast < Watcher * >(arg);
-             watcher->handle_quiesce();
-        } static void unquiesce_cb(void *arg) {
+            watcher->handle_quiesce();
+        } static void unquiesce_cb(void *arg)
+        {
             Watcher *watcher = static_cast < Watcher * >(arg);
             watcher->handle_unquiesce();
         }
 
-        rbd_image_t & image;
+        rbd_image_t &image;
         uint64_t handle = 0;
         size_t quiesce_count = 0;
         size_t unquiesce_count = 0;
@@ -267,25 +274,29 @@ TEST_F(TestGroup, add_snapshot)
         ceph::mutex lock = ceph::make_mutex("lock");
         ceph::condition_variable cv;
 
-      Watcher(rbd_image_t & image):image(image) {
+        Watcher(rbd_image_t &image): image(image)
+        {
         }
 
-        void handle_quiesce() {
+        void handle_quiesce()
+        {
             ASSERT_EQ(quiesce_count, unquiesce_count);
             quiesce_count++;
             rbd_quiesce_complete(image, handle, r);
         }
-        void handle_unquiesce() {
+        void handle_unquiesce()
+        {
             std::unique_lock locker(lock);
             unquiesce_count++;
             cv.notify_one();
         }
-        bool wait_for_unquiesce(size_t c) {
+        bool wait_for_unquiesce(size_t c)
+        {
             std::unique_lock locker(lock);
-            return cv.wait_for(locker, std::chrono::seconds(60),[this, c] () {
-                               return unquiesce_count >= c;
-                               }
-            );
+            return cv.wait_for(locker, std::chrono::seconds(60), [this, c]() {
+                return unquiesce_count >= c;
+            }
+                              );
         }
     }
     watcher(image);
@@ -330,8 +341,8 @@ TEST_F(TestGroup, add_snapshot)
     ASSERT_EQ(0U, num_snaps);
 
     ASSERT_EQ(-EINVAL, rbd_group_snap_create2(ioctx, group_name, snap_name,
-                                              RBD_SNAP_CREATE_SKIP_QUIESCE |
-                                              RBD_SNAP_CREATE_IGNORE_QUIESCE_ERROR));
+              RBD_SNAP_CREATE_SKIP_QUIESCE |
+              RBD_SNAP_CREATE_IGNORE_QUIESCE_ERROR));
     watcher.r = -EINVAL;
     ASSERT_EQ(-EINVAL, rbd_group_snap_create2(ioctx, group_name, snap_name, 0));
 
@@ -432,8 +443,8 @@ TEST_F(TestGroup, add_snapshotPP)
     ASSERT_EQ(0, rbd.group_snap_remove(ioctx, group_name, snap_name));
 
     ASSERT_EQ(-EINVAL, rbd.group_snap_create2(ioctx, group_name, snap_name,
-                                              RBD_SNAP_CREATE_SKIP_QUIESCE |
-                                              RBD_SNAP_CREATE_IGNORE_QUIESCE_ERROR));
+              RBD_SNAP_CREATE_SKIP_QUIESCE |
+              RBD_SNAP_CREATE_IGNORE_QUIESCE_ERROR));
     snaps.clear();
     ASSERT_EQ(0, rbd.group_snap_list(ioctx, group_name, &snaps,
                                      sizeof(librbd::group_snap_info_t)));

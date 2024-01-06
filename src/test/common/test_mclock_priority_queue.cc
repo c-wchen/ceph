@@ -20,26 +20,32 @@
 
 struct Request {
     int value;
-     Request(): value(0) {
-    } Request(const Request & o) = default;
-    explicit Request(int value):value(value) {
+    Request(): value(0)
+    {
+    } Request(const Request &o) = default;
+    explicit Request(int value): value(value)
+    {
     }
 };
 
 struct Client {
     int client_num;
-     Client(): Client(-1) {
-    } Client(int client_num):client_num(client_num) {
+    Client(): Client(-1)
+    {
+    } Client(int client_num): client_num(client_num)
+    {
     }
-    friend bool operator<(const Client & r1, const Client & r2) {
+    friend bool operator<(const Client &r1, const Client &r2)
+    {
         return r1.client_num < r2.client_num;
     }
-    friend bool operator==(const Client & r1, const Client & r2) {
+    friend bool operator==(const Client &r1, const Client &r2)
+    {
         return r1.client_num == r2.client_num;
     }
 };
 
-const crimson::dmclock::ClientInfo * client_info_func(const Client & c)
+const crimson::dmclock::ClientInfo *client_info_func(const Client &c)
 {
     static const crimson::dmclock::ClientInfo the_info(10.0, 10.0, 10.0);
     return &the_info;
@@ -182,12 +188,11 @@ TEST(mClockPriorityQueue, EnqueuFront)
     }
 
     for (uint i = 0; i < 4; ++i) {
-        Request & r = reqs.front();
+        Request &r = reqs.front();
         if (r.value > 5) {
             q.enqueue_strict_front(r.value == 6 ? c2 : 1, r.value,
                                    std::move(r));
-        }
-        else {
+        } else {
             q.enqueue_front(r.value <= 2 ? c1 : c2, r.value, 0, std::move(r));
         }
         reqs.pop_front();
@@ -241,7 +246,7 @@ TEST(mClockPriorityQueue, RemoveByClass)
     ASSERT_EQ(3u, out.size());
     while (!out.empty()) {
         ASSERT_TRUE((out.front().value & out_mask) > 0) <<
-            "had value that was not expected after first removal";
+                "had value that was not expected after first removal";
         out.pop_front();
     }
 
@@ -253,7 +258,7 @@ TEST(mClockPriorityQueue, RemoveByClass)
     while (!q.empty()) {
         Request r = q.dequeue();
         ASSERT_TRUE((r.value & in_mask) > 0) <<
-            "had value that was not expected after two removals";
+                                             "had value that was not expected after two removals";
     }
 }
 
@@ -278,26 +283,28 @@ TEST(mClockPriorityQueue, RemoveByFilter)
     std::list < Request > filtered;
 
     q.remove_by_filter([&](const Request & r)->bool {
-                       if (r.value & 2) {
-                       filtered.push_back(r); return true;}
-                       else {
-                       return false;}
-                       }
-    ) ;
+        if (r.value & 2) {
+            filtered.push_back(r);
+            return true;
+        } else {
+            return false;
+        }
+    }
+                      ) ;
 
     ASSERT_EQ(4u, filtered.size()) <<
-        "filter should have removed four elements";
+                                   "filter should have removed four elements";
     while (!filtered.empty()) {
         ASSERT_TRUE((filtered.front().value & 2) > 0) <<
-            "expect this value to have been filtered out";
+                "expect this value to have been filtered out";
         filtered.pop_front();
     }
 
     ASSERT_EQ(5u, q.get_size_slow()) <<
-        "filter should have left five remaining elements";
+                                     "filter should have left five remaining elements";
     while (!q.empty()) {
         Request r = q.dequeue();
         ASSERT_TRUE((r.value & 2) == 0) <<
-            "expect this value to have been left in";
+                                        "expect this value to have been left in";
     }
 }

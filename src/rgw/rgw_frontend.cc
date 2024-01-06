@@ -13,11 +13,11 @@
 
 using namespace std;
 
-int RGWFrontendConfig::parse_config(const string & config,
+int RGWFrontendConfig::parse_config(const string &config,
                                     std::multimap < string,
                                     string > &config_map)
 {
-  for (auto & entry:get_str_vec(config, " ")) {
+    for (auto &entry : get_str_vec(config, " ")) {
         string key;
         string val;
 
@@ -47,18 +47,18 @@ int RGWFrontendConfig::parse_config(const string & config,
     return 0;
 }
 
-void RGWFrontendConfig::set_default_config(RGWFrontendConfig & def_conf)
+void RGWFrontendConfig::set_default_config(RGWFrontendConfig &def_conf)
 {
-    const auto & def_conf_map = def_conf.get_config_map();
+    const auto &def_conf_map = def_conf.get_config_map();
 
-  for (auto & entry:def_conf_map) {
+    for (auto &entry : def_conf_map) {
         if (config_map.find(entry.first) == config_map.end()) {
             config_map.emplace(entry.first, entry.second);
         }
     }
 }
 
-std::optional < string > RGWFrontendConfig::get_val(const std::string & key)
+std::optional < string > RGWFrontendConfig::get_val(const std::string &key)
 {
     auto iter = config_map.find(key);
     if (iter == config_map.end()) {
@@ -68,8 +68,8 @@ std::optional < string > RGWFrontendConfig::get_val(const std::string & key)
     return iter->second;
 }
 
-bool RGWFrontendConfig::get_val(const string & key, const string & def_val,
-                                string * out)
+bool RGWFrontendConfig::get_val(const string &key, const string &def_val,
+                                string *out)
 {
     auto iter = config_map.find(key);
     if (iter == config_map.end()) {
@@ -81,7 +81,7 @@ bool RGWFrontendConfig::get_val(const string & key, const string & def_val,
     return true;
 }
 
-bool RGWFrontendConfig::get_val(const string & key, int def_val, int *out)
+bool RGWFrontendConfig::get_val(const string &key, int def_val, int *out)
 {
     string str;
     bool found = get_val(key, "", &str);

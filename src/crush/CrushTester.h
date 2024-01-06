@@ -9,9 +9,10 @@
 
 #include <fstream>
 
-class CrushTester {
-    CrushWrapper & crush;
-    std::ostream & err;
+class CrushTester
+{
+    CrushWrapper &crush;
+    std::ostream &err;
 
     std::map < int, int >device_weight;
     int min_rule, max_rule;
@@ -35,12 +36,12 @@ class CrushTester {
     bool output_data_file;
     bool output_csv;
 
-     std::string output_data_file_name;
+    std::string output_data_file_name;
 
-/*
- * mark a ratio of devices down, can be used to simulate placement distributions
- * under degrated cluster conditions
- */
+    /*
+     * mark a ratio of devices down, can be used to simulate placement distributions
+     * under degrated cluster conditions
+     */
     void adjust_weights(std::vector < __u32 > &weight);
 
     /*
@@ -60,7 +61,7 @@ class CrushTester {
      *
      * which can help make post-processing easier
      */
-     std::map < int, int >get_collapsed_mapping();
+    std::map < int, int >get_collapsed_mapping();
 
     /*
      * Essentially a re-implementation of CRUSH. Given a vector of devices
@@ -74,7 +75,7 @@ class CrushTester {
      * monte-carlo simulator for CRUSH placements which can be used to compare the
      * statistical distribution of the CRUSH algorithm to a random number generator
      */
-    int random_placement(int ruleno, std::vector < int >&out, int maxout,
+    int random_placement(int ruleno, std::vector < int > &out, int maxout,
                          std::vector < __u32 > &weight);
 
     // scaffolding to store data for off-line processing
@@ -85,75 +86,80 @@ class CrushTester {
         std::vector < std::string > batch_device_utilization_all;
         std::vector < std::string > batch_device_expected_utilization_all;
         std::map < int, float >proportional_weights;
-         std::map < int, float >proportional_weights_all;
-         std::map < int, float >absolute_weights;
+        std::map < int, float >proportional_weights_all;
+        std::map < int, float >absolute_weights;
     };
 
-    void write_to_csv(std::ofstream & csv_file,
-                      std::vector < std::string > &payload) {
+    void write_to_csv(std::ofstream &csv_file,
+                      std::vector < std::string > &payload)
+    {
         if (csv_file.good())
             for (std::vector < std::string >::iterator it = payload.begin();
-                 it != payload.end(); ++it)
+                 it != payload.end(); ++it) {
                 csv_file << (*it);
-    } void write_to_csv(std::ofstream & csv_file, std::map < int,
-                        float >&payload) {
+            }
+    } void write_to_csv(std::ofstream &csv_file, std::map < int,
+                        float > &payload)
+    {
         if (csv_file.good())
             for (std::map < int, float >::iterator it = payload.begin();
-                 it != payload.end(); ++it)
+                 it != payload.end(); ++it) {
                 csv_file << (*it).first << ',' << (*it).second << std::endl;
+            }
     }
 
     void write_data_set_to_csv(std::string user_tag,
-                               tester_data_set & tester_data) {
+                               tester_data_set &tester_data)
+    {
 
         std::
-            ofstream
-            device_utilization_file((user_tag +
-                                     (std::string) "-device_utilization.csv").
+        ofstream
+        device_utilization_file((user_tag +
+                                 (std::string) "-device_utilization.csv").
+                                c_str());
+        std::
+        ofstream
+        device_utilization_all_file((user_tag +
+                                     (std::
+                                      string)
+                                     "-device_utilization_all.csv").
                                     c_str());
         std::
-            ofstream
-            device_utilization_all_file((user_tag +
-                                         (std::
-                                          string)
-                                         "-device_utilization_all.csv").
-                                        c_str());
+        ofstream
+        placement_information_file((user_tag +
+                                    (std::
+                                     string) "-placement_information.csv").
+                                   c_str());
         std::
-            ofstream
-            placement_information_file((user_tag +
-                                        (std::
-                                         string) "-placement_information.csv").
-                                       c_str());
+        ofstream
+        proportional_weights_file((user_tag +
+                                   (std::
+                                    string) "-proportional_weights.csv").
+                                  c_str());
         std::
-            ofstream
-            proportional_weights_file((user_tag +
+        ofstream
+        proportional_weights_all_file((user_tag +
                                        (std::
-                                        string) "-proportional_weights.csv").
+                                        string)
+                                       "-proportional_weights_all.csv").
                                       c_str());
         std::
-            ofstream
-            proportional_weights_all_file((user_tag +
-                                           (std::
-                                            string)
-                                           "-proportional_weights_all.csv").
-                                          c_str());
-        std::
-            ofstream
-            absolute_weights_file((user_tag +
-                                   (std::string) "-absolute_weights.csv").
-                                  c_str());
+        ofstream
+        absolute_weights_file((user_tag +
+                               (std::string) "-absolute_weights.csv").
+                              c_str());
 
         // write the headers
         device_utilization_file <<
-            "Device ID, Number of Objects Stored, Number of Objects Expected" <<
-            std::endl;
+                                "Device ID, Number of Objects Stored, Number of Objects Expected" <<
+                                std::endl;
         device_utilization_all_file <<
-            "Device ID, Number of Objects Stored, Number of Objects Expected" <<
-            std::endl;
+                                    "Device ID, Number of Objects Stored, Number of Objects Expected" <<
+                                    std::endl;
         proportional_weights_file << "Device ID, Proportional Weight" << std::
-            endl;
+                                  endl;
         proportional_weights_all_file << "Device ID, Proportional Weight" <<
-            std::endl;
+                                      std::endl;
         absolute_weights_file << "Device ID, Absolute Weight" << std::endl;
 
         placement_information_file << "Input";
@@ -181,24 +187,24 @@ class CrushTester {
 
         if (num_batches > 1) {
             std::
-                ofstream
-                batch_device_utilization_all_file((user_tag +
-                                                   (std::
-                                                    string)
-                                                   "-batch_device_utilization_all.csv").
-                                                  c_str());
+            ofstream
+            batch_device_utilization_all_file((user_tag +
+                                               (std::
+                                                string)
+                                               "-batch_device_utilization_all.csv").
+                                              c_str());
             std::
-                ofstream
-                batch_device_expected_utilization_all_file((user_tag +
-                                                            (std::
-                                                             string)
-                                                            "-batch_device_expected_utilization_all.csv").
-                                                           c_str());
+            ofstream
+            batch_device_expected_utilization_all_file((user_tag +
+                    (std::
+                     string)
+                    "-batch_device_expected_utilization_all.csv").
+                    c_str());
 
             batch_device_utilization_all_file << "Batch Round";
             for (unsigned i = 0; i < tester_data.device_utilization.size(); i++) {
                 batch_device_utilization_all_file << ", Objects Stored on OSD"
-                    << i;
+                                                  << i;
             }
             batch_device_utilization_all_file << std::endl;
 
@@ -219,168 +225,210 @@ class CrushTester {
     }
 
     void write_integer_indexed_vector_data_string(std::vector < std::string >
-                                                  &dst, int index,
-                                                  std::vector <
-                                                  int >vector_data);
+            &dst, int index,
+            std::vector <
+            int > vector_data);
     void write_integer_indexed_vector_data_string(std::vector < std::string >
-                                                  &dst, int index,
-                                                  std::vector <
-                                                  float >vector_data);
+            &dst, int index,
+            std::vector <
+            float > vector_data);
     void write_integer_indexed_scalar_data_string(std::vector < std::string >
-                                                  &dst, int index,
-                                                  int scalar_data);
+            &dst, int index,
+            int scalar_data);
     void write_integer_indexed_scalar_data_string(std::vector < std::string >
-                                                  &dst, int index,
-                                                  float scalar_data);
+            &dst, int index,
+            float scalar_data);
 
-  public:
-    CrushTester(CrushWrapper & c, std::ostream & eo)
-  :    
-    crush(c), err(eo),
-    min_rule(-1), max_rule(-1),
-    min_x(-1), max_x(-1),
-    min_rep(-1), max_rep(-1),
-    pool_id(-1),
-    num_batches(1),
-    use_crush(true),
-    mark_down_device_ratio(0.0),
-    mark_down_bucket_ratio(1.0),
-    output_utilization(false),
-    output_utilization_all(false),
-    output_statistics(false),
-    output_mappings(false),
-    output_bad_mappings(false),
-    output_choose_tries(false),
-    output_data_file(false), output_csv(false), output_data_file_name("")
+public:
+    CrushTester(CrushWrapper &c, std::ostream &eo)
+        :
+        crush(c), err(eo),
+        min_rule(-1), max_rule(-1),
+        min_x(-1), max_x(-1),
+        min_rep(-1), max_rep(-1),
+        pool_id(-1),
+        num_batches(1),
+        use_crush(true),
+        mark_down_device_ratio(0.0),
+        mark_down_bucket_ratio(1.0),
+        output_utilization(false),
+        output_utilization_all(false),
+        output_statistics(false),
+        output_mappings(false),
+        output_bad_mappings(false),
+        output_choose_tries(false),
+        output_data_file(false), output_csv(false), output_data_file_name("")
     {
     }
 
-    void set_output_data_file_name(std::string name) {
+    void set_output_data_file_name(std::string name)
+    {
         output_data_file_name = name;
     }
-    std::string get_output_data_file_name()const {
+    std::string get_output_data_file_name()const
+    {
         return output_data_file_name;
-    } void set_output_data_file(bool b) {
+    } void set_output_data_file(bool b)
+    {
         output_data_file = b;
     }
-    bool get_output_data_file() const {
+    bool get_output_data_file() const
+    {
         return output_data_file;
-    } void set_output_csv(bool b) {
+    } void set_output_csv(bool b)
+    {
         output_csv = b;
     }
-    bool get_output_csv() const {
+    bool get_output_csv() const
+    {
         return output_csv;
-    } void set_output_utilization(bool b) {
+    } void set_output_utilization(bool b)
+    {
         output_utilization = b;
     }
-    bool get_output_utilization() const {
+    bool get_output_utilization() const
+    {
         return output_utilization;
-    } void set_output_utilization_all(bool b) {
+    } void set_output_utilization_all(bool b)
+    {
         output_utilization_all = b;
     }
-    bool get_output_utilization_all() const {
+    bool get_output_utilization_all() const
+    {
         return output_utilization_all;
-    } void set_output_statistics(bool b) {
+    } void set_output_statistics(bool b)
+    {
         output_statistics = b;
     }
-    bool get_output_statistics() const {
+    bool get_output_statistics() const
+    {
         return output_statistics;
-    } void set_output_mappings(bool b) {
+    } void set_output_mappings(bool b)
+    {
         output_mappings = b;
     }
-    bool get_output_mappings() const {
+    bool get_output_mappings() const
+    {
         return output_mappings;
-    } void set_output_bad_mappings(bool b) {
+    } void set_output_bad_mappings(bool b)
+    {
         output_bad_mappings = b;
     }
-    bool get_output_bad_mappings() const {
+    bool get_output_bad_mappings() const
+    {
         return output_bad_mappings;
-    } void set_output_choose_tries(bool b) {
+    } void set_output_choose_tries(bool b)
+    {
         output_choose_tries = b;
     }
-    bool get_output_choose_tries() const {
+    bool get_output_choose_tries() const
+    {
         return output_choose_tries;
-    } void set_batches(int b) {
+    } void set_batches(int b)
+    {
         num_batches = b;
     }
-    int get_batches() const {
+    int get_batches() const
+    {
         return num_batches;
-    } void set_random_placement() {
+    } void set_random_placement()
+    {
         use_crush = false;
     }
-    bool get_random_placement() const {
+    bool get_random_placement() const
+    {
         return use_crush == false;
-    } void set_bucket_down_ratio(float bucket_ratio) {
+    } void set_bucket_down_ratio(float bucket_ratio)
+    {
         mark_down_bucket_ratio = bucket_ratio;
     }
-    float get_bucket_down_ratio() const {
+    float get_bucket_down_ratio() const
+    {
         return mark_down_bucket_ratio;
-    } void set_device_down_ratio(float device_ratio) {
+    } void set_device_down_ratio(float device_ratio)
+    {
         mark_down_device_ratio = device_ratio;
     }
-    float set_device_down_ratio() const {
+    float set_device_down_ratio() const
+    {
         return mark_down_device_ratio;
     } void set_device_weight(int dev, float f);
 
-    void set_min_rep(int r) {
+    void set_min_rep(int r)
+    {
         min_rep = r;
     }
-    int get_min_rep() const {
+    int get_min_rep() const
+    {
         return min_rep;
-    } void set_max_rep(int r) {
+    } void set_max_rep(int r)
+    {
         max_rep = r;
     }
-    int get_max_rep() const {
+    int get_max_rep() const
+    {
         return max_rep;
-    } void set_num_rep(int r) {
+    } void set_num_rep(int r)
+    {
         min_rep = max_rep = r;
     }
 
-    void set_min_x(int x) {
+    void set_min_x(int x)
+    {
         min_x = x;
     }
 
-    void set_pool_id(int64_t x) {
+    void set_pool_id(int64_t x)
+    {
         pool_id = x;
     }
 
-    int get_min_x() const {
+    int get_min_x() const
+    {
         return min_x;
-    } void set_max_x(int x) {
+    } void set_max_x(int x)
+    {
         max_x = x;
     }
-    int get_max_x() const {
+    int get_max_x() const
+    {
         return max_x;
-    } void set_x(int x) {
+    } void set_x(int x)
+    {
         min_x = max_x = x;
     }
 
-    void set_min_rule(int rule) {
+    void set_min_rule(int rule)
+    {
         min_rule = rule;
     }
-    int get_min_rule() const {
+    int get_min_rule() const
+    {
         return min_rule;
-    } void set_max_rule(int rule) {
+    } void set_max_rule(int rule)
+    {
         max_rule = rule;
     }
-    int get_max_rule() const {
+    int get_max_rule() const
+    {
         return max_rule;
-    } void set_rule(int rule) {
+    } void set_rule(int rule)
+    {
         min_rule = max_rule = rule;
     }
 
-  /**
-   * check if any bucket/nodes is referencing an unknown name or type
-   * @param max_id rejects any non-bucket items with id less than this number,
-   *               pass 0 to disable this check
-   * @return false if an dangling name/type is referenced or an item id is too
-   *         large, true otherwise
-   */
+    /**
+     * check if any bucket/nodes is referencing an unknown name or type
+     * @param max_id rejects any non-bucket items with id less than this number,
+     *               pass 0 to disable this check
+     * @return false if an dangling name/type is referenced or an item id is too
+     *         large, true otherwise
+     */
     bool check_name_maps(unsigned max_id = 0) const;
-    int test(CephContext * cct);
-    int test_with_fork(CephContext * cct, int timeout);
+    int test(CephContext *cct);
+    int test_with_fork(CephContext *cct, int timeout);
 
-    int compare(CrushWrapper & other);
+    int compare(CrushWrapper &other);
 };
 
 #endif

@@ -10,8 +10,9 @@
 
 namespace bc = boost::container;
 
-namespace ceph {
-    class Formatter;
+namespace ceph
+{
+class Formatter;
 } class JSONObj;
 
 class RGWCoroutine;
@@ -24,9 +25,9 @@ struct rgw_data_notify_entry;
 struct rgw_data_notify_v1_encoder {
     const bc::flat_map < int, bc::flat_set < rgw_data_notify_entry >> &shards;
 };
-void encode_json(const char *name, const rgw_data_notify_v1_encoder & e,
-                 ceph::Formatter * f);
+void encode_json(const char *name, const rgw_data_notify_v1_encoder &e,
+                 ceph::Formatter *f);
 struct rgw_data_notify_v1_decoder {
     bc::flat_map < int, bc::flat_set < rgw_data_notify_entry >> &shards;
 };
-void decode_json_obj(rgw_data_notify_v1_decoder & d, JSONObj * obj);
+void decode_json_obj(rgw_data_notify_v1_decoder &d, JSONObj *obj);

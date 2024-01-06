@@ -19,18 +19,23 @@
 #include "crypto/crypto_plugin.h"
 #include "crypto/qat/qat_crypto_accel.h"
 
-class QccCryptoPlugin:public CryptoPlugin {
+class QccCryptoPlugin: public CryptoPlugin
+{
     static std::mutex qat_init;
 
-  public:
+public:
 
-     explicit QccCryptoPlugin(CephContext * cct):CryptoPlugin(cct) {
-    } ~QccCryptoPlugin() {
+    explicit QccCryptoPlugin(CephContext *cct): CryptoPlugin(cct)
+    {
+    } ~QccCryptoPlugin()
+    {
     }
-    virtual int factory(CryptoAccelRef * cs, std::ostream * ss) {
+    virtual int factory(CryptoAccelRef *cs, std::ostream *ss)
+    {
         std::lock_guard < std::mutex > l(qat_init);
-        if (cryptoaccel == nullptr)
+        if (cryptoaccel == nullptr) {
             cryptoaccel = CryptoAccelRef(new QccCryptoAccel);
+        }
 
         *cs = cryptoaccel;
         return 0;

@@ -19,33 +19,33 @@ TEST(TestRGWReshard, dynamic_reshard_shard_count)
 {
     // assuming we have prime numbers up to 1999
     ASSERT_EQ(1999u, RGWBucketReshard::get_max_prime_shards()) <<
-        "initial list has primes up to 1999";
+            "initial list has primes up to 1999";
 
     ASSERT_EQ(1u, RGWBucketReshard::get_prime_shards_greater_or_equal(1)) <<
-        "we allow for 1 shard even though it's not prime";
+            "we allow for 1 shard even though it's not prime";
     ASSERT_EQ(809u, RGWBucketReshard::get_prime_shards_greater_or_equal(808)) <<
-        "809 is prime";
+            "809 is prime";
     ASSERT_EQ(809u, RGWBucketReshard::get_prime_shards_greater_or_equal(809)) <<
-        "809 is prime";
+            "809 is prime";
     ASSERT_EQ(811u, RGWBucketReshard::get_prime_shards_greater_or_equal(810)) <<
-        "811 is prime";
+            "811 is prime";
     ASSERT_EQ(811u, RGWBucketReshard::get_prime_shards_greater_or_equal(811)) <<
-        "811 is prime";
+            "811 is prime";
     ASSERT_EQ(821u, RGWBucketReshard::get_prime_shards_greater_or_equal(812)) <<
-        "821 is prime";
+            "821 is prime";
 
     ASSERT_EQ(1u, RGWBucketReshard::get_prime_shards_less_or_equal(1)) <<
-        "we allow for 1 shard even though it's not prime";
+            "we allow for 1 shard even though it's not prime";
     ASSERT_EQ(797u, RGWBucketReshard::get_prime_shards_less_or_equal(808)) <<
-        "809 is prime";
+            "809 is prime";
     ASSERT_EQ(809u, RGWBucketReshard::get_prime_shards_less_or_equal(809)) <<
-        "809 is prime";
+            "809 is prime";
     ASSERT_EQ(809u, RGWBucketReshard::get_prime_shards_less_or_equal(810)) <<
-        "811 is prime";
+            "811 is prime";
     ASSERT_EQ(811u, RGWBucketReshard::get_prime_shards_less_or_equal(811)) <<
-        "811 is prime";
+            "811 is prime";
     ASSERT_EQ(811u, RGWBucketReshard::get_prime_shards_less_or_equal(812)) <<
-        "821 is prime";
+            "821 is prime";
 
     // tests when max dynamic shards is equal to end of prime list
     ASSERT_EQ(1999u, RGWBucketReshard::get_preferred_shards(1998, 1999));

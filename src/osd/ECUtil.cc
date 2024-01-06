@@ -9,9 +9,9 @@ using ceph::bufferlist;
 using ceph::ErasureCodeInterfaceRef;
 using ceph::Formatter;
 
-int ECUtil::decode(const stripe_info_t & sinfo,
-                   ErasureCodeInterfaceRef & ec_impl,
-                   map < int, bufferlist > &to_decode, bufferlist * out)
+int ECUtil::decode(const stripe_info_t &sinfo,
+                   ErasureCodeInterfaceRef &ec_impl,
+                   map < int, bufferlist > &to_decode, bufferlist *out)
 {
     ceph_assert(to_decode.size());
 
@@ -26,8 +26,9 @@ int ECUtil::decode(const stripe_info_t & sinfo,
         ceph_assert(i->second.length() == total_data_size);
     }
 
-    if (total_data_size == 0)
+    if (total_data_size == 0) {
         return 0;
+    }
 
     for (uint64_t i = 0; i < total_data_size; i += sinfo.get_chunk_size()) {
         map < int, bufferlist > chunks;
@@ -44,17 +45,18 @@ int ECUtil::decode(const stripe_info_t & sinfo,
     return 0;
 }
 
-int ECUtil::decode(const stripe_info_t & sinfo,
-                   ErasureCodeInterfaceRef & ec_impl,
+int ECUtil::decode(const stripe_info_t &sinfo,
+                   ErasureCodeInterfaceRef &ec_impl,
                    map < int, bufferlist > &to_decode,
-                   map < int, bufferlist * >&out)
+                   map < int, bufferlist * > &out)
 {
 
     ceph_assert(to_decode.size());
 
-  for (auto && i:to_decode) {
-        if (i.second.length() == 0)
+    for (auto && i : to_decode) {
+        if (i.second.length() == 0) {
             return 0;
+        }
     }
 
     set < int >need;
@@ -66,7 +68,7 @@ int ECUtil::decode(const stripe_info_t & sinfo,
     }
 
     set < int >avail;
-  for (auto && i:to_decode) {
+    for (auto && i : to_decode) {
         ceph_assert(i.second.length() != 0);
         avail.insert(i.first);
     }
@@ -79,11 +81,11 @@ int ECUtil::decode(const stripe_info_t & sinfo,
     int repair_data_per_chunk = 0;
     int subchunk_size = sinfo.get_chunk_size() / ec_impl->get_sub_chunk_count();
 
-  for (auto && i:to_decode) {
+    for (auto && i : to_decode) {
         auto found = min.find(i.first);
         if (found != min.end()) {
             int repair_subchunk_count = 0;
-          for (auto & subchunks:min[i.first]) {
+            for (auto &subchunks : min[i.first]) {
                 repair_subchunk_count += subchunks.second;
             }
             repair_data_per_chunk = repair_subchunk_count * subchunk_size;
@@ -108,17 +110,17 @@ int ECUtil::decode(const stripe_info_t & sinfo,
             j->second->claim_append(out_bls[j->first]);
         }
     }
-  for (auto && i:out) {
+    for (auto && i : out) {
         ceph_assert(i.second->length() ==
                     chunks_count * sinfo.get_chunk_size());
     }
     return 0;
 }
 
-int ECUtil::encode(const stripe_info_t & sinfo,
-                   ErasureCodeInterfaceRef & ec_impl,
-                   bufferlist & in,
-                   const set < int >&want, map < int, bufferlist > *out)
+int ECUtil::encode(const stripe_info_t &sinfo,
+                   ErasureCodeInterfaceRef &ec_impl,
+                   bufferlist &in,
+                   const set < int > &want, map < int, bufferlist > *out)
 {
 
     uint64_t logical_size = in.length();
@@ -127,8 +129,9 @@ int ECUtil::encode(const stripe_info_t & sinfo,
     ceph_assert(out);
     ceph_assert(out->empty());
 
-    if (logical_size == 0)
+    if (logical_size == 0) {
         return 0;
+    }
 
     for (uint64_t i = 0; i < logical_size; i += sinfo.get_stripe_width()) {
         map < int, bufferlist > encoded;
@@ -148,7 +151,7 @@ int ECUtil::encode(const stripe_info_t & sinfo,
         ceph_assert(i->second.length() % sinfo.get_chunk_size() == 0);
         ceph_assert(sinfo.
                     aligned_chunk_offset_to_logical_offset(i->second.
-                                                           length()) ==
+                            length()) ==
                     logical_size);
     }
     return 0;
@@ -173,7 +176,7 @@ void ECUtil::HashInfo::append(uint64_t old_size,
     total_chunk_size += size_to_append;
 }
 
-void ECUtil::HashInfo::encode(bufferlist & bl) const const
+void ECUtil::HashInfo::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(total_chunk_size, bl);
@@ -181,7 +184,7 @@ void ECUtil::HashInfo::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void ECUtil::HashInfo::decode(bufferlist::const_iterator & bl)
+void ECUtil::HashInfo::decode(bufferlist::const_iterator &bl)
 {
     DECODE_START(1, bl);
     decode(total_chunk_size, bl);
@@ -190,7 +193,7 @@ void ECUtil::HashInfo::decode(bufferlist::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void ECUtil::HashInfo::dump(Formatter * f) const const
+void ECUtil::HashInfo::dump(Formatter *f) const const
 {
     f->dump_unsigned("total_chunk_size", total_chunk_size);
     f->open_array_section("cumulative_shard_hashes");
@@ -203,13 +206,17 @@ void ECUtil::HashInfo::dump(Formatter * f) const const
     f->close_section();
 }
 
-namespace ECUtil {
-    std::ostream & operator<<(std::ostream & out, const HashInfo & hi) {
-        ostringstream hashes;
-        for (auto hash:hi.cumulative_shard_hashes)
-            hashes << " " << hex << hash;
-        return out << "tcs=" << hi.total_chunk_size << hashes.str();
-}} void ECUtil::HashInfo::generate_test_instances(list < HashInfo * >&o)
+namespace ECUtil
+{
+std::ostream &operator<<(std::ostream &out, const HashInfo &hi)
+{
+    ostringstream hashes;
+    for (auto hash : hi.cumulative_shard_hashes) {
+        hashes << " " << hex << hash;
+    }
+    return out << "tcs=" << hi.total_chunk_size << hashes.str();
+}
+} void ECUtil::HashInfo::generate_test_instances(list < HashInfo * > &o)
 {
     o.push_back(new HashInfo(3));
     {
@@ -227,12 +234,12 @@ namespace ECUtil {
 
 const string HINFO_KEY = "hinfo_key";
 
-bool ECUtil::is_hinfo_key_string(const string & key)
+bool ECUtil::is_hinfo_key_string(const string &key)
 {
     return key == HINFO_KEY;
 }
 
-const string & ECUtil::get_hinfo_key()
+const string &ECUtil::get_hinfo_key()
 {
     return HINFO_KEY;
 }

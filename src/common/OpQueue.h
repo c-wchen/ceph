@@ -20,8 +20,9 @@
 #include <list>
 #include <functional>
 
-namespace ceph {
-    class Formatter;
+namespace ceph
+{
+class Formatter;
 }
 /**
  * Abstract class for all Op Queues
@@ -29,8 +30,9 @@ namespace ceph {
  * In order to provide optimized code, be sure to declare all
  * virtual functions as final in the derived class.
  */ template < typename T, typename K >
- class OpQueue {
-  public:
+class OpQueue
+{
+public:
     // Ops of this class should be deleted immediately. If out isn't
     // nullptr then items should be added to the front in
     // front-to-back order. The typical strategy is to visit items in
@@ -58,13 +60,14 @@ namespace ceph {
     virtual T dequeue() = 0;
 
     // Formatted output of the queue
-    virtual void dump(ceph::Formatter * f) const = 0;
+    virtual void dump(ceph::Formatter *f) const = 0;
 
     // Human readable brief description of queue and relevant parameters
-    virtual void print(std::ostream & f) const = 0;
+    virtual void print(std::ostream &f) const = 0;
 
     // Don't leak resources on destruction
-    virtual ~ OpQueue() {
+    virtual ~ OpQueue()
+    {
     };
 };
 

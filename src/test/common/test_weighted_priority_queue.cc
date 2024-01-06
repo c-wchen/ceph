@@ -11,13 +11,14 @@
 #include <list>
 #include <tuple>
 
-#define CEPH_OP_CLASS_STRICT	0
-#define CEPH_OP_CLASS_NORMAL	0
-#define CEPH_OP_QUEUE_BACK	0
-#define CEPH_OP_QUEUE_FRONT	0
+#define CEPH_OP_CLASS_STRICT    0
+#define CEPH_OP_CLASS_NORMAL    0
+#define CEPH_OP_QUEUE_BACK  0
+#define CEPH_OP_QUEUE_FRONT 0
 
-class WeightedPriorityQueueTest:public testing::Test {
-  protected:
+class WeightedPriorityQueueTest: public testing::Test
+{
+protected:
     typedef unsigned Klass;
     // tuple<Prio, Klass, OpID> so that we can verfiy the op
     typedef std::tuple < unsigned, unsigned, unsigned >Item;
@@ -32,8 +33,9 @@ class WeightedPriorityQueueTest:public testing::Test {
     const unsigned max_prios = 5;   // (0-4) * 64
     const unsigned klasses = 37;    // Make prime to help get good coverage
 
-    void fill_queue(WQ & wq, LQ & strictq, LQ & normq,
-                    unsigned item_size, bool randomize = false) {
+    void fill_queue(WQ &wq, LQ &strictq, LQ &normq,
+                    unsigned item_size, bool randomize = false)
+    {
         unsigned p, k, c, o, op_queue, fob;
         for (unsigned i = 1; i <= item_size; ++i) {
             // Choose priority, class, cost and 'op' for this op.
@@ -45,10 +47,10 @@ class WeightedPriorityQueueTest:public testing::Test {
                 // still work ok.
                 if (c > (1 << 19) && c < (1 << 20)) {
                     c = 0;
-                } op_queue = rand() % 10;
+                }
+                op_queue = rand() % 10;
                 fob = rand() % 10;
-            }
-            else {
+            } else {
                 p = (i % max_prios) * 64;
                 k = i % klasses;
                 c = (i % 8 == 0 || i % 16 == 0) ? 0 : 1 << (i % 23);
@@ -58,41 +60,40 @@ class WeightedPriorityQueueTest:public testing::Test {
             o = rand() % (1 << 16);
             // Choose how to enqueue this op.
             switch (op_queue) {
-            case 6:
-                // Strict Queue
-                if (fob == 4) {
-                    // Queue to the front.
-                    strictq[p][k].
+                case 6:
+                    // Strict Queue
+                    if (fob == 4) {
+                        // Queue to the front.
+                        strictq[p][k].
                         push_front(std::make_pair(c, std::make_tuple(p, k, o)));
-                    wq.enqueue_strict_front(Klass(k), p,
-                                            std::make_tuple(p, k, o));
-                }
-                else {
-                    //Queue to the back.
-                    strictq[p][k].
+                        wq.enqueue_strict_front(Klass(k), p,
+                                                std::make_tuple(p, k, o));
+                    } else {
+                        //Queue to the back.
+                        strictq[p][k].
                         push_back(std::make_pair(c, std::make_tuple(p, k, o)));
-                    wq.enqueue_strict(Klass(k), p, std::make_tuple(p, k, o));
-                }
-                break;
-            default:
-                // Normal queue
-                if (fob == 4) {
-                    // Queue to the front.
-                    normq[p][k].
+                        wq.enqueue_strict(Klass(k), p, std::make_tuple(p, k, o));
+                    }
+                    break;
+                default:
+                    // Normal queue
+                    if (fob == 4) {
+                        // Queue to the front.
+                        normq[p][k].
                         push_front(std::make_pair(c, std::make_tuple(p, k, o)));
-                    wq.enqueue_front(Klass(k), p, c, std::make_tuple(p, k, o));
-                }
-                else {
-                    //Queue to the back.
-                    normq[p][k].
+                        wq.enqueue_front(Klass(k), p, c, std::make_tuple(p, k, o));
+                    } else {
+                        //Queue to the back.
+                        normq[p][k].
                         push_back(std::make_pair(c, std::make_tuple(p, k, o)));
-                    wq.enqueue(Klass(k), p, c, std::make_tuple(p, k, o));
-                }
-                break;
+                        wq.enqueue(Klass(k), p, c, std::make_tuple(p, k, o));
+                    }
+                    break;
             }
         }
     }
-    void test_queue(unsigned item_size, bool randomize = false) {
+    void test_queue(unsigned item_size, bool randomize = false)
+    {
         // Due to the WRR queue having a lot of probabilistic logic
         // we can't determine the exact order OPs will be dequeued.
         // However, the queue should not dequeue a priority out of
@@ -136,8 +137,7 @@ class WeightedPriorityQueueTest:public testing::Test {
                 if (strictq[std::get < 0 > (r)].empty()) {
                     strictq.erase(std::get < 0 > (r));
                 }
-            }
-            else {
+            } else {
                 // Check that if there are multiple classes in a priority
                 // that it is not dequeueing the same class each time.
                 LastKlass::iterator si = last_norm.find(std::get < 0 > (r));
@@ -162,10 +162,12 @@ class WeightedPriorityQueueTest:public testing::Test {
         }
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         srand(time(0));
     }
-    void TearDown() override {
+    void TearDown() override
+    {
     }
 };
 

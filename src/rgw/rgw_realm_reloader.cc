@@ -26,16 +26,16 @@
 // duration
 static constexpr bool USE_SAFE_TIMER_CALLBACKS = false;
 
-RGWRealmReloader::RGWRealmReloader(RGWProcessEnv & env,
+RGWRealmReloader::RGWRealmReloader(RGWProcessEnv &env,
                                    const rgw::auth::
-                                   ImplicitTenants & implicit_tenants,
+                                   ImplicitTenants &implicit_tenants,
                                    std::map < std::string,
                                    std::string > &service_map_meta,
-                                   Pauser * frontends)
-:env(env), implicit_tenants(implicit_tenants),
-service_map_meta(service_map_meta), frontends(frontends),
-timer(env.driver->ctx(), mutex, USE_SAFE_TIMER_CALLBACKS),
-mutex(ceph::make_mutex("RGWRealmReloader")), reload_scheduled(nullptr)
+                                   Pauser *frontends)
+    : env(env), implicit_tenants(implicit_tenants),
+      service_map_meta(service_map_meta), frontends(frontends),
+      timer(env.driver->ctx(), mutex, USE_SAFE_TIMER_CALLBACKS),
+      mutex(ceph::make_mutex("RGWRealmReloader")), reload_scheduled(nullptr)
 {
     timer.init();
 }
@@ -43,21 +43,24 @@ mutex(ceph::make_mutex("RGWRealmReloader")), reload_scheduled(nullptr)
 RGWRealmReloader::~RGWRealmReloader()
 {
     std::lock_guard lock {
-    mutex};
+        mutex};
     timer.shutdown();
 }
 
-class RGWRealmReloader::C_Reload:public Context {
+class RGWRealmReloader::C_Reload: public Context
+{
     RGWRealmReloader *reloader;
-  public:
-    explicit C_Reload(RGWRealmReloader * reloader):reloader(reloader) {
-    } void finish(int r) override {
+public:
+    explicit C_Reload(RGWRealmReloader *reloader): reloader(reloader)
+    {
+    } void finish(int r) override
+    {
         reloader->reload();
     }
 };
 
 void RGWRealmReloader::handle_notify(RGWRealmNotify type,
-                                     bufferlist::const_iterator & p)
+                                     bufferlist::const_iterator &p)
 {
     if (!env.driver) {
         /* we're in the middle of reload */
@@ -67,10 +70,10 @@ void RGWRealmReloader::handle_notify(RGWRealmNotify type,
     CephContext *const cct = env.driver->ctx();
 
     std::lock_guard lock {
-    mutex};
+        mutex};
     if (reload_scheduled) {
         ldout(cct, 4) << "Notification on realm, reconfiguration "
-            "already scheduled" << dendl;
+                      "already scheduled" << dendl;
         return;
     }
 
@@ -106,7 +109,7 @@ void RGWRealmReloader::reload()
         // allow a new notify to reschedule us. it's important that we do this
         // before we start loading the new realm, or we could miss some updates
         std::lock_guard lock {
-        mutex};
+            mutex};
         reload_scheduled = nullptr;
     }
 
@@ -128,10 +131,10 @@ void RGWRealmReloader::reload()
 
         ldpp_dout(&dp, 1) << "Creating new driver" << dendl;
 
-        rgw::sal::Driver * store_cleanup = nullptr;
+        rgw::sal::Driver *store_cleanup = nullptr;
         {
             std::unique_lock lock {
-            mutex};
+                mutex};
 
             // failure to recreate RGWRados is not a recoverable error, but we
             // don't want to assert or abort the entire cluster.  instead, just
@@ -140,16 +143,16 @@ void RGWRealmReloader::reload()
             if (env.driver == nullptr) {
                 ldpp_dout(&dp,
                           -1) <<
-                    "Failed to reinitialize RGWRados after a realm "
-                    "configuration update. Waiting for a new update." << dendl;
+                              "Failed to reinitialize RGWRados after a realm "
+                              "configuration update. Waiting for a new update." << dendl;
 
                 // sleep until another event is scheduled
-                cond.wait(lock,[this] {
-                          return reload_scheduled;
-                          }
-                );
+                cond.wait(lock, [this] {
+                    return reload_scheduled;
+                }
+                         );
                 ldout(cct, 1) << "Woke up with a new configuration, retrying "
-                    "RGWRados initialization." << dendl;
+                              "RGWRados initialization." << dendl;
             }
 
             if (reload_scheduled) {
@@ -166,7 +169,7 @@ void RGWRealmReloader::reload()
         if (store_cleanup) {
             ldpp_dout(&dp,
                       4) << "Got another notification, restarting RGWRados "
-                "initialization." << dendl;
+                         "initialization." << dendl;
 
             DriverManager::close_storage(store_cleanup);
         }
@@ -176,7 +179,7 @@ void RGWRealmReloader::reload()
     if (r < 0) {
         ldpp_dout(&dp,
                   -1) << "ERROR: failed to register to service map: " <<
-            cpp_strerror(-r) << dendl;
+                      cpp_strerror(-r) << dendl;
 
         /* ignore error */
     }

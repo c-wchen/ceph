@@ -9,7 +9,8 @@
 struct Context;
 
 struct MockSafeTimer {
-    virtual ~ MockSafeTimer() {
+    virtual ~ MockSafeTimer()
+    {
     } MOCK_METHOD2(add_event_after, Context * (double, Context *));
     MOCK_METHOD2(add_event_at,
                  Context * (ceph::real_clock::time_point, Context *));

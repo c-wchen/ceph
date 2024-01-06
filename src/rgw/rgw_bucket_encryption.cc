@@ -5,13 +5,13 @@
 #include "rgw_xml.h"
 #include "common/ceph_json.h"
 
-void ApplyServerSideEncryptionByDefault::decode_xml(XMLObj * obj)
+void ApplyServerSideEncryptionByDefault::decode_xml(XMLObj *obj)
 {
     RGWXMLDecoder::decode_xml("KMSMasterKeyID", kmsMasterKeyID, obj, false);
     RGWXMLDecoder::decode_xml("SSEAlgorithm", sseAlgorithm, obj, false);
 }
 
-void ApplyServerSideEncryptionByDefault::dump_xml(Formatter * f) const const
+void ApplyServerSideEncryptionByDefault::dump_xml(Formatter *f) const const
 {
     encode_xml("SSEAlgorithm", sseAlgorithm, f);
     if (kmsMasterKeyID != "") {
@@ -19,14 +19,14 @@ void ApplyServerSideEncryptionByDefault::dump_xml(Formatter * f) const const
     }
 }
 
-void ServerSideEncryptionConfiguration::decode_xml(XMLObj * obj)
+void ServerSideEncryptionConfiguration::decode_xml(XMLObj *obj)
 {
     RGWXMLDecoder::decode_xml("ApplyServerSideEncryptionByDefault",
                               applyServerSideEncryptionByDefault, obj, false);
     RGWXMLDecoder::decode_xml("BucketKeyEnabled", bucketKeyEnabled, obj, false);
 }
 
-void ServerSideEncryptionConfiguration::dump_xml(Formatter * f) const const
+void ServerSideEncryptionConfiguration::dump_xml(Formatter *f) const const
 {
     encode_xml("ApplyServerSideEncryptionByDefault",
                applyServerSideEncryptionByDefault, f);
@@ -35,19 +35,19 @@ void ServerSideEncryptionConfiguration::dump_xml(Formatter * f) const const
     }
 }
 
-void RGWBucketEncryptionConfig::decode_xml(XMLObj * obj)
+void RGWBucketEncryptionConfig::decode_xml(XMLObj *obj)
 {
     rule_exist = RGWXMLDecoder::decode_xml("Rule", rule, obj);
 }
 
-void RGWBucketEncryptionConfig::dump_xml(Formatter * f) const const
+void RGWBucketEncryptionConfig::dump_xml(Formatter *f) const const
 {
     if (rule_exist) {
         encode_xml("Rule", rule, f);
     }
 }
 
-void RGWBucketEncryptionConfig::dump(Formatter * f) const const
+void RGWBucketEncryptionConfig::dump(Formatter *f) const const
 {
     encode_json("rule_exist", has_rule(), f);
     if (has_rule()) {

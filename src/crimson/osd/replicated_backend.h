@@ -12,23 +12,24 @@
 #include "acked_peers.h"
 #include "pg_backend.h"
 
-namespace crimson::osd {
-    class ShardServices;
-} class ReplicatedBackend:public PGBackend {
-  public:
+namespace crimson::osd
+{
+class ShardServices;
+} class ReplicatedBackend: public PGBackend
+{
+public:
     ReplicatedBackend(pg_t pgid, pg_shard_t whoami,
                       CollectionRef coll,
-                      crimson::osd::ShardServices & shard_services,
-                      DoutPrefixProvider & dpp);
-    void got_rep_op_reply(const MOSDRepOpReply & reply) final;
+                      crimson::osd::ShardServices &shard_services,
+                      DoutPrefixProvider &dpp);
+    void got_rep_op_reply(const MOSDRepOpReply &reply) final;
     seastar::future <> stop() final;
     void on_actingset_changed(bool same_primary) final;
-  private:
-    ll_read_ierrorator::future < ceph::bufferlist >
-        _read(const hobject_t & hoid, uint64_t off,
-              uint64_t len, uint32_t flags) override;
+private:
+    ll_read_ierrorator::future < ceph::bufferlist > _read(const hobject_t &hoid, uint64_t off,
+            uint64_t len, uint32_t flags) override;
     rep_op_fut_t _submit_transaction(std::set < pg_shard_t > &&pg_shards,
-                                     const hobject_t & hoid,
+                                     const hobject_t &hoid,
                                      ceph::os::Transaction && txn,
                                      osd_op_params_t && osd_op_p,
                                      epoch_t min_epoch, epoch_t max_epoch,
@@ -36,11 +37,13 @@ namespace crimson::osd {
                                      &&log_entries) final;
     const pg_t pgid;
     const pg_shard_t whoami;
-    class pending_on_t:public seastar::weakly_referencable < pending_on_t > {
-      public:
-        pending_on_t(size_t pending, const eversion_t & at_version)
-        :pending {
-        static_cast < unsigned >(pending)}, at_version(at_version) {
+    class pending_on_t: public seastar::weakly_referencable < pending_on_t >
+    {
+    public:
+        pending_on_t(size_t pending, const eversion_t &at_version)
+            : pending {
+            static_cast < unsigned >(pending)}, at_version(at_version)
+        {
         } unsigned pending;
         // The order of pending_txns' at_version must be the same as their
         // corresponding ceph_tid_t, as we rely on this condition for checking
@@ -54,6 +57,6 @@ namespace crimson::osd {
     using pending_transactions_t = std::map < ceph_tid_t, pending_on_t >;
     pending_transactions_t pending_trans;
 
-    seastar::future <> request_committed(const osd_reqid_t & reqid,
-                                         const eversion_t & at_version) final;
+    seastar::future <> request_committed(const osd_reqid_t &reqid,
+                                         const eversion_t &at_version) final;
 };

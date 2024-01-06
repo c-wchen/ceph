@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -24,11 +24,11 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "SelectDriver."
 
-int SelectDriver::init(EventCenter * c, int nevent)
+int SelectDriver::init(EventCenter *c, int nevent)
 {
 #ifndef _WIN32
     ldout(cct, 0) << "Select isn't suitable for production env, just avoid "
-        << "compiling error or special purpose" << dendl;
+                  << "compiling error or special purpose" << dendl;
 #endif
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
@@ -40,15 +40,18 @@ int SelectDriver::add_event(int fd, int cur_mask, int add_mask)
 {
     ldout(cct,
           10) << __func__ << " add event to fd=" << fd << " mask=" << add_mask
-        << dendl;
+              << dendl;
 
     int mask = cur_mask | add_mask;
-    if (mask & EVENT_READABLE)
+    if (mask & EVENT_READABLE) {
         FD_SET(fd, &rfds);
-    if (mask & EVENT_WRITABLE)
+    }
+    if (mask & EVENT_WRITABLE) {
         FD_SET(fd, &wfds);
-    if (fd > max_fd)
+    }
+    if (fd > max_fd) {
         max_fd = fd;
+    }
 
     return 0;
 }
@@ -57,12 +60,14 @@ int SelectDriver::del_event(int fd, int cur_mask, int delmask)
 {
     ldout(cct,
           10) << __func__ << " del event fd=" << fd << " cur mask=" << cur_mask
-        << dendl;
+              << dendl;
 
-    if (delmask & EVENT_READABLE)
+    if (delmask & EVENT_READABLE) {
         FD_CLR(fd, &rfds);
-    if (delmask & EVENT_WRITABLE)
+    }
+    if (delmask & EVENT_WRITABLE) {
         FD_CLR(fd, &wfds);
+    }
     return 0;
 }
 
@@ -84,10 +89,12 @@ int SelectDriver::event_wait(std::vector < FiredFileEvent > &fired_events,
         for (int j = 0; j <= max_fd; j++) {
             int mask = 0;
             struct FiredFileEvent fe;
-            if (FD_ISSET(j, &_rfds))
+            if (FD_ISSET(j, &_rfds)) {
                 mask |= EVENT_READABLE;
-            if (FD_ISSET(j, &_wfds))
+            }
+            if (FD_ISSET(j, &_wfds)) {
                 mask |= EVENT_WRITABLE;
+            }
             if (mask) {
                 fe.fd = j;
                 fe.mask = mask;

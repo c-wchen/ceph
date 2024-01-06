@@ -21,44 +21,52 @@ void register_test_leader_watcher()
 {
 }
 
-class TestLeaderWatcher:public::rbd::mirror::TestFixture {
-  public:
-    class Listener:public rbd::mirror::leader_watcher::Listener {
-      public:
+class TestLeaderWatcher: public::rbd::mirror::TestFixture
+{
+public:
+    class Listener: public rbd::mirror::leader_watcher::Listener
+    {
+    public:
         Listener()
-      :    
-        m_test_lock(ceph::
-                    make_mutex(unique_lock_name
-                               ("LeaderWatcher::m_test_lock", this))) {
-        } void on_acquire(int r, Context * ctx) {
+            :
+            m_test_lock(ceph::
+                        make_mutex(unique_lock_name
+                                   ("LeaderWatcher::m_test_lock", this)))
+        {
+        } void on_acquire(int r, Context *ctx)
+        {
             std::lock_guard locker {
-            m_test_lock};
+                m_test_lock};
             m_on_acquire_r = r;
             m_on_acquire = ctx;
         }
 
-        void on_release(int r, Context * ctx) {
+        void on_release(int r, Context *ctx)
+        {
             std::lock_guard locker {
-            m_test_lock};
+                m_test_lock};
             m_on_release_r = r;
             m_on_release = ctx;
         }
 
-        int acquire_count() const {
+        int acquire_count() const
+        {
             std::lock_guard locker {
-            m_test_lock};
+                m_test_lock};
             return m_acquire_count;
         }
 
-        int release_count() const {
+        int release_count() const
+        {
             std::lock_guard locker {
-            m_test_lock};
+                m_test_lock};
             return m_release_count;
         }
 
-        void post_acquire_handler(Context * on_finish) override {
+        void post_acquire_handler(Context *on_finish) override
+        {
             std::lock_guard locker {
-            m_test_lock};
+                m_test_lock};
             m_acquire_count++;
             on_finish->complete(m_on_acquire_r);
             m_on_acquire_r = 0;
@@ -68,9 +76,10 @@ class TestLeaderWatcher:public::rbd::mirror::TestFixture {
             }
         }
 
-        void pre_release_handler(Context * on_finish) override {
+        void pre_release_handler(Context *on_finish) override
+        {
             std::lock_guard locker {
-            m_test_lock};
+                m_test_lock};
             m_release_count++;
             on_finish->complete(m_on_release_r);
             m_on_release_r = 0;
@@ -81,15 +90,18 @@ class TestLeaderWatcher:public::rbd::mirror::TestFixture {
         }
 
         void update_leader_handler(const std::
-                                   string & leader_instance_id) override {
+                                   string &leader_instance_id) override
+        {
         }
 
-        void handle_instances_added(const InstanceIds & instance_ids) override {
+        void handle_instances_added(const InstanceIds &instance_ids) override
+        {
         }
-        void handle_instances_removed(const InstanceIds & instance_ids) override {
+        void handle_instances_removed(const InstanceIds &instance_ids) override
+        {
         }
 
-      private:
+    private:
         mutable ceph::mutex m_test_lock;
         int m_acquire_count = 0;
         int m_release_count = 0;
@@ -106,10 +118,11 @@ class TestLeaderWatcher:public::rbd::mirror::TestFixture {
 
     std::list < std::unique_ptr < Connection > >m_connections;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         TestFixture::SetUp();
         EXPECT_EQ(0, librbd::api::Mirror <>::mode_set(m_local_io_ctx,
-                                                      RBD_MIRROR_MODE_POOL));
+                  RBD_MIRROR_MODE_POOL));
 
         if (is_librados_test_stub(*_rados)) {
             // speed testing up a little
@@ -119,7 +132,8 @@ class TestLeaderWatcher:public::rbd::mirror::TestFixture {
         }
     }
 
-    librados::IoCtx & create_connection(bool no_heartbeats = false) {
+    librados::IoCtx &create_connection(bool no_heartbeats = false)
+    {
         m_connections.push_back(std::unique_ptr < Connection >
                                 (new Connection()));
         Connection *c = m_connections.back().get();
@@ -129,8 +143,7 @@ class TestLeaderWatcher:public::rbd::mirror::TestFixture {
             EXPECT_EQ(0,
                       c->cluster.
                       conf_set("rbd_mirror_leader_heartbeat_interval", "3600"));
-        }
-        else if (is_librados_test_stub(*_rados)) {
+        } else if (is_librados_test_stub(*_rados)) {
             EXPECT_EQ(0,
                       c->cluster.
                       conf_set("rbd_mirror_leader_heartbeat_interval", "1"));
@@ -270,7 +283,7 @@ TEST_F(TestLeaderWatcher, Break)
     Listener listener1, listener2;
     LeaderWatcher <> leader_watcher1(m_threads,
                                      create_connection(true /* no heartbeats */
-                                                       ),
+                                                      ),
                                      &listener1);
     LeaderWatcher <> leader_watcher2(m_threads, create_connection(),
                                      &listener2);
@@ -307,7 +320,7 @@ TEST_F(TestLeaderWatcher, Stress)
 
     C_SaferCond on_init_acquire;
     listener.on_acquire(0, &on_init_acquire);
-  for (auto & leader_watcher:leader_watchers) {
+    for (auto &leader_watcher : leader_watchers) {
         ASSERT_EQ(0, leader_watcher->init());
     }
     ASSERT_EQ(0, on_init_acquire.wait());
@@ -321,8 +334,7 @@ TEST_F(TestLeaderWatcher, Stress)
                 ASSERT_FALSE(leader_watcher);
                 leader_watcher.reset(*it);
                 it = leader_watchers.erase(it);
-            }
-            else {
+            } else {
                 it++;
             }
         }

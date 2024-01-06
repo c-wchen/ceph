@@ -27,31 +27,33 @@
 
 extern pid_t ceph_gettid();
 
-class Thread {
-  private:
+class Thread
+{
+private:
     pthread_t thread_id;
     pid_t pid;
     int cpuid;
-     std::string thread_name;
+    std::string thread_name;
 
     void *entry_wrapper();
 
-  public:
-     Thread(const Thread &) = delete;
-     Thread & operator=(const Thread &) = delete;
+public:
+    Thread(const Thread &) = delete;
+    Thread &operator=(const Thread &) = delete;
 
-     Thread();
-     virtual ~ Thread();
+    Thread();
+    virtual ~ Thread();
 
-  protected:
-     virtual void *entry() = 0;
+protected:
+    virtual void *entry() = 0;
 
-  private:
+private:
     static void *_entry_func(void *arg);
 
-  public:
-    const pthread_t & get_thread_id() const;
-    pid_t get_pid() const {
+public:
+    const pthread_t &get_thread_id() const;
+    pid_t get_pid() const
+    {
         return pid;
     } bool is_started() const;
     bool am_self() const;
@@ -65,20 +67,21 @@ class Thread {
 
 // Functions for with std::thread
 
-void set_thread_name(std::thread & t, const std::string & s);
-std::string get_thread_name(const std::thread & t);
-void kill(std::thread & t, int signal);
+void set_thread_name(std::thread &t, const std::string &s);
+std::string get_thread_name(const std::thread &t);
+void kill(std::thread &t, int signal);
 
 template < typename Fun, typename ... Args >
-    std::thread make_named_thread(std::string_view n,
-                                  Fun && fun, Args && ... args)
+std::thread make_named_thread(std::string_view n,
+                              Fun && fun, Args && ... args)
 {
 
-    return std::thread([n = std::string(n)] (auto && fun, auto && ... args) {
-                       ceph_pthread_setname(pthread_self(), n.data());
-                       std::invoke(std::forward < Fun > (fun),
-                                   std::forward < Args > (args) ...);}
-                       , std::forward < Fun > (fun),
-                       std::forward < Args > (args) ...);
+    return std::thread([n = std::string(n)](auto && fun, auto && ... args) {
+        ceph_pthread_setname(pthread_self(), n.data());
+        std::invoke(std::forward < Fun > (fun),
+                    std::forward < Args > (args) ...);
+    }
+    , std::forward < Fun > (fun),
+    std::forward < Args > (args) ...);
 }
 #endif

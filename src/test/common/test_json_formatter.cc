@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -9,7 +9,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include <errno.h>
@@ -45,7 +45,7 @@ TEST(formatter, bug_37706)
     ASSERT_TRUE(pg_stats.parse(s.c_str(), s.length()));
     v = pg_stats.get_array_elements();
 
-  for (auto i:v) {
+    for (auto i : v) {
         JSONParser pg_json;
         ASSERT_TRUE(pg_json.parse(i.c_str(), i.length()));
         string pgid;
@@ -70,7 +70,7 @@ TEST(formatter, utime)
     EXPECT_TRUE(parser.parse(bl.c_str(), bl.length()));
 
     cout << input << " -> '" << std::string(bl.c_str(), bl.length())
-        << std::endl;
+         << std::endl;
 
     utime_t output;
     decode_json_obj(output, &parser);

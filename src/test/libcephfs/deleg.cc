@@ -32,9 +32,9 @@
 #include "include/ceph_assert.h"
 
 /* in ms -- 1 minute */
-#define MAX_WAIT	(60 * 1000)
+#define MAX_WAIT    (60 * 1000)
 
-static void wait_for_atomic_bool(std::atomic_bool & recalled)
+static void wait_for_atomic_bool(std::atomic_bool &recalled)
 {
     int i = 0;
 
@@ -44,7 +44,7 @@ static void wait_for_atomic_bool(std::atomic_bool & recalled)
     }
 }
 
-static int ceph_ll_delegation_wait(struct ceph_mount_info *cmount, Fh * fh,
+static int ceph_ll_delegation_wait(struct ceph_mount_info *cmount, Fh *fh,
                                    unsigned cmd, ceph_deleg_cb_t cb, void *priv)
 {
     int ret, retry = 0;
@@ -64,15 +64,15 @@ static int set_default_deleg_timeout(struct ceph_mount_info *cmount)
     return ceph_set_deleg_timeout(cmount, session_timeout - 1);
 }
 
-static void dummy_deleg_cb(Fh * fh, void *priv)
+static void dummy_deleg_cb(Fh *fh, void *priv)
 {
-    std::atomic_bool * recalled = (std::atomic_bool *) priv;
+    std::atomic_bool *recalled = (std::atomic_bool *) priv;
     recalled->store(true);
 }
 
 static void open_breaker_func(struct ceph_mount_info *cmount,
                               const char *filename, int flags,
-                              std::atomic_bool * opened)
+                              std::atomic_bool *opened)
 {
     bool do_shutdown = false;
 
@@ -100,8 +100,9 @@ static void open_breaker_func(struct ceph_mount_info *cmount,
         ASSERT_EQ(ceph_ll_getattr
                   (cmount, file, &stx, CEPH_STATX_ALL_STATS, 0, perms), 0);
         ret = ceph_ll_open(cmount, file, flags, &fh, perms);
-        if (ret != -CEPHFS_EAGAIN)
+        if (ret != -CEPHFS_EAGAIN) {
             break;
+        }
         ASSERT_LT(i++, MAX_WAIT);
         usleep(1000);
     }
@@ -109,8 +110,9 @@ static void open_breaker_func(struct ceph_mount_info *cmount,
     opened->store(true);
     ASSERT_EQ(ceph_ll_close(cmount, fh), 0);
 
-    if (do_shutdown)
+    if (do_shutdown) {
         ceph_shutdown(cmount);
+    }
 }
 
 enum {
@@ -142,32 +144,34 @@ static void namespace_breaker_func(struct ceph_mount_info *cmount, int cmd,
     int ret, i = 0;
     for (;;) {
         switch (cmd) {
-        case DelegTestRename:
-            ret = ceph_ll_rename(cmount, root, oldname, root, newname, perms);
-            break;
-        case DelegTestLink:
-            if (!file) {
-                ASSERT_EQ(ceph_ll_lookup
-                          (cmount, root, oldname, &file, &stx, 0, 0, perms), 0);
-            }
-            ret = ceph_ll_link(cmount, file, root, newname, perms);
-            break;
-        case DelegTestUnlink:
-            ret = ceph_ll_unlink(cmount, root, oldname, perms);
-            break;
-        default:
-            // Bad command
-            ceph_abort();
+            case DelegTestRename:
+                ret = ceph_ll_rename(cmount, root, oldname, root, newname, perms);
+                break;
+            case DelegTestLink:
+                if (!file) {
+                    ASSERT_EQ(ceph_ll_lookup
+                              (cmount, root, oldname, &file, &stx, 0, 0, perms), 0);
+                }
+                ret = ceph_ll_link(cmount, file, root, newname, perms);
+                break;
+            case DelegTestUnlink:
+                ret = ceph_ll_unlink(cmount, root, oldname, perms);
+                break;
+            default:
+                // Bad command
+                ceph_abort();
         }
-        if (ret != -CEPHFS_EAGAIN)
+        if (ret != -CEPHFS_EAGAIN) {
             break;
+        }
         ASSERT_LT(i++, MAX_WAIT);
         usleep(1000);
     }
     ASSERT_EQ(ret, 0);
 
-    if (do_shutdown)
+    if (do_shutdown) {
         ceph_shutdown(cmount);
+    }
 }
 
 static void simple_deleg_test(struct ceph_mount_info *cmount,

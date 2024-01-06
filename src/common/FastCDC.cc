@@ -62,21 +62,20 @@ void FastCDC::_setup(int target, int size_window_bits)
         ++did;
         if (did == target_bits - TARGET_WINDOW_MASK_BITS) {
             large_mask = m;
-        }
-        else if (did == target_bits) {
+        } else if (did == target_bits) {
             target_mask = m;
-        }
-        else if (did == target_bits + TARGET_WINDOW_MASK_BITS) {
+        } else if (did == target_bits + TARGET_WINDOW_MASK_BITS) {
             small_mask = m;
         }
     }
 }
 
 static inline bool _scan(
-                            // these are our cursor/postion...
-                            bufferlist::buffers_t::const_iterator * p, const char **pp, const char **pe, size_t & pos, size_t max,  // how much to read
-                            uint64_t & fp,  // fingerprint
-                            uint64_t mask, const uint64_t * table)
+    // these are our cursor/postion...
+    bufferlist::buffers_t::const_iterator *p, const char **pp, const char **pe, size_t &pos,
+    size_t max,    // how much to read
+    uint64_t &fp,   // fingerprint
+    uint64_t mask, const uint64_t *table)
 {
     while (pos < max) {
         if (*pp == *pe) {
@@ -98,7 +97,7 @@ static inline bool _scan(
     return true;
 }
 
-void FastCDC::calc_chunks(const bufferlist & bl,
+void FastCDC::calc_chunks(const bufferlist &bl,
                           std::vector < std::pair < uint64_t,
                           uint64_t >> *chunks) const const
 {
@@ -154,24 +153,24 @@ void FastCDC::calc_chunks(const bufferlist & bl,
 
         // find an end marker
         if (
-               // for the first "small" region
-               _scan(&p, &pp, &pe, pos,
-                     std::min(len,
-                              cstart +
-                              (1 << (target_bits - TARGET_WINDOW_BITS))), fp,
-                     small_mask, table) &&
-               // for the middle range (close to our target)
-               (TARGET_WINDOW_BITS == 0 ||
-                _scan(&p, &pp, &pe, pos,
-                      std::min(len,
-                               cstart +
-                               (1 << (target_bits + TARGET_WINDOW_BITS))), fp,
-                      target_mask, table)) &&
-               // we're past target, use large_mask!
-               _scan(&p, &pp, &pe, pos,
-                     std::min(len,
-                              cstart + (1 << max_bits)),
-                     fp, large_mask, table)) ;
+            // for the first "small" region
+            _scan(&p, &pp, &pe, pos,
+                  std::min(len,
+                           cstart +
+                           (1 << (target_bits - TARGET_WINDOW_BITS))), fp,
+                  small_mask, table) &&
+            // for the middle range (close to our target)
+            (TARGET_WINDOW_BITS == 0 ||
+             _scan(&p, &pp, &pe, pos,
+                   std::min(len,
+                            cstart +
+                            (1 << (target_bits + TARGET_WINDOW_BITS))), fp,
+                   target_mask, table)) &&
+            // we're past target, use large_mask!
+            _scan(&p, &pp, &pe, pos,
+                  std::min(len,
+                           cstart + (1 << max_bits)),
+                  fp, large_mask, table)) ;
 
         chunks->push_back(std::pair < uint64_t,
                           uint64_t > (cstart, pos - cstart));

@@ -15,14 +15,18 @@ using namespace librados;
 
 using std::string;
 
-class LibRadosSnapshotStatsSelfManagedPP:public RadosTestPP {
-  public:
-    LibRadosSnapshotStatsSelfManagedPP() {
+class LibRadosSnapshotStatsSelfManagedPP: public RadosTestPP
+{
+public:
+    LibRadosSnapshotStatsSelfManagedPP()
+    {
     };
-    ~LibRadosSnapshotStatsSelfManagedPP()override {
+    ~LibRadosSnapshotStatsSelfManagedPP()override
+    {
     };
-  protected:
-    void SetUp() override {
+protected:
+    void SetUp() override
+    {
         // disable pg autoscaler for the tests
         string cmd =
             "{"
@@ -44,7 +48,8 @@ class LibRadosSnapshotStatsSelfManagedPP:public RadosTestPP {
         RadosTestPP::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         // re-enable pg autoscaler
         string cmd =
             "{"
@@ -67,14 +72,18 @@ class LibRadosSnapshotStatsSelfManagedPP:public RadosTestPP {
     }
 };
 
-class LibRadosSnapshotStatsSelfManagedECPP:public RadosTestECPP {
-  public:
-    LibRadosSnapshotStatsSelfManagedECPP() {
+class LibRadosSnapshotStatsSelfManagedECPP: public RadosTestECPP
+{
+public:
+    LibRadosSnapshotStatsSelfManagedECPP()
+    {
     };
-    ~LibRadosSnapshotStatsSelfManagedECPP()override {
+    ~LibRadosSnapshotStatsSelfManagedECPP()override
+    {
     };
-  protected:
-    void SetUp() override {
+protected:
+    void SetUp() override
+    {
         // disable pg autoscaler for the tests
         string cmd =
             "{"
@@ -96,7 +105,8 @@ class LibRadosSnapshotStatsSelfManagedECPP:public RadosTestECPP {
         RadosTestECPP::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         // re-enable pg autoscaler
         string cmd =
             "{"
@@ -119,13 +129,13 @@ class LibRadosSnapshotStatsSelfManagedECPP:public RadosTestECPP {
     }
 };
 
-void get_snaptrim_stats(json_spirit::Object & pg_dump,
+void get_snaptrim_stats(json_spirit::Object &pg_dump,
                         int *objs_trimmed, double *trim_duration)
 {
     // pg_map
     json_spirit::Object pgmap;
     for (json_spirit::Object::size_type i = 0; i < pg_dump.size(); ++i) {
-        json_spirit::Pair & p = pg_dump[i];
+        json_spirit::Pair &p = pg_dump[i];
         if (p.name_ == "pg_map") {
             pgmap = p.value_.get_obj();
             break;
@@ -135,7 +145,7 @@ void get_snaptrim_stats(json_spirit::Object & pg_dump,
     // pg_stats array
     json_spirit::Array pgs;
     for (json_spirit::Object::size_type i = 0; i < pgmap.size(); ++i) {
-        json_spirit::Pair & p = pgmap[i];
+        json_spirit::Pair &p = pgmap[i];
         if (p.name_ == "pg_stats") {
             pgs = p.value_.get_array();
             break;
@@ -144,9 +154,9 @@ void get_snaptrim_stats(json_spirit::Object & pg_dump,
 
     // snaptrim stats
     for (json_spirit::Object::size_type j = 0; j < pgs.size(); ++j) {
-        json_spirit::Object & pg_stat = pgs[j].get_obj();
+        json_spirit::Object &pg_stat = pgs[j].get_obj();
         for (json_spirit::Object::size_type k = 0; k < pg_stat.size(); ++k) {
-            json_spirit::Pair & stats = pg_stat[k];
+            json_spirit::Pair &stats = pg_stat[k];
             if (stats.name_ == "objects_trimmed") {
                 *objs_trimmed += stats.value_.get_int();
             }
@@ -218,17 +228,17 @@ TEST_F(LibRadosSnapshotStatsSelfManagedPP, SnaptrimStatsPP)
         ASSERT_NE(0,
                   json_spirit::read(outstr,
                                     v)) << "unable to parse json." << '\n' <<
-            outstr;
+                                        outstr;
 
         // pg_map
-        json_spirit::Object & obj = v.get_obj();
+        json_spirit::Object &obj = v.get_obj();
         get_snaptrim_stats(obj, &objects_trimmed, &snaptrim_duration);
         if (objects_trimmed < num_objs) {
             tries++;
             objects_trimmed = 0;
             std::
-                cout << "Still waiting for all objects to be trimmed... " <<
-                std::endl;
+            cout << "Still waiting for all objects to be trimmed... " <<
+                 std::endl;
             sleep(30);
         }
     } while (objects_trimmed < num_objs && tries < 5);
@@ -307,17 +317,17 @@ TEST_F(LibRadosSnapshotStatsSelfManagedECPP, SnaptrimStatsECPP)
         ASSERT_NE(0,
                   json_spirit::read(outstr,
                                     v)) << "unable to parse json." << '\n' <<
-            outstr;
+                                        outstr;
 
         // pg_map
-        json_spirit::Object & obj = v.get_obj();
+        json_spirit::Object &obj = v.get_obj();
         get_snaptrim_stats(obj, &objects_trimmed, &snaptrim_duration);
         if (objects_trimmed < num_objs) {
             tries++;
             objects_trimmed = 0;
             std::
-                cout << "Still waiting for all objects to be trimmed... " <<
-                std::endl;
+            cout << "Still waiting for all objects to be trimmed... " <<
+                 std::endl;
             sleep(30);
         }
     } while (objects_trimmed < num_objs && tries < 5);

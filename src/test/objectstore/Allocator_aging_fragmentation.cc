@@ -37,30 +37,30 @@ struct Scenario {
 
 std::vector < Scenario > scenarios {
     Scenario {
-    512, 65536, 0.8, 0.6, 0.1, 3}, Scenario {
-    512, 65536, 0.9, 0.7, 0.0, 3}, Scenario {
-    512, 65536, 0.9, 0.7, 0.1, 3}, Scenario {
-    512, 65536, 0.8, 0.6, 0.5, 3}, Scenario {
-    512, 65536, 0.9, 0.7, 0.5, 3}, Scenario {
-    1024, 65536, 0.8, 0.6, 0.1, 3}, Scenario {
-    1024, 65536, 0.9, 0.7, 0.0, 3}, Scenario {
-    1024, 65536, 0.9, 0.7, 0.1, 3}, Scenario {
-    1024 *2, 65536, 0.8, 0.6, 0.3, 3}, Scenario {
-    1024 *2, 65536, 0.9, 0.7, 0.0, 3}, Scenario {
-    1024 *2, 65536, 0.9, 0.7, 0.3, 3}, Scenario {
-    512, 65536 / 16, 0.8, 0.6, 0.1, 3}, Scenario {
-    512, 65536 / 16, 0.9, 0.7, 0.0, 3}, Scenario {
-    512, 65536 / 16, 0.9, 0.7, 0.1, 3}, Scenario {
-    512, 65536 / 16, 0.8, 0.6, 0.5, 3}, Scenario {
-    512, 65536 / 16, 0.9, 0.7, 0.5, 3}, Scenario {
-    1024, 65536 / 16, 0.8, 0.6, 0.1, 3}, Scenario {
-    1024, 65536 / 16, 0.9, 0.7, 0.0, 3}, Scenario {
-    1024, 65536 / 16, 0.9, 0.7, 0.1, 3}, Scenario {
-    1024 *2, 65536 / 16, 0.8, 0.6, 0.3, 3}, Scenario {
-    1024 *2, 65536 / 16, 0.9, 0.7, 0.0, 3}, Scenario {
-1024 *2, 65536 / 16, 0.9, 0.7, 0.3, 3}};
+        512, 65536, 0.8, 0.6, 0.1, 3}, Scenario {
+        512, 65536, 0.9, 0.7, 0.0, 3}, Scenario {
+        512, 65536, 0.9, 0.7, 0.1, 3}, Scenario {
+        512, 65536, 0.8, 0.6, 0.5, 3}, Scenario {
+        512, 65536, 0.9, 0.7, 0.5, 3}, Scenario {
+        1024, 65536, 0.8, 0.6, 0.1, 3}, Scenario {
+        1024, 65536, 0.9, 0.7, 0.0, 3}, Scenario {
+        1024, 65536, 0.9, 0.7, 0.1, 3}, Scenario {
+        1024 * 2, 65536, 0.8, 0.6, 0.3, 3}, Scenario {
+        1024 * 2, 65536, 0.9, 0.7, 0.0, 3}, Scenario {
+        1024 * 2, 65536, 0.9, 0.7, 0.3, 3}, Scenario {
+        512, 65536 / 16, 0.8, 0.6, 0.1, 3}, Scenario {
+        512, 65536 / 16, 0.9, 0.7, 0.0, 3}, Scenario {
+        512, 65536 / 16, 0.9, 0.7, 0.1, 3}, Scenario {
+        512, 65536 / 16, 0.8, 0.6, 0.5, 3}, Scenario {
+        512, 65536 / 16, 0.9, 0.7, 0.5, 3}, Scenario {
+        1024, 65536 / 16, 0.8, 0.6, 0.1, 3}, Scenario {
+        1024, 65536 / 16, 0.9, 0.7, 0.0, 3}, Scenario {
+        1024, 65536 / 16, 0.9, 0.7, 0.1, 3}, Scenario {
+        1024 * 2, 65536 / 16, 0.8, 0.6, 0.3, 3}, Scenario {
+        1024 * 2, 65536 / 16, 0.9, 0.7, 0.0, 3}, Scenario {
+        1024 * 2, 65536 / 16, 0.9, 0.7, 0.3, 3}};
 
-void PrintTo(const Scenario & s,::std::ostream * os)
+void PrintTo(const Scenario &s, ::std::ostream *os)
 {
     *os << "(capacity=" << s.capacity;
     *os << "G, alloc_unit=" << s.alloc_unit;
@@ -73,41 +73,42 @@ void PrintTo(const Scenario & s,::std::ostream * os)
 bool verbose = getenv("VERBOSE") != nullptr;
 
 class AllocTracker;
-class AllocTest:public::testing::TestWithParam < std::string > {
-  protected:
+class AllocTest: public::testing::TestWithParam < std::string >
+{
+protected:
     boost::scoped_ptr < AllocTracker > at;
     gen_type rng;
     static boost::intrusive_ptr < CephContext > cct;
 
-  public:
+public:
     boost::scoped_ptr < Allocator > alloc;
-    AllocTest():alloc(nullptr)
-{
-} void init_alloc(const std::string & alloc_name, int64_t size,
-                  uint64_t min_alloc_size);
-void init_close();
-void doAgingTest(std::function < uint32_t() > size_generator,
-                 const std::string & alloc_name, uint64_t capacity,
-                 uint32_t alloc_unit, uint64_t high_mark, uint64_t low_mark,
-                 uint32_t iterations, double leak_factor = 0);
+    AllocTest(): alloc(nullptr)
+    {
+    } void init_alloc(const std::string &alloc_name, int64_t size,
+                      uint64_t min_alloc_size);
+    void init_close();
+    void doAgingTest(std::function < uint32_t() > size_generator,
+                     const std::string &alloc_name, uint64_t capacity,
+                     uint32_t alloc_unit, uint64_t high_mark, uint64_t low_mark,
+                     uint32_t iterations, double leak_factor = 0);
 
-uint64_t capacity;
-uint32_t alloc_unit;
+    uint64_t capacity;
+    uint32_t alloc_unit;
 
-uint64_t level = 0;
-uint64_t allocs = 0;
-uint64_t fragmented = 0;
-uint64_t fragments = 0;
-uint64_t total_fragments = 0;
+    uint64_t level = 0;
+    uint64_t allocs = 0;
+    uint64_t fragmented = 0;
+    uint64_t fragments = 0;
+    uint64_t total_fragments = 0;
 
-void do_fill(uint64_t high_mark, std::function < uint32_t() > size_generator,
-             double leak_factor = 0);
-void do_free(uint64_t low_mark);
-uint32_t free_random();
+    void do_fill(uint64_t high_mark, std::function < uint32_t() > size_generator,
+                 double leak_factor = 0);
+    void do_free(uint64_t low_mark);
+    uint32_t free_random();
 
-void TearDown() final;
-static void SetUpTestSuite();
-static void TearDownTestSuite();
+    void TearDown() final;
+    static void SetUpTestSuite();
+    static void TearDownTestSuite();
 };
 
 struct test_result {
@@ -125,21 +126,26 @@ const uint64_t _1G = 1024 * 1024 * 1024;
 
 const uint64_t _2m = 2 * 1024 * 1024;
 
-class AllocTracker {
+class AllocTracker
+{
     std::vector < bluestore_pextent_t > allocations;
     uint64_t size = 0;
 
-  public:
-    bool push(uint64_t offs, uint32_t len) {
+public:
+    bool push(uint64_t offs, uint32_t len)
+    {
         assert(len != 0);
-        if (size + 1 > allocations.size())
+        if (size + 1 > allocations.size()) {
             allocations.resize(size + 100);
+        }
         allocations[size++] = bluestore_pextent_t(offs, len);
         return true;
-    } bool pop_random(gen_type & rng, uint64_t * offs, uint32_t * len,
-                      uint32_t max_len = 0) {
-        if (size == 0)
+    } bool pop_random(gen_type &rng, uint64_t *offs, uint32_t *len,
+                      uint32_t max_len = 0)
+    {
+        if (size == 0) {
             return false;
+        }
         uint64_t pos = rng() % size;
         *len = allocations[pos].length;
         *offs = allocations[pos].offset;
@@ -148,8 +154,7 @@ class AllocTracker {
             allocations[pos].length = *len - max_len;
             allocations[pos].offset = *offs + max_len;
             *len = max_len;
-        }
-        else {
+        } else {
             allocations[pos] = allocations[size - 1];
             --size;
         }
@@ -159,7 +164,7 @@ class AllocTracker {
 
 boost::intrusive_ptr < CephContext > AllocTest::cct;
 
-void AllocTest::init_alloc(const std::string & allocator_name, int64_t size,
+void AllocTest::init_alloc(const std::string &allocator_name, int64_t size,
                            uint64_t min_alloc_size)
 {
     this->capacity = size;
@@ -207,7 +212,7 @@ void AllocTest::do_fill(uint64_t high_mark,
             break;
         }
         level += r;
-      for (auto a:tmp) {
+        for (auto a : tmp) {
             bool full = !at->push(a.offset, a.length);
             EXPECT_EQ(full, false);
         }
@@ -230,13 +235,14 @@ void AllocTest::do_fill(uint64_t high_mark,
 void AllocTest::do_free(uint64_t low_mark)
 {
     while (level > low_mark) {
-        if (free_random() == 0)
+        if (free_random() == 0) {
             break;
+        }
     }
 }
 
 void AllocTest::doAgingTest(std::function < uint32_t() > size_generator,
-                            const std::string & allocator_name,
+                            const std::string &allocator_name,
                             uint64_t capacity, uint32_t alloc_unit,
                             uint64_t high_mark, uint64_t low_mark,
                             uint32_t iterations, double leak_factor)
@@ -253,15 +259,16 @@ void AllocTest::doAgingTest(std::function < uint32_t() > size_generator,
     fragmented = 0;
     fragments = 0;
     total_fragments = 0;
-    if (verbose)
+    if (verbose) {
         std::cout << "INITIAL FILL" << std::endl;
+    }
     do_fill(high_mark, size_generator, leak_factor);    //initial fill with data
     if (verbose)
         std::cout << "    fragmented allocs=" << 100.0 * fragmented /
-            allocs << "%" << " #frags=" << (fragmented !=
-                                            0 ? double (fragments) /
-                                            fragmented : 0)<<" time=" <<
-            (ceph_clock_now() - start) * 1000 << "ms" << std::endl;
+                  allocs << "%" << " #frags=" << (fragmented !=
+                          0 ? double (fragments) /
+                          fragmented : 0) << " time=" <<
+                  (ceph_clock_now() - start) * 1000 << "ms" << std::endl;
 
     for (uint32_t i = 0; i < iterations; i++) {
         allocs = 0;
@@ -271,25 +278,27 @@ void AllocTest::doAgingTest(std::function < uint32_t() > size_generator,
 
         uint64_t level_previous = level;
         start = ceph_clock_now();
-        if (verbose)
+        if (verbose) {
             std::cout << "ADDING CAPACITY " << i + 1 << std::endl;
+        }
         do_free(low_mark);      //simulates adding new capacity to cluster
         if (verbose)
             std::cout << "    level change: " <<
-                double (level_previous) / capacity * 100 << "% -> " <<
-            double (level) / capacity * 100 << "% time=" <<
-            (ceph_clock_now() - start) * 1000 << "ms" << std::endl;
+                      double (level_previous) / capacity * 100 << "% -> " <<
+                      double (level) / capacity * 100 << "% time=" <<
+                      (ceph_clock_now() - start) * 1000 << "ms" << std::endl;
 
         start = ceph_clock_now();
-        if (verbose)
+        if (verbose) {
             std::cout << "APPENDING " << i + 1 << std::endl;
+        }
         do_fill(high_mark, size_generator, leak_factor);    //only creating elements
         if (verbose)
             std::cout << "    fragmented allocs=" << 100.0 * fragmented /
-                allocs << "%" << " #frags=" << (fragmented !=
-                                                0 ? double (fragments) /
-                                                fragmented : 0)<<" time=" <<
-                (ceph_clock_now() - start) * 1000 << "ms" << std::endl;
+                      allocs << "%" << " #frags=" << (fragmented !=
+                              0 ? double (fragments) /
+                              fragmented : 0) << " time=" <<
+                      (ceph_clock_now() - start) * 1000 << "ms" << std::endl;
     }
     double frag_score = alloc->get_fragmentation_score();
     do_free(0);
@@ -297,17 +306,17 @@ void AllocTest::doAgingTest(std::function < uint32_t() > size_generator,
     ASSERT_EQ(alloc->get_free(), capacity);
 
     std::cout << "    fragmented allocs=" << 100.0 * fragmented /
-        allocs << "%" << " #frags=" << (fragmented !=
-                                        0 ? double (fragments) /
-                                        fragmented : 0)<<" time=" <<
-        (ceph_clock_now() -
-         start) *
-        1000 << "ms" << " frag.score=" << frag_score <<
-        " after free frag.score=" << free_frag_score << std::endl;
+              allocs << "%" << " #frags=" << (fragmented !=
+                      0 ? double (fragments) /
+                      fragmented : 0) << " time=" <<
+              (ceph_clock_now() -
+               start) *
+              1000 << "ms" << " frag.score=" << frag_score <<
+              " after free frag.score=" << free_frag_score << std::endl;
 
     uint64_t sum = 0;
     uint64_t cnt = 0;
-    auto list_free =[&](size_t off, size_t len) {
+    auto list_free = [&](size_t off, size_t len) {
         cnt++;
         sum += len;
     };
@@ -315,11 +324,11 @@ void AllocTest::doAgingTest(std::function < uint32_t() > size_generator,
     ASSERT_EQ(sum, capacity);
     if (verbose)
         std::
-            cout << "free chunks sum=" << sum << " free chunks count=" << cnt <<
-            std::endl;
+        cout << "free chunks sum=" << sum << " free chunks count=" << cnt <<
+             std::endl;
 
     //adding to totals
-    test_result & r = results_per_allocator[allocator_name];
+    test_result &r = results_per_allocator[allocator_name];
     r.tests_cnt++;
     r.fragmented_percent += 100.0 * fragmented / allocs;
     r.fragments_count +=
@@ -349,14 +358,14 @@ void AllocTest::TearDownTestSuite()
     cct.reset();
 
     std::cout << "Summary: " << std::endl;
-  for (auto & r:results_per_allocator) {
+    for (auto &r : results_per_allocator) {
         std::cout << r.first <<
-            "    fragmented allocs=" << r.second.fragmented_percent /
-            r.second.tests_cnt << "%" << " #frags=" << r.second.
-            fragments_count /
-            r.second.tests_cnt << " free_score=" << r.second.frag_score /
-            r.second.tests_cnt << " time=" << r.second.time *
-            1000 << "ms" << std::endl;
+                  "    fragmented allocs=" << r.second.fragmented_percent /
+                  r.second.tests_cnt << "%" << " #frags=" << r.second.
+                  fragments_count /
+                  r.second.tests_cnt << " free_score=" << r.second.frag_score /
+                  r.second.tests_cnt << " time=" << r.second.time *
+                  1000 << "ms" << std::endl;
     }
 }
 
@@ -364,13 +373,13 @@ TEST_P(AllocTest, test_alloc_triangle_0_8M_16M)
 {
     std::string allocator_name = GetParam();
     boost::triangle_distribution < double >D(1, (8 * 1024 * 1024),
-                                             (16 * 1024 * 1024));
-  for (auto & s:scenarios) {
+            (16 * 1024 * 1024));
+    for (auto &s : scenarios) {
         std::cout << "Allocator: " << allocator_name << ", ";
         PrintTo(s, &std::cout);
         std::cout << std::endl;
 
-        auto size_generator =[&]()->uint32_t {
+        auto size_generator = [&]()->uint32_t {
             return (uint32_t(D(rng)) + s.alloc_unit) & ~(s.alloc_unit - 1);
         };
 
@@ -385,17 +394,18 @@ TEST_P(AllocTest, test_alloc_8M_and_64K)
     std::string allocator_name = GetParam();
     constexpr uint32_t max_chunk_size = 8 * 1024 * 1024;
     constexpr uint32_t min_chunk_size = 64 * 1024;
-  for (auto & s:scenarios) {
+    for (auto &s : scenarios) {
         std::cout << "Allocator: " << allocator_name << ", ";
         PrintTo(s, &std::cout);
         std::cout << std::endl;
         boost::uniform_int <> D(0, 1);
 
-        auto size_generator =[&]()->uint32_t {
-            if (D(rng) == 0)
+        auto size_generator = [&]()->uint32_t {
+            if (D(rng) == 0) {
                 return max_chunk_size;
-            else
+            } else {
                 return min_chunk_size;
+            }
         };
 
         doAgingTest(size_generator, allocator_name, s.capacity * _1G,
@@ -409,7 +419,7 @@ TEST_P(AllocTest, test_alloc_fragmentation_max_chunk_8M)
     std::string allocator_name = GetParam();
     constexpr uint32_t max_object_size = 150 * 1000 * 1000;
     constexpr uint32_t max_chunk_size = 8 * 1024 * 1024;
-  for (auto & s:scenarios) {
+    for (auto &s : scenarios) {
         std::cout << "Allocator: " << allocator_name << ", ";
         PrintTo(s, &std::cout);
         std::cout << std::endl;
@@ -417,14 +427,18 @@ TEST_P(AllocTest, test_alloc_fragmentation_max_chunk_8M)
 
         uint32_t object_size = 0;
 
-        auto size_generator =[&]()->uint32_t {
+        auto size_generator = [&]()->uint32_t {
             uint32_t c;
-            if (object_size == 0)
+            if (object_size == 0) {
                 object_size = (uint32_t(D(rng)) * s.alloc_unit);
+            }
             if (object_size > max_chunk_size)
+            {
                 c = max_chunk_size;
-            else
+            } else
+            {
                 c = object_size;
+            }
             object_size -= c;
             return c;
         };
@@ -451,12 +465,11 @@ TEST_P(AllocTest, test_bonus_empty_fragmented)
         ASSERT_EQ(r, want);
         if (tmp.size() > 1) {
             interval_set < uint64_t > release_set;
-          for (auto & t:tmp) {
+            for (auto &t : tmp) {
                 release_set.insert(t.offset, t.length);
             }
             alloc->release(release_set);
-        }
-        else {
+        } else {
             interval_set < uint64_t > release_set;
             uint64_t offset = tmp[0].offset;
             uint64_t length = tmp[0].length;
@@ -481,5 +494,5 @@ TEST_P(AllocTest, test_bonus_empty_fragmented)
 }
 
 INSTANTIATE_TEST_SUITE_P(Allocator,
-                         AllocTest,::testing::Values("stupid", "bitmap", "avl",
-                                                     "btree"));
+                         AllocTest, ::testing::Values("stupid", "bitmap", "avl",
+                                 "btree"));

@@ -61,9 +61,9 @@ uint16_t checksummer::get() const const
     return htons(~csum);
 }
 
-void checksummer::sum(const Packet & p)
+void checksummer::sum(const Packet &p)
 {
-  for (auto && f:p.fragments()) {
+    for (auto && f : p.fragments()) {
         sum(f.base, f.size);
     }
 }

@@ -79,8 +79,8 @@ TEST(MonCap, ParseGood)
         std::cout << "Testing good input: '" << str << "'" << std::endl;
         ASSERT_TRUE(cap.parse(str, &cout));
         std::
-            cout << "                                         -> " << cap <<
-            std::endl;
+        cout << "                                         -> " << cap <<
+             std::endl;
     }
 }
 
@@ -196,9 +196,9 @@ TEST(MonCap, AllowAll)
     ASSERT_TRUE(cap.parse("allow *", NULL));
     ASSERT_TRUE(cap.is_allow_all());
     ASSERT_TRUE(cap.is_capable(NULL, {
-                               }, "foo", "asdf", {
-                               }, true, true, true, {
-                               }));
+    }, "foo", "asdf", {
+    }, true, true, true, {
+    }));
 
     MonCap cap2;
     ASSERT_FALSE(cap2.is_allow_all());
@@ -220,14 +220,14 @@ TEST(MonCap, Network)
     c.parse("192.167.2.3");
 
     ASSERT_TRUE(cap.is_capable(NULL, {
-                               }, "foo", "asdf", {
-                               }, true, true, true, a));
+    }, "foo", "asdf", {
+    }, true, true, true, a));
     ASSERT_TRUE(cap.is_capable(NULL, {
-                               }, "foo", "asdf", {
-                               }, true, true, true, b));
+    }, "foo", "asdf", {
+    }, true, true, true, b));
     ASSERT_FALSE(cap.is_capable(NULL, {
-                                }, "foo", "asdf", {
-                                }, true, true, true, c));
+    }, "foo", "asdf", {
+    }, true, true, true, c));
 }
 
 TEST(MonCap, ProfileOSD)
@@ -241,62 +241,62 @@ TEST(MonCap, ProfileOSD)
     map < string, string > ca;
 
     ASSERT_TRUE(cap.is_capable(NULL, name, "osd", "", ca, true, false, false, {
-                               }));
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "osd", "", ca, true, true, false, {
-                               }));
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "osd", "", ca, true, true, true, {
-                               }));
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "osd", "", ca, true, true, true, {
-                               }));
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "mon", "", ca, true, false, false, {
-                               }));
+    }));
 
     ASSERT_FALSE(cap.is_capable(NULL, name, "mds", "", ca, true, true, true, {
-                                }));
+    }));
     ASSERT_FALSE(cap.is_capable(NULL, name, "mon", "", ca, true, true, true, {
-                                }));
+    }));
 
     ca.clear();
     ASSERT_FALSE(cap.
                  is_capable(NULL, name, "", "config-key get", ca, true, true,
-                            true, {
-                            }));
+    true, {
+    }));
     ca["key"] = "daemon-private/osd.123";
     ASSERT_FALSE(cap.
                  is_capable(NULL, name, "", "config-key get", ca, true, true,
-                            true, {
-                            }));
+    true, {
+    }));
     ca["key"] = "daemon-private/osd.12/asdf";
     ASSERT_FALSE(cap.
                  is_capable(NULL, name, "", "config-key get", ca, true, true,
-                            true, {
-                            }));
+    true, {
+    }));
     ca["key"] = "daemon-private/osd.123/";
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key get", ca, true, true,
-                               true, {
-                               }));
+    true, {
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key get", ca, true, true,
-                               true, {
-                               }));
+    true, {
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key get", ca, true, true,
-                               true, {
-                               }));
+    true, {
+    }));
     ca["key"] = "daemon-private/osd.123/foo";
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key get", ca, true, true,
-                               true, {
-                               }));
+    true, {
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key put", ca, true, true,
-                               true, {
-                               }));
+    true, {
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key set", ca, true, true,
-                               true, {
-                               }));
+    true, {
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key exists", ca, true,
-                               true, true, {
-                               }));
+    true, true, {
+    }));
     ASSERT_TRUE(cap.is_capable(NULL, name, "", "config-key delete", ca, true,
-                               true, true, {
-                               }));
+    true, true, {
+    }));
 }
 
 TEST(MonCap, CommandRegEx)
@@ -309,16 +309,22 @@ TEST(MonCap, CommandRegEx)
     EntityName name;
     name.from_str("osd.123");
     ASSERT_TRUE(cap.is_capable(nullptr, name, "", "abc", { {
-                               "arg", "12345abcde"}}, true, true, true, {
-                               }));
+            "arg", "12345abcde"
+        }
+    }, true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "abc", { {
-                                "arg", "~!@#$"}}, true, true, true, {
-                                }));
+            "arg", "~!@#$"
+        }
+    }, true, true, true, {
+    }));
 
     ASSERT_TRUE(cap.parse("allow command abc with arg regex \"[*\"", NULL));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "abc", { {
-                                "arg", ""}}, true, true, true, {
-                                }));
+            "arg", ""
+        }
+    }, true, true, true, {
+    }));
 }
 
 TEST(MonCap, ProfileBootstrapRBD)
@@ -330,27 +336,39 @@ TEST(MonCap, ProfileBootstrapRBD)
     EntityName name;
     name.from_str("mon.a");
     ASSERT_TRUE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                               {
-                               "entity", "client.rbd"}, {
-                               "caps_mon", "profile rbd"}, {
-                               "caps_osd",
-                               "profile rbd pool=foo, profile rbd-read-only"},},
-                               true, true, true, {
-                               }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "profile rbd"
+        }, {
+            "caps_osd",
+            "profile rbd pool=foo, profile rbd-read-only"
+        },
+    },
+    true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                                {
-                                "entity", "client.rbd"}, {
-                                "caps_mon", "allow *"}, {
-                                "caps_osd", "profile rbd"},}, true, true, true, {
-                                }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "allow *"
+        }, {
+            "caps_osd", "profile rbd"
+        },
+    }, true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                                {
-                                "entity", "client.rbd"}, {
-                                "caps_mon", "profile rbd"}, {
-                                "caps_osd",
-                                "profile rbd pool=foo, allow *, profile rbd-read-only"},},
-                                true, true, true, {
-                                }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "profile rbd"
+        }, {
+            "caps_osd",
+            "profile rbd pool=foo, allow *, profile rbd-read-only"
+        },
+    },
+    true, true, true, {
+    }));
 }
 
 TEST(MonCap, ProfileBootstrapRBDMirror)
@@ -362,35 +380,51 @@ TEST(MonCap, ProfileBootstrapRBDMirror)
     EntityName name;
     name.from_str("mon.a");
     ASSERT_TRUE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                               {
-                               "entity", "client.rbd"}, {
-                               "caps_mon", "profile rbd-mirror"}, {
-                               "caps_osd",
-                               "profile rbd pool=foo, profile rbd-read-only"},},
-                               true, true, true, {
-                               }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "profile rbd-mirror"
+        }, {
+            "caps_osd",
+            "profile rbd pool=foo, profile rbd-read-only"
+        },
+    },
+    true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                                {
-                                "entity", "client.rbd"}, {
-                                "caps_mon", "profile rbd"}, {
-                                "caps_osd",
-                                "profile rbd pool=foo, profile rbd-read-only"},},
-                                true, true, true, {
-                                }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "profile rbd"
+        }, {
+            "caps_osd",
+            "profile rbd pool=foo, profile rbd-read-only"
+        },
+    },
+    true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                                {
-                                "entity", "client.rbd"}, {
-                                "caps_mon", "allow *"}, {
-                                "caps_osd", "profile rbd"},}, true, true, true, {
-                                }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "allow *"
+        }, {
+            "caps_osd", "profile rbd"
+        },
+    }, true, true, true, {
+    }));
     ASSERT_FALSE(cap.is_capable(nullptr, name, "", "auth get-or-create", {
-                                {
-                                "entity", "client.rbd"}, {
-                                "caps_mon", "profile rbd-mirror"}, {
-                                "caps_osd",
-                                "profile rbd pool=foo, allow *, profile rbd-read-only"},},
-                                true, true, true, {
-                                }));
+        {
+            "entity", "client.rbd"
+        }, {
+            "caps_mon", "profile rbd-mirror"
+        }, {
+            "caps_osd",
+            "profile rbd pool=foo, allow *, profile rbd-read-only"
+        },
+    },
+    true, true, true, {
+    }));
 }
 
 TEST(MonCap, ProfileRBD)
@@ -402,10 +436,12 @@ TEST(MonCap, ProfileRBD)
     EntityName name;
     name.from_str("mon.a");
     ASSERT_FALSE(cap.is_capable(nullptr, name, "config-key", "config-key get", {
-                                {
-                                "key", "rbd/mirror/peer/1/1234"},}, true, false,
-                                false, {
-                                }));
+        {
+            "key", "rbd/mirror/peer/1/1234"
+        },
+    }, true, false,
+    false, {
+    }));
 }
 
 TEST(MonCap, ProfileRBDMirror)
@@ -417,8 +453,10 @@ TEST(MonCap, ProfileRBDMirror)
     EntityName name;
     name.from_str("mon.a");
     ASSERT_TRUE(cap.is_capable(nullptr, name, "config-key", "config-key get", {
-                               {
-                               "key", "rbd/mirror/peer/1/1234"},}, true, false,
-                               false, {
-                               }));
+        {
+            "key", "rbd/mirror/peer/1/1234"
+        },
+    }, true, false,
+    false, {
+    }));
 }

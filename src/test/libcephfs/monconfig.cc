@@ -23,21 +23,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-class MonConfig:public::testing::Test {
-  protected:
+class MonConfig: public::testing::Test
+{
+protected:
     struct ceph_mount_info *ca;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         ASSERT_EQ(0, ceph_create(&ca, NULL));
         ASSERT_EQ(0, ceph_conf_read_file(ca, NULL));
         ASSERT_EQ(0, ceph_conf_parse_env(ca, NULL));
-    } void TearDown() override {
+    } void TearDown() override
+    {
         ceph_shutdown(ca);
     }
 
     // Helper to remove/unset all possible mon information from ConfigProxy
-    void clear_mon_config(CephContext * cct) {
-        auto & conf = cct->_conf;
+    void clear_mon_config(CephContext *cct)
+    {
+        auto &conf = cct->_conf;
         // Clear safe_to_start_threads, allowing updates to config values
         conf._clear_safe_to_start_threads();
         ASSERT_EQ(0, conf.set_val("monmap", "", nullptr));
@@ -47,7 +51,8 @@ class MonConfig:public::testing::Test {
     }
 
     // Helper to test basic operation on a mount
-    void use_mount(struct ceph_mount_info *mnt, std::string name_prefix) {
+    void use_mount(struct ceph_mount_info *mnt, std::string name_prefix)
+    {
         char name[20];
         snprintf(name, sizeof(name), "%s.%d", name_prefix.c_str(), getpid());
         int fd = ceph_open(mnt, name, O_CREAT | O_RDWR, 0644);

@@ -21,10 +21,13 @@ int main(int argc, char **argv)
     map < string, string > defaults = {
         // make sure we have 3 copies, or some tests won't work
         {
-        "osd_pool_default_size", "3"},
-            // our map is flat, so just try and split across OSDs, not hosts or whatever
+            "osd_pool_default_size", "3"
+        },
+        // our map is flat, so just try and split across OSDs, not hosts or whatever
         {
-    "osd_crush_chooseleaf_type", "0"},};
+            "osd_crush_chooseleaf_type", "0"
+        },
+    };
     std::vector < const char *>args(argv, argv + argc);
     auto cct = global_init(&defaults, args, CEPH_ENTITY_TYPE_CLIENT,
                            CODE_ENVIRONMENT_UTILITY,
@@ -34,10 +37,11 @@ int main(int argc, char **argv)
     return RUN_ALL_TESTS();
 }
 
-class OSDMapTest:public testing::Test,
-    public::testing::WithParamInterface < std::pair < int, int >> {
+class OSDMapTest: public testing::Test,
+    public::testing::WithParamInterface < std::pair < int, int >>
+{
     int num_osds = 6;
-  public:
+public:
     OSDMap osdmap;
     OSDMapMapping mapping;
     const uint64_t my_ec_pool = 1;
@@ -51,8 +55,10 @@ class OSDMapTest:public testing::Test,
     static const string unblocked_ip_addrs[];
     const string EC_RULE_NAME = "erasure";
 
-    OSDMapTest() {
-    } void set_up_map(int new_num_osds = 6, bool no_default_pools = false) {
+    OSDMapTest()
+    {
+    } void set_up_map(int new_num_osds = 6, bool no_default_pools = false)
+    {
         num_osds = new_num_osds;
         uuid_d fsid;
         osdmap.build_simple(g_ceph_context, 0, fsid, num_osds);
@@ -73,8 +79,9 @@ class OSDMapTest:public testing::Test,
             pending_inc.new_uuid[i] = sample_uuid;
         }
         osdmap.apply_incremental(pending_inc);
-        if (no_default_pools)   // do not create any default pool(s)
+        if (no_default_pools) { // do not create any default pool(s)
             return;
+        }
 
         OSDMap::Incremental new_pool_inc(osdmap.get_epoch() + 1);
         new_pool_inc.new_pool_max = osdmap.get_pool_max();
@@ -85,7 +92,8 @@ class OSDMapTest:public testing::Test,
         set_rep_pool("reppool", new_pool_inc);
         osdmap.apply_incremental(new_pool_inc);
     }
-    int get_ec_crush_rule() {
+    int get_ec_crush_rule()
+    {
         int r = osdmap.crush->get_rule_id(EC_RULE_NAME);
         if (r < 0) {
             r = osdmap.crush->add_simple_rule(EC_RULE_NAME, "default", "osd",
@@ -94,13 +102,15 @@ class OSDMapTest:public testing::Test,
         }
         return r;
     }
-    uint64_t set_ec_pool(const string & name,
-                         OSDMap::Incremental & new_pool_inc,
-                         bool assert_pool_id = true) {
+    uint64_t set_ec_pool(const string &name,
+                         OSDMap::Incremental &new_pool_inc,
+                         bool assert_pool_id = true)
+    {
         pg_pool_t empty;
         uint64_t pool_id = ++new_pool_inc.new_pool_max;
-        if (assert_pool_id)
+        if (assert_pool_id) {
             ceph_assert(pool_id == my_ec_pool);
+        }
         pg_pool_t *p = new_pool_inc.get_new_pool(pool_id, &empty);
         p->size = 3;
         p->set_pg_num(64);
@@ -110,12 +120,14 @@ class OSDMapTest:public testing::Test,
         new_pool_inc.new_pool_names[pool_id] = name;    //"ec";
         return pool_id;
     }
-    uint64_t set_rep_pool(const string name, OSDMap::Incremental & new_pool_inc,
-                          bool assert_pool_id = true) {
+    uint64_t set_rep_pool(const string name, OSDMap::Incremental &new_pool_inc,
+                          bool assert_pool_id = true)
+    {
         pg_pool_t empty;
         uint64_t pool_id = ++new_pool_inc.new_pool_max;
-        if (assert_pool_id)
+        if (assert_pool_id) {
             ceph_assert(pool_id == my_rep_pool);
+        }
         pg_pool_t *p = new_pool_inc.get_new_pool(pool_id, &empty);
         p->size = 3;
         p->set_pg_num(64);
@@ -127,17 +139,20 @@ class OSDMapTest:public testing::Test,
         return pool_id;
     }
 
-    unsigned int get_num_osds() {
+    unsigned int get_num_osds()
+    {
         return num_osds;
     }
-    void get_crush(const OSDMap & tmap, CrushWrapper & newcrush) {
+    void get_crush(const OSDMap &tmap, CrushWrapper &newcrush)
+    {
         bufferlist bl;
         tmap.crush->encode(bl, CEPH_FEATURES_SUPPORTED_DEFAULT);
         auto p = bl.cbegin();
         newcrush.decode(p);
     }
-    int crush_move(OSDMap & tmap, const string & name,
-                   const vector < string > &argvec) {
+    int crush_move(OSDMap &tmap, const string &name,
+                   const vector < string > &argvec)
+    {
         map < string, string > loc;
         CrushWrapper::parse_loc_map(argvec, &loc);
         CrushWrapper newcrush;
@@ -152,8 +167,7 @@ class OSDMapTest:public testing::Test,
                 err =
                     newcrush.create_or_move_item(g_ceph_context, id, 0, name,
                                                  loc);
-            }
-            else {
+            } else {
                 err = newcrush.move_bucket(g_ceph_context, id, loc);
             }
             if (err >= 0) {
@@ -164,15 +178,15 @@ class OSDMapTest:public testing::Test,
                 tmap.apply_incremental(pending_inc);
                 err = 0;
             }
-        }
-        else {
+        } else {
             // already there
             err = 0;
         }
         return err;
     }
-    int crush_rule_create_replicated(const string & name,
-                                     const string & root, const string & type) {
+    int crush_rule_create_replicated(const string &name,
+                                     const string &root, const string &type)
+    {
         if (osdmap.crush->rule_exists(name)) {
             return osdmap.crush->get_rule_id(name);
         }
@@ -193,8 +207,9 @@ class OSDMapTest:public testing::Test,
     }
     void test_mappings(int pool,
                        int num,
-                       vector < int >*any,
-                       vector < int >*first, vector < int >*primary) {
+                       vector < int > *any,
+                       vector < int > *first, vector < int > *primary)
+    {
         mapping.update(osdmap);
         for (int i = 0; i < num; ++i) {
             vector < int >up, acting;
@@ -203,12 +218,15 @@ class OSDMapTest:public testing::Test,
             osdmap.pg_to_up_acting_osds(pgid,
                                         &up, &up_primary, &acting,
                                         &acting_primary);
-            for (unsigned j = 0; j < acting.size(); ++j)
+            for (unsigned j = 0; j < acting.size(); ++j) {
                 (*any)[acting[j]]++;
-            if (!acting.empty())
+            }
+            if (!acting.empty()) {
                 (*first)[acting[0]]++;
-            if (acting_primary >= 0)
+            }
+            if (acting_primary >= 0) {
                 (*primary)[acting_primary]++;
+            }
 
             // compare to precalc mapping
             vector < int >up2, acting2;
@@ -224,8 +242,9 @@ class OSDMapTest:public testing::Test,
         cout << "first: " << *first << std::endl;;
         cout << "primary: " << *primary << std::endl;;
     }
-    void clean_pg_upmaps(CephContext * cct,
-                         const OSDMap & om, OSDMap::Incremental & pending_inc) {
+    void clean_pg_upmaps(CephContext *cct,
+                         const OSDMap &om, OSDMap::Incremental &pending_inc)
+    {
         int cpu_num = 8;
         int pgs_per_chunk = 256;
         ThreadPool tp(cct, "BUG_40104::clean_upmap_tp", "clean_upmap_tp",
@@ -239,14 +258,16 @@ class OSDMapTest:public testing::Test,
         job.wait();
         tp.stop();
     }
-    void set_primary_affinity_all(float pa) {
+    void set_primary_affinity_all(float pa)
+    {
         for (uint i = 0; i < get_num_osds(); i++) {
             osdmap.set_primary_affinity(i,
                                         int (pa *
                                              CEPH_OSD_MAX_PRIMARY_AFFINITY));
         }
     }
-    bool score_in_range(float score, uint nosds = 0) {
+    bool score_in_range(float score, uint nosds = 0)
+    {
         if (nosds == 0) {
             nosds = get_num_osds();
         }
@@ -491,8 +512,9 @@ TEST_F(OSDMapTest, KeepsNecessaryTemps)
             break;
         }
     }
-    if (i == (int)get_num_osds())
+    if (i == (int)get_num_osds()) {
         FAIL() << "did not find unused OSD for temp mapping";
+    }
 
     pgtemp_map.new_pg_temp[pgid] =
         mempool::osdmap::vector < int >(up_osds.begin(), up_osds.end());
@@ -515,11 +537,11 @@ TEST_F(OSDMapTest, PrimaryAffinity)
 
     int n = get_num_osds();
     for (map < int64_t, pg_pool_t >::const_iterator p =
-         osdmap.get_pools().begin(); p != osdmap.get_pools().end(); ++p) {
+             osdmap.get_pools().begin(); p != osdmap.get_pools().end(); ++p) {
         int pool = p->first;
         int expect_primary = 10000 / n;
         cout << "pool " << pool << " size " << (int)p->second.size
-            << " expect_primary " << expect_primary << std::endl;
+             << " expect_primary " << expect_primary << std::endl;
         {
             vector < int >any(n, 0);
             vector < int >first(n, 0);
@@ -544,8 +566,7 @@ TEST_F(OSDMapTest, PrimaryAffinity)
                 if (i >= 2) {
                     ASSERT_LT(0, first[i]);
                     ASSERT_LT(0, primary[i]);
-                }
-                else {
+                } else {
                     if (p->second.is_replicated()) {
                         ASSERT_EQ(0, first[i]);
                     }
@@ -568,14 +589,12 @@ TEST_F(OSDMapTest, PrimaryAffinity)
                 if (i >= 2) {
                     ASSERT_LT(0, first[i]);
                     ASSERT_LT(0, primary[i]);
-                }
-                else if (i == 1) {
+                } else if (i == 1) {
                     if (p->second.is_replicated()) {
                         ASSERT_EQ(0, first[i]);
                     }
                     ASSERT_EQ(0, primary[i]);
-                }
-                else {
+                } else {
                     ASSERT_LT(expect * 2 / 3, primary[0]);
                     ASSERT_GT(expect * 4 / 3, primary[0]);
                 }
@@ -626,45 +645,45 @@ TEST_F(OSDMapTest, parse_osd_id_list)
     set < int >all;
     osdmap.get_all_osds(all);
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "osd.0"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "osd.0"}, &out, &cout));
     ASSERT_EQ(1u, out.size());
     ASSERT_EQ(0, *out.begin());
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "1"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "1"}, &out, &cout));
     ASSERT_EQ(1u, out.size());
     ASSERT_EQ(1, *out.begin());
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "osd.0", "osd.1"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "osd.0", "osd.1"}, &out, &cout));
     ASSERT_EQ(2u, out.size());
     ASSERT_EQ(0, *out.begin());
     ASSERT_EQ(1, *out.rbegin());
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "osd.0", "1"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "osd.0", "1"}, &out, &cout));
     ASSERT_EQ(2u, out.size());
     ASSERT_EQ(0, *out.begin());
     ASSERT_EQ(1, *out.rbegin());
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "*"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "*"}, &out, &cout));
     ASSERT_EQ(all.size(), out.size());
     ASSERT_EQ(all, out);
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "all"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "all"}, &out, &cout));
     ASSERT_EQ(all, out);
 
-    ASSERT_EQ(0, osdmap.parse_osd_id_list( {
-                                          "any"}, &out, &cout));
+    ASSERT_EQ(0, osdmap.parse_osd_id_list({
+        "any"}, &out, &cout));
     ASSERT_EQ(all, out);
 
-    ASSERT_EQ(-EINVAL, osdmap.parse_osd_id_list( {
-                                                "foo"}, &out, &cout));
-    ASSERT_EQ(-EINVAL, osdmap.parse_osd_id_list( {
-                                                "-12"}, &out, &cout));
+    ASSERT_EQ(-EINVAL, osdmap.parse_osd_id_list({
+        "foo"}, &out, &cout));
+    ASSERT_EQ(-EINVAL, osdmap.parse_osd_id_list({
+        "-12"}, &out, &cout));
 }
 
 TEST_F(OSDMapTest, CleanPGUpmaps)
@@ -721,11 +740,11 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
     {
         // validate we won't have two OSDs from a same host
         int parent_0 = osdmap.crush->get_parent_of_type(up[0],
-                                                        osdmap.crush->
-                                                        get_type_id("host"));
+                       osdmap.crush->
+                       get_type_id("host"));
         int parent_1 = osdmap.crush->get_parent_of_type(up[1],
-                                                        osdmap.crush->
-                                                        get_type_id("host"));
+                       osdmap.crush->
+                       get_type_id("host"));
         ASSERT_TRUE(parent_0 != parent_1);
     }
 
@@ -900,8 +919,9 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
         ASSERT_TRUE(!crush.rule_exists(rule_name));
         int rno;
         for (rno = 0; rno < crush.get_max_rules(); rno++) {
-            if (!crush.rule_exists(rno))
+            if (!crush.rule_exists(rno)) {
                 break;
+            }
         }
         string root_name = "default";
         int root = crush.get_item_id(root_name);
@@ -913,9 +933,9 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
         crush_rule_set_step(rule, step++, CRUSH_RULE_SET_CHOOSE_TRIES, 100, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_TAKE, root, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_CHOOSE_INDEP, 2,
-                            1 /* host */ );
+                            1 /* host */);
         crush_rule_set_step(rule, step++, CRUSH_RULE_CHOOSE_INDEP, 2,
-                            0 /* osd */ );
+                            0 /* osd */);
         crush_rule_set_step(rule, step++, CRUSH_RULE_EMIT, 0, 0);
         ASSERT_TRUE(step == steps);
         auto r = crush_add_rule(crush.get_crush_map(), rule, rno);
@@ -960,13 +980,13 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
             from = *(ec_up.begin());
             ASSERT_TRUE(from >= 0);
             auto parent =
-                tmp.crush->get_parent_of_type(from, 1 /* host */ , rno);
+                tmp.crush->get_parent_of_type(from, 1 /* host */, rno);
             ASSERT_TRUE(parent < 0);
             // pick an osd of the same parent with *from*
             for (int i = 0; i < (int)get_num_osds(); i++) {
                 if (std::find(ec_up.begin(), ec_up.end(), i) == ec_up.end()) {
                     auto p =
-                        tmp.crush->get_parent_of_type(i, 1 /* host */ , rno);
+                        tmp.crush->get_parent_of_type(i, 1 /* host */, rno);
                     if (p == parent) {
                         to = i;
                         break;
@@ -1000,14 +1020,14 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
             // STEP-1: enumerate all children of up[0]'s parent,
             // replace up[1] with one of them (other than up[0])
             int parent = osdmap.crush->get_parent_of_type(up[0],
-                                                          osdmap.crush->
-                                                          get_type_id("host"));
+                         osdmap.crush->
+                         get_type_id("host"));
             set < int >candidates;
             osdmap.crush->get_leaves(osdmap.crush->get_item_name(parent),
                                      &candidates);
             ASSERT_LT(1U, candidates.size());
             int replaced_by = -1;
-          for (auto c:candidates) {
+            for (auto c : candidates) {
                 if (c != up[0]) {
                     replaced_by = c;
                     break;
@@ -1021,7 +1041,7 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
                 OSDMap::Incremental pending_inc(osdmap.get_epoch() + 1);
                 pending_inc.new_pg_upmap[pgid] =
                     mempool::osdmap::vector < int32_t > (new_pg_upmap.begin(),
-                                                         new_pg_upmap.end());
+                        new_pg_upmap.end());
                 osdmap.apply_incremental(pending_inc);
                 vector < int >new_up;
                 int new_up_primary;
@@ -1036,7 +1056,7 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
             OSDMap::Incremental pending_inc(osdmap.get_epoch() + 1);
             pending_inc.new_pg_upmap[pgid] =
                 mempool::osdmap::vector < int32_t > (new_pg_upmap.begin(),
-                                                     new_pg_upmap.end());
+                    new_pg_upmap.end());
             osdmap.apply_incremental(pending_inc);
             {
                 // validate pg_upmap is there
@@ -1048,13 +1068,13 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
                 ASSERT_EQ(new_up[1], new_pg_upmap[1]);
                 // and we shall have two OSDs from a same host now..
                 int parent_0 = osdmap.crush->get_parent_of_type(new_up[0],
-                                                                osdmap.crush->
-                                                                get_type_id
-                                                                ("host"));
+                               osdmap.crush->
+                               get_type_id
+                               ("host"));
                 int parent_1 = osdmap.crush->get_parent_of_type(new_up[1],
-                                                                osdmap.crush->
-                                                                get_type_id
-                                                                ("host"));
+                               osdmap.crush->
+                               get_type_id
+                               ("host"));
                 ASSERT_EQ(parent_0, parent_1);
             }
         }
@@ -1078,10 +1098,10 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
         // TEST pg_upmap_items
         // enumerate all used hosts first
         set < int >parents;
-      for (auto u:up) {
+        for (auto u : up) {
             int parent = osdmap.crush->get_parent_of_type(u,
-                                                          osdmap.crush->
-                                                          get_type_id("host"));
+                         osdmap.crush->
+                         get_type_id("host"));
             ASSERT_GT(0, parent);
             parents.insert(parent);
         }
@@ -1091,13 +1111,13 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
         {
             // STEP-1: try mark out up[1] and all other OSDs from the same host
             int parent = osdmap.crush->get_parent_of_type(up[1],
-                                                          osdmap.crush->
-                                                          get_type_id("host"));
+                         osdmap.crush->
+                         get_type_id("host"));
             set < int >children;
             osdmap.crush->get_leaves(osdmap.crush->get_item_name(parent),
                                      &children);
             OSDMap::Incremental pending_inc(osdmap.get_epoch() + 1);
-          for (auto c:children) {
+            for (auto c : children) {
                 pending_inc.new_weight[c] = CEPH_OSD_OUT;
             }
             OSDMap tmpmap;
@@ -1108,11 +1128,11 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
             tmpmap.pg_to_raw_up(pgid, &new_up, &new_up_primary);
             // verify that we'll have OSDs from a different host..
             int will_choose = -1;
-          for (auto o:new_up) {
+            for (auto o : new_up) {
                 int parent = tmpmap.crush->get_parent_of_type(o,
-                                                              osdmap.crush->
-                                                              get_type_id
-                                                              ("host"));
+                             osdmap.crush->
+                             get_type_id
+                             ("host"));
                 if (!parents.count(parent)) {
                     will_choose = o;
                     candidate_parent = parent;  // record
@@ -1178,13 +1198,13 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
         {
             // STEP-3: mark out up[1] and all other OSDs from the same host
             int parent = osdmap.crush->get_parent_of_type(up[1],
-                                                          osdmap.crush->
-                                                          get_type_id("host"));
+                         osdmap.crush->
+                         get_type_id("host"));
             set < int >children;
             osdmap.crush->get_leaves(osdmap.crush->get_item_name(parent),
                                      &children);
             OSDMap::Incremental pending_inc(osdmap.get_epoch() + 1);
-          for (auto c:children) {
+            for (auto c : children) {
                 pending_inc.new_weight[c] = CEPH_OSD_OUT;
             }
             osdmap.apply_incremental(pending_inc);
@@ -1195,13 +1215,13 @@ TEST_F(OSDMapTest, CleanPGUpmaps)
                 osdmap.pg_to_raw_up(pgid, &new_up, &new_up_primary);
                 ASSERT_EQ(up.size(), new_up.size());
                 int parent_0 = osdmap.crush->get_parent_of_type(new_up[0],
-                                                                osdmap.crush->
-                                                                get_type_id
-                                                                ("host"));
+                               osdmap.crush->
+                               get_type_id
+                               ("host"));
                 int parent_1 = osdmap.crush->get_parent_of_type(new_up[1],
-                                                                osdmap.crush->
-                                                                get_type_id
-                                                                ("host"));
+                               osdmap.crush->
+                               get_type_id
+                               ("host"));
                 ASSERT_EQ(parent_0, parent_1);
             }
         }
@@ -1253,8 +1273,9 @@ TEST_F(OSDMapTest, BUG_38897)
         ASSERT_TRUE(!crush.rule_exists(rule_name));
         int rno;
         for (rno = 0; rno < crush.get_max_rules(); rno++) {
-            if (!crush.rule_exists(rno))
+            if (!crush.rule_exists(rno)) {
                 break;
+            }
         }
         int steps = 7;
         crush_rule *rule = crush_make_rule(steps, rule_type);
@@ -1319,7 +1340,7 @@ TEST_F(OSDMapTest, BUG_38897)
                     OSDMap::Incremental pending_inc(osdmap.get_epoch() + 1);
                     pending_inc.new_pg_upmap[pgid] =
                         mempool::osdmap::vector < int32_t > (new_up.begin(),
-                                                             new_up.end());
+                            new_up.end());
                     osdmap.apply_incremental(pending_inc);
                 }
                 osdmap.pg_to_raw_up(pgid, &up, &up_primary);
@@ -1352,8 +1373,9 @@ TEST_F(OSDMapTest, BUG_38897)
         ASSERT_TRUE(!crush.rule_exists(rule_name));
         int rno;
         for (rno = 0; rno < crush.get_max_rules(); rno++) {
-            if (!crush.rule_exists(rno))
+            if (!crush.rule_exists(rno)) {
                 break;
+            }
         }
         int steps = 7;
         crush_rule *rule = crush_make_rule(steps, rule_type);
@@ -1491,8 +1513,8 @@ TEST_F(OSDMapTest, BUG_40104)
         clean_pg_upmaps(g_ceph_context, osdmap, pending_inc);
         auto latency = mono_clock::now() - start;
         std::cout << "clean_pg_upmaps (~" << big_pg_num
-            << " pg_upmap_items) latency:" << timespan_str(latency)
-            << std::endl;
+                  << " pg_upmap_items) latency:" << timespan_str(latency)
+                  << std::endl;
     }
 }
 
@@ -1509,8 +1531,9 @@ TEST_F(OSDMapTest, BUG_42052)
     ASSERT_TRUE(!crush.rule_exists(rule_name));
     int rno;
     for (rno = 0; rno < crush.get_max_rules(); rno++) {
-        if (!crush.rule_exists(rno))
+        if (!crush.rule_exists(rno)) {
             break;
+        }
     }
     int steps = 8;
     crush_rule *rule = crush_make_rule(steps, rule_type);
@@ -1557,7 +1580,7 @@ TEST_F(OSDMapTest, BUG_42052)
     {
         // pg_upmap 1.0 [2,3,5]
         vector < int32_t > new_up {
-        2, 3, 5};
+            2, 3, 5};
         OSDMap::Incremental pending_inc(osdmap.get_epoch() + 1);
         pending_inc.new_pg_upmap[pgid] =
             mempool::osdmap::vector < int32_t > (new_up.begin(), new_up.end());
@@ -1631,8 +1654,9 @@ TEST_F(OSDMapTest, BUG_42485)
         ASSERT_TRUE(!crush.rule_exists(rule_name));
         int rno;
         for (rno = 0; rno < crush.get_max_rules(); rno++) {
-            if (!crush.rule_exists(rno))
+            if (!crush.rule_exists(rno)) {
                 break;
+            }
         }
         string root_name = "default";
         string dc_1 = "dc-0";
@@ -1647,11 +1671,11 @@ TEST_F(OSDMapTest, BUG_42485)
         crush_rule_set_step(rule, step++, CRUSH_RULE_SET_CHOOSE_TRIES, 100, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_TAKE, dc1, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_CHOOSELEAF_FIRSTN, 2,
-                            3 /* rack */ );
+                            3 /* rack */);
         crush_rule_set_step(rule, step++, CRUSH_RULE_EMIT, 0, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_TAKE, dc2, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_CHOOSELEAF_FIRSTN, 2,
-                            3 /* rack */ );
+                            3 /* rack */);
         crush_rule_set_step(rule, step++, CRUSH_RULE_EMIT, 0, 0);
         ASSERT_TRUE(step == steps);
         auto r = crush_add_rule(crush.get_crush_map(), rule, rno);
@@ -1695,29 +1719,31 @@ TEST_F(OSDMapTest, BUG_42485)
             from = *(rep_up.begin());
             ASSERT_TRUE(from >= 0);
             auto dc_parent =
-                tmp.crush->get_parent_of_type(from, 8 /* dc */ , rno);
-            if (dc_parent == dc1)
+                tmp.crush->get_parent_of_type(from, 8 /* dc */, rno);
+            if (dc_parent == dc1) {
                 dc_parent = dc2;
-            else
+            } else {
                 dc_parent = dc1;
+            }
             auto rack_parent =
-                tmp.crush->get_parent_of_type(from, 3 /* rack */ , rno);
+                tmp.crush->get_parent_of_type(from, 3 /* rack */, rno);
             ASSERT_TRUE(dc_parent < 0);
             ASSERT_TRUE(rack_parent < 0);
             set < int >rack_parents;
-          for (auto & i:rep_up) {
-                if (i == from)
+            for (auto &i : rep_up) {
+                if (i == from) {
                     continue;
+                }
                 auto rack_parent =
-                    tmp.crush->get_parent_of_type(i, 3 /* rack */ , rno);
+                    tmp.crush->get_parent_of_type(i, 3 /* rack */, rno);
                 rack_parents.insert(rack_parent);
             }
             for (int i = 0; i < (int)get_num_osds(); i++) {
                 if (std::find(rep_up.begin(), rep_up.end(), i) == rep_up.end()) {
                     auto dc_p =
-                        tmp.crush->get_parent_of_type(i, 8 /* dc */ , rno);
+                        tmp.crush->get_parent_of_type(i, 8 /* dc */, rno);
                     auto rack_p =
-                        tmp.crush->get_parent_of_type(i, 3 /* rack */ , rno);
+                        tmp.crush->get_parent_of_type(i, 3 /* rack */, rno);
                     if (dc_p == dc_parent
                         && rack_parents.find(rack_p) == rack_parents.end()) {
                         to = i;
@@ -1743,7 +1769,7 @@ TEST_F(OSDMapTest, BUG_42485)
         {
             pg_t rep_pgid = rep_pgid2;
             vector < int >from_osds {
-            -1, -1};
+                -1, -1};
             vector < int >rep_up;
             int rep_up_primary;
             tmp.pg_to_raw_up(rep_pgid, &rep_up, &rep_up_primary);
@@ -1754,27 +1780,29 @@ TEST_F(OSDMapTest, BUG_42485)
             ASSERT_TRUE(*(from_osds.begin()) >= 0);
             ASSERT_TRUE(*(from_osds.rbegin()) >= 0);
             vector < pair < int32_t, int32_t >> new_pg_upmap_items;
-          for (auto & from:from_osds) {
+            for (auto &from : from_osds) {
                 int to = -1;
                 auto dc_parent =
-                    tmp.crush->get_parent_of_type(from, 8 /* dc */ , rno);
-                if (dc_parent == dc1)
+                    tmp.crush->get_parent_of_type(from, 8 /* dc */, rno);
+                if (dc_parent == dc1) {
                     dc_parent = dc2;
-                else
+                } else {
                     dc_parent = dc1;
+                }
                 auto rack_parent =
-                    tmp.crush->get_parent_of_type(from, 3 /* rack */ , rno);
+                    tmp.crush->get_parent_of_type(from, 3 /* rack */, rno);
                 ASSERT_TRUE(dc_parent < 0);
                 ASSERT_TRUE(rack_parent < 0);
                 set < int >rack_parents;
-              for (auto & i:rep_up) {
-                    if (i == from)
+                for (auto &i : rep_up) {
+                    if (i == from) {
                         continue;
+                    }
                     auto rack_parent =
-                        tmp.crush->get_parent_of_type(i, 3 /* rack */ , rno);
+                        tmp.crush->get_parent_of_type(i, 3 /* rack */, rno);
                     rack_parents.insert(rack_parent);
                 }
-              for (auto & i:new_pg_upmap_items) {
+                for (auto &i : new_pg_upmap_items) {
                     auto rack_from =
                         tmp.crush->get_parent_of_type(i.first, 3, rno);
                     auto rack_to =
@@ -1786,9 +1814,9 @@ TEST_F(OSDMapTest, BUG_42485)
                     if (std::find(rep_up.begin(), rep_up.end(), i) ==
                         rep_up.end()) {
                         auto dc_p =
-                            tmp.crush->get_parent_of_type(i, 8 /* dc */ , rno);
+                            tmp.crush->get_parent_of_type(i, 8 /* dc */, rno);
                         auto rack_p =
-                            tmp.crush->get_parent_of_type(i, 3 /* rack */ ,
+                            tmp.crush->get_parent_of_type(i, 3 /* rack */,
                                                           rno);
                         if (dc_p == dc_parent
                             && rack_parents.find(rack_p) ==
@@ -1829,11 +1857,13 @@ TEST(PGTempMap, basic)
     for (auto i = 3; i < 1000; ++i) {
         pg_t x(i, 1);
         m.set(x, {
-              static_cast < int >(i)});
+            static_cast < int >(i)
+        });
     }
     pg_t b(2, 1);
     m.set(a, {
-          1, 2});
+        1, 2
+    });
     ASSERT_NE(m.find(a), m.end());
     ASSERT_EQ(m.find(a), m.begin());
     ASSERT_EQ(m.find(b), m.end());
@@ -1887,8 +1917,9 @@ TEST_F(OSDMapTest, BUG_43124)
         ASSERT_TRUE(!crush.rule_exists(rule_name));
         int rno;
         for (rno = 0; rno < crush.get_max_rules(); rno++) {
-            if (!crush.rule_exists(rno))
+            if (!crush.rule_exists(rno)) {
                 break;
+            }
         }
         int steps = 6;
         string root_name = "default";
@@ -1900,9 +1931,9 @@ TEST_F(OSDMapTest, BUG_43124)
         crush_rule_set_step(rule, step++, CRUSH_RULE_SET_CHOOSE_TRIES, 100, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_TAKE, root, 0);
         crush_rule_set_step(rule, step++, CRUSH_RULE_CHOOSE_FIRSTN, 4,
-                            3 /* rack */ );
+                            3 /* rack */);
         crush_rule_set_step(rule, step++, CRUSH_RULE_CHOOSELEAF_INDEP, 3,
-                            1 /* host */ );
+                            1 /* host */);
         crush_rule_set_step(rule, step++, CRUSH_RULE_EMIT, 0, 0);
         ASSERT_TRUE(step == steps);
         auto r = crush_add_rule(crush.get_crush_map(), rule, rno);
@@ -1958,19 +1989,19 @@ TEST_F(OSDMapTest, BUG_43124)
             from = *(rep_up.begin());
             ASSERT_TRUE(from >= 0);
             auto from_rack =
-                tmp.crush->get_parent_of_type(from, 3 /* rack */ , rno);
+                tmp.crush->get_parent_of_type(from, 3 /* rack */, rno);
             set < int >failure_domains;
-          for (auto & osd:rep_up) {
+            for (auto &osd : rep_up) {
                 failure_domains.insert(tmp.crush->
-                                       get_parent_of_type(osd, 1 /* host */ ,
-                                                          rno));
+                                       get_parent_of_type(osd, 1 /* host */,
+                                               rno));
             }
             for (int i = 0; i < (int)get_num_osds(); i++) {
                 if (std::find(rep_up.begin(), rep_up.end(), i) == rep_up.end()) {
                     auto to_rack =
-                        tmp.crush->get_parent_of_type(i, 3 /* rack */ , rno);
+                        tmp.crush->get_parent_of_type(i, 3 /* rack */, rno);
                     auto to_host =
-                        tmp.crush->get_parent_of_type(i, 1 /* host */ , rno);
+                        tmp.crush->get_parent_of_type(i, 1 /* host */, rno);
                     if (to_rack != from_rack
                         && failure_domains.count(to_host) == 0) {
                         to = i;
@@ -2047,14 +2078,13 @@ TEST_F(OSDMapTest, BUG_48884)
     stats_null.statfs.internal_metadata = 0;
     for (unsigned int x = 0; x < get_num_osds(); x++) {
         if (x > 3 && x < 8) {
-            pgmap.osd_stat.insert( {
-                                  x, stats_null}
-            );
-        }
-        else {
-            pgmap.osd_stat.insert( {
-                                  x, stats}
-            );
+            pgmap.osd_stat.insert({
+                x, stats_null}
+                                 );
+        } else {
+            pgmap.osd_stat.insert({
+                x, stats}
+                                 );
         }
     }
 
@@ -2064,7 +2094,7 @@ TEST_F(OSDMapTest, BUG_48884)
     JSONParser parser;
     parser.parse(ss.str().c_str(), static_cast < int >(ss.str().size()));
     auto iter = parser.find_first();
-  for (const auto & bucket:(*iter)->get_array_elements()) {
+    for (const auto &bucket : (*iter)->get_array_elements()) {
         JSONParser parser2;
         parser2.parse(bucket.c_str(), static_cast < int >(bucket.size()));
         auto *obj = parser2.find_obj("name");
@@ -2108,8 +2138,9 @@ TEST_P(OSDMapTest, BUG_51842)
     ASSERT_TRUE(!crush.rule_exists(rule_name));
     int rno;
     for (rno = 0; rno < crush.get_max_rules(); rno++) {
-        if (!crush.rule_exists(rno))
+        if (!crush.rule_exists(rno)) {
             break;
+        }
     }
     string root_bucket = "infra-1706";
     int root = crush.get_item_id(root_bucket);
@@ -2176,16 +2207,16 @@ TEST_P(OSDMapTest, BUG_51842)
     pg_t rep_pgid3 = tmp.raw_pg_to_pg(rep_pg3);
     {
         OSDMap::Incremental pending_inc(tmp.get_epoch() + 1);
-        pending_inc.new_pg_upmap[rep_pgid] = mempool::osdmap::vector < int32_t > ( {
-                                                                                  1,
-                                                                                  0,
-                                                                                  2});
+        pending_inc.new_pg_upmap[rep_pgid] = mempool::osdmap::vector < int32_t > ({
+            1,
+            0,
+            2});
         pending_inc.new_pg_upmap[rep_pgid2] =
-            mempool::osdmap::vector < int32_t > ( {
-                                                 1, 2, 0});
+        mempool::osdmap::vector < int32_t > ({
+            1, 2, 0});
         pending_inc.new_pg_upmap[rep_pgid3] =
-            mempool::osdmap::vector < int32_t > ( {
-                                                 1, 2, 0});
+        mempool::osdmap::vector < int32_t > ({
+            1, 2, 0});
         tmp.apply_incremental(pending_inc);
         ASSERT_TRUE(tmp.have_pg_upmaps(rep_pgid));
         ASSERT_TRUE(tmp.have_pg_upmaps(rep_pgid2));
@@ -2232,14 +2263,14 @@ TEST_P(OSDMapTest, BUG_51842)
     }
 }
 
-const string OSDMapTest::range_addrs[] =
-    { "198.51.100.0/22", "10.2.5.102/32", "2001:db8::/48",
+const string OSDMapTest::range_addrs[] = {
+    "198.51.100.0/22", "10.2.5.102/32", "2001:db8::/48",
     "3001:db8::/72", "4001:db8::/30", "5001:db8::/64", "6001:db8::/128",
-        "7001:db8::/127"
+    "7001:db8::/127"
 };
 
-const string OSDMapTest::ip_addrs[] =
-    { "198.51.100.14", "198.51.100.0", "198.51.103.255",
+const string OSDMapTest::ip_addrs[] = {
+    "198.51.100.14", "198.51.100.0", "198.51.103.255",
     "10.2.5.102",
     "2001:db8:0:0:0:0:0:0", "2001:db8:0:0:0:0001:ffff:ffff",
     "2001:db8:0:ffff:ffff:ffff:ffff:ffff",
@@ -2253,8 +2284,8 @@ const string OSDMapTest::ip_addrs[] =
     "7001:db8:0:0:0:0:0:0", "7001:db8:0:0:0:0:0:0001"
 };
 
-const string OSDMapTest::unblocked_ip_addrs[] =
-    { "0.0.0.0", "1.1.1.1", "192.168.1.1",
+const string OSDMapTest::unblocked_ip_addrs[] = {
+    "0.0.0.0", "1.1.1.1", "192.168.1.1",
     "198.51.99.255", "198.51.104.0",
     "10.2.5.101", "10.2.5.103",
     "2001:db7:ffff:ffff:ffff:ffff:ffff:ffff", "2001:db8:0001::",
@@ -2270,7 +2301,7 @@ TEST_F(OSDMapTest, blocklisting_ips)
     set_up_map(6);              //whatever
 
     OSDMap::Incremental new_blocklist_inc(osdmap.get_epoch() + 1);
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
@@ -2278,13 +2309,13 @@ TEST_F(OSDMapTest, blocklisting_ips)
     }
     osdmap.apply_incremental(new_blocklist_inc);
 
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
         ASSERT_TRUE(osdmap.is_blocklisted(addr, g_ceph_context));
     }
-  for (const auto & a:unblocked_ip_addrs) {
+    for (const auto &a : unblocked_ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
@@ -2292,20 +2323,20 @@ TEST_F(OSDMapTest, blocklisting_ips)
     }
 
     OSDMap::Incremental rm_blocklist_inc(osdmap.get_epoch() + 1);
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
         rm_blocklist_inc.old_blocklist.push_back(addr);
     }
     osdmap.apply_incremental(rm_blocklist_inc);
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
         ASSERT_FALSE(osdmap.is_blocklisted(addr, g_ceph_context));
     }
-  for (const auto & a:unblocked_ip_addrs) {
+    for (const auto &a : unblocked_ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
@@ -2321,7 +2352,7 @@ TEST_F(OSDMapTest, blocklisting_ranges)
 {
     set_up_map(6);              //whatever
     OSDMap::Incremental range_blocklist_inc(osdmap.get_epoch() + 1);
-  for (const auto & a:range_addrs) {
+    for (const auto &a : range_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.type = entity_addr_t::TYPE_CIDR;
@@ -2329,7 +2360,7 @@ TEST_F(OSDMapTest, blocklisting_ranges)
     }
     osdmap.apply_incremental(range_blocklist_inc);
 
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
@@ -2339,7 +2370,7 @@ TEST_F(OSDMapTest, blocklisting_ranges)
         }
         ASSERT_TRUE(blocklisted);
     }
-  for (const auto & a:unblocked_ip_addrs) {
+    for (const auto &a : unblocked_ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
@@ -2351,7 +2382,7 @@ TEST_F(OSDMapTest, blocklisting_ranges)
     }
 
     OSDMap::Incremental rm_range_blocklist(osdmap.get_epoch() + 1);
-  for (const auto & a:range_addrs) {
+    for (const auto &a : range_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.type = entity_addr_t::TYPE_CIDR;
@@ -2359,13 +2390,13 @@ TEST_F(OSDMapTest, blocklisting_ranges)
     }
     osdmap.apply_incremental(rm_range_blocklist);
 
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
         ASSERT_FALSE(osdmap.is_blocklisted(addr, g_ceph_context));
     }
-  for (const auto & a:unblocked_ip_addrs) {
+    for (const auto &a : unblocked_ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
@@ -2387,24 +2418,26 @@ TEST_F(OSDMapTest, blocklisting_everything)
     range_blocklist_inc.new_range_blocklist[baddr] = ceph_clock_now();
     osdmap.apply_incremental(range_blocklist_inc);
 
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
-        if (addr.is_ipv4())
+        if (addr.is_ipv4()) {
             continue;
+        }
         bool blocklisted = osdmap.is_blocklisted(addr, g_ceph_context);
         if (!blocklisted) {
             cout << "erroneously not  blocklisted " << addr << std::endl;
         }
         ASSERT_TRUE(blocklisted);
     }
-  for (const auto & a:unblocked_ip_addrs) {
+    for (const auto &a : unblocked_ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
-        if (addr.is_ipv4())
+        if (addr.is_ipv4()) {
             continue;
+        }
         bool blocklisted = osdmap.is_blocklisted(addr, g_ceph_context);
         if (!blocklisted) {
             cout << "erroneously not  blocklisted " << addr << std::endl;
@@ -2421,24 +2454,26 @@ TEST_F(OSDMapTest, blocklisting_everything)
     swap_blocklist_inc.new_range_blocklist[caddr] = ceph_clock_now();
     osdmap.apply_incremental(swap_blocklist_inc);
 
-  for (const auto & a:ip_addrs) {
+    for (const auto &a : ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
-        if (!addr.is_ipv4())
+        if (!addr.is_ipv4()) {
             continue;
+        }
         bool blocklisted = osdmap.is_blocklisted(addr, g_ceph_context);
         if (!blocklisted) {
             cout << "erroneously not  blocklisted " << addr << std::endl;
         }
         ASSERT_TRUE(blocklisted);
     }
-  for (const auto & a:unblocked_ip_addrs) {
+    for (const auto &a : unblocked_ip_addrs) {
         entity_addr_t addr;
         addr.parse(a);
         addr.set_type(entity_addr_t::TYPE_LEGACY);
-        if (!addr.is_ipv4())
+        if (!addr.is_ipv4()) {
             continue;
+        }
         bool blocklisted = osdmap.is_blocklisted(addr, g_ceph_context);
         if (!blocklisted) {
             cout << "erroneously not  blocklisted " << addr << std::endl;
@@ -2449,11 +2484,11 @@ TEST_F(OSDMapTest, blocklisting_everything)
 
 TEST_F(OSDMapTest, ReadBalanceScore1)
 {
-    std::srand(unsigned (std::time(0)));
+    std::srand(unsigned(std::time(0)));
     uint osd_rand = rand() % 13;
     set_up_map(6 + osd_rand);   //whatever
     auto pools = osdmap.get_pools();
-  for (auto &[pid, pg_pool]:pools) {
+    for (auto &[pid, pg_pool] : pools) {
         const pg_pool_t *pi = osdmap.get_pg_pool(pid);
         if (pi->is_replicated()) {
             //cout << "pool " << pid << " " << pg_pool << std::endl;
@@ -2488,7 +2523,7 @@ TEST_F(OSDMapTest, ReadBalanceScore1)
                 // Create random shuffle of OSDs
                 std::random_shuffle(osds.begin(), osds.end());
                 for (uint i = 0; i < num_osds; i++) {
-                    if ((float (i + 1) / float (num_osds))<fratio) {
+                    if ((float (i + 1) / float (num_osds)) < fratio) {
                         ASSERT_TRUE(osds[i] < num_osds);
                         osdmap.set_primary_affinity(osds[i],
                                                     CEPH_OSD_MAX_PRIMARY_AFFINITY);
@@ -2499,14 +2534,12 @@ TEST_F(OSDMapTest, ReadBalanceScore1)
                         ASSERT_TRUE(rbi.adjusted_score == 0.);
                         ASSERT_TRUE(rbi.acting_adj_score == 0.);
                         ASSERT_FALSE(rbi.err_msg.empty());
-                    }
-                    else {
+                    } else {
                         if (rc < 0) {
                             ASSERT_TRUE(rbi.adjusted_score == 0.);
                             ASSERT_TRUE(rbi.acting_adj_score == 0.);
                             ASSERT_FALSE(rbi.err_msg.empty());
-                        }
-                        else {
+                        } else {
                             ASSERT_TRUE(score_in_range
                                         (rbi.acting_adj_score, i + 1));
                             ASSERT_TRUE(rbi.err_msg.empty());
@@ -2522,7 +2555,7 @@ TEST_F(OSDMapTest, ReadBalanceScore1)
 
 TEST_F(OSDMapTest, ReadBalanceScore2)
 {
-    std::srand(unsigned (std::time(0)));
+    std::srand(unsigned(std::time(0)));
     uint osd_num = 6 + rand() % 13;
     set_up_map(osd_num, true);
     for (int i = 0; i < 100; i++) { //running 100 random tests
@@ -2533,10 +2566,12 @@ TEST_F(OSDMapTest, ReadBalanceScore2)
         // set pa for all osds
         for (uint j = 0; j < osd_num; j++) {
             uint pa = 1 + rand() % 100;
-            if (pa > 80)
+            if (pa > 80) {
                 pa = 100;
-            if (pa < 20)
+            }
+            if (pa < 20) {
                 pa = 0;
+            }
             float fpa = (float)pa / 100.;
             if (pa > 0) {
                 num_pa_osds++;
@@ -2568,14 +2603,12 @@ TEST_F(OSDMapTest, ReadBalanceScore2)
             ASSERT_FALSE(rbi.err_msg.empty());
             ASSERT_TRUE(rbi.acting_adj_score == 0.);
             ASSERT_TRUE(rbi.adjusted_score == 0.);
-        }
-        else {
+        } else {
             if (rc < 0) {
                 ASSERT_TRUE(rbi.adjusted_score == 0.);
                 ASSERT_TRUE(rbi.acting_adj_score == 0.);
                 ASSERT_FALSE(rbi.err_msg.empty());
-            }
-            else {
+            } else {
                 if (rbi.err_msg.empty()) {
                     ASSERT_TRUE(score_in_range
                                 (rbi.acting_adj_score, num_pa_osds));
@@ -2594,7 +2627,7 @@ TEST_F(OSDMapTest, read_balance_small_map)
     set_up_map(4);
 
     const vector < string > test_cases = { "basic", "prim_affinity" };
-  for (const auto & test:test_cases) {
+    for (const auto &test : test_cases) {
         if (test == "prim_affinity") {
             // Make osd.0 off-limits for primaries by giving it prim affinity 0
             OSDMap::Incremental pending_inc0(osdmap.get_epoch() + 1);
@@ -2629,14 +2662,14 @@ TEST_F(OSDMapTest, read_balance_small_map)
         osdmap.get_pgs_by_osd(g_ceph_context, my_rep_pool, &prim_pgs_by_osd_2,
                               &acting_prims_by_osd_2);
         vector < uint64_t > osds_to_check;
-      for (const auto &[osd, pgs]:prim_pgs_by_osd_2) {
+        for (const auto &[osd, pgs] : prim_pgs_by_osd_2) {
             osds_to_check.push_back(osd);
         }
         map < uint64_t, float >desired_prim_dist;
         rc = osdmap.calc_desired_primary_distribution(g_ceph_context,
-                                                      my_rep_pool,
-                                                      osds_to_check,
-                                                      desired_prim_dist);
+             my_rep_pool,
+             osds_to_check,
+             desired_prim_dist);
         ASSERT_TRUE(rc >= 0);
 
         // Balance reads
@@ -2674,7 +2707,7 @@ TEST_F(OSDMapTest, read_balance_small_map)
                 acting_prims_by_osd_4;
             osdmap.get_pgs_by_osd(g_ceph_context, my_rep_pool,
                                   &prim_pgs_by_osd_4, &acting_prims_by_osd_4);
-          for (const auto &[osd, primaries]:prim_pgs_by_osd_4) {
+            for (const auto &[osd, primaries] : prim_pgs_by_osd_4) {
                 ASSERT_TRUE(primaries.size() >=
                             floor(desired_prim_dist[osd] - 1));
                 ASSERT_TRUE(primaries.size() <=
@@ -2690,7 +2723,7 @@ TEST_F(OSDMapTest, read_balance_large_map)
     set_up_map(60);
 
     const vector < string > test_cases = { "basic", "prim_affinity" };
-  for (const auto & test:test_cases) {
+    for (const auto &test : test_cases) {
         if (test == "prim_affinity") {
             // Make osd.0 off-limits for primaries by giving it prim affinity 0
             OSDMap::Incremental pending_inc0(osdmap.get_epoch() + 1);
@@ -2725,14 +2758,14 @@ TEST_F(OSDMapTest, read_balance_large_map)
         osdmap.get_pgs_by_osd(g_ceph_context, my_rep_pool, &prim_pgs_by_osd_2,
                               &acting_prims_by_osd_2);
         vector < uint64_t > osds_to_check;
-      for (auto[osd, pgs]:prim_pgs_by_osd_2) {
+        for (auto[osd, pgs] : prim_pgs_by_osd_2) {
             osds_to_check.push_back(osd);
         }
         map < uint64_t, float >desired_prim_dist;
         rc = osdmap.calc_desired_primary_distribution(g_ceph_context,
-                                                      my_rep_pool,
-                                                      osds_to_check,
-                                                      desired_prim_dist);
+             my_rep_pool,
+             osds_to_check,
+             desired_prim_dist);
         ASSERT_TRUE(rc >= 0);
 
         // Balance reads
@@ -2770,7 +2803,7 @@ TEST_F(OSDMapTest, read_balance_large_map)
                 acting_prims_by_osd_4;
             osdmap.get_pgs_by_osd(g_ceph_context, my_rep_pool,
                                   &prim_pgs_by_osd_4, &acting_prims_by_osd_4);
-          for (const auto &[osd, primaries]:prim_pgs_by_osd_4) {
+            for (const auto &[osd, primaries] : prim_pgs_by_osd_4) {
                 ASSERT_TRUE(primaries.size() >=
                             floor(desired_prim_dist[osd] - 1));
                 ASSERT_TRUE(primaries.size() <=
@@ -2783,13 +2816,13 @@ TEST_F(OSDMapTest, read_balance_large_map)
 TEST_F(OSDMapTest, read_balance_random_map)
 {
     // Set up map with random number of OSDs
-    std::srand(unsigned (std::time(0)));
+    std::srand(unsigned(std::time(0)));
     uint num_osds = 3 + (rand() % 10);
     ASSERT_TRUE(num_osds >= 3);
     set_up_map(num_osds);
 
     const vector < string > test_cases = { "basic", "prim_affinity" };
-  for (const auto & test:test_cases) {
+    for (const auto &test : test_cases) {
         uint rand_osd = rand() % num_osds;
         if (test == "prim_affinity") {
             // Make a random OSD off-limits for primaries by giving it prim affinity 0
@@ -2826,14 +2859,14 @@ TEST_F(OSDMapTest, read_balance_random_map)
         osdmap.get_pgs_by_osd(g_ceph_context, my_rep_pool, &prim_pgs_by_osd_2,
                               &acting_prims_by_osd_2);
         vector < uint64_t > osds_to_check;
-      for (const auto &[osd, pgs]:prim_pgs_by_osd_2) {
+        for (const auto &[osd, pgs] : prim_pgs_by_osd_2) {
             osds_to_check.push_back(osd);
         }
         map < uint64_t, float >desired_prim_dist;
         rc = osdmap.calc_desired_primary_distribution(g_ceph_context,
-                                                      my_rep_pool,
-                                                      osds_to_check,
-                                                      desired_prim_dist);
+             my_rep_pool,
+             osds_to_check,
+             desired_prim_dist);
         ASSERT_TRUE(rc >= 0);
 
         // Balance reads
@@ -2871,13 +2904,13 @@ TEST_F(OSDMapTest, read_balance_random_map)
                 acting_prims_by_osd_4;
             osdmap.get_pgs_by_osd(g_ceph_context, my_rep_pool,
                                   &prim_pgs_by_osd_4, &acting_prims_by_osd_4);
-          for (auto[osd, primaries]:prim_pgs_by_osd_4) {
+            for (auto[osd, primaries] : prim_pgs_by_osd_4) {
                 ASSERT_TRUE(primaries.size() >=
                             floor(desired_prim_dist[osd] - 1));
                 ASSERT_TRUE(primaries.size() <=
                             ceil(desired_prim_dist[osd] + 1));
             }
-          for (auto[osd, primaries]:prim_pgs_by_osd_4) {
+            for (auto[osd, primaries] : prim_pgs_by_osd_4) {
                 ASSERT_TRUE(primaries.size() >=
                             floor(desired_prim_dist[osd] - 1));
                 ASSERT_TRUE(primaries.size() <=
@@ -2887,9 +2920,10 @@ TEST_F(OSDMapTest, read_balance_random_map)
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(OSDMap, OSDMapTest,::testing::Values(std::make_pair < int, int >(0, 1),    // chooseleaf firstn 0 host
-                                                              std::make_pair < int, int >(3, 1),    // chooseleaf firstn 3 host
-                                                              std::make_pair < int, int >(0, 0),    // chooseleaf firstn 0 osd
-                                                              std::make_pair < int, int >(3, 0) // chooseleaf firstn 3 osd
-                         )
-    );
+INSTANTIATE_TEST_SUITE_P(OSDMap, OSDMapTest, ::testing::Values(std::make_pair < int, int >(0,
+                         1),   // chooseleaf firstn 0 host
+                         std::make_pair < int, int >(3, 1),    // chooseleaf firstn 3 host
+                         std::make_pair < int, int >(0, 0),    // chooseleaf firstn 0 osd
+                         std::make_pair < int, int >(3, 0) // chooseleaf firstn 3 osd
+                                                              )
+                        );

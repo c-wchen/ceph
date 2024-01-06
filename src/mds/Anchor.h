@@ -26,20 +26,24 @@
  * anchor table, MDS ensures that the table also contains inode's ancestor
  * inodes. MDS can get inode's path by looking up anchor table recursively.
  */
-class Anchor {
-  public:
-    Anchor() {
-    } Anchor(inodeno_t i, inodeno_t di, std::string_view str, __u8 tp):ino(i),
-        dirino(di), d_name(str), d_type(tp) {
+class Anchor
+{
+public:
+    Anchor()
+    {
+    } Anchor(inodeno_t i, inodeno_t di, std::string_view str, __u8 tp): ino(i),
+        dirino(di), d_name(str), d_type(tp)
+    {
     }
 
-    void encode(bufferlist & bl) const;
-    void decode(bufferlist::const_iterator & bl);
-    void dump(Formatter * f) const;
-    static void generate_test_instances(std::list < Anchor * >&ls);
-    bool operator==(const Anchor & r) const {
+    void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &bl);
+    void dump(Formatter *f) const;
+    static void generate_test_instances(std::list < Anchor * > &ls);
+    bool operator==(const Anchor &r) const
+    {
         return ino == r.ino && dirino == r.dirino &&
-            d_name == r.d_name && d_type == r.d_type && frags == r.frags;
+               d_name == r.d_name && d_type == r.d_type && frags == r.frags;
     } inodeno_t ino;            // anchored ino
     inodeno_t dirino;
     std::string d_name;
@@ -51,19 +55,22 @@ class Anchor {
 
 WRITE_CLASS_ENCODER(Anchor)
 
-class RecoveredAnchor:public Anchor {
-  public:
-    RecoveredAnchor()
+class RecoveredAnchor: public Anchor
 {
-} mds_rank_t auth = MDS_RANK_NONE;  // auth hint
+public:
+    RecoveredAnchor()
+    {
+    } mds_rank_t auth = MDS_RANK_NONE;  // auth hint
 };
 
-class OpenedAnchor:public Anchor {
-  public:
+class OpenedAnchor: public Anchor
+{
+public:
     OpenedAnchor(inodeno_t i, inodeno_t di, std::string_view str, __u8 tp,
-                 int nr):Anchor(i, di, str, tp), nref(nr) {
+                 int nr): Anchor(i, di, str, tp), nref(nr)
+    {
     } mutable int nref = 0;     // how many children
 };
 
-std::ostream & operator<<(std::ostream & out, const Anchor & a);
+std::ostream &operator<<(std::ostream &out, const Anchor &a);
 #endif

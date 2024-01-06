@@ -37,15 +37,15 @@ seed::~seed()
     driver = NULL;
 }
 
-void seed::init(req_state * _req, rgw::sal::Driver * _driver)
+void seed::init(req_state *_req, rgw::sal::Driver *_driver)
 {
     s = _req;
     driver = _driver;
 }
 
-int seed::get_torrent_file(rgw::sal::Object * object,
-                           uint64_t & total_len,
-                           ceph::bufferlist & bl_data, rgw_obj & obj)
+int seed::get_torrent_file(rgw::sal::Object *object,
+                           uint64_t &total_len,
+                           ceph::bufferlist &bl_data, rgw_obj &obj)
 {
     /* add other field if config is set */
     dencode.bencode_dict(bl);
@@ -65,7 +65,7 @@ int seed::get_torrent_file(rgw::sal::Object * object,
     ldpp_dout(s, 20) << "NOTICE: head obj oid= " << oid << dendl;
 
     const set < string > obj_key {
-    RGW_OBJ_TORRENT};
+        RGW_OBJ_TORRENT};
     map < string, bufferlist > m;
     const int r = object->omap_get_vals_by_keys(s, oid, obj_key, &m);
     if (r < 0) {
@@ -76,7 +76,7 @@ int seed::get_torrent_file(rgw::sal::Object * object,
     if (m.size() != 1) {
         ldpp_dout(s,
                   0) << "ERROR: omap key " RGW_OBJ_TORRENT " not found" <<
-            dendl;
+                     dendl;
         return -EINVAL;
     }
     bl.append(std::move(m.begin()->second));
@@ -92,7 +92,7 @@ bool seed::get_flag()
     return is_torrent;
 }
 
-void seed::update(bufferlist & bl)
+void seed::update(bufferlist &bl)
 {
     if (!is_torrent) {
         return;
@@ -118,7 +118,7 @@ int seed::complete(optional_yield y)
     if (0 != ret) {
         ldpp_dout(s,
                   0) << "ERROR: failed to save_torrent_file() ret= " << ret <<
-            dendl;
+                     dendl;
         return ret;
     }
 
@@ -130,7 +130,7 @@ off_t seed::get_data_len()
     return info.len;
 }
 
-void seed::set_create_date(ceph::real_time & value)
+void seed::set_create_date(ceph::real_time &value)
 {
     utime_t date = ceph::real_clock::to_timespec(value);
     create_date = date.sec();
@@ -141,12 +141,12 @@ void seed::set_info_pieces(char *buff)
     info.sha1_bl.append(buff, CEPH_CRYPTO_SHA1_DIGESTSIZE);
 }
 
-void seed::set_info_name(const string & value)
+void seed::set_info_name(const string &value)
 {
     info.name = value;
 }
 
-void seed::sha1(SHA1 * h, bufferlist & bl, off_t bl_len)
+void seed::sha1(SHA1 *h, bufferlist &bl, off_t bl_len)
 {
     off_t num = bl_len / info.piece_length;
     off_t remain = 0;
@@ -251,7 +251,7 @@ int seed::save_torrent_file(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(s,
                   0) << "ERROR: failed to omap_set() op_ret = " << op_ret <<
-            dendl;
+                     dendl;
         return op_ret;
     }
 

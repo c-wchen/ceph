@@ -248,8 +248,8 @@ TEST_F(LibRadosIoPP, RoundTripPP2)
     ObjectReadOperation read;
     read.read(0, bl.length(), NULL, NULL);
     read.
-        set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_NOCACHE |
-                      LIBRADOS_OP_FLAG_FADVISE_RANDOM);
+    set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_NOCACHE |
+                  LIBRADOS_OP_FLAG_FADVISE_RANDOM);
     ASSERT_EQ(0, ioctx.operate("foo", &read, &bl));
     ASSERT_EQ(0, memcmp(bl.c_str(), "ceph", 4));
 }
@@ -263,7 +263,7 @@ TEST_F(LibRadosIoPP, Checksum)
     bl.append(buf, sizeof(buf));
     ASSERT_EQ(0, ioctx.write("foo", bl, sizeof(buf), 0));
     bufferlist init_value_bl;
-    encode(static_cast < uint32_t > (-1), init_value_bl);
+    encode(static_cast < uint32_t >(-1), init_value_bl);
     bufferlist csum_bl;
     ASSERT_EQ(0, ioctx.checksum("foo", LIBRADOS_CHECKSUM_TYPE_CRC32C,
                                 init_value_bl, sizeof(buf), 0, 0, &csum_bl));
@@ -346,8 +346,8 @@ TEST_F(LibRadosIoPP, WriteFullRoundTripPP2)
     ObjectReadOperation read;
     read.read(0, bl.length(), NULL, NULL);
     read.
-        set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_DONTNEED |
-                      LIBRADOS_OP_FLAG_FADVISE_RANDOM);
+    set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_DONTNEED |
+                  LIBRADOS_OP_FLAG_FADVISE_RANDOM);
     ASSERT_EQ(0, ioctx.operate("foo", &read, &bl));
     ASSERT_EQ(0, memcmp(bl.c_str(), "ceph", 4));
 }
@@ -474,12 +474,10 @@ TEST_F(LibRadosIoPP, XattrListPP)
         if (i->first == string(attr1)) {
             ASSERT_EQ(0,
                       memcmp(i->second.c_str(), attr1_buf, sizeof(attr1_buf)));
-        }
-        else if (i->first == string(attr2)) {
+        } else if (i->first == string(attr2)) {
             ASSERT_EQ(0,
                       memcmp(i->second.c_str(), attr2_buf, sizeof(attr2_buf)));
-        }
-        else {
+        } else {
             ASSERT_EQ(0, 1);
         }
     }
@@ -693,8 +691,8 @@ TEST_F(LibRadosIoECPP, RoundTripPP2)
     ObjectReadOperation read;
     read.read(0, bl.length(), NULL, NULL);
     read.
-        set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_DONTNEED |
-                      LIBRADOS_OP_FLAG_FADVISE_RANDOM);
+    set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_DONTNEED |
+                  LIBRADOS_OP_FLAG_FADVISE_RANDOM);
     ASSERT_EQ(0, ioctx.operate("foo", &read, &bl));
     ASSERT_EQ(0, memcmp(bl.c_str(), "ceph", 4));
 }
@@ -706,7 +704,7 @@ TEST_F(LibRadosIoECPP, OverlappingWriteRoundTripPP)
     int dbsize = bsize * 2;
     char *buf = (char *)new char[dbsize];
     char *buf2 = (char *)new char[bsize];
-    auto cleanup =[&]{
+    auto cleanup = [&] {
         delete[]buf;
         delete[]buf2;
     };
@@ -756,8 +754,8 @@ TEST_F(LibRadosIoECPP, WriteFullRoundTripPP2)
     ObjectReadOperation read;
     read.read(0, bl.length(), NULL, NULL);
     read.
-        set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_DONTNEED |
-                      LIBRADOS_OP_FLAG_FADVISE_RANDOM);
+    set_op_flags2(LIBRADOS_OP_FLAG_FADVISE_DONTNEED |
+                  LIBRADOS_OP_FLAG_FADVISE_RANDOM);
     ASSERT_EQ(0, ioctx.operate("foo", &read, &bl));
     ASSERT_EQ(0, memcmp(bl.c_str(), "ceph", 4));
 }
@@ -767,7 +765,7 @@ TEST_F(LibRadosIoECPP, AppendRoundTripPP)
     SKIP_IF_CRIMSON();
     char *buf = (char *)new char[alignment];
     char *buf2 = (char *)new char[alignment];
-    auto cleanup =[&]{
+    auto cleanup = [&] {
         delete[]buf;
         delete[]buf2;
     };
@@ -896,12 +894,10 @@ TEST_F(LibRadosIoECPP, XattrListPP)
         if (i->first == string(attr1)) {
             ASSERT_EQ(0,
                       memcmp(i->second.c_str(), attr1_buf, sizeof(attr1_buf)));
-        }
-        else if (i->first == string(attr2)) {
+        } else if (i->first == string(attr2)) {
             ASSERT_EQ(0,
                       memcmp(i->second.c_str(), attr2_buf, sizeof(attr2_buf)));
-        }
-        else {
+        } else {
             ASSERT_EQ(0, 1);
         }
     }

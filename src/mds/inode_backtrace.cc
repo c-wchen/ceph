@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #include "inode_backtrace.h"
@@ -7,7 +7,7 @@
 
 /* inode_backpointer_t */
 
-void inode_backpointer_t::encode(ceph::buffer::list & bl) const const
+void inode_backpointer_t::encode(ceph::buffer::list &bl) const const
 {
     ENCODE_START(2, 2, bl);
     encode(dirino, bl);
@@ -16,7 +16,7 @@ void inode_backpointer_t::encode(ceph::buffer::list & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void inode_backpointer_t::decode(ceph::buffer::list::const_iterator & bl)
+void inode_backpointer_t::decode(ceph::buffer::list::const_iterator &bl)
 {
     DECODE_START_LEGACY_COMPAT_LEN(2, 2, 2, bl);
     decode(dirino, bl);
@@ -25,7 +25,7 @@ void inode_backpointer_t::decode(ceph::buffer::list::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void inode_backpointer_t::decode_old(ceph::buffer::list::const_iterator & bl)
+void inode_backpointer_t::decode_old(ceph::buffer::list::const_iterator &bl)
 {
     using ceph::decode;
     decode(dirino, bl);
@@ -33,7 +33,7 @@ void inode_backpointer_t::decode_old(ceph::buffer::list::const_iterator & bl)
     decode(version, bl);
 }
 
-void inode_backpointer_t::dump(ceph::Formatter * f) const const
+void inode_backpointer_t::dump(ceph::Formatter *f) const const
 {
     f->dump_unsigned("dirino", dirino);
     f->dump_string("dname", dname);
@@ -41,7 +41,7 @@ void inode_backpointer_t::dump(ceph::Formatter * f) const const
 }
 
 void inode_backpointer_t::generate_test_instances(std::list <
-                                                  inode_backpointer_t * >&ls)
+        inode_backpointer_t * > &ls)
 {
     ls.push_back(new inode_backpointer_t);
     ls.push_back(new inode_backpointer_t);
@@ -54,7 +54,7 @@ void inode_backpointer_t::generate_test_instances(std::list <
  * inode_backtrace_t
  */
 
-void inode_backtrace_t::encode(ceph::buffer::list & bl) const const
+void inode_backtrace_t::encode(ceph::buffer::list &bl) const const
 {
     ENCODE_START(5, 4, bl);
     encode(ino, bl);
@@ -64,16 +64,16 @@ void inode_backtrace_t::encode(ceph::buffer::list & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void inode_backtrace_t::decode(ceph::buffer::list::const_iterator & bl)
+void inode_backtrace_t::decode(ceph::buffer::list::const_iterator &bl)
 {
     DECODE_START_LEGACY_COMPAT_LEN(5, 4, 4, bl);
-    if (struct_v < 3)
-        return;                 // sorry, the old data was crap
+    if (struct_v < 3) {
+        return;    // sorry, the old data was crap
+    }
     decode(ino, bl);
     if (struct_v >= 4) {
         decode(ancestors, bl);
-    }
-    else {
+    } else {
         __u32 n;
         decode(n, bl);
         while (n--) {
@@ -88,7 +88,7 @@ void inode_backtrace_t::decode(ceph::buffer::list::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void inode_backtrace_t::dump(ceph::Formatter * f) const const
+void inode_backtrace_t::dump(ceph::Formatter *f) const const
 {
     f->dump_unsigned("ino", ino);
     f->open_array_section("ancestors");
@@ -107,7 +107,7 @@ void inode_backtrace_t::dump(ceph::Formatter * f) const const
 }
 
 void inode_backtrace_t::generate_test_instances(std::list <
-                                                inode_backtrace_t * >&ls)
+        inode_backtrace_t * > &ls)
 {
     ls.push_back(new inode_backtrace_t);
     ls.push_back(new inode_backtrace_t);
@@ -121,47 +121,51 @@ void inode_backtrace_t::generate_test_instances(std::list <
     ls.back()->old_pools.push_back(7);
 }
 
-int inode_backtrace_t::compare(const inode_backtrace_t & other,
-                               bool * equivalent, bool * divergent) const const
+int inode_backtrace_t::compare(const inode_backtrace_t &other,
+                               bool *equivalent, bool *divergent) const const
 {
     int min_size = std::min(ancestors.size(), other.ancestors.size());
     *equivalent = true;
     *divergent = false;
-    if (min_size == 0)
+    if (min_size == 0) {
         return 0;
+    }
     int comparator = 0;
-    if (ancestors[0].version > other.ancestors[0].version)
+    if (ancestors[0].version > other.ancestors[0].version) {
         comparator = 1;
-    else if (ancestors[0].version < other.ancestors[0].version)
+    } else if (ancestors[0].version < other.ancestors[0].version) {
         comparator = -1;
+    }
     if (ancestors[0].dirino != other.ancestors[0].dirino ||
-        ancestors[0].dname != other.ancestors[0].dname)
+        ancestors[0].dname != other.ancestors[0].dname) {
         *divergent = true;
+    }
     for (int i = 1; i < min_size; ++i) {
         if (*divergent) {
-      /**
-       * we already know the dentries and versions are
-       * incompatible; no point checking farther
-       */
+            /**
+             * we already know the dentries and versions are
+             * incompatible; no point checking farther
+             */
             break;
         }
         if (ancestors[i].dirino != other.ancestors[i].dirino ||
             ancestors[i].dname != other.ancestors[i].dname) {
             *equivalent = false;
             return comparator;
-        }
-        else if (ancestors[i].version > other.ancestors[i].version) {
-            if (comparator < 0)
+        } else if (ancestors[i].version > other.ancestors[i].version) {
+            if (comparator < 0) {
                 *divergent = true;
+            }
             comparator = 1;
-        }
-        else if (ancestors[i].version < other.ancestors[i].version) {
-            if (comparator > 0)
+        } else if (ancestors[i].version < other.ancestors[i].version) {
+            if (comparator > 0) {
                 *divergent = true;
+            }
             comparator = -1;
         }
     }
-    if (*divergent)
+    if (*divergent) {
         *equivalent = false;
+    }
     return comparator;
 }

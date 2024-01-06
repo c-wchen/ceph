@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -29,14 +29,17 @@ struct OldObjManifestPart {
     uint64_t loc_ofs;           /* the offset at that object where the data is located */
     uint64_t size;              /* the part size */
 
-     OldObjManifestPart():loc_ofs(0), size(0) {
-    } void encode(bufferlist & bl) const {
+    OldObjManifestPart(): loc_ofs(0), size(0)
+    {
+    } void encode(bufferlist &bl) const
+    {
         ENCODE_START(2, 2, bl);
         encode(loc, bl);
         encode(loc_ofs, bl);
         encode(size, bl);
         ENCODE_FINISH(bl);
-    } void decode(bufferlist::const_iterator & bl) {
+    } void decode(bufferlist::const_iterator &bl)
+    {
         DECODE_START_LEGACY_COMPAT_LEN_32(2, 2, 2, bl);
         decode(loc, bl);
         decode(loc_ofs, bl);
@@ -44,64 +47,72 @@ struct OldObjManifestPart {
         DECODE_FINISH(bl);
     }
 
-    void dump(Formatter * f) const;
-    static void generate_test_instances(list < OldObjManifestPart * >&o);
+    void dump(Formatter *f) const;
+    static void generate_test_instances(list < OldObjManifestPart * > &o);
 };
 
 WRITE_CLASS_ENCODER(OldObjManifestPart)
 
-class OldObjManifest {
-  protected:
+class OldObjManifest
+{
+protected:
     map < uint64_t, OldObjManifestPart > objs;
 
     uint64_t obj_size;
-  public:
+public:
 
-     OldObjManifest():obj_size(0)
-{
-} OldObjManifest(const OldObjManifest & rhs) {
-    *this = rhs;
-}
-OldObjManifest & operator=(const OldObjManifest & rhs) {
-    objs = rhs.objs;
-    obj_size = rhs.obj_size;
-    return *this;
-}
+    OldObjManifest(): obj_size(0)
+    {
+    } OldObjManifest(const OldObjManifest &rhs)
+    {
+        *this = rhs;
+    }
+    OldObjManifest &operator=(const OldObjManifest &rhs)
+    {
+        objs = rhs.objs;
+        obj_size = rhs.obj_size;
+        return *this;
+    }
 
-const map < uint64_t, OldObjManifestPart > &get_objs() {
-    return objs;
-}
+    const map < uint64_t, OldObjManifestPart > &get_objs()
+    {
+        return objs;
+    }
 
-void append(uint64_t ofs, const OldObjManifestPart & part) {
-    objs[ofs] = part;
-    obj_size = std::max(obj_size, ofs + part.size);
-}
+    void append(uint64_t ofs, const OldObjManifestPart &part)
+    {
+        objs[ofs] = part;
+        obj_size = std::max(obj_size, ofs + part.size);
+    }
 
-void encode(bufferlist & bl) const {
-    ENCODE_START(2, 2, bl);
-    encode(obj_size, bl);
-    encode(objs, bl);
-    ENCODE_FINISH(bl);
-} void decode(bufferlist::const_iterator & bl) {
-    DECODE_START_LEGACY_COMPAT_LEN_32(6, 2, 2, bl);
-    decode(obj_size, bl);
-    decode(objs, bl);
-    DECODE_FINISH(bl);
-}
+    void encode(bufferlist &bl) const
+    {
+        ENCODE_START(2, 2, bl);
+        encode(obj_size, bl);
+        encode(objs, bl);
+        ENCODE_FINISH(bl);
+    } void decode(bufferlist::const_iterator &bl)
+    {
+        DECODE_START_LEGACY_COMPAT_LEN_32(6, 2, 2, bl);
+        decode(obj_size, bl);
+        decode(objs, bl);
+        DECODE_FINISH(bl);
+    }
 
-bool empty() {
-    return objs.empty();
-}
+    bool empty()
+    {
+        return objs.empty();
+    }
 };
 
 WRITE_CLASS_ENCODER(OldObjManifest)
 
-void append_head(list < rgw_obj > *objs, rgw_obj & head)
+void append_head(list < rgw_obj > *objs, rgw_obj &head)
 {
     objs->push_back(head);
 }
 
-void append_stripes(list < rgw_obj > *objs, RGWObjManifest & manifest,
+void append_stripes(list < rgw_obj > *objs, RGWObjManifest &manifest,
                     uint64_t obj_size, uint64_t stripe_size)
 {
     string prefix = manifest.get_prefix();
@@ -120,12 +131,12 @@ void append_stripes(list < rgw_obj > *objs, RGWObjManifest & manifest,
     }
 }
 
-static void gen_obj(test_rgw_env & env, uint64_t obj_size,
+static void gen_obj(test_rgw_env &env, uint64_t obj_size,
                     uint64_t head_max_size, uint64_t stripe_size,
-                    RGWObjManifest * manifest,
-                    const rgw_placement_rule & placement_rule,
-                    rgw_bucket * bucket, rgw_obj * head,
-                    RGWObjManifest::generator * gen,
+                    RGWObjManifest *manifest,
+                    const rgw_placement_rule &placement_rule,
+                    rgw_bucket *bucket, rgw_obj *head,
+                    RGWObjManifest::generator *gen,
                     list < rgw_obj > *test_objs)
 {
     manifest->set_trivial_rule(head_max_size, stripe_size);
@@ -178,10 +189,10 @@ static void gen_obj(test_rgw_env & env, uint64_t obj_size,
     ASSERT_EQ(manifest->has_tail(), (obj_size > head_max_size));
 }
 
-static void gen_old_obj(test_rgw_env & env, uint64_t obj_size,
+static void gen_old_obj(test_rgw_env &env, uint64_t obj_size,
                         uint64_t head_max_size, uint64_t stripe_size,
-                        OldObjManifest * manifest, old_rgw_bucket * bucket,
-                        old_rgw_obj * head, list < old_rgw_obj > *test_objs)
+                        OldObjManifest *manifest, old_rgw_bucket *bucket,
+                        old_rgw_obj *head, list < old_rgw_obj > *test_objs)
 {
     test_rgw_init_old_bucket(bucket, "buck");
 
@@ -232,7 +243,7 @@ TEST(TestRGWManifest, head_only_obj)
 
     cout << " manifest.get_obj_size()=" << manifest.get_obj_size() << std::endl;
     cout << " manifest.get_head_size()=" << manifest.
-        get_head_size() << std::endl;
+         get_head_size() << std::endl;
     list < rgw_obj >::iterator liter;
 
     RGWObjManifest::obj_iterator iter;
@@ -278,7 +289,7 @@ TEST(TestRGWManifest, obj_with_head_and_tail)
          iter != manifest.obj_end(&dp) && liter != objs.end();
          ++iter, ++liter) {
         cout << "*liter=" << *liter << " iter.get_location()=" << env.
-            get_raw(iter.get_location()) << std::endl;
+             get_raw(iter.get_location()) << std::endl;
         ASSERT_TRUE(env.get_raw(*liter) == env.get_raw(iter.get_location()));
 
         last_obj = iter.get_location();
@@ -311,7 +322,7 @@ TEST(TestRGWManifest, multipart)
     string upload_id = "abc123";
 
     for (int i = 0; i < num_parts; ++i) {
-        RGWObjManifest & manifest = pm[i];
+        RGWObjManifest &manifest = pm[i];
         RGWObjManifest::generator gen;
         manifest.set_prefix(upload_id);
 
@@ -378,7 +389,7 @@ TEST(TestRGWManifest, old_obj_manifest)
     try {
         auto iter = bl.cbegin();
         decode(manifest, iter);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         ASSERT_TRUE(false);
     }
 
@@ -394,7 +405,7 @@ TEST(TestRGWManifest, old_obj_manifest)
         prepend_old_bucket_marker(old_bucket, liter->get_object(), old_oid);
         rgw_raw_obj raw_old(old_pool, old_oid);
         cout << "*liter=" << raw_old << " iter.get_location()=" << env.
-            get_raw(iter.get_location()) << std::endl;
+             get_raw(iter.get_location()) << std::endl;
         ASSERT_EQ(raw_old, env.get_raw(iter.get_location()));
 
         last_obj = env.get_raw(iter.get_location());

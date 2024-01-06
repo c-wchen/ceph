@@ -24,15 +24,18 @@
  * haven't forked) or pass a message to the parent with the error if
  * we have.
  */
-class Preforker {
+class Preforker
+{
     pid_t childpid;
     bool forked;
     int fd[2];                  // parent's, child's
 
-  public:
-     Preforker()
-    :childpid(0), forked(false) {
-    } int prefork(std::string & err) {
+public:
+    Preforker()
+        : childpid(0), forked(false)
+    {
+    } int prefork(std::string &err)
+    {
         ceph_assert(!forked);
         std::ostringstream oss;
         int r = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fd);
@@ -67,24 +70,27 @@ class Preforker {
         }
         if (is_child()) {
             ::close(fd[0]);
-        }
-        else {
+        } else {
             ::close(fd[1]);
         }
         return 0;
     }
 
-    int get_signal_fd() const {
+    int get_signal_fd() const
+    {
         return forked ? fd[1] : 0;
-    } bool is_child() {
+    } bool is_child()
+    {
         return childpid == 0;
     }
 
-    bool is_parent() {
+    bool is_parent()
+    {
         return childpid != 0;
     }
 
-    int parent_wait(std::string & err_msg) {
+    int parent_wait(std::string &err_msg)
+    {
         ceph_assert(forked);
 
         int r = -1;
@@ -95,25 +101,20 @@ class Preforker {
             ::close(0);
             ::close(1);
             ::close(2);
-        }
-        else if (err) {
+        } else if (err) {
             oss << "[" << getpid() << "]: " << cpp_strerror(err);
-        }
-        else {
+        } else {
             // wait for child to exit
             int status;
             err = waitpid(childpid, &status, 0);
             if (err < 0) {
                 oss << "[" << getpid() << "]" << " waitpid error: " <<
                     cpp_strerror(err);
-            }
-            else if (WIFSIGNALED(status)) {
+            } else if (WIFSIGNALED(status)) {
                 oss << "[" << getpid() << "]" << " exited with a signal";
-            }
-            else if (!WIFEXITED(status)) {
+            } else if (!WIFEXITED(status)) {
                 oss << "[" << getpid() << "]" << " did not exit normally";
-            }
-            else {
+            } else {
                 err = WEXITSTATUS(status);
                 if (err != 0)
                     oss << "[" << getpid() << "]" << " returned exit_status " <<
@@ -124,20 +125,24 @@ class Preforker {
         return err;
     }
 
-    int signal_exit(int r) {
+    int signal_exit(int r)
+    {
         if (forked) {
             /* If we get an error here, it's too late to do anything reasonable about it. */
             [[maybe_unused]] auto n = safe_write(fd[1], &r, sizeof(r));
         }
         return r;
     }
-    void exit(int r) {
-        if (is_child())
+    void exit(int r)
+    {
+        if (is_child()) {
             signal_exit(r);
+        }
         ::exit(r);
     }
 
-    void daemonize() {
+    void daemonize()
+    {
         ceph_assert(forked);
         static int r = -1;
         int r2 =::write(fd[1], &r, sizeof(r));

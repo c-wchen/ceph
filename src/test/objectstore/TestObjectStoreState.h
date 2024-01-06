@@ -24,8 +24,9 @@
 
 typedef boost::mt11213b rngen_t;
 
-class TestObjectStoreState {
-  public:
+class TestObjectStoreState
+{
+public:
     struct coll_entry_t {
         spg_t m_pgid;
         coll_t m_cid;
@@ -34,13 +35,14 @@ class TestObjectStoreState {
         std::map < int, hobject_t * >m_objects;
         int m_next_object_id;
 
-        coll_entry_t(spg_t pgid, ObjectStore::CollectionHandle & ch,
+        coll_entry_t(spg_t pgid, ObjectStore::CollectionHandle &ch,
                      char *meta_obj_buf)
-        :m_pgid(pgid),
-            m_cid(m_pgid),
-            m_meta_obj(hobject_t
-                       (sobject_t(object_t(meta_obj_buf), CEPH_NOSNAP))),
-            m_ch(ch), m_next_object_id(0) {
+            : m_pgid(pgid),
+              m_cid(m_pgid),
+              m_meta_obj(hobject_t
+                         (sobject_t(object_t(meta_obj_buf), CEPH_NOSNAP))),
+              m_ch(ch), m_next_object_id(0)
+        {
             m_meta_obj.hobj.pool = m_pgid.pool();
             m_meta_obj.hobj.set_hash(m_pgid.ps());
         } ~coll_entry_t();
@@ -51,15 +53,15 @@ class TestObjectStoreState {
         hobject_t *remove_obj(int id);
         hobject_t *get_obj_at(int pos, int *key = NULL);
         hobject_t *remove_obj_at(int pos, int *key = NULL);
-        hobject_t *replace_obj(int id, hobject_t * obj);
-        int get_random_obj_id(rngen_t & gen);
+        hobject_t *replace_obj(int id, hobject_t *obj);
+        int get_random_obj_id(rngen_t &gen);
 
-      private:
-        hobject_t * get_obj(int id, bool remove);
+    private:
+        hobject_t *get_obj(int id, bool remove);
         hobject_t *get_obj_at(int pos, bool remove, int *key = NULL);
     };
 
-  protected:
+protected:
     boost::shared_ptr < ObjectStore > m_store;
     std::map < coll_t, coll_entry_t * >m_collections;
     std::vector < coll_t > m_collections_ids;
@@ -72,89 +74,105 @@ class TestObjectStoreState {
     ceph::mutex m_finished_lock = ceph::make_mutex("Finished Lock");
     ceph::condition_variable m_finished_cond;
 
-    void rebuild_id_vec() {
+    void rebuild_id_vec()
+    {
         m_collections_ids.clear();
         m_collections_ids.reserve(m_collections.size());
-      for (auto & i:m_collections) {
+        for (auto &i : m_collections) {
             m_collections_ids.push_back(i.first);
         }
     }
 
-    void wait_for_ready() {
+    void wait_for_ready()
+    {
         std::unique_lock locker {
-        m_finished_lock};
-        m_finished_cond.wait(locker,[this] {
-                             return m_max_in_flight <= 0
-                             || m_in_flight < m_max_in_flight;}
-        );
+            m_finished_lock};
+        m_finished_cond.wait(locker, [this] {
+            return m_max_in_flight <= 0
+            || m_in_flight < m_max_in_flight;
+        }
+                            );
     }
 
-    void wait_for_done() {
+    void wait_for_done()
+    {
         std::unique_lock locker {
-        m_finished_lock};
-        m_finished_cond.wait(locker,[this] {
-                             return m_in_flight == 0;
-                             }
-        );
+            m_finished_lock};
+        m_finished_cond.wait(locker, [this] {
+            return m_in_flight == 0;
+        }
+                            );
     }
 
-    void set_max_in_flight(int max) {
+    void set_max_in_flight(int max)
+    {
         m_max_in_flight = max;
     }
-    void set_num_objs_per_coll(int val) {
+    void set_num_objs_per_coll(int val)
+    {
         m_num_objs_per_coll = val;
     }
 
     coll_entry_t *get_coll(coll_t cid, bool erase = false);
     coll_entry_t *get_coll_at(int pos, bool erase = false);
-    int get_next_pool_id() {
+    int get_next_pool_id()
+    {
         return m_next_pool++;
     }
 
-  private:
+private:
     static const int m_default_num_colls = 30;
     // The pool ID used for collection creation, ID 0 is preserve for other tests
     int m_next_pool;
 
-  public:
-  explicit TestObjectStoreState(ObjectStore * store):
-    m_next_coll_nr(0), m_num_objs_per_coll(10), m_num_objects(0),
-        m_max_in_flight(0), m_next_pool(2) {
+public:
+    explicit TestObjectStoreState(ObjectStore *store):
+        m_next_coll_nr(0), m_num_objs_per_coll(10), m_num_objects(0),
+        m_max_in_flight(0), m_next_pool(2)
+    {
         m_store.reset(store);
     }
-    ~TestObjectStoreState() {
+    ~TestObjectStoreState()
+    {
         auto it = m_collections.begin();
         while (it != m_collections.end()) {
-            if (it->second)
+            if (it->second) {
                 delete it->second;
+            }
             m_collections.erase(it++);
         }
     }
 
     void init(int colls, int objs);
-    void init() {
+    void init()
+    {
         init(m_default_num_colls, 0);
     }
 
-    int inc_in_flight() {
+    int inc_in_flight()
+    {
         return ++m_in_flight;
     }
 
-    int dec_in_flight() {
+    int dec_in_flight()
+    {
         return --m_in_flight;
     }
 
     coll_entry_t *coll_create(spg_t pgid, ObjectStore::CollectionHandle ch);
 
-    class C_OnFinished:public Context {
-      protected:
-        TestObjectStoreState * m_state;
+    class C_OnFinished: public Context
+    {
+    protected:
+        TestObjectStoreState *m_state;
 
-      public:
-        explicit C_OnFinished(TestObjectStoreState * state):m_state(state) {
-        } void finish(int r) override {
+    public:
+        explicit C_OnFinished(TestObjectStoreState *state): m_state(state)
+        {
+        } void finish(int r) override
+        {
             std::lock_guard locker {
-            m_state->m_finished_lock};
+                m_state->m_finished_lock};
             m_state->dec_in_flight();
             m_state->m_finished_cond.notify_all();
 

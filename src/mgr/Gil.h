@@ -27,16 +27,19 @@ typedef struct _ts PyThreadState;
  * the thread state relates to.  This allows the Gil class to
  * validate that we're being used from the right thread.
  */
-class SafeThreadState {
-  public:
-    explicit SafeThreadState(PyThreadState * ts_);
+class SafeThreadState
+{
+public:
+    explicit SafeThreadState(PyThreadState *ts_);
 
     SafeThreadState()
-    :ts(nullptr), thread(0) {
+        : ts(nullptr), thread(0)
+    {
     } PyThreadState *ts;
     pthread_t thread;
 
-    void set(PyThreadState * ts_) {
+    void set(PyThreadState *ts_)
+    {
         ts = ts_;
         thread = pthread_self();
     }
@@ -54,16 +57,17 @@ class SafeThreadState {
 //
 // See the comment in Gil::Gil for when to set new_thread == true
 //
-class Gil {
-  public:
+class Gil
+{
+public:
     Gil(const Gil &) = delete;
-     Gil & operator=(const Gil &) = delete;
+    Gil &operator=(const Gil &) = delete;
 
-     Gil(SafeThreadState & ts, bool new_thread = false);
+    Gil(SafeThreadState &ts, bool new_thread = false);
     ~Gil();
 
-  private:
-     SafeThreadState & pThreadState;
+private:
+    SafeThreadState &pThreadState;
     PyThreadState *pNewThreadState = nullptr;
 };
 
@@ -82,23 +86,23 @@ struct without_gil_t {
     ~without_gil_t();
     void release_gil();
     void acquire_gil();
-  private:
-     PyThreadState * save = nullptr;
+private:
+    PyThreadState *save = nullptr;
     friend struct with_gil_t;
 };
 
 struct with_gil_t {
-    with_gil_t(without_gil_t & allow_threads);
+    with_gil_t(without_gil_t &allow_threads);
     ~with_gil_t();
-  private:
-    without_gil_t & allow_threads;
+private:
+    without_gil_t &allow_threads;
 };
 
 // invoke func with GIL acquired
-template < typename Func > auto with_gil(without_gil_t & no_gil, Func && func)
+template < typename Func > auto with_gil(without_gil_t &no_gil, Func && func)
 {
     with_gil_t gil {
-    no_gil};
+        no_gil};
     return std::invoke(std::forward < Func > (func));
 }
 

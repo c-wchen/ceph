@@ -1,20 +1,19 @@
 
 #include "RoleSelector.h"
 
-int MDSRoleSelector::parse_rank(const FSMap & fsmap, std::string const &str)
+int MDSRoleSelector::parse_rank(const FSMap &fsmap, std::string const &str)
 {
     if (str == "all" || str == "*") {
         std::set < mds_rank_t > in;
-        const MDSMap & mds_map = fsmap.get_filesystem(fscid)->mds_map;
+        const MDSMap &mds_map = fsmap.get_filesystem(fscid)->mds_map;
         mds_map.get_mds_set(in);
 
-      for (auto rank:in) {
+        for (auto rank : in) {
             roles.push_back(mds_role_t(fscid, rank));
         }
 
         return 0;
-    }
-    else {
+    } else {
         std::string rank_err;
         mds_rank_t rank = strict_strtol(str.c_str(), 10, &rank_err);
         if (!rank_err.empty()) {
@@ -28,7 +27,7 @@ int MDSRoleSelector::parse_rank(const FSMap & fsmap, std::string const &str)
     }
 }
 
-int MDSRoleSelector::parse(const FSMap & fsmap, std::string const &str,
+int MDSRoleSelector::parse(const FSMap &fsmap, std::string const &str,
                            bool allow_unqualified_rank)
 {
     auto colon_pos = str.find(":");
@@ -38,15 +37,12 @@ int MDSRoleSelector::parse(const FSMap & fsmap, std::string const &str,
         if (fsmap.filesystem_count() == 1 && allow_unqualified_rank) {
             fscid = fsmap.get_filesystem()->fscid;
             return parse_rank(fsmap, str);
-        }
-        else {
+        } else {
             return -EINVAL;
         }
-    }
-    else if (colon_pos == 0 || colon_pos == str.size() - 1) {
+    } else if (colon_pos == 0 || colon_pos == str.size() - 1) {
         return -EINVAL;
-    }
-    else {
+    } else {
         const std::string ns_str = str.substr(0, colon_pos);
         const std::string rank_str = str.substr(colon_pos + 1);
         std::shared_ptr < const Filesystem > fs_ptr;

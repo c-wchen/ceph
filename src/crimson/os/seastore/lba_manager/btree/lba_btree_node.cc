@@ -15,34 +15,39 @@
 
 SET_SUBSYS(seastore_lba);
 
-namespace crimson::os::seastore::lba_manager::btree {
+namespace crimson::os::seastore::lba_manager::btree
+{
 
-    std::ostream & operator<<(std::ostream & out, const lba_map_val_t & v) {
-        return out << "lba_map_val_t("
-            << v.paddr
-            << "~" << v.len
-            << ", refcount=" << v.refcount
-            << ", checksum=" << v.checksum << ")";
-    } std::ostream & LBALeafNode::_print_detail(std::ostream & out) const {
-        out << ", size=" << this->get_size()
+std::ostream &operator<<(std::ostream &out, const lba_map_val_t &v)
+{
+    return out << "lba_map_val_t("
+           << v.paddr
+           << "~" << v.len
+           << ", refcount=" << v.refcount
+           << ", checksum=" << v.checksum << ")";
+} std::ostream &LBALeafNode::_print_detail(std::ostream &out) const
+{
+    out << ", size=" << this->get_size()
         << ", meta=" << this->get_meta()
         << ", my_tracker=" << (void *)this->my_tracker;
-        if (this->my_tracker) {
-            out << ", my_tracker->parent=" << (void *)this->my_tracker->
-                get_parent().get();
-        } return out << ", root_block=" << (void *)this->root_block.get();
+    if (this->my_tracker) {
+        out << ", my_tracker->parent=" << (void *)this->my_tracker->
+            get_parent().get();
     }
+    return out << ", root_block=" << (void *)this->root_block.get();
+}
 
-    void LBALeafNode::resolve_relative_addrs(paddr_t base) {
-        LOG_PREFIX(LBALeafNode::resolve_relative_addrs);
-      for (auto i:*this) {
-            if (i->get_val().paddr.is_relative()) {
-                auto val = i->get_val();
-                val.paddr = base.add_relative(val.paddr);
-                TRACE("{} -> {}", i->get_val().paddr, val.paddr);
-                i->set_val(val);
-            }
+void LBALeafNode::resolve_relative_addrs(paddr_t base)
+{
+    LOG_PREFIX(LBALeafNode::resolve_relative_addrs);
+    for (auto i : *this) {
+        if (i->get_val().paddr.is_relative()) {
+            auto val = i->get_val();
+            val.paddr = base.add_relative(val.paddr);
+            TRACE("{} -> {}", i->get_val().paddr, val.paddr);
+            i->set_val(val);
         }
     }
+}
 
 }

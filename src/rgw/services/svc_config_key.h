@@ -18,12 +18,15 @@
 
 #include "rgw_service.h"
 
-class RGWSI_ConfigKey:public RGWServiceInstance {
-  public:
-    RGWSI_ConfigKey(CephContext * cct):RGWServiceInstance(cct) {
-    } virtual ~ RGWSI_ConfigKey() {
+class RGWSI_ConfigKey: public RGWServiceInstance
+{
+public:
+    RGWSI_ConfigKey(CephContext *cct): RGWServiceInstance(cct)
+    {
+    } virtual ~ RGWSI_ConfigKey()
+    {
     }
 
-    virtual int get(const std::string & key, bool secure, bufferlist * result) =
+    virtual int get(const std::string &key, bool secure, bufferlist *result) =
         0;
 };

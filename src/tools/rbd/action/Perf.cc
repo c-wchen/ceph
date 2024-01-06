@@ -26,101 +26,111 @@
 #include <boost/program_options.hpp>
 #include "json_spirit/json_spirit.h"
 
-namespace rbd {
-    namespace action {
-        namespace perf {
+namespace rbd
+{
+namespace action
+{
+namespace perf
+{
 
-            namespace at = argument_types;
-            namespace po = boost::program_options;
+namespace at = argument_types;
+namespace po = boost::program_options;
 
-             namespace {
+namespace
+{
 
-                enum class StatDescriptor {
-                    WRITE_OPS = 0,
-                    READ_OPS,
-                    WRITE_BYTES,
-                    READ_BYTES,
-                    WRITE_LATENCY,
-                    READ_LATENCY
-                };
+enum class StatDescriptor {
+    WRITE_OPS = 0,
+    READ_OPS,
+    WRITE_BYTES,
+    READ_BYTES,
+    WRITE_LATENCY,
+    READ_LATENCY
+};
 
-                typedef boost::bimap < StatDescriptor,
-                    std::string > StatDescriptors;
+typedef boost::bimap < StatDescriptor,
+        std::string > StatDescriptors;
 
-                static const StatDescriptors STAT_DESCRIPTORS =
-                    boost::assign::list_of < StatDescriptors::relation >
-                    (StatDescriptor::WRITE_OPS, "write_ops")
-                    (StatDescriptor::READ_OPS, "read_ops")
-                    (StatDescriptor::WRITE_BYTES, "write_bytes")
-                    (StatDescriptor::READ_BYTES, "read_bytes")
-                    (StatDescriptor::WRITE_LATENCY, "write_latency")
-                    (StatDescriptor::READ_LATENCY, "read_latency");
+static const StatDescriptors STAT_DESCRIPTORS =
+    boost::assign::list_of < StatDescriptors::relation >
+    (StatDescriptor::WRITE_OPS, "write_ops")
+    (StatDescriptor::READ_OPS, "read_ops")
+    (StatDescriptor::WRITE_BYTES, "write_bytes")
+    (StatDescriptor::READ_BYTES, "read_bytes")
+    (StatDescriptor::WRITE_LATENCY, "write_latency")
+    (StatDescriptor::READ_LATENCY, "read_latency");
 
-                 std::ostream & operator<<(std::ostream & os,
-                                           const StatDescriptor & val) {
-                    auto it = STAT_DESCRIPTORS.left.find(val);
-                    if (it == STAT_DESCRIPTORS.left.end()) {
-                        os << "unknown (" << static_cast < int >(val) << ")";
-                    }
-                    else {
-                        os << it->second;
-                    } return os;
-                } void validate(boost::any & v,
-                                const std::vector < std::string > &values,
-                                StatDescriptor * target_type, int) {
-                    po::validators::check_first_occurrence(v);
-                    std::string s = po::validators::get_single_string(values);
-                    boost::replace_all(s, "_", " ");
-                    boost::replace_all(s, "-", "_");
+std::ostream &operator<<(std::ostream &os,
+                         const StatDescriptor &val)
+{
+    auto it = STAT_DESCRIPTORS.left.find(val);
+    if (it == STAT_DESCRIPTORS.left.end()) {
+        os << "unknown (" << static_cast < int >(val) << ")";
+    } else {
+        os << it->second;
+    }
+    return os;
+} void validate(boost::any &v,
+                const std::vector < std::string > &values,
+                StatDescriptor *target_type, int)
+{
+    po::validators::check_first_occurrence(v);
+    std::string s = po::validators::get_single_string(values);
+    boost::replace_all(s, "_", " ");
+    boost::replace_all(s, "-", "_");
 
-                    auto it = STAT_DESCRIPTORS.right.find(s);
-                    if (it == STAT_DESCRIPTORS.right.end()) {
-                        throw po::validation_error(po::validation_error::
-                                                   invalid_option_value);
-                    }
-                    v = boost::any(it->second);
-                }
+    auto it = STAT_DESCRIPTORS.right.find(s);
+    if (it == STAT_DESCRIPTORS.right.end()) {
+        throw po::validation_error(po::validation_error::
+                                   invalid_option_value);
+    }
+    v = boost::any(it->second);
+}
 
-                struct ImageStat {
-                    ImageStat(const std::string & pool_name,
-                              const std::string & pool_namespace,
-                              const std::string & image_name)
-                    :pool_name(pool_name), pool_namespace(pool_namespace),
-                        image_name(image_name) {
-                        stats.resize(STAT_DESCRIPTORS.size());
-                    } std::string pool_name;
-                    std::string pool_namespace;
-                    std::string image_name;
-                    std::vector < double >stats;
-                };
-
-                typedef std::vector < ImageStat > ImageStats;
-
-                typedef std::pair < std::string, std::string > SpecPair;
-
-                std::string format_pool_spec(const std::string & pool,
-                                             const std::
-                                             string & pool_namespace) {
-                    std::string pool_spec {
-                    pool};
-                    if (!pool_namespace.empty()) {
-                        pool_spec += "/" + pool_namespace;
-                    }
-                    return pool_spec;
-                }
-
-                int query_iostats(librados::Rados & rados,
-                                  const std::string & pool_spec,
-                                  StatDescriptor sort_by,
-                                  ImageStats * image_stats,
-                                  std::ostream & err_os) {
-                    auto sort_by_str =
-                        STAT_DESCRIPTORS.left.find(sort_by)->second;
-
-                  std::string cmd = R "(
+struct ImageStat {
+    ImageStat(const std::string &pool_name,
+              const std::string &pool_namespace,
+              const std::string &image_name)
+        : pool_name(pool_name), pool_namespace(pool_namespace),
+          image_name(image_name)
     {
-      " prefix ": " rbd perf image stats ",
-      " pool_spec ": ") " + pool_spec + R"(",
+        stats.resize(STAT_DESCRIPTORS.size());
+    } std::string pool_name;
+    std::string pool_namespace;
+    std::string image_name;
+    std::vector < double >stats;
+};
+
+typedef std::vector < ImageStat > ImageStats;
+
+typedef std::pair < std::string, std::string > SpecPair;
+
+std::string format_pool_spec(const std::string &pool,
+                             const std::
+                             string &pool_namespace)
+{
+    std::string pool_spec {
+        pool};
+    if (!pool_namespace.empty()) {
+        pool_spec += "/" + pool_namespace;
+    }
+    return pool_spec;
+}
+
+int query_iostats(librados::Rados &rados,
+                  const std::string &pool_spec,
+                  StatDescriptor sort_by,
+                  ImageStats *image_stats,
+                  std::ostream &err_os)
+{
+    auto sort_by_str =
+        STAT_DESCRIPTORS.left.find(sort_by)->second;
+
+    std::string cmd = R "( {
+" prefix ": " rbd perf image stats "
+    ,
+" pool_spec ": ") "
+    + pool_spec + R"(",
       " sort_by ": ") " + sort_by_str + R"(",
       " format ": " json "
     }") ";

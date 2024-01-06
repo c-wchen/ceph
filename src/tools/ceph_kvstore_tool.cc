@@ -31,19 +31,19 @@ using namespace std;
 void usage(const char *pname)
 {
     std::
-        cout << "Usage: " << pname <<
-        " <leveldb|rocksdb|bluestore-kv> <store path> command [args...]\n" <<
-        "\n" << "Commands:\n" << "  list [prefix]\n" << "  list-crc [prefix]\n"
-        << "  dump [prefix]\n" << "  exists <prefix> [key]\n" <<
-        "  get <prefix> <key> [out <file>]\n" << "  crc <prefix> <key>\n" <<
-        "  get-size [<prefix> <key>]\n" <<
-        "  set <prefix> <key> [ver <N>|in <file>]\n" << "  rm <prefix> <key>\n"
-        << "  rm-prefix <prefix>\n" <<
-        "  store-copy <path> [num-keys-per-tx] [leveldb|rocksdb|...] \n" <<
-        "  store-crc <path>\n" << "  compact\n" << "  compact-prefix <prefix>\n"
-        << "  compact-range <prefix> <start> <end>\n" <<
-        "  destructive-repair  (use only as last resort! may corrupt healthy data)\n"
-        << "  stats\n" << "  histogram [prefix]\n" << std::endl;
+    cout << "Usage: " << pname <<
+         " <leveldb|rocksdb|bluestore-kv> <store path> command [args...]\n" <<
+         "\n" << "Commands:\n" << "  list [prefix]\n" << "  list-crc [prefix]\n"
+         << "  dump [prefix]\n" << "  exists <prefix> [key]\n" <<
+         "  get <prefix> <key> [out <file>]\n" << "  crc <prefix> <key>\n" <<
+         "  get-size [<prefix> <key>]\n" <<
+         "  set <prefix> <key> [ver <N>|in <file>]\n" << "  rm <prefix> <key>\n"
+         << "  rm-prefix <prefix>\n" <<
+         "  store-copy <path> [num-keys-per-tx] [leveldb|rocksdb|...] \n" <<
+         "  store-crc <path>\n" << "  compact\n" << "  compact-prefix <prefix>\n"
+         << "  compact-range <prefix> <start> <end>\n" <<
+         "  destructive-repair  (use only as last resort! may corrupt healthy data)\n"
+         << "  stats\n" << "  histogram [prefix]\n" << std::endl;
 }
 
 int main(int argc, const char *argv[])
@@ -60,7 +60,8 @@ int main(int argc, const char *argv[])
 
     map < string, string > defaults = {
         {
-        "debug_rocksdb", "2"}
+            "debug_rocksdb", "2"
+        }
     };
 
     auto cct = global_init(&defaults, args,
@@ -69,8 +70,9 @@ int main(int argc, const char *argv[])
     common_init_finish(g_ceph_context);
 
     ceph_assert((int)args.size() < argc);
-    for (size_t i = 0; i < args.size(); i++)
+    for (size_t i = 0; i < args.size(); i++) {
         argv[i + 1] = args[i];
+    }
     argc = args.size() + 1;
 
     if (args.size() < 3) {
@@ -97,51 +99,49 @@ int main(int argc, const char *argv[])
         int ret = st.destructive_repair();
         if (!ret) {
             std::
-                cout <<
-                "destructive-repair completed without reporting an error" <<
-                std::endl;
-        }
-        else {
+            cout <<
+                 "destructive-repair completed without reporting an error" <<
+                 std::endl;
+        } else {
             std::cout << "destructive-repair failed with " << cpp_strerror(ret)
-                << std::endl;
+                      << std::endl;
         }
         return ret;
-    }
-    else if (cmd == "list" || cmd == "list-crc") {
+    } else if (cmd == "list" || cmd == "list-crc") {
         string prefix;
-        if (argc > 4)
+        if (argc > 4) {
             prefix = url_unescape(argv[4]);
+        }
 
         bool do_crc = (cmd == "list-crc");
         st.list(prefix, do_crc, false);
 
-    }
-    else if (cmd == "dump") {
+    } else if (cmd == "dump") {
         string prefix;
-        if (argc > 4)
+        if (argc > 4) {
             prefix = url_unescape(argv[4]);
+        }
         st.list(prefix, false, true);
 
-    }
-    else if (cmd == "exists") {
+    } else if (cmd == "exists") {
         string key;
         if (argc < 5) {
             usage(argv[0]);
             return 1;
         }
         string prefix(url_unescape(argv[4]));
-        if (argc > 5)
+        if (argc > 5) {
             key = url_unescape(argv[5]);
+        }
 
         bool ret = st.exists(prefix, key);
         std::
-            cout << "(" << url_escape(prefix) << ", " << url_escape(key) << ") "
-            << (ret ? "exists" : "does not exist")
-            << std::endl;
+        cout << "(" << url_escape(prefix) << ", " << url_escape(key) << ") "
+             << (ret ? "exists" : "does not exist")
+             << std::endl;
         return (ret ? 0 : 1);
 
-    }
-    else if (cmd == "get") {
+    } else if (cmd == "get") {
         if (argc < 6) {
             usage(argv[0]);
             return 1;
@@ -152,7 +152,7 @@ int main(int argc, const char *argv[])
         bool exists = false;
         bufferlist bl = st.get(prefix, key, exists);
         std::
-            cout << "(" << url_escape(prefix) << ", " << url_escape(key) << ")";
+        cout << "(" << url_escape(prefix) << ", " << url_escape(key) << ")";
         if (!exists) {
             std::cout << " does not exist" << std::endl;
             return 1;
@@ -163,7 +163,7 @@ int main(int argc, const char *argv[])
             string subcmd(argv[6]);
             if (subcmd != "out") {
                 std::cerr << "unrecognized subcmd '" << subcmd << "'"
-                    << std::endl;
+                          << std::endl;
                 return 1;
             }
             if (argc < 8) {
@@ -180,18 +180,16 @@ int main(int argc, const char *argv[])
             int err = bl.write_file(argv[7], 0644);
             if (err < 0) {
                 std::cerr << "error writing value to '" << out << "': "
-                    << cpp_strerror(err) << std::endl;
+                          << cpp_strerror(err) << std::endl;
                 return 1;
             }
-        }
-        else {
+        } else {
             ostringstream os;
             bl.hexdump(os);
             std::cout << os.str() << std::endl;
         }
 
-    }
-    else if (cmd == "crc") {
+    } else if (cmd == "crc") {
         if (argc < 6) {
             usage(argv[0]);
             return 1;
@@ -202,20 +200,20 @@ int main(int argc, const char *argv[])
         bool exists = false;
         bufferlist bl = st.get(prefix, key, exists);
         std::
-            cout << "(" << url_escape(prefix) << ", " << url_escape(key) <<
-            ") ";
+        cout << "(" << url_escape(prefix) << ", " << url_escape(key) <<
+             ") ";
         if (!exists) {
             std::cout << " does not exist" << std::endl;
             return 1;
         }
         std::cout << " crc " << bl.crc32c(0) << std::endl;
 
-    }
-    else if (cmd == "get-size") {
+    } else if (cmd == "get-size") {
         std::cout << "estimated store size: " << st.get_size() << std::endl;
 
-        if (argc < 5)
+        if (argc < 5) {
             return 0;
+        }
 
         if (argc < 6) {
             usage(argv[0]);
@@ -228,14 +226,13 @@ int main(int argc, const char *argv[])
         bufferlist bl = st.get(prefix, key, exists);
         if (!exists) {
             std::cerr << "(" << url_escape(prefix) << "," << url_escape(key)
-                << ") does not exist" << std::endl;
+                      << ") does not exist" << std::endl;
             return 1;
         }
         std::cout << "(" << url_escape(prefix) << "," << url_escape(key)
-            << ") size " << byte_u_t(bl.length()) << std::endl;
+                  << ") size " << byte_u_t(bl.length()) << std::endl;
 
-    }
-    else if (cmd == "set") {
+    } else if (cmd == "set") {
         if (argc < 8) {
             usage(argv[0]);
             return 1;
@@ -253,17 +250,15 @@ int main(int argc, const char *argv[])
                 return 1;
             }
             encode(v, val);
-        }
-        else if (subcmd == "in") {
+        } else if (subcmd == "in") {
             int ret = val.read_file(argv[7], &errstr);
             if (ret < 0 || !errstr.empty()) {
                 std::cerr << "error reading file: " << errstr << std::endl;
                 return 1;
             }
-        }
-        else {
+        } else {
             std::cerr << "unrecognized subcommand '" << subcmd << "'" << std::
-                endl;
+                      endl;
             usage(argv[0]);
             return 1;
         }
@@ -271,12 +266,11 @@ int main(int argc, const char *argv[])
         bool ret = st.set(prefix, key, val);
         if (!ret) {
             std::cerr << "error setting ("
-                << url_escape(prefix) << "," << url_escape(key) << ")" << std::
-                endl;
+                      << url_escape(prefix) << "," << url_escape(key) << ")" << std::
+                      endl;
             return 1;
         }
-    }
-    else if (cmd == "rm") {
+    } else if (cmd == "rm") {
         if (argc < 6) {
             usage(argv[0]);
             return 1;
@@ -287,12 +281,11 @@ int main(int argc, const char *argv[])
         bool ret = st.rm(prefix, key);
         if (!ret) {
             std::cerr << "error removing ("
-                << url_escape(prefix) << "," << url_escape(key) << ")"
-                << std::endl;
+                      << url_escape(prefix) << "," << url_escape(key) << ")"
+                      << std::endl;
             return 1;
         }
-    }
-    else if (cmd == "rm-prefix") {
+    } else if (cmd == "rm-prefix") {
         if (argc < 5) {
             usage(argv[0]);
             return 1;
@@ -302,17 +295,15 @@ int main(int argc, const char *argv[])
         bool ret = st.rm_prefix(prefix);
         if (!ret) {
             std::cerr << "error removing prefix ("
-                << url_escape(prefix) << ")" << std::endl;
+                      << url_escape(prefix) << ")" << std::endl;
             return 1;
         }
-    }
-    else if (cmd == "store-copy") {
+    } else if (cmd == "store-copy") {
         int num_keys_per_tx = 128;  // magic number that just feels right.
         if (argc < 5) {
             usage(argv[0]);
             return 1;
-        }
-        else if (argc > 5) {
+        } else if (argc > 5) {
             string err;
             num_keys_per_tx = strict_strtol(argv[5], 10, &err);
             if (!err.empty()) {
@@ -330,12 +321,11 @@ int main(int argc, const char *argv[])
                              other_store_type);
         if (ret < 0) {
             std::cerr << "error copying store to path '" << argv[4]
-                << "': " << cpp_strerror(ret) << std::endl;
+                      << "': " << cpp_strerror(ret) << std::endl;
             return 1;
         }
 
-    }
-    else if (cmd == "store-crc") {
+    } else if (cmd == "store-crc") {
         if (argc < 4) {
             usage(argv[0]);
             return 1;
@@ -344,19 +334,16 @@ int main(int argc, const char *argv[])
         uint32_t crc = st.traverse(string(), true, false, &fs);
         std::cout << "store at '" << argv[4] << "' crc " << crc << std::endl;
 
-    }
-    else if (cmd == "compact") {
+    } else if (cmd == "compact") {
         st.compact();
-    }
-    else if (cmd == "compact-prefix") {
+    } else if (cmd == "compact-prefix") {
         if (argc < 5) {
             usage(argv[0]);
             return 1;
         }
         string prefix(url_unescape(argv[4]));
         st.compact_prefix(prefix);
-    }
-    else if (cmd == "compact-range") {
+    } else if (cmd == "compact-range") {
         if (argc < 7) {
             usage(argv[0]);
             return 1;
@@ -365,17 +352,15 @@ int main(int argc, const char *argv[])
         string start(url_unescape(argv[5]));
         string end(url_unescape(argv[6]));
         st.compact_range(prefix, start, end);
-    }
-    else if (cmd == "stats") {
+    } else if (cmd == "stats") {
         st.print_stats();
-    }
-    else if (cmd == "histogram") {
+    } else if (cmd == "histogram") {
         string prefix;
-        if (argc > 4)
+        if (argc > 4) {
             prefix = url_unescape(argv[4]);
+        }
         st.build_size_histogram(prefix);
-    }
-    else {
+    } else {
         std::cerr << "Unrecognized command: " << cmd << std::endl;
         return 1;
     }

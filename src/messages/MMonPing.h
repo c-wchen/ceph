@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /**
  * This is used to send pings between monitors for
@@ -18,48 +18,57 @@
 #include "msg/Message.h"
 #include "mon/ConnectionTracker.h"
 
-class MMonPing final:public Message {
-  private:
+class MMonPing final: public Message
+{
+private:
     static constexpr int HEAD_VERSION = 1;
     static constexpr int COMPAT_VERSION = 1;
 
-  public:
+public:
     enum {
         PING = 1,
         PING_REPLY = 2,
     };
-    const char *get_op_name(int op) const {
+    const char *get_op_name(int op) const
+    {
         switch (op) {
-        case PING:
-            return "ping";
-            case PING_REPLY:return "ping_reply";
-            default:return "???";
-    }} __u8 op = 0;
+            case PING:
+                return "ping";
+            case PING_REPLY:
+                return "ping_reply";
+            default:
+                return "???";
+        }
+    } __u8 op = 0;
     utime_t stamp;
     bufferlist tracker_bl;
     uint32_t min_message_size = 0;
 
-    MMonPing(__u8 o, utime_t s, const bufferlist & tbl, uint32_t min_message)
-  :    Message {
-    MSG_MON_PING, HEAD_VERSION, COMPAT_VERSION},
-        op(o), stamp(s), tracker_bl(tbl), min_message_size(min_message) {
-    }
-    MMonPing(__u8 o, utime_t s, const bufferlist & tbl)
-    :Message {
-    MSG_MON_PING, HEAD_VERSION, COMPAT_VERSION},
-        op(o), stamp(s), tracker_bl(tbl) {
-    }
-    MMonPing()
-  :    Message {
-    MSG_MON_PING, HEAD_VERSION, COMPAT_VERSION}
+    MMonPing(__u8 o, utime_t s, const bufferlist &tbl, uint32_t min_message)
+        :    Message {
+        MSG_MON_PING, HEAD_VERSION, COMPAT_VERSION},
+    op(o), stamp(s), tracker_bl(tbl), min_message_size(min_message)
     {
     }
-  private:
-    ~MMonPing()final {
+    MMonPing(__u8 o, utime_t s, const bufferlist &tbl)
+        : Message {
+        MSG_MON_PING, HEAD_VERSION, COMPAT_VERSION},
+    op(o), stamp(s), tracker_bl(tbl)
+    {
+    }
+    MMonPing()
+        :    Message {
+        MSG_MON_PING, HEAD_VERSION, COMPAT_VERSION}
+    {
+    }
+private:
+    ~MMonPing()final
+    {
     }
 
-  public:
-    void decode_payload() override {
+public:
+    void decode_payload() override
+    {
         auto p = payload.cbegin();
         decode(op, p);
         decode(stamp, p);
@@ -71,7 +80,8 @@ class MMonPing final:public Message {
         p += size;
         min_message_size = size + payload_mid_length;
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(op, payload);
         encode(stamp, payload);
@@ -98,14 +108,16 @@ class MMonPing final:public Message {
         }
     }
 
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "mon_ping";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "mon_ping(" << get_op_name(op)
-        << " stamp " << stamp << ")";
-  } private:
-     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+            << " stamp " << stamp << ")";
+    } private:
+    template < class T, typename ... Args >
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

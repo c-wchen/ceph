@@ -7,17 +7,20 @@
 #include <boost/beast/http/empty_body.hpp>
 #include <boost/beast/http/message.hpp>
 
-namespace librbd {
-    namespace migration {
+namespace librbd
+{
+namespace migration
+{
 
-        struct HttpProcessorInterface {
-            using EmptyBody = boost::beast::http::empty_body;
-            using EmptyRequest = boost::beast::http::request < EmptyBody >;
+struct HttpProcessorInterface {
+    using EmptyBody = boost::beast::http::empty_body;
+    using EmptyRequest = boost::beast::http::request < EmptyBody >;
 
-             virtual ~ HttpProcessorInterface() {
-            } virtual void process_request(EmptyRequest & request) = 0;
+    virtual ~ HttpProcessorInterface()
+    {
+    } virtual void process_request(EmptyRequest &request) = 0;
 
-        };
+};
 
 } // namespace migration }      // namespace librbd
 #endif                          // CEPH_LIBRBD_MIGRATION_HTTP_PROCESSOR_INTERFACE_H

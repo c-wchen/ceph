@@ -83,8 +83,7 @@ bool tri_mutex::try_lock_for_read() noexcept
     if (!writers && !exclusively_used && waiters.empty()) {
         ++readers;
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -168,8 +167,7 @@ bool tri_mutex::try_lock_for_excl() noexcept
     if (readers == 0u && writers == 0u && !exclusively_used) {
         exclusively_used = true;
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -185,14 +183,11 @@ bool tri_mutex::is_acquired() const const
 {
     if (readers != 0u) {
         return true;
-    }
-    else if (writers != 0u) {
+    } else if (writers != 0u) {
         return true;
-    }
-    else if (exclusively_used) {
+    } else if (exclusively_used) {
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -202,29 +197,28 @@ void tri_mutex::wake()
     assert(!readers && !writers && !exclusively_used);
     type_t type = type_t::none;
     while (!waiters.empty()) {
-        auto & waiter = waiters.front();
+        auto &waiter = waiters.front();
         if (type == type_t::exclusive) {
             break;
         }
         if (type == type_t::none) {
             type = waiter.type;
-        }
-        else if (type != waiter.type) {
+        } else if (type != waiter.type) {
             // to be woken in the next batch
             break;
         }
         switch (type) {
-        case type_t::read:
-            ++readers;
-            break;
-        case type_t::write:
-            ++writers;
-            break;
-        case type_t::exclusive:
-            exclusively_used = true;
-            break;
-        default:
-            assert(0);
+            case type_t::read:
+                ++readers;
+                break;
+            case type_t::write:
+                ++writers;
+                break;
+            case type_t::exclusive:
+                exclusively_used = true;
+                break;
+            default:
+                assert(0);
         }
         waiter.pr.set_value();
         waiters.pop_front();

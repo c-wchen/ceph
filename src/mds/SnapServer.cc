@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "SnapServer.h"
@@ -47,21 +47,23 @@ void SnapServer::reset_state()
     if (mds) {                  // only if I'm running in a live MDS
         snapid_t first_free = 0;
         mds->objecter->with_osdmap([&](const OSDMap & o) {
-          for (const auto p:      mds->mdsmap->
-                                        get_data_pools())
-                                   {
-                                   const pg_pool_t * pi = o.get_pg_pool(p);
-                                   if (!pi) {
-                                   // If pool isn't in OSDMap yet then can't have any snaps
-                                   // needing removal, skip.
-                                   continue;}
-                                   if (pi->snap_seq > first_free) {
-                                   first_free = pi->snap_seq;}
-                                   }
-                                   }
-        ) ;
-        if (first_free > last_snap)
+            for (const auto p :      mds->mdsmap->
+                 get_data_pools()) {
+                const pg_pool_t *pi = o.get_pg_pool(p);
+                if (!pi) {
+                    // If pool isn't in OSDMap yet then can't have any snaps
+                    // needing removal, skip.
+                    continue;
+                }
+                if (pi->snap_seq > first_free) {
+                    first_free = pi->snap_seq;
+                }
+            }
+        }
+                                  ) ;
+        if (first_free > last_snap) {
             last_snap = first_free;
+        }
     }
     last_created = last_snap;
     last_destroyed = last_snap;
@@ -72,8 +74,8 @@ void SnapServer::reset_state()
 
 // SERVER
 
-void SnapServer::_prepare(const bufferlist & bl, uint64_t reqid,
-                          mds_rank_t bymds, bufferlist & out)
+void SnapServer::_prepare(const bufferlist &bl, uint64_t reqid,
+                          mds_rank_t bymds, bufferlist &out)
 {
     using ceph::decode;
     using ceph::encode;
@@ -82,8 +84,7 @@ void SnapServer::_prepare(const bufferlist & bl, uint64_t reqid,
     decode(op, p);
 
     switch (op) {
-    case TABLE_OP_CREATE:
-        {
+        case TABLE_OP_CREATE: {
             SnapInfo info;
             decode(info.ino, p);
             if (!p.end()) {
@@ -92,9 +93,8 @@ void SnapServer::_prepare(const bufferlist & bl, uint64_t reqid,
                 info.snapid = ++last_snap;
                 pending_update[version] = info;
                 dout(10) << "prepare v" << version << " create " << info <<
-                    dendl;
-            }
-            else {
+                         dendl;
+            } else {
                 pending_noop.insert(version);
                 dout(10) << "prepare v" << version << " noop" << dendl;
             }
@@ -103,8 +103,7 @@ void SnapServer::_prepare(const bufferlist & bl, uint64_t reqid,
         }
         break;
 
-    case TABLE_OP_DESTROY:
-        {
+        case TABLE_OP_DESTROY: {
             inodeno_t ino;
             snapid_t snapid;
             decode(ino, p);     // not used, currently.
@@ -114,16 +113,16 @@ void SnapServer::_prepare(const bufferlist & bl, uint64_t reqid,
             ++last_snap;
 
             pending_destroy[version] = {
-            snapid, last_snap};
+                snapid, last_snap
+            };
             dout(10) << "prepare v" << version << " destroy " << snapid <<
-                " seq " << last_snap << dendl;
+                     " seq " << last_snap << dendl;
 
             encode(last_snap, out);
         }
         break;
 
-    case TABLE_OP_UPDATE:
-        {
+        case TABLE_OP_UPDATE: {
             SnapInfo info;
             decode(info.ino, p);
             decode(info.snapid, p);
@@ -135,31 +134,34 @@ void SnapServer::_prepare(const bufferlist & bl, uint64_t reqid,
         }
         break;
 
-    default:
-        ceph_abort();
+        default:
+            ceph_abort();
     }
     //dump();
 }
 
-void SnapServer::_get_reply_buffer(version_t tid, bufferlist * pbl) const const
+void SnapServer::_get_reply_buffer(version_t tid, bufferlist *pbl) const const
 {
     using ceph::encode;
     auto p = pending_update.find(tid);
     if (p != pending_update.end()) {
-        if (pbl && !snaps.count(p->second.snapid))  // create
+        if (pbl && !snaps.count(p->second.snapid)) { // create
             encode(p->second.snapid, *pbl);
+        }
         return;
     }
     auto q = pending_destroy.find(tid);
     if (q != pending_destroy.end()) {
-        if (pbl)
+        if (pbl) {
             encode(q->second.second, *pbl);
+        }
         return;
     }
     auto r = pending_noop.find(tid);
     if (r != pending_noop.end()) {
-        if (pbl)
+        if (pbl) {
             encode(last_snap, *pbl);
+        }
         return;
     }
     assert(0 == "tid not found");
@@ -168,17 +170,18 @@ void SnapServer::_get_reply_buffer(version_t tid, bufferlist * pbl) const const
 void SnapServer::_commit(version_t tid, cref_t < MMDSTableRequest > req)
 {
     if (pending_update.count(tid)) {
-        SnapInfo & info = pending_update[tid];
+        SnapInfo &info = pending_update[tid];
         string opname;
         if (snaps.count(info.snapid)) {
             opname = "update";
-            if (info.stamp == utime_t())
+            if (info.stamp == utime_t()) {
                 info.stamp = snaps[info.snapid].stamp;
-        }
-        else {
+            }
+        } else {
             opname = "create";
-            if (info.snapid > last_created)
+            if (info.snapid > last_created) {
                 last_created = info.snapid;
+            }
         }
         dout(7) << "commit " << tid << " " << opname << " " << info << dendl;
         snaps[info.snapid] = info;
@@ -189,24 +192,24 @@ void SnapServer::_commit(version_t tid, cref_t < MMDSTableRequest > req)
         snapid_t sn = pending_destroy[tid].first;
         snapid_t seq = pending_destroy[tid].second;
         dout(7) << "commit " << tid << " destroy " << sn << " seq " << seq <<
-            dendl;
+                dendl;
         snaps.erase(sn);
-        if (seq > last_destroyed)
+        if (seq > last_destroyed) {
             last_destroyed = seq;
+        }
 
-      for (const auto p:mds->mdsmap->get_data_pools()) {
+        for (const auto p : mds->mdsmap->get_data_pools()) {
             need_to_purge[p].insert(sn);
             need_to_purge[p].insert(seq);
         }
 
         pending_destroy.erase(tid);
-    }
-    else if (pending_noop.count(tid)) {
+    } else if (pending_noop.count(tid)) {
         dout(7) << "commit " << tid << " noop" << dendl;
         pending_noop.erase(tid);
-    }
-    else
+    } else {
         ceph_abort();
+    }
 
     //dump();
 }
@@ -214,19 +217,20 @@ void SnapServer::_commit(version_t tid, cref_t < MMDSTableRequest > req)
 void SnapServer::_rollback(version_t tid)
 {
     if (pending_update.count(tid)) {
-        SnapInfo & info = pending_update[tid];
+        SnapInfo &info = pending_update[tid];
         string opname;
-        if (snaps.count(info.snapid))
+        if (snaps.count(info.snapid)) {
             opname = "update";
-        else
+        } else {
             opname = "create";
+        }
         dout(7) << "rollback " << tid << " " << opname << " " << info << dendl;
         pending_update.erase(tid);
     }
 
     else if (pending_destroy.count(tid)) {
         dout(7) << "rollback " << tid << " destroy " << pending_destroy[tid] <<
-            dendl;
+                dendl;
         pending_destroy.erase(tid);
     }
 
@@ -235,13 +239,14 @@ void SnapServer::_rollback(version_t tid)
         pending_noop.erase(tid);
     }
 
-    else
+    else {
         ceph_abort();
+    }
 
     //dump();
 }
 
-void SnapServer::_server_update(bufferlist & bl)
+void SnapServer::_server_update(bufferlist &bl)
 {
     using ceph::decode;
     auto p = bl.cbegin();
@@ -252,10 +257,12 @@ void SnapServer::_server_update(bufferlist & bl)
     for (map < int, vector < snapid_t > >::iterator p = purge.begin();
          p != purge.end(); ++p) {
         for (vector < snapid_t >::iterator q = p->second.begin();
-             q != p->second.end(); ++q)
+             q != p->second.end(); ++q) {
             need_to_purge[p->first].erase(*q);
-        if (need_to_purge[p->first].empty())
+        }
+        if (need_to_purge[p->first].empty()) {
             need_to_purge.erase(p->first);
+        }
     }
 }
 
@@ -272,7 +279,7 @@ bool SnapServer::_notify_prep(version_t tid)
     encode(last_destroyed, bl);
     ceph_assert(version == tid);
 
-  for (auto & p:active_clients) {
+    for (auto &p : active_clients) {
         auto m =
             make_message < MMDSTableRequest > (table,
                                                TABLESERVER_OP_NOTIFY_PREP, 0,
@@ -296,27 +303,26 @@ void SnapServer::handle_query(const cref_t < MMDSTableRequest > &req)
                                            req->reqid, version);
 
     switch (op) {
-    case 'F':                  // full
-        version_t have_version;
-        decode(have_version, p);
-        ceph_assert(have_version <= version);
-        if (have_version == version) {
-            char type = 'U';
-            encode(type, reply->bl);
-        }
-        else {
-            char type = 'F';
-            encode(type, reply->bl);
-            encode(snaps, reply->bl);
-            encode(pending_update, reply->bl);
-            encode(pending_destroy, reply->bl);
-            encode(last_created, reply->bl);
-            encode(last_destroyed, reply->bl);
-        }
-        // FIXME: implement incremental change
-        break;
-    default:
-        ceph_abort();
+        case 'F':                  // full
+            version_t have_version;
+            decode(have_version, p);
+            ceph_assert(have_version <= version);
+            if (have_version == version) {
+                char type = 'U';
+                encode(type, reply->bl);
+            } else {
+                char type = 'F';
+                encode(type, reply->bl);
+                encode(snaps, reply->bl);
+                encode(pending_update, reply->bl);
+                encode(pending_destroy, reply->bl);
+                encode(last_created, reply->bl);
+                encode(last_destroyed, reply->bl);
+            }
+            // FIXME: implement incremental change
+            break;
+        default:
+            ceph_abort();
     };
 
     mds->send_message(reply, req->get_connection());
@@ -337,28 +343,30 @@ void SnapServer::check_osd_map(bool force)
     // since starting with octopus we now get an explicit ack after we remove a
     // snap.
     mds->objecter->with_osdmap([this, &all_purged,
-                                &all_purge] (const OSDMap & osdmap) {
-      for (const auto & p:    need_to_purge) {
-                               int id = p.first;
-                               const pg_pool_t * pi = osdmap.get_pg_pool(id);
-                               if (pi == NULL) {
-                               // The pool is gone.  So are the snapshots.
-                               all_purged[id] =
-                               std::vector < snapid_t > (p.second.begin(),
-                                                         p.second.end());
-                               continue;}
+    &all_purge](const OSDMap & osdmap) {
+        for (const auto &p :    need_to_purge) {
+            int id = p.first;
+            const pg_pool_t *pi = osdmap.get_pg_pool(id);
+            if (pi == NULL) {
+                // The pool is gone.  So are the snapshots.
+                all_purged[id] =
+                    std::vector < snapid_t > (p.second.begin(),
+                                              p.second.end());
+                continue;
+            }
 
-          for (const auto & q:p.second) {
-                               if (pi->is_removed_snap(q)) {
-                               dout(10) << " osdmap marks " << q <<
-                               " as removed" << dendl;
-                               all_purged[id].push_back(q);}
-                               else {
-                               all_purge[id].push_back(q);}
-                               }
-                               }
-                               }
-    ) ;
+            for (const auto &q : p.second) {
+                if (pi->is_removed_snap(q)) {
+                    dout(10) << " osdmap marks " << q <<
+                             " as removed" << dendl;
+                    all_purged[id].push_back(q);
+                } else {
+                    all_purge[id].push_back(q);
+                }
+            }
+        }
+    }
+                              ) ;
 
     if (!all_purged.empty()) {
         // prepare to remove from need_to_purge list
@@ -384,12 +392,12 @@ void SnapServer::handle_remove_snaps(const cref_t < MRemoveSnaps > &m)
     map < int32_t, vector < snapid_t > >all_purged;
     int num = 0;
 
-  for (const auto &[id, snaps]:need_to_purge) {
+    for (const auto &[id, snaps] : need_to_purge) {
         auto i = m->snaps.find(id);
         if (i == m->snaps.end()) {
             continue;
         }
-      for (const auto & q:snaps) {
+        for (const auto &q : snaps) {
             if (std::find(i->second.begin(), i->second.end(), q) !=
                 i->second.end()) {
                 dout(10) << " mon reports " << q << " is removed" << dendl;
@@ -408,7 +416,7 @@ void SnapServer::handle_remove_snaps(const cref_t < MRemoveSnaps > &m)
     }
 }
 
-void SnapServer::dump(Formatter * f) const const
+void SnapServer::dump(Formatter *f) const const
 {
     f->open_object_section("snapserver");
 
@@ -434,7 +442,7 @@ void SnapServer::dump(Formatter * f) const const
 
     f->open_object_section("need_to_purge");
     for (map < int, set < snapid_t > >::const_iterator i =
-         need_to_purge.begin(); i != need_to_purge.end(); ++i) {
+             need_to_purge.begin(); i != need_to_purge.end(); ++i) {
         CachedStackStringStream css;
         *css << i->first;
         f->open_array_section(css->strv());
@@ -460,7 +468,7 @@ void SnapServer::dump(Formatter * f) const const
 
     f->open_array_section("pending_destroy");
     for (map < version_t, pair < snapid_t, snapid_t > >::const_iterator i =
-         pending_destroy.begin(); i != pending_destroy.end(); ++i) {
+             pending_destroy.begin(); i != pending_destroy.end(); ++i) {
         f->open_object_section("snap");
         f->dump_unsigned("version", i->first);
         f->dump_unsigned("removed_snap", i->second.first);
@@ -472,12 +480,12 @@ void SnapServer::dump(Formatter * f) const const
     f->close_section();
 }
 
-void SnapServer::generate_test_instances(std::list < SnapServer * >&ls)
+void SnapServer::generate_test_instances(std::list < SnapServer * > &ls)
 {
     list < SnapInfo * >snapinfo_instances;
     SnapInfo::generate_test_instances(snapinfo_instances);
     SnapInfo populated_snapinfo = *(snapinfo_instances.back());
-  for (auto & info:snapinfo_instances) {
+    for (auto &info : snapinfo_instances) {
         delete info;
         info = nullptr;
     }
@@ -509,13 +517,13 @@ bool SnapServer::force_update(snapid_t last, snapid_t v2_since,
     }
     if (v2_since > snaprealm_v2_since) {
         derr << " updating snaprealm_v2_since " << snaprealm_v2_since
-            << " -> " << v2_since << dendl;
+             << " -> " << v2_since << dendl;
         snaprealm_v2_since = v2_since;
         modified = true;
     }
     if (snaps != _snaps) {
         derr << " updating snaps {" << snaps << "} -> {" << _snaps << "}" <<
-            dendl;
+             dendl;
         snaps = _snaps;
         modified = true;
     }

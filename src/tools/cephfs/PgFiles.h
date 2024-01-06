@@ -26,19 +26,20 @@
  * some bad/damaged PGs and wants to see which files might be
  * affected.
  */
-class PgFiles {
-  private:
-    Objecter * objecter;
+class PgFiles
+{
+private:
+    Objecter *objecter;
     struct ceph_mount_info *cmount = nullptr;
 
-     std::set < pg_t > pgs;
-     std::set < uint64_t > pools;
+    std::set < pg_t > pgs;
+    std::set < uint64_t > pools;
 
     void hit_file(std::string const &path, const struct ceph_statx &stx);
     void hit_dir(std::string const &path);
 
-  public:
-     PgFiles(Objecter * o, const std::set < pg_t > &pgs_);
+public:
+    PgFiles(Objecter *o, const std::set < pg_t > &pgs_);
     ~PgFiles();
 
     int init();

@@ -48,15 +48,19 @@ struct pidfh {
     dev_t pf_dev;
     ino_t pf_ino;
 
-    pidfh() {
+    pidfh()
+    {
         reset();
-    } ~pidfh() {
+    } ~pidfh()
+    {
         remove();
     }
 
-    bool is_open() const {
+    bool is_open() const
+    {
         return !pf_path.empty() && pf_fd != -1;
-    } void reset() {
+    } void reset()
+    {
         pf_fd = -1;
         pf_path.clear();
         pf_dev = 0;
@@ -73,20 +77,24 @@ static pidfh *pfh = nullptr;
 int pidfh::verify()
 {
     // check that the file we opened still is the same
-    if (pf_fd == -1)
+    if (pf_fd == -1) {
         return -EINVAL;
+    }
     struct stat st;
-    if (stat(pf_path.c_str(), &st) == -1)
+    if (stat(pf_path.c_str(), &st) == -1) {
         return -errno;
-    if (st.st_dev != pf_dev || st.st_ino != pf_ino)
+    }
+    if (st.st_dev != pf_dev || st.st_ino != pf_ino) {
         return -ESTALE;
+    }
     return 0;
 }
 
 int pidfh::remove()
 {
-    if (pf_path.empty())
+    if (pf_path.empty()) {
         return 0;
+    }
 
     int ret;
     if ((ret = verify()) < 0) {
@@ -101,7 +109,7 @@ int pidfh::remove()
     ret =::lseek(pf_fd, 0, SEEK_SET);
     if (ret < 0) {
         std::cerr << __func__ << " lseek failed "
-            << cpp_strerror(errno) << std::endl;
+                  << cpp_strerror(errno) << std::endl;
         return -errno;
     }
 
@@ -112,21 +120,21 @@ int pidfh::remove()
     ::close(pf_fd);
     if (res < 0) {
         std::cerr << __func__ << " safe_read failed "
-            << cpp_strerror(-res) << std::endl;
+                  << cpp_strerror(-res) << std::endl;
         return res;
     }
 
     int a = atoi(buf);
     if (a != getpid()) {
         std::cerr << __func__ << " the pid found in the file is "
-            << a << " which is different from getpid() "
-            << getpid() << std::endl;
+                  << a << " which is different from getpid() "
+                  << getpid() << std::endl;
         return -EDOM;
     }
     ret =::unlink(pf_path.c_str());
     if (ret < 0) {
         std::cerr << __func__ << " unlink " << pf_path.c_str() << " failed "
-            << cpp_strerror(errno) << std::endl;
+                  << cpp_strerror(errno) << std::endl;
         return -errno;
     }
     reset();
@@ -142,7 +150,7 @@ int pidfh::open(std::string_view pid_file)
     if (fd < 0) {
         int err = errno;
         derr << __func__ << ": failed to open pid file '"
-            << pf_path << "': " << cpp_strerror(err) << dendl;
+             << pf_path << "': " << cpp_strerror(err) << dendl;
         reset();
         return -err;
     }
@@ -150,7 +158,7 @@ int pidfh::open(std::string_view pid_file)
     if (fstat(fd, &st) == -1) {
         int err = errno;
         derr << __func__ << ": failed to fstat pid file '"
-            << pf_path << "': " << cpp_strerror(err) << dendl;
+             << pf_path << "': " << cpp_strerror(err) << dendl;
         ::close(fd);
         reset();
         return -err;
@@ -173,12 +181,11 @@ int pidfh::open(std::string_view pid_file)
     if (r < 0) {
         if (errno == EAGAIN || errno == EACCES) {
             derr << __func__ << ": failed to lock pidfile "
-                << pf_path << " because another process locked it"
-                << "': " << cpp_strerror(errno) << dendl;
-        }
-        else {
+                 << pf_path << " because another process locked it"
+                 << "': " << cpp_strerror(errno) << dendl;
+        } else {
             derr << __func__ << ": failed to lock pidfile "
-                << pf_path << "': " << cpp_strerror(errno) << dendl;
+                 << pf_path << "': " << cpp_strerror(errno) << dendl;
         }
         const auto lock_errno = errno;
         ::close(pf_fd);
@@ -191,21 +198,22 @@ int pidfh::open(std::string_view pid_file)
 
 int pidfh::write()
 {
-    if (!is_open())
+    if (!is_open()) {
         return 0;
+    }
 
     char buf[32];
     int len = snprintf(buf, sizeof(buf), "%d\n", getpid());
     if (::ftruncate(pf_fd, 0) < 0) {
         int err = errno;
         derr << __func__ << ": failed to ftruncate the pid file '"
-            << pf_path << "': " << cpp_strerror(err) << dendl;
+             << pf_path << "': " << cpp_strerror(err) << dendl;
         return -err;
     }
     ssize_t res = safe_write(pf_fd, buf, len);
     if (res < 0) {
         derr << __func__ << ": failed to write to pid file '"
-            << pf_path << "': " << cpp_strerror(-res) << dendl;
+             << pf_path << "': " << cpp_strerror(-res) << dendl;
         return res;
     }
     return 0;
@@ -213,8 +221,9 @@ int pidfh::write()
 
 void pidfile_remove()
 {
-    if (pfh != nullptr)
+    if (pfh != nullptr) {
         delete pfh;
+    }
     pfh = nullptr;
 }
 
@@ -230,7 +239,7 @@ int pidfile_write(std::string_view pid_file)
     pfh = new pidfh();
     if (atexit(pidfile_remove)) {
         derr << __func__ << ": failed to set pidfile_remove function "
-            << "to run at exit." << dendl;
+             << "to run at exit." << dendl;
         return -EINVAL;
     }
 

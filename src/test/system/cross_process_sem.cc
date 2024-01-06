@@ -34,12 +34,12 @@ struct cross_process_sem_data_t {
  * care about destroying semaphores before the process finishes. It's pretty
  * difficult to get it right and there is usually no benefit.
  */
-int CrossProcessSem:: create(int initial_val, CrossProcessSem ** res)
+int CrossProcessSem:: create(int initial_val, CrossProcessSem **res)
 {
 #ifndef _WIN32
     struct cross_process_sem_data_t *data =
-        static_cast <
-        cross_process_sem_data_t *
+            static_cast <
+            cross_process_sem_data_t *
         >(mmap(NULL, sizeof(struct cross_process_sem_data_t),
                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
     if (data == MAP_FAILED) {
@@ -74,11 +74,13 @@ void CrossProcessSem:: wait()
 {
     while (true) {
         int ret = sem_wait(&m_data->sem);
-        if (ret == 0)
+        if (ret == 0) {
             return;
+        }
         int err = errno;
-        if (err == -EINTR)
+        if (err == -EINTR) {
             continue;
+        }
         ceph_abort();
     }
 }
@@ -93,25 +95,28 @@ void CrossProcessSem:: post()
 
 int CrossProcessSem:: reinit(int dval)
 {
-    if (dval < 0)
+    if (dval < 0) {
         return -EINVAL;
+    }
     int cval;
-    if (sem_getvalue(&m_data->sem, &cval) == -1)
+    if (sem_getvalue(&m_data->sem, &cval) == -1) {
         return errno;
+    }
     if (cval < dval) {
         int diff = dval - cval;
-        for (int i = 0; i < diff; ++i)
+        for (int i = 0; i < diff; ++i) {
             sem_post(&m_data->sem);
-    }
-    else {
+        }
+    } else {
         int diff = cval - dval;
-        for (int i = 0; i < diff; ++i)
+        for (int i = 0; i < diff; ++i) {
             sem_wait(&m_data->sem);
+        }
     }
     return 0;
 }
 
-CrossProcessSem::CrossProcessSem(struct cross_process_sem_data_t * data)
-:  m_data(data)
+CrossProcessSem::CrossProcessSem(struct cross_process_sem_data_t *data)
+    :  m_data(data)
 {
 }

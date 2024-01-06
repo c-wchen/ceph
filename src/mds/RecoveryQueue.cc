@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "CInode.h"
@@ -27,21 +27,26 @@
 
 using namespace std;
 
-class C_MDC_Recover:public MDSIOContextBase {
-  public:
-    C_MDC_Recover(RecoveryQueue * rq_, CInode * i):
-        MDSIOContextBase(false), rq(rq_), in(i) {
+class C_MDC_Recover: public MDSIOContextBase
+{
+public:
+    C_MDC_Recover(RecoveryQueue *rq_, CInode *i):
+        MDSIOContextBase(false), rq(rq_), in(i)
+    {
         ceph_assert(rq != NULL);
-    } void print(ostream & out) const override {
+    } void print(ostream &out) const override
+    {
         out << "file_recover(" << in->ino() << ")";
     } uint64_t size = 0;
     utime_t mtime;
-  protected:
-    void finish(int r) override {
+protected:
+    void finish(int r) override
+    {
         rq->_recovered(in, r, size, mtime);
     }
 
-    MDSRank *get_mds() override {
+    MDSRank *get_mds() override
+    {
         return rq->mds;
     }
 
@@ -49,10 +54,10 @@ class C_MDC_Recover:public MDSIOContextBase {
     CInode *in;
 };
 
-RecoveryQueue::RecoveryQueue(MDSRank * mds_):
-file_recover_queue(member_offset(CInode, item_dirty_dirfrag_dir)),
-file_recover_queue_front(member_offset(CInode, item_dirty_dirfrag_nest)),
-mds(mds_), filer(mds_->objecter, mds_->finisher)
+RecoveryQueue::RecoveryQueue(MDSRank *mds_):
+    file_recover_queue(member_offset(CInode, item_dirty_dirfrag_dir)),
+    file_recover_queue_front(member_offset(CInode, item_dirty_dirfrag_nest)),
+    mds(mds_), filer(mds_->objecter, mds_->finisher)
 {
 }
 
@@ -63,8 +68,8 @@ mds(mds_), filer(mds_->objecter, mds_->finisher)
 void RecoveryQueue::advance()
 {
     dout(10) << file_recover_queue_size << " queued, "
-        << file_recover_queue_front_size << " prioritized, "
-        << file_recovering.size() << " recovering" << dendl;
+             << file_recover_queue_front_size << " prioritized, "
+             << file_recovering.size() << " recovering" << dendl;
 
     while (file_recovering.size() < g_conf()->mds_max_file_recover) {
         if (!file_recover_queue_front.empty()) {
@@ -72,14 +77,12 @@ void RecoveryQueue::advance()
             in->item_recover_queue_front.remove_myself();
             file_recover_queue_front_size--;
             _start(in);
-        }
-        else if (!file_recover_queue.empty()) {
+        } else if (!file_recover_queue.empty()) {
             CInode *in = file_recover_queue.front();
             in->item_recover_queue.remove_myself();
             file_recover_queue_size--;
             _start(in);
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -91,20 +94,20 @@ void RecoveryQueue::advance()
                 file_recover_queue_front_size);
 }
 
-void RecoveryQueue::_start(CInode * in)
+void RecoveryQueue::_start(CInode *in)
 {
-    const auto & pi = in->get_projected_inode();
+    const auto &pi = in->get_projected_inode();
 
     // blech
     if (pi->client_ranges.size() && !pi->get_max_size()) {
         mds->clog->warn() << "bad client_range " << pi->client_ranges
-            << " on ino " << pi->ino;
+                          << " on ino " << pi->ino;
     }
 
     auto p = file_recovering.find(in);
     if (pi->client_ranges.size() && pi->get_max_size()) {
         dout(10) << "starting " << pi->size << " " << pi->client_ranges
-            << " " << *in << dendl;
+                 << " " << *in << dendl;
         if (p == file_recovering.end()) {
             file_recovering.insert(make_pair(in, false));
 
@@ -113,14 +116,12 @@ void RecoveryQueue::_start(CInode * in)
             filer.probe(in->ino(), &layout, in->last,
                         pi->get_max_size(), &fin->size, &fin->mtime, false,
                         0, fin);
-        }
-        else {
+        } else {
             p->second = true;
             dout(10) << "already working on " << *in <<
-                ", set need_restart flag" << dendl;
+                     ", set need_restart flag" << dendl;
         }
-    }
-    else {
+    } else {
         dout(10) << "skipping " << pi->size << " " << *in << dendl;
         if (p == file_recovering.end()) {
             in->state_clear(CInode::STATE_RECOVERING);
@@ -130,7 +131,7 @@ void RecoveryQueue::_start(CInode * in)
     }
 }
 
-void RecoveryQueue::prioritize(CInode * in)
+void RecoveryQueue::prioritize(CInode *in)
 {
     if (file_recovering.count(in)) {
         dout(10) << "already working on " << *in << dendl;
@@ -155,17 +156,17 @@ void RecoveryQueue::prioritize(CInode * in)
     dout(10) << "not queued " << *in << dendl;
 }
 
-static bool _is_in_any_recover_queue(CInode * in)
+static bool _is_in_any_recover_queue(CInode *in)
 {
     return in->item_recover_queue.is_on_list() ||
-        in->item_recover_queue_front.is_on_list();
+           in->item_recover_queue_front.is_on_list();
 }
 
 /**
  * Given an authoritative inode which is in the cache,
  * enqueue it for recovery.
  */
-void RecoveryQueue::enqueue(CInode * in)
+void RecoveryQueue::enqueue(CInode *in)
 {
     dout(15) << "RecoveryQueue::enqueue " << *in << dendl;
     ceph_assert(logger);        // Caller should have done set_logger before using me
@@ -189,25 +190,24 @@ void RecoveryQueue::enqueue(CInode * in)
 /**
  * Call back on completion of Filer probe on an inode.
  */
-void RecoveryQueue::_recovered(CInode * in, int r, uint64_t size, utime_t mtime)
+void RecoveryQueue::_recovered(CInode *in, int r, uint64_t size, utime_t mtime)
 {
     dout(10) << "_recovered r=" << r << " size=" << size << " mtime=" << mtime
-        << " for " << *in << dendl;
+             << " for " << *in << dendl;
 
     if (r != 0) {
         dout(0) << "recovery error! " << r << dendl;
         if (r == -CEPHFS_EBLOCKLISTED) {
             mds->respawn();
             return;
-        }
-        else {
+        } else {
             // Something wrong on the OSD side trying to recover the size
             // of this inode.  In principle we could record this as a piece
             // of per-inode damage, but it's actually more likely that
             // this indicates something wrong with the MDS (like maybe
             // it has the wrong auth caps?)
             mds->clog->error() << " OSD read error while recovering size"
-                " for inode " << in->ino();
+                               " for inode " << in->ino();
             mds->damaged();
         }
     }
@@ -235,8 +235,7 @@ void RecoveryQueue::_recovered(CInode * in, int r, uint64_t size, utime_t mtime)
         logger->set(l_mdc_num_recovering_prioritized,
                     file_recover_queue_front_size);
         _start(in);
-    }
-    else if (!_is_in_any_recover_queue(in)) {
+    } else if (!_is_in_any_recover_queue(in)) {
         // journal
         mds->locker->check_inode_max_size(in, true, 0, size, mtime);
         mds->locker->eval(in, CEPH_LOCK_IFILE);

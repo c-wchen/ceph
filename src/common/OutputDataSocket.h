@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_COMMON_OUTPUTDATASOCKET_H
@@ -20,21 +20,23 @@
 #include "include/common_fwd.h"
 #include "include/buffer.h"
 
-class OutputDataSocket:public Thread {
-  public:
-    OutputDataSocket(CephContext * cct, uint64_t _backlog);
+class OutputDataSocket: public Thread
+{
+public:
+    OutputDataSocket(CephContext *cct, uint64_t _backlog);
     ~OutputDataSocket() override;
 
-    bool init(const std::string & path);
+    bool init(const std::string &path);
 
-    void append_output(ceph::buffer::list & bl);
+    void append_output(ceph::buffer::list &bl);
 
-  protected:
-     virtual void init_connection(ceph::buffer::list & bl) {
+protected:
+    virtual void init_connection(ceph::buffer::list &bl)
+    {
     } void shutdown();
 
     std::string create_shutdown_pipe(int *pipe_rd, int *pipe_wr);
-    std::string bind_and_listen(const std::string & sock_path, int *fd);
+    std::string bind_and_listen(const std::string &sock_path, int *fd);
 
     void *entry() override;
     bool do_accept();

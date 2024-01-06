@@ -12,7 +12,7 @@
 #include "objclass/objclass.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(acl)
+CLS_NAME(acl)
 
 int get_method(cls_method_context_t ctx, char *indata, int datalen,
                char **outdata, int *outdatalen)

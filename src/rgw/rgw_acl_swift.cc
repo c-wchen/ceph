@@ -26,7 +26,8 @@
 using namespace std;
 
 static int parse_list(const char *uid_list, std::vector < std::string > &uids)
-{                               /* out */
+{
+    /* out */
     char *s = strdup(uid_list);
     if (!s) {
         return -ENOMEM;
@@ -45,34 +46,37 @@ static int parse_list(const char *uid_list, std::vector < std::string > &uids)
     return 0;
 }
 
-static bool is_referrer(const std::string & designator)
+static bool is_referrer(const std::string &designator)
 {
     return designator.compare(".r") == 0 ||
-        designator.compare(".ref") == 0 ||
-        designator.compare(".referer") == 0 ||
-        designator.compare(".referrer") == 0;
+           designator.compare(".ref") == 0 ||
+           designator.compare(".referer") == 0 ||
+           designator.compare(".referrer") == 0;
 }
 
-static bool uid_is_public(const string & uid)
+static bool uid_is_public(const string &uid)
 {
-    if (uid[0] != '.' || uid[1] != 'r')
+    if (uid[0] != '.' || uid[1] != 'r') {
         return false;
+    }
 
     int pos = uid.find(':');
-    if (pos < 0 || pos == (int)uid.size())
+    if (pos < 0 || pos == (int)uid.size()) {
         return false;
+    }
 
     string sub = uid.substr(0, pos);
     string after = uid.substr(pos + 1);
 
-    if (after.compare("*") != 0)
+    if (after.compare("*") != 0) {
         return false;
+    }
 
     return is_referrer(sub);
 }
 
 static boost::optional < ACLGrant > referrer_to_grant(std::string url_spec,
-                                                      const uint32_t perm)
+        const uint32_t perm)
 {
     /* This function takes url_spec as non-ref std::string because of the trim
      * operation that is essential to preserve compliance with Swift. It can't
@@ -86,8 +90,7 @@ static boost::optional < ACLGrant > referrer_to_grant(std::string url_spec,
             boost::algorithm::trim(url_spec);
 
             is_negative = true;
-        }
-        else {
+        } else {
             is_negative = false;
         }
 
@@ -100,8 +103,7 @@ static boost::optional < ACLGrant > referrer_to_grant(std::string url_spec,
             if (url_spec.empty() || url_spec == ".") {
                 return boost::none;
             }
-        }
-        else {
+        } else {
             /* Please be aware we're specially handling the .r:* in _add_grant()
              * of RGWAccessControlList as the S3 API has a similar concept, and
              * thus we can have a small portion of compatibility. */
@@ -109,16 +111,15 @@ static boost::optional < ACLGrant > referrer_to_grant(std::string url_spec,
 
         grant.set_referer(url_spec, is_negative ? 0 : perm);
         return grant;
-    }
-    catch(const std::out_of_range &) {
+    } catch (const std::out_of_range &) {
         return boost::none;
     }
 }
 
-static ACLGrant user_to_grant(const DoutPrefixProvider * dpp,
-                              CephContext * const cct,
-                              rgw::sal::Driver * driver,
-                              const std::string & uid, const uint32_t perm)
+static ACLGrant user_to_grant(const DoutPrefixProvider *dpp,
+                              CephContext *const cct,
+                              rgw::sal::Driver *driver,
+                              const std::string &uid, const uint32_t perm)
 {
     RGWUserInfo grant_user;
     ACLGrant grant;
@@ -129,20 +130,19 @@ static ACLGrant user_to_grant(const DoutPrefixProvider * dpp,
         ldpp_dout(dpp, 10) << "grant user does not exist: " << uid << dendl;
         /* skipping silently */
         grant.set_canon(user->get_id(), std::string(), perm);
-    }
-    else {
+    } else {
         grant.set_canon(user->get_id(), user->get_display_name(), perm);
     }
 
     return grant;
 }
 
-int RGWAccessControlPolicy_SWIFT::add_grants(const DoutPrefixProvider * dpp,
-                                             rgw::sal::Driver * driver,
-                                             const std::vector < std::string >
-                                             &uids, const uint32_t perm)
+int RGWAccessControlPolicy_SWIFT::add_grants(const DoutPrefixProvider *dpp,
+        rgw::sal::Driver *driver,
+        const std::vector < std::string >
+        &uids, const uint32_t perm)
 {
-  for (const auto & uid:uids) {
+    for (const auto &uid : uids) {
         boost::optional < ACLGrant > grant;
         ldpp_dout(dpp,
                   20) << "trying to add grant for ACL uid=" << uid << dendl;
@@ -153,8 +153,7 @@ int RGWAccessControlPolicy_SWIFT::add_grants(const DoutPrefixProvider * dpp,
         if (std::string::npos == pos) {
             /* No, it don't have -- we've got just a regular user identifier. */
             grant = user_to_grant(dpp, cct, driver, uid, perm);
-        }
-        else {
+        } else {
             /* Yes, *potentially* an HTTP referral. */
             auto designator = uid.substr(0, pos);
             auto designatee = uid.substr(pos + 1);
@@ -165,8 +164,7 @@ int RGWAccessControlPolicy_SWIFT::add_grants(const DoutPrefixProvider * dpp,
 
             if (!boost::algorithm::starts_with(designator, ".")) {
                 grant = user_to_grant(dpp, cct, driver, uid, perm);
-            }
-            else if ((perm & SWIFT_PERM_WRITE) == 0 && is_referrer(designator)) {
+            } else if ((perm & SWIFT_PERM_WRITE) == 0 && is_referrer(designator)) {
                 /* HTTP referrer-based ACLs aren't acceptable for writes. */
                 grant = referrer_to_grant(designatee, perm);
             }
@@ -174,8 +172,7 @@ int RGWAccessControlPolicy_SWIFT::add_grants(const DoutPrefixProvider * dpp,
 
         if (grant) {
             acl.add_grant(&*grant);
-        }
-        else {
+        } else {
             return -EINVAL;
         }
     }
@@ -183,13 +180,13 @@ int RGWAccessControlPolicy_SWIFT::add_grants(const DoutPrefixProvider * dpp,
     return 0;
 }
 
-int RGWAccessControlPolicy_SWIFT::create(const DoutPrefixProvider * dpp,
-                                         rgw::sal::Driver * driver,
-                                         const rgw_user & id,
-                                         const std::string & name,
-                                         const char *read_list,
-                                         const char *write_list,
-                                         uint32_t & rw_mask)
+int RGWAccessControlPolicy_SWIFT::create(const DoutPrefixProvider *dpp,
+        rgw::sal::Driver *driver,
+        const rgw_user &id,
+        const std::string &name,
+        const char *read_list,
+        const char *write_list,
+        uint32_t &rw_mask)
 {
     acl.create_default(id, name);
     owner.set_id(id);
@@ -201,14 +198,14 @@ int RGWAccessControlPolicy_SWIFT::create(const DoutPrefixProvider * dpp,
         int r = parse_list(read_list, uids);
         if (r < 0) {
             ldpp_dout(dpp, 0) << "ERROR: parse_list for read returned r="
-                << r << dendl;
+                              << r << dendl;
             return r;
         }
 
         r = add_grants(dpp, driver, uids, SWIFT_PERM_READ);
         if (r < 0) {
             ldpp_dout(dpp, 0) << "ERROR: add_grants for read returned r="
-                << r << dendl;
+                              << r << dendl;
             return r;
         }
         rw_mask |= SWIFT_PERM_READ;
@@ -218,14 +215,14 @@ int RGWAccessControlPolicy_SWIFT::create(const DoutPrefixProvider * dpp,
         int r = parse_list(write_list, uids);
         if (r < 0) {
             ldpp_dout(dpp, 0) << "ERROR: parse_list for write returned r="
-                << r << dendl;
+                              << r << dendl;
             return r;
         }
 
         r = add_grants(dpp, driver, uids, SWIFT_PERM_WRITE);
         if (r < 0) {
             ldpp_dout(dpp, 0) << "ERROR: add_grants for write returned r="
-                << r << dendl;
+                              << r << dendl;
             return r;
         }
         rw_mask |= SWIFT_PERM_WRITE;
@@ -234,8 +231,8 @@ int RGWAccessControlPolicy_SWIFT::create(const DoutPrefixProvider * dpp,
 }
 
 void RGWAccessControlPolicy_SWIFT::filter_merge(uint32_t rw_mask,
-                                                RGWAccessControlPolicy_SWIFT *
-                                                old)
+        RGWAccessControlPolicy_SWIFT *
+        old)
 {
     /* rw_mask&SWIFT_PERM_READ => setting read acl,
      * rw_mask&SWIFT_PERM_WRITE => setting write acl
@@ -245,8 +242,8 @@ void RGWAccessControlPolicy_SWIFT::filter_merge(uint32_t rw_mask,
         return;
     }
     rw_mask ^= (SWIFT_PERM_READ | SWIFT_PERM_WRITE);
-  for (auto & iter:old->acl.get_grant_map()) {
-        ACLGrant & grant = iter.second;
+    for (auto &iter : old->acl.get_grant_map()) {
+        ACLGrant &grant = iter.second;
         uint32_t perm = grant.get_permission().get_permissions();
         rgw_user id;
         string url_spec;
@@ -268,21 +265,20 @@ void RGWAccessControlPolicy_SWIFT::filter_merge(uint32_t rw_mask,
     }
 }
 
-void RGWAccessControlPolicy_SWIFT::to_str(string & read, string & write)
+void RGWAccessControlPolicy_SWIFT::to_str(string &read, string &write)
 {
     multimap < string, ACLGrant > &m = acl.get_grant_map();
     multimap < string, ACLGrant >::iterator iter;
 
     for (iter = m.begin(); iter != m.end(); ++iter) {
-        ACLGrant & grant = iter->second;
+        ACLGrant &grant = iter->second;
         const uint32_t perm = grant.get_permission().get_permissions();
         rgw_user id;
         string url_spec;
         if (!grant.get_id(id)) {
             if (grant.get_group() == ACL_GROUP_ALL_USERS) {
                 id = SWIFT_GROUP_ALL_USERS;
-            }
-            else {
+            } else {
                 url_spec = grant.get_referer();
                 if (url_spec.empty()) {
                     continue;
@@ -295,14 +291,12 @@ void RGWAccessControlPolicy_SWIFT::to_str(string & read, string & write)
                 read.append(",");
             }
             read.append(id.to_str());
-        }
-        else if (perm & SWIFT_PERM_WRITE) {
+        } else if (perm & SWIFT_PERM_WRITE) {
             if (!write.empty()) {
                 write.append(",");
             }
             write.append(id.to_str());
-        }
-        else if (perm == 0 && !url_spec.empty()) {
+        } else if (perm == 0 && !url_spec.empty()) {
             /* only X-Container-Read headers support referers */
             if (!read.empty()) {
                 read.append(",");
@@ -313,20 +307,19 @@ void RGWAccessControlPolicy_SWIFT::to_str(string & read, string & write)
 }
 
 void RGWAccessControlPolicy_SWIFTAcct::add_grants(const DoutPrefixProvider *
-                                                  dpp,
-                                                  rgw::sal::Driver * driver,
-                                                  const std::vector <
-                                                  std::string > &uids,
-                                                  const uint32_t perm)
+        dpp,
+        rgw::sal::Driver *driver,
+        const std::vector <
+        std::string > &uids,
+        const uint32_t perm)
 {
-  for (const auto & uid:uids) {
+    for (const auto &uid : uids) {
         ACLGrant grant;
 
         if (uid_is_public(uid)) {
             grant.set_group(ACL_GROUP_ALL_USERS, perm);
             acl.add_grant(&grant);
-        }
-        else {
+        } else {
             std::unique_ptr < rgw::sal::User > user =
                 driver->get_user(rgw_user(uid));
 
@@ -336,8 +329,7 @@ void RGWAccessControlPolicy_SWIFTAcct::add_grants(const DoutPrefixProvider *
                 /* skipping silently */
                 grant.set_canon(user->get_id(), std::string(), perm);
                 acl.add_grant(&grant);
-            }
-            else {
+            } else {
                 grant.set_canon(user->get_id(), user->get_display_name(), perm);
                 acl.add_grant(&grant);
             }
@@ -345,11 +337,11 @@ void RGWAccessControlPolicy_SWIFTAcct::add_grants(const DoutPrefixProvider *
     }
 }
 
-bool RGWAccessControlPolicy_SWIFTAcct::create(const DoutPrefixProvider * dpp,
-                                              rgw::sal::Driver * driver,
-                                              const rgw_user & id,
-                                              const std::string & name,
-                                              const std::string & acl_str)
+bool RGWAccessControlPolicy_SWIFTAcct::create(const DoutPrefixProvider *dpp,
+        rgw::sal::Driver *driver,
+        const rgw_user &id,
+        const std::string &name,
+        const std::string &acl_str)
 {
     acl.create_default(id, name);
     owner.set_id(id);
@@ -393,15 +385,15 @@ bool RGWAccessControlPolicy_SWIFTAcct::create(const DoutPrefixProvider * dpp,
     return true;
 }
 
-boost::optional < std::string > RGWAccessControlPolicy_SWIFTAcct::to_str() constconst
-{
+boost::optional < std::string > RGWAccessControlPolicy_SWIFTAcct::to_str() constconst {
     std::vector < std::string > admin;
     std::vector < std::string > readwrite;
     std::vector < std::string > readonly;
 
     /* Parition the grant map into three not-overlapping groups. */
-  for (const auto & item:get_acl().get_grant_map()) {
-        const ACLGrant & grant = item.second;
+    for (const auto &item : get_acl().get_grant_map())
+    {
+        const ACLGrant &grant = item.second;
         const uint32_t perm = grant.get_permission().get_permissions();
 
         rgw_user id;
@@ -410,28 +402,25 @@ boost::optional < std::string > RGWAccessControlPolicy_SWIFTAcct::to_str() const
                 continue;
             }
             id = SWIFT_GROUP_ALL_USERS;
-        }
-        else if (owner.get_id() == id) {
+        } else if (owner.get_id() == id) {
             continue;
         }
 
         if (SWIFT_PERM_ADMIN == (perm & SWIFT_PERM_ADMIN)) {
             admin.insert(admin.end(), id.to_str());
-        }
-        else if (SWIFT_PERM_RWRT == (perm & SWIFT_PERM_RWRT)) {
+        } else if (SWIFT_PERM_RWRT == (perm & SWIFT_PERM_RWRT)) {
             readwrite.insert(readwrite.end(), id.to_str());
-        }
-        else if (SWIFT_PERM_READ == (perm & SWIFT_PERM_READ)) {
+        } else if (SWIFT_PERM_READ == (perm & SWIFT_PERM_READ)) {
             readonly.insert(readonly.end(), id.to_str());
-        }
-        else {
+        } else {
             // FIXME: print a warning
         }
     }
 
     /* If there is no grant to serialize, let's exit earlier to not return
      * an empty JSON object which brakes the functional tests of Swift. */
-    if (admin.empty() && readwrite.empty() && readonly.empty()) {
+    if (admin.empty() && readwrite.empty() && readonly.empty())
+    {
         return boost::none;
     }
 
@@ -439,13 +428,16 @@ boost::optional < std::string > RGWAccessControlPolicy_SWIFTAcct::to_str() const
     JSONFormatter formatter;
 
     formatter.open_object_section("acl");
-    if (!readonly.empty()) {
+    if (!readonly.empty())
+    {
         encode_json("read-only", readonly, &formatter);
     }
-    if (!readwrite.empty()) {
+    if (!readwrite.empty())
+    {
         encode_json("read-write", readwrite, &formatter);
     }
-    if (!admin.empty()) {
+    if (!admin.empty())
+    {
         encode_json("admin", admin, &formatter);
     }
     formatter.close_section();

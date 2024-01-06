@@ -30,24 +30,25 @@
 
 #include "erasure-code/ErasureCodeInterface.h"
 
-class ErasureCodeBench {
+class ErasureCodeBench
+{
     int in_size;
     int max_iterations;
     int erasures;
     int k;
     int m;
 
-     std::string plugin;
+    std::string plugin;
 
     bool exhaustive_erasures;
-     std::vector < int >erased;
-     std::string workload;
+    std::vector < int >erased;
+    std::string workload;
 
-     ceph::ErasureCodeProfile profile;
+    ceph::ErasureCodeProfile profile;
 
     bool verbose;
-     boost::intrusive_ptr < CephContext > cct;
-  public:
+    boost::intrusive_ptr < CephContext > cct;
+public:
     int setup(int argc, char **argv);
     int run();
     int decode_erasures(const std::map < int, ceph::buffer::list > &all_chunks,

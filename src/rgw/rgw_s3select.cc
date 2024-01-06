@@ -5,14 +5,17 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-namespace rgw::s3select {
-    RGWOp *create_s3select_op() {
-        return new RGWSelectObj_ObjStore_S3();
-}};
+namespace rgw::s3select
+{
+RGWOp *create_s3select_op()
+{
+    return new RGWSelectObj_ObjStore_S3();
+}
+};
 
 using namespace s3selectEngine;
 
-std::string & aws_response_handler::get_sql_result()
+std::string &aws_response_handler::get_sql_result()
 {
     return sql_result;
 }
@@ -146,7 +149,7 @@ int aws_response_handler::create_message(u_int32_t header_len)
     //[total-byte-length:4][header-byte-length:4][crc:4][headers:variable-length][payload:variable-length][crc:4]
     //s3select result is produced into sql_result, the sql_result is also the response-message, thus the attach headers and CRC
     //are created later to the produced SQL result, and actually wrapping the payload.
-    auto push_encode_int =[&](u_int32_t s, int pos){
+    auto push_encode_int = [&](u_int32_t s, int pos) {
         u_int32_t x = htonl(s);
         sql_result.replace(pos, sizeof(x), reinterpret_cast < char *>(&x),
                            sizeof(x));
@@ -242,8 +245,8 @@ void aws_response_handler::send_success_response()
 }
 
 void aws_response_handler::send_error_response(const char *error_code,
-                                               const char *error_message,
-                                               const char *resource_id)
+        const char *error_message,
+        const char *resource_id)
 {
     set_req_state_err(s, 0);
     dump_errno(s, 400);
@@ -287,26 +290,26 @@ void aws_response_handler::send_stats_response()
 }
 
 RGWSelectObj_ObjStore_S3::RGWSelectObj_ObjStore_S3():
-m_buff_header(std::make_unique < char[] > (1000)),
-m_scan_range_ind(false),
-m_start_scan_sz(0),
-m_end_scan_sz(0),
-m_object_size_for_processing(0),
-m_parquet_type(false),
-m_json_type(false),
-chunk_number(0),
-m_requested_range(0),
-m_scan_offset(1024), m_skip_next_chunk(false), m_is_trino_request(false)
+    m_buff_header(std::make_unique < char[] > (1000)),
+    m_scan_range_ind(false),
+    m_start_scan_sz(0),
+    m_end_scan_sz(0),
+    m_object_size_for_processing(0),
+    m_parquet_type(false),
+    m_json_type(false),
+    chunk_number(0),
+    m_requested_range(0),
+    m_scan_offset(1024), m_skip_next_chunk(false), m_is_trino_request(false)
 {
     set_get_data(true);
-    fp_get_obj_size =[&]() {
+    fp_get_obj_size = [&]() {
         return get_obj_size();
     };
     fp_range_req =
-        [&](int64_t start, int64_t len, void *buff, optional_yield * y) {
+    [&](int64_t start, int64_t len, void *buff, optional_yield * y) {
         ldout(s->cct,
               10) << "S3select: range-request start: " << start << " length: "
-            << len << dendl;
+                  << len << dendl;
         auto status = range_request(start, len, buff, *y);
         return status;
     };
@@ -314,22 +317,22 @@ m_scan_offset(1024), m_skip_next_chunk(false), m_is_trino_request(false)
     m_rgw_api.set_get_size_api(fp_get_obj_size);
     m_rgw_api.set_range_req_api(fp_range_req);
 #endif
-    fp_result_header_format =[this] (std::string & result) {
+    fp_result_header_format = [this](std::string & result) {
         m_aws_response_handler.init_response();
         m_aws_response_handler.init_success_response();
         return 0;
     };
-    fp_s3select_result_format =[this] (std::string & result) {
+    fp_s3select_result_format = [this](std::string & result) {
         fp_chunked_transfer_encoding();
         m_aws_response_handler.send_success_response();
         return 0;
     };
 
-    fp_debug_mesg =[&](const char *mesg) {
+    fp_debug_mesg = [&](const char *mesg) {
         ldpp_dout(this, 10) << mesg << dendl;
     };
 
-    fp_chunked_transfer_encoding =[&](void) {
+    fp_chunked_transfer_encoding = [&](void) {
         if (chunk_number == 0) {
             if (op_ret < 0) {
                 set_req_state_err(s, op_ret);
@@ -365,26 +368,26 @@ int RGWSelectObj_ObjStore_S3::get_params(optional_yield y)
     if (ret != 0) {
         ldpp_dout(this,
                   10) << "s3-select query: failed to retrieve query; ret = " <<
-            ret << dendl;
+                      ret << dendl;
         return ret;
     }
     m_s3select_query = data.to_str();
     if (m_s3select_query.length() > 0) {
         ldpp_dout(this, 10) << "s3-select query: " << m_s3select_query << dendl;
-    }
-    else {
+    } else {
         ldpp_dout(this,
                   10) << "s3-select query: failed to retrieve query;" << dendl;
         return -1;
     }
-    const auto & m = s->info.env->get_map();
-    auto user_agent = m.find("HTTP_USER_AGENT"); {
+    const auto &m = s->info.env->get_map();
+    auto user_agent = m.find("HTTP_USER_AGENT");
+    {
         if (user_agent != m.end()) {
             if (user_agent->second.find("Trino") != std::string::npos) {
                 m_is_trino_request = true;
                 ldpp_dout(this,
                           10) << "s3-select query: request sent by Trino." <<
-                    dendl;
+                              dendl;
             }
         }
     }
@@ -397,8 +400,8 @@ int RGWSelectObj_ObjStore_S3::get_params(optional_yield y)
 }
 
 int RGWSelectObj_ObjStore_S3::run_s3select_on_csv(const char *query,
-                                                  const char *input,
-                                                  size_t input_length)
+        const char *input,
+        size_t input_length)
 {
     int status = 0;
     uint32_t length_before_processing, length_post_processing;
@@ -434,14 +437,12 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_csv(const char *query,
     }
     if (output_quote_fields.compare("ALWAYS") == 0) {
         csv.quote_fields_always = true;
-    }
-    else if (output_quote_fields.compare("ASNEEDED") == 0) {
+    } else if (output_quote_fields.compare("ASNEEDED") == 0) {
         csv.quote_fields_asneeded = true;
     }
     if (m_header_info.compare("IGNORE") == 0) {
         csv.ignore_header_info = true;
-    }
-    else if (m_header_info.compare("USE") == 0) {
+    } else if (m_header_info.compare("USE") == 0) {
         csv.use_header_info = true;
     }
     //m_s3_csv_object.set_external_debug_system(fp_debug_mesg);
@@ -451,20 +452,19 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_csv(const char *query,
     if (s3select_syntax.get_error_description().empty() == false) {
         //error-flow (syntax-error)
         m_aws_response_handler.send_error_response(s3select_syntax_error,
-                                                   s3select_syntax.
-                                                   get_error_description().
-                                                   c_str(),
-                                                   s3select_resource_id);
+                              s3select_syntax.
+                              get_error_description().
+                              c_str(),
+                              s3select_resource_id);
         ldpp_dout(this,
                   10) <<
-            "s3-select query: failed to prase the following query {" << query <<
-            "}" << dendl;
+                      "s3-select query: failed to prase the following query {" << query <<
+                      "}" << dendl;
         ldpp_dout(this,
                   10) << "s3-select query: syntax-error {" << s3select_syntax.
-            get_error_description() << "}" << dendl;
+                      get_error_description() << "}" << dendl;
         return -1;
-    }
-    else {
+    } else {
         if (input == nullptr) {
             input = "";
         }
@@ -473,23 +473,23 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_csv(const char *query,
         //query is correct(syntax), processing is starting.
         status =
             m_s3_csv_object.run_s3select_on_stream(m_aws_response_handler.
-                                                   get_sql_result(), input,
-                                                   input_length,
-                                                   m_object_size_for_processing);
+                get_sql_result(), input,
+                input_length,
+                m_object_size_for_processing);
         length_post_processing = m_s3_csv_object.get_return_result_size();
         m_aws_response_handler.update_total_bytes_returned(m_s3_csv_object.
-                                                           get_return_result_size
-                                                           ());
+                              get_return_result_size
+                              ());
 
         if (status < 0) {
             //error flow(processing-time)
             m_aws_response_handler.
-                send_error_response(s3select_processTime_error,
-                                    m_s3_csv_object.get_error_description().
-                                    c_str(), s3select_resource_id);
+            send_error_response(s3select_processTime_error,
+                                m_s3_csv_object.get_error_description().
+                                c_str(), s3select_resource_id);
             ldpp_dout(this,
                       10) << "s3-select query: failed to process query; {" <<
-                m_s3_csv_object.get_error_description() << "}" << dendl;
+                          m_s3_csv_object.get_error_description() << "}" << dendl;
             return -1;
         }
 
@@ -497,9 +497,8 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_csv(const char *query,
     if ((length_post_processing - length_before_processing) != 0) {
         ldpp_dout(this,
                   10) << "s3-select: sql-result-size = " <<
-            m_aws_response_handler.get_sql_result().size() << dendl;
-    }
-    else {
+                      m_aws_response_handler.get_sql_result().size() << dendl;
+    } else {
         m_aws_response_handler.send_continuation_response();
     }
     if (enable_progress == true) {
@@ -519,16 +518,15 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_parquet(const char *query)
         s3select_syntax.parse_query(m_sql_query.c_str());
         //m_s3_parquet_object.set_external_debug_system(fp_debug_mesg);
         try {
-            //at this stage the Parquet-processing requires for the meta-data that reside on Parquet object 
+            //at this stage the Parquet-processing requires for the meta-data that reside on Parquet object
             m_s3_parquet_object.set_parquet_object(std::string("s3object"),
                                                    &s3select_syntax,
                                                    &m_rgw_api);
-        }
-        catch(base_s3select_exception & e) {
+        } catch (base_s3select_exception &e) {
             ldpp_dout(this,
                       10) <<
-                "S3select: failed upon parquet-reader construction: " << e.
-                what() << dendl;
+                          "S3select: failed upon parquet-reader construction: " << e.
+                          what() << dendl;
             fp_result_header_format(m_aws_response_handler.get_sql_result());
             m_aws_response_handler.get_sql_result().append(e.what());
             fp_s3select_result_format(m_aws_response_handler.get_sql_result());
@@ -539,30 +537,29 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_parquet(const char *query)
         //the SQL statement failed the syntax parser
         fp_result_header_format(m_aws_response_handler.get_sql_result());
         m_aws_response_handler.get_sql_result().append(s3select_syntax.
-                                                       get_error_description().
-                                                       data());
+                              get_error_description().
+                              data());
         fp_s3select_result_format(m_aws_response_handler.get_sql_result());
         ldpp_dout(this,
                   10) << "s3-select query: failed to prase query; {" <<
-            s3select_syntax.get_error_description() << "}" << dendl;
+                      s3select_syntax.get_error_description() << "}" << dendl;
         status = -1;
-    }
-    else {
+    } else {
         fp_result_header_format(m_aws_response_handler.get_sql_result());
         //at this stage the Parquet-processing "takes control", it keep calling to s3-range-request according to the SQL statement.
         status =
             m_s3_parquet_object.run_s3select_on_object(m_aws_response_handler.
-                                                       get_sql_result(),
-                                                       fp_s3select_result_format,
-                                                       fp_result_header_format);
+                get_sql_result(),
+                fp_s3select_result_format,
+                fp_result_header_format);
         if (status < 0) {
             m_aws_response_handler.get_sql_result().append(m_s3_parquet_object.
-                                                           get_error_description
-                                                           ());
+                                  get_error_description
+                                  ());
             fp_s3select_result_format(m_aws_response_handler.get_sql_result());
             ldout(s->cct,
                   10) << "S3select: failure while execution" <<
-                m_s3_parquet_object.get_error_description() << dendl;
+                      m_s3_parquet_object.get_error_description() << dendl;
         }
     }
 #endif
@@ -570,8 +567,8 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_parquet(const char *query)
 }
 
 int RGWSelectObj_ObjStore_S3::run_s3select_on_json(const char *query,
-                                                   const char *input,
-                                                   size_t input_length)
+        const char *input,
+        size_t input_length)
 {
     int status = 0;
 
@@ -587,8 +584,8 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_json(const char *query,
         const char *s3select_json_error_msg =
             "s3-select query: wrong json dataType should use DOCUMENT; ";
         m_aws_response_handler.send_error_response(s3select_json_error,
-                                                   s3select_json_error_msg,
-                                                   s3select_resource_id);
+                              s3select_json_error_msg,
+                              s3select_resource_id);
         ldpp_dout(this, 10) << s3select_json_error_msg << dendl;
         return -EINVAL;
     }
@@ -598,13 +595,13 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_json(const char *query,
     if (s3select_syntax.get_error_description().empty() == false) {
         //SQL statement is wrong(syntax).
         m_aws_response_handler.send_error_response(s3select_syntax_error,
-                                                   s3select_syntax.
-                                                   get_error_description().
-                                                   c_str(),
-                                                   s3select_resource_id);
+                              s3select_syntax.
+                              get_error_description().
+                              c_str(),
+                              s3select_resource_id);
         ldpp_dout(this,
                   10) << "s3-select query: failed to prase query; {" <<
-            s3select_syntax.get_error_description() << "}" << dendl;
+                      s3select_syntax.get_error_description() << "}" << dendl;
         return -EINVAL;
     }
 
@@ -621,42 +618,40 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_json(const char *query,
     try {
         status =
             m_s3_json_object.run_s3select_on_stream(m_aws_response_handler.
-                                                    get_sql_result(), input,
-                                                    input_length,
-                                                    m_object_size_for_processing);
-    }
-    catch(base_s3select_exception & e) {
+                get_sql_result(), input,
+                input_length,
+                m_object_size_for_processing);
+    } catch (base_s3select_exception &e) {
         ldpp_dout(this,
                   10) << "S3select: failed to process JSON object: " << e.
-            what() << dendl;
+                      what() << dendl;
         m_aws_response_handler.get_sql_result().append(e.what());
         m_aws_response_handler.send_error_response(s3select_processTime_error,
-                                                   e.what(),
-                                                   s3select_resource_id);
+                              e.what(),
+                              s3select_resource_id);
         return -EINVAL;
     }
     uint32_t length_post_processing =
         m_aws_response_handler.get_sql_result().size();
     m_aws_response_handler.update_total_bytes_returned(length_post_processing -
-                                                       length_before_processing);
+                          length_before_processing);
     if (status < 0) {
         //error flow(processing-time)
         m_aws_response_handler.send_error_response(s3select_processTime_error,
-                                                   m_s3_json_object.
-                                                   get_error_description().
-                                                   c_str(),
-                                                   s3select_resource_id);
+                              m_s3_json_object.
+                              get_error_description().
+                              c_str(),
+                              s3select_resource_id);
         ldpp_dout(this,
                   10) << "s3-select query: failed to process query; {" <<
-            m_s3_json_object.get_error_description() << "}" << dendl;
+                      m_s3_json_object.get_error_description() << "}" << dendl;
         return -EINVAL;
     }
     fp_chunked_transfer_encoding();
 
     if (length_post_processing - length_before_processing != 0) {
         m_aws_response_handler.send_success_response();
-    }
-    else {
+    } else {
         m_aws_response_handler.send_continuation_response();
     }
     if (enable_progress == true) {
@@ -667,12 +662,12 @@ int RGWSelectObj_ObjStore_S3::run_s3select_on_json(const char *query,
     return status;
 }
 
-int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string & sql_query)
+int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string &sql_query)
 {
     std::string input_tag {
-    "InputSerialization"};
+        "InputSerialization"};
     std::string output_tag {
-    "OutputSerialization"};
+        "OutputSerialization"};
     if (chunk_number != 0) {
         return 0;
     }
@@ -693,20 +688,18 @@ int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string & sql_query)
     if (m_s3select_query.find(input_tag + "><CSV") != std::string::npos) {
         ldpp_dout(this,
                   10) << "s3select: engine is set to process CSV objects" <<
-            dendl;
-    }
-    else if (m_s3select_query.find(input_tag + "><JSON") != std::string::npos) {
+                      dendl;
+    } else if (m_s3select_query.find(input_tag + "><JSON") != std::string::npos) {
         m_json_type = true;
         ldpp_dout(this,
                   10) << "s3select: engine is set to process JSON objects" <<
-            dendl;
-    }
-    else if (m_s3select_query.find(input_tag + "><Parquet") !=
-             std::string::npos) {
+                      dendl;
+    } else if (m_s3select_query.find(input_tag + "><Parquet") !=
+               std::string::npos) {
         m_parquet_type = true;
         ldpp_dout(this,
                   10) << "s3select: engine is set to process Parquet objects" <<
-            dendl;
+                      dendl;
     }
 
     extract_by_tag(m_s3select_query, "Expression", sql_query);
@@ -723,8 +716,7 @@ int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string & sql_query)
     extract_by_tag(m_s3select_input, "Type", m_json_datatype);
     if (m_row_delimiter.size() == 0) {
         m_row_delimiter = '\n';
-    }
-    else if (m_row_delimiter.compare("&#10;") == 0) {
+    } else if (m_row_delimiter.compare("&#10;") == 0) {
         //presto change
         m_row_delimiter = '\n';
     }
@@ -744,8 +736,7 @@ int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string & sql_query)
     extract_by_tag(m_s3select_output, "RecordDelimiter", output_row_delimiter);
     if (output_row_delimiter.size() == 0) {
         output_row_delimiter = '\n';
-    }
-    else if (output_row_delimiter.compare("&#10;") == 0) {
+    } else if (output_row_delimiter.compare("&#10;") == 0) {
         //presto change
         output_row_delimiter = '\n';
     }
@@ -753,8 +744,8 @@ int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string & sql_query)
         && m_compression_type.compare("NONE") != 0) {
         ldpp_dout(this,
                   10) <<
-            "RGW supports currently only NONE option for compression type" <<
-            dendl;
+                      "RGW supports currently only NONE option for compression type" <<
+                      dendl;
         return -1;
     }
     extract_by_tag(m_s3select_query, "Start", m_start_scan);
@@ -766,23 +757,21 @@ int RGWSelectObj_ObjStore_S3::handle_aws_cli_parameters(std::string & sql_query)
         }
         if (m_end_scan.size()) {
             m_end_scan_sz = std::stol(m_end_scan);
-        }
-        else {
+        } else {
             m_end_scan_sz = std::numeric_limits < std::int64_t >::max();
         }
     }
     if (m_enable_progress.compare("true") == 0) {
         enable_progress = true;
-    }
-    else {
+    } else {
         enable_progress = false;
     }
     return 0;
 }
 
 int RGWSelectObj_ObjStore_S3::extract_by_tag(std::string input,
-                                             std::string tag_name,
-                                             std::string & result)
+        std::string tag_name,
+        std::string &result)
 {
     result = "";
     size_t _qs = input.find("<" + tag_name + ">", 0);
@@ -804,7 +793,7 @@ size_t RGWSelectObj_ObjStore_S3::get_obj_size()
 }
 
 int RGWSelectObj_ObjStore_S3::range_request(int64_t ofs, int64_t len,
-                                            void *buff, optional_yield y)
+        void *buff, optional_yield y)
 {
     //purpose: implementation for arrow::ReadAt, this may take several async calls.
     //send_response_date(call_back) accumulate buffer, upon completion control is back to ReadAt.
@@ -817,15 +806,15 @@ int RGWSelectObj_ObjStore_S3::range_request(int64_t ofs, int64_t len,
     m_request_range = len;
     ldout(s->cct,
           10) << "S3select: calling execute(async):" << " request-offset :" <<
-        ofs << " request-length :" << len << " buffer size : " <<
-        requested_buffer.size() << dendl;
+              ofs << " request-length :" << len << " buffer size : " <<
+              requested_buffer.size() << dendl;
     RGWGetObj::execute(y);
     if (buff) {
         memcpy(buff, requested_buffer.data(), len);
     }
     ldout(s->cct,
           10) << "S3select: done waiting, buffer is complete buffer-size:" <<
-        requested_buffer.size() << dendl;
+              requested_buffer.size() << dendl;
     return len;
 }
 
@@ -846,7 +835,7 @@ void RGWSelectObj_ObjStore_S3::execute(optional_yield y)
             && memcmp(parquet_magic, parquet_magicE, 4)) {
             ldout(s->cct,
                   10) << s->object->
-                get_name() << " does not contain parquet magic" << dendl;
+                      get_name() << " does not contain parquet magic" << dendl;
             op_ret = -ERR_INVALID_REQUEST;
             return;
         }
@@ -855,80 +844,75 @@ void RGWSelectObj_ObjStore_S3::execute(optional_yield y)
         if (status) {
             ldout(s->cct,
                   10) << "S3select: failed to process query <" << m_sql_query <<
-                "> on object " << s->object->get_name() << dendl;
+                      "> on object " << s->object->get_name() << dendl;
             op_ret = -ERR_INVALID_REQUEST;
-        }
-        else {
+        } else {
             ldout(s->cct,
                   10) << "S3select: complete query with success " << dendl;
         }
-    }
-    else {
+    } else {
         //CSV or JSON processing
         if (m_scan_range_ind) {
 
             m_requested_range = (m_end_scan_sz - m_start_scan_sz);
 
             if (m_is_trino_request) {
-                // fetch more than requested(m_scan_offset), that additional bytes are scanned for end of row, 
+                // fetch more than requested(m_scan_offset), that additional bytes are scanned for end of row,
                 // thus the additional length will be processed, and no broken row for Trino.
                 // assumption: row is smaller than m_scan_offset. (a different approach is to request for additional range)
                 range_request(m_start_scan_sz,
                               m_requested_range + m_scan_offset, nullptr, y);
-            }
-            else {
+            } else {
                 range_request(m_start_scan_sz, m_requested_range, nullptr, y);
             }
 
-        }
-        else {
+        } else {
             RGWGetObj::execute(y);
         }
     }                           //if (m_parquet_type)
 }
 
-int RGWSelectObj_ObjStore_S3::parquet_processing(bufferlist & bl, off_t ofs,
-                                                 off_t len)
+int RGWSelectObj_ObjStore_S3::parquet_processing(bufferlist &bl, off_t ofs,
+        off_t len)
 {
     fp_chunked_transfer_encoding();
     size_t append_in_callback = 0;
     int part_no = 1;
     //concat the requested buffer
-  for (auto & it:bl.buffers()) {
+    for (auto &it : bl.buffers()) {
         if (it.length() == 0) {
             ldout(s->cct,
                   10) <<
-                "S3select: get zero-buffer while appending request-buffer " <<
-                dendl;
+                      "S3select: get zero-buffer while appending request-buffer " <<
+                      dendl;
         }
         append_in_callback += it.length();
         ldout(s->cct,
               10) << "S3select: part " << part_no++ << " it.length() = " << it.
-            length() << dendl;
+                  length() << dendl;
         requested_buffer.append(&(it)[0] + ofs, len);
     }
     ldout(s->cct,
           10) << "S3select:append_in_callback = " << append_in_callback <<
-        dendl;
+              dendl;
     if (requested_buffer.size() < m_request_range) {
         ldout(s->cct,
               10) << "S3select: need another round buffe-size: " <<
-            requested_buffer.
-            size() << " request range length:" << m_request_range << dendl;
+                  requested_buffer.
+                  size() << " request range length:" << m_request_range << dendl;
         return 0;
-    }
-    else {                      //buffer is complete
+    } else {                    //buffer is complete
         ldout(s->cct,
               10) << "S3select: buffer is complete " << requested_buffer.
-            size() << " request range length:" << m_request_range << dendl;
+                  size() << " request range length:" << m_request_range << dendl;
         m_request_range = 0;
     }
     return 0;
 }
 
 void RGWSelectObj_ObjStore_S3::shape_chunk_per_trino_requests(const char *it_cp,
-                                                              off_t & ofs,
-                                                              off_t & len)
+        off_t &ofs,
+        off_t &len)
 {
 //in case it is a scan range request and sent by Trino client.
 //this routine chops the start/end of chunks.
@@ -942,15 +926,16 @@ void RGWSelectObj_ObjStore_S3::shape_chunk_per_trino_requests(const char *it_cp,
 
         ldpp_dout(this,
                   10) <<
-            "s3select query: per Trino request the first and last chunk should modified."
-            << dendl;
+                      "s3select query: per Trino request the first and last chunk should modified."
+                      << dendl;
 
         //chop the head of the first chunk and only upon the slice does not include the head of the object.
         if (m_start_scan_sz
             && (m_aws_response_handler.get_processed_size() == 0)) {
             char *p = const_cast < char *>(it_cp + ofs);
-            while (strncmp(row_delimiter, p, 1) && (p - (it_cp + ofs)) < len)
+            while (strncmp(row_delimiter, p, 1) && (p - (it_cp + ofs)) < len) {
                 p++;
+            }
             if (!strncmp(row_delimiter, p, 1)) {
                 new_offset += (p - (it_cp + ofs)) + 1;
             }
@@ -958,7 +943,7 @@ void RGWSelectObj_ObjStore_S3::shape_chunk_per_trino_requests(const char *it_cp,
 
         //RR : end of the range-request. the original request sent by Trino client
         //RD : row-delimiter
-        //[ ... ] : chunk boundaries 
+        //[ ... ] : chunk boundaries
 
         //chop the end of the last chunk for this request
         //if it's the last chunk, search for first row-delimiter for the following different use-cases
@@ -970,29 +955,26 @@ void RGWSelectObj_ObjStore_S3::shape_chunk_per_trino_requests(const char *it_cp,
                 //thus, search for the first row-delimiter
                 //[:previous (RR) ... ][:current (RD) ]
                 start = 0;
-            }
-            else if (m_aws_response_handler.get_processed_size()) {
-                //the *current* chunk contain the complete request in the middle of the chunk. 
+            } else if (m_aws_response_handler.get_processed_size()) {
+                //the *current* chunk contain the complete request in the middle of the chunk.
                 //thus, search for the first row-delimiter after the complete request position
                 //[:current (RR) .... (RD) ]
                 start =
                     m_requested_range -
                     m_aws_response_handler.get_processed_size();
-            }
-            else {
+            } else {
                 //the current chunk is the first chunk and it contains complete request
                 //[:current:first-chunk (RR) .... (RD) ]
                 start = m_requested_range;
             }
 
-            for (sc = start; sc < len; sc++)    //assumption : row-delimiter must exist or its end ebject
-            {
+            for (sc = start; sc < len; sc++) {  //assumption : row-delimiter must exist or its end ebject
                 char *p = const_cast < char *>(it_cp) + ofs + sc;
                 if (!strncmp(row_delimiter, p, 1)) {
                     ldout(s->cct,
                           10) << "S3select: found row-delimiter on " << sc <<
-                        " get_processed_size = " << m_aws_response_handler.
-                        get_processed_size() << dendl;
+                              " get_processed_size = " << m_aws_response_handler.
+                              get_processed_size() << dendl;
                     len = sc + 1;   //+1 is for delimiter.  TODO what about m_object_size_for_processing (to update according to len)
                     //the end of row exist in current chunk.
                     //thus, the next chunk should be skipped
@@ -1006,13 +988,13 @@ void RGWSelectObj_ObjStore_S3::shape_chunk_per_trino_requests(const char *it_cp,
 
     ldout(s->cct,
           10) <<
-        "S3select: shape_chunk_per_trino_requests:update progress len = " << len
-        << dendl;
+              "S3select: shape_chunk_per_trino_requests:update progress len = " << len
+              << dendl;
     len -= new_offset;
 }
 
-int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist & bl, off_t ofs,
-                                             off_t len)
+int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist &bl, off_t ofs,
+        off_t len)
 {
     int status = 0;
     if (m_skip_next_chunk == true) {
@@ -1024,29 +1006,28 @@ int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist & bl, off_t ofs,
         if (status < 0) {
             return -EINVAL;
         }
-    }
-    else {
+    } else {
         auto bl_len = bl.get_num_buffers();
         int buff_no = 0;
-      for (auto & it:bl.buffers()) {
+        for (auto &it : bl.buffers()) {
             ldpp_dout(this,
                       10) << "s3select :processing segment " << buff_no <<
-                " out of " << bl_len << " off " << ofs << " len " << len <<
-                " obj-size " << m_object_size_for_processing << dendl;
+                          " out of " << bl_len << " off " << ofs << " len " << len <<
+                          " obj-size " << m_object_size_for_processing << dendl;
             if (it.length() == 0 || len == 0) {
                 ldpp_dout(this,
                           10) << "s3select :it->_len is zero. segment " <<
-                    buff_no << " out of " << bl_len << " obj-size " <<
-                    m_object_size_for_processing << dendl;
+                              buff_no << " out of " << bl_len << " obj-size " <<
+                              m_object_size_for_processing << dendl;
                 continue;
             }
 
             if ((ofs + len) > it.length()) {
                 ldpp_dout(this,
                           10) <<
-                    "offset and length may cause invalid read: ofs = " << ofs <<
-                    " len = " << len << " it.length() = " << it.
-                    length() << dendl;
+                              "offset and length may cause invalid read: ofs = " << ofs <<
+                              " len = " << len << " it.length() = " << it.
+                              length() << dendl;
                 ofs = 0;
                 len = it.length();
             }
@@ -1057,11 +1038,12 @@ int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist & bl, off_t ofs,
 
             ldpp_dout(this,
                       10) << "s3select: chunk:  ofs = " << ofs << " len = " <<
-                len << " it.length() = " << it.
-                length() << " m_object_size_for_processing = " <<
-                m_object_size_for_processing << dendl;
+                          len << " it.length() = " << it.
+                          length() << " m_object_size_for_processing = " <<
+                          m_object_size_for_processing << dendl;
 
-            m_aws_response_handler.update_processed_size(it.length());  //NOTE : to run analysis to validate len is aligned with m_processed_bytes
+            m_aws_response_handler.update_processed_size(
+                                      it.length());  //NOTE : to run analysis to validate len is aligned with m_processed_bytes
             status =
                 run_s3select_on_csv(m_sql_query.c_str(), &(it)[0] + ofs, len);
             if (status < 0) {
@@ -1076,9 +1058,9 @@ int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist & bl, off_t ofs,
 
     ldpp_dout(this,
               10) << "s3select : m_aws_response_handler.get_processed_size() "
-        << m_aws_response_handler.get_processed_size()
-        << " m_object_size_for_processing " <<
-        uint64_t(m_object_size_for_processing) << dendl;
+                  << m_aws_response_handler.get_processed_size()
+                  << " m_object_size_for_processing " <<
+                  uint64_t(m_object_size_for_processing) << dendl;
 
     if (m_aws_response_handler.get_processed_size() >=
         uint64_t(m_object_size_for_processing)
@@ -1089,16 +1071,16 @@ int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist & bl, off_t ofs,
             m_aws_response_handler.init_end_response();
             ldpp_dout(this,
                       10) <<
-                "s3select : reached the end of query request : aws_response_handler.get_processed_size() "
-                << m_aws_response_handler.get_processed_size()
-                << "m_object_size_for_processing : " <<
-                m_object_size_for_processing << dendl;
+                          "s3select : reached the end of query request : aws_response_handler.get_processed_size() "
+                          << m_aws_response_handler.get_processed_size()
+                          << "m_object_size_for_processing : " <<
+                          m_object_size_for_processing << dendl;
         }
         if (m_s3_csv_object.is_sql_limit_reached()) {
             //stop fetching chunks
             ldpp_dout(this,
                       10) << "s3select : reached the limit :" <<
-                m_aws_response_handler.get_processed_size() << dendl;
+                          m_aws_response_handler.get_processed_size() << dendl;
             status = -ENOENT;
         }
     }
@@ -1106,41 +1088,41 @@ int RGWSelectObj_ObjStore_S3::csv_processing(bufferlist & bl, off_t ofs,
     return status;
 }
 
-int RGWSelectObj_ObjStore_S3::json_processing(bufferlist & bl, off_t ofs,
-                                              off_t len)
+int RGWSelectObj_ObjStore_S3::json_processing(bufferlist &bl, off_t ofs,
+        off_t len)
 {
     int status = 0;
 
     if (s->obj_size == 0 || m_object_size_for_processing == 0) {
         //in case of empty object the s3select-function returns a correct "empty" result(for aggregation and non-aggregation queries).
         status = run_s3select_on_json(m_sql_query.c_str(), nullptr, 0);
-        if (status < 0)
+        if (status < 0) {
             return -EINVAL;
-    }
-    else {
+        }
+    } else {
         //loop on buffer-list(chunks)
         auto bl_len = bl.get_num_buffers();
         int i = 0;
-      for (auto & it:bl.buffers()) {
+        for (auto &it : bl.buffers()) {
             ldpp_dout(this,
                       10) << "processing segment " << i << " out of " << bl_len
-                << " off " << ofs << " len " << len << " obj-size " <<
-                m_object_size_for_processing << dendl;
+                          << " off " << ofs << " len " << len << " obj-size " <<
+                          m_object_size_for_processing << dendl;
             //skipping the empty chunks
             if (len == 0) {
                 ldpp_dout(this,
                           10) << "s3select:it->_len is zero. segment " << i <<
-                    " out of " << bl_len << " obj-size " <<
-                    m_object_size_for_processing << dendl;
+                              " out of " << bl_len << " obj-size " <<
+                              m_object_size_for_processing << dendl;
                 continue;
             }
 
             if ((ofs + len) > it.length()) {
                 ldpp_dout(this,
                           10) <<
-                    "s3select: offset and length may cause invalid read: ofs = "
-                    << ofs << " len = " << len << " it.length() = " << it.
-                    length() << dendl;
+                              "s3select: offset and length may cause invalid read: ofs = "
+                              << ofs << " len = " << len << " it.length() = " << it.
+                              length() << dendl;
                 ofs = 0;
                 len = it.length();
             }
@@ -1178,14 +1160,14 @@ int RGWSelectObj_ObjStore_S3::json_processing(bufferlist & bl, off_t ofs,
             status = -ENOENT;
             ldpp_dout(this,
                       10) << "s3select : reached the limit :" <<
-                m_aws_response_handler.get_processed_size() << dendl;
+                          m_aws_response_handler.get_processed_size() << dendl;
         }
     }
     return status;
 }
 
-int RGWSelectObj_ObjStore_S3::send_response_data(bufferlist & bl, off_t ofs,
-                                                 off_t len)
+int RGWSelectObj_ObjStore_S3::send_response_data(bufferlist &bl, off_t ofs,
+        off_t len)
 {
     if (m_scan_range_ind == false) {
         m_object_size_for_processing = s->obj_size;
@@ -1194,10 +1176,10 @@ int RGWSelectObj_ObjStore_S3::send_response_data(bufferlist & bl, off_t ofs,
         if (m_end_scan_sz == -1) {
             m_end_scan_sz = s->obj_size;
         }
-        if (static_cast < uint64_t > ((m_end_scan_sz - m_start_scan_sz)) > s->obj_size) {   //in the case user provides range bigger than object-size
+        if (static_cast < uint64_t >((m_end_scan_sz - m_start_scan_sz)) >
+            s->obj_size) {    //in the case user provides range bigger than object-size
             m_object_size_for_processing = s->obj_size;
-        }
-        else {
+        } else {
             m_object_size_for_processing = m_end_scan_sz - m_start_scan_sz;
         }
     }

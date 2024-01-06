@@ -6,7 +6,7 @@
 #include "common/ceph_context.h"
 #include <sstream>
 
-bool get_features(uint64_t * features)
+bool get_features(uint64_t *features)
 {
     const char *c = getenv("RBD_FEATURES");
     if (c == NULL) {
@@ -26,8 +26,8 @@ bool is_feature_enabled(uint64_t feature)
     return (get_features(&features) && (features & feature) == feature);
 }
 
-int create_image_full_pp(librbd::RBD & rbd, librados::IoCtx & ioctx,
-                         const std::string & name, uint64_t size,
+int create_image_full_pp(librbd::RBD &rbd, librados::IoCtx &ioctx,
+                         const std::string &name, uint64_t size,
                          uint64_t features, bool old_format, int *order)
 {
     if (old_format) {
@@ -37,8 +37,7 @@ int create_image_full_pp(librbd::RBD & rbd, librados::IoCtx & ioctx,
             return r;
         }
         return rbd.create(ioctx, name.c_str(), size, order);
-    }
-    else if ((features & RBD_FEATURE_STRIPINGV2) != 0) {
+    } else if ((features & RBD_FEATURE_STRIPINGV2) != 0) {
         uint64_t stripe_unit = IMAGE_STRIPE_UNIT;
         if (*order) {
             // use a conservative stripe_unit for non default order
@@ -49,14 +48,13 @@ int create_image_full_pp(librbd::RBD & rbd, librados::IoCtx & ioctx,
                PRIu64 "\n", stripe_unit, IMAGE_STRIPE_COUNT);
         return rbd.create3(ioctx, name.c_str(), size, features, order,
                            stripe_unit, IMAGE_STRIPE_COUNT);
-    }
-    else {
+    } else {
         return rbd.create2(ioctx, name.c_str(), size, features, order);
     }
 }
 
-int create_image_pp(librbd::RBD & rbd, librados::IoCtx & ioctx,
-                    const std::string & name, uint64_t size)
+int create_image_pp(librbd::RBD &rbd, librados::IoCtx &ioctx,
+                    const std::string &name, uint64_t size)
 {
     int order = 0;
     uint64_t features = 0;
@@ -68,15 +66,14 @@ int create_image_pp(librbd::RBD & rbd, librados::IoCtx & ioctx,
             return r;
         }
         return rbd.create(ioctx, name.c_str(), size, &order);
-    }
-    else {
+    } else {
         return rbd.create2(ioctx, name.c_str(), size, features, &order);
     }
 }
 
-int clone_image_pp(librbd::RBD & rbd, librbd::Image & p_image,
-                   librados::IoCtx & p_ioctx, const char *p_name,
-                   const char *p_snap_name, librados::IoCtx & c_ioctx,
+int clone_image_pp(librbd::RBD &rbd, librbd::Image &p_image,
+                   librados::IoCtx &p_ioctx, const char *p_name,
+                   const char *p_snap_name, librados::IoCtx &c_ioctx,
                    const char *c_name, uint64_t features)
 {
     uint64_t stripe_unit = p_image.get_stripe_unit();
@@ -93,7 +90,7 @@ int clone_image_pp(librbd::RBD & rbd, librbd::Image & p_image,
                       features, &c_order, stripe_unit, stripe_count);
 }
 
-int get_image_id(librbd::Image & image, std::string * image_id)
+int get_image_id(librbd::Image &image, std::string *image_id)
 {
     int r = image.get_id(image_id);
     if (r < 0) {
@@ -102,15 +99,14 @@ int get_image_id(librbd::Image & image, std::string * image_id)
     return 0;
 }
 
-int create_image_data_pool(librados::Rados & rados, std::string & data_pool,
-                           bool * created)
+int create_image_data_pool(librados::Rados &rados, std::string &data_pool,
+                           bool *created)
 {
     std::string pool;
     int r = rados.conf_get("rbd_default_data_pool", pool);
     if (r != 0) {
         return r;
-    }
-    else if (pool.empty()) {
+    } else if (pool.empty()) {
         return 0;
     }
 
@@ -131,14 +127,14 @@ int create_image_data_pool(librados::Rados & rados, std::string & data_pool,
     return rbd.pool_init(ioctx, true);
 }
 
-bool is_librados_test_stub(librados::Rados & rados)
+bool is_librados_test_stub(librados::Rados &rados)
 {
     std::string fsid;
     EXPECT_EQ(0, rados.cluster_fsid(&fsid));
     return fsid == "00000000-1111-2222-3333-444444444444";
 }
 
-bool is_rbd_pwl_enabled(ceph::common::CephContext * cct)
+bool is_rbd_pwl_enabled(ceph::common::CephContext *cct)
 {
 #if defined(WITH_RBD_RWL) || defined(WITH_RBD_SSD_CACHE)
     auto value =

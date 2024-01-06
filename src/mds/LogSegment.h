@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_LOGSEGMENT_H
@@ -34,12 +34,13 @@ class CDentry;
 class MDSRank;
 struct MDPeerUpdate;
 
-class LogSegment {
-  public:
+class LogSegment
+{
+public:
     using seq_t = uint64_t;
 
-  LogSegment(uint64_t _seq, loff_t off = -1):
-    seq(_seq), offset(off), end(off),
+    LogSegment(uint64_t _seq, loff_t off = -1):
+        seq(_seq), offset(off), end(off),
         dirty_dirfrags(member_offset(CDir, item_dirty)),
         new_dirfrags(member_offset(CDir, item_new)),
         dirty_inodes(member_offset(CInode, item_dirty)),
@@ -49,19 +50,24 @@ class LogSegment {
         dirty_dirfrag_dir(member_offset(CInode, item_dirty_dirfrag_dir)),
         dirty_dirfrag_nest(member_offset(CInode, item_dirty_dirfrag_nest)),
         dirty_dirfrag_dirfragtree(member_offset
-                                  (CInode, item_dirty_dirfrag_dirfragtree)) {
-    } void try_to_expire(MDSRank * mds, MDSGatherBuilder & gather_bld,
+                                  (CInode, item_dirty_dirfrag_dirfragtree))
+    {
+    } void try_to_expire(MDSRank *mds, MDSGatherBuilder &gather_bld,
                          int op_prio);
-    void purge_inodes_finish(interval_set < inodeno_t > &inos) {
+    void purge_inodes_finish(interval_set < inodeno_t > &inos)
+    {
         purging_inodes.subtract(inos);
-        if (NULL != purged_cb && purging_inodes.empty())
+        if (NULL != purged_cb && purging_inodes.empty()) {
             purged_cb->complete(0);
+        }
     }
-    void set_purged_cb(MDSContext * c) {
+    void set_purged_cb(MDSContext *c)
+    {
         ceph_assert(purged_cb == NULL);
         purged_cb = c;
     }
-    void wait_for_expiry(MDSContext * c) {
+    void wait_for_expiry(MDSContext *c)
+    {
         ceph_assert(c != NULL);
         expiry_waiters.push_back(c);
     }

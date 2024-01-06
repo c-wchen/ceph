@@ -9,11 +9,14 @@ struct Item {
     xlist < Item * >::item xitem;
     int val;
 
-    explicit Item(int v):xitem(this), val(v) {
-}};
+    explicit Item(int v): xitem(this), val(v)
+    {
+    }
+};
 
-class XlistTest:public testing::Test {
-  protected:
+class XlistTest: public testing::Test
+{
+protected:
     typedef xlist < Item * >ItemList;
     typedef std::vector < Item * >Items;
     typedef std::vector < ItemList::item * >Refs;
@@ -21,11 +24,14 @@ class XlistTest:public testing::Test {
     // for filling up an ItemList
     Refs refs;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         for (int i = 0; i < 13; i++) {
             items.push_back(new Item(i));
             refs.push_back(&items.back()->xitem);
-    }} void TearDown() override {
+        }
+    } void TearDown() override
+    {
         for (Items::iterator i = items.begin(); i != items.end(); ++i) {
             delete *i;
         }

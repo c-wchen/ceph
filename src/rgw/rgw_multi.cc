@@ -27,12 +27,14 @@ bool RGWMultiPart::xml_end(const char *el)
         static_cast < RGWMultiPartNumber * >(find_first("PartNumber"));
     RGWMultiETag *etag_obj = static_cast < RGWMultiETag * >(find_first("ETag"));
 
-    if (!num_obj || !etag_obj)
+    if (!num_obj || !etag_obj) {
         return false;
+    }
 
     string s = num_obj->get_data();
-    if (s.empty())
+    if (s.empty()) {
         return false;
+    }
 
     num = atoi(s.c_str());
 
@@ -67,34 +69,31 @@ XMLObj *RGWMultiXMLParser::alloc_obj(const char *el)
         strcmp(el, "CompletedMultipartUpload") == 0 ||
         strcmp(el, "MultipartUpload") == 0) {
         obj = new RGWMultiCompleteUpload();
-    }
-    else if (strcmp(el, "Part") == 0) {
+    } else if (strcmp(el, "Part") == 0) {
         obj = new RGWMultiPart();
-    }
-    else if (strcmp(el, "PartNumber") == 0) {
+    } else if (strcmp(el, "PartNumber") == 0) {
         obj = new RGWMultiPartNumber();
-    }
-    else if (strcmp(el, "ETag") == 0) {
+    } else if (strcmp(el, "ETag") == 0) {
         obj = new RGWMultiETag();
     }
 
     return obj;
 }
 
-bool is_v2_upload_id(const string & upload_id)
+bool is_v2_upload_id(const string &upload_id)
 {
     const char *uid = upload_id.c_str();
 
     return (strncmp
             (uid, MULTIPART_UPLOAD_ID_PREFIX,
              sizeof(MULTIPART_UPLOAD_ID_PREFIX) - 1) == 0)
-        ||
-        (strncmp
-         (uid, MULTIPART_UPLOAD_ID_PREFIX_LEGACY,
-          sizeof(MULTIPART_UPLOAD_ID_PREFIX_LEGACY) - 1) == 0);
+           ||
+           (strncmp
+            (uid, MULTIPART_UPLOAD_ID_PREFIX_LEGACY,
+             sizeof(MULTIPART_UPLOAD_ID_PREFIX_LEGACY) - 1) == 0);
 }
 
-void RGWUploadPartInfo::generate_test_instances(list < RGWUploadPartInfo * >&o)
+void RGWUploadPartInfo::generate_test_instances(list < RGWUploadPartInfo * > &o)
 {
     RGWUploadPartInfo *i = new RGWUploadPartInfo;
     i->num = 1;
@@ -104,7 +103,7 @@ void RGWUploadPartInfo::generate_test_instances(list < RGWUploadPartInfo * >&o)
     o.push_back(new RGWUploadPartInfo);
 }
 
-void RGWUploadPartInfo::dump(Formatter * f) const const
+void RGWUploadPartInfo::dump(Formatter *f) const const
 {
     encode_json("num", num, f);
     encode_json("size", size, f);

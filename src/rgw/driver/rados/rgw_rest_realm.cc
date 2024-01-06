@@ -21,12 +21,14 @@ using namespace std;
 static const uint32_t PERIOD_HISTORY_FETCH_MAX = 64;
 
 // base period op, shared between Get and Post
-class RGWOp_Period_Base:public RGWRESTOp {
-  protected:
+class RGWOp_Period_Base: public RGWRESTOp
+{
+protected:
     RGWPeriod period;
     std::ostringstream error_stream;
-  public:
-    int verify_permission(optional_yield) override {
+public:
+    int verify_permission(optional_yield) override
+    {
         return 0;
     } void send_response() override;
 };
@@ -40,7 +42,7 @@ void RGWOp_Period_Base::send_response()
     if (op_ret < 0) {
         if (!s->err.message.empty()) {
             ldpp_dout(this, 4) << "Request failed with " << op_ret
-                << ": " << s->err.message << dendl;
+                               << ": " << s->err.message << dendl;
         }
         end_header(s);
         return;
@@ -52,17 +54,22 @@ void RGWOp_Period_Base::send_response()
 }
 
 // GET /admin/realm/period
-class RGWOp_Period_Get:public RGWOp_Period_Base {
-  public:
+class RGWOp_Period_Get: public RGWOp_Period_Base
+{
+public:
     void execute(optional_yield y) override;
-    int check_caps(const RGWUserCaps & caps) override {
+    int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("zone", RGW_CAP_READ);
-    } int verify_permission(optional_yield) override {
+    } int verify_permission(optional_yield) override
+    {
         return check_caps(s->user->get_caps());
     }
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_period";
-}};
+    }
+};
 
 void RGWOp_Period_Get::execute(optional_yield y)
 {
@@ -81,22 +88,28 @@ void RGWOp_Period_Get::execute(optional_yield y)
                     static_cast <
                     rgw::sal::RadosStore * >(driver)->svc()->sysobj, realm_id,
                     y, realm_name);
-    if (op_ret < 0)
+    if (op_ret < 0) {
         ldpp_dout(this, 5) << "failed to read period" << dendl;
+    }
 }
 
 // POST /admin/realm/period
-class RGWOp_Period_Post:public RGWOp_Period_Base {
-  public:
+class RGWOp_Period_Post: public RGWOp_Period_Base
+{
+public:
     void execute(optional_yield y) override;
-    int check_caps(const RGWUserCaps & caps) override {
+    int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("zone", RGW_CAP_WRITE);
-    } int verify_permission(optional_yield) override {
+    } int verify_permission(optional_yield) override
+    {
         return check_caps(s->user->get_caps());
     }
-    const char *name() const override {
+    const char *name() const override
+    {
         return "post_period";
-    } RGWOpType get_type() override {
+    } RGWOpType get_type() override
+    {
         return RGW_OP_PERIOD_POST;
     }
 };
@@ -123,9 +136,9 @@ void RGWOp_Period_Post::execute(optional_yield y)
     if (period.get_realm() != static_cast <
         rgw::sal::RadosStore * >(driver)->svc()->zone->get_realm().get_id()) {
         error_stream << "period with realm id " << period.get_realm()
-            << " doesn't match current realm " << static_cast <
-            rgw::sal::RadosStore *
-            >(driver)->svc()->zone->get_realm().get_id() << std::endl;
+                     << " doesn't match current realm " << static_cast <
+                     rgw::sal::RadosStore *
+                     >(driver)->svc()->zone->get_realm().get_id() << std::endl;
         op_ret = -EINVAL;
         return;
     }
@@ -140,7 +153,7 @@ void RGWOp_Period_Post::execute(optional_yield y)
                    rgw::sal::RadosStore * >(driver)->svc()->sysobj, y);
     if (op_ret < 0) {
         ldpp_dout(this, -1) << "failed to read current realm: "
-            << cpp_strerror(-op_ret) << dendl;
+                            << cpp_strerror(-op_ret) << dendl;
         return;
     }
 
@@ -152,7 +165,7 @@ void RGWOp_Period_Post::execute(optional_yield y)
                             realm.get_id(), y);
     if (op_ret < 0) {
         ldpp_dout(this, -1) << "failed to read current period: "
-            << cpp_strerror(-op_ret) << dendl;
+                            << cpp_strerror(-op_ret) << dendl;
         return;
     }
 
@@ -173,7 +186,7 @@ void RGWOp_Period_Post::execute(optional_yield y)
         >(driver)->svc()->zone->get_zone_params().get_id()) {
         ldpp_dout(this,
                   10) << "master zone rejecting period id=" << period.
-            get_id() << " epoch=" << period.get_epoch() << dendl;
+                      get_id() << " epoch=" << period.get_epoch() << dendl;
         op_ret = -EINVAL;       // XXX: error code
         return;
     }
@@ -190,7 +203,7 @@ void RGWOp_Period_Post::execute(optional_yield y)
     if (op_ret == -EEXIST) {
         // already have this epoch (or a more recent one)
         ldpp_dout(this, 4) << "already have epoch >= " << period.get_epoch()
-            << " for period " << period.get_id() << dendl;
+                           << " for period " << period.get_id() << dendl;
         op_ret = 0;
         return;
     }
@@ -209,17 +222,17 @@ void RGWOp_Period_Post::execute(optional_yield y)
         // discard periods in the past
         if (period.get_realm_epoch() < current_epoch) {
             ldpp_dout(this, 10) << "discarding period " << period.get_id()
-                << " with realm epoch " << period.get_realm_epoch()
-                << " older than current epoch " << current_epoch << dendl;
+                                << " with realm epoch " << period.get_realm_epoch()
+                                << " older than current epoch " << current_epoch << dendl;
             // return success to ack that we have this period
             return;
         }
         // discard periods too far in the future
         if (period.get_realm_epoch() > current_epoch + PERIOD_HISTORY_FETCH_MAX) {
             ldpp_dout(this, -1) << "discarding period " << period.get_id()
-                << " with realm epoch " << period.
-                get_realm_epoch() << " too far in "
-                "the future from current epoch " << current_epoch << dendl;
+                                << " with realm epoch " << period.
+                                get_realm_epoch() << " too far in "
+                                "the future from current epoch " << current_epoch << dendl;
             op_ret = -ENOENT;   // XXX: error code
             return;
         }
@@ -231,19 +244,19 @@ void RGWOp_Period_Post::execute(optional_yield y)
             op_ret = cursor.get_error();
             ldpp_dout(this,
                       -1) <<
-                "failed to collect the periods between current period " <<
-                current_period.
-                get_id() << " (realm epoch " << current_epoch <<
-                ") and the new period " << period.get_id()
-                << " (realm epoch " << period.get_realm_epoch()
-                << "): " << cpp_strerror(-op_ret) << dendl;
+                          "failed to collect the periods between current period " <<
+                          current_period.
+                          get_id() << " (realm epoch " << current_epoch <<
+                          ") and the new period " << period.get_id()
+                          << " (realm epoch " << period.get_realm_epoch()
+                          << "): " << cpp_strerror(-op_ret) << dendl;
             return;
         }
         if (cursor.has_next()) {
             // don't switch if we have a newer period in our history
             ldpp_dout(this, 4) << "attached period " << period.get_id()
-                << " to history, but the history contains newer periods" <<
-                dendl;
+                               << " to history, but the history contains newer periods" <<
+                               dendl;
             return;
         }
         // set as current period
@@ -254,8 +267,8 @@ void RGWOp_Period_Post::execute(optional_yield y)
             return;
         }
         ldpp_dout(this, 4) << "period " << period.get_id()
-            << " is newer than current period " << current_period.get_id()
-            << ", updating realm's current period and notifying zone" << dendl;
+                           << " is newer than current period " << current_period.get_id()
+                           << ", updating realm's current period and notifying zone" << dendl;
         realm.notify_new_period(this, period, y);
         return;
     }
@@ -263,54 +276,65 @@ void RGWOp_Period_Post::execute(optional_yield y)
     op_ret = period.reflect(this, y);
     if (op_ret < 0) {
         ldpp_dout(this, -1) << "failed to update local objects: "
-            << cpp_strerror(-op_ret) << dendl;
+                            << cpp_strerror(-op_ret) << dendl;
         return;
     }
     ldpp_dout(this, 4) << "period epoch " << period.get_epoch()
-        << " is newer than current epoch " << current_period.get_epoch()
-        << ", updating period's latest epoch and notifying zone" << dendl;
+                       << " is newer than current epoch " << current_period.get_epoch()
+                       << ", updating period's latest epoch and notifying zone" << dendl;
     realm.notify_new_period(this, period, y);
     // update the period history
     period_history->insert(RGWPeriod {
-                           period}
-    );
+        period}
+                          );
 }
 
-class RGWHandler_Period:public RGWHandler_Auth_S3 {
-  protected:
+class RGWHandler_Period: public RGWHandler_Auth_S3
+{
+protected:
     using RGWHandler_Auth_S3::RGWHandler_Auth_S3;
 
-    RGWOp *op_get() override {
+    RGWOp *op_get() override
+    {
         return new RGWOp_Period_Get;
-    } RGWOp *op_post() override {
+    } RGWOp *op_post() override
+    {
         return new RGWOp_Period_Post;
     }
 };
 
-class RGWRESTMgr_Period:public RGWRESTMgr {
-  public:
-    RGWHandler_REST * get_handler(rgw::sal::Driver * driver,
-                                  req_state *,
-                                  const rgw::auth::
-                                  StrategyRegistry & auth_registry,
-                                  const std::string &)override {
+class RGWRESTMgr_Period: public RGWRESTMgr
+{
+public:
+    RGWHandler_REST *get_handler(rgw::sal::Driver *driver,
+                                 req_state *,
+                                 const rgw::auth::
+                                 StrategyRegistry &auth_registry,
+                                 const std::string &)override
+    {
         return new RGWHandler_Period(auth_registry);
-}};
+    }
+};
 
 // GET /admin/realm
-class RGWOp_Realm_Get:public RGWRESTOp {
+class RGWOp_Realm_Get: public RGWRESTOp
+{
     std::unique_ptr < RGWRealm > realm;
-  public:
-    int check_caps(const RGWUserCaps & caps) override {
+public:
+    int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("zone", RGW_CAP_READ);
-    } int verify_permission(optional_yield) override {
+    } int verify_permission(optional_yield) override
+    {
         return check_caps(s->user->get_caps());
     }
     void execute(optional_yield y) override;
     void send_response() override;
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_realm";
-}};
+    }
+};
 
 void RGWOp_Realm_Get::execute(optional_yield y)
 {
@@ -327,7 +351,7 @@ void RGWOp_Realm_Get::execute(optional_yield y)
                     rgw::sal::RadosStore * >(driver)->svc()->sysobj, y);
     if (op_ret < 0)
         ldpp_dout(this, -1) << "failed to read realm id=" << id
-            << " name=" << name << dendl;
+                            << " name=" << name << dendl;
 }
 
 void RGWOp_Realm_Get::send_response()
@@ -346,20 +370,25 @@ void RGWOp_Realm_Get::send_response()
 }
 
 // GET /admin/realm?list
-class RGWOp_Realm_List:public RGWRESTOp {
+class RGWOp_Realm_List: public RGWRESTOp
+{
     std::string default_id;
     std::list < std::string > realms;
-  public:
-    int check_caps(const RGWUserCaps & caps) override {
+public:
+    int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("zone", RGW_CAP_READ);
-    } int verify_permission(optional_yield) override {
+    } int verify_permission(optional_yield) override
+    {
         return check_caps(s->user->get_caps());
     }
     void execute(optional_yield y) override;
     void send_response() override;
-    const char *name() const override {
+    const char *name() const override
+    {
         return "list_realms";
-}};
+    }
+};
 
 void RGWOp_Realm_List::execute(optional_yield y)
 {
@@ -373,9 +402,10 @@ void RGWOp_Realm_List::execute(optional_yield y)
     op_ret =
         static_cast <
         rgw::sal::RadosStore * >(driver)->svc()->zone->list_realms(this,
-                                                                   realms);
-    if (op_ret < 0)
+            realms);
+    if (op_ret < 0) {
         ldpp_dout(this, -1) << "failed to list realms" << dendl;
+    }
 }
 
 void RGWOp_Realm_List::send_response()
@@ -396,14 +426,18 @@ void RGWOp_Realm_List::send_response()
     flusher.flush();
 }
 
-class RGWHandler_Realm:public RGWHandler_Auth_S3 {
-  protected:
+class RGWHandler_Realm: public RGWHandler_Auth_S3
+{
+protected:
     using RGWHandler_Auth_S3::RGWHandler_Auth_S3;
-    RGWOp *op_get() override {
-        if (s->info.args.sub_resource_exists("list"))
+    RGWOp *op_get() override
+    {
+        if (s->info.args.sub_resource_exists("list")) {
             return new RGWOp_Realm_List;
+        }
         return new RGWOp_Realm_Get;
-}};
+    }
+};
 
 RGWRESTMgr_Realm::RGWRESTMgr_Realm()
 {
@@ -411,11 +445,11 @@ RGWRESTMgr_Realm::RGWRESTMgr_Realm()
     register_resource("period", new RGWRESTMgr_Period);
 }
 
-RGWHandler_REST *RGWRESTMgr_Realm::get_handler(rgw::sal::Driver * driver,
-                                               req_state *,
-                                               const rgw::auth::
-                                               StrategyRegistry & auth_registry,
-                                               const std::string &)
+RGWHandler_REST *RGWRESTMgr_Realm::get_handler(rgw::sal::Driver *driver,
+        req_state *,
+        const rgw::auth::
+        StrategyRegistry &auth_registry,
+        const std::string &)
 {
     return new RGWHandler_Realm(auth_registry);
 }

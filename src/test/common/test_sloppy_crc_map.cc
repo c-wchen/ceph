@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void dump(const SloppyCRCMap & scm)
+void dump(const SloppyCRCMap &scm)
 {
     auto f = Formatter::create_unique("json-pretty");
     f->open_object_section("map");
@@ -27,13 +27,15 @@ TEST(SloppyCRCMap, basic)
     b.append("asdf");
 
     scm.write(0, a.length(), a);
-    if (0)
+    if (0) {
         dump(scm);
+    }
     ASSERT_EQ(0, scm.read(0, a.length(), a, &cout));
 
     scm.write(12, b.length(), b);
-    if (0)
+    if (0) {
         dump(scm);
+    }
 
     ASSERT_EQ(0, scm.read(12, b.length(), b, &cout));
     ASSERT_EQ(1, scm.read(0, a.length(), a, &cout));

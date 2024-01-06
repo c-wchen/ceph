@@ -1,4 +1,4 @@
-// -*- mode:c++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:c++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * ceph - scalable distributed file system
@@ -27,41 +27,44 @@
  * and read past corruptions and missing objects.  It is also
  * less efficient but more plainly written.
  */
-class JournalScanner {
-  private:
-    librados::IoCtx & io;
+class JournalScanner
+{
+private:
+    librados::IoCtx &io;
 
     // Input constraints
     const int rank;
-     std::string type;
+    std::string type;
     JournalFilter const filter;
 
     void gap_advance();
 
-  public:
-     JournalScanner(librados::IoCtx & io_,
-                    int rank_,
-                    const std::string & type_,
-                    JournalFilter const &filter_):io(io_),
+public:
+    JournalScanner(librados::IoCtx &io_,
+                   int rank_,
+                   const std::string &type_,
+                   JournalFilter const &filter_): io(io_),
         rank(rank_),
         type(type_),
         filter(filter_),
         is_mdlog(false),
         pointer_present(false),
         pointer_valid(false),
-        header_present(false), header_valid(false), header(NULL) {
+        header_present(false), header_valid(false), header(NULL)
+    {
     };
 
-    JournalScanner(librados::IoCtx & io_,
+    JournalScanner(librados::IoCtx &io_,
                    int rank_,
-                   const std::string & type_):io(io_),
+                   const std::string &type_): io(io_),
         rank(rank_),
         type(type_),
         filter(type_),
         is_mdlog(false),
         pointer_present(false),
         pointer_valid(false),
-        header_present(false), header_valid(false), header(NULL) {
+        header_present(false), header_valid(false), header(NULL)
+    {
     };
 
     ~JournalScanner();
@@ -71,7 +74,7 @@ class JournalScanner {
     int scan_pointer();
     int scan_header();
     int scan_events();
-    void report(std::ostream & out) const;
+    void report(std::ostream &out) const;
 
     std::string obj_name(uint64_t offset) const;
     std::string obj_name(inodeno_t ino, uint64_t offset) const;
@@ -80,22 +83,27 @@ class JournalScanner {
     inodeno_t ino;              // Corresponds to journal ino according their type
     struct EventRecord {
         EventRecord(std::unique_ptr < LogEvent > le,
-                    uint32_t rs):log_event(std::move(le)), raw_size(rs) {
+                    uint32_t rs): log_event(std::move(le)), raw_size(rs)
+        {
         } EventRecord(std::unique_ptr < PurgeItem > p,
-                      uint32_t rs):pi(std::move(p)), raw_size(rs) {
+                      uint32_t rs): pi(std::move(p)), raw_size(rs)
+        {
         }
         std::unique_ptr < LogEvent > log_event;
         std::unique_ptr < PurgeItem > pi;
         uint32_t raw_size = 0;  //< Size from start offset including all encoding overhead
     };
 
-    class EventError {
-      public:
+    class EventError
+    {
+    public:
         int r;
-         std::string description;
-         EventError(int r_, const std::string & desc_)
-        :r(r_), description(desc_) {
-    }};
+        std::string description;
+        EventError(int r_, const std::string &desc_)
+            : r(r_), description(desc_)
+        {
+        }
+    };
 
     typedef std::map < uint64_t, EventRecord > EventMap;
     typedef std::map < uint64_t, EventError > ErrorMap;
@@ -105,7 +113,7 @@ class JournalScanner {
     bool pointer_valid;         //mdlog specific
     bool header_present;
     bool header_valid;
-    Journaler::Header * header;
+    Journaler::Header *header;
 
     bool is_healthy() const;
     bool is_readable() const;
@@ -119,9 +127,9 @@ class JournalScanner {
     // any subsequent errors handling them (e.g. replaying)
     ErrorMap errors;
 
-  private:
+private:
     // Forbid copy construction because I have ptr members
-    JournalScanner(const JournalScanner & rhs);
+    JournalScanner(const JournalScanner &rhs);
 };
 
 #endif // JOURNAL_SCANNER_H

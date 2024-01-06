@@ -64,7 +64,7 @@ enum {
     P_LAST,
 };
 
-int SimpleRADOSStriper::config_logger(CephContext * cct, std::string_view name,
+int SimpleRADOSStriper::config_logger(CephContext *cct, std::string_view name,
                                       std::shared_ptr < PerfCounters > *l)
 {
     PerfCountersBuilder plb(cct, name.data(), P_FIRST, P_LAST);
@@ -101,8 +101,8 @@ SimpleRADOSStriper::~SimpleRADOSStriper()
 }
 
 SimpleRADOSStriper::extent SimpleRADOSStriper::get_next_extent(uint64_t off,
-                                                               size_t len) const
-    const
+        size_t len) const
+const
 {
     extent e;
     {
@@ -165,16 +165,14 @@ int SimpleRADOSStriper::truncate(uint64_t size)
 int SimpleRADOSStriper::wait_for_aios(bool block)
 {
     while (!aios.empty()) {
-        auto & aiocp = aios.front();
+        auto &aiocp = aios.front();
         int rc;
         if (block) {
             rc = aiocp->wait_for_complete();
-        }
-        else {
+        } else {
             if (aiocp->is_complete()) {
                 rc = aiocp->get_return_value();
-            }
-            else {
+            } else {
                 return 0;
             }
         }
@@ -211,7 +209,7 @@ int SimpleRADOSStriper::flush()
     return 0;
 }
 
-int SimpleRADOSStriper::stat(uint64_t * s)
+int SimpleRADOSStriper::stat(uint64_t *s)
 {
     d(5) << dendl;
 
@@ -288,7 +286,7 @@ int SimpleRADOSStriper::open()
         ceph_assert(err.empty());
     }
     d(15) << " size: " << size << " allocated: " << allocated << " version: " <<
-        version << dendl;
+          version << dendl;
     return 0;
 }
 
@@ -314,7 +312,7 @@ int SimpleRADOSStriper::shrink_alloc(uint64_t a)
         offset += ext.len;
     }
 
-  for (auto & aiocp:removes) {
+    for (auto &aiocp : removes) {
         if (int rc = aiocp->wait_for_complete(); rc < 0 && rc != -ENOENT) {
             d(5) << " aio_remove failed: " << cpp_strerror(rc) << dendl;
             return rc;
@@ -359,8 +357,7 @@ int SimpleRADOSStriper::maybe_shrink_alloc()
         if (allocated > 0) {
             d(10) << "allocation shrink to 0" << dendl;
             return shrink_alloc(0);
-        }
-        else {
+        } else {
             return 0;
         }
     }
@@ -394,9 +391,9 @@ bufferlist SimpleRADOSStriper::uint2bl(uint64_t v)
 int SimpleRADOSStriper::set_metadata(uint64_t new_size, bool update_size)
 {
     d(10) << " new_size: " << new_size
-        << " update_size: " << update_size
-        << " allocated: " << allocated
-        << " size: " << size << " version: " << version << dendl;
+          << " update_size: " << update_size
+          << " allocated: " << allocated
+          << " size: " << size << " version: " << version << dendl;
 
     bool do_op = false;
     auto new_allocated = allocated;
@@ -407,22 +404,26 @@ int SimpleRADOSStriper::set_metadata(uint64_t new_size, bool update_size)
         new_allocated = min_growth + ((size + mask) & ~mask);   /* round up base 2 */
         op.setxattr(XATTR_ALLOCATED, uint2bl(new_allocated));
         do_op = true;
-        if (logger)
+        if (logger) {
             logger->inc(P_UPDATE_ALLOCATED);
+        }
         d(15) << " updating allocated to " << new_allocated << dendl;
     }
     if (update_size) {
         op.setxattr(XATTR_SIZE, uint2bl(new_size));
         do_op = true;
-        if (logger)
+        if (logger) {
             logger->inc(P_UPDATE_SIZE);
+        }
         d(15) << " updating size to " << new_size << dendl;
     }
     if (do_op) {
-        if (logger)
+        if (logger) {
             logger->inc(P_UPDATE_METADATA);
-        if (logger)
+        }
+        if (logger) {
             logger->inc(P_UPDATE_VERSION);
+        }
         op.setxattr(XATTR_VERSION, uint2bl(version + 1));
         d(15) << " updating version to " << (version + 1) << dendl;
         auto aiocp = aiocompletionptr(librados::Rados::aio_create_completion());
@@ -474,7 +475,7 @@ ssize_t SimpleRADOSStriper::write(const void *data, size_t len, uint64_t off)
         bufferlist bl;
         bl.append((const char *)data + w, ext.len);
         if (int rc =
-            ioctx.aio_write(ext.soid, aiocp.get(), bl, ext.len, ext.off);
+                ioctx.aio_write(ext.soid, aiocp.get(), bl, ext.len, ext.off);
             rc < 0) {
             break;
         }
@@ -511,7 +512,7 @@ ssize_t SimpleRADOSStriper::read(void *data, size_t len, uint64_t off)
         auto &[bl, aiocp] = reads.emplace_back();
         aiocp = aiocompletionptr(librados::Rados::aio_create_completion());
         if (int rc =
-            ioctx.aio_read(ext.soid, aiocp.get(), &bl, ext.len, ext.off);
+                ioctx.aio_read(ext.soid, aiocp.get(), &bl, ext.len, ext.off);
             rc < 0) {
             d(1) << " read failure: " << cpp_strerror(rc) << dendl;
             return rc;
@@ -520,7 +521,7 @@ ssize_t SimpleRADOSStriper::read(void *data, size_t len, uint64_t off)
     }
 
     r = 0;
-  for (auto &[bl, aiocp]:reads) {
+    for (auto &[bl, aiocp] : reads) {
         if (int rc = aiocp->wait_for_complete(); rc < 0) {
             d(1) << " read failure: " << cpp_strerror(rc) << dendl;
             return rc;
@@ -533,28 +534,28 @@ ssize_t SimpleRADOSStriper::read(void *data, size_t len, uint64_t off)
     return r;
 }
 
-int SimpleRADOSStriper::print_lockers(std::ostream & out)
+int SimpleRADOSStriper::print_lockers(std::ostream &out)
 {
     int exclusive;
     std::string tag;
     std::list < librados::locker_t > lockers;
     auto ext = get_first_extent();
     if (int rc =
-        ioctx.list_lockers(ext.soid, biglock, &exclusive, &tag, &lockers);
+            ioctx.list_lockers(ext.soid, biglock, &exclusive, &tag, &lockers);
         rc < 0) {
         d(1) << " list_lockers failure: " << cpp_strerror(rc) << dendl;
         return rc;
     }
     if (lockers.empty()) {
         out << " lockers none";
-    }
-    else {
+    } else {
         out << " lockers exclusive=" << exclusive << " tag=" << tag <<
             " lockers=[";
         bool first = true;
-      for (const auto & l:lockers) {
-            if (!first)
+        for (const auto &l : lockers) {
+            if (!first) {
                 out << ",";
+            }
             out << l.client << ":" << l.cookie << ":" << l.address;
         }
         out << "]";
@@ -611,8 +612,8 @@ int SimpleRADOSStriper::recover_lock()
     {
         auto tv = ceph::to_timeval(lock_keeper_timeout);
         if (int rc =
-            ioctx.lock_exclusive(ext.soid, biglock, cookie.to_string(),
-                                 lockdesc, &tv, 0); rc < 0) {
+                ioctx.lock_exclusive(ext.soid, biglock, cookie.to_string(),
+                                     lockdesc, &tv, 0); rc < 0) {
             return rc;
         }
         locked = true;
@@ -627,8 +628,7 @@ int SimpleRADOSStriper::recover_lock()
             if (rc == -ENOENT) {
                 /* someone removed it? ok... */
                 goto setowner;
-            }
-            else {
+            } else {
                 d(-1) << "could not recover exclusive locker" << dendl;
                 locked = false; /* it will drop eventually */
                 return -EIO;
@@ -640,8 +640,7 @@ int SimpleRADOSStriper::recover_lock()
     if (addrs.empty()) {
         d(5) << "someone else cleaned up" << dendl;
         goto setowner;
-    }
-    else {
+    } else {
         d(5) << "exclusive lock holder was " << addrs << dendl;
     }
 
@@ -650,16 +649,17 @@ int SimpleRADOSStriper::recover_lock()
         addrv.parse(addrs.c_str());
         auto R = librados::Rados(ioctx);
         std::string_view b = "blocklist";
-      retry:
-      for (auto & a:addrv.v) {
+retry:
+        for (auto &a : addrv.v) {
             CachedStackStringStream css;
             *css << "{\"prefix\":\"osd " << b << "\", \"" << b <<
-                "op\":\"add\",";
+                 "op\":\"add\",";
             *css << "\"addr\":\"";
             *css << a;
             *css << "\"}";
             std::vector < std::string > cmd = {
-            css->str()};
+                css->str()
+            };
             d(5) << "sending blocklist command: " << cmd << dendl;
             std::string out;
             if (int rc = R.mon_command(css->str(), bufferlist(), nullptr, &out);
@@ -669,8 +669,8 @@ int SimpleRADOSStriper::recover_lock()
                     goto retry;
                 }
                 d(-1) <<
-                    "Cannot proceed with recovery because I have failed to blocklist the old client: "
-                    << cpp_strerror(rc) << ", out = " << out << dendl;
+                      "Cannot proceed with recovery because I have failed to blocklist the old client: "
+                      << cpp_strerror(rc) << ", out = " << out << dendl;
                 locked = false; /* it will drop eventually */
                 return -EIO;
             }
@@ -679,7 +679,7 @@ int SimpleRADOSStriper::recover_lock()
         R.wait_for_latest_osdmap();
     }
 
-  setowner:
+setowner:
     d(5) << "setting new owner to myself, " << myaddrs << dendl;
     {
         auto myaddrbl = str2bl(myaddrs);
@@ -731,8 +731,7 @@ int SimpleRADOSStriper::lock(uint64_t timeoutms)
             locked = true;
             last_renewal = clock::now();
             break;
-        }
-        else if (rc == -EBUSY) {
+        } else if (rc == -EBUSY) {
             if ((slept % 500000) == 0) {
                 d(-1) << "waiting for locks: ";
                 print_lockers(*_dout);
@@ -741,8 +740,7 @@ int SimpleRADOSStriper::lock(uint64_t timeoutms)
             usleep(5000);
             slept += 5000;
             continue;
-        }
-        else if (rc == -ECANCELED) {
+        } else if (rc == -ECANCELED) {
             /* CMPXATTR failed, a locker didn't cleanup. Try to recover! */
             if (rc = recover_lock(); rc < 0) {
                 if (rc == -EBUSY) {
@@ -751,8 +749,7 @@ int SimpleRADOSStriper::lock(uint64_t timeoutms)
                 return rc;
             }
             break;
-        }
-        else {
+        } else {
             d(-1) << " lock failed: " << cpp_strerror(rc) << dendl;
             return rc;
         }

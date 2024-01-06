@@ -207,9 +207,9 @@ TEST(LibCephFS, LayoutSetBadJSON)
     {
         // set a new layout and verify the same
         const char *new_layout = "" // bad json without starting brace
-            "\"stripe_unit\": 65536, "
-            "\"stripe_count\": 1, "
-            "\"object_size\": 65536, " "\"pool_name\": \"cephfs.a.data\", " "}";
+                                 "\"stripe_unit\": 65536, "
+                                 "\"stripe_count\": 1, "
+                                 "\"object_size\": 65536, " "\"pool_name\": \"cephfs.a.data\", " "}";
         // try to set a malformed JSON, eg. without an open brace
         ASSERT_EQ(-CEPHFS_EINVAL,
                   ceph_setxattr(cmount, "test/d0", "ceph.dir.layout.json",

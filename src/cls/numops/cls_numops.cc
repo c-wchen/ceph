@@ -38,7 +38,7 @@ using ceph::encode;
 CLS_VER(1, 0)
 CLS_NAME(numops)
 
-static int add(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
+static int add(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
     string key, diff_str;
 
@@ -46,7 +46,7 @@ static int add(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
     try {
         decode(key, iter);
         decode(diff_str, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_LOG(20, "add: invalid decode of input");
         return -EINVAL;
     }
@@ -66,14 +66,12 @@ static int add(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
 
     if (ret == -ENODATA || bl.length() == 0) {
         value = 0;
-    }
-    else if (ret < 0) {
+    } else if (ret < 0) {
         if (ret != -ENOENT) {
             CLS_ERR("add: error reading omap key %s: %d", key.c_str(), ret);
         }
         return ret;
-    }
-    else {
+    } else {
         std::string stored_value(bl.c_str(), bl.length());
         end_ptr = 0;
         value = strtod(stored_value.c_str(), &end_ptr);
@@ -95,7 +93,7 @@ static int add(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
     return cls_cxx_map_set_val(hctx, key, &new_value);
 }
 
-static int mul(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
+static int mul(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
     string key, diff_str;
 
@@ -103,7 +101,7 @@ static int mul(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
     try {
         decode(key, iter);
         decode(diff_str, iter);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_LOG(20, "mul: invalid decode of input");
         return -EINVAL;
     }
@@ -123,14 +121,12 @@ static int mul(cls_method_context_t hctx, bufferlist * in, bufferlist * out)
 
     if (ret == -ENODATA || bl.length() == 0) {
         value = 0;
-    }
-    else if (ret < 0) {
+    } else if (ret < 0) {
         if (ret != -ENOENT) {
             CLS_ERR("mul: error reading omap key %s: %d", key.c_str(), ret);
         }
         return ret;
-    }
-    else {
+    } else {
         std::string stored_value(bl.c_str(), bl.length());
         end_ptr = 0;
         value = strtod(stored_value.c_str(), &end_ptr);

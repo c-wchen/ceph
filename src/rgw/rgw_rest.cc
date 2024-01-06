@@ -134,7 +134,7 @@ map < int, const char *>http_status_names;
  * make attrs look_like_this
  * converts dashes to underscores
  */
-string lowercase_underscore_http_attr(const string & orig)
+string lowercase_underscore_http_attr(const string &orig)
 {
     const char *s = orig.c_str();
     char buf[orig.size() + 1];
@@ -142,11 +142,11 @@ string lowercase_underscore_http_attr(const string & orig)
 
     for (size_t i = 0; i < orig.size(); ++i, ++s) {
         switch (*s) {
-        case '-':
-            buf[i] = '_';
-            break;
-        default:
-            buf[i] = tolower(*s);
+            case '-':
+                buf[i] = '_';
+                break;
+            default:
+                buf[i] = tolower(*s);
         }
     }
     return string(buf);
@@ -156,7 +156,7 @@ string lowercase_underscore_http_attr(const string & orig)
  * make attrs LOOK_LIKE_THIS
  * converts dashes to underscores
  */
-string uppercase_underscore_http_attr(const string & orig)
+string uppercase_underscore_http_attr(const string &orig)
 {
     const char *s = orig.c_str();
     char buf[orig.size() + 1];
@@ -164,11 +164,11 @@ string uppercase_underscore_http_attr(const string & orig)
 
     for (size_t i = 0; i < orig.size(); ++i, ++s) {
         switch (*s) {
-        case '-':
-            buf[i] = '_';
-            break;
-        default:
-            buf[i] = toupper(*s);
+            case '-':
+                buf[i] = '_';
+                break;
+            default:
+                buf[i] = toupper(*s);
         }
     }
     return string(buf);
@@ -178,13 +178,13 @@ string uppercase_underscore_http_attr(const string & orig)
 static set < string > hostnames_set;
 static set < string > hostnames_s3website_set;
 
-void rgw_rest_init(CephContext * cct, const rgw::sal::ZoneGroup & zone_group)
+void rgw_rest_init(CephContext *cct, const rgw::sal::ZoneGroup &zone_group)
 {
-  for (const auto & rgw2http:base_rgw_to_http_attrs) {
+    for (const auto &rgw2http : base_rgw_to_http_attrs) {
         rgw_to_http_attrs[rgw2http.rgw_attr] = rgw2http.http_attr;
     }
 
-  for (const auto & http2rgw:generic_attrs) {
+    for (const auto &http2rgw : generic_attrs) {
         generic_attrs_map[http2rgw.http_header] = http2rgw.rgw_attr;
     }
 
@@ -205,7 +205,7 @@ void rgw_rest_init(CephContext * cct, const rgw::sal::ZoneGroup & zone_group)
         generic_attrs_map[http_header] = rgw_attr;
     }
 
-    for (const struct rgw_http_status_code * h = http_codes; h->code; h++) {
+    for (const struct rgw_http_status_code *h = http_codes; h->code; h++) {
         http_status_names[h->code] = h->name;
     }
 
@@ -222,7 +222,7 @@ void rgw_rest_init(CephContext * cct, const rgw::sal::ZoneGroup & zone_group)
     /* TODO: We should have a sanity check that no hostname matches the end of
      * any other hostname, otherwise we will get ambigious results from
      * rgw_find_host_in_domains.
-     * Eg: 
+     * Eg:
      * Hostnames: [A, B.A]
      * Inputs: [Z.A, X.B.A]
      * Z.A clearly splits to subdomain=Z, domain=Z
@@ -235,14 +235,14 @@ void rgw_rest_init(CephContext * cct, const rgw::sal::ZoneGroup & zone_group)
     hostnames_s3website_set.erase("");  // filter out empty hostnames
     ldout(cct,
           20) << "RGW S3website hostnames: " << hostnames_s3website_set <<
-        dendl;
+              dendl;
     /* TODO: we should repeat the hostnames_set sanity check here
      * and ALSO decide about overlap, if any
      */
 }
 
-static bool str_ends_with_nocase(const string & s, const string & suffix,
-                                 size_t * pos)
+static bool str_ends_with_nocase(const string &s, const string &suffix,
+                                 size_t *pos)
 {
     size_t len = suffix.size();
     if (len > (size_t) s.size()) {
@@ -257,26 +257,26 @@ static bool str_ends_with_nocase(const string & s, const string & suffix,
     return boost::algorithm::iends_with(s, suffix);
 }
 
-static bool rgw_find_host_in_domains(const string & host, string * domain,
-                                     string * subdomain,
+static bool rgw_find_host_in_domains(const string &host, string *domain,
+                                     string *subdomain,
                                      const set < string > &valid_hostnames_set)
 {
     set < string >::iterator iter;
-  /** TODO, Future optimization
-   * store hostnames_set elements _reversed_, and look for a prefix match,
-   * which is much faster than a suffix match.
-   */
+    /** TODO, Future optimization
+     * store hostnames_set elements _reversed_, and look for a prefix match,
+     * which is much faster than a suffix match.
+     */
     for (iter = valid_hostnames_set.begin(); iter != valid_hostnames_set.end();
          ++iter) {
         size_t pos;
-        if (!str_ends_with_nocase(host, *iter, &pos))
+        if (!str_ends_with_nocase(host, *iter, &pos)) {
             continue;
+        }
 
         if (pos == 0) {
             *domain = host;
             subdomain->clear();
-        }
-        else {
+        } else {
             if (host[pos - 1] != '.') {
                 continue;
             }
@@ -289,18 +289,18 @@ static bool rgw_find_host_in_domains(const string & host, string * domain,
     return false;
 }
 
-static void dump_status(req_state * s, int status, const char *status_name)
+static void dump_status(req_state *s, int status, const char *status_name)
 {
     s->formatter->set_status(status, status_name);
     try {
         RESTFUL_IO(s)->send_status(status, status_name);
-    } catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         ldpp_dout(s, 0) << "ERROR: s->cio->send_status() returned err="
-            << e.what() << dendl;
+                        << e.what() << dendl;
     }
 }
 
-void rgw_flush_formatter_and_reset(req_state * s, Formatter * formatter)
+void rgw_flush_formatter_and_reset(req_state *s, Formatter *formatter)
 {
     std::ostringstream oss;
     formatter->output_footer();
@@ -313,7 +313,7 @@ void rgw_flush_formatter_and_reset(req_state * s, Formatter * formatter)
     s->formatter->reset();
 }
 
-void rgw_flush_formatter(req_state * s, Formatter * formatter)
+void rgw_flush_formatter(req_state *s, Formatter *formatter)
 {
     std::ostringstream oss;
     formatter->flush(oss);
@@ -323,7 +323,7 @@ void rgw_flush_formatter(req_state * s, Formatter * formatter)
     }
 }
 
-void dump_errno(int http_ret, string & out)
+void dump_errno(int http_ret, string &out)
 {
     stringstream ss;
 
@@ -331,40 +331,40 @@ void dump_errno(int http_ret, string & out)
     out = ss.str();
 }
 
-void dump_errno(const struct rgw_err &err, string & out)
+void dump_errno(const struct rgw_err &err, string &out)
 {
     dump_errno(err.http_ret, out);
 }
 
-void dump_errno(req_state * s)
+void dump_errno(req_state *s)
 {
     dump_status(s, s->err.http_ret, http_status_names[s->err.http_ret]);
 }
 
-void dump_errno(req_state * s, int http_ret)
+void dump_errno(req_state *s, int http_ret)
 {
     dump_status(s, http_ret, http_status_names[http_ret]);
 }
 
-void dump_header(req_state * const s,
-                 const std::string_view & name, const std::string_view & val)
+void dump_header(req_state *const s,
+                 const std::string_view &name, const std::string_view &val)
 {
     try {
         RESTFUL_IO(s)->send_header(name, val);
-    } catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         ldpp_dout(s, 0) << "ERROR: s->cio->send_header() returned err="
-            << e.what() << dendl;
+                        << e.what() << dendl;
     }
 }
 
-void dump_header(req_state * const s,
-                 const std::string_view & name, ceph::buffer::list & bl)
+void dump_header(req_state *const s,
+                 const std::string_view &name, ceph::buffer::list &bl)
 {
     return dump_header(s, name, rgw_sanitized_hdrval(bl));
 }
 
-void dump_header(req_state * const s,
-                 const std::string_view & name, const long long val)
+void dump_header(req_state *const s,
+                 const std::string_view &name, const long long val)
 {
     char buf[32];
     const auto len = snprintf(buf, sizeof(buf), "%lld", val);
@@ -372,8 +372,8 @@ void dump_header(req_state * const s,
     return dump_header(s, name, std::string_view(buf, len));
 }
 
-void dump_header(req_state * const s,
-                 const std::string_view & name, const utime_t & ut)
+void dump_header(req_state *const s,
+                 const std::string_view &name, const utime_t &ut)
 {
     char buf[32];
     const auto len = snprintf(buf, sizeof(buf), "%lld.%05d",
@@ -383,30 +383,30 @@ void dump_header(req_state * const s,
     return dump_header(s, name, std::string_view(buf, len));
 }
 
-void dump_content_length(req_state * const s, const uint64_t len)
+void dump_content_length(req_state *const s, const uint64_t len)
 {
     try {
         RESTFUL_IO(s)->send_content_length(len);
-    } catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         ldpp_dout(s, 0) << "ERROR: s->cio->send_content_length() returned err="
-            << e.what() << dendl;
+                        << e.what() << dendl;
     }
     dump_header(s, "Accept-Ranges", "bytes");
 }
 
-static void dump_chunked_encoding(req_state * const s)
+static void dump_chunked_encoding(req_state *const s)
 {
     try {
         RESTFUL_IO(s)->send_chunked_transfer_encoding();
-    } catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         ldpp_dout(s,
                   0) << "ERROR: RESTFUL_IO(s)->send_chunked_transfer_encoding()"
-            << " returned err=" << e.what() << dendl;
+                     << " returned err=" << e.what() << dendl;
     }
 }
 
-void dump_etag(req_state * const s,
-               const std::string_view & etag, const bool quoted)
+void dump_etag(req_state *const s,
+               const std::string_view &etag, const bool quoted)
 {
     if (etag.empty()) {
         return;
@@ -414,26 +414,24 @@ void dump_etag(req_state * const s,
 
     if (s->prot_flags & RGW_REST_SWIFT && !quoted) {
         return dump_header(s, "etag", etag);
-    }
-    else {
+    } else {
         return dump_header_quoted(s, "ETag", etag);
     }
 }
 
-void dump_bucket_from_state(req_state * s)
+void dump_bucket_from_state(req_state *s)
 {
     if (g_conf()->rgw_expose_bucket && !s->bucket_name.empty()) {
         if (!s->bucket_tenant.empty()) {
             dump_header(s, "Bucket",
                         url_encode(s->bucket_tenant + "/" + s->bucket_name));
-        }
-        else {
+        } else {
             dump_header(s, "Bucket", url_encode(s->bucket_name));
         }
     }
 }
 
-void dump_redirect(req_state * const s, const std::string & redirect)
+void dump_redirect(req_state *const s, const std::string &redirect)
 {
     return dump_header_if_nonempty(s, "Location", redirect);
 }
@@ -442,7 +440,7 @@ static size_t dump_time_header_impl(char (&timestr)[TIME_BUF_SIZE],
                                     const real_time t)
 {
     const utime_t ut(t);
-    time_t secs = static_cast < time_t > (ut.sec());
+    time_t secs = static_cast < time_t >(ut.sec());
 
     struct tm result;
     const struct tm *const tmp = gmtime_r(&secs, &result);
@@ -453,7 +451,7 @@ static size_t dump_time_header_impl(char (&timestr)[TIME_BUF_SIZE],
     return strftime(timestr, sizeof(timestr), "%a, %d %b %Y %H:%M:%S %Z", tmp);
 }
 
-void dump_time_header(req_state * s, const char *name, real_time t)
+void dump_time_header(req_state *s, const char *name, real_time t)
 {
     char timestr[TIME_BUF_SIZE];
 
@@ -465,7 +463,7 @@ void dump_time_header(req_state * s, const char *name, real_time t)
     return dump_header(s, name, std::string_view(timestr, len));
 }
 
-std::string dump_time_to_str(const real_time & t)
+std::string dump_time_to_str(const real_time &t)
 {
     char timestr[TIME_BUF_SIZE];
     dump_time_header_impl(timestr, t);
@@ -473,12 +471,12 @@ std::string dump_time_to_str(const real_time & t)
     return timestr;
 }
 
-void dump_last_modified(req_state * s, real_time t)
+void dump_last_modified(req_state *s, real_time t)
 {
     dump_time_header(s, "Last-Modified", t);
 }
 
-void dump_epoch_header(req_state * s, const char *name, real_time t)
+void dump_epoch_header(req_state *s, const char *name, real_time t)
 {
     utime_t ut(t);
     char buf[65];
@@ -489,7 +487,7 @@ void dump_epoch_header(req_state * s, const char *name, real_time t)
     return dump_header(s, name, std::string_view(buf, len));
 }
 
-void dump_time(req_state * s, const char *name, real_time t)
+void dump_time(req_state *s, const char *name, real_time t)
 {
     char buf[TIME_BUF_SIZE];
     rgw_to_iso8601(t, buf, sizeof(buf));
@@ -497,18 +495,19 @@ void dump_time(req_state * s, const char *name, real_time t)
     s->formatter->dump_string(name, buf);
 }
 
-void dump_owner(req_state * s, const rgw_user & id, const string & name,
+void dump_owner(req_state *s, const rgw_user &id, const string &name,
                 const char *section)
 {
-    if (!section)
+    if (!section) {
         section = "Owner";
+    }
     s->formatter->open_object_section(section);
     s->formatter->dump_string("ID", id.to_str());
     s->formatter->dump_string("DisplayName", name);
     s->formatter->close_section();
 }
 
-void dump_access_control(req_state * s, const char *origin,
+void dump_access_control(req_state *s, const char *origin,
                          const char *meth,
                          const char *hdr, const char *exp_hdr, uint32_t max_age)
 {
@@ -538,7 +537,7 @@ void dump_access_control(req_state * s, const char *origin,
     }
 }
 
-void dump_access_control(req_state * s, RGWOp * op)
+void dump_access_control(req_state *s, RGWOp *op)
 {
     string origin;
     string method;
@@ -547,14 +546,15 @@ void dump_access_control(req_state * s, RGWOp * op)
     unsigned max_age = CORS_MAX_AGE_INVALID;
 
     if (!op->
-        generate_cors_headers(origin, method, header, exp_header, &max_age))
+        generate_cors_headers(origin, method, header, exp_header, &max_age)) {
         return;
+    }
 
     dump_access_control(s, origin.c_str(), method.c_str(), header.c_str(),
                         exp_header.c_str(), max_age);
 }
 
-void dump_start(req_state * s)
+void dump_start(req_state *s)
 {
     if (!s->content_started) {
         s->formatter->output_header();
@@ -562,18 +562,17 @@ void dump_start(req_state * s)
     }
 }
 
-void dump_trans_id(req_state * s)
+void dump_trans_id(req_state *s)
 {
     if (s->prot_flags & RGW_REST_SWIFT) {
         dump_header(s, "X-Trans-Id", s->trans_id);
         dump_header(s, "X-Openstack-Request-Id", s->trans_id);
-    }
-    else if (s->trans_id.length()) {
+    } else if (s->trans_id.length()) {
         dump_header(s, "x-amz-request-id", s->trans_id);
     }
 }
 
-void end_header(req_state * s, RGWOp * op, const char *content_type,
+void end_header(req_state *s, RGWOp *op, const char *content_type,
                 const int64_t proposed_content_length, bool force_content_type,
                 bool force_no_error)
 {
@@ -600,20 +599,19 @@ void end_header(req_state * s, RGWOp * op, const char *content_type,
     if (force_content_type ||
         (!content_type && s->formatter->get_len() != 0) || s->is_err()) {
         ctype = to_mime_type(s->format);
-        if (s->prot_flags & RGW_REST_SWIFT)
+        if (s->prot_flags & RGW_REST_SWIFT) {
             ctype.append("; charset=utf-8");
+        }
         content_type = ctype.c_str();
     }
     if (!force_no_error && s->is_err()) {
         dump_start(s);
         dump(s);
         dump_content_length(s, s->formatter->get_len());
-    }
-    else {
+    } else {
         if (proposed_content_length == CHUNKED_TRANSFER_ENCODING) {
             dump_chunked_encoding(s);
-        }
-        else if (proposed_content_length != NO_CONTENT_LENGTH) {
+        } else if (proposed_content_length != NO_CONTENT_LENGTH) {
             dump_content_length(s, proposed_content_length);
         }
     }
@@ -625,21 +623,20 @@ void end_header(req_state * s, RGWOp * op, const char *content_type,
 
     try {
         RESTFUL_IO(s)->complete_header();
-    }
-    catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         ldpp_dout(s,
                   0) << "ERROR: RESTFUL_IO(s)->complete_header() returned err="
-            << e.what() << dendl;
+                     << e.what() << dendl;
     }
 
     ACCOUNTING_IO(s)->set_account(true);
     rgw_flush_formatter_and_reset(s, s->formatter);
 }
 
-static void build_redirect_url(req_state * s, const string & redirect_base,
-                               string * redirect_url)
+static void build_redirect_url(req_state *s, const string &redirect_base,
+                               string *redirect_url)
 {
-    string & dest_uri = *redirect_url;
+    string &dest_uri = *redirect_url;
 
     dest_uri = redirect_base;
     /*
@@ -654,8 +651,8 @@ static void build_redirect_url(req_state * s, const string & redirect_base,
     dest_uri += s->info.request_params;
 }
 
-void abort_early(req_state * s, RGWOp * op, int err_no,
-                 RGWHandler * handler, optional_yield y)
+void abort_early(req_state *s, RGWOp *op, int err_no,
+                 RGWHandler *handler, optional_yield y)
 {
     string error_content("");
     if (!s->formatter) {
@@ -668,14 +665,13 @@ void abort_early(req_state * s, RGWOp * op, int err_no,
         int new_err_no;
         new_err_no = op->error_handler(err_no, &error_content, y);
         ldpp_dout(s, 1) << "op->ERRORHANDLER: err_no=" << err_no
-            << " new_err_no=" << new_err_no << dendl;
+                        << " new_err_no=" << new_err_no << dendl;
         err_no = new_err_no;
-    }
-    else if (handler != NULL) {
+    } else if (handler != NULL) {
         int new_err_no;
         new_err_no = handler->error_handler(err_no, &error_content, y);
         ldpp_dout(s, 1) << "handler->ERRORHANDLER: err_no=" << err_no
-            << " new_err_no=" << new_err_no << dendl;
+                        << " new_err_no=" << new_err_no << dendl;
         err_no = new_err_no;
     }
 
@@ -700,8 +696,7 @@ void abort_early(req_state * s, RGWOp * op, int err_no,
             string dest_uri;
             if (!s->redirect.empty()) {
                 dest_uri = s->redirect;
-            }
-            else if (!s->zonegroup_endpoint.empty()) {
+            } else if (!s->zonegroup_endpoint.empty()) {
                 build_redirect_url(s, s->zonegroup_endpoint, &dest_uri);
             }
 
@@ -722,27 +717,26 @@ void abort_early(req_state * s, RGWOp * op, int err_no,
             end_header(s, op, NULL, error_content.size(), false, true);
             RESTFUL_IO(s)->send_body(error_content.c_str(),
                                      error_content.size());
-        }
-        else {
+        } else {
             end_header(s, op);
         }
     }
     perfcounter->inc(l_rgw_failed_req);
 }
 
-void dump_continue(req_state * const s)
+void dump_continue(req_state *const s)
 {
     try {
         RESTFUL_IO(s)->send_100_continue();
-    } catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         ldpp_dout(s,
                   0) <<
-            "ERROR: RESTFUL_IO(s)->send_100_continue() returned err=" << e.
-            what() << dendl;
+                     "ERROR: RESTFUL_IO(s)->send_100_continue() returned err=" << e.
+                     what() << dendl;
     }
 }
 
-void dump_range(req_state * const s,
+void dump_range(req_state *const s,
                 const uint64_t ofs, const uint64_t end, const uint64_t total)
 {
     /* dumping range into temp buffer first, as libfcgi will fail to digest
@@ -753,8 +747,7 @@ void dump_range(req_state * const s,
     if (!total) {
         len = snprintf(range_buf, sizeof(range_buf), "bytes */%lld",
                        static_cast < long long >(total));
-    }
-    else {
+    } else {
         len = snprintf(range_buf, sizeof(range_buf), "bytes %lld-%lld/%lld",
                        static_cast < long long >(ofs),
                        static_cast < long long >(end),
@@ -764,12 +757,13 @@ void dump_range(req_state * const s,
     return dump_header(s, "Content-Range", std::string_view(range_buf, len));
 }
 
-int dump_body(req_state * const s, const char *const buf, const size_t len)
+int dump_body(req_state *const s, const char *const buf, const size_t len)
 {
     bool healthchk = false;
     // we dont want to limit health checks
-    if (s->op_type == RGW_OP_GET_HEALTH_CHECK)
+    if (s->op_type == RGW_OP_GET_HEALTH_CHECK) {
         healthchk = true;
+    }
     if (len > 0 && !healthchk) {
         const char *method = s->info.method;
         s->ratelimit_data->decrease_bytes(method, s->ratelimit_user_name, len,
@@ -781,34 +775,34 @@ int dump_body(req_state * const s, const char *const buf, const size_t len)
     }
     try {
         return RESTFUL_IO(s)->send_body(buf, len);
-    }
-    catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         return -e.code().value();
     }
 }
 
-int dump_body(req_state * const s, /* const */ ceph::buffer::list & bl)
+int dump_body(req_state *const s, /* const */ ceph::buffer::list &bl)
 {
     return dump_body(s, bl.c_str(), bl.length());
 }
 
-int dump_body(req_state * const s, const std::string & str)
+int dump_body(req_state *const s, const std::string &str)
 {
     return dump_body(s, str.c_str(), str.length());
 }
 
-int recv_body(req_state * const s, char *const buf, const size_t max)
+int recv_body(req_state *const s, char *const buf, const size_t max)
 {
     int len;
     try {
         len = RESTFUL_IO(s)->recv_body(buf, max);
-    } catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         return -e.code().value();
     }
     bool healthchk = false;
     // we dont want to limit health checks
-    if (s->op_type == RGW_OP_GET_HEALTH_CHECK)
+    if (s->op_type == RGW_OP_GET_HEALTH_CHECK) {
         healthchk = true;
+    }
     if (len > 0 && !healthchk) {
         const char *method = s->info.method;
         s->ratelimit_data->decrease_bytes(method, s->ratelimit_user_name, len,
@@ -843,14 +837,15 @@ int RGWGetObj_ObjStore::get_params(optional_yield y)
     return 0;
 }
 
-int RESTArgs::get_string(req_state * s, const string & name,
-                         const string & def_val, string * val, bool * existed)
+int RESTArgs::get_string(req_state *s, const string &name,
+                         const string &def_val, string *val, bool *existed)
 {
     bool exists;
     *val = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -860,14 +855,15 @@ int RESTArgs::get_string(req_state * s, const string & name,
     return 0;
 }
 
-int RESTArgs::get_uint64(req_state * s, const string & name,
-                         uint64_t def_val, uint64_t * val, bool * existed)
+int RESTArgs::get_uint64(req_state *s, const string &name,
+                         uint64_t def_val, uint64_t *val, bool *existed)
 {
     bool exists;
     string sval = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -875,20 +871,22 @@ int RESTArgs::get_uint64(req_state * s, const string & name,
     }
 
     int r = stringtoull(sval, val);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
 
-int RESTArgs::get_int64(req_state * s, const string & name,
-                        int64_t def_val, int64_t * val, bool * existed)
+int RESTArgs::get_int64(req_state *s, const string &name,
+                        int64_t def_val, int64_t *val, bool *existed)
 {
     bool exists;
     string sval = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -896,20 +894,22 @@ int RESTArgs::get_int64(req_state * s, const string & name,
     }
 
     int r = stringtoll(sval, val);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
 
-int RESTArgs::get_uint32(req_state * s, const string & name,
-                         uint32_t def_val, uint32_t * val, bool * existed)
+int RESTArgs::get_uint32(req_state *s, const string &name,
+                         uint32_t def_val, uint32_t *val, bool *existed)
 {
     bool exists;
     string sval = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -917,20 +917,22 @@ int RESTArgs::get_uint32(req_state * s, const string & name,
     }
 
     int r = stringtoul(sval, val);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
 
-int RESTArgs::get_int32(req_state * s, const string & name,
-                        int32_t def_val, int32_t * val, bool * existed)
+int RESTArgs::get_int32(req_state *s, const string &name,
+                        int32_t def_val, int32_t *val, bool *existed)
 {
     bool exists;
     string sval = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -938,20 +940,22 @@ int RESTArgs::get_int32(req_state * s, const string & name,
     }
 
     int r = stringtol(sval, val);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
 
-int RESTArgs::get_time(req_state * s, const string & name,
-                       const utime_t & def_val, utime_t * val, bool * existed)
+int RESTArgs::get_time(req_state *s, const string &name,
+                       const utime_t &def_val, utime_t *val, bool *existed)
 {
     bool exists;
     string sval = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -961,22 +965,24 @@ int RESTArgs::get_time(req_state * s, const string & name,
     uint64_t epoch, nsec;
 
     int r = utime_t::parse_date(sval, &epoch, &nsec);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     *val = utime_t(epoch, nsec);
 
     return 0;
 }
 
-int RESTArgs::get_epoch(req_state * s, const string & name, uint64_t def_val,
-                        uint64_t * epoch, bool * existed)
+int RESTArgs::get_epoch(req_state *s, const string &name, uint64_t def_val,
+                        uint64_t *epoch, bool *existed)
 {
     bool exists;
     string date = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *epoch = def_val;
@@ -984,20 +990,22 @@ int RESTArgs::get_epoch(req_state * s, const string & name, uint64_t def_val,
     }
 
     int r = utime_t::parse_date(date, epoch, NULL);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return 0;
 }
 
-int RESTArgs::get_bool(req_state * s, const string & name, bool def_val,
-                       bool * val, bool * existed)
+int RESTArgs::get_bool(req_state *s, const string &name, bool def_val,
+                       bool *val, bool *existed)
 {
     bool exists;
     string sval = s->info.args.get(name, &exists);
 
-    if (existed)
+    if (existed) {
         *existed = exists;
+    }
 
     if (!exists) {
         *val = def_val;
@@ -1038,7 +1046,7 @@ int RGWPutObj_ObjStore::verify_params()
 {
     if (s->length) {
         off_t len = atoll(s->length);
-        if (len > (off_t) (s->cct->_conf->rgw_max_put_size)) {
+        if (len > (off_t)(s->cct->_conf->rgw_max_put_size)) {
             return -ERR_TOO_LARGE;
         }
     }
@@ -1064,16 +1072,16 @@ int RGWPutObj_ObjStore::get_params(optional_yield y)
     return 0;
 }
 
-int RGWPutObj_ObjStore::get_data(bufferlist & bl)
+int RGWPutObj_ObjStore::get_data(bufferlist &bl)
 {
     size_t cl;
     uint64_t chunk_size = s->cct->_conf->rgw_max_chunk_size;
     if (s->length) {
         cl = atoll(s->length) - ofs;
-        if (cl > chunk_size)
+        if (cl > chunk_size) {
             cl = chunk_size;
-    }
-    else {
+        }
+    } else {
         cl = chunk_size;
     }
 
@@ -1103,10 +1111,10 @@ int RGWPutObj_ObjStore::get_data(bufferlist & bl)
 /*
  * parses params in the format: 'first; param1=foo; param2=bar'
  */
-void RGWPostObj_ObjStore::parse_boundary_params(const std::string & params_str,
-                                                std::string & first,
-                                                std::map < std::string,
-                                                std::string > &params)
+void RGWPostObj_ObjStore::parse_boundary_params(const std::string &params_str,
+        std::string &first,
+        std::map < std::string,
+        std::string > &params)
 {
     size_t pos = params_str.find(';');
     if (std::string::npos == pos) {
@@ -1131,8 +1139,7 @@ void RGWPostObj_ObjStore::parse_boundary_params(const std::string & params_str,
                 rgw_trim_whitespace(param.substr(0, eqpos));
             std::string val = rgw_trim_quotes(param.substr(eqpos + 1));
             params[std::move(param_name)] = std::move(val);
-        }
-        else {
+        } else {
             params[rgw_trim_whitespace(param)] = "";
         }
 
@@ -1140,16 +1147,19 @@ void RGWPostObj_ObjStore::parse_boundary_params(const std::string & params_str,
     }
 }
 
-int RGWPostObj_ObjStore::parse_part_field(const std::string & line, std::string & field_name,   /* out */
-                                          post_part_field & field)
-{                               /* out */
+int RGWPostObj_ObjStore::parse_part_field(const std::string &line, std::string &field_name,     /* out */
+        post_part_field &field)
+{
+    /* out */
     size_t pos = line.find(':');
-    if (pos == string::npos)
+    if (pos == string::npos) {
         return -EINVAL;
+    }
 
     field_name = line.substr(0, pos);
-    if (pos >= line.size() - 1)
+    if (pos >= line.size() - 1) {
         return 0;
+    }
 
     parse_boundary_params(line.substr(pos + 1), field.val, field.params);
 
@@ -1165,25 +1175,28 @@ static bool is_crlf(const char *s)
  * find the index of the boundary, if exists, or optionally the next end of line
  * also returns how many bytes to skip
  */
-static int index_of(ceph::bufferlist & bl,
+static int index_of(ceph::bufferlist &bl,
                     uint64_t max_len,
-                    const std::string & str,
-                    const bool check_crlf, bool & reached_boundary, int &skip)
+                    const std::string &str,
+                    const bool check_crlf, bool &reached_boundary, int &skip)
 {
     reached_boundary = false;
     skip = 0;
 
-    if (str.size() < 2)         // we assume boundary is at least 2 chars (makes it easier with crlf checks)
+    if (str.size() < 2) {       // we assume boundary is at least 2 chars (makes it easier with crlf checks)
         return -EINVAL;
+    }
 
-    if (bl.length() < str.size())
+    if (bl.length() < str.size()) {
         return -1;
+    }
 
     const char *buf = bl.c_str();
     const char *s = str.c_str();
 
-    if (max_len > bl.length())
+    if (max_len > bl.length()) {
         max_len = bl.length();
+    }
 
     for (uint64_t i = 0; i < max_len; i++, buf++) {
         if (check_crlf && i >= 1 && is_crlf(buf - 1)) {
@@ -1209,11 +1222,11 @@ static int index_of(ceph::bufferlist & bl,
     return -1;
 }
 
-int RGWPostObj_ObjStore::read_with_boundary(ceph::bufferlist & bl,
-                                            uint64_t max,
-                                            const bool check_crlf,
-                                            bool & reached_boundary,
-                                            bool & done)
+int RGWPostObj_ObjStore::read_with_boundary(ceph::bufferlist &bl,
+        uint64_t max,
+        const bool check_crlf,
+        bool &reached_boundary,
+        bool &done)
 {
     uint64_t cl = max + 2 + boundary.size();
 
@@ -1265,8 +1278,7 @@ int RGWPostObj_ObjStore::read_with_boundary(ceph::bufferlist & bl,
             const char *data = in_data.c_str();
             if (is_crlf(data + max)) {
                 max += 2;
-            }
-            else {
+            } else {
                 if (*(data + max) == '-' && *(data + max + 1) == '-') {
                     done = true;
                     max += 2;
@@ -1281,22 +1293,22 @@ int RGWPostObj_ObjStore::read_with_boundary(ceph::bufferlist & bl,
     return 0;
 }
 
-int RGWPostObj_ObjStore::read_line(ceph::bufferlist & bl,
+int RGWPostObj_ObjStore::read_line(ceph::bufferlist &bl,
                                    const uint64_t max,
-                                   bool & reached_boundary, bool & done)
+                                   bool &reached_boundary, bool &done)
 {
     return read_with_boundary(bl, max, true, reached_boundary, done);
 }
 
-int RGWPostObj_ObjStore::read_data(ceph::bufferlist & bl,
+int RGWPostObj_ObjStore::read_data(ceph::bufferlist &bl,
                                    const uint64_t max,
-                                   bool & reached_boundary, bool & done)
+                                   bool &reached_boundary, bool &done)
 {
     return read_with_boundary(bl, max, false, reached_boundary, done);
 }
 
 int RGWPostObj_ObjStore::
-read_form_part_header(struct post_form_part *const part, bool & done)
+read_form_part_header(struct post_form_part *const part, bool &done)
 {
     bufferlist bl;
     bool reached_boundary;
@@ -1314,8 +1326,7 @@ read_form_part_header(struct post_form_part *const part, bool & done)
         r = read_line(bl, chunk_size, reached_boundary, done);
         if (r < 0) {
             return r;
-        }
-        else if (done) {
+        } else if (done) {
             return 0;
         }
     }
@@ -1357,37 +1368,36 @@ read_form_part_header(struct post_form_part *const part, bool & done)
     return 0;
 }
 
-bool RGWPostObj_ObjStore::part_str(parts_collection_t & parts,
-                                   const std::string & name, std::string * val)
+bool RGWPostObj_ObjStore::part_str(parts_collection_t &parts,
+                                   const std::string &name, std::string *val)
 {
     const auto iter = parts.find(name);
     if (std::end(parts) == iter) {
         return false;
     }
 
-    ceph::bufferlist & data = iter->second.data;
+    ceph::bufferlist &data = iter->second.data;
     std::string str = string(data.c_str(), data.length());
     *val = rgw_trim_whitespace(str);
     return true;
 }
 
-std::string RGWPostObj_ObjStore::get_part_str(parts_collection_t & parts,
-                                              const std::string & name,
-                                              const std::string & def_val)
+std::string RGWPostObj_ObjStore::get_part_str(parts_collection_t &parts,
+        const std::string &name,
+        const std::string &def_val)
 {
     std::string val;
 
     if (part_str(parts, name, &val)) {
         return val;
-    }
-    else {
+    } else {
         return rgw_trim_whitespace(def_val);
     }
 }
 
-bool RGWPostObj_ObjStore::part_bl(parts_collection_t & parts,
-                                  const std::string & name,
-                                  ceph::bufferlist * pbl)
+bool RGWPostObj_ObjStore::part_bl(parts_collection_t &parts,
+                                  const std::string &name,
+                                  ceph::bufferlist *pbl)
 {
     const auto iter = parts.find(name);
     if (std::end(parts) == iter) {
@@ -1407,7 +1417,7 @@ int RGWPostObj_ObjStore::verify_params()
         return -ERR_LENGTH_REQUIRED;
     }
     off_t len = atoll(s->length);
-    if (len > (off_t) (s->cct->_conf->rgw_max_put_size)) {
+    if (len > (off_t)(s->cct->_conf->rgw_max_put_size)) {
         return -ERR_TOO_LARGE;
     }
 
@@ -1438,12 +1448,12 @@ int RGWPostObj_ObjStore::get_params(optional_yield y)
 
     if (s->cct->_conf->subsys.should_gather < ceph_subsys_rgw, 20 > ()) {
         ldpp_dout(s, 20) << "request content_type_str="
-            << req_content_type_str << dendl;
+                         << req_content_type_str << dendl;
         ldpp_dout(s, 20) << "request content_type params:" << dendl;
 
-      for (const auto & pair:params) {
+        for (const auto &pair : params) {
             ldpp_dout(s, 20) << " " << pair.first << " -> " << pair.second
-                << dendl;
+                             << dendl;
         }
     }
 
@@ -1466,7 +1476,7 @@ int RGWPutACLs_ObjStore::get_params(optional_yield y)
     std::tie(op_ret, data) = read_all_input(s, max_size, false);
     ldpp_dout(s,
               0) << "RGWPutACLs_ObjStore::get_params read data is: " << data.
-        c_str() << dendl;
+                 c_str() << dendl;
     return op_ret;
 }
 
@@ -1491,9 +1501,9 @@ int RGWPutObjLegalHold_ObjStore::get_params(optional_yield y)
     return op_ret;
 }
 
-static std::tuple < int, bufferlist > read_all_chunked_input(req_state * s,
-                                                             const uint64_t
-                                                             max_read)
+static std::tuple < int, bufferlist > read_all_chunked_input(req_state *s,
+        const uint64_t
+        max_read)
 {
 #define READ_CHUNK 4096
 #define MAX_READ_CHUNK (128 * 1024)
@@ -1514,15 +1524,15 @@ static std::tuple < int, bufferlist > read_all_chunked_input(req_state * s,
         bl.append(bp);
 
         if (read_len == need_to_read) {
-            if (need_to_read < MAX_READ_CHUNK)
+            if (need_to_read < MAX_READ_CHUNK) {
                 need_to_read *= 2;
+            }
 
             if ((unsigned)total > max_read) {
                 return std::make_tuple(-ERANGE, std::move(bl));
             }
             total += need_to_read;
-        }
-        else {
+        } else {
             break;
         }
     } while (true);
@@ -1530,18 +1540,19 @@ static std::tuple < int, bufferlist > read_all_chunked_input(req_state * s,
     return std::make_tuple(0, std::move(bl));
 }
 
-std::tuple < int, bufferlist > rgw_rest_read_all_input(req_state * s,
-                                                       const uint64_t max_len,
-                                                       const bool allow_chunked)
+std::tuple < int, bufferlist > rgw_rest_read_all_input(req_state *s,
+        const uint64_t max_len,
+        const bool allow_chunked)
 {
     size_t cl = 0;
     int len = 0;
     bufferlist bl;
 
-    if (s->length)
+    if (s->length) {
         cl = atoll(s->length);
-    else if (!allow_chunked)
+    } else if (!allow_chunked) {
         return std::make_tuple(-ERR_LENGTH_REQUIRED, std::move(bl));
+    }
 
     if (cl) {
         if (cl > (size_t) max_len) {
@@ -1559,16 +1570,17 @@ std::tuple < int, bufferlist > rgw_rest_read_all_input(req_state * s,
         bp.set_length(len);
         bl.append(bp);
 
-    }
-    else if (allow_chunked && !s->length) {
+    } else if (allow_chunked && !s->length) {
         const char *encoding = s->info.env->get("HTTP_TRANSFER_ENCODING");
-        if (!encoding || strcmp(encoding, "chunked") != 0)
+        if (!encoding || strcmp(encoding, "chunked") != 0) {
             return std::make_tuple(-ERR_LENGTH_REQUIRED, std::move(bl));
+        }
 
         int ret = 0;
         std::tie(ret, bl) = read_all_chunked_input(s, max_len);
-        if (ret < 0)
+        if (ret < 0) {
             return std::make_tuple(ret, std::move(bl));
+        }
     }
 
     return std::make_tuple(0, std::move(bl));
@@ -1585,8 +1597,9 @@ int RGWCompleteMultipart_ObjStore::get_params(optional_yield y)
 
     const auto max_size = s->cct->_conf->rgw_max_put_param_size;
     std::tie(op_ret, data) = read_all_input(s, max_size);
-    if (op_ret < 0)
+    if (op_ret < 0) {
         return op_ret;
+    }
 
     return 0;
 }
@@ -1688,29 +1701,29 @@ RGWOp *RGWHandler_REST::get_op(void)
 {
     RGWOp *op;
     switch (s->op) {
-    case OP_GET:
-        op = op_get();
-        break;
-    case OP_PUT:
-        op = op_put();
-        break;
-    case OP_DELETE:
-        op = op_delete();
-        break;
-    case OP_HEAD:
-        op = op_head();
-        break;
-    case OP_POST:
-        op = op_post();
-        break;
-    case OP_COPY:
-        op = op_copy();
-        break;
-    case OP_OPTIONS:
-        op = op_options();
-        break;
-    default:
-        return NULL;
+        case OP_GET:
+            op = op_get();
+            break;
+        case OP_PUT:
+            op = op_put();
+            break;
+        case OP_DELETE:
+            op = op_delete();
+            break;
+        case OP_HEAD:
+            op = op_head();
+            break;
+        case OP_POST:
+            op = op_post();
+            break;
+        case OP_COPY:
+            op = op_copy();
+            break;
+        case OP_OPTIONS:
+            op = op_options();
+            break;
+        default:
+            return NULL;
     }
 
     if (op) {
@@ -1719,12 +1732,12 @@ RGWOp *RGWHandler_REST::get_op(void)
     return op;
 }                               /* get_op */
 
-void RGWHandler_REST::put_op(RGWOp * op)
+void RGWHandler_REST::put_op(RGWOp *op)
 {
     delete op;
 }                               /* put_op */
 
-int RGWHandler_REST::allocate_formatter(req_state * s,
+int RGWHandler_REST::allocate_formatter(req_state *s,
                                         RGWFormat default_type,
                                         bool configurable)
 {
@@ -1734,14 +1747,11 @@ int RGWHandler_REST::allocate_formatter(req_state * s,
         string format_str = s->info.args.get("format");
         if (format_str.compare("xml") == 0) {
             type = RGWFormat::XML;
-        }
-        else if (format_str.compare("json") == 0) {
+        } else if (format_str.compare("json") == 0) {
             type = RGWFormat::JSON;
-        }
-        else if (format_str.compare("html") == 0) {
+        } else if (format_str.compare("html") == 0) {
             type = RGWFormat::HTML;
-        }
-        else {
+        } else {
             const char *accept = s->info.env->get("HTTP_ACCEPT");
             if (accept) {
                 // trim at first ;
@@ -1750,11 +1760,9 @@ int RGWHandler_REST::allocate_formatter(req_state * s,
 
                 if (format == "text/xml" || format == "application/xml") {
                     type = RGWFormat::XML;
-                }
-                else if (format == "application/json") {
+                } else if (format == "application/json") {
                     type = RGWFormat::JSON;
-                }
-                else if (format == "text/html") {
+                } else if (format == "text/html") {
                     type = RGWFormat::HTML;
                 }
             }
@@ -1763,7 +1771,7 @@ int RGWHandler_REST::allocate_formatter(req_state * s,
     return RGWHandler_REST::reallocate_formatter(s, type);
 }
 
-int RGWHandler_REST::reallocate_formatter(req_state * s, const RGWFormat type)
+int RGWHandler_REST::reallocate_formatter(req_state *s, const RGWFormat type)
 {
     if (s->format == type) {
         // do nothing, just reset
@@ -1776,34 +1784,32 @@ int RGWHandler_REST::reallocate_formatter(req_state * s, const RGWFormat type)
     s->formatter = nullptr;
     s->format = type;
 
-    const string & mm = s->info.args.get("multipart-manifest");
+    const string &mm = s->info.args.get("multipart-manifest");
     const bool multipart_delete = (mm.compare("delete") == 0);
     const bool swift_bulkupload = s->prot_flags & RGW_REST_SWIFT &&
-        s->info.args.exists("extract-archive");
+                                  s->info.args.exists("extract-archive");
     switch (s->format) {
-    case RGWFormat::PLAIN:
-        {
+        case RGWFormat::PLAIN: {
             const bool use_kv_syntax = s->info.args.exists("bulk-delete") ||
-                multipart_delete || swift_bulkupload;
+                                       multipart_delete || swift_bulkupload;
             s->formatter = new RGWFormatter_Plain(use_kv_syntax);
             break;
         }
-    case RGWFormat::XML:
-        {
+        case RGWFormat::XML: {
             const bool lowercase_underscore = s->info.args.exists("bulk-delete")
-                || multipart_delete || swift_bulkupload;
+                                              || multipart_delete || swift_bulkupload;
 
             s->formatter = new XMLFormatter(false, lowercase_underscore);
             break;
         }
-    case RGWFormat::JSON:
-        s->formatter = new JSONFormatter(false);
-        break;
-    case RGWFormat::HTML:
-        s->formatter = new HTMLFormatter(s->prot_flags & RGW_REST_WEBSITE);
-        break;
-    default:
-        return -EINVAL;
+        case RGWFormat::JSON:
+            s->formatter = new JSONFormatter(false);
+            break;
+        case RGWFormat::HTML:
+            s->formatter = new HTMLFormatter(s->prot_flags & RGW_REST_WEBSITE);
+            break;
+        default:
+            return -EINVAL;
 
     };
     //s->formatter->reset(); // All formatters should reset on create already
@@ -1813,7 +1819,7 @@ int RGWHandler_REST::reallocate_formatter(req_state * s, const RGWFormat type)
 
 // This function enforces Amazon's spec for bucket names.
 // (The requirements, not the recommendations.)
-int RGWHandler_REST::validate_bucket_name(const string & bucket)
+int RGWHandler_REST::validate_bucket_name(const string &bucket)
 {
     int len = bucket.size();
     if (len < 3) {
@@ -1823,18 +1829,19 @@ int RGWHandler_REST::validate_bucket_name(const string & bucket)
         }
         // Name too short
         return -ERR_INVALID_BUCKET_NAME;
-    }
-    else if (len > MAX_BUCKET_NAME_LEN) {
+    } else if (len > MAX_BUCKET_NAME_LEN) {
         // Name too long
         return -ERR_INVALID_BUCKET_NAME;
     }
 
     const char *s = bucket.c_str();
     for (int i = 0; i < len; ++i, ++s) {
-        if (*(unsigned char *)s == 0xff)
+        if (*(unsigned char *)s == 0xff) {
             return -ERR_INVALID_BUCKET_NAME;
-        if (*(unsigned char *)s == '/')
+        }
+        if (*(unsigned char *)s == '/') {
             return -ERR_INVALID_BUCKET_NAME;
+        }
     }
 
     return 0;
@@ -1844,7 +1851,7 @@ int RGWHandler_REST::validate_bucket_name(const string & bucket)
 // is at most 1024 bytes long."
 // However, we can still have control characters and other nasties in there.
 // Just as long as they're utf-8 nasties.
-int RGWHandler_REST::validate_object_name(const string & object)
+int RGWHandler_REST::validate_object_name(const string &object)
 {
     int len = object.size();
     if (len > MAX_OBJ_NAME_LEN) {
@@ -1861,27 +1868,35 @@ int RGWHandler_REST::validate_object_name(const string & object)
 
 static http_op op_from_method(const char *method)
 {
-    if (!method)
+    if (!method) {
         return OP_UNKNOWN;
-    if (strcmp(method, "GET") == 0)
+    }
+    if (strcmp(method, "GET") == 0) {
         return OP_GET;
-    if (strcmp(method, "PUT") == 0)
+    }
+    if (strcmp(method, "PUT") == 0) {
         return OP_PUT;
-    if (strcmp(method, "DELETE") == 0)
+    }
+    if (strcmp(method, "DELETE") == 0) {
         return OP_DELETE;
-    if (strcmp(method, "HEAD") == 0)
+    }
+    if (strcmp(method, "HEAD") == 0) {
         return OP_HEAD;
-    if (strcmp(method, "POST") == 0)
+    }
+    if (strcmp(method, "POST") == 0) {
         return OP_POST;
-    if (strcmp(method, "COPY") == 0)
+    }
+    if (strcmp(method, "COPY") == 0) {
         return OP_COPY;
-    if (strcmp(method, "OPTIONS") == 0)
+    }
+    if (strcmp(method, "OPTIONS") == 0) {
         return OP_OPTIONS;
+    }
 
     return OP_UNKNOWN;
 }
 
-int RGWHandler_REST::init_permissions(RGWOp * op, optional_yield y)
+int RGWHandler_REST::init_permissions(RGWOp *op, optional_yield y)
 {
     if (op->get_type() == RGW_OP_CREATE_BUCKET) {
         // We don't need user policies in case of STS token returned by AssumeRole, hence the check for user type
@@ -1902,11 +1917,10 @@ int RGWHandler_REST::init_permissions(RGWOp * op, optional_yield y)
                                                 (user_policies.end()));
 
                 }
-            }
-            catch(const std::exception & e) {
+            } catch (const std::exception &e) {
                 ldpp_dout(op,
                           -1) << "Error reading IAM User Policy: " << e.
-                    what() << dendl;
+                              what() << dendl;
             }
         }
         rgw_build_iam_environment(driver, s);
@@ -1916,49 +1930,50 @@ int RGWHandler_REST::init_permissions(RGWOp * op, optional_yield y)
     return do_init_permissions(op, y);
 }
 
-int RGWHandler_REST::read_permissions(RGWOp * op_obj, optional_yield y)
+int RGWHandler_REST::read_permissions(RGWOp *op_obj, optional_yield y)
 {
     bool only_bucket = false;
 
     switch (s->op) {
-    case OP_HEAD:
-    case OP_GET:
-        only_bucket = false;
-        break;
-    case OP_PUT:
-    case OP_POST:
-    case OP_COPY:
-        /* is it a 'multi-object delete' request? */
-        if (s->info.args.exists("delete")) {
-            only_bucket = true;
-            break;
-        }
-        if (is_obj_update_op()) {
+        case OP_HEAD:
+        case OP_GET:
             only_bucket = false;
             break;
-        }
-        /* is it a 'create bucket' request? */
-        if (op_obj->get_type() == RGW_OP_CREATE_BUCKET)
-            return 0;
+        case OP_PUT:
+        case OP_POST:
+        case OP_COPY:
+            /* is it a 'multi-object delete' request? */
+            if (s->info.args.exists("delete")) {
+                only_bucket = true;
+                break;
+            }
+            if (is_obj_update_op()) {
+                only_bucket = false;
+                break;
+            }
+            /* is it a 'create bucket' request? */
+            if (op_obj->get_type() == RGW_OP_CREATE_BUCKET) {
+                return 0;
+            }
 
-        only_bucket = true;
-        break;
-    case OP_DELETE:
-        if (!s->info.args.exists("tagging")) {
             only_bucket = true;
-        }
-        break;
-    case OP_OPTIONS:
-        only_bucket = true;
-        break;
-    default:
-        return -EINVAL;
+            break;
+        case OP_DELETE:
+            if (!s->info.args.exists("tagging")) {
+                only_bucket = true;
+            }
+            break;
+        case OP_OPTIONS:
+            only_bucket = true;
+            break;
+        default:
+            return -EINVAL;
     }
 
     return do_read_permissions(op_obj, only_bucket, y);
 }
 
-void RGWRESTMgr::register_resource(string resource, RGWRESTMgr * mgr)
+void RGWRESTMgr::register_resource(string resource, RGWRESTMgr *mgr)
 {
     string r = "/";
     r.append(resource);
@@ -1991,15 +2006,15 @@ void RGWRESTMgr::register_resource(string resource, RGWRESTMgr * mgr)
     }
 }
 
-void RGWRESTMgr::register_default_mgr(RGWRESTMgr * mgr)
+void RGWRESTMgr::register_default_mgr(RGWRESTMgr *mgr)
 {
     delete default_mgr;
     default_mgr = mgr;
 }
 
-RGWRESTMgr *RGWRESTMgr::get_resource_mgr(req_state * const s,
-                                         const std::string & uri,
-                                         std::string * const out_uri)
+RGWRESTMgr *RGWRESTMgr::get_resource_mgr(req_state *const s,
+        const std::string &uri,
+        std::string *const out_uri)
 {
     *out_uri = uri;
 
@@ -2007,12 +2022,12 @@ RGWRESTMgr *RGWRESTMgr::get_resource_mgr(req_state * const s,
 
     for (iter = resources_by_size.rbegin(); iter != resources_by_size.rend();
          ++iter) {
-        string & resource = iter->second;
+        string &resource = iter->second;
         if (uri.compare(0, iter->first, resource) == 0 &&
             (uri.size() == iter->first || uri[iter->first] == '/')) {
             std::string suffix = uri.substr(iter->first);
             return resource_mgrs[resource]->get_resource_mgr(s, suffix,
-                                                             out_uri);
+                    out_uri);
         }
     }
 
@@ -2023,10 +2038,10 @@ RGWRESTMgr *RGWRESTMgr::get_resource_mgr(req_state * const s,
     return this;
 }
 
-void RGWREST::register_x_headers(const string & s_headers)
+void RGWREST::register_x_headers(const string &s_headers)
 {
     std::vector < std::string > hdrs = get_str_vec(s_headers);
-  for (auto & hdr:hdrs) {
+    for (auto &hdr : hdrs) {
         boost::algorithm::to_upper(hdr);    // XXX
         (void)x_headers.insert(hdr);
     }
@@ -2047,8 +2062,7 @@ int64_t parse_content_length(const char *content_length)
 
     if (*content_length == '\0') {
         len = 0;
-    }
-    else {
+    } else {
         string err;
         len = strict_strtoll(content_length, 10, &err);
         if (!err.empty()) {
@@ -2059,9 +2073,9 @@ int64_t parse_content_length(const char *content_length)
     return len;
 }
 
-int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
+int RGWREST::preprocess(req_state *s, rgw::io::BasicClient *cio)
 {
-    req_info & info = s->info;
+    req_info &info = s->info;
 
     /* save the request uri used to hash on the client side. request_uri may suffer
        modifications as part of the bucket encoding in the subdomain calling format.
@@ -2093,7 +2107,7 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
     }
     ldpp_dout(s,
               10) << "rgw api priority: s3=" << api_priority_s3 << " s3website="
-        << api_priority_s3website << dendl;
+                  << api_priority_s3website << dendl;
     bool s3website_enabled = api_priority_s3website >= 0;
 
     if (info.host.size()) {
@@ -2103,8 +2117,7 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
             if (pos >= 1) {
                 info.host = info.host.substr(1, pos - 1);
             }
-        }
-        else {
+        } else {
             pos = info.host.find(':');
             if (pos >= 0) {
                 info.host = info.host.substr(0, pos);
@@ -2134,11 +2147,11 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
         }
 
         ldpp_dout(s, 20)
-            << "subdomain=" << subdomain
-            << " domain=" << domain
-            << " in_hosted_domain=" << in_hosted_domain
-            << " in_hosted_domain_s3website=" << in_hosted_domain_s3website
-            << dendl;
+                << "subdomain=" << subdomain
+                << " domain=" << domain
+                << " in_hosted_domain=" << in_hosted_domain
+                << " in_hosted_domain_s3website=" << in_hosted_domain_s3website
+                << dendl;
 
         if (g_conf()->rgw_resolve_cname
             && !in_hosted_domain && !in_hosted_domain_s3website) {
@@ -2147,13 +2160,13 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
             int r = rgw_resolver->resolve_cname(info.host, cname, &found);
             if (r < 0) {
                 ldpp_dout(s, 0)
-                    << "WARNING: rgw_resolver->resolve_cname() returned r=" << r
-                    << dendl;
+                        << "WARNING: rgw_resolver->resolve_cname() returned r=" << r
+                        << dendl;
             }
 
             if (found) {
                 ldpp_dout(s, 5) << "resolved host cname " << info.host << " -> "
-                    << cname << dendl;
+                                << cname << dendl;
                 in_hosted_domain =
                     rgw_find_host_in_domains(cname, &domain, &subdomain,
                                              hostnames_set);
@@ -2172,11 +2185,11 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
                 }
 
                 ldpp_dout(s, 20)
-                    << "subdomain=" << subdomain
-                    << " domain=" << domain
-                    << " in_hosted_domain=" << in_hosted_domain
-                    << " in_hosted_domain_s3website=" <<
-                    in_hosted_domain_s3website << dendl;
+                        << "subdomain=" << subdomain
+                        << " domain=" << domain
+                        << " in_hosted_domain=" << in_hosted_domain
+                        << " in_hosted_domain_s3website=" <<
+                        in_hosted_domain_s3website << dendl;
             }
         }
 
@@ -2209,8 +2222,9 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
         if (in_hosted_domain && !subdomain.empty()) {
             string encoded_bucket = "/";
             encoded_bucket.append(subdomain);
-            if (s->info.request_uri[0] != '/')
+            if (s->info.request_uri[0] != '/') {
                 encoded_bucket.append("/");
+            }
             encoded_bucket.append(s->info.request_uri);
             s->info.request_uri = encoded_bucket;
         }
@@ -2220,13 +2234,13 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
         }
 
         ldpp_dout(s, 20)
-            << "final domain/bucket"
-            << " subdomain=" << subdomain
-            << " domain=" << domain
-            << " in_hosted_domain=" << in_hosted_domain
-            << " in_hosted_domain_s3website=" << in_hosted_domain_s3website
-            << " s->info.domain=" << s->info.domain
-            << " s->info.request_uri=" << s->info.request_uri << dendl;
+                << "final domain/bucket"
+                << " subdomain=" << subdomain
+                << " domain=" << domain
+                << " in_hosted_domain=" << in_hosted_domain
+                << " in_hosted_domain_s3website=" << in_hosted_domain_s3website
+                << " s->info.domain=" << s->info.domain
+                << " s->info.request_uri=" << s->info.request_uri << dendl;
     }
 
     if (s->info.domain.empty()) {
@@ -2259,9 +2273,8 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
     if (!http_content_length != !content_length) {
         /* Easy case: one or the other is missing */
         s->length = (content_length ? content_length : http_content_length);
-    }
-    else if (s->cct->_conf->rgw_content_length_compat &&
-             content_length && http_content_length) {
+    } else if (s->cct->_conf->rgw_content_length_compat &&
+               content_length && http_content_length) {
         /* Hard case: Both are set, we have to disambiguate */
         int64_t content_length_i, http_content_length_i;
 
@@ -2271,13 +2284,11 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
         // Now check them:
         if (http_content_length_i < 0) {
             // HTTP_CONTENT_LENGTH is invalid, ignore it
-        }
-        else if (content_length_i < 0) {
+        } else if (content_length_i < 0) {
             // CONTENT_LENGTH is invalid, and HTTP_CONTENT_LENGTH is valid
             // Swap entries
             content_length = http_content_length;
-        }
-        else {
+        } else {
             // both CONTENT_LENGTH and HTTP_CONTENT_LENGTH are valid
             // Let's pick the larger size
             if (content_length_i < http_content_length_i) {
@@ -2289,8 +2300,7 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
         // End of: else if (s->cct->_conf->rgw_content_length_compat &&
         //   content_length &&
         // http_content_length)
-    }
-    else {
+    } else {
         /* no content length was defined */
         s->length = NULL;
     }
@@ -2298,8 +2308,7 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
     if (s->length) {
         if (*s->length == '\0') {
             s->content_length = 0;
-        }
-        else {
+        } else {
             string err;
             s->content_length = strict_strtoll(s->length, 10, &err);
             if (!err.empty()) {
@@ -2334,13 +2343,13 @@ int RGWREST::preprocess(req_state * s, rgw::io::BasicClient * cio)
     return 0;
 }
 
-RGWHandler_REST *RGWREST::get_handler(rgw::sal::Driver * const driver,
-                                      req_state * const s,
+RGWHandler_REST *RGWREST::get_handler(rgw::sal::Driver *const driver,
+                                      req_state *const s,
                                       const rgw::auth::
-                                      StrategyRegistry & auth_registry,
-                                      const std::string & frontend_prefix,
-                                      RGWRestfulIO * const rio,
-                                      RGWRESTMgr ** const pmgr,
+                                      StrategyRegistry &auth_registry,
+                                      const std::string &frontend_prefix,
+                                      RGWRestfulIO *const rio,
+                                      RGWRESTMgr **const pmgr,
                                       int *const init_error)
 {
     *init_error = preprocess(s, rio);
@@ -2368,7 +2377,7 @@ RGWHandler_REST *RGWREST::get_handler(rgw::sal::Driver * const driver,
 
     ldpp_dout(s,
               20) << __func__ << " handler=" << typeid(*handler).
-        name() << dendl;
+                  name() << dendl;
 
     *init_error = handler->init(driver, s, rio);
     if (*init_error < 0) {

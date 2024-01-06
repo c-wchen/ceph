@@ -10,12 +10,13 @@
 
 #include "common/Formatter.h"
 
-void Dentry::dump(Formatter * f) const const
+void Dentry::dump(Formatter *f) const const
 {
     f->dump_string("name", name);
     f->dump_stream("dir") << dir->parent_inode->ino;
-    if (inode)
+    if (inode) {
         f->dump_stream("ino") << inode->ino;
+    }
     f->dump_int("ref", ref);
     f->dump_int("offset", offset);
     if (lease_mds >= 0) {
@@ -27,7 +28,7 @@ void Dentry::dump(Formatter * f) const const
     f->dump_int("cap_shared_gen", cap_shared_gen);
 }
 
-std::ostream & operator<<(std::ostream & oss, const Dentry & dn)
+std::ostream &operator<<(std::ostream &oss, const Dentry &dn)
 {
     return oss << dn.dir->parent_inode->vino() << "[\"" << dn.name << "\"]";
 }

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab ft=cpp
 
 #include "rgw_perf_counters.h"
@@ -7,7 +7,7 @@
 
 PerfCounters *perfcounter = NULL;
 
-int rgw_perf_start(CephContext * cct)
+int rgw_perf_start(CephContext *cct)
 {
     PerfCountersBuilder plb(cct, "rgw", l_rgw_first, l_rgw_last);
 
@@ -85,7 +85,7 @@ int rgw_perf_start(CephContext * cct)
     return 0;
 }
 
-void rgw_perf_stop(CephContext * cct)
+void rgw_perf_stop(CephContext *cct)
 {
     ceph_assert(perfcounter);
     cct->get_perfcounters_collection()->remove(perfcounter);

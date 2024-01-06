@@ -21,12 +21,14 @@ bool RGWMultiDelObject::xml_end(const char *el)
     RGWMultiDelVersionId *vid =
         static_cast < RGWMultiDelVersionId * >(find_first("VersionId"));
 
-    if (!key_obj)
+    if (!key_obj) {
         return false;
+    }
 
     string s = key_obj->get_data();
-    if (s.empty())
+    if (s.empty()) {
         return false;
+    }
 
     key = s;
 
@@ -50,8 +52,8 @@ bool RGWMultiDelDelete::xml_end(const char *el)
     RGWMultiDelObject *object =
         static_cast < RGWMultiDelObject * >(iter.get_next());
     while (object) {
-        const string & key = object->get_key();
-        const string & instance = object->get_version_id();
+        const string &key = object->get_key();
+        const string &instance = object->get_version_id();
         rgw_obj_key k(key, instance);
         objects.push_back(k);
         object = static_cast < RGWMultiDelObject * >(iter.get_next());
@@ -64,17 +66,13 @@ XMLObj *RGWMultiDelXMLParser::alloc_obj(const char *el)
     XMLObj *obj = NULL;
     if (strcmp(el, "Delete") == 0) {
         obj = new RGWMultiDelDelete();
-    }
-    else if (strcmp(el, "Quiet") == 0) {
+    } else if (strcmp(el, "Quiet") == 0) {
         obj = new RGWMultiDelQuiet();
-    }
-    else if (strcmp(el, "Object") == 0) {
+    } else if (strcmp(el, "Object") == 0) {
         obj = new RGWMultiDelObject();
-    }
-    else if (strcmp(el, "Key") == 0) {
+    } else if (strcmp(el, "Key") == 0) {
         obj = new RGWMultiDelKey();
-    }
-    else if (strcmp(el, "VersionId") == 0) {
+    } else if (strcmp(el, "VersionId") == 0) {
         obj = new RGWMultiDelVersionId();
     }
 

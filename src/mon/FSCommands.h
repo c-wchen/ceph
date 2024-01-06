@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef FS_COMMANDS_H_
@@ -24,8 +24,9 @@
 #include <string>
 #include <ostream>
 
-class FileSystemCommandHandler:protected CommandHandler {
-  protected:
+class FileSystemCommandHandler: protected CommandHandler
+{
+protected:
     std::string prefix;
 
     enum {
@@ -33,36 +34,41 @@ class FileSystemCommandHandler:protected CommandHandler {
         POOL_DATA_DEFAULT,
         POOL_DATA_EXTRA,
     };
-  /**
-   * Return 0 if the pool is suitable for use with CephFS, or
-   * in case of errors return a negative error code, and populate
-   * the passed ostream with an explanation.
-   *
-   * @param metadata whether the pool will be for metadata (stricter checks)
-   */
-    int _check_pool(OSDMap & osd_map,
+    /**
+     * Return 0 if the pool is suitable for use with CephFS, or
+     * in case of errors return a negative error code, and populate
+     * the passed ostream with an explanation.
+     *
+     * @param metadata whether the pool will be for metadata (stricter checks)
+     */
+    int _check_pool(OSDMap &osd_map,
                     const int64_t pool_id,
                     int type,
                     bool force,
-                    std::ostream * ss, bool allow_overlay = false) const;
+                    std::ostream *ss, bool allow_overlay = false) const;
 
-    virtual std::string const &get_prefix() const {
+    virtual std::string const &get_prefix() const
+    {
         return prefix;
-  } public:
-     FileSystemCommandHandler(const std::string & prefix_)
-    :prefix(prefix_) {
-    } virtual ~ FileSystemCommandHandler() {
+    } public:
+    FileSystemCommandHandler(const std::string &prefix_)
+        : prefix(prefix_)
+    {
+    } virtual ~ FileSystemCommandHandler()
+    {
     }
 
-    int is_op_allowed(const MonOpRequestRef & op, const FSMap & fsmap,
-                      const cmdmap_t & cmdmap, std::ostream & ss) const;
+    int is_op_allowed(const MonOpRequestRef &op, const FSMap &fsmap,
+                      const cmdmap_t &cmdmap, std::ostream &ss) const;
 
-    int can_handle(std::string const &prefix_, MonOpRequestRef & op,
-                   FSMap & fsmap, const cmdmap_t & cmdmap,
-                   std::ostream & ss) const {
+    int can_handle(std::string const &prefix_, MonOpRequestRef &op,
+                   FSMap &fsmap, const cmdmap_t &cmdmap,
+                   std::ostream &ss) const
+    {
         if (get_prefix() != prefix_) {
             return 0;
-        } if (get_prefix() == "fs new" || get_prefix() == "fs flag set") {
+        }
+        if (get_prefix() == "fs new" || get_prefix() == "fs flag set") {
             return 1;
         }
 
@@ -70,16 +76,17 @@ class FileSystemCommandHandler:protected CommandHandler {
     }
 
     static std::list < std::shared_ptr < FileSystemCommandHandler >
-        >load(Paxos * paxos);
+    >load(Paxos *paxos);
 
-    virtual bool batched_propose() {
+    virtual bool batched_propose()
+    {
         return false;
     }
 
-    virtual int handle(Monitor * mon,
-                       FSMap & fsmap,
+    virtual int handle(Monitor *mon,
+                       FSMap &fsmap,
                        MonOpRequestRef op,
-                       const cmdmap_t & cmdmap, std::ostream & ss) = 0;
+                       const cmdmap_t &cmdmap, std::ostream &ss) = 0;
 };
 
 #endif

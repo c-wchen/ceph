@@ -69,14 +69,14 @@ using ceph::make_message;
 using ceph::mono_clock;
 using ceph::mono_time;
 using ceph::timespan_str;
-static ostream & _prefix(std::ostream * _dout, Monitor & mon, version_t v)
+static ostream &_prefix(std::ostream *_dout, Monitor &mon, version_t v)
 {
     return *_dout << "mon." << mon.name << "@" << mon.rank
-        << "(" << mon.get_state_name()
-        << ").auth v" << v << " ";
+           << "(" << mon.get_state_name()
+           << ").auth v" << v << " ";
 }
 
-ostream & operator<<(ostream & out, const AuthMonitor & pm)
+ostream &operator<<(ostream &out, const AuthMonitor &pm)
 {
     return out << "auth";
 }
@@ -94,16 +94,16 @@ bool AuthMonitor::check_rotate()
 }
 
 void AuthMonitor::process_used_pending_keys(const std::map < EntityName,
-                                            CryptoKey > &used_pending_keys)
+        CryptoKey > &used_pending_keys)
 {
-  for (auto &[name, used_key]:used_pending_keys) {
+    for (auto &[name, used_key] : used_pending_keys) {
         dout(10) << __func__ << " used pending_key for " << name << dendl;
         KeyServerData::Incremental inc;
         inc.op = KeyServerData::AUTH_INC_ADD;
         inc.name = name;
 
         mon.key_server.get_auth(name, inc.auth);
-      for (auto & p:pending_auth) {
+        for (auto &p : pending_auth) {
             if (p.inc_type == AUTH_DATA) {
                 KeyServerData::Incremental auth_inc;
                 auto q = p.auth_data.cbegin();
@@ -111,14 +111,14 @@ void AuthMonitor::process_used_pending_keys(const std::map < EntityName,
                 if (auth_inc.op == KeyServerData::AUTH_INC_ADD &&
                     auth_inc.name == name) {
                     dout(10) << __func__ <<
-                        "  starting with pending uncommitted" << dendl;
+                             "  starting with pending uncommitted" << dendl;
                     inc.auth = auth_inc.auth;
                 }
             }
         }
         if (stringify(inc.auth.pending_key) == stringify(used_key)) {
             dout(10) << __func__ << " committing pending_key -> key for "
-                << name << dendl;
+                     << name << dendl;
             inc.auth.key = inc.auth.pending_key;
             inc.auth.pending_key.clear();
             push_cephx_inc(inc);
@@ -132,8 +132,9 @@ void AuthMonitor::process_used_pending_keys(const std::map < EntityName,
 
 void AuthMonitor::tick()
 {
-    if (!is_active())
+    if (!is_active()) {
         return;
+    }
 
     dout(10) << *this << dendl;
 
@@ -148,8 +149,7 @@ void AuthMonitor::tick()
         if (mon.is_leader()) {
             increase_max_global_id();
             propose = true;
-        }
-        else {
+        } else {
             dout(10) << __func__ << "requesting more ids from leader" << dendl;
             MMonGlobalID *req = new MMonGlobalID();
             req->old_max_id = max_global_id;
@@ -161,12 +161,11 @@ void AuthMonitor::tick()
         auto used_pending_keys = mon.key_server.get_used_pending_keys();
         if (!used_pending_keys.empty()) {
             dout(10) << __func__ << " " << used_pending_keys.
-                size() << " used pending_keys" << dendl;
+                     size() << " used pending_keys" << dendl;
             if (mon.is_leader()) {
                 process_used_pending_keys(used_pending_keys);
                 propose = true;
-            }
-            else {
+            } else {
                 MMonUsedPendingKeys *req = new MMonUsedPendingKeys();
                 req->used_pending_keys = used_pending_keys;
                 mon.send_mon_message(req, mon.get_leader());
@@ -191,8 +190,9 @@ void AuthMonitor::on_active()
 {
     dout(10) << "AuthMonitor::on_active()" << dendl;
 
-    if (!mon.is_leader())
+    if (!mon.is_leader()) {
         return;
+    }
 
     mon.key_server.start_server();
     mon.key_server.clear_used_pending_keys();
@@ -217,14 +217,14 @@ void AuthMonitor::on_active()
     }
 }
 
-bufferlist _encode_cap(const string & cap)
+bufferlist _encode_cap(const string &cap)
 {
     bufferlist bl;
     encode(cap, bl);
     return bl;
 }
 
-void AuthMonitor::get_initial_keyring(KeyRing * keyring)
+void AuthMonitor::get_initial_keyring(KeyRing *keyring)
 {
     dout(10) << __func__ << dendl;
     ceph_assert(keyring != nullptr);
@@ -241,7 +241,7 @@ void AuthMonitor::get_initial_keyring(KeyRing * keyring)
     decode(*keyring, p);
 }
 
-void _generate_bootstrap_keys(list < pair < EntityName, EntityAuth > >*auth_lst)
+void _generate_bootstrap_keys(list < pair < EntityName, EntityAuth > > *auth_lst)
 {
     ceph_assert(auth_lst != nullptr);
 
@@ -249,38 +249,55 @@ void _generate_bootstrap_keys(list < pair < EntityName, EntityAuth > >*auth_lst)
         {
             "admin", {
                 {
-                "mon", _encode_cap("allow *")}, {
-                "osd", _encode_cap("allow *")}, {
-                "mds", _encode_cap("allow *")}, {
-                "mgr", _encode_cap("allow *")}
-        }}, {
+                    "mon", _encode_cap("allow *")
+                }, {
+                    "osd", _encode_cap("allow *")
+                }, {
+                    "mds", _encode_cap("allow *")
+                }, {
+                    "mgr", _encode_cap("allow *")
+                }
+            }
+        }, {
             "bootstrap-osd", {
                 {
-                "mon", _encode_cap("allow profile bootstrap-osd")}
-        }}, {
+                    "mon", _encode_cap("allow profile bootstrap-osd")
+                }
+            }
+        }, {
             "bootstrap-rgw", {
                 {
-                "mon", _encode_cap("allow profile bootstrap-rgw")}
-        }}, {
+                    "mon", _encode_cap("allow profile bootstrap-rgw")
+                }
+            }
+        }, {
             "bootstrap-mds", {
                 {
-                "mon", _encode_cap("allow profile bootstrap-mds")}
-        }}, {
+                    "mon", _encode_cap("allow profile bootstrap-mds")
+                }
+            }
+        }, {
             "bootstrap-mgr", {
                 {
-                "mon", _encode_cap("allow profile bootstrap-mgr")}
-        }}, {
+                    "mon", _encode_cap("allow profile bootstrap-mgr")
+                }
+            }
+        }, {
             "bootstrap-rbd", {
                 {
-                "mon", _encode_cap("allow profile bootstrap-rbd")}
-        }}, {
+                    "mon", _encode_cap("allow profile bootstrap-rbd")
+                }
+            }
+        }, {
             "bootstrap-rbd-mirror", {
                 {
-                "mon", _encode_cap("allow profile bootstrap-rbd-mirror")}
-        }}
+                    "mon", _encode_cap("allow profile bootstrap-rbd-mirror")
+                }
+            }
+        }
     };
 
-  for (auto & p:bootstrap) {
+    for (auto &p : bootstrap) {
         EntityName name;
         name.from_str("client." + p.first);
         EntityAuth auth;
@@ -291,7 +308,7 @@ void _generate_bootstrap_keys(list < pair < EntityName, EntityAuth > >*auth_lst)
     }
 }
 
-void AuthMonitor::create_initial_keys(KeyRing * keyring)
+void AuthMonitor::create_initial_keys(KeyRing *keyring)
 {
     dout(10) << __func__ << " with keyring" << dendl;
     ceph_assert(keyring != nullptr);
@@ -299,7 +316,7 @@ void AuthMonitor::create_initial_keys(KeyRing * keyring)
     list < pair < EntityName, EntityAuth > >auth_lst;
     _generate_bootstrap_keys(&auth_lst);
 
-  for (auto & p:auth_lst) {
+    for (auto &p : auth_lst) {
         if (keyring->exists(p.first)) {
             continue;
         }
@@ -336,21 +353,22 @@ void AuthMonitor::create_initial()
     format_version = 3;
 }
 
-void AuthMonitor::update_from_paxos(bool * need_bootstrap)
+void AuthMonitor::update_from_paxos(bool *need_bootstrap)
 {
     dout(10) << __func__ << dendl;
     load_health();
 
     version_t version = get_last_committed();
     version_t keys_ver = mon.key_server.get_ver();
-    if (version == keys_ver)
+    if (version == keys_ver) {
         return;
+    }
     ceph_assert(version > keys_ver);
 
     version_t latest_full = get_version_latest_full();
 
     dout(10) << __func__ << " version " << version << " keys ver " << keys_ver
-        << " latest " << latest_full << dendl;
+             << " latest " << latest_full << dendl;
 
     if ((latest_full > 0) && (latest_full > keys_ver)) {
         bufferlist latest_bl;
@@ -369,7 +387,7 @@ void AuthMonitor::update_from_paxos(bool * need_bootstrap)
     }
 
     dout(10) << __func__ << " key server version " << mon.key_server.
-        get_ver() << dendl;
+             get_ver() << dendl;
 
     // walk through incrementals
     while (version > keys_ver) {
@@ -381,11 +399,12 @@ void AuthMonitor::update_from_paxos(bool * need_bootstrap)
         // reset if we are moving to initial state.  we will normally have
         // keys in here temporarily for bootstrapping that we need to
         // clear out.
-        if (keys_ver == 0)
+        if (keys_ver == 0) {
             mon.key_server.clear_secrets();
+        }
 
         dout(20) << __func__ << " walking through version " << (keys_ver + 1)
-            << " len " << bl.length() << dendl;
+                 << " len " << bl.length() << dendl;
 
         auto p = bl.cbegin();
         __u8 v;
@@ -394,12 +413,11 @@ void AuthMonitor::update_from_paxos(bool * need_bootstrap)
             Incremental inc;
             decode(inc, p);
             switch (inc.inc_type) {
-            case GLOBAL_ID:
-                max_global_id = inc.max_global_id;
-                break;
+                case GLOBAL_ID:
+                    max_global_id = inc.max_global_id;
+                    break;
 
-            case AUTH_DATA:
-                {
+                case AUTH_DATA: {
                     KeyServerData::Incremental auth_inc;
                     auto iter = inc.auth_data.cbegin();
                     decode(auth_inc, iter);
@@ -424,12 +442,12 @@ void AuthMonitor::update_from_paxos(bool * need_bootstrap)
         if (last_allocated_id == 0) {
             last_allocated_id = max_global_id;
             dout(10) << __func__ << " last_allocated_id initialized to "
-                << max_global_id << dendl;
+                     << max_global_id << dendl;
         }
     }
 
     dout(10) << __func__ << " max_global_id=" << max_global_id
-        << " format_version " << format_version << dendl;
+             << " format_version " << format_version << dendl;
 
     mon.key_server.dump();
 }
@@ -476,8 +494,9 @@ void AuthMonitor::encode_pending(MonitorDBStore::TransactionRef t)
     __u8 v = 1;
     encode(v, bl);
     vector < Incremental >::iterator p;
-    for (p = pending_auth.begin(); p != pending_auth.end(); ++p)
+    for (p = pending_auth.begin(); p != pending_auth.end(); ++p) {
         p->encode(bl, mon.get_quorum_con_features());
+    }
 
     version_t version = get_last_committed() + 1;
     put_version(t, version, bl);
@@ -488,7 +507,7 @@ void AuthMonitor::encode_pending(MonitorDBStore::TransactionRef t)
     map < string, list < string >> bad_detail;  // entity -> details
     for (auto i = mon.key_server.secrets_begin();
          i != mon.key_server.secrets_end(); ++i) {
-      for (auto & p:i->second.caps) {
+        for (auto &p : i->second.caps) {
             ostringstream ss;
             if (!valid_caps(p.first, p.second, &ss)) {
                 ostringstream ss2;
@@ -497,16 +516,15 @@ void AuthMonitor::encode_pending(MonitorDBStore::TransactionRef t)
             }
         }
     }
-  for (auto & inc:pending_auth) {
+    for (auto &inc : pending_auth) {
         if (inc.inc_type == AUTH_DATA) {
             KeyServerData::Incremental auth_inc;
             auto iter = inc.auth_data.cbegin();
             decode(auth_inc, iter);
             if (auth_inc.op == KeyServerData::AUTH_INC_DEL) {
                 bad_detail.erase(auth_inc.name.to_str());
-            }
-            else if (auth_inc.op == KeyServerData::AUTH_INC_ADD) {
-              for (auto & p:auth_inc.auth.caps) {
+            } else if (auth_inc.op == KeyServerData::AUTH_INC_ADD) {
+                for (auto &p : auth_inc.auth.caps) {
                     ostringstream ss;
                     if (!valid_caps(p.first, p.second, &ss)) {
                         ostringstream ss2;
@@ -522,8 +540,8 @@ void AuthMonitor::encode_pending(MonitorDBStore::TransactionRef t)
         ss << bad_detail.size() << " auth entities have invalid capabilities";
         health_check_t *check = &next.add("AUTH_BAD_CAPS", HEALTH_ERR, ss.str(),
                                           bad_detail.size());
-      for (auto & i:bad_detail) {
-          for (auto & j:i.second) {
+        for (auto &i : bad_detail) {
+            for (auto &j : i.second) {
                 check->detail.push_back(j);
             }
         }
@@ -535,18 +553,19 @@ void AuthMonitor::encode_full(MonitorDBStore::TransactionRef t)
 {
     version_t version = mon.key_server.get_ver();
     // do not stash full version 0 as it will never be removed nor read
-    if (version == 0)
+    if (version == 0) {
         return;
+    }
 
     dout(10) << __func__ << " auth v " << version << dendl;
     ceph_assert(get_last_committed() == version);
 
     bufferlist full_bl;
     std::scoped_lock l {
-    mon.key_server.get_lock()};
+        mon.key_server.get_lock()};
     dout(20) << __func__ << " key server has "
-        << (mon.key_server.has_secrets()? "" : "no ")
-        << "secrets!" << dendl;
+             << (mon.key_server.has_secrets() ? "" : "no ")
+             << "secrets!" << dendl;
     __u8 v = 1;
     encode(v, full_bl);
     encode(max_global_id, full_bl);
@@ -560,8 +579,9 @@ version_t AuthMonitor::get_trim_to() const const
 {
     unsigned max = g_conf()->paxos_max_join_drift * 2;
     version_t version = get_last_committed();
-    if (mon.is_leader() && (version > max))
+    if (mon.is_leader() && (version > max)) {
         return version - max;
+    }
     return 0;
 }
 
@@ -569,30 +589,29 @@ bool AuthMonitor::preprocess_query(MonOpRequestRef op)
 {
     auto m = op->get_req < PaxosServiceMessage > ();
     dout(10) << "preprocess_query " << *m << " from " << m->
-        get_orig_source_inst() << dendl;
+             get_orig_source_inst() << dendl;
     switch (m->get_type()) {
-    case MSG_MON_COMMAND:
-        try {
-            return preprocess_command(op);
-        }
-        catch(const bad_cmd_get & e) {
-            bufferlist bl;
-            mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
+        case MSG_MON_COMMAND:
+            try {
+                return preprocess_command(op);
+            } catch (const bad_cmd_get &e) {
+                bufferlist bl;
+                mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
+                return true;
+            }
+
+        case CEPH_MSG_AUTH:
+            return prep_auth(op, false);
+
+        case MSG_MON_GLOBAL_ID:
+            return false;
+
+        case MSG_MON_USED_PENDING_KEYS:
+            return false;
+
+        default:
+            ceph_abort();
             return true;
-        }
-
-    case CEPH_MSG_AUTH:
-        return prep_auth(op, false);
-
-    case MSG_MON_GLOBAL_ID:
-        return false;
-
-    case MSG_MON_USED_PENDING_KEYS:
-        return false;
-
-    default:
-        ceph_abort();
-        return true;
     }
 }
 
@@ -600,26 +619,25 @@ bool AuthMonitor::prepare_update(MonOpRequestRef op)
 {
     auto m = op->get_req < PaxosServiceMessage > ();
     dout(10) << "prepare_update " << *m << " from " << m->
-        get_orig_source_inst() << dendl;
+             get_orig_source_inst() << dendl;
     switch (m->get_type()) {
-    case MSG_MON_COMMAND:
-        try {
-            return prepare_command(op);
-        }
-        catch(const bad_cmd_get & e) {
-            bufferlist bl;
-            mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
-            return true;
-        }
-    case MSG_MON_GLOBAL_ID:
-        return prepare_global_id(op);
-    case MSG_MON_USED_PENDING_KEYS:
-        return prepare_used_pending_keys(op);
-    case CEPH_MSG_AUTH:
-        return prep_auth(op, true);
-    default:
-        ceph_abort();
-        return false;
+        case MSG_MON_COMMAND:
+            try {
+                return prepare_command(op);
+            } catch (const bad_cmd_get &e) {
+                bufferlist bl;
+                mon.reply_command(op, -EINVAL, e.what(), bl, get_last_committed());
+                return true;
+            }
+        case MSG_MON_GLOBAL_ID:
+            return prepare_global_id(op);
+        case MSG_MON_USED_PENDING_KEYS:
+            return prepare_used_pending_keys(op);
+        case CEPH_MSG_AUTH:
+            return prep_auth(op, true);
+        default:
+            ceph_abort();
+            return false;
     }
 }
 
@@ -636,7 +654,7 @@ uint64_t AuthMonitor::_assign_global_id()
     ceph_assert(ceph_mutex_is_locked(mon.auth_lock));
     if (mon_num < 1 || mon_rank < 0) {
         dout(10) << __func__ << " inactive (num_mon " << mon_num
-            << " rank " << mon_rank << ")" << dendl;
+                 << " rank " << mon_rank << ")" << dendl;
         return 0;
     }
     if (!last_allocated_id) {
@@ -653,13 +671,13 @@ uint64_t AuthMonitor::_assign_global_id()
 
     if (id >= max_global_id) {
         dout(10) << __func__ << " failed (max " << max_global_id << ")" <<
-            dendl;
+                 dendl;
         return 0;
     }
 
     last_allocated_id = id;
     dout(10) << __func__ << " " << id << " (max " << max_global_id << ")"
-        << dendl;
+             << dendl;
     return id;
 }
 
@@ -683,7 +701,7 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
 {
     auto m = op->get_req < MAuth > ();
     dout(10) << "prep_auth() blob_size=" << m->get_auth_payload().
-        length() << dendl;
+             length() << dendl;
 
     MonSession *s = op->get_session();
     if (!s) {
@@ -711,8 +729,7 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
             decode(supported, indata);
             decode(entity_name, indata);
             decode(s->con->peer_global_id, indata);
-        }
-        catch(const ceph::buffer::error & e) {
+        } catch (const ceph::buffer::error &e) {
             dout(10) << "failed to decode initial auth message" << dendl;
             ret = -EINVAL;
             goto reply;
@@ -728,24 +745,22 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
                 if (g_conf()->cephx_cluster_require_signatures ||
                     g_conf()->cephx_require_signatures) {
                     dout(1) << m->get_source_inst()
-                        << " supports cephx but not signatures and"
-                        << " 'cephx [cluster] require signatures = true';"
-                        << " disallowing cephx" << dendl;
+                            << " supports cephx but not signatures and"
+                            << " 'cephx [cluster] require signatures = true';"
+                            << " disallowing cephx" << dendl;
                     supported.erase(CEPH_AUTH_CEPHX);
                 }
-            }
-            else {
+            } else {
                 if (g_conf()->cephx_service_require_signatures ||
                     g_conf()->cephx_require_signatures) {
                     dout(1) << m->get_source_inst()
-                        << " supports cephx but not signatures and"
-                        << " 'cephx [service] require signatures = true';"
-                        << " disallowing cephx" << dendl;
+                            << " supports cephx but not signatures and"
+                            << " 'cephx [service] require signatures = true';"
+                            << " disallowing cephx" << dendl;
                     supported.erase(CEPH_AUTH_CEPHX);
                 }
             }
-        }
-        else if (!m->get_connection()->has_feature(CEPH_FEATURE_CEPHX_V2)) {
+        } else if (!m->get_connection()->has_feature(CEPH_FEATURE_CEPHX_V2)) {
             if (entity_name.get_type() == CEPH_ENTITY_TYPE_MON ||
                 entity_name.get_type() == CEPH_ENTITY_TYPE_OSD ||
                 entity_name.get_type() == CEPH_ENTITY_TYPE_MDS ||
@@ -753,19 +768,18 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
                 if (g_conf()->cephx_cluster_require_version >= 2 ||
                     g_conf()->cephx_require_version >= 2) {
                     dout(1) << m->get_source_inst()
-                        << " supports cephx but not v2 and"
-                        << " 'cephx [cluster] require version >= 2';"
-                        << " disallowing cephx" << dendl;
+                            << " supports cephx but not v2 and"
+                            << " 'cephx [cluster] require version >= 2';"
+                            << " disallowing cephx" << dendl;
                     supported.erase(CEPH_AUTH_CEPHX);
                 }
-            }
-            else {
+            } else {
                 if (g_conf()->cephx_service_require_version >= 2 ||
                     g_conf()->cephx_require_version >= 2) {
                     dout(1) << m->get_source_inst()
-                        << " supports cephx but not v2 and"
-                        << " 'cephx [service] require version >= 2';"
-                        << " disallowing cephx" << dendl;
+                            << " supports cephx but not v2 and"
+                            << " 'cephx [service] require version >= 2';"
+                            << " disallowing cephx" << dendl;
                     supported.erase(CEPH_AUTH_CEPHX);
                 }
             }
@@ -775,10 +789,11 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
         if (entity_name.get_type() == CEPH_ENTITY_TYPE_MON ||
             entity_name.get_type() == CEPH_ENTITY_TYPE_OSD ||
             entity_name.get_type() == CEPH_ENTITY_TYPE_MDS ||
-            entity_name.get_type() == CEPH_ENTITY_TYPE_MGR)
+            entity_name.get_type() == CEPH_ENTITY_TYPE_MGR) {
             type = mon.auth_cluster_required.pick(supported);
-        else
+        } else {
             type = mon.auth_service_required.pick(supported);
+        }
 
         s->auth_handler =
             get_auth_service_handler(type, g_ceph_context, &mon.key_server);
@@ -789,8 +804,7 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
         }
         start = true;
         proto = type;
-    }
-    else if (!s->auth_handler) {
+    } else if (!s->auth_handler) {
         dout(10) << "protocol specified but no s->auth_handler" << dendl;
         ret = -EINVAL;
         goto reply;
@@ -808,14 +822,14 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
 
             if (mon.is_leader() && paxos_writable) {
                 dout(10) << "increasing global id, waitlisting message" <<
-                    dendl;
+                         dendl;
                 wait_for_active(op, new C_RetryMessage(this, op));
                 goto done;
             }
 
             if (!mon.is_leader()) {
                 dout(10) << "not the leader, requesting more ids from leader" <<
-                    dendl;
+                         dendl;
                 int leader = mon.get_leader();
                 MMonGlobalID *req = new MMonGlobalID();
                 req->old_max_id = max_global_id;
@@ -838,8 +852,7 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
                                                  is_new_global_id,
                                                  &response_bl,
                                                  &s->con->peer_caps_info);
-        }
-        else {
+        } else {
             // request
             ret = s->auth_handler->handle_request(indata, 0,    // no connection_secret needed
                                                   &response_bl,
@@ -857,25 +870,25 @@ bool AuthMonitor::prep_auth(MonOpRequestRef op, bool paxos_writable)
             }
             ret = 0;
         }
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         ret = -EINVAL;
         dout(0) <<
-            "caught error when trying to handle auth request, probably malformed request"
-            << dendl;
+                "caught error when trying to handle auth request, probably malformed request"
+                << dendl;
     }
 
-  reply:
+reply:
     reply = new MAuthReply(proto, &response_bl, ret, s->con->peer_global_id);
     mon.send_reply(op, reply);
     if (finished) {
         // always send the latest monmap.
-        if (m->monmap_epoch < mon.monmap->get_epoch())
+        if (m->monmap_epoch < mon.monmap->get_epoch()) {
             mon.send_latest_monmap(m->get_connection().get());
+        }
 
         mon.configmon()->check_sub(s);
     }
-  done:
+done:
     return true;
 }
 
@@ -937,43 +950,41 @@ bool AuthMonitor::preprocess_command(MonOpRequestRef op)
             if (keyring.get_auth(entity, eauth)) {
                 KeyRing kr;
                 kr.add(entity, eauth);
-                if (f)
+                if (f) {
                     kr.encode_formatted("auth", f.get(), rdata);
-                else
+                } else {
                     kr.encode_plaintext(rdata);
+                }
                 r = 0;
-            }
-            else {
+            } else {
                 ss << "no key for " << eauth;
                 r = -ENOENT;
             }
-        }
-        else {
-            if (f)
+        } else {
+            if (f) {
                 keyring.encode_formatted("auth", f.get(), rdata);
-            else
+            } else {
                 keyring.encode_plaintext(rdata);
+            }
             r = 0;
         }
-    }
-    else if (prefix == "auth get" && !entity_name.empty()) {
+    } else if (prefix == "auth get" && !entity_name.empty()) {
         KeyRing keyring;
         EntityAuth entity_auth;
         if (!mon.key_server.get_auth(entity, entity_auth)) {
             ss << "failed to find " << entity_name << " in keyring";
             r = -ENOENT;
-        }
-        else {
+        } else {
             keyring.add(entity, entity_auth);
-            if (f)
+            if (f) {
                 keyring.encode_formatted("auth", f.get(), rdata);
-            else
+            } else {
                 keyring.encode_plaintext(rdata);
+            }
             r = 0;
         }
-    }
-    else if (prefix == "auth print-key" ||
-             prefix == "auth print_key" || prefix == "auth get-key") {
+    } else if (prefix == "auth print-key" ||
+               prefix == "auth print_key" || prefix == "auth get-key") {
         EntityAuth auth;
         if (!mon.key_server.get_auth(entity, auth)) {
             ss << "don't have " << entity;
@@ -982,28 +993,24 @@ bool AuthMonitor::preprocess_command(MonOpRequestRef op)
         }
         if (f) {
             auth.key.encode_formatted("auth", f.get(), rdata);
-        }
-        else {
+        } else {
             auth.key.encode_plaintext(rdata);
         }
         r = 0;
-    }
-    else if (prefix == "auth list" || prefix == "auth ls") {
+    } else if (prefix == "auth list" || prefix == "auth ls") {
         if (f) {
             mon.key_server.encode_formatted("auth", f.get(), rdata);
-        }
-        else {
+        } else {
             mon.key_server.encode_plaintext(rdata);
         }
         r = 0;
         goto done;
-    }
-    else {
+    } else {
         ss << "invalid command";
         r = -EINVAL;
     }
 
-  done:
+done:
     rdata.append(ds);
     string rs;
     getline(ss, rs, '\0');
@@ -1011,17 +1018,17 @@ bool AuthMonitor::preprocess_command(MonOpRequestRef op)
     return true;
 }
 
-void AuthMonitor::export_keyring(KeyRing & keyring)
+void AuthMonitor::export_keyring(KeyRing &keyring)
 {
     mon.key_server.export_keyring(keyring);
 }
 
-int AuthMonitor::import_keyring(KeyRing & keyring)
+int AuthMonitor::import_keyring(KeyRing &keyring)
 {
     dout(10) << __func__ << " " << keyring.size() << " keys" << dendl;
 
     for (map < EntityName, EntityAuth >::iterator p =
-         keyring.get_keys().begin(); p != keyring.get_keys().end(); ++p) {
+             keyring.get_keys().begin(); p != keyring.get_keys().end(); ++p) {
         if (p->second.caps.empty()) {
             dout(0) << "import: no caps supplied" << dendl;
             return -EINVAL;
@@ -1032,11 +1039,12 @@ int AuthMonitor::import_keyring(KeyRing & keyring)
     return 0;
 }
 
-int AuthMonitor::remove_entity(const EntityName & entity)
+int AuthMonitor::remove_entity(const EntityName &entity)
 {
     dout(10) << __func__ << " " << entity << dendl;
-    if (!mon.key_server.contains(entity))
+    if (!mon.key_server.contains(entity)) {
         return -ENOENT;
+    }
 
     KeyServerData::Incremental auth_inc;
     auth_inc.name = entity;
@@ -1046,10 +1054,10 @@ int AuthMonitor::remove_entity(const EntityName & entity)
     return 0;
 }
 
-bool AuthMonitor::entity_is_pending(EntityName & entity)
+bool AuthMonitor::entity_is_pending(EntityName &entity)
 {
     // are we about to have it?
-  for (auto & p:pending_auth) {
+    for (auto &p : pending_auth) {
         if (p.inc_type == AUTH_DATA) {
             KeyServerData::Incremental inc;
             auto q = p.auth_data.cbegin();
@@ -1062,22 +1070,22 @@ bool AuthMonitor::entity_is_pending(EntityName & entity)
     return false;
 }
 
-int AuthMonitor::exists_and_matches_entity(const auth_entity_t & entity,
-                                           bool has_secret, stringstream & ss)
+int AuthMonitor::exists_and_matches_entity(const auth_entity_t &entity,
+        bool has_secret, stringstream &ss)
 {
     return exists_and_matches_entity(entity.name, entity.auth,
                                      entity.auth.caps, has_secret, ss);
 }
 
-int AuthMonitor::exists_and_matches_entity(const EntityName & name,
-                                           const EntityAuth & auth,
-                                           const map < string,
-                                           bufferlist > &caps, bool has_secret,
-                                           stringstream & ss)
+int AuthMonitor::exists_and_matches_entity(const EntityName &name,
+        const EntityAuth &auth,
+        const map < string,
+        bufferlist > &caps, bool has_secret,
+        stringstream &ss)
 {
 
     dout(20) << __func__ << " entity " << name << " auth " << auth
-        << " caps " << caps << " has_secret " << has_secret << dendl;
+             << " caps " << caps << " has_secret " << has_secret << dendl;
 
     EntityAuth existing_auth;
     // does entry already exist?
@@ -1095,11 +1103,11 @@ int AuthMonitor::exists_and_matches_entity(const EntityName & name,
             ss << "entity " << name << " exists but caps do not match";
             return -EINVAL;
         }
-      for (auto & it:caps) {
+        for (auto &it : caps) {
             if (existing_auth.caps.count(it.first) == 0 ||
                 !existing_auth.caps[it.first].contents_equal(it.second)) {
                 ss << "entity " << name << " exists but cap "
-                    << it.first << " does not match";
+                   << it.first << " does not match";
                 return -EINVAL;
             }
         }
@@ -1110,7 +1118,7 @@ int AuthMonitor::exists_and_matches_entity(const EntityName & name,
     return -ENOENT;
 }
 
-int AuthMonitor::add_entity(const EntityName & name, const EntityAuth & auth)
+int AuthMonitor::add_entity(const EntityName &name, const EntityAuth &auth)
 {
 
     // okay, add it.
@@ -1126,10 +1134,10 @@ int AuthMonitor::add_entity(const EntityName & name, const EntityAuth & auth)
 }
 
 int AuthMonitor::validate_osd_destroy(int32_t id,
-                                      const uuid_d & uuid,
-                                      EntityName & cephx_entity,
-                                      EntityName & lockbox_entity,
-                                      stringstream & ss)
+                                      const uuid_d &uuid,
+                                      EntityName &cephx_entity,
+                                      EntityName &lockbox_entity,
+                                      stringstream &ss)
 {
     ceph_assert(paxos.is_plugged());
 
@@ -1140,14 +1148,14 @@ int AuthMonitor::validate_osd_destroy(int32_t id,
 
     if (!cephx_entity.from_str(cephx_str)) {
         dout(10) << __func__ << " invalid cephx entity '"
-            << cephx_str << "'" << dendl;
+                 << cephx_str << "'" << dendl;
         ss << "invalid cephx key entity '" << cephx_str << "'";
         return -EINVAL;
     }
 
     if (!lockbox_entity.from_str(lockbox_str)) {
         dout(10) << __func__ << " invalid lockbox entity '"
-            << lockbox_str << "'" << dendl;
+                 << lockbox_str << "'" << dendl;
         ss << "invalid lockbox key entity '" << lockbox_str << "'";
         return -EINVAL;
     }
@@ -1160,31 +1168,29 @@ int AuthMonitor::validate_osd_destroy(int32_t id,
     return 0;
 }
 
-int AuthMonitor::do_osd_destroy(const EntityName & cephx_entity,
-                                const EntityName & lockbox_entity)
+int AuthMonitor::do_osd_destroy(const EntityName &cephx_entity,
+                                const EntityName &lockbox_entity)
 {
     ceph_assert(paxos.is_plugged());
 
     dout(10) << __func__ << " cephx " << cephx_entity
-        << " lockbox " << lockbox_entity << dendl;
+             << " lockbox " << lockbox_entity << dendl;
 
     bool removed = false;
 
     int err = remove_entity(cephx_entity);
     if (err == -ENOENT) {
         dout(10) << __func__ << " " << cephx_entity << " does not exist" <<
-            dendl;
-    }
-    else {
+                 dendl;
+    } else {
         removed = true;
     }
 
     err = remove_entity(lockbox_entity);
     if (err == -ENOENT) {
         dout(10) << __func__ << " " << lockbox_entity << " does not exist" <<
-            dendl;
-    }
-    else {
+                 dendl;
+    } else {
         removed = true;
     }
 
@@ -1200,15 +1206,15 @@ int AuthMonitor::do_osd_destroy(const EntityName & cephx_entity,
     return 0;
 }
 
-int _create_auth(EntityAuth & auth,
-                 const string & key, const map < string, bufferlist > &caps)
+int _create_auth(EntityAuth &auth,
+                 const string &key, const map < string, bufferlist > &caps)
 {
-    if (key.empty())
+    if (key.empty()) {
         return -EINVAL;
+    }
     try {
         auth.key.decode_base64(key);
-    }
-    catch(ceph::buffer::error & e) {
+    } catch (ceph::buffer::error &e) {
         return -EINVAL;
     }
     auth.caps = caps;
@@ -1216,27 +1222,31 @@ int _create_auth(EntityAuth & auth,
 }
 
 int AuthMonitor::validate_osd_new(int32_t id,
-                                  const uuid_d & uuid,
-                                  const string & cephx_secret,
-                                  const string & lockbox_secret,
-                                  auth_entity_t & cephx_entity,
-                                  auth_entity_t & lockbox_entity,
-                                  stringstream & ss)
+                                  const uuid_d &uuid,
+                                  const string &cephx_secret,
+                                  const string &lockbox_secret,
+                                  auth_entity_t &cephx_entity,
+                                  auth_entity_t &lockbox_entity,
+                                  stringstream &ss)
 {
 
     dout(10) << __func__ << " osd." << id << " uuid " << uuid << dendl;
 
     map < string, bufferlist > cephx_caps = {
         {
-        "osd", _encode_cap("allow *")}, {
-        "mon", _encode_cap("allow profile osd")}, {
-        "mgr", _encode_cap("allow profile osd")}
+            "osd", _encode_cap("allow *")
+        }, {
+            "mon", _encode_cap("allow profile osd")
+        }, {
+            "mgr", _encode_cap("allow profile osd")
+        }
     };
     map < string, bufferlist > lockbox_caps = {
         {
-        "mon", _encode_cap("allow command \"config-key get\" "
+            "mon", _encode_cap("allow command \"config-key get\" "
                                "with key=\"dm-crypt/osd/" +
-                               stringify(uuid) + "/luks\"")}
+                               stringify(uuid) + "/luks\"")
+        }
     };
 
     bool has_lockbox = !lockbox_secret.empty();
@@ -1246,7 +1256,7 @@ int AuthMonitor::validate_osd_new(int32_t id,
 
     if (!cephx_entity.name.from_str(cephx_name)) {
         dout(10) << __func__ << " invalid cephx entity '"
-            << cephx_name << "'" << dendl;
+                 << cephx_name << "'" << dendl;
         ss << "invalid cephx key entity '" << cephx_name << "'";
         return -EINVAL;
     }
@@ -1254,7 +1264,7 @@ int AuthMonitor::validate_osd_new(int32_t id,
     if (has_lockbox) {
         if (!lockbox_entity.name.from_str(lockbox_name)) {
             dout(10) << __func__ << " invalid cephx lockbox entity '"
-                << lockbox_name << "'" << dendl;
+                     << lockbox_name << "'" << dendl;
             ss << "invalid cephx lockbox entity '" << lockbox_name << "'";
             return -EINVAL;
         }
@@ -1316,8 +1326,8 @@ int AuthMonitor::validate_osd_new(int32_t id,
     return 0;
 }
 
-int AuthMonitor::do_osd_new(const auth_entity_t & cephx_entity,
-                            const auth_entity_t & lockbox_entity,
+int AuthMonitor::do_osd_new(const auth_entity_t &cephx_entity,
+                            const auth_entity_t &lockbox_entity,
                             bool has_lockbox)
 {
     ceph_assert(paxos.is_plugged());
@@ -1325,8 +1335,7 @@ int AuthMonitor::do_osd_new(const auth_entity_t & cephx_entity,
     dout(10) << __func__ << " cephx " << cephx_entity.name << " lockbox ";
     if (has_lockbox) {
         *_dout << lockbox_entity.name;
-    }
-    else {
+    } else {
         *_dout << "n/a";
     }
     *_dout << dendl;
@@ -1353,8 +1362,8 @@ int AuthMonitor::do_osd_new(const auth_entity_t & cephx_entity,
     return 0;
 }
 
-bool AuthMonitor::valid_caps(const string & type,
-                             const string & caps, ostream * out)
+bool AuthMonitor::valid_caps(const string &type,
+                             const string &caps, ostream *out)
 {
     if (type == "mon") {
         MonCap moncap;
@@ -1373,20 +1382,17 @@ bool AuthMonitor::valid_caps(const string & type,
         if (!mgrcap.parse(caps, out)) {
             return false;
         }
-    }
-    else if (type == "osd") {
+    } else if (type == "osd") {
         OSDCap ocap;
         if (!ocap.parse(caps, out)) {
             return false;
         }
-    }
-    else if (type == "mds") {
+    } else if (type == "mds") {
         MDSAuthCaps mdscap;
         if (!mdscap.parse(g_ceph_context, caps, out)) {
             return false;
         }
-    }
-    else {
+    } else {
         if (out) {
             *out << "unknown cap type '" << type << "'";
         }
@@ -1395,7 +1401,7 @@ bool AuthMonitor::valid_caps(const string & type,
     return true;
 }
 
-bool AuthMonitor::valid_caps(const vector < string > &caps, ostream * out)
+bool AuthMonitor::valid_caps(const vector < string > &caps, ostream *out)
 {
     for (vector < string >::const_iterator p = caps.begin();
          p != caps.end(); p += 2) {
@@ -1470,8 +1476,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         KeyRing keyring;
         try {
             decode(keyring, iter);
-        }
-        catch(const ceph::buffer::error & ex) {
+        } catch (const ceph::buffer::error &ex) {
             ss << "error decoding keyring" << " " << ex.what();
             err = -EINVAL;
             goto done;
@@ -1485,11 +1490,10 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         }
         err = 0;
         wait_for_finished_proposal(op, new Monitor::C_Command(mon, op, 0, rs,
-                                                              get_last_committed
-                                                              () + 1));
+                                   get_last_committed
+                                   () + 1));
         return true;
-    }
-    else if (prefix == "auth add" && !entity_name.empty()) {
+    } else if (prefix == "auth add" && !entity_name.empty()) {
         /* expected behavior:
          *  - if command reproduces current state, return 0.
          *  - if command adds brand new entity, handle it.
@@ -1506,8 +1510,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
             auto iter = bl.cbegin();
             try {
                 decode(new_keyring, iter);
-            }
-            catch(const ceph::buffer::error & ex) {
+            } catch (const ceph::buffer::error &ex) {
                 ss << "error decoding keyring";
                 err = -EINVAL;
                 goto done;
@@ -1523,8 +1526,8 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         if (entity_is_pending(entity)) {
             wait_for_finished_proposal(op,
                                        new Monitor::C_Command(mon, op, 0, rs,
-                                                              get_last_committed
-                                                              () + 1));
+                                               get_last_committed
+                                               () + 1));
             return true;
         }
 
@@ -1542,7 +1545,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         if (has_keyring) {
             if (!new_keyring.get_auth(auth_inc.name, new_inc)) {
                 ss << "key for " << auth_inc.name
-                    << " not found in provided keyring";
+                   << " not found in provided keyring";
                 err = -EINVAL;
                 goto done;
             }
@@ -1574,8 +1577,8 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         // okay, add it.
         if (!has_keyring) {
             dout(10) <<
-                "AuthMonitor::prepare_command generating random key for " <<
-                auth_inc.name << dendl;
+                     "AuthMonitor::prepare_command generating random key for " <<
+                     auth_inc.name << dendl;
             new_inc.key.create(g_ceph_context, CEPH_CRYPTO_AES);
         }
         new_inc.caps = new_caps;
@@ -1586,17 +1589,16 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         ss << "added key for " << auth_inc.name;
         getline(ss, rs);
         wait_for_finished_proposal(op, new Monitor::C_Command(mon, op, 0, rs,
-                                                              get_last_committed
-                                                              () + 1));
+                                   get_last_committed
+                                   () + 1));
         return true;
-    }
-    else if ((prefix == "auth get-or-create-pending" ||
-              prefix == "auth clear-pending" ||
-              prefix == "auth commit-pending")) {
+    } else if ((prefix == "auth get-or-create-pending" ||
+                prefix == "auth clear-pending" ||
+                prefix == "auth commit-pending")) {
         if (mon.monmap->min_mon_release < ceph_release_t::quincy) {
             err = -EPERM;
             ss <<
-                "pending_keys are not available until after upgrading to quincy";
+               "pending_keys are not available until after upgrading to quincy";
             goto done;
         }
 
@@ -1608,7 +1610,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         }
 
         // is there an uncommitted pending_key? (or any change for this entity)
-      for (auto & p:pending_auth) {
+        for (auto &p : pending_auth) {
             if (p.inc_type == AUTH_DATA) {
                 KeyServerData::Incremental auth_inc;
                 auto q = p.auth_data.cbegin();
@@ -1617,9 +1619,9 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
                     auth_inc.name == entity) {
                     wait_for_finished_proposal(op,
                                                new Monitor::C_Command(mon, op,
-                                                                      0, rs,
-                                                                      get_last_committed
-                                                                      () + 1));
+                                                       0, rs,
+                                                       get_last_committed
+                                                       () + 1));
                     return true;
                 }
             }
@@ -1632,8 +1634,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
                 kr.add(entity, entity_auth.key, entity_auth.pending_key);
                 err = 0;
                 exists = true;
-            }
-            else {
+            } else {
                 KeyServerData::Incremental auth_inc;
                 auth_inc.op = KeyServerData::AUTH_INC_ADD;
                 auth_inc.name = entity;
@@ -1646,15 +1647,13 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
             }
             if (f) {
                 kr.encode_formatted("auth", f.get(), rdata);
-            }
-            else {
+            } else {
                 kr.encode_plaintext(rdata);
             }
             if (exists) {
                 goto done;
             }
-        }
-        else if (prefix == "auth clear-pending") {
+        } else if (prefix == "auth clear-pending") {
             if (entity_auth.pending_key.empty()) {
                 err = 0;
                 goto done;
@@ -1665,8 +1664,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
             auth_inc.auth = entity_auth;
             auth_inc.auth.pending_key.clear();
             push_cephx_inc(auth_inc);
-        }
-        else if (prefix == "auth commit-pending") {
+        } else if (prefix == "auth commit-pending") {
             if (entity_auth.pending_key.empty()) {
                 err = 0;
                 ss << "no pending key";
@@ -1682,12 +1680,11 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         }
         wait_for_finished_proposal(op,
                                    new Monitor::C_Command(mon, op, 0, rs, rdata,
-                                                          get_last_committed() +
-                                                          1));
+                                           get_last_committed() +
+                                           1));
         return true;
-    }
-    else if ((prefix == "auth get-or-create-key" ||
-              prefix == "auth get-or-create") && !entity_name.empty()) {
+    } else if ((prefix == "auth get-or-create-key" ||
+                prefix == "auth get-or-create") && !entity_name.empty()) {
         // auth get-or-create <name> [mon osdcapa osd osdcapb ...]
 
         if (!valid_caps(caps_vec, &ss)) {
@@ -1699,7 +1696,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         std::map < std::string, bufferlist > wanted_caps;
         for (vector < string >::const_iterator it = caps_vec.begin();
              it != caps_vec.end() && (it + 1) != caps_vec.end(); it += 2) {
-            const std::string & sys = *it;
+            const std::string &sys = *it;
             bufferlist cap;
             encode(*(it + 1), cap);
             wanted_caps[sys] = cap;
@@ -1708,12 +1705,12 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         // do we have it?
         EntityAuth entity_auth;
         if (mon.key_server.get_auth(entity, entity_auth)) {
-          for (const auto & sys_cap:wanted_caps) {
+            for (const auto &sys_cap : wanted_caps) {
                 if (entity_auth.caps.count(sys_cap.first) == 0 ||
                     !entity_auth.caps[sys_cap.first].contents_equal(sys_cap.
-                                                                    second)) {
+                            second)) {
                     ss << "key for " << entity << " exists but cap " << sys_cap.
-                        first << " does not match";
+                       first << " does not match";
                     err = -EINVAL;
                     goto done;
                 }
@@ -1722,19 +1719,16 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
             if (prefix == "auth get-or-create-key") {
                 if (f) {
                     entity_auth.key.encode_formatted("auth", f.get(), rdata);
-                }
-                else {
+                } else {
                     ds << entity_auth.key;
                 }
-            }
-            else {
+            } else {
                 KeyRing kr;
                 kr.add(entity, entity_auth.key, entity_auth.pending_key);
                 if (f) {
                     kr.set_caps(entity, entity_auth.caps);
                     kr.encode_formatted("auth", f.get(), rdata);
-                }
-                else {
+                } else {
                     kr.encode_plaintext(rdata);
                 }
             }
@@ -1753,9 +1747,9 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
                     auth_inc.name == entity) {
                     wait_for_finished_proposal(op,
                                                new Monitor::C_Command(mon, op,
-                                                                      0, rs,
-                                                                      get_last_committed
-                                                                      () + 1));
+                                                       0, rs,
+                                                       get_last_committed
+                                                       () + 1));
                     return true;
                 }
             }
@@ -1773,19 +1767,16 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         if (prefix == "auth get-or-create-key") {
             if (f) {
                 auth_inc.auth.key.encode_formatted("auth", f.get(), rdata);
-            }
-            else {
+            } else {
                 ds << auth_inc.auth.key;
             }
-        }
-        else {
+        } else {
             KeyRing kr;
             kr.add(entity, auth_inc.auth.key);
             if (f) {
                 kr.set_caps(entity, wanted_caps);
                 kr.encode_formatted("auth", f.get(), rdata);
-            }
-            else {
+            } else {
                 kr.encode_plaintext(rdata);
             }
         }
@@ -1794,11 +1785,10 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         getline(ss, rs);
         wait_for_finished_proposal(op,
                                    new Monitor::C_Command(mon, op, 0, rs, rdata,
-                                                          get_last_committed() +
-                                                          1));
+                                           get_last_committed() +
+                                           1));
         return true;
-    }
-    else if (prefix == "fs authorize") {
+    } else if (prefix == "fs authorize") {
         string filesystem;
         cmd_getval(cmdmap, "filesystem", filesystem);
         string mon_cap_string = "allow r";
@@ -1812,8 +1802,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
                 ss << "filesystem " << filesystem << " does not exist.";
                 err = -EINVAL;
                 goto done;
-            }
-            else {
+            } else {
                 mon_cap_string +=
                     " fsname=" + std::string(fs->mds_map.get_fs_name());
             }
@@ -1821,8 +1810,8 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
 
         for (auto it = caps_vec.begin();
              it != caps_vec.end() && (it + 1) != caps_vec.end(); it += 2) {
-            const string & path = *it;
-            const string & cap = *(it + 1);
+            const string &path = *it;
+            const string &cap = *(it + 1);
             bool root_squash = false;
             if ((it + 2) != caps_vec.end() && *(it + 2) == "root_squash") {
                 root_squash = true;
@@ -1834,31 +1823,32 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
                 err = -EINVAL;
                 goto done;
             }
-            if (cap.compare(0, 2, "rw") == 0)
+            if (cap.compare(0, 2, "rw") == 0) {
                 osd_cap_wanted = "rw";
+            }
 
             char last = '\0';
             for (size_t i = 2; i < cap.size(); ++i) {
                 char c = cap.at(i);
                 if (last >= c) {
                     ss <<
-                        "Permission flags (except 'rw') must be specified in alphabetical order.";
+                       "Permission flags (except 'rw') must be specified in alphabetical order.";
                     err = -EINVAL;
                     goto done;
                 }
                 switch (c) {
-                case 'p':
-                    break;
-                case 's':
-                    break;
-                default:
-                    ss << "Unknown permission flag '" << c << "'.";
-                    err = -EINVAL;
-                    goto done;
+                    case 'p':
+                        break;
+                    case 's':
+                        break;
+                    default:
+                        ss << "Unknown permission flag '" << c << "'.";
+                        err = -EINVAL;
+                        goto done;
                 }
             }
 
-            mds_cap_string += mds_cap_string.empty()? "" : ", ";
+            mds_cap_string += mds_cap_string.empty() ? "" : ", ";
             mds_cap_string += "allow " + cap;
 
             if (filesystem != "*" && filesystem != "all" && fs != nullptr) {
@@ -1875,18 +1865,21 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
             }
         }
 
-        osd_cap_string += osd_cap_string.empty()? "" : ", ";
+        osd_cap_string += osd_cap_string.empty() ? "" : ", ";
         osd_cap_string += "allow " + osd_cap_wanted
-            + " tag " + pg_pool_t::APPLICATION_NAME_CEPHFS
-            + " data=" + filesystem;
+                          + " tag " + pg_pool_t::APPLICATION_NAME_CEPHFS
+                          + " data=" + filesystem;
 
         std::map < string, bufferlist > wanted_caps = {
             {
-            "mon", _encode_cap(mon_cap_string)}
+                "mon", _encode_cap(mon_cap_string)
+            }
             , {
-            "osd", _encode_cap(osd_cap_string)}
+                "osd", _encode_cap(osd_cap_string)
+            }
             , {
-            "mds", _encode_cap(mds_cap_string)}
+                "mds", _encode_cap(mds_cap_string)
+            }
         };
 
         if (!valid_caps("mon", mon_cap_string, &ss) ||
@@ -1898,17 +1891,17 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
 
         EntityAuth entity_auth;
         if (mon.key_server.get_auth(entity, entity_auth)) {
-          for (const auto & sys_cap:wanted_caps) {
+            for (const auto &sys_cap : wanted_caps) {
                 if (entity_auth.caps.count(sys_cap.first) == 0 ||
                     !entity_auth.caps[sys_cap.first].contents_equal(sys_cap.
-                                                                    second)) {
+                            second)) {
                     ss << entity <<
-                        " already has fs capabilities that differ from " <<
-                        "those supplied. To generate a new auth key for " <<
-                        entity << ", first remove " << entity <<
-                        " from configuration files, " <<
-                        "execute 'ceph auth rm " << entity <<
-                        "', then execute this " << "command again.";
+                       " already has fs capabilities that differ from " <<
+                       "those supplied. To generate a new auth key for " <<
+                       entity << ", first remove " << entity <<
+                       " from configuration files, " <<
+                       "execute 'ceph auth rm " << entity <<
+                       "', then execute this " << "command again.";
                     err = -EINVAL;
                     goto done;
                 }
@@ -1919,8 +1912,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
             if (f) {
                 kr.set_caps(entity, entity_auth.caps);
                 kr.encode_formatted("auth", f.get(), rdata);
-            }
-            else {
+            } else {
                 kr.encode_plaintext(rdata);
             }
             err = 0;
@@ -1939,8 +1931,7 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         if (f) {
             kr.set_caps(entity, wanted_caps);
             kr.encode_formatted("auth", f.get(), rdata);
-        }
-        else {
+        } else {
             kr.encode_plaintext(rdata);
         }
 
@@ -1948,11 +1939,10 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         getline(ss, rs);
         wait_for_finished_proposal(op,
                                    new Monitor::C_Command(mon, op, 0, rs, rdata,
-                                                          get_last_committed() +
-                                                          1));
+                                           get_last_committed() +
+                                           1));
         return true;
-    }
-    else if (prefix == "auth caps" && !entity_name.empty()) {
+    } else if (prefix == "auth caps" && !entity_name.empty()) {
         KeyServerData::Incremental auth_inc;
         auth_inc.name = entity;
         if (!mon.key_server.get_auth(auth_inc.name, auth_inc.auth)) {
@@ -1968,8 +1958,9 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
 
         map < string, bufferlist > newcaps;
         for (vector < string >::iterator it = caps_vec.begin();
-             it != caps_vec.end(); it += 2)
+             it != caps_vec.end(); it += 2) {
             encode(*(it + 1), newcaps[*it]);
+        }
 
         auth_inc.op = KeyServerData::AUTH_INC_ADD;
         auth_inc.auth.caps = newcaps;
@@ -1978,12 +1969,11 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         ss << "updated caps for " << auth_inc.name;
         getline(ss, rs);
         wait_for_finished_proposal(op, new Monitor::C_Command(mon, op, 0, rs,
-                                                              get_last_committed
-                                                              () + 1));
+                                   get_last_committed
+                                   () + 1));
         return true;
-    }
-    else if ((prefix == "auth del" || prefix == "auth rm") &&
-             !entity_name.empty()) {
+    } else if ((prefix == "auth del" || prefix == "auth rm") &&
+               !entity_name.empty()) {
         KeyServerData::Incremental auth_inc;
         auth_inc.name = entity;
         if (!mon.key_server.contains(auth_inc.name)) {
@@ -1994,11 +1984,11 @@ bool AuthMonitor::prepare_command(MonOpRequestRef op)
         push_cephx_inc(auth_inc);
 
         wait_for_finished_proposal(op, new Monitor::C_Command(mon, op, 0, rs,
-                                                              get_last_committed
-                                                              () + 1));
+                                   get_last_committed
+                                   () + 1));
         return true;
     }
-  done:
+done:
     rdata.append(ds);
     getline(ss, rs, '\0');
     mon.reply_command(op, err, rs, rdata, get_last_committed());
@@ -2031,15 +2021,15 @@ bool AuthMonitor::_upgrade_format_to_dumpling()
          p != mon.key_server.secrets_end(); ++p) {
         // grab mon caps, if any
         string mon_caps;
-        if (p->second.caps.count("mon") == 0)
+        if (p->second.caps.count("mon") == 0) {
             continue;
+        }
         try {
             auto it = p->second.caps["mon"].cbegin();
             decode(mon_caps, it);
-        }
-        catch(const ceph::buffer::error &) {
+        } catch (const ceph::buffer::error &) {
             dout(10) << __func__ << " unable to parse mon cap for "
-                << p->first << dendl;
+                     << p->first << dendl;
             continue;
         }
 
@@ -2063,7 +2053,7 @@ bool AuthMonitor::_upgrade_format_to_dumpling()
 
         if (new_caps.length() > 0) {
             dout(5) << __func__ << " updating " << p->first << " mon cap from "
-                << mon_caps << " to " << new_caps << dendl;
+                    << mon_caps << " to " << new_caps << dendl;
 
             bufferlist bl;
             encode(new_caps, bl);
@@ -2095,14 +2085,12 @@ bool AuthMonitor::_upgrade_format_to_luminous()
         if (n == "client.admin") {
             // admin gets it all
             newcap = "allow *";
-        }
-        else if (n.find("osd.") == 0 ||
-                 n.find("mds.") == 0 || n.find("mon.") == 0) {
+        } else if (n.find("osd.") == 0 ||
+                   n.find("mds.") == 0 || n.find("mon.") == 0) {
             // daemons follow their profile
             string type = n.substr(0, 3);
             newcap = "allow profile " + type;
-        }
-        else if (p->second.caps.count("mon")) {
+        } else if (p->second.caps.count("mon")) {
             // if there are any mon caps, give them 'r' mgr caps
             newcap = "allow r";
         }
@@ -2126,7 +2114,7 @@ bool AuthMonitor::_upgrade_format_to_luminous()
             decode(oldcaps, blp);
             if (oldcaps == "allow *") {
                 dout(5) << " fixing " << n << " mon cap to 'allow profile mgr'"
-                    << dendl;
+                        << dendl;
                 bufferlist bl;
                 encode("allow profile mgr", bl);
 
@@ -2165,7 +2153,7 @@ bool AuthMonitor::_upgrade_format_to_mimic()
     _generate_bootstrap_keys(&auth_lst);
 
     bool changed = false;
-  for (auto & p:auth_lst) {
+    for (auto &p : auth_lst) {
         if (mon.key_server.contains(p.first)) {
             continue;
         }
@@ -2195,15 +2183,14 @@ void AuthMonitor::upgrade_format()
         contains_all(ceph::features::mon::FEATURE_LUMINOUS)) {
         // pre-luminous quorum
         current = FORMAT_DUMPLING;
-    }
-    else if (!mon.get_quorum_mon_features().
-             contains_all(ceph::features::mon::FEATURE_MIMIC)) {
+    } else if (!mon.get_quorum_mon_features().
+               contains_all(ceph::features::mon::FEATURE_MIMIC)) {
         // pre-mimic quorum
         current = FORMAT_LUMINOUS;
     }
     if (format_version >= current) {
         dout(20) << __func__ << " format " << format_version
-            << " is current" << dendl;
+                 << " is current" << dendl;
         return;
     }
 
@@ -2216,26 +2203,24 @@ void AuthMonitor::upgrade_format()
     if (format_version == FORMAT_NONE) {
         changed = _upgrade_format_to_dumpling();
 
-    }
-    else if (format_version == FORMAT_DUMPLING) {
+    } else if (format_version == FORMAT_DUMPLING) {
         changed = _upgrade_format_to_luminous();
-    }
-    else if (format_version == FORMAT_LUMINOUS) {
+    } else if (format_version == FORMAT_LUMINOUS) {
         changed = _upgrade_format_to_mimic();
     }
 
     if (changed) {
         // note new format
         dout(10) << __func__ << " proposing update from format " <<
-            format_version << " -> " << current << dendl;
+                 format_version << " -> " << current << dendl;
         format_version = current;
         propose_pending();
     }
 }
 
-void AuthMonitor::dump_info(Formatter * f)
+void AuthMonitor::dump_info(Formatter *f)
 {
-  /*** WARNING: do not include any privileged information here! ***/
+    /*** WARNING: do not include any privileged information here! ***/
     f->open_object_section("auth");
     f->dump_unsigned("first_committed", get_first_committed());
     f->dump_unsigned("last_committed", get_last_committed());

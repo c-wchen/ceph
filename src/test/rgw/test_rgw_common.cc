@@ -1,13 +1,14 @@
 #include "test_rgw_common.h"
 
-void test_rgw_add_placement(RGWZoneGroup * zonegroup,
-                            RGWZoneParams * zone_params,
-                            const std::string & name, bool is_default)
+void test_rgw_add_placement(RGWZoneGroup *zonegroup,
+                            RGWZoneParams *zone_params,
+                            const std::string &name, bool is_default)
 {
     zonegroup->placement_targets[name] = {
-    name};
+        name
+    };
 
-    RGWZonePlacementInfo & pinfo = zone_params->placement_pools[name];
+    RGWZonePlacementInfo &pinfo = zone_params->placement_pools[name];
     pinfo.index_pool = rgw_pool(name + ".index").to_str();
 
     rgw_pool data_pool(name + ".data");
@@ -21,16 +22,16 @@ void test_rgw_add_placement(RGWZoneGroup * zonegroup,
     }
 }
 
-void test_rgw_init_env(RGWZoneGroup * zonegroup, RGWZoneParams * zone_params)
+void test_rgw_init_env(RGWZoneGroup *zonegroup, RGWZoneParams *zone_params)
 {
     test_rgw_add_placement(zonegroup, zone_params, "default-placement", true);
 
 }
 
-void test_rgw_populate_explicit_placement_bucket(rgw_bucket * b, const char *t,
-                                                 const char *n, const char *dp,
-                                                 const char *ip, const char *m,
-                                                 const char *id)
+void test_rgw_populate_explicit_placement_bucket(rgw_bucket *b, const char *t,
+        const char *n, const char *dp,
+        const char *ip, const char *m,
+        const char *id)
 {
     b->tenant = t;
     b->name = n;
@@ -40,7 +41,7 @@ void test_rgw_populate_explicit_placement_bucket(rgw_bucket * b, const char *t,
     b->explicit_placement.index_pool = rgw_pool(ip);
 }
 
-void test_rgw_populate_old_bucket(old_rgw_bucket * b, const char *t,
+void test_rgw_populate_old_bucket(old_rgw_bucket *b, const char *t,
                                   const char *n, const char *dp, const char *ip,
                                   const char *m, const char *id)
 {
@@ -52,7 +53,7 @@ void test_rgw_populate_old_bucket(old_rgw_bucket * b, const char *t,
     b->index_pool = ip;
 }
 
-std::string test_rgw_get_obj_oid(const rgw_obj & obj)
+std::string test_rgw_get_obj_oid(const rgw_obj &obj)
 {
     std::string oid;
     std::string loc;
@@ -61,21 +62,21 @@ std::string test_rgw_get_obj_oid(const rgw_obj & obj)
     return oid;
 }
 
-void test_rgw_init_explicit_placement_bucket(rgw_bucket * bucket,
-                                             const char *name)
+void test_rgw_init_explicit_placement_bucket(rgw_bucket *bucket,
+        const char *name)
 {
     test_rgw_populate_explicit_placement_bucket(bucket, "", name, ".data-pool",
-                                                ".index-pool", "marker",
-                                                "bucket-id");
+            ".index-pool", "marker",
+            "bucket-id");
 }
 
-void test_rgw_init_old_bucket(old_rgw_bucket * bucket, const char *name)
+void test_rgw_init_old_bucket(old_rgw_bucket *bucket, const char *name)
 {
     test_rgw_populate_old_bucket(bucket, "", name, ".data-pool", ".index-pool",
                                  "marker", "bucket-id");
 }
 
-void test_rgw_populate_bucket(rgw_bucket * b, const char *t, const char *n,
+void test_rgw_populate_bucket(rgw_bucket *b, const char *t, const char *n,
                               const char *m, const char *id)
 {
     b->tenant = t;
@@ -84,14 +85,14 @@ void test_rgw_populate_bucket(rgw_bucket * b, const char *t, const char *n,
     b->bucket_id = id;
 }
 
-void test_rgw_init_bucket(rgw_bucket * bucket, const char *name)
+void test_rgw_init_bucket(rgw_bucket *bucket, const char *name)
 {
     test_rgw_populate_bucket(bucket, "", name, "marker", "bucket-id");
 }
 
-rgw_obj test_rgw_create_obj(const rgw_bucket & bucket, const std::string & name,
-                            const std::string & instance,
-                            const std::string & ns)
+rgw_obj test_rgw_create_obj(const rgw_bucket &bucket, const std::string &name,
+                            const std::string &instance,
+                            const std::string &ns)
 {
     rgw_obj obj(bucket, name);
     if (!instance.empty()) {

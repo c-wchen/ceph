@@ -12,14 +12,14 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "mgr.osd_perf_metric_collector " << __func__ << " "
 
-OSDPerfMetricCollector::OSDPerfMetricCollector(MetricListener & listener)
-:  
-MetricCollector < OSDPerfMetricQuery,
-OSDPerfMetricLimit, OSDPerfMetricKey, OSDPerfMetricReport > (listener)
+OSDPerfMetricCollector::OSDPerfMetricCollector(MetricListener &listener)
+    :
+    MetricCollector < OSDPerfMetricQuery,
+    OSDPerfMetricLimit, OSDPerfMetricKey, OSDPerfMetricReport > (listener)
 {
 }
 
-void OSDPerfMetricCollector::process_reports(const MetricPayload & payload)
+void OSDPerfMetricCollector::process_reports(const MetricPayload &payload)
 {
     const std::map < OSDPerfMetricQuery, OSDPerfMetricReport > &reports =
         boost::get < OSDMetricPayload > (payload).report;
@@ -27,12 +27,13 @@ void OSDPerfMetricCollector::process_reports(const MetricPayload & payload)
     std::lock_guard locker(lock);
     process_reports_generic(reports,
                             [](PerformanceCounter * counter,
-                               const PerformanceCounter & update) {
-                            counter->first += update.first;
-                            counter->second += update.second;});
+    const PerformanceCounter & update) {
+        counter->first += update.first;
+        counter->second += update.second;
+    });
 }
 
-int OSDPerfMetricCollector::get_counters(PerfCollector * collector)
+int OSDPerfMetricCollector::get_counters(PerfCollector *collector)
 {
     OSDPerfCollector *c = static_cast < OSDPerfCollector * >(collector);
 

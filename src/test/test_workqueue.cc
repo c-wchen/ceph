@@ -56,28 +56,37 @@ TEST(WorkQueue, Resize)
     tp.stop();
 }
 
-class twq:public ThreadPool::WorkQueue < int > {
-  public:
-    twq(time_t timeout, time_t suicide_timeout, ThreadPool * tp)
-    :ThreadPool::WorkQueue < int >("test_wq", ceph::make_timespan(timeout),
-                                   ceph::make_timespan(suicide_timeout), tp) {
-    } bool _enqueue(int *item) override {
+class twq: public ThreadPool::WorkQueue < int >
+{
+public:
+    twq(time_t timeout, time_t suicide_timeout, ThreadPool *tp)
+        : ThreadPool::WorkQueue < int >("test_wq", ceph::make_timespan(timeout),
+                                        ceph::make_timespan(suicide_timeout), tp)
+    {
+    } bool _enqueue(int *item) override
+    {
         return true;
     }
-    void _dequeue(int *item) override {
+    void _dequeue(int *item) override
+    {
         ceph_abort();
     }
-    bool _empty() override {
+    bool _empty() override
+    {
         return true;
     }
-    int *_dequeue() override {
+    int *_dequeue() override
+    {
         return nullptr;
     }
-    void _process(int *osr, ThreadPool::TPHandle & handle) override {
+    void _process(int *osr, ThreadPool::TPHandle &handle) override
+    {
     }
-    void _process_finish(int *osr) override {
+    void _process_finish(int *osr) override
+    {
     }
-    void _clear() override {
+    void _clear() override
+    {
     }
 };
 

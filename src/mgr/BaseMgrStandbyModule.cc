@@ -22,11 +22,11 @@
 using std::string;
 
 typedef struct {
-    PyObject_HEAD StandbyPyModule * this_module;
+    PyObject_HEAD StandbyPyModule *this_module;
 } BaseMgrStandbyModule;
 
-static PyObject *BaseMgrStandbyModule_new(PyTypeObject * type, PyObject * args,
-                                          PyObject * kwds)
+static PyObject *BaseMgrStandbyModule_new(PyTypeObject *type, PyObject *args,
+        PyObject *kwds)
 {
     BaseMgrStandbyModule *self;
 
@@ -35,9 +35,8 @@ static PyObject *BaseMgrStandbyModule_new(PyTypeObject * type, PyObject * args,
     return (PyObject *) self;
 }
 
-static int
-BaseMgrStandbyModule_init(BaseMgrStandbyModule * self, PyObject * args,
-                          PyObject * kwds)
+static int BaseMgrStandbyModule_init(BaseMgrStandbyModule *self, PyObject *args,
+                                     PyObject *kwds)
 {
     PyObject *this_module_capsule = nullptr;
     static const char *kwlist[] = { "this_module", NULL };
@@ -56,13 +55,13 @@ BaseMgrStandbyModule_init(BaseMgrStandbyModule * self, PyObject * args,
     return 0;
 }
 
-static PyObject *ceph_get_mgr_id(BaseMgrStandbyModule * self, PyObject * args)
+static PyObject *ceph_get_mgr_id(BaseMgrStandbyModule *self, PyObject *args)
 {
     return PyUnicode_FromString(g_conf()->name.get_id().c_str());
 }
 
-static PyObject *ceph_get_module_option(BaseMgrStandbyModule * self,
-                                        PyObject * args)
+static PyObject *ceph_get_module_option(BaseMgrStandbyModule *self,
+                                        PyObject *args)
 {
     char *what = nullptr;
     char *prefix = nullptr;
@@ -85,23 +84,21 @@ static PyObject *ceph_get_module_option(BaseMgrStandbyModule * self,
     PyEval_RestoreThread(tstate);
     if (found) {
         dout(10) << __func__ << " " << final_key << " found: " << value
-            << dendl;
+                 << dendl;
         return self->this_module->py_module->get_typed_option_value(what,
-                                                                    value);
-    }
-    else {
+                value);
+    } else {
         if (prefix) {
             dout(4) << __func__ << " [" << prefix << "/]" << what <<
-                " not found " << dendl;
-        }
-        else {
+                    " not found " << dendl;
+        } else {
             dout(4) << __func__ << " " << what << " not found " << dendl;
         }
         Py_RETURN_NONE;
     }
 }
 
-static PyObject *ceph_option_get(BaseMgrStandbyModule * self, PyObject * args)
+static PyObject *ceph_option_get(BaseMgrStandbyModule *self, PyObject *args)
 {
     char *what = nullptr;
     if (!PyArg_ParseTuple(args, "s:ceph_option_get", &what)) {
@@ -114,14 +111,13 @@ static PyObject *ceph_option_get(BaseMgrStandbyModule * self, PyObject * args)
     if (r >= 0) {
         dout(10) << "ceph_option_get " << what << " found: " << value << dendl;
         return PyUnicode_FromString(value.c_str());
-    }
-    else {
+    } else {
         dout(4) << "ceph_option_get " << what << " not found " << dendl;
         Py_RETURN_NONE;
     }
 }
 
-static PyObject *ceph_store_get(BaseMgrStandbyModule * self, PyObject * args)
+static PyObject *ceph_store_get(BaseMgrStandbyModule *self, PyObject *args)
 {
     char *what = nullptr;
     if (!PyArg_ParseTuple(args, "s:ceph_store_get", &what)) {
@@ -139,22 +135,21 @@ static PyObject *ceph_store_get(BaseMgrStandbyModule * self, PyObject * args)
 
     if (found) {
         dout(10) << "ceph_store_get " << what << " found: " << value.
-            c_str() << dendl;
+                 c_str() << dendl;
         return PyUnicode_FromString(value.c_str());
-    }
-    else {
+    } else {
         dout(4) << "ceph_store_get " << what << " not found " << dendl;
         Py_RETURN_NONE;
     }
 }
 
-static PyObject *ceph_get_active_uri(BaseMgrStandbyModule * self,
-                                     PyObject * args)
+static PyObject *ceph_get_active_uri(BaseMgrStandbyModule *self,
+                                     PyObject *args)
 {
     return PyUnicode_FromString(self->this_module->get_active_uri().c_str());
 }
 
-static PyObject *ceph_log(BaseMgrStandbyModule * self, PyObject * args)
+static PyObject *ceph_log(BaseMgrStandbyModule *self, PyObject *args)
 {
     char *record = nullptr;
     if (!PyArg_ParseTuple(args, "s:log", &record)) {
@@ -168,8 +163,8 @@ static PyObject *ceph_log(BaseMgrStandbyModule * self, PyObject * args)
     Py_RETURN_NONE;
 }
 
-static PyObject *ceph_standby_state_get(BaseMgrStandbyModule * self,
-                                        PyObject * args)
+static PyObject *ceph_standby_state_get(BaseMgrStandbyModule *self,
+                                        PyObject *args)
 {
     char *whatc = NULL;
     if (!PyArg_ParseTuple(args, "s:ceph_state_get", &whatc)) {
@@ -187,10 +182,10 @@ static PyObject *ceph_standby_state_get(BaseMgrStandbyModule * self,
     if (what == "mgr_ips") {
         entity_addrvec_t myaddrs = self->this_module->get_myaddrs();
         with_gil_t with_gil {
-        no_gil};
+            no_gil};
         f.open_array_section("ips");
         std::set < std::string > did;
-      for (auto & i:myaddrs.v) {
+        for (auto &i : myaddrs.v) {
             std::string ip = i.ip_only_to_str();
             if (auto[where, inserted] = did.insert(ip); inserted) {
                 f.dump_string("ip", ip);
@@ -198,44 +193,57 @@ static PyObject *ceph_standby_state_get(BaseMgrStandbyModule * self,
         }
         f.close_section();
         return f.get();
-    }
-    else {
+    } else {
         derr << "Python module requested unknown data '" << what << "'" <<
-            dendl;
+             dendl;
         with_gil_t with_gil {
-        no_gil};
+            no_gil};
         Py_RETURN_NONE;
     }
 }
 
 PyMethodDef BaseMgrStandbyModule_methods[] = {
-    {"_ceph_get", (PyCFunction) ceph_standby_state_get, METH_VARARGS,
-     "Get a cluster object (standby)"}
+    {
+        "_ceph_get", (PyCFunction) ceph_standby_state_get, METH_VARARGS,
+        "Get a cluster object (standby)"
+    }
     ,
 
-    {"_ceph_get_mgr_id", (PyCFunction) ceph_get_mgr_id, METH_NOARGS,
-     "Get the name of the Mgr daemon where we are running"}
+    {
+        "_ceph_get_mgr_id", (PyCFunction) ceph_get_mgr_id, METH_NOARGS,
+        "Get the name of the Mgr daemon where we are running"
+    }
     ,
 
-    {"_ceph_get_module_option", (PyCFunction) ceph_get_module_option,
-     METH_VARARGS,
-     "Get a module configuration option value"}
+    {
+        "_ceph_get_module_option", (PyCFunction) ceph_get_module_option,
+        METH_VARARGS,
+        "Get a module configuration option value"
+    }
     ,
 
-    {"_ceph_get_option", (PyCFunction) ceph_option_get, METH_VARARGS,
-     "Get a native configuration option value"}
+    {
+        "_ceph_get_option", (PyCFunction) ceph_option_get, METH_VARARGS,
+        "Get a native configuration option value"
+    }
     ,
 
-    {"_ceph_get_store", (PyCFunction) ceph_store_get, METH_VARARGS,
-     "Get a KV store value"}
+    {
+        "_ceph_get_store", (PyCFunction) ceph_store_get, METH_VARARGS,
+        "Get a KV store value"
+    }
     ,
 
-    {"_ceph_get_active_uri", (PyCFunction) ceph_get_active_uri, METH_NOARGS,
-     "Get the URI of the active instance of this module, if any"}
+    {
+        "_ceph_get_active_uri", (PyCFunction) ceph_get_active_uri, METH_NOARGS,
+        "Get the URI of the active instance of this module, if any"
+    }
     ,
 
-    {"_ceph_log", (PyCFunction) ceph_log, METH_VARARGS,
-     "Emit a log message"}
+    {
+        "_ceph_log", (PyCFunction) ceph_log, METH_VARARGS,
+        "Emit a log message"
+    }
     ,
 
     {NULL, NULL, 0, NULL}
@@ -243,7 +251,7 @@ PyMethodDef BaseMgrStandbyModule_methods[] = {
 
 PyTypeObject BaseMgrStandbyModuleType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-        "ceph_module.BaseMgrStandbyModule", /* tp_name */
+    "ceph_module.BaseMgrStandbyModule", /* tp_name */
     sizeof(BaseMgrStandbyModule),   /* tp_basicsize */
     0,                          /* tp_itemsize */
     0,                          /* tp_dealloc */

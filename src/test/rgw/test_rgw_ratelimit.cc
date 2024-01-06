@@ -202,7 +202,7 @@ TEST(RGWRateLimitGC, NO_GC_AHEAD_OF_TIME)
     // Please make sure to change those values when you change the map_size in the code
 
     std::shared_ptr < ActiveRateLimiter >
-        ratelimit(new ActiveRateLimiter(g_ceph_context));
+    ratelimit(new ActiveRateLimiter(g_ceph_context));
     ratelimit->start();
     auto active = ratelimit->get_active();
     RGWRateLimitInfo info;
@@ -219,7 +219,7 @@ TEST(RGWRateLimiterGC, GC_IS_WORKING)
     // Please make sure to change those values when you change the map_size in the code
 
     std::shared_ptr < ActiveRateLimiter >
-        ratelimit(new ActiveRateLimiter(g_ceph_context));
+    ratelimit(new ActiveRateLimiter(g_ceph_context));
     ratelimit->start();
     auto active = ratelimit->get_active();
     RGWRateLimitInfo info;

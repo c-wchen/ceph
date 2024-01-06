@@ -1,7 +1,7 @@
 #include "rgw_public_access.h"
 #include "rgw_xml.h"
 
-void PublicAccessBlockConfiguration::decode_xml(XMLObj * obj)
+void PublicAccessBlockConfiguration::decode_xml(XMLObj *obj)
 {
     RGWXMLDecoder::decode_xml("BlockPublicAcls", BlockPublicAcls, obj);
     RGWXMLDecoder::decode_xml("IgnorePublicAcls", IgnorePublicAcls, obj);
@@ -10,7 +10,7 @@ void PublicAccessBlockConfiguration::decode_xml(XMLObj * obj)
                               obj);
 }
 
-void PublicAccessBlockConfiguration::dump_xml(Formatter * f) const const
+void PublicAccessBlockConfiguration::dump_xml(Formatter *f) const const
 {
     Formatter::ObjectSection os(*f, "BlockPublicAccessBlockConfiguration");
     // Note: AWS spec mentions the values to be ALL CAPs, but clients seem to
@@ -22,15 +22,15 @@ void PublicAccessBlockConfiguration::dump_xml(Formatter * f) const const
     f->dump_bool("RestrictPublicBuckets", RestrictPublicBuckets);
 }
 
-std::ostream & operator<<(std::ostream & os,
-                          const PublicAccessBlockConfiguration & access_conf)
+std::ostream &operator<<(std::ostream &os,
+                         const PublicAccessBlockConfiguration &access_conf)
 {
     os << std::boolalpha
-        << "BlockPublicAcls: " << access_conf.block_public_acls() << std::endl
-        << "IgnorePublicAcls: " << access_conf.ignore_public_acls() << std::endl
-        << "BlockPublicPolicy" << access_conf.block_public_policy() << std::endl
-        << "RestrictPublicBuckets" << access_conf.
-        restrict_public_buckets() << std::endl;
+       << "BlockPublicAcls: " << access_conf.block_public_acls() << std::endl
+       << "IgnorePublicAcls: " << access_conf.ignore_public_acls() << std::endl
+       << "BlockPublicPolicy" << access_conf.block_public_policy() << std::endl
+       << "RestrictPublicBuckets" << access_conf.
+       restrict_public_buckets() << std::endl;
 
     return os;
 }

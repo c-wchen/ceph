@@ -12,7 +12,7 @@ using std::string;
 
 using ceph::bufferlist;
 
-void cls_refcount_get(librados::ObjectWriteOperation & op, const string & tag,
+void cls_refcount_get(librados::ObjectWriteOperation &op, const string &tag,
                       bool implicit_ref)
 {
     bufferlist in;
@@ -23,7 +23,7 @@ void cls_refcount_get(librados::ObjectWriteOperation & op, const string & tag,
     op.exec("refcount", "get", in);
 }
 
-void cls_refcount_put(librados::ObjectWriteOperation & op, const string & tag,
+void cls_refcount_put(librados::ObjectWriteOperation &op, const string &tag,
                       bool implicit_ref)
 {
     bufferlist in;
@@ -34,7 +34,7 @@ void cls_refcount_put(librados::ObjectWriteOperation & op, const string & tag,
     op.exec("refcount", "put", in);
 }
 
-void cls_refcount_set(librados::ObjectWriteOperation & op,
+void cls_refcount_set(librados::ObjectWriteOperation &op,
                       list < string > &refs)
 {
     bufferlist in;
@@ -44,7 +44,7 @@ void cls_refcount_set(librados::ObjectWriteOperation & op,
     op.exec("refcount", "set", in);
 }
 
-int cls_refcount_read(librados::IoCtx & io_ctx, string & oid,
+int cls_refcount_read(librados::IoCtx &io_ctx, string &oid,
                       list < string > *refs, bool implicit_ref)
 {
     bufferlist in, out;
@@ -52,15 +52,15 @@ int cls_refcount_read(librados::IoCtx & io_ctx, string & oid,
     call.implicit_ref = implicit_ref;
     encode(call, in);
     int r = io_ctx.exec(oid, "refcount", "read", in, out);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     cls_refcount_read_ret ret;
     try {
         auto iter = out.cbegin();
         decode(ret, iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         return -EIO;
     }
 

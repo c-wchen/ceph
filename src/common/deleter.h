@@ -43,77 +43,90 @@
 ///  - decrementing a reference count somewhere
 ///
 /// A deleter performs its action from its destructor.
-class deleter final {
-  public:
+class deleter final
+{
+public:
     /// \cond internal
     struct impl;
     struct raw_object_tag {
     };
     /// \endcond
-  private:
+private:
     // if bit 0 set, point to object to be freed directly.
-     impl * _impl = nullptr;
-  public:
+    impl *_impl = nullptr;
+public:
     /// Constructs an empty deleter that does nothing in its destructor.
-     deleter() = default;
-     deleter(const deleter &) = delete;
+    deleter() = default;
+    deleter(const deleter &) = delete;
     /// Moves a deleter.
-     deleter(deleter && x) noexcept:_impl(x._impl) {
+    deleter(deleter && x) noexcept: _impl(x._impl)
+    {
         x._impl = nullptr;
     }
     /// \cond internal explicit deleter(impl * i):_impl(i) {
-    }
-    deleter(raw_object_tag tag, void *object)
-    :_impl(from_raw_object(object)) {
-    }
-    /// \endcond
-    /// Destroys the deleter and carries out the encapsulated action.
-    ~deleter();
-    deleter & operator=(deleter && x);
-    deleter & operator=(deleter &) = delete;
-    /// Performs a sharing operation.  The encapsulated action will only
-    /// be carried out after both the original deleter and the returned
-    /// deleter are both destroyed.
-    ///
-    /// \return a deleter with the same encapsulated action as this one.
-    deleter share();
-    /// Checks whether the deleter has an associated action.
-    explicit operator  bool() const {
-        return bool(_impl);
-    }
-    /// \cond internal void reset(impl * i) {
-        this->~deleter();
-        new(this) deleter(i);
-    }
-    /// \endcond
-    /// Appends another deleter to this deleter.  When this deleter is
-    /// destroyed, both encapsulated actions will be carried out.
-    void append(deleter d);
-  private:
-    static bool is_raw_object(impl * i) {
-        auto x = reinterpret_cast < uintptr_t > (i);
-        return x & 1;
-    }
-    bool is_raw_object() const {
-        return is_raw_object(_impl);
-    } static void *to_raw_object(impl * i) {
-        auto x = reinterpret_cast < uintptr_t > (i);
-        return reinterpret_cast < void *>(x & ~uintptr_t(1));
-    }
-    void *to_raw_object() const {
-        return to_raw_object(_impl);
-    } impl *from_raw_object(void *object) {
-        auto x = reinterpret_cast < uintptr_t > (object);
-        return reinterpret_cast < impl * >(x | 1);
-    }
+}
+deleter(raw_object_tag tag, void *object)
+    : _impl(from_raw_object(object))
+{
+}
+/// \endcond
+/// Destroys the deleter and carries out the encapsulated action.
+~deleter();
+deleter &operator=(deleter && x);
+deleter &operator=(deleter &) = delete;
+/// Performs a sharing operation.  The encapsulated action will only
+/// be carried out after both the original deleter and the returned
+/// deleter are both destroyed.
+///
+/// \return a deleter with the same encapsulated action as this one.
+deleter share();
+/// Checks whether the deleter has an associated action.
+explicit operator  bool() const
+{
+    return bool(_impl);
+}
+/// \cond internal void reset(impl * i) {
+this->~deleter();
+new (this) deleter(i);
+}
+/// \endcond
+/// Appends another deleter to this deleter.  When this deleter is
+/// destroyed, both encapsulated actions will be carried out.
+void append(deleter d);
+private:
+static bool is_raw_object(impl *i)
+{
+    auto x = reinterpret_cast < uintptr_t >(i);
+    return x & 1;
+}
+bool is_raw_object() const
+{
+    return is_raw_object(_impl);
+}
+static void *to_raw_object(impl *i)
+{
+    auto x = reinterpret_cast < uintptr_t >(i);
+    return reinterpret_cast < void *>(x & ~uintptr_t(1));
+}
+void *to_raw_object() const
+{
+    return to_raw_object(_impl);
+}
+impl *from_raw_object(void *object)
+{
+    auto x = reinterpret_cast < uintptr_t >(object);
+    return reinterpret_cast < impl * >(x | 1);
+}
 };
 
 /// \cond internal
 struct deleter::impl {
     std::atomic_uint refs;
     deleter next;
-     impl(deleter next):refs(1), next(std::move(next)) {
-    } virtual ~ impl() {
+    impl(deleter next): refs(1), next(std::move(next))
+    {
+    } virtual ~ impl()
+    {
     }
 };
 
@@ -130,35 +143,39 @@ inline deleter::~deleter()
     }
 }
 
-inline deleter & deleter::operator=(deleter && x)
+inline deleter &deleter::operator=(deleter && x)
 {
     if (this != &x) {
         this->~deleter();
-        new(this) deleter(std::move(x));
+        new (this) deleter(std::move(x));
     }
     return *this;
 }
 
 /// \cond internal
-template < typename Deleter > struct lambda_deleter_impl final:deleter::impl {
+template < typename Deleter > struct lambda_deleter_impl final: deleter::impl {
     Deleter del;
     lambda_deleter_impl(deleter next, Deleter && del)
-    :impl(std::move(next)), del(std::move(del)) {
-    } ~lambda_deleter_impl() override {
+        : impl(std::move(next)), del(std::move(del))
+    {
+    } ~lambda_deleter_impl() override
+    {
         del();
     }
 };
 
-template < typename Object > struct object_deleter_impl final:deleter::impl {
+template < typename Object > struct object_deleter_impl final: deleter::impl {
     Object obj;
     object_deleter_impl(deleter next, Object && obj)
-    :impl(std::move(next)), obj(std::move(obj)) {
-}};
+        : impl(std::move(next)), obj(std::move(obj))
+    {
+    }
+};
 
 template < typename Object >
-    inline
-    object_deleter_impl < Object > *make_object_deleter_impl(deleter next,
-                                                             Object obj)
+inline
+object_deleter_impl < Object > *make_object_deleter_impl(deleter next,
+        Object obj)
 {
     return new object_deleter_impl < Object > (std::move(next), std::move(obj));
 }
@@ -189,10 +206,12 @@ template < typename Object > deleter make_deleter(Object o)
 }
 
 /// \cond internal
-struct free_deleter_impl final:deleter::impl {
+struct free_deleter_impl final: deleter::impl {
     void *obj;
-    free_deleter_impl(void *obj):impl(deleter()), obj(obj) {
-    } ~free_deleter_impl() override {
+    free_deleter_impl(void *obj): impl(deleter()), obj(obj)
+    {
+    } ~free_deleter_impl() override
+    {
         std::free(obj);
     }
 };
@@ -222,16 +241,17 @@ inline void deleter::append(deleter d)
     impl *next_impl = _impl;
     deleter *next_d = this;
     while (next_impl) {
-        if (next_impl == d._impl)
+        if (next_impl == d._impl) {
             return;
+        }
         if (is_raw_object(next_impl)) {
             next_d->_impl = next_impl =
-                new free_deleter_impl(to_raw_object(next_impl));
+                                new free_deleter_impl(to_raw_object(next_impl));
         }
         if (next_impl->refs != 1) {
             next_d->_impl = next_impl =
-                make_object_deleter_impl(std::move(next_impl->next),
-                                         deleter(next_impl));
+                                make_object_deleter_impl(std::move(next_impl->next),
+                                    deleter(next_impl));
         }
         next_d = &next_impl->next;
         next_impl = next_d->_impl;
@@ -260,10 +280,10 @@ inline deleter make_free_deleter(void *obj)
 /// \related deleter
 inline deleter make_free_deleter(deleter next, void *obj)
 {
-    return make_deleter(std::move(next),[obj] ()mutable {
-                        std::free(obj);
-                        }
-    );
+    return make_deleter(std::move(next), [obj]()mutable {
+        std::free(obj);
+    }
+                       );
 }
 
 /// \see make_deleter(Object)
@@ -271,7 +291,7 @@ inline deleter make_free_deleter(deleter next, void *obj)
 template < typename T > inline deleter make_object_deleter(T && obj)
 {
     return deleter {
-    make_object_deleter_impl(deleter(), std::move(obj))};
+        make_object_deleter_impl(deleter(), std::move(obj))};
 }
 
 /// \see make_deleter(deleter, Object)
@@ -279,7 +299,7 @@ template < typename T > inline deleter make_object_deleter(T && obj)
 template < typename T > inline deleter make_object_deleter(deleter d, T && obj)
 {
     return deleter {
-    make_object_deleter_impl(std::move(d), std::move(obj))};
+        make_object_deleter_impl(std::move(d), std::move(obj))};
 }
 
 /// @}

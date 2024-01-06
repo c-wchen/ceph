@@ -14,8 +14,9 @@ using namespace std;
 
 int RGWObjManifest::generator::create_next(uint64_t ofs)
 {
-    if (ofs < last_ofs)         /* only going forward */
+    if (ofs < last_ofs) {       /* only going forward */
         return -EINVAL;
+    }
 
     uint64_t max_head_size = manifest->get_max_head_size();
 
@@ -42,9 +43,9 @@ int RGWObjManifest::generator::create_next(uint64_t ofs)
     return 0;
 }
 
-int RGWObjManifest::append(const DoutPrefixProvider * dpp, RGWObjManifest & m,
-                           const RGWZoneGroup & zonegroup,
-                           const RGWZoneParams & zone_params)
+int RGWObjManifest::append(const DoutPrefixProvider *dpp, RGWObjManifest &m,
+                           const RGWZoneGroup &zonegroup,
+                           const RGWZoneParams &zone_params)
 {
     if (explicit_objs || m.explicit_objs) {
         return append_explicit(dpp, m, zonegroup, zone_params);
@@ -74,13 +75,13 @@ int RGWObjManifest::append(const DoutPrefixProvider * dpp, RGWObjManifest & m,
         map < uint64_t, RGWObjManifestRule >::reverse_iterator last_rule =
             rules.rbegin();
 
-        RGWObjManifestRule & rule = last_rule->second;
+        RGWObjManifestRule &rule = last_rule->second;
 
         if (rule.part_size == 0) {
             rule.part_size = obj_size - rule.start_ofs;
         }
 
-        RGWObjManifestRule & next_rule = miter->second;
+        RGWObjManifestRule &next_rule = miter->second;
         if (!next_rule.part_size) {
             next_rule.part_size = m.obj_size - next_rule.start_ofs;
         }
@@ -100,8 +101,7 @@ int RGWObjManifest::append(const DoutPrefixProvider * dpp, RGWObjManifest & m,
             rule_prefix != next_rule_prefix) {
             if (next_rule_prefix != prefix) {
                 append_rules(m, miter, &next_rule_prefix);
-            }
-            else {
+            } else {
                 append_rules(m, miter, NULL);
             }
             break;
@@ -125,22 +125,23 @@ int RGWObjManifest::append(const DoutPrefixProvider * dpp, RGWObjManifest & m,
     return 0;
 }
 
-void RGWObjManifest::append_rules(RGWObjManifest & m, map < uint64_t,
-                                  RGWObjManifestRule >::iterator & miter,
-                                  string * override_prefix)
+void RGWObjManifest::append_rules(RGWObjManifest &m, map < uint64_t,
+                                  RGWObjManifestRule >::iterator &miter,
+                                  string *override_prefix)
 {
     for (; miter != m.rules.end(); ++miter) {
         RGWObjManifestRule rule = miter->second;
         rule.start_ofs += obj_size;
-        if (override_prefix)
+        if (override_prefix) {
             rule.override_prefix = *override_prefix;
+        }
         rules[rule.start_ofs] = rule;
     }
 }
 
-void RGWObjManifest::convert_to_explicit(const DoutPrefixProvider * dpp,
-                                         const RGWZoneGroup & zonegroup,
-                                         const RGWZoneParams & zone_params)
+void RGWObjManifest::convert_to_explicit(const DoutPrefixProvider *dpp,
+        const RGWZoneGroup &zonegroup,
+        const RGWZoneParams &zone_params)
 {
     if (explicit_objs) {
         return;
@@ -148,17 +149,16 @@ void RGWObjManifest::convert_to_explicit(const DoutPrefixProvider * dpp,
     obj_iterator iter = obj_begin(dpp);
 
     while (iter != obj_end(dpp)) {
-        RGWObjManifestPart & part = objs[iter.get_stripe_ofs()];
-        const rgw_obj_select & os = iter.get_location();
-        const rgw_raw_obj & raw_loc = os.get_raw_obj(zonegroup, zone_params);
+        RGWObjManifestPart &part = objs[iter.get_stripe_ofs()];
+        const rgw_obj_select &os = iter.get_location();
+        const rgw_raw_obj &raw_loc = os.get_raw_obj(zonegroup, zone_params);
         part.loc_ofs = 0;
 
         uint64_t ofs = iter.get_stripe_ofs();
 
         if (ofs == 0) {
             part.loc = obj;
-        }
-        else {
+        } else {
             RGWSI_Tier_RADOS::raw_obj_to_obj(tail_placement.bucket, raw_loc,
                                              &part.loc);
         }
@@ -173,10 +173,10 @@ void RGWObjManifest::convert_to_explicit(const DoutPrefixProvider * dpp,
     prefix.clear();
 }
 
-int RGWObjManifest::append_explicit(const DoutPrefixProvider * dpp,
-                                    RGWObjManifest & m,
-                                    const RGWZoneGroup & zonegroup,
-                                    const RGWZoneParams & zone_params)
+int RGWObjManifest::append_explicit(const DoutPrefixProvider *dpp,
+                                    RGWObjManifest &m,
+                                    const RGWZoneGroup &zonegroup,
+                                    const RGWZoneParams &zone_params)
 {
     if (!explicit_objs) {
         convert_to_explicit(dpp, zonegroup, zone_params);
@@ -187,7 +187,7 @@ int RGWObjManifest::append_explicit(const DoutPrefixProvider * dpp,
     map < uint64_t, RGWObjManifestPart >::iterator iter;
     uint64_t base = obj_size;
     for (iter = m.objs.begin(); iter != m.objs.end(); ++iter) {
-        RGWObjManifestPart & part = iter->second;
+        RGWObjManifestPart &part = iter->second;
         objs[base + iter->first] = part;
     }
     obj_size += m.obj_size;
@@ -195,7 +195,7 @@ int RGWObjManifest::append_explicit(const DoutPrefixProvider * dpp,
     return 0;
 }
 
-bool RGWObjManifest::get_rule(uint64_t ofs, RGWObjManifestRule * rule)
+bool RGWObjManifest::get_rule(uint64_t ofs, RGWObjManifestRule *rule)
 {
     if (rules.empty()) {
         return false;
@@ -212,21 +212,20 @@ bool RGWObjManifest::get_rule(uint64_t ofs, RGWObjManifestRule * rule)
     return true;
 }
 
-int RGWObjManifest::generator::create_begin(CephContext * cct,
-                                            RGWObjManifest * _m,
-                                            const rgw_placement_rule &
-                                            head_placement_rule,
-                                            const rgw_placement_rule *
-                                            tail_placement_rule,
-                                            const rgw_bucket & _b,
-                                            const rgw_obj & _obj)
+int RGWObjManifest::generator::create_begin(CephContext *cct,
+        RGWObjManifest *_m,
+        const rgw_placement_rule &
+        head_placement_rule,
+        const rgw_placement_rule *
+        tail_placement_rule,
+        const rgw_bucket &_b,
+        const rgw_obj &_obj)
 {
     manifest = _m;
 
     if (!tail_placement_rule) {
         manifest->set_tail_placement(head_placement_rule, _b);
-    }
-    else {
+    } else {
         rgw_placement_rule new_tail_rule = *tail_placement_rule;
         new_tail_rule.inherit_from(head_placement_rule);
         manifest->set_tail_placement(new_tail_rule, _b);
@@ -256,8 +255,7 @@ int RGWObjManifest::generator::create_begin(CephContext * cct,
 
     if (head_size > 0) {
         cur_stripe_size = head_size;
-    }
-    else {
+    } else {
         cur_stripe_size = rule.stripe_max_size;
     }
 
@@ -265,14 +263,14 @@ int RGWObjManifest::generator::create_begin(CephContext * cct,
 
     manifest->get_implicit_location(cur_part_id, cur_stripe, 0, NULL, &cur_obj);
 
-    // Normal object which not generated through copy operation 
+    // Normal object which not generated through copy operation
     manifest->set_tail_instance(_obj.key.instance);
 
     return 0;
 }
 
 void RGWObjManifestPart::generate_test_instances(std::list <
-                                                 RGWObjManifestPart * >&o)
+        RGWObjManifestPart * > &o)
 {
     o.push_back(new RGWObjManifestPart);
 
@@ -287,7 +285,7 @@ void RGWObjManifestPart::generate_test_instances(std::list <
     o.push_back(p);
 }
 
-void RGWObjManifest::generate_test_instances(std::list < RGWObjManifest * >&o)
+void RGWObjManifest::generate_test_instances(std::list < RGWObjManifest * > &o)
 {
     RGWObjManifest *m = new RGWObjManifest;
     map < uint64_t, RGWObjManifestPart > objs;
@@ -308,7 +306,7 @@ void RGWObjManifest::generate_test_instances(std::list < RGWObjManifest * >&o)
     o.push_back(new RGWObjManifest);
 }
 
-void RGWObjManifestPart::dump(Formatter * f) const const
+void RGWObjManifestPart::dump(Formatter *f) const const
 {
     f->open_object_section("loc");
     loc.dump(f);
@@ -317,7 +315,7 @@ void RGWObjManifestPart::dump(Formatter * f) const const
     f->dump_unsigned("size", size);
 }
 
-void RGWObjManifest::obj_iterator::dump(Formatter * f) const const
+void RGWObjManifest::obj_iterator::dump(Formatter *f) const const
 {
     f->dump_unsigned("part_ofs", part_ofs);
     f->dump_unsigned("stripe_ofs", stripe_ofs);
@@ -329,7 +327,7 @@ void RGWObjManifest::obj_iterator::dump(Formatter * f) const const
     f->dump_object("location", location);
 }
 
-void RGWObjManifest::dump(Formatter * f) const const
+void RGWObjManifest::dump(Formatter *f) const const
 {
     map < uint64_t, RGWObjManifestPart >::const_iterator iter = objs.begin();
     f->open_array_section("objs");
@@ -361,7 +359,7 @@ void RGWObjManifest::dump(Formatter * f) const const
     f->dump_object("end_iter", obj_end(nullptr));
 }
 
-void RGWObjManifestRule::dump(Formatter * f) const const
+void RGWObjManifestRule::dump(Formatter *f) const const
 {
     encode_json("start_part_num", start_part_num, f);
     encode_json("start_ofs", start_ofs, f);
@@ -370,7 +368,7 @@ void RGWObjManifestRule::dump(Formatter * f) const const
     encode_json("override_prefix", override_prefix, f);
 }
 
-void rgw_obj_select::dump(Formatter * f) const const
+void rgw_obj_select::dump(Formatter *f) const const
 {
     f->dump_string("placement_rule", placement_rule.to_str());
     f->dump_object("obj", obj);
@@ -378,7 +376,7 @@ void rgw_obj_select::dump(Formatter * f) const const
     f->dump_bool("is_raw", is_raw);
 }
 
-void RGWObjTier::dump(Formatter * f) const const
+void RGWObjTier::dump(Formatter *f) const const
 {
     encode_json("name", name, f);
     encode_json("tier_placement", tier_placement, f);
@@ -386,11 +384,11 @@ void RGWObjTier::dump(Formatter * f) const const
 }
 
 // returns true on success, false on failure
-static bool rgw_get_obj_data_pool(const RGWZoneGroup & zonegroup,
-                                  const RGWZoneParams & zone_params,
+static bool rgw_get_obj_data_pool(const RGWZoneGroup &zonegroup,
+                                  const RGWZoneParams &zone_params,
                                   const rgw_placement_rule &
-                                  head_placement_rule, const rgw_obj & obj,
-                                  rgw_pool * pool)
+                                  head_placement_rule, const rgw_obj &obj,
+                                  rgw_pool *pool)
 {
     if (!zone_params.get_head_data_pool(head_placement_rule, obj, pool)) {
         RGWZonePlacementInfo placement;
@@ -403,8 +401,7 @@ static bool rgw_get_obj_data_pool(const RGWZoneGroup & zonegroup,
             *pool =
                 placement.get_data_pool(zonegroup.default_placement.
                                         storage_class);
-        }
-        else {
+        } else {
             *pool = placement.get_data_extra_pool();
         }
     }
@@ -412,10 +409,10 @@ static bool rgw_get_obj_data_pool(const RGWZoneGroup & zonegroup,
     return true;
 }
 
-static bool rgw_obj_to_raw(const RGWZoneGroup & zonegroup,
-                           const RGWZoneParams & zone_params,
-                           const rgw_placement_rule & head_placement_rule,
-                           const rgw_obj & obj, rgw_raw_obj * raw_obj)
+static bool rgw_obj_to_raw(const RGWZoneGroup &zonegroup,
+                           const RGWZoneParams &zone_params,
+                           const rgw_placement_rule &head_placement_rule,
+                           const rgw_obj &obj, rgw_raw_obj *raw_obj)
 {
     get_obj_bucket_and_oid_loc(obj, raw_obj->oid, raw_obj->loc);
 
@@ -423,9 +420,9 @@ static bool rgw_obj_to_raw(const RGWZoneGroup & zonegroup,
                                  obj, &raw_obj->pool);
 }
 
-rgw_raw_obj rgw_obj_select::get_raw_obj(const RGWZoneGroup & zonegroup,
-                                        const RGWZoneParams & zone_params) const
-    const
+rgw_raw_obj rgw_obj_select::get_raw_obj(const RGWZoneGroup &zonegroup,
+                                        const RGWZoneParams &zone_params) const
+const
 {
     if (!is_raw) {
         rgw_raw_obj r;
@@ -436,8 +433,8 @@ rgw_raw_obj rgw_obj_select::get_raw_obj(const RGWZoneGroup & zonegroup,
 }
 
 // returns true on success, false on failure
-bool RGWRados::get_obj_data_pool(const rgw_placement_rule & placement_rule,
-                                 const rgw_obj & obj, rgw_pool * pool)
+bool RGWRados::get_obj_data_pool(const rgw_placement_rule &placement_rule,
+                                 const rgw_obj &obj, rgw_pool *pool)
 {
     return rgw_get_obj_data_pool(svc.zone->get_zonegroup(),
                                  svc.zone->get_zone_params(), placement_rule,

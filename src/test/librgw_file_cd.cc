@@ -27,28 +27,29 @@
 
 using namespace std;
 
-namespace {
-    librgw_t rgw = nullptr;
-    string userid("testuser");
-    string access_key("");
-    string secret_key("");
-    struct rgw_fs *fs = nullptr;
+namespace
+{
+librgw_t rgw = nullptr;
+string userid("testuser");
+string access_key("");
+string secret_key("");
+struct rgw_fs *fs = nullptr;
 
-    uint32_t owner_uid = 867;
-    uint32_t owner_gid = 5309;
-    uint32_t create_mask = RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
+uint32_t owner_uid = 867;
+uint32_t owner_gid = 5309;
+uint32_t create_mask = RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
 
-    bool do_create = false;
-    bool do_delete = false;
-    bool do_multi = false;
-    int multi_cnt = 10;
+bool do_create = false;
+bool do_delete = false;
+bool do_multi = false;
+int multi_cnt = 10;
 
-    string bucket_name = "sorrydave";
+string bucket_name = "sorrydave";
 
-    struct {
-        int argc;
-        char **argv;
-    } saved_args;
+struct {
+    int argc;
+    char **argv;
+} saved_args;
 }
 
 TEST(LibRGW, INIT)
@@ -134,8 +135,9 @@ TEST(LibRGW, CLEANUP)
 
 TEST(LibRGW, UMOUNT)
 {
-    if (!fs)
+    if (!fs) {
         return;
+    }
 
     int ret = rgw_umount(fs, RGW_UMOUNT_FLAG_NONE);
     ASSERT_EQ(ret, 0);
@@ -166,39 +168,30 @@ int main(int argc, char *argv[])
         if (ceph_argparse_witharg(args, arg_iter, &val, "--access",
                                   (char *)nullptr)) {
             access_key = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--secret",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--secret",
+                                         (char *)nullptr)) {
             secret_key = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--userid",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--userid",
+                                         (char *)nullptr)) {
             userid = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--bn",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--bn",
+                                         (char *)nullptr)) {
             bucket_name = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--uid",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--uid",
+                                         (char *)nullptr)) {
             owner_uid = std::stoi(val);
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--gid",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--gid",
+                                         (char *)nullptr)) {
             owner_gid = std::stoi(val);
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--create",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--create",
+                                      (char *)nullptr)) {
             do_create = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--delete",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--delete",
+                                      (char *)nullptr)) {
             do_delete = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--multi", (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--multi", (char *)nullptr)) {
             do_multi = true;
-        }
-        else {
+        } else {
             ++arg_iter;
         }
     }

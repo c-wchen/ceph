@@ -43,7 +43,7 @@ string str_int(string s, int i)
 }
 
 /* test garbage collection */
-static void create_obj(cls_rgw_obj & obj, int i, int j)
+static void create_obj(cls_rgw_obj &obj, int i, int j)
 {
     char buf[32];
     snprintf(buf, sizeof(buf), "-%d.%d", i, j);
@@ -86,8 +86,7 @@ TEST(cls_rgw_gc, gc_queue_ops1)
         cls_rgw_gc_queue_enqueue(op, 0, info);
         if (i == 1) {
             ASSERT_EQ(-ENOSPC, ioctx.operate(queue_name, &op));
-        }
-        else {
+        } else {
             ASSERT_EQ(0, ioctx.operate(queue_name, &op));
         }
     }
@@ -125,7 +124,7 @@ TEST(cls_rgw_gc, gc_queue_ops1)
                                   list_info1, &truncated, next_marker);
     ASSERT_EQ(1, list_info1.size());
 
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         std::cerr << "[          ] list info tag = " << it.tag << std::endl;
         ASSERT_EQ("chain-0", it.tag);
     }
@@ -172,8 +171,7 @@ TEST(cls_rgw_gc, gc_queue_ops2)
         cls_rgw_gc_queue_enqueue(op, 0, info);
         if (i == 2) {
             ASSERT_EQ(-ENOSPC, ioctx.operate(queue_name, &op));
-        }
-        else {
+        } else {
             ASSERT_EQ(0, ioctx.operate(queue_name, &op));
         }
     }
@@ -188,7 +186,7 @@ TEST(cls_rgw_gc, gc_queue_ops2)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 0;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         string tag = "chain-" + to_string(i);
         ASSERT_EQ(tag, it.tag);
         i++;
@@ -253,8 +251,9 @@ TEST(cls_rgw_gc, gc_queue_ops3)
         info.tag = tag;
         cls_rgw_gc_queue_enqueue(op, 5, info);
         ASSERT_EQ(0, ioctx.operate(queue_name, &op));
-        if (i == 0)
+        if (i == 0) {
             defer_info = info;
+        }
     }
 
     //Test defer entry for 1st element
@@ -272,7 +271,7 @@ TEST(cls_rgw_gc, gc_queue_ops3)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 0;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         std::cerr << "[          ] list info tag = " << it.tag << std::endl;
         if (i == 0) {
             ASSERT_EQ("chain-1", it.tag);
@@ -353,7 +352,7 @@ TEST(cls_rgw_gc, gc_queue_ops4)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 0;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         string tag = "chain-" + to_string(i);
         ASSERT_EQ(tag, it.tag);
         i++;
@@ -402,8 +401,7 @@ TEST(cls_rgw_gc, gc_queue_ops5)
         info.tag = tag;
         if (i == 2) {
             cls_rgw_gc_queue_enqueue(op, 300, info);
-        }
-        else {
+        } else {
             cls_rgw_gc_queue_enqueue(op, 0, info);
         }
         ASSERT_EQ(0, ioctx.operate(queue_name, &op));
@@ -418,7 +416,7 @@ TEST(cls_rgw_gc, gc_queue_ops5)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 0;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         string tag = "chain-" + to_string(i);
         ASSERT_EQ(tag, it.tag);
         i++;
@@ -504,7 +502,7 @@ TEST(cls_rgw_gc, gc_queue_ops6)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 1;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         string tag = "chain-" + to_string(i);
         ASSERT_EQ(tag, it.tag);
         i++;
@@ -577,7 +575,7 @@ TEST(cls_rgw_gc, gc_queue_ops7)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 1;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         string tag = "chain-" + to_string(i);
         ASSERT_EQ(tag, it.tag);
         i++;
@@ -650,7 +648,7 @@ TEST(cls_rgw_gc, gc_queue_ops8)
     ASSERT_EQ(2, list_info1.size());
 
     int i = 1;
-  for (auto it:list_info1) {
+    for (auto it : list_info1) {
         string tag = "chain-" + to_string(i);
         ASSERT_EQ(tag, it.tag);
         i++;

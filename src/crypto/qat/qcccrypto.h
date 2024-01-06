@@ -15,23 +15,27 @@ extern "C" {
 #include "icp_sal_user.h"
 #include "icp_sal_poll.h"
 #include "qae_mem_utils.h"
-} class QccCrypto {
+}
+class QccCrypto
+{
 
-  public:
+public:
     CpaCySymCipherDirection qcc_op_type;
 
-    QccCrypto() {
+    QccCrypto()
+    {
     };
-    ~QccCrypto() {
+    ~QccCrypto()
+    {
     };
 
     bool init();
     bool destroy();
     bool perform_op(unsigned char *out, const unsigned char *in, size_t size,
-                    uint8_t * iv,
-                    uint8_t * key, CpaCySymCipherDirection op_type);
+                    uint8_t *iv,
+                    uint8_t *key, CpaCySymCipherDirection op_type);
 
-  private:
+private:
 
     // Currently only supporting AES_256_CBC.
     // To-Do: Needs to be expanded
@@ -99,7 +103,7 @@ extern "C" {
      * Function to handle the crypt operation. Will run while the main thread
      * runs the polling function on the instance doing the op
      */
-    void do_crypt(qcc_thread_args * thread_args);
+    void do_crypt(qcc_thread_args *thread_args);
 
     /*
      * Handle queue with free instances to handle op
@@ -114,7 +118,8 @@ extern "C" {
      * hugepages.
      * To-Do: A kernel based one.
      */
-    static inline void qcc_contig_mem_free(void **ptr) {
+    static inline void qcc_contig_mem_free(void **ptr)
+    {
         if (*ptr) {
             qaeMemFreeNUMA(ptr);
             *ptr = NULL;
@@ -122,7 +127,8 @@ extern "C" {
     }
 
     static inline CpaStatus qcc_contig_mem_alloc(void **ptr, Cpa32U size,
-                                                 Cpa32U alignment = 1) {
+            Cpa32U alignment = 1)
+    {
         *ptr = qaeMemAllocNUMA(size, 0, alignment);
         if (NULL == *ptr) {
             return CPA_STATUS_RESOURCE;
@@ -134,14 +140,16 @@ extern "C" {
      * Malloc & free calls masked to maintain consistency and future kernel
      * alloc support.
      */
-    static inline void qcc_os_mem_free(void **ptr) {
+    static inline void qcc_os_mem_free(void **ptr)
+    {
         if (*ptr) {
             free(*ptr);
             *ptr = NULL;
         }
     }
 
-    static inline CpaStatus qcc_os_mem_alloc(void **ptr, Cpa32U size) {
+    static inline CpaStatus qcc_os_mem_alloc(void **ptr, Cpa32U size)
+    {
         *ptr = malloc(size);
         if (*ptr == NULL) {
             return CPA_STATUS_RESOURCE;
@@ -150,7 +158,8 @@ extern "C" {
     }
 
     std::atomic < bool > is_init = {
-    false};
+        false
+    };
     CpaStatus init_stat, stat;
 
     /*

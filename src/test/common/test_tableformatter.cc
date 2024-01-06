@@ -17,10 +17,10 @@ TEST(tableformatter, singleline)
     formatter.flush(sout);
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n" "+----------+--------+---------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n" "+----------+--------+---------+\n";
     EXPECT_EQ(cmp, sout.str());
 }
 
@@ -32,10 +32,10 @@ TEST(tableformatter, longfloat)
     formatter.flush(sout);
 
     std::string cmp = ""
-        "+----------------------+\n"
-        "| float                |\n"
-        "+----------------------+\n"
-        "| 0.14285714285714285  |\n" "+----------------------+\n";
+                      "+----------------------+\n"
+                      "| float                |\n"
+                      "+----------------------+\n"
+                      "| 0.14285714285714285  |\n" "+----------------------+\n";
     EXPECT_EQ(cmp, sout.str());
 }
 
@@ -51,11 +51,11 @@ TEST(tableformatter, multiline)
     formatter.dump_string("string", "string");
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n"
-        "| 20       | 20     | string  |\n" "+----------+--------+---------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n"
+                      "| 20       | 20     | string  |\n" "+----------+--------+---------+\n";
 
     formatter.flush(sout);
     EXPECT_EQ(cmp, sout.str());
@@ -72,10 +72,10 @@ TEST(tableformatter, multiflush)
     formatter.flush(sout1);
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n" "+----------+--------+---------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n" "+----------+--------+---------+\n";
 
     EXPECT_EQ(cmp, sout1.str());
 
@@ -85,7 +85,7 @@ TEST(tableformatter, multiflush)
     formatter.flush(sout2);
 
     cmp = ""
-        "| 20       | 20     | string  |\n" "+----------+--------+---------+\n";
+          "| 20       | 20     | string  |\n" "+----------+--------+---------+\n";
 
     EXPECT_EQ(cmp, sout2.str());
 
@@ -106,15 +106,15 @@ TEST(tableformatter, multireset)
     formatter.flush(sout);
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n"
-        "+----------+--------+---------+\n"
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 20       | 20     | string  |\n" "+----------+--------+---------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 20       | 20     | string  |\n" "+----------+--------+---------+\n";
 
     EXPECT_EQ(cmp, sout.str());
 }
@@ -133,16 +133,16 @@ TEST(tableformatter, changingheaderlength)
     formatter.flush(sout);
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n"
-        "+----------+--------+---------+\n"
-        "+----------+--------+---------------+\n"
-        "| integer  | float  | string        |\n"
-        "+----------+--------+---------------+\n"
-        "| 20       | 20     | stringstring  |\n"
-        "+----------+--------+---------------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "+----------+--------+---------------+\n"
+                      "| integer  | float  | string        |\n"
+                      "+----------+--------+---------------+\n"
+                      "| 20       | 20     | stringstring  |\n"
+                      "+----------+--------+---------------+\n";
 
     EXPECT_EQ(cmp, sout.str());
 }
@@ -161,16 +161,16 @@ TEST(tableformatter, changingheader)
     formatter.flush(sout);
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n"
-        "+----------+--------+---------+\n"
-        "+--------------+---------+---------------+\n"
-        "| longinteger  | double  | char*         |\n"
-        "+--------------+---------+---------------+\n"
-        "| 20           | 20      | stringstring  |\n"
-        "+--------------+---------+---------------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "+--------------+---------+---------------+\n"
+                      "| longinteger  | double  | char*         |\n"
+                      "+--------------+---------+---------------+\n"
+                      "| 20           | 20      | stringstring  |\n"
+                      "+--------------+---------+---------------+\n";
 
     EXPECT_EQ(cmp, sout.str());
 }
@@ -190,16 +190,16 @@ TEST(tableformatter, extendingheader)
     formatter.flush(sout);
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n"
-        "+----------+--------+---------+\n"
-        "+----------+--------+---------+--------+\n"
-        "| integer  | float  | string  | char*  |\n"
-        "+----------+--------+---------+--------+\n"
-        "| 20       | 20     | string  | abcde  |\n"
-        "+----------+--------+---------+--------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "+----------+--------+---------+--------+\n"
+                      "| integer  | float  | string  | char*  |\n"
+                      "+----------+--------+---------+--------+\n"
+                      "| 20       | 20     | string  | abcde  |\n"
+                      "+----------+--------+---------+--------+\n";
 
     EXPECT_EQ(cmp, sout.str());
 }
@@ -215,10 +215,10 @@ TEST(tableformatter, stream)
     delete formatter;
 
     std::string cmp = ""
-        "+----------+--------+---------+\n"
-        "| integer  | float  | string  |\n"
-        "+----------+--------+---------+\n"
-        "| 10       | 10     | string  |\n" "+----------+--------+---------+\n";
+                      "+----------+--------+---------+\n"
+                      "| integer  | float  | string  |\n"
+                      "+----------+--------+---------+\n"
+                      "| 10       | 10     | string  |\n" "+----------+--------+---------+\n";
 
     EXPECT_EQ(cmp, sout.str());
 }
@@ -238,8 +238,8 @@ TEST(tableformatter, multiline_keyval)
     delete formatter;
 
     std::string cmp = ""
-        "key::integer=\"10\" key::float=\"10\" key::string=\"string\" \n"
-        "key::integer=\"20\" key::float=\"20\" key::string=\"string\" \n";
+                      "key::integer=\"10\" key::float=\"10\" key::string=\"string\" \n"
+                      "key::integer=\"20\" key::float=\"20\" key::string=\"string\" \n";
 
     EXPECT_EQ(cmp, sout.str());
 }

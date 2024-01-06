@@ -12,12 +12,14 @@
 #include "include/coredumpctl.h"
 #include "log/Log.h"
 
-class lockdep:public::testing::Test {
-  protected:
-    void SetUp() override {
+class lockdep: public::testing::Test
+{
+protected:
+    void SetUp() override
+    {
 #ifndef CEPH_DEBUG_MUTEX
         GTEST_SKIP() <<
-            "WARNING: CEPH_DEBUG_MUTEX is not defined, lockdep will not work";
+                     "WARNING: CEPH_DEBUG_MUTEX is not defined, lockdep will not work";
 #endif
         CephInitParameters params(CEPH_ENTITY_TYPE_CLIENT);
         cct = common_preinit(params, CODE_ENVIRONMENT_UTILITY,
@@ -26,14 +28,15 @@ class lockdep:public::testing::Test {
         cct->_conf.set_val("lockdep", "true");
         cct->_conf.apply_changes(nullptr);
         ASSERT_TRUE(g_lockdep);
-    } void TearDown() final {
+    } void TearDown() final
+    {
         if (cct) {
             cct->put();
             cct = nullptr;
         }
     }
-  protected:
-    CephContext * cct = nullptr;
+protected:
+    CephContext *cct = nullptr;
 };
 
 TEST_F(lockdep, abba)

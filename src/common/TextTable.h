@@ -32,23 +32,27 @@
  * between columns.
  */
 
-class TextTable {
+class TextTable
+{
 
-  public:
+public:
     enum Align { LEFT = 1, CENTER, RIGHT };
 
-  private:
+private:
     struct TextTableColumn {
         std::string heading;
         int width;
         Align hd_align;
         Align col_align;
 
-         TextTableColumn() {
-        } TextTableColumn(const std::string & h, int w, Align ha,
-                          Align ca):heading(h), width(w), hd_align(ha),
-            col_align(ca) {
-        } ~TextTableColumn() {
+        TextTableColumn()
+        {
+        } TextTableColumn(const std::string &h, int w, Align ha,
+                          Align ca): heading(h), width(w), hd_align(ha),
+            col_align(ca)
+        {
+        } ~TextTableColumn()
+        {
         }
     };
 
@@ -56,69 +60,76 @@ class TextTable {
     unsigned int curcol, currow;    // col, row being inserted into
     unsigned int indent;        // indent width when rendering
     std::string column_separation = {
-    "  "};
+        "  "
+    };
 
-  protected:
+protected:
     std::vector < std::vector < std::string > >row; // row data array
 
-  public:
-  TextTable():curcol(0), currow(0), indent(0) {
+public:
+    TextTable(): curcol(0), currow(0), indent(0)
+    {
     }
-    ~TextTable() {
+    ~TextTable()
+    {
     }
 
-  /**
-   * Define a column in the table.
-   *
-   * @param heading Column heading string (or "")
-   * @param hd_align Alignment for heading in column
-   * @param col_align Data alignment
-   *
-   * @note alignment is of type TextTable::Align; values are
-   * TextTable::LEFT, TextTable::CENTER, or TextTable::RIGHT
-   *
-   */
-    void define_column(const std::string & heading, Align hd_align,
+    /**
+     * Define a column in the table.
+     *
+     * @param heading Column heading string (or "")
+     * @param hd_align Alignment for heading in column
+     * @param col_align Data alignment
+     *
+     * @note alignment is of type TextTable::Align; values are
+     * TextTable::LEFT, TextTable::CENTER, or TextTable::RIGHT
+     *
+     */
+    void define_column(const std::string &heading, Align hd_align,
                        Align col_align);
 
-  /**
-   * Set indent for table.  Only affects table output.
-   *
-   * @param i Number of spaces to indent
-   */
-    void set_indent(int i) {
+    /**
+     * Set indent for table.  Only affects table output.
+     *
+     * @param i Number of spaces to indent
+     */
+    void set_indent(int i)
+    {
         indent = i;
     }
 
-  /**
-   * Set column separation
-   *
-   * @param s String to separate columns
-   */
-    void set_column_separation(const std::string & s) {
+    /**
+     * Set column separation
+     *
+     * @param s String to separate columns
+     */
+    void set_column_separation(const std::string &s)
+    {
         column_separation = s;
     }
 
-  /**
-   * Add item to table, perhaps on new row.
-   * table << val1 << val2 << TextTable::endrow;
-   *
-   * @param: value to output.
-   *
-   * @note: Numerics are output in decimal; strings are not truncated.
-   * Output formatting choice is limited to alignment in define_column().
-   *
-   * @return TextTable& for chaining.
-   */
-
-    template < typename T > TextTable & operator<<(const T & item) {
-        if (row.size() < currow + 1)
-            row.resize(currow + 1);
-
     /**
-     * col.size() is a good guess for how big row[currow] needs to be,
-     * so just expand it out now
+     * Add item to table, perhaps on new row.
+     * table << val1 << val2 << TextTable::endrow;
+     *
+     * @param: value to output.
+     *
+     * @note: Numerics are output in decimal; strings are not truncated.
+     * Output formatting choice is limited to alignment in define_column().
+     *
+     * @return TextTable& for chaining.
      */
+
+    template < typename T > TextTable &operator<<(const T &item)
+    {
+        if (row.size() < currow + 1) {
+            row.resize(currow + 1);
+        }
+
+        /**
+         * col.size() is a good guess for how big row[currow] needs to be,
+         * so just expand it out now
+         */
         if (row[currow].size() < col.size()) {
             row[currow].resize(col.size());
         }
@@ -144,36 +155,37 @@ class TextTable {
         return *this;
     }
 
-  /**
-   * Degenerate type/variable here is just to allow selection of the
-   * following operator<< for "<< TextTable::endrow"
-   */
+    /**
+     * Degenerate type/variable here is just to allow selection of the
+     * following operator<< for "<< TextTable::endrow"
+     */
 
     struct endrow_t {
     };
     static constexpr endrow_t endrow {
     };
 
-  /**
-   * Implements TextTable::endrow
-   */
+    /**
+     * Implements TextTable::endrow
+     */
 
-    TextTable & operator<<(endrow_t) {
+    TextTable &operator<<(endrow_t)
+    {
         curcol = 0;
         currow++;
         return *this;
     }
 
-  /**
-   * Render table to ostream (i.e. cout << table)
-   */
+    /**
+     * Render table to ostream (i.e. cout << table)
+     */
 
-    friend std::ostream & operator<<(std::ostream & out, const TextTable & t);
+    friend std::ostream &operator<<(std::ostream &out, const TextTable &t);
 
-  /**
-   * clear: Reset everything in a TextTable except column defs
-   * resize cols to heading widths, clear indent
-   */
+    /**
+     * clear: Reset everything in a TextTable except column defs
+     * resize cols to heading widths, clear indent
+     */
 
     void clear();
 };

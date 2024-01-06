@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MOSDREPSCRUB_H
@@ -21,8 +21,9 @@
  * instruct an OSD initiate a replica scrub on a specific PG
  */
 
-class MOSDRepScrub final:public MOSDFastDispatchOp {
-  public:
+class MOSDRepScrub final: public MOSDFastDispatchOp
+{
+public:
     static constexpr int HEAD_VERSION = 9;
     static constexpr int COMPAT_VERSION = 6;
 
@@ -38,42 +39,50 @@ class MOSDRepScrub final:public MOSDFastDispatchOp {
     int32_t priority = 0;
     bool high_priority = false;
 
-    epoch_t get_map_epoch() const override {
+    epoch_t get_map_epoch() const override
+    {
         return map_epoch;
-    } epoch_t get_min_epoch() const override {
+    } epoch_t get_min_epoch() const override
+    {
         return min_epoch;
-    } spg_t get_spg() const override {
+    } spg_t get_spg() const override
+    {
         return pgid;
     } MOSDRepScrub()
-    :MOSDFastDispatchOp {
-    MSG_OSD_REP_SCRUB, HEAD_VERSION, COMPAT_VERSION}
-    , chunky(false), deep(false) {
+        : MOSDFastDispatchOp {
+        MSG_OSD_REP_SCRUB, HEAD_VERSION, COMPAT_VERSION}
+    , chunky(false), deep(false)
+    {
     }
 
     MOSDRepScrub(spg_t pgid, eversion_t scrub_to, epoch_t map_epoch,
                  epoch_t min_epoch, hobject_t start, hobject_t end, bool deep,
                  bool preemption, int prio, bool highprio)
-  :    MOSDFastDispatchOp {
-    MSG_OSD_REP_SCRUB, HEAD_VERSION, COMPAT_VERSION},
-        pgid(pgid),
-        scrub_to(scrub_to),
-        map_epoch(map_epoch),
-        min_epoch(min_epoch),
-        chunky(true),
-        start(start),
-        end(end),
-        deep(deep),
-        allow_preemption(preemption), priority(prio), high_priority(highprio) {
+        :    MOSDFastDispatchOp {
+        MSG_OSD_REP_SCRUB, HEAD_VERSION, COMPAT_VERSION},
+    pgid(pgid),
+    scrub_to(scrub_to),
+    map_epoch(map_epoch),
+    min_epoch(min_epoch),
+    chunky(true),
+    start(start),
+    end(end),
+    deep(deep),
+    allow_preemption(preemption), priority(prio), high_priority(highprio)
+    {
     }
 
-  private:
-    ~MOSDRepScrub()final {
+private:
+    ~MOSDRepScrub()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "replica scrub";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "replica_scrub(pg: " << pgid
             << ",from:" << scrub_from
             << ",to:" << scrub_to
@@ -84,8 +93,9 @@ class MOSDRepScrub final:public MOSDFastDispatchOp {
             << ",version:" << header.version
             << ",allow_preemption:" << (int)allow_preemption
             << ",priority=" << priority << (high_priority ? " (high)" : "")
-        << ")";
-    } void encode_payload(uint64_t features) override {
+            << ")";
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(pgid.pgid, payload);
         encode(scrub_from, payload);
@@ -102,7 +112,8 @@ class MOSDRepScrub final:public MOSDFastDispatchOp {
         encode(priority, payload);
         encode(high_priority, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(pgid.pgid, p);
@@ -120,8 +131,7 @@ class MOSDRepScrub final:public MOSDFastDispatchOp {
         }
         if (header.version >= 7) {
             decode(min_epoch, p);
-        }
-        else {
+        } else {
             min_epoch = map_epoch;
         }
         if (header.version >= 8) {

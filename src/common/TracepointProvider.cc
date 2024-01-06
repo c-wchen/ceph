@@ -4,11 +4,10 @@
 #include "common/TracepointProvider.h"
 #include "common/config.h"
 
-TracepointProvider::TracepointProvider(CephContext * cct, const char *library,
+TracepointProvider::TracepointProvider(CephContext *cct, const char *library,
                                        const char *config_key)
-:m_cct(cct), m_library(library), m_config_keys
-{
-config_key, NULL}
+    : m_cct(cct), m_library(library), m_config_keys {
+    config_key, NULL}
 
 {
     m_cct->_conf.add_observer(this);
@@ -23,16 +22,16 @@ TracepointProvider::~TracepointProvider()
     }
 }
 
-void TracepointProvider::handle_conf_change(const ConfigProxy & conf,
-                                            const std::set < std::string >
-                                            &changed)
+void TracepointProvider::handle_conf_change(const ConfigProxy &conf,
+        const std::set < std::string >
+        &changed)
 {
     if (changed.count(m_config_keys[0])) {
         verify_config(conf);
     }
 }
 
-void TracepointProvider::verify_config(const ConfigProxy & conf)
+void TracepointProvider::verify_config(const ConfigProxy &conf)
 {
     std::lock_guard locker(m_lock);
     if (m_handle) {

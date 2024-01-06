@@ -9,7 +9,8 @@
 
 class RGWPeriod;
 
-class RGWPeriodPuller:public RGWPeriodHistory::Puller {
+class RGWPeriodPuller: public RGWPeriodHistory::Puller
+{
     CephContext *cct;
 
     struct {
@@ -17,9 +18,9 @@ class RGWPeriodPuller:public RGWPeriodHistory::Puller {
         RGWSI_SysObj *sysobj;
     } svc;
 
-  public:
-    explicit RGWPeriodPuller(RGWSI_Zone * zone_svc, RGWSI_SysObj * sysobj_svc);
+public:
+    explicit RGWPeriodPuller(RGWSI_Zone *zone_svc, RGWSI_SysObj *sysobj_svc);
 
-    int pull(const DoutPrefixProvider * dpp, const std::string & period_id,
-             RGWPeriod & period, optional_yield y) override;
+    int pull(const DoutPrefixProvider *dpp, const std::string &period_id,
+             RGWPeriod &period, optional_yield y) override;
 };

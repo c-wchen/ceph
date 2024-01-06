@@ -31,8 +31,9 @@ int RadosImport::import(std::string pool, bool no_overwrite)
     librados::Rados cluster;
 
     char *id = getenv("CEPH_CLIENT_ID");
-    if (id)
+    if (id) {
         cerr << "Client id is: " << id << std::endl;
+    }
     int ret = cluster.init(id);
     if (ret) {
         cerr << "Error " << ret << " in cluster.init" << std::endl;
@@ -63,55 +64,55 @@ int RadosImport::import(std::string pool, bool no_overwrite)
     return import(ioctx, no_overwrite);
 }
 
-int RadosImport::import(librados::IoCtx & io_ctx, bool no_overwrite)
+int RadosImport::import(librados::IoCtx &io_ctx, bool no_overwrite)
 {
     bufferlist ebl;
     pg_info_t info;
     PGLog::IndexedLog log;
 
     int ret = read_super();
-    if (ret)
+    if (ret) {
         return ret;
+    }
 
     if (sh.magic != super_header::super_magic) {
         cerr << "Invalid magic number: 0x"
-            << std::hex << sh.magic << " vs. 0x" << super_header::super_magic
-            << std::dec << std::endl;
+             << std::hex << sh.magic << " vs. 0x" << super_header::super_magic
+             << std::dec << std::endl;
         return -EFAULT;
     }
 
     if (sh.version > super_header::super_ver) {
         cerr << "Can't handle export format version=" << sh.
-            version << std::endl;
+             version << std::endl;
         return -EINVAL;
     }
 
     //First section must be TYPE_PG_BEGIN
     sectiontype_t type;
     ret = read_section(&type, &ebl);
-    if (ret)
+    if (ret) {
         return ret;
+    }
 
     bool pool_mode = false;
     if (type == TYPE_POOL_BEGIN) {
         pool_mode = true;
         cout << "Importing pool" << std::endl;
-    }
-    else if (type == TYPE_PG_BEGIN) {
+    } else if (type == TYPE_PG_BEGIN) {
         auto ebliter = ebl.cbegin();
         pg_begin pgb;
         pgb.decode(ebliter);
         spg_t pgid = pgb.pgid;;
         if (!pgid.is_no_shard()) {
             cerr << "Importing Erasure Coded shard is not supported" << std::
-                endl;
+                 endl;
             return -EOPNOTSUPP;
         }
         dout(10) << "Exported features: " << pgb.superblock.
-            compat_features << dendl;
+                 compat_features << dendl;
         cout << "Importing from pgid " << pgid << std::endl;
-    }
-    else {
+    } else {
         cerr << "Invalid initial section code " << type << std::endl;
         return -EFAULT;
     }
@@ -120,22 +121,24 @@ int RadosImport::import(librados::IoCtx & io_ctx, bool no_overwrite)
 #if 0
     if (sb.compat_features.compare(pgb.superblock.compat_features) == -1) {
         cerr << "Export has incompatible features set "
-            << pgb.superblock.compat_features << std::endl;
+             << pgb.superblock.compat_features << std::endl;
         return -EINVAL;
     }
 #endif
 
 #if defined(__linux__)
-    if (file_fd != STDIN_FILENO)
+    if (file_fd != STDIN_FILENO) {
         posix_fadvise(file_fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+    }
 #endif
 
     bool done = false;
     bool found_metadata = false;
     while (!done) {
         ret = read_section(&type, &ebl);
-        if (ret)
+        if (ret) {
             return ret;
+        }
 
         //cout << "do_import: Section type " << hex << type << dec << std::endl;
         if (type >= END_OF_TYPES) {
@@ -143,25 +146,25 @@ int RadosImport::import(librados::IoCtx & io_ctx, bool no_overwrite)
             continue;
         }
         switch (type) {
-        case TYPE_OBJECT_BEGIN:
-            ret = get_object_rados(io_ctx, ebl, no_overwrite);
-            if (ret) {
-                cerr << "Error inserting object: " << ret << std::endl;
-                return ret;
-            }
-            break;
-        case TYPE_PG_METADATA:
-            dout(10) << "Don't care about the old metadata" << dendl;
-            found_metadata = true;
-            break;
-        case TYPE_PG_END:
-            done = true;
-            break;
-        case TYPE_POOL_END:
-            done = true;
-            break;
-        default:
-            return -EFAULT;
+            case TYPE_OBJECT_BEGIN:
+                ret = get_object_rados(io_ctx, ebl, no_overwrite);
+                if (ret) {
+                    cerr << "Error inserting object: " << ret << std::endl;
+                    return ret;
+                }
+                break;
+            case TYPE_PG_METADATA:
+                dout(10) << "Don't care about the old metadata" << dendl;
+                found_metadata = true;
+                break;
+            case TYPE_PG_END:
+                done = true;
+                break;
+            case TYPE_POOL_END:
+                done = true;
+                break;
+            default:
+                return -EFAULT;
         }
     }
 
@@ -170,13 +173,14 @@ int RadosImport::import(librados::IoCtx & io_ctx, bool no_overwrite)
     }
 
 #if defined(__linux__)
-    if (file_fd != STDIN_FILENO)
+    if (file_fd != STDIN_FILENO) {
         posix_fadvise(file_fd, 0, 0, POSIX_FADV_DONTNEED);
+    }
 #endif
     return 0;
 }
 
-int RadosImport::get_object_rados(librados::IoCtx & ioctx, bufferlist & bl,
+int RadosImport::get_object_rados(librados::IoCtx &ioctx, bufferlist &bl,
                                   bool no_overwrite)
 {
     auto ebliter = bl.cbegin();
@@ -216,12 +220,13 @@ int RadosImport::get_object_rados(librados::IoCtx & ioctx, bufferlist & bl,
         if (ret == 0) {
             if (no_overwrite)
                 // Could set skipping, but dry-run doesn't change anything either
+            {
                 msg = "Skipping existing";
-            else
+            } else {
                 msg = "***Overwrite***";
+            }
         }
-    }
-    else {
+    } else {
         int ret = ioctx.create(ob.hoid.hobj.oid.name, true);
         if (ret && ret != -EEXIST) {
             cerr << "create failed: " << cpp_strerror(ret) << std::endl;
@@ -231,8 +236,7 @@ int RadosImport::get_object_rados(librados::IoCtx & ioctx, bufferlist & bl,
             if (no_overwrite) {
                 msg = "Skipping existing";
                 skipping = true;
-            }
-            else {
+            } else {
                 msg = "***Overwrite***";
                 ret = ioctx.remove(ob.hoid.hobj.oid.name);
                 if (ret < 0) {
@@ -261,12 +265,11 @@ int RadosImport::get_object_rados(librados::IoCtx & ioctx, bufferlist & bl,
     if (align) {
         need_align = true;
         alignment = align;
-    }
-    else {
+    } else {
         int ret = ioctx.pool_requires_alignment2(&need_align);
         if (ret < 0) {
             cerr << "pool_requires_alignment2 failed: " << cpp_strerror(ret)
-                << std::endl;
+                 << std::endl;
             return ret;
         }
 
@@ -274,7 +277,7 @@ int RadosImport::get_object_rados(librados::IoCtx & ioctx, bufferlist & bl,
             ret = ioctx.pool_required_alignment2(&alignment);
             if (ret < 0) {
                 cerr << "pool_required_alignment2 failed: " << cpp_strerror(ret)
-                    << std::endl;
+                     << std::endl;
                 return ret;
             }
             ceph_assert(alignment != 0);
@@ -304,125 +307,133 @@ int RadosImport::get_object_rados(librados::IoCtx & ioctx, bufferlist & bl,
             continue;
         }
         switch (type) {
-        case TYPE_DATA:
-            ds.decode(ebliter);
-            dout(10) << "\tdata: offset " << ds.offset << " len " << ds.
-                len << dendl;
-            if (need_align) {
-                if (ds.offset != in_offset) {
-                    cerr << "Discontiguous object data in export" << std::endl;
-                    return -EFAULT;
+            case TYPE_DATA:
+                ds.decode(ebliter);
+                dout(10) << "\tdata: offset " << ds.offset << " len " << ds.
+                         len << dendl;
+                if (need_align) {
+                    if (ds.offset != in_offset) {
+                        cerr << "Discontiguous object data in export" << std::endl;
+                        return -EFAULT;
+                    }
+                    ceph_assert(ds.databl.length() == ds.len);
+                    databl.claim_append(ds.databl);
+                    in_offset += ds.len;
+                    if (databl.length() >= alignment) {
+                        uint64_t rndlen =
+                            uint64_t(databl.length() / alignment) * alignment;
+                        dout(10) << "write offset=" << out_offset << " len=" <<
+                                 rndlen << dendl;
+                        if (!dry_run && !skipping) {
+                            ret =
+                                ioctx.write(ob.hoid.hobj.oid.name, databl, rndlen,
+                                            out_offset);
+                            if (ret) {
+                                cerr << "write failed: " << cpp_strerror(ret) <<
+                                     std::endl;
+                                return ret;
+                            }
+                        }
+                        out_offset += rndlen;
+                        bufferlist n;
+                        if (databl.length() > rndlen) {
+                            ceph_assert(databl.length() - rndlen < alignment);
+                            n.substr_of(databl, rndlen, databl.length() - rndlen);
+                        }
+                        databl = n;
+                    }
+                    break;
                 }
-                ceph_assert(ds.databl.length() == ds.len);
-                databl.claim_append(ds.databl);
-                in_offset += ds.len;
-                if (databl.length() >= alignment) {
-                    uint64_t rndlen =
-                        uint64_t(databl.length() / alignment) * alignment;
-                    dout(10) << "write offset=" << out_offset << " len=" <<
-                        rndlen << dendl;
-                    if (!dry_run && !skipping) {
-                        ret =
-                            ioctx.write(ob.hoid.hobj.oid.name, databl, rndlen,
-                                        out_offset);
-                        if (ret) {
-                            cerr << "write failed: " << cpp_strerror(ret) <<
-                                std::endl;
+                if (!dry_run && !skipping) {
+                    ret =
+                        ioctx.write(ob.hoid.hobj.oid.name, ds.databl, ds.len,
+                                    ds.offset);
+                    if (ret) {
+                        cerr << "write failed: " << cpp_strerror(ret) << std::endl;
+                        return ret;
+                    }
+                }
+                break;
+            case TYPE_ATTRS:
+                as.decode(ebliter);
+
+                dout(10) << "\tattrs: len " << as.data.size() << dendl;
+                if (dry_run || skipping) {
+                    break;
+                }
+                for (std::map < string, bufferlist >::iterator i = as.data.begin();
+                     i != as.data.end(); ++i) {
+                    // The user xattrs that we want all begin with "_" with length > 1.
+                    // Drop key "_" and all attributes that do not start with '_'
+                    if (i->first == "_" || i->first[0] != '_') {
+                        continue;
+                    }
+                    ret =
+                        ioctx.setxattr(ob.hoid.hobj.oid.name,
+                                       i->first.substr(1).c_str(), i->second);
+                    if (ret) {
+                        cerr << "setxattr failed: " << cpp_strerror(ret) << std::
+                             endl;
+                        if (ret != -EOPNOTSUPP) {
                             return ret;
                         }
                     }
-                    out_offset += rndlen;
-                    bufferlist n;
-                    if (databl.length() > rndlen) {
-                        ceph_assert(databl.length() - rndlen < alignment);
-                        n.substr_of(databl, rndlen, databl.length() - rndlen);
-                    }
-                    databl = n;
                 }
                 break;
-            }
-            if (!dry_run && !skipping) {
-                ret =
-                    ioctx.write(ob.hoid.hobj.oid.name, ds.databl, ds.len,
-                                ds.offset);
-                if (ret) {
-                    cerr << "write failed: " << cpp_strerror(ret) << std::endl;
-                    return ret;
-                }
-            }
-            break;
-        case TYPE_ATTRS:
-            as.decode(ebliter);
+            case TYPE_OMAP_HDR:
+                oh.decode(ebliter);
 
-            dout(10) << "\tattrs: len " << as.data.size() << dendl;
-            if (dry_run || skipping)
-                break;
-            for (std::map < string, bufferlist >::iterator i = as.data.begin();
-                 i != as.data.end(); ++i) {
-                // The user xattrs that we want all begin with "_" with length > 1.
-                // Drop key "_" and all attributes that do not start with '_'
-                if (i->first == "_" || i->first[0] != '_')
-                    continue;
-                ret =
-                    ioctx.setxattr(ob.hoid.hobj.oid.name,
-                                   i->first.substr(1).c_str(), i->second);
-                if (ret) {
-                    cerr << "setxattr failed: " << cpp_strerror(ret) << std::
-                        endl;
-                    if (ret != -EOPNOTSUPP)
-                        return ret;
-                }
-            }
-            break;
-        case TYPE_OMAP_HDR:
-            oh.decode(ebliter);
-
-            dout(10) << "\tomap header: " << string(oh.hdr.c_str(),
-                                                    oh.hdr.length())
-                << dendl;
-            if (dry_run || skipping)
-                break;
-            ret = ioctx.omap_set_header(ob.hoid.hobj.oid.name, oh.hdr);
-            if (ret) {
-                cerr << "omap_set_header failed: " << cpp_strerror(ret) << std::
-                    endl;
-                if (ret != -EOPNOTSUPP)
-                    return ret;
-            }
-            break;
-        case TYPE_OMAP:
-            os.decode(ebliter);
-
-            dout(10) << "\tomap: size " << os.omap.size() << dendl;
-            if (dry_run || skipping)
-                break;
-            ret = ioctx.omap_set(ob.hoid.hobj.oid.name, os.omap);
-            if (ret) {
-                cerr << "omap_set failed: " << cpp_strerror(ret) << std::endl;
-                if (ret != -EOPNOTSUPP)
-                    return ret;
-            }
-            break;
-        case TYPE_OBJECT_END:
-            done = true;
-            if (need_align && databl.length() > 0) {
-                ceph_assert(databl.length() < alignment);
-                dout(10) << "END write offset=" << out_offset << " len=" <<
-                    databl.length() << dendl;
-                if (dry_run || skipping)
+                dout(10) << "\tomap header: " << string(oh.hdr.c_str(),
+                                                        oh.hdr.length())
+                         << dendl;
+                if (dry_run || skipping) {
                     break;
-                ret =
-                    ioctx.write(ob.hoid.hobj.oid.name, databl, databl.length(),
-                                out_offset);
-                if (ret) {
-                    cerr << "write failed: " << cpp_strerror(ret) << std::endl;
-                    return ret;
                 }
-            }
-            break;
-        default:
-            cerr << "Unexpected section type " << type << std::endl;
-            return -EFAULT;
+                ret = ioctx.omap_set_header(ob.hoid.hobj.oid.name, oh.hdr);
+                if (ret) {
+                    cerr << "omap_set_header failed: " << cpp_strerror(ret) << std::
+                         endl;
+                    if (ret != -EOPNOTSUPP) {
+                        return ret;
+                    }
+                }
+                break;
+            case TYPE_OMAP:
+                os.decode(ebliter);
+
+                dout(10) << "\tomap: size " << os.omap.size() << dendl;
+                if (dry_run || skipping) {
+                    break;
+                }
+                ret = ioctx.omap_set(ob.hoid.hobj.oid.name, os.omap);
+                if (ret) {
+                    cerr << "omap_set failed: " << cpp_strerror(ret) << std::endl;
+                    if (ret != -EOPNOTSUPP) {
+                        return ret;
+                    }
+                }
+                break;
+            case TYPE_OBJECT_END:
+                done = true;
+                if (need_align && databl.length() > 0) {
+                    ceph_assert(databl.length() < alignment);
+                    dout(10) << "END write offset=" << out_offset << " len=" <<
+                             databl.length() << dendl;
+                    if (dry_run || skipping) {
+                        break;
+                    }
+                    ret =
+                        ioctx.write(ob.hoid.hobj.oid.name, databl, databl.length(),
+                                    out_offset);
+                    if (ret) {
+                        cerr << "write failed: " << cpp_strerror(ret) << std::endl;
+                        return ret;
+                    }
+                }
+                break;
+            default:
+                cerr << "Unexpected section type " << type << std::endl;
+                return -EFAULT;
         }
     }
     return 0;

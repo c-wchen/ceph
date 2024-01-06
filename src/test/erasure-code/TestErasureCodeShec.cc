@@ -45,8 +45,8 @@ TEST(ErasureCodeShec, init_1)
     //all parameters are normal values
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -77,8 +77,8 @@ TEST(ErasureCodeShec, init_2)
     //all parameters are normal values
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -111,8 +111,8 @@ TEST(ErasureCodeShec, init_3)
     //all parameters are normal values
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -144,8 +144,8 @@ TEST(ErasureCodeShec, init_4)
     //all parameters are normal values
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -176,8 +176,8 @@ TEST(ErasureCodeShec, init_5)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     //plugin is not specified
     (*profile)["technique"] = "";
@@ -199,8 +199,8 @@ TEST(ErasureCodeShec, init_6)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "jerasure";  //unexpected value
     (*profile)["technique"] = "";
@@ -222,8 +222,8 @@ TEST(ErasureCodeShec, init_7)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "abc";   //unexpected value
     (*profile)["technique"] = "";
@@ -245,8 +245,8 @@ TEST(ErasureCodeShec, init_8)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -268,8 +268,8 @@ TEST(ErasureCodeShec, init_9)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -292,8 +292,8 @@ TEST(ErasureCodeShec, init_10)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -315,8 +315,8 @@ TEST(ErasureCodeShec, init_11)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "abc";    //unexpected value
@@ -338,8 +338,8 @@ TEST(ErasureCodeShec, init_12)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -360,8 +360,8 @@ TEST(ErasureCodeShec, init_13)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -382,8 +382,8 @@ TEST(ErasureCodeShec, init_14)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -404,8 +404,8 @@ TEST(ErasureCodeShec, init_15)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -426,8 +426,8 @@ TEST(ErasureCodeShec, init_16)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -448,8 +448,8 @@ TEST(ErasureCodeShec, init_17)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -470,8 +470,8 @@ TEST(ErasureCodeShec, init_18)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -492,8 +492,8 @@ TEST(ErasureCodeShec, init_19)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -514,8 +514,8 @@ TEST(ErasureCodeShec, init_20)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -536,8 +536,8 @@ TEST(ErasureCodeShec, init_21)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -558,8 +558,8 @@ TEST(ErasureCodeShec, init_22)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -580,8 +580,8 @@ TEST(ErasureCodeShec, init_23)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -602,8 +602,8 @@ TEST(ErasureCodeShec, init_24)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -631,8 +631,8 @@ TEST(ErasureCodeShec, init_25)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -660,8 +660,8 @@ TEST(ErasureCodeShec, init_26)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -689,8 +689,8 @@ TEST(ErasureCodeShec, init_27)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -718,8 +718,8 @@ TEST(ErasureCodeShec, init_28)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -740,8 +740,8 @@ TEST(ErasureCodeShec, init_29)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -767,8 +767,8 @@ TEST(ErasureCodeShec, init_30)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -793,8 +793,8 @@ TEST(ErasureCodeShec, init_31)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -815,8 +815,8 @@ TEST(ErasureCodeShec, init_32)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -837,8 +837,8 @@ TEST(ErasureCodeShec, init_33)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -859,8 +859,8 @@ TEST(ErasureCodeShec, init_34)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -882,8 +882,8 @@ TEST(ErasureCodeShec, init2_4)
     //all parameters are normal values
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -914,8 +914,8 @@ TEST(ErasureCodeShec, init2_5)
     //all parameters are normal values
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     ErasureCodeProfile *profile2 = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
@@ -957,8 +957,8 @@ TEST(ErasureCodeShec, minimum_to_decode_8)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -993,8 +993,8 @@ TEST(ErasureCodeShec, minimum_to_decode_9)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1029,8 +1029,8 @@ TEST(ErasureCodeShec, minimum_to_decode_10)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1065,8 +1065,8 @@ TEST(ErasureCodeShec, minimum_to_decode_11)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1101,8 +1101,8 @@ TEST(ErasureCodeShec, minimum_to_decode_12)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1134,8 +1134,8 @@ TEST(ErasureCodeShec, minimum_to_decode_13)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1175,8 +1175,8 @@ TEST(ErasureCodeShec, minimum_to_decode2_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1211,8 +1211,8 @@ TEST(ErasureCodeShec, minimum_to_decode2_3)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1260,8 +1260,8 @@ TEST(ErasureCodeShec, minimum_to_decode_with_cost_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1282,7 +1282,7 @@ TEST(ErasureCodeShec, minimum_to_decode_with_cost_1)
     }
 
     int r = shec->minimum_to_decode_with_cost(want_to_decode, available_chunks,
-                                              &minimum_chunks);
+            &minimum_chunks);
     EXPECT_TRUE(shec->matrix != NULL);
     EXPECT_EQ(0, r);
     EXPECT_TRUE(minimum_chunks.size());
@@ -1296,8 +1296,8 @@ TEST(ErasureCodeShec, minimum_to_decode_with_cost_2_3)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1328,7 +1328,7 @@ TEST(ErasureCodeShec, minimum_to_decode_with_cost_2_3)
     sleep(1);
     printf("*** test start ***\n");
     int r = shec->minimum_to_decode_with_cost(want_to_decode, available_chunks,
-                                              &minimum_chunks);
+            &minimum_chunks);
     EXPECT_TRUE(shec->matrix != NULL);
     EXPECT_EQ(0, r);
     EXPECT_EQ(want_to_decode, minimum_chunks);
@@ -1345,8 +1345,8 @@ TEST(ErasureCodeShec, encode_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1364,7 +1364,7 @@ TEST(ErasureCodeShec, encode_1)
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "0123"            //128
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1405,8 +1405,8 @@ TEST(ErasureCodeShec, encode_2)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1423,7 +1423,7 @@ TEST(ErasureCodeShec, encode_2)
 
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1445,8 +1445,9 @@ TEST(ErasureCodeShec, encode_2)
 
     bufferlist out1, out2, usable;
     //out1 is "encoded"
-    for (unsigned int i = 0; i < encoded.size(); ++i)
+    for (unsigned int i = 0; i < encoded.size(); ++i) {
         out1.append(encoded[i]);
+    }
     //out2 is "decoded"
     shec->decode_concat(encoded, &out2);
     usable.substr_of(out2, 0, in.length());
@@ -1461,8 +1462,8 @@ TEST(ErasureCodeShec, encode_3)
 {
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1475,7 +1476,7 @@ TEST(ErasureCodeShec, encode_3)
     bufferlist in;
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
-        );
+             );
     set < int >want_to_encode;
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
@@ -1518,8 +1519,8 @@ TEST(ErasureCodeShec, encode_4)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1536,7 +1537,7 @@ TEST(ErasureCodeShec, encode_4)
 
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count() - 1; ++i) {
         want_to_encode.insert(i);
     }
@@ -1577,8 +1578,8 @@ TEST(ErasureCodeShec, encode_8)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1594,7 +1595,7 @@ TEST(ErasureCodeShec, encode_8)
 
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1611,8 +1612,8 @@ TEST(ErasureCodeShec, encode_9)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1629,7 +1630,7 @@ TEST(ErasureCodeShec, encode_9)
 
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1649,8 +1650,8 @@ TEST(ErasureCodeShec, encode2_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1668,7 +1669,7 @@ TEST(ErasureCodeShec, encode2_1)
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "0123"            //128
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1708,8 +1709,8 @@ TEST(ErasureCodeShec, encode2_3)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1727,7 +1728,7 @@ TEST(ErasureCodeShec, encode2_3)
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "0123"            //128
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1779,8 +1780,8 @@ TEST(ErasureCodeShec, decode_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1799,7 +1800,7 @@ TEST(ErasureCodeShec, decode_1)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1829,8 +1830,7 @@ TEST(ErasureCodeShec, decode_1)
         if (c_size * (i + 1) <= in.length()) {
             usable.substr_of(in, c_size * i, c_size);
             cmp = memcmp(decoded[i].c_str(), usable.c_str(), c_size);
-        }
-        else {
+        } else {
             usable.substr_of(in, c_size * i, in.length() % c_size);
             cmp =
                 memcmp(decoded[i].c_str(), usable.c_str(),
@@ -1848,8 +1848,8 @@ TEST(ErasureCodeShec, decode_8)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1868,7 +1868,7 @@ TEST(ErasureCodeShec, decode_8)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1898,8 +1898,7 @@ TEST(ErasureCodeShec, decode_8)
         if (c_size * (i + 1) <= in.length()) {
             usable.substr_of(in, c_size * i, c_size);
             cmp = memcmp(decoded[i].c_str(), usable.c_str(), c_size);
-        }
-        else {
+        } else {
             usable.substr_of(in, c_size * i, in.length() % c_size);
             cmp =
                 memcmp(decoded[i].c_str(), usable.c_str(),
@@ -1917,8 +1916,8 @@ TEST(ErasureCodeShec, decode_9)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -1937,7 +1936,7 @@ TEST(ErasureCodeShec, decode_9)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -1979,8 +1978,7 @@ TEST(ErasureCodeShec, decode_9)
         if (c_size * (i + 1) <= in.length()) {
             usable.substr_of(in, c_size * i, c_size);
             cmp = memcmp(decoded[i].c_str(), usable.c_str(), c_size);
-        }
-        else {
+        } else {
             usable.substr_of(in, c_size * i, in.length() % c_size);
             cmp =
                 memcmp(decoded[i].c_str(), usable.c_str(),
@@ -1998,8 +1996,8 @@ TEST(ErasureCodeShec, decode_10)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2018,7 +2016,7 @@ TEST(ErasureCodeShec, decode_10)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2049,8 +2047,8 @@ TEST(ErasureCodeShec, decode_11)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2068,7 +2066,7 @@ TEST(ErasureCodeShec, decode_11)
     in.append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //length = 62
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCD"            //128
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2099,8 +2097,8 @@ TEST(ErasureCodeShec, decode_12)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2119,7 +2117,7 @@ TEST(ErasureCodeShec, decode_12)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2147,8 +2145,8 @@ TEST(ErasureCodeShec, decode_13)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2167,7 +2165,7 @@ TEST(ErasureCodeShec, decode_13)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2202,8 +2200,8 @@ TEST(ErasureCodeShec, decode2_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2222,7 +2220,7 @@ TEST(ErasureCodeShec, decode2_1)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2258,8 +2256,8 @@ TEST(ErasureCodeShec, decode2_3)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2278,7 +2276,7 @@ TEST(ErasureCodeShec, decode2_3)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2325,8 +2323,8 @@ TEST(ErasureCodeShec, decode2_4)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2345,7 +2343,7 @@ TEST(ErasureCodeShec, decode2_4)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
     }
@@ -2403,8 +2401,8 @@ TEST(ErasureCodeShec, create_rule_1_2)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2461,8 +2459,8 @@ TEST(ErasureCodeShec, create_rule_4)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2512,8 +2510,8 @@ TEST(ErasureCodeShec, create_rule2_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2571,8 +2569,8 @@ TEST(ErasureCodeShec, create_rule2_3)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2609,8 +2607,8 @@ TEST(ErasureCodeShec, get_chunk_count_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2632,8 +2630,8 @@ TEST(ErasureCodeShec, get_data_chunk_count_1)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2655,8 +2653,8 @@ TEST(ErasureCodeShec, get_chunk_size_1_2)
     //init
     ErasureCodeShecTableCache tcache;
     ErasureCodeShec *shec = new ErasureCodeShecReedSolomonVandermonde(tcache,
-                                                                      ErasureCodeShec::
-                                                                      MULTIPLE);
+        ErasureCodeShec::
+        MULTIPLE);
     ErasureCodeProfile *profile = new ErasureCodeProfile();
     (*profile)["plugin"] = "shec";
     (*profile)["technique"] = "";
@@ -2780,7 +2778,7 @@ void *thread4(void *pParam)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //124
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
-        );
+             );
     set < int >want_to_encode;
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);
@@ -2809,7 +2807,7 @@ void *thread5(void *pParam)
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //186
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //248
               "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"  //310
-        );
+             );
     set < int >want_to_encode;
     for (unsigned int i = 0; i < shec->get_chunk_count(); ++i) {
         want_to_encode.insert(i);

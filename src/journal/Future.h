@@ -13,38 +13,42 @@
 
 class Context;
 
-namespace journal {
+namespace journal
+{
 
-    class FutureImpl;
+class FutureImpl;
 
-    class Future {
-      public:
-        Future();
-        Future(const Future &);
-        Future & operator=(const Future &);
-         Future(Future &&);
-         Future & operator=(Future &&);
-         Future(ceph::ref_t < FutureImpl > future_impl);
-        ~Future();
+class Future
+{
+public:
+    Future();
+    Future(const Future &);
+    Future &operator=(const Future &);
+    Future(Future &&);
+    Future &operator=(Future &&);
+    Future(ceph::ref_t < FutureImpl > future_impl);
+    ~Future();
 
-        bool is_valid() const {
-            return bool(m_future_impl);
-        } void flush(Context * on_safe);
-        void wait(Context * on_safe);
+    bool is_valid() const
+    {
+        return bool(m_future_impl);
+    } void flush(Context *on_safe);
+    void wait(Context *on_safe);
 
-        bool is_complete() const;
-        int get_return_value() const;
+    bool is_complete() const;
+    int get_return_value() const;
 
-      private:
-         friend class Journaler;
-        friend std::ostream & operator<<(std::ostream &, const Future &);
+private:
+    friend class Journaler;
+    friend std::ostream &operator<<(std::ostream &, const Future &);
 
-        const auto & get_future_impl() const {
-            return m_future_impl;
-        } ceph::ref_t < FutureImpl > m_future_impl;
-    };
+    const auto &get_future_impl() const
+    {
+        return m_future_impl;
+    } ceph::ref_t < FutureImpl > m_future_impl;
+};
 
-     std::ostream & operator<<(std::ostream & os, const Future & future);
+std::ostream &operator<<(std::ostream &os, const Future &future);
 
 } // namespace journal using journal::operator<<;
 

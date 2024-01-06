@@ -14,62 +14,63 @@
 #undef dout_prefix
 #define dout_prefix (*_dout << "rgw period puller: ")
 
-RGWPeriodPuller::RGWPeriodPuller(RGWSI_Zone * zone_svc,
-                                 RGWSI_SysObj * sysobj_svc)
+RGWPeriodPuller::RGWPeriodPuller(RGWSI_Zone *zone_svc,
+                                 RGWSI_SysObj *sysobj_svc)
 {
     cct = zone_svc->ctx();
     svc.zone = zone_svc;
     svc.sysobj = sysobj_svc;
 }
 
-namespace {
+namespace
+{
 
 // pull the given period over the connection
-    int pull_period(const DoutPrefixProvider * dpp, RGWRESTConn * conn,
-                    const std::string & period_id, const std::string & realm_id,
-                    RGWPeriod & period, optional_yield y) {
-        rgw_user user;
-        RGWEnv env;
-        req_info info(conn->get_ctx(), &env);
-        info.method = "GET";
-        info.request_uri = "/admin/realm/period";
+int pull_period(const DoutPrefixProvider *dpp, RGWRESTConn *conn,
+                const std::string &period_id, const std::string &realm_id,
+                RGWPeriod &period, optional_yield y)
+{
+    rgw_user user;
+    RGWEnv env;
+    req_info info(conn->get_ctx(), &env);
+    info.method = "GET";
+    info.request_uri = "/admin/realm/period";
 
-        auto & params = info.args.get_params();
-        params["realm_id"] = realm_id;
-        params["period_id"] = period_id;
+    auto &params = info.args.get_params();
+    params["realm_id"] = realm_id;
+    params["period_id"] = period_id;
 
-        bufferlist data;
+    bufferlist data;
 #define MAX_REST_RESPONSE (128 * 1024)
-        int r =
-            conn->forward(dpp, user, info, nullptr, MAX_REST_RESPONSE, nullptr,
-                          &data, y);
-        if (r < 0) {
-            return r;
-        }
-
-        JSONParser parser;
-        r = parser.parse(data.c_str(), data.length());
-        if (r < 0) {
-            ldpp_dout(dpp,
-                      -1) << "request failed: " << cpp_strerror(-r) << dendl;
-            return r;
-        }
-
-        try {
-            decode_json_obj(period, &parser);
-        }
-        catch(const JSONDecoder::err & e) {
-            ldpp_dout(dpp, -1) << "failed to decode JSON input: "
-                << e.what() << dendl;
-            return -EINVAL;
-        }
-        return 0;
+    int r =
+        conn->forward(dpp, user, info, nullptr, MAX_REST_RESPONSE, nullptr,
+                      &data, y);
+    if (r < 0) {
+        return r;
     }
+
+    JSONParser parser;
+    r = parser.parse(data.c_str(), data.length());
+    if (r < 0) {
+        ldpp_dout(dpp,
+                  -1) << "request failed: " << cpp_strerror(-r) << dendl;
+        return r;
+    }
+
+    try {
+        decode_json_obj(period, &parser);
+    } catch (const JSONDecoder::err &e) {
+        ldpp_dout(dpp, -1) << "failed to decode JSON input: "
+                           << e.what() << dendl;
+        return -EINVAL;
+    }
+    return 0;
+}
 
 }                               // anonymous namespace
 
-int RGWPeriodPuller::pull(const DoutPrefixProvider * dpp,
-                          const std::string & period_id, RGWPeriod & period,
+int RGWPeriodPuller::pull(const DoutPrefixProvider *dpp,
+                          const std::string &period_id, RGWPeriod &period,
                           optional_yield y)
 {
     // try to read the period from rados
@@ -80,12 +81,12 @@ int RGWPeriodPuller::pull(const DoutPrefixProvider * dpp,
         if (svc.zone->is_meta_master()) {
             // can't pull if we're the master
             ldpp_dout(dpp, 1) << "metadata master failed to read period "
-                << period_id << " from local storage: " << cpp_strerror(r) <<
-                dendl;
+                              << period_id << " from local storage: " << cpp_strerror(r) <<
+                              dendl;
             return r;
         }
         ldpp_dout(dpp, 14) << "pulling period " << period_id
-            << " from master" << dendl;
+                           << " from master" << dendl;
         // request the period from the master zone
         r = pull_period(dpp, svc.zone->get_master_conn(), period_id,
                         svc.zone->get_realm().get_id(), period, y);
@@ -98,8 +99,7 @@ int RGWPeriodPuller::pull(const DoutPrefixProvider * dpp,
         r = period.store_info(dpp, true, y);
         if (r == -EEXIST) {
             r = 0;
-        }
-        else if (r < 0) {
+        } else if (r < 0) {
             ldpp_dout(dpp,
                       -1) << "failed to store period " << period_id << dendl;
             return r;
@@ -112,7 +112,7 @@ int RGWPeriodPuller::pull(const DoutPrefixProvider * dpp,
         }
         if (r < 0) {
             ldpp_dout(dpp, -1) << "failed to update latest_epoch for period "
-                << period_id << dendl;
+                               << period_id << dendl;
             return r;
         }
         // reflect period objects if this is the latest version
@@ -123,11 +123,10 @@ int RGWPeriodPuller::pull(const DoutPrefixProvider * dpp,
             }
         }
         ldpp_dout(dpp, 14) << "period " << period_id
-            << " pulled and written to local storage" << dendl;
-    }
-    else {
+                           << " pulled and written to local storage" << dendl;
+    } else {
         ldpp_dout(dpp, 14) << "found period " << period_id
-            << " in local storage" << dendl;
+                           << " in local storage" << dendl;
     }
     return 0;
 }

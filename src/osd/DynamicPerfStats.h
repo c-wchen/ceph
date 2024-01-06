@@ -10,24 +10,28 @@
 #include "osd/OSD.h"
 #include "osd/OpRequest.h"
 
-class DynamicPerfStats {
-  public:
-    DynamicPerfStats() {
-    } DynamicPerfStats(const std::list < OSDPerfMetricQuery > &queries) {
-      for (auto & query:queries) {
+class DynamicPerfStats
+{
+public:
+    DynamicPerfStats()
+    {
+    } DynamicPerfStats(const std::list < OSDPerfMetricQuery > &queries)
+    {
+        for (auto &query : queries) {
             data[query];
         }
     }
 
-    void merge(const DynamicPerfStats & dps) {
-      for (auto & query_it:dps.data) {
-            auto & query = query_it.first;
-          for (auto & key_it:query_it.second) {
-                auto & key = key_it.first;
+    void merge(const DynamicPerfStats &dps)
+    {
+        for (auto &query_it : dps.data) {
+            auto &query = query_it.first;
+            for (auto &key_it : query_it.second) {
+                auto &key = key_it.first;
                 auto counter_it = key_it.second.begin();
                 auto update_counter_fnc =
-                    [&counter_it] (const PerformanceCounterDescriptor & d,
-                                   PerformanceCounter * c){
+                    [&counter_it](const PerformanceCounterDescriptor & d,
+                PerformanceCounter * c) {
                     c->first += counter_it->first;
                     c->second += counter_it->second;
                     counter_it++;
@@ -39,110 +43,113 @@ class DynamicPerfStats {
         }
     }
 
-    void set_queries(const std::list < OSDPerfMetricQuery > &queries) {
+    void set_queries(const std::list < OSDPerfMetricQuery > &queries)
+    {
         std::map < OSDPerfMetricQuery,
             std::map < OSDPerfMetricKey, PerformanceCounters >> new_data;
-      for (auto & query:queries) {
+        for (auto &query : queries) {
             std::swap(new_data[query], data[query]);
         }
         std::swap(data, new_data);
     }
 
-    bool is_enabled() {
+    bool is_enabled()
+    {
         return !data.empty();
     }
 
-    void add(const OSDService * osd, const pg_info_t & pg_info,
-             const OpRequest & op, uint64_t inb, uint64_t outb,
-             const utime_t & latency) {
+    void add(const OSDService *osd, const pg_info_t &pg_info,
+             const OpRequest &op, uint64_t inb, uint64_t outb,
+             const utime_t &latency)
+    {
 
         auto update_counter_fnc =
-            [&op, inb, outb, &latency] (const PerformanceCounterDescriptor & d,
-                                        PerformanceCounter * c){
+            [&op, inb, outb, &latency](const PerformanceCounterDescriptor & d,
+        PerformanceCounter * c) {
             ceph_assert(d.is_supported());
 
             switch (d.type) {
-            case PerformanceCounterType::OPS:
-                c->first++;
-                return;
-            case PerformanceCounterType::WRITE_OPS:
-                if (op.may_write() || op.may_cache()) {
+                case PerformanceCounterType::OPS:
                     c->first++;
-                }
-                return;
-            case PerformanceCounterType::READ_OPS:
-                if (op.may_read()) {
-                    c->first++;
-                }
-                return;
-            case PerformanceCounterType::BYTES:
-                c->first += inb + outb;
-                return;
-            case PerformanceCounterType::WRITE_BYTES:
-                if (op.may_write() || op.may_cache()) {
-                    c->first += inb;
-                }
-                return;
-            case PerformanceCounterType::READ_BYTES:
-                if (op.may_read()) {
-                    c->first += outb;
-                }
-                return;
-            case PerformanceCounterType::LATENCY:
-                c->first += latency.to_nsec();
-                c->second++;
-                return;
-            case PerformanceCounterType::WRITE_LATENCY:
-                if (op.may_write() || op.may_cache()) {
+                    return;
+                case PerformanceCounterType::WRITE_OPS:
+                    if (op.may_write() || op.may_cache()) {
+                        c->first++;
+                    }
+                    return;
+                case PerformanceCounterType::READ_OPS:
+                    if (op.may_read()) {
+                        c->first++;
+                    }
+                    return;
+                case PerformanceCounterType::BYTES:
+                    c->first += inb + outb;
+                    return;
+                case PerformanceCounterType::WRITE_BYTES:
+                    if (op.may_write() || op.may_cache()) {
+                        c->first += inb;
+                    }
+                    return;
+                case PerformanceCounterType::READ_BYTES:
+                    if (op.may_read()) {
+                        c->first += outb;
+                    }
+                    return;
+                case PerformanceCounterType::LATENCY:
                     c->first += latency.to_nsec();
                     c->second++;
-                }
-                return;
-            case PerformanceCounterType::READ_LATENCY:
-                if (op.may_read()) {
-                    c->first += latency.to_nsec();
-                    c->second++;
-                }
-                return;
-            default:
-                ceph_abort_msg("unknown counter type");
+                    return;
+                case PerformanceCounterType::WRITE_LATENCY:
+                    if (op.may_write() || op.may_cache()) {
+                        c->first += latency.to_nsec();
+                        c->second++;
+                    }
+                    return;
+                case PerformanceCounterType::READ_LATENCY:
+                    if (op.may_read()) {
+                        c->first += latency.to_nsec();
+                        c->second++;
+                    }
+                    return;
+                default:
+                    ceph_abort_msg("unknown counter type");
             }
         };
 
         auto get_subkey_fnc =
-            [&osd, &pg_info, &op] (const OSDPerfMetricSubKeyDescriptor & d,
-                                   OSDPerfMetricSubKey * sub_key){
+            [&osd, &pg_info, &op](const OSDPerfMetricSubKeyDescriptor & d,
+        OSDPerfMetricSubKey * sub_key) {
             ceph_assert(d.is_supported());
 
             auto m = op.get_req < MOSDOp > ();
             std::string match_string;
             switch (d.type) {
-            case OSDPerfMetricSubKeyType::CLIENT_ID:
-                match_string = stringify(m->get_reqid().name);
-                break;
-            case OSDPerfMetricSubKeyType::CLIENT_ADDRESS:
-                match_string = stringify(m->get_connection()->get_peer_addr());
-                break;
-            case OSDPerfMetricSubKeyType::POOL_ID:
-                match_string = stringify(m->get_spg().pool());
-                break;
-            case OSDPerfMetricSubKeyType::NAMESPACE:
-                match_string = m->get_hobj().nspace;
-                break;
-            case OSDPerfMetricSubKeyType::OSD_ID:
-                match_string = stringify(osd->get_nodeid());
-                break;
-            case OSDPerfMetricSubKeyType::PG_ID:
-                match_string = stringify(pg_info.pgid);
-                break;
-            case OSDPerfMetricSubKeyType::OBJECT_NAME:
-                match_string = m->get_oid().name;
-                break;
-            case OSDPerfMetricSubKeyType::SNAP_ID:
-                match_string = stringify(m->get_snapid());
-                break;
-            default:
-                ceph_abort_msg("unknown counter type");
+                case OSDPerfMetricSubKeyType::CLIENT_ID:
+                    match_string = stringify(m->get_reqid().name);
+                    break;
+                case OSDPerfMetricSubKeyType::CLIENT_ADDRESS:
+                    match_string = stringify(m->get_connection()->get_peer_addr());
+                    break;
+                case OSDPerfMetricSubKeyType::POOL_ID:
+                    match_string = stringify(m->get_spg().pool());
+                    break;
+                case OSDPerfMetricSubKeyType::NAMESPACE:
+                    match_string = m->get_hobj().nspace;
+                    break;
+                case OSDPerfMetricSubKeyType::OSD_ID:
+                    match_string = stringify(osd->get_nodeid());
+                    break;
+                case OSDPerfMetricSubKeyType::PG_ID:
+                    match_string = stringify(pg_info.pgid);
+                    break;
+                case OSDPerfMetricSubKeyType::OBJECT_NAME:
+                    match_string = m->get_oid().name;
+                    break;
+                case OSDPerfMetricSubKeyType::SNAP_ID:
+                    match_string = stringify(m->get_snapid());
+                    break;
+                default:
+                    ceph_abort_msg("unknown counter type");
             }
 
             std::smatch match;
@@ -158,8 +165,8 @@ class DynamicPerfStats {
             return true;
         };
 
-      for (auto & it:data) {
-            auto & query = it.first;
+        for (auto &it : data) {
+            auto &query = it.first;
             OSDPerfMetricKey key;
             if (query.get_key(get_subkey_fnc, &key)) {
                 query.update_counters(update_counter_fnc, &it.second[key]);
@@ -170,34 +177,35 @@ class DynamicPerfStats {
     void add_to_reports(const std::map < OSDPerfMetricQuery,
                         OSDPerfMetricLimits > &limits,
                         std::map < OSDPerfMetricQuery,
-                        OSDPerfMetricReport > *reports) {
-      for (auto & it:data) {
-            auto & query = it.first;
+                        OSDPerfMetricReport > *reports)
+    {
+        for (auto &it : data) {
+            auto &query = it.first;
             auto limit_it = limits.find(query);
             if (limit_it == limits.end()) {
                 continue;
             }
-            auto & query_limits = limit_it->second;
-            auto & counters = it.second;
-            auto & report = (*reports)[query];
+            auto &query_limits = limit_it->second;
+            auto &counters = it.second;
+            auto &report = (*reports)[query];
 
             query.get_performance_counter_descriptors(&report.
-                                                      performance_counter_descriptors);
+                    performance_counter_descriptors);
 
-            auto & descriptors = report.performance_counter_descriptors;
+            auto &descriptors = report.performance_counter_descriptors;
             ceph_assert(descriptors.size() > 0);
 
             if (!is_limited(query_limits, counters.size())) {
-              for (auto & it_counters:counters) {
-                    auto & bl =
+                for (auto &it_counters : counters) {
+                    auto &bl =
                         report.group_packed_performance_counters[it_counters.
-                                                                 first];
+                            first];
                     query.pack_counters(it_counters.second, &bl);
                 }
                 continue;
             }
 
-          for (auto & limit:query_limits) {
+            for (auto &limit : query_limits) {
                 size_t index = 0;
                 for (; index < descriptors.size(); index++) {
                     if (descriptors[index] == limit.order_by) {
@@ -216,7 +224,7 @@ class DynamicPerfStats {
 
                 ceph_assert(limit.max_count < counters.size());
                 typedef std::map < OSDPerfMetricKey,
-                    PerformanceCounters >::iterator Iterator;
+                        PerformanceCounters >::iterator Iterator;
                 std::vector < Iterator > counter_iterators;
                 counter_iterators.reserve(limit.max_count);
 
@@ -238,10 +246,10 @@ class DynamicPerfStats {
                     }
                 }
 
-              for (auto it_counters:counter_iterators) {
-                    auto & bl =
+                for (auto it_counters : counter_iterators) {
+                    auto &bl =
                         report.group_packed_performance_counters[it_counters->
-                                                                 first];
+                            first];
                     if (bl.length() == 0) {
                         query.pack_counters(it_counters->second, &bl);
                     }
@@ -250,14 +258,15 @@ class DynamicPerfStats {
         }
     }
 
-  private:
-    static bool is_limited(const OSDPerfMetricLimits & limits,
-                           size_t counters_size) {
+private:
+    static bool is_limited(const OSDPerfMetricLimits &limits,
+                           size_t counters_size)
+    {
         if (limits.empty()) {
             return false;
         }
 
-      for (auto & limit:limits) {
+        for (auto &limit : limits) {
             if (limit.max_count >= counters_size) {
                 return false;
             }

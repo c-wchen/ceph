@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MLOCK_H
@@ -19,8 +19,9 @@
 #include "mds/SimpleLock.h"
 #include "messages/MMDSOp.h"
 
-class MLock final:public MMDSOp {
-  private:
+class MLock final: public MMDSOp
+{
+private:
     static constexpr int HEAD_VERSION = 1;
     static constexpr int COMPAT_VERSION = 1;
 
@@ -31,67 +32,84 @@ class MLock final:public MMDSOp {
     __u16 lock_type = 0;        // lock object type
     MDSCacheObjectInfo object_info;
 
-     ceph::buffer::list lockdata;   // and possibly some data
+    ceph::buffer::list lockdata;   // and possibly some data
 
-  public:
-     ceph::buffer::list & get_data() {
+public:
+    ceph::buffer::list &get_data()
+    {
         return lockdata;
-    } const ceph::buffer::list & get_data() const {
+    } const ceph::buffer::list &get_data() const
+    {
         return lockdata;
-    } int get_asker() const {
+    } int get_asker() const
+    {
         return asker;
-    } int get_action() const {
+    } int get_action() const
+    {
         return action;
-    } metareqid_t get_reqid() const {
+    } metareqid_t get_reqid() const
+    {
         return reqid;
-    } int get_lock_type() const {
+    } int get_lock_type() const
+    {
         return lock_type;
-    } const MDSCacheObjectInfo & get_object_info() const {
+    } const MDSCacheObjectInfo &get_object_info() const
+    {
         return object_info;
-    } MDSCacheObjectInfo & get_object_info() {
+    } MDSCacheObjectInfo &get_object_info()
+    {
         return object_info;
     }
 
-  protected:
-  MLock():MMDSOp {
-    MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION}
+protected:
+    MLock(): MMDSOp {
+        MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION}
     {
     }
-  MLock(int ac, mds_rank_t as):
-    MMDSOp {
-    MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION},
-        action(ac), asker(as), lock_type(0) {
+    MLock(int ac, mds_rank_t as):
+        MMDSOp {
+        MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION},
+    action(ac), asker(as), lock_type(0)
+    {
     }
-    MLock(SimpleLock * lock, int ac, mds_rank_t as):MMDSOp {
-    MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION},
-        action(ac), asker(as), lock_type(lock->get_type()) {
+    MLock(SimpleLock *lock, int ac, mds_rank_t as): MMDSOp {
+        MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION},
+    action(ac), asker(as), lock_type(lock->get_type())
+    {
         lock->get_parent()->set_object_info(object_info);
     }
-    MLock(SimpleLock * lock, int ac, mds_rank_t as,
-          ceph::buffer::list & bl):MMDSOp {
-    MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION}, action(ac), asker(as),
-        lock_type(lock->get_type()) {
+    MLock(SimpleLock *lock, int ac, mds_rank_t as,
+          ceph::buffer::list &bl): MMDSOp {
+        MSG_MDS_LOCK, HEAD_VERSION, COMPAT_VERSION}, action(ac), asker(as),
+    lock_type(lock->get_type())
+    {
         lock->get_parent()->set_object_info(object_info);
         lockdata = std::move(bl);
     }
-    ~MLock()final {
+    ~MLock()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "ILock";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "lock(a=" << SimpleLock::get_lock_action_name(action)
-        << " " << SimpleLock::get_lock_type_name(lock_type)
-        << " " << object_info << ")";
-    } void set_reqid(metareqid_t ri) {
+            << " " << SimpleLock::get_lock_type_name(lock_type)
+            << " " << object_info << ")";
+    } void set_reqid(metareqid_t ri)
+    {
         reqid = ri;
     }
-    void set_data(const ceph::buffer::list & lockdata) {
+    void set_data(const ceph::buffer::list &lockdata)
+    {
         this->lockdata = lockdata;
     }
 
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(asker, p);
@@ -101,7 +119,8 @@ class MLock final:public MMDSOp {
         decode(object_info, p);
         decode(lockdata, p);
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(asker, payload);
         encode(action, payload);
@@ -110,11 +129,11 @@ class MLock final:public MMDSOp {
         encode(object_info, payload);
         encode(lockdata, payload);
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
     template < class T, typename ... Args >
-        friend MURef < T > crimson::make_message(Args && ... args);
+    friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

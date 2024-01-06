@@ -85,13 +85,13 @@ string get_path(LPCWSTR path_w)
 }
 
 static NTSTATUS do_open_file(string path,
-                             int flags, mode_t mode, fd_context * fdc)
+                             int flags, mode_t mode, fd_context *fdc)
 {
     dout(20) << __func__ << " " << path << dendl;
     int fd = ceph_open(cmount, path.c_str(), flags, mode);
     if (fd < 0) {
         dout(2) << __func__ << " " << path
-            << ": ceph_open failed. Error: " << fd << dendl;
+                << ": ceph_open failed. Error: " << fd << dendl;
         return cephfs_errno_to_ntstatus_map(fd);
     }
 
@@ -112,7 +112,7 @@ static NTSTATUS WinCephCreateDirectory(LPCWSTR FileName,
     int ret = ceph_mkdir(cmount, path.c_str(), g_cfg->dir_mode);
     if (ret < 0) {
         dout(2) << __func__ << " " << path
-            << ": ceph_mkdir failed. Error: " << ret << dendl;
+                << ": ceph_mkdir failed. Error: " << ret << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
     return 0;
@@ -137,7 +137,7 @@ static NTSTATUS WinCephCreateFile(LPCWSTR FileName,
 
     string path = get_path(FileName);
     dout(20) << __func__ << " " << path
-        << ". CreationDisposition: " << CreationDisposition << dendl;
+             << ". CreationDisposition: " << CreationDisposition << dendl;
 
     if (g_cfg->debug) {
         print_open_params(path.c_str(), AccessMode, FlagsAndAttributes,
@@ -147,7 +147,8 @@ static NTSTATUS WinCephCreateFile(LPCWSTR FileName,
 
     pfd_context fdc = (pfd_context) & (DokanFileInfo->Context);
     *fdc = {
-    0};
+        0
+    };
     NTSTATUS st = 0;
 
     struct ceph_statx stbuf;
@@ -158,98 +159,101 @@ static NTSTATUS WinCephCreateFile(LPCWSTR FileName,
             dout(20) << __func__ << " " << path << ". File exists." << dendl;
             if (CreateOptions & FILE_DIRECTORY_FILE) {
                 dout(2) << __func__ << " " << path << ". Not a directory." <<
-                    dendl;
+                        dendl;
                 return STATUS_NOT_A_DIRECTORY;
             }
             switch (CreationDisposition) {
-            case CREATE_NEW:
-                return STATUS_OBJECT_NAME_COLLISION;
-            case TRUNCATE_EXISTING:
-                // open O_TRUNC & return 0
-                return do_open_file(path, O_CREAT | O_TRUNC | O_RDWR,
-                                    g_cfg->file_mode, fdc);
-            case OPEN_ALWAYS:
-                // open & return STATUS_OBJECT_NAME_COLLISION
-                if (!WRITE_ACCESS_REQUESTED(AccessMode))
-                    fdc->read_only = 1;
-                if ((st = do_open_file(path, fdc->read_only ? O_RDONLY : O_RDWR,
-                                       g_cfg->file_mode, fdc)))
-                    return st;
-                return STATUS_OBJECT_NAME_COLLISION;
-            case OPEN_EXISTING:
-                // open & return 0
-                if (!WRITE_ACCESS_REQUESTED(AccessMode))
-                    fdc->read_only = 1;
-                if ((st = do_open_file(path, fdc->read_only ? O_RDONLY : O_RDWR,
-                                       g_cfg->file_mode, fdc)))
-                    return st;
-                return 0;
-            case CREATE_ALWAYS:
-                // open O_TRUNC & return STATUS_OBJECT_NAME_COLLISION
-                if ((st = do_open_file(path, O_CREAT | O_TRUNC | O_RDWR,
-                                       g_cfg->file_mode, fdc)))
-                    return st;
-                return STATUS_OBJECT_NAME_COLLISION;
+                case CREATE_NEW:
+                    return STATUS_OBJECT_NAME_COLLISION;
+                case TRUNCATE_EXISTING:
+                    // open O_TRUNC & return 0
+                    return do_open_file(path, O_CREAT | O_TRUNC | O_RDWR,
+                                        g_cfg->file_mode, fdc);
+                case OPEN_ALWAYS:
+                    // open & return STATUS_OBJECT_NAME_COLLISION
+                    if (!WRITE_ACCESS_REQUESTED(AccessMode)) {
+                        fdc->read_only = 1;
+                    }
+                    if ((st = do_open_file(path, fdc->read_only ? O_RDONLY : O_RDWR,
+                                           g_cfg->file_mode, fdc))) {
+                        return st;
+                    }
+                    return STATUS_OBJECT_NAME_COLLISION;
+                case OPEN_EXISTING:
+                    // open & return 0
+                    if (!WRITE_ACCESS_REQUESTED(AccessMode)) {
+                        fdc->read_only = 1;
+                    }
+                    if ((st = do_open_file(path, fdc->read_only ? O_RDONLY : O_RDWR,
+                                           g_cfg->file_mode, fdc))) {
+                        return st;
+                    }
+                    return 0;
+                case CREATE_ALWAYS:
+                    // open O_TRUNC & return STATUS_OBJECT_NAME_COLLISION
+                    if ((st = do_open_file(path, O_CREAT | O_TRUNC | O_RDWR,
+                                           g_cfg->file_mode, fdc))) {
+                        return st;
+                    }
+                    return STATUS_OBJECT_NAME_COLLISION;
             }
-        }
-        else if (S_ISDIR(stbuf.stx_mode)) {
+        } else if (S_ISDIR(stbuf.stx_mode)) {
             dout(20) << __func__ << " " << path << ". Directory exists." <<
-                dendl;
+                     dendl;
             DokanFileInfo->IsDirectory = TRUE;
             if (CreateOptions & FILE_NON_DIRECTORY_FILE) {
                 dout(2) << __func__ << " " << path << ". File is a directory."
-                    << dendl;
+                        << dendl;
                 return STATUS_FILE_IS_A_DIRECTORY;
             }
 
             switch (CreationDisposition) {
-            case CREATE_NEW:
-                return STATUS_OBJECT_NAME_COLLISION;
-            case TRUNCATE_EXISTING:
-                return 0;
-            case OPEN_ALWAYS:
-            case OPEN_EXISTING:
-                return do_open_file(path, O_RDONLY, g_cfg->file_mode, fdc);
-            case CREATE_ALWAYS:
-                return STATUS_OBJECT_NAME_COLLISION;
+                case CREATE_NEW:
+                    return STATUS_OBJECT_NAME_COLLISION;
+                case TRUNCATE_EXISTING:
+                    return 0;
+                case OPEN_ALWAYS:
+                case OPEN_EXISTING:
+                    return do_open_file(path, O_RDONLY, g_cfg->file_mode, fdc);
+                case CREATE_ALWAYS:
+                    return STATUS_OBJECT_NAME_COLLISION;
             }
-        }
-        else {
+        } else {
             derr << __func__ << " " << path
-                << ": Unsupported st_mode: " << stbuf.stx_mode << dendl;
+                 << ": Unsupported st_mode: " << stbuf.stx_mode << dendl;
             return STATUS_BAD_FILE_TYPE;
         }
-    }
-    else {                      // The file doens't exist.
+    } else {                    // The file doens't exist.
         if (DokanFileInfo->IsDirectory) {
             // TODO: check create disposition.
             dout(20) << __func__ << " " << path << ". New directory." << dendl;
-            if ((st = WinCephCreateDirectory(FileName, DokanFileInfo)))
+            if ((st = WinCephCreateDirectory(FileName, DokanFileInfo))) {
                 return st;
+            }
             // Dokan expects a file handle even when creating new directories.
             return do_open_file(path, O_RDONLY, g_cfg->file_mode, fdc);
         }
         dout(20) << __func__ << " " << path << ". New file." << dendl;
         switch (CreationDisposition) {
-        case CREATE_NEW:
-            // create & return 0
-            return do_open_file(path, O_CREAT | O_RDWR | O_EXCL,
-                                g_cfg->file_mode, fdc);
-        case CREATE_ALWAYS:
-            // create & return 0
-            return do_open_file(path, O_CREAT | O_TRUNC | O_RDWR,
-                                g_cfg->file_mode, fdc);
-        case OPEN_ALWAYS:
-            return do_open_file(path, O_CREAT | O_RDWR, g_cfg->file_mode, fdc);
-        case OPEN_EXISTING:
-        case TRUNCATE_EXISTING:
-            dout(2) << __func__ << " " << path << ": Not found." << dendl;
-            return STATUS_OBJECT_NAME_NOT_FOUND;
-        default:
-            derr << __func__ << " " << path
-                << ": Unsupported create disposition: "
-                << CreationDisposition << dendl;
-            return STATUS_INVALID_PARAMETER;
+            case CREATE_NEW:
+                // create & return 0
+                return do_open_file(path, O_CREAT | O_RDWR | O_EXCL,
+                                    g_cfg->file_mode, fdc);
+            case CREATE_ALWAYS:
+                // create & return 0
+                return do_open_file(path, O_CREAT | O_TRUNC | O_RDWR,
+                                    g_cfg->file_mode, fdc);
+            case OPEN_ALWAYS:
+                return do_open_file(path, O_CREAT | O_RDWR, g_cfg->file_mode, fdc);
+            case OPEN_EXISTING:
+            case TRUNCATE_EXISTING:
+                dout(2) << __func__ << " " << path << ": Not found." << dendl;
+                return STATUS_OBJECT_NAME_NOT_FOUND;
+            default:
+                derr << __func__ << " " << path
+                     << ": Unsupported create disposition: "
+                     << CreationDisposition << dendl;
+                return STATUS_INVALID_PARAMETER;
         }
     }
 
@@ -272,7 +276,7 @@ static void WinCephCloseFile(LPCWSTR FileName, PDOKAN_FILE_INFO DokanFileInfo)
     int ret = ceph_close(cmount, fdc->fd);
     if (ret) {
         dout(2) << __func__ << " " << path
-            << " failed. fd: " << fdc->fd << ". Error: " << ret << dendl;
+                << " failed. fd: " << fdc->fd << ". Error: " << ret << dendl;
     }
 
     DokanFileInfo->Context = 0;
@@ -293,13 +297,12 @@ static void WinCephCleanup(LPCWSTR FileName, PDOKAN_FILE_INFO DokanFileInfo)
             int ret = ceph_rmdir(cmount, path.c_str());
             if (ret)
                 derr << __func__ << " " << path
-                    << ": ceph_rmdir failed. Error: " << ret << dendl;
-        }
-        else {
+                     << ": ceph_rmdir failed. Error: " << ret << dendl;
+        } else {
             int ret = ceph_unlink(cmount, path.c_str());
             if (ret != 0) {
                 derr << __func__ << " " << path
-                    << ": ceph_unlink failed. Error: " << ret << dendl;
+                     << ": ceph_unlink failed. Error: " << ret << dendl;
             }
         }
     }
@@ -317,26 +320,26 @@ static NTSTATUS WinCephReadFile(LPCWSTR FileName,
     }
     if (Offset < 0) {
         dout(2) << __func__ << " " << get_path(FileName)
-            << ": Invalid offset: " << Offset << dendl;
+                << ": Invalid offset: " << Offset << dendl;
         return STATUS_INVALID_PARAMETER;
     }
     if (Offset > CEPH_DOKAN_MAX_FILE_SZ || BufferLength > CEPH_DOKAN_MAX_IO_SZ) {
         dout(2) << "File read too large: " << get_path(FileName)
-            << ". Offset: " << Offset
-            << ". Buffer length: " << BufferLength << dendl;
+                << ". Offset: " << Offset
+                << ". Buffer length: " << BufferLength << dendl;
         return STATUS_FILE_TOO_LARGE;
     }
 
     pfd_context fdc = (pfd_context) & (DokanFileInfo->Context);
     if (!fdc->fd) {
         dout(15) << __func__ << " " << get_path(FileName)
-            << ". Missing context, using temporary handle." << dendl;
+                 << ". Missing context, using temporary handle." << dendl;
 
         string path = get_path(FileName);
         int fd_new = ceph_open(cmount, path.c_str(), O_RDONLY, 0);
         if (fd_new < 0) {
             dout(2) << __func__ << " " << path
-                << ": ceph_open failed. Error: " << fd_new << dendl;
+                    << ": ceph_open failed. Error: " << fd_new << dendl;
             return cephfs_errno_to_ntstatus_map(fd_new);
         }
 
@@ -344,24 +347,23 @@ static NTSTATUS WinCephReadFile(LPCWSTR FileName,
             ceph_read(cmount, fd_new, (char *)Buffer, BufferLength, Offset);
         if (ret < 0) {
             dout(2) << __func__ << " " << path
-                << ": ceph_read failed. Error: " << ret
-                << ". Offset: " << Offset
-                << "Buffer length: " << BufferLength << dendl;
+                    << ": ceph_read failed. Error: " << ret
+                    << ". Offset: " << Offset
+                    << "Buffer length: " << BufferLength << dendl;
             ceph_close(cmount, fd_new);
             return cephfs_errno_to_ntstatus_map(ret);
         }
         *ReadLength = ret;
         ceph_close(cmount, fd_new);
         return 0;
-    }
-    else {
+    } else {
         int ret =
             ceph_read(cmount, fdc->fd, (char *)Buffer, BufferLength, Offset);
         if (ret < 0) {
             dout(2) << __func__ << " " << get_path(FileName)
-                << ": ceph_read failed. Error: " << ret
-                << ". Offset: " << Offset
-                << "Buffer length: " << BufferLength << dendl;
+                    << ": ceph_read failed. Error: " << ret
+                    << ". Offset: " << Offset
+                    << "Buffer length: " << BufferLength << dendl;
             return cephfs_errno_to_ntstatus_map(ret);
         }
         *ReadLength = ret;
@@ -390,15 +392,14 @@ static NTSTATUS WinCephWriteFile(LPCWSTR FileName,
                 ceph_statx(cmount, path.c_str(), &stbuf, requested_attrs, 0);
             if (ret) {
                 dout(2) << __func__ << " " << path
-                    << ": ceph_statx failed. Error: " << ret << dendl;
+                        << ": ceph_statx failed. Error: " << ret << dendl;
                 return cephfs_errno_to_ntstatus_map(ret);
             }
 
             Offset = stbuf.stx_size;
-        }
-        else {
+        } else {
             dout(2) << __func__ << " " << get_path(FileName)
-                << ": Invalid offset: " << Offset << dendl;
+                    << ": Invalid offset: " << Offset << dendl;
             return STATUS_INVALID_PARAMETER;
         }
     }
@@ -406,15 +407,16 @@ static NTSTATUS WinCephWriteFile(LPCWSTR FileName,
     if (Offset > CEPH_DOKAN_MAX_FILE_SZ ||
         NumberOfBytesToWrite > CEPH_DOKAN_MAX_IO_SZ) {
         dout(2) << "File write too large: " << get_path(FileName)
-            << ". Offset: " << Offset
-            << ". Buffer length: " << NumberOfBytesToWrite
-            << ". WriteToEndOfFile: " << (bool) DokanFileInfo->WriteToEndOfFile
-            << dendl;
+                << ". Offset: " << Offset
+                << ". Buffer length: " << NumberOfBytesToWrite
+                << ". WriteToEndOfFile: " << (bool) DokanFileInfo->WriteToEndOfFile
+                << dendl;
         return STATUS_FILE_TOO_LARGE;
     }
     pfd_context fdc = (pfd_context) & (DokanFileInfo->Context);
-    if (fdc->read_only)
+    if (fdc->read_only) {
         return STATUS_ACCESS_DENIED;
+    }
 
     // TODO: check if we still have to support missing handles.
     // According to Dokan docs, it might be related to memory mapped files, in
@@ -422,12 +424,12 @@ static NTSTATUS WinCephWriteFile(LPCWSTR FileName,
     if (!fdc->fd) {
         string path = get_path(FileName);
         dout(15) << __func__ << " " << path
-            << ". Missing context, using temporary handle." << dendl;
+                 << ". Missing context, using temporary handle." << dendl;
 
         int fd_new = ceph_open(cmount, path.c_str(), O_RDWR, 0);
         if (fd_new < 0) {
             dout(2) << __func__ << " " << path
-                << ": ceph_open failed. Error: " << fd_new << dendl;
+                    << ": ceph_open failed. Error: " << fd_new << dendl;
             return cephfs_errno_to_ntstatus_map(fd_new);
         }
 
@@ -435,24 +437,23 @@ static NTSTATUS WinCephWriteFile(LPCWSTR FileName,
                              NumberOfBytesToWrite, Offset);
         if (ret < 0) {
             dout(2) << __func__ << " " << path
-                << ": ceph_write failed. Error: " << ret
-                << ". Offset: " << Offset
-                << "Buffer length: " << NumberOfBytesToWrite << dendl;
+                    << ": ceph_write failed. Error: " << ret
+                    << ". Offset: " << Offset
+                    << "Buffer length: " << NumberOfBytesToWrite << dendl;
             ceph_close(cmount, fd_new);
             return cephfs_errno_to_ntstatus_map(ret);
         }
         *NumberOfBytesWritten = ret;
         ceph_close(cmount, fd_new);
         return 0;
-    }
-    else {
+    } else {
         int ret = ceph_write(cmount, fdc->fd, (char *)Buffer,
                              NumberOfBytesToWrite, Offset);
         if (ret < 0) {
             dout(2) << __func__ << " " << get_path(FileName)
-                << ": ceph_write failed. Error: " << ret
-                << ". Offset: " << Offset
-                << "Buffer length: " << NumberOfBytesToWrite << dendl;
+                    << ": ceph_write failed. Error: " << ret
+                    << ". Offset: " << Offset
+                    << "Buffer length: " << NumberOfBytesToWrite << dendl;
             return cephfs_errno_to_ntstatus_map(ret);
         }
         *NumberOfBytesWritten = ret;
@@ -466,23 +467,23 @@ static NTSTATUS WinCephFlushFileBuffers(LPCWSTR FileName,
     pfd_context fdc = (pfd_context) & (DokanFileInfo->Context);
     if (!fdc->fd) {
         derr << __func__ << ": missing context: " << get_path(FileName) <<
-            dendl;
+             dendl;
         return STATUS_INVALID_HANDLE;
     }
 
     int ret = ceph_fsync(cmount, fdc->fd, 0);
     if (ret) {
         dout(2) << __func__ << " " << get_path(FileName)
-            << ": ceph_sync failed. Error: " << ret << dendl;
+                << ": ceph_sync failed. Error: " << ret << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
     return 0;
 }
 
 static NTSTATUS WinCephGetFileInformation(LPCWSTR FileName,
-                                          LPBY_HANDLE_FILE_INFORMATION
-                                          HandleFileInformation,
-                                          PDOKAN_FILE_INFO DokanFileInfo)
+        LPBY_HANDLE_FILE_INFORMATION
+        HandleFileInformation,
+        PDOKAN_FILE_INFO DokanFileInfo)
 {
     string path = get_path(FileName);
     dout(20) << __func__ << " " << path << dendl;
@@ -496,15 +497,14 @@ static NTSTATUS WinCephGetFileInformation(LPCWSTR FileName,
         int ret = ceph_statx(cmount, path.c_str(), &stbuf, requested_attrs, 0);
         if (ret) {
             dout(2) << __func__ << " " << path
-                << ": ceph_statx failed. Error: " << ret << dendl;
+                    << ": ceph_statx failed. Error: " << ret << dendl;
             return cephfs_errno_to_ntstatus_map(ret);
         }
-    }
-    else {
+    } else {
         int ret = ceph_fstatx(cmount, fdc->fd, &stbuf, requested_attrs, 0);
         if (ret) {
             dout(2) << __func__ << " " << path
-                << ": ceph_fstatx failed. Error: " << ret << dendl;
+                    << ": ceph_fstatx failed. Error: " << ret << dendl;
             return cephfs_errno_to_ntstatus_map(ret);
         }
     }
@@ -520,8 +520,7 @@ static NTSTATUS WinCephGetFileInformation(LPCWSTR FileName,
 
     if (S_ISDIR(stbuf.stx_mode)) {
         HandleFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-    }
-    else if (S_ISREG(stbuf.stx_mode)) {
+    } else if (S_ISREG(stbuf.stx_mode)) {
         HandleFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
     }
 
@@ -542,7 +541,7 @@ static NTSTATUS WinCephFindFiles(LPCWSTR FileName, PFillFindData FillFindData,  
     int ret = ceph_opendir(cmount, path.c_str(), &dirp);
     if (ret != 0) {
         dout(2) << __func__ << " " << path
-            << ": ceph_mkdir failed. Error: " << ret << dendl;
+                << ": ceph_mkdir failed. Error: " << ret << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
 
@@ -556,11 +555,12 @@ static NTSTATUS WinCephFindFiles(LPCWSTR FileName, PFillFindData FillFindData,  
         unsigned int requested_attrs = CEPH_STATX_BASIC_STATS;
         ret = ceph_readdirplus_r(cmount, dirp, &result, &stbuf, requested_attrs, 0, // no special flags used when filling attrs
                                  NULL); // we're not using inodes.
-        if (!ret)
+        if (!ret) {
             break;
+        }
         if (ret < 0) {
             dout(2) << __func__ << " " << path
-                << ": ceph_readdirplus_r failed. Error: " << ret << dendl;
+                    << ": ceph_readdirplus_r failed. Error: " << ret << dendl;
             return cephfs_errno_to_ntstatus_map(ret);
         }
 
@@ -575,8 +575,7 @@ static NTSTATUS WinCephFindFiles(LPCWSTR FileName, PFillFindData FillFindData,  
 
         if (S_ISDIR(stbuf.stx_mode)) {
             findData.dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-        }
-        else if (S_ISREG(stbuf.stx_mode)) {
+        } else if (S_ISREG(stbuf.stx_mode)) {
             findData.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
         }
 
@@ -587,7 +586,7 @@ static NTSTATUS WinCephFindFiles(LPCWSTR FileName, PFillFindData FillFindData,  
     ceph_closedir(cmount, dirp);
 
     dout(20) << __func__ << " " << path
-        << " found " << count << " entries." << dendl;
+             << " found " << count << " entries." << dendl;
     return 0;
 }
 
@@ -622,7 +621,7 @@ static NTSTATUS WinCephDeleteDirectory(LPCWSTR FileName,
     int ret = ceph_opendir(cmount, path.c_str(), &dirp);
     if (ret != 0) {
         dout(2) << __func__ << " " << path
-            << ": ceph_opendir failed. Error: " << ret << dendl;
+                << ": ceph_opendir failed. Error: " << ret << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
 
@@ -634,12 +633,12 @@ static NTSTATUS WinCephDeleteDirectory(LPCWSTR FileName,
             if (strcmp(result->d_name, ".") && strcmp(result->d_name, "..")) {
                 ceph_closedir(cmount, dirp);
                 dout(2) << __func__ << " " << path
-                    << ": directory is not empty. " << dendl;
+                        << ": directory is not empty. " << dendl;
                 return STATUS_DIRECTORY_NOT_EMPTY;
             }
-        }
-        else
+        } else {
             break;
+        }
     }
 
     ceph_closedir(cmount, dirp);
@@ -658,7 +657,7 @@ static NTSTATUS WinCephMoveFile(LPCWSTR FileName,   // existing file name
     int ret = ceph_rename(cmount, path.c_str(), new_path.c_str());
     if (ret) {
         dout(2) << __func__ << " " << path << " -> " << new_path
-            << ": ceph_rename failed. Error: " << ret << dendl;
+                << ": ceph_rename failed. Error: " << ret << dendl;
     }
 
     return cephfs_errno_to_ntstatus_map(ret);
@@ -671,15 +670,15 @@ static NTSTATUS WinCephSetEndOfFile(LPCWSTR FileName,
     pfd_context fdc = (pfd_context) & (DokanFileInfo->Context);
     if (!fdc->fd) {
         derr << __func__ << ": missing context: " << get_path(FileName) <<
-            dendl;
+             dendl;
         return STATUS_INVALID_HANDLE;
     }
 
     int ret = ceph_ftruncate(cmount, fdc->fd, ByteOffset);
     if (ret) {
         dout(2) << __func__ << " " << get_path(FileName)
-            << ": ceph_ftruncate failed. Error: " << ret
-            << " Offset: " << ByteOffset << dendl;
+                << ": ceph_ftruncate failed. Error: " << ret
+                << " Offset: " << ByteOffset << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
 
@@ -687,13 +686,13 @@ static NTSTATUS WinCephSetEndOfFile(LPCWSTR FileName,
 }
 
 static NTSTATUS WinCephSetAllocationSize(LPCWSTR FileName,
-                                         LONGLONG AllocSize,
-                                         PDOKAN_FILE_INFO DokanFileInfo)
+        LONGLONG AllocSize,
+        PDOKAN_FILE_INFO DokanFileInfo)
 {
     pfd_context fdc = (pfd_context) & (DokanFileInfo->Context);
     if (!fdc->fd) {
         derr << __func__ << ": missing context: " << get_path(FileName) <<
-            dendl;
+             dendl;
         return STATUS_INVALID_HANDLE;
     }
 
@@ -702,7 +701,7 @@ static NTSTATUS WinCephSetAllocationSize(LPCWSTR FileName,
     int ret = ceph_fstatx(cmount, fdc->fd, &stbuf, requested_attrs, 0);
     if (ret) {
         dout(2) << __func__ << " " << get_path(FileName)
-            << ": ceph_fstatx failed. Error: " << ret << dendl;
+                << ": ceph_fstatx failed. Error: " << ret << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
 
@@ -710,7 +709,7 @@ static NTSTATUS WinCephSetAllocationSize(LPCWSTR FileName,
         int ret = ceph_ftruncate(cmount, fdc->fd, AllocSize);
         if (ret) {
             dout(2) << __func__ << " " << get_path(FileName)
-                << ": ceph_ftruncate failed. Error: " << ret << dendl;
+                    << ": ceph_ftruncate failed. Error: " << ret << dendl;
             return cephfs_errno_to_ntstatus_map(ret);
         }
         return 0;
@@ -719,8 +718,8 @@ static NTSTATUS WinCephSetAllocationSize(LPCWSTR FileName,
 }
 
 static NTSTATUS WinCephSetFileAttributes(LPCWSTR FileName,
-                                         DWORD FileAttributes,
-                                         PDOKAN_FILE_INFO DokanFileInfo)
+        DWORD FileAttributes,
+        PDOKAN_FILE_INFO DokanFileInfo)
 {
     string path = get_path(FileName);
     dout(20) << __func__ << " (stubbed) " << path << dendl;
@@ -728,9 +727,9 @@ static NTSTATUS WinCephSetFileAttributes(LPCWSTR FileName,
 }
 
 static NTSTATUS WinCephSetFileTime(LPCWSTR FileName,
-                                   CONST FILETIME * CreationTime,
-                                   CONST FILETIME * LastAccessTime,
-                                   CONST FILETIME * LastWriteTime,
+                                   CONST FILETIME *CreationTime,
+                                   CONST FILETIME *LastAccessTime,
+                                   CONST FILETIME *LastWriteTime,
                                    PDOKAN_FILE_INFO DokanFileInfo)
 {
     // TODO: as per a previous inline comment, this might cause problems
@@ -760,7 +759,7 @@ static NTSTATUS WinCephSetFileTime(LPCWSTR FileName,
     int ret = ceph_setattrx(cmount, path.c_str(), &stbuf, mask, 0);
     if (ret) {
         dout(2) << __func__ << " " << path
-            << ": ceph_setattrx failed. Error: " << ret << dendl;
+                << ": ceph_setattrx failed. Error: " << ret << dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
     return 0;
@@ -782,13 +781,13 @@ static NTSTATUS WinCephSetFileSecurity(LPCWSTR FileName,
 }
 
 static NTSTATUS WinCephGetVolumeInformation(LPWSTR VolumeNameBuffer,
-                                            DWORD VolumeNameSize,
-                                            LPDWORD VolumeSerialNumber,
-                                            LPDWORD MaximumComponentLength,
-                                            LPDWORD FileSystemFlags,
-                                            LPWSTR FileSystemNameBuffer,
-                                            DWORD FileSystemNameSize,
-                                            PDOKAN_FILE_INFO DokanFileInfo)
+        DWORD VolumeNameSize,
+        LPDWORD VolumeSerialNumber,
+        LPDWORD MaximumComponentLength,
+        LPDWORD FileSystemFlags,
+        LPWSTR FileSystemNameBuffer,
+        DWORD FileSystemNameSize,
+        PDOKAN_FILE_INFO DokanFileInfo)
 {
     g_cfg->win_vol_name.copy(VolumeNameBuffer, VolumeNameSize);
     *VolumeSerialNumber = g_cfg->win_vol_serial;
@@ -796,9 +795,9 @@ static NTSTATUS WinCephGetVolumeInformation(LPWSTR VolumeNameBuffer,
     *MaximumComponentLength = g_cfg->max_path_len;
 
     *FileSystemFlags = FILE_CASE_SENSITIVE_SEARCH |
-        FILE_CASE_PRESERVED_NAMES |
-        FILE_SUPPORTS_REMOTE_STORAGE |
-        FILE_UNICODE_ON_DISK | FILE_PERSISTENT_ACLS;
+                       FILE_CASE_PRESERVED_NAMES |
+                       FILE_SUPPORTS_REMOTE_STORAGE |
+                       FILE_UNICODE_ON_DISK | FILE_PERSISTENT_ACLS;
 
     wcscpy(FileSystemNameBuffer, L"Ceph");
     return 0;
@@ -823,11 +822,11 @@ static NTSTATUS WinCephGetDiskFreeSpace(PULONGLONG FreeBytesAvailable,
     return 0;
 }
 
-int do_unmap(wstring & mountpoint)
+int do_unmap(wstring &mountpoint)
 {
     if (!DokanRemoveMountPoint(mountpoint.c_str())) {
         wcerr << "Couldn't remove the specified CephFS mount: "
-            << mountpoint << std::endl;
+              << mountpoint << std::endl;
         return -EINVAL;
     }
     return 0;
@@ -836,10 +835,11 @@ int do_unmap(wstring & mountpoint)
 int cleanup_mount()
 {
     int ret = ceph_unmount(cmount);
-    if (ret)
+    if (ret) {
         derr << "Couldn't perform clean unmount. Error: " << ret << dendl;
-    else
+    } else {
         dout(0) << "Unmounted." << dendl;
+    }
     return ret;
 }
 
@@ -853,14 +853,14 @@ static NTSTATUS WinCephUnmount(PDOKAN_FILE_INFO DokanFileInfo)
 BOOL WINAPI ConsoleHandler(DWORD dwType)
 {
     switch (dwType) {
-    case CTRL_C_EVENT:
-        dout(0) << "Received ctrl-c." << dendl;
-        exit(0);
-    case CTRL_BREAK_EVENT:
-        dout(0) << "Received break event." << dendl;
-        break;
-    default:
-        dout(0) << "Received console event: " << dwType << dendl;
+        case CTRL_C_EVENT:
+            dout(0) << "Received ctrl-c." << dendl;
+            exit(0);
+        case CTRL_BREAK_EVENT:
+            dout(0) << "Received break event." << dendl;
+            break;
+        default:
+            dout(0) << "Received console event: " << dwType << dendl;
     }
     return TRUE;
 }
@@ -879,7 +879,7 @@ NTSTATUS get_volume_serial(PDWORD serial)
                             fsid_str, sizeof(fsid_str));
     if (ret < 0) {
         dout(2) << "Coudln't retrieve the cluster fsid. Error: " << ret <<
-            dendl;
+                dendl;
         return cephfs_errno_to_ntstatus_map(ret);
     }
 
@@ -958,44 +958,44 @@ int do_map()
 
     if (g_cfg->max_path_len > 260) {
         dout(0) << "maximum path length set to " << g_cfg->max_path_len
-            << ". Some Windows utilities may not be able to handle "
-            << "paths that exceed MAX_PATH (260) characters. "
-            << "CreateDirectoryW, used by Powershell, has also been "
-            << "observed to fail when paths exceed 16384 characters." << dendl;
+                << ". Some Windows utilities may not be able to handle "
+                << "paths that exceed MAX_PATH (260) characters. "
+                << "CreateDirectoryW, used by Powershell, has also been "
+                << "observed to fail when paths exceed 16384 characters." << dendl;
     }
 
     atexit(unmount_atexit);
     dout(0) << "Mounted cephfs directory: " << g_cfg->root_path.c_str()
-        << ". Mountpoint: " << to_string(g_cfg->mountpoint) << dendl;
+            << ". Mountpoint: " << to_string(g_cfg->mountpoint) << dendl;
 
     DokanInit();
 
     DWORD status = DokanMain(dokan_options, dokan_operations);
     switch (static_cast < int >(status)) {
-    case DOKAN_SUCCESS:
-        dout(2) << "Dokan has returned successfully" << dendl;
-        break;
-    case DOKAN_ERROR:
-        derr << "Received generic dokan error." << dendl;
-        break;
-    case DOKAN_DRIVE_LETTER_ERROR:
-        derr << "Invalid drive letter or mountpoint." << dendl;
-        break;
-    case DOKAN_DRIVER_INSTALL_ERROR:
-        derr << "Can't initialize Dokan driver." << dendl;
-        break;
-    case DOKAN_START_ERROR:
-        derr << "Dokan failed to start" << dendl;
-        break;
-    case DOKAN_MOUNT_ERROR:
-        derr << "Dokan mount error." << dendl;
-        break;
-    case DOKAN_MOUNT_POINT_ERROR:
-        derr << "Invalid mountpoint." << dendl;
-        break;
-    default:
-        derr << "Unknown Dokan error: " << status << dendl;
-        break;
+        case DOKAN_SUCCESS:
+            dout(2) << "Dokan has returned successfully" << dendl;
+            break;
+        case DOKAN_ERROR:
+            derr << "Received generic dokan error." << dendl;
+            break;
+        case DOKAN_DRIVE_LETTER_ERROR:
+            derr << "Invalid drive letter or mountpoint." << dendl;
+            break;
+        case DOKAN_DRIVER_INSTALL_ERROR:
+            derr << "Can't initialize Dokan driver." << dendl;
+            break;
+        case DOKAN_START_ERROR:
+            derr << "Dokan failed to start" << dendl;
+            break;
+        case DOKAN_MOUNT_ERROR:
+            derr << "Dokan mount error." << dendl;
+            break;
+        case DOKAN_MOUNT_POINT_ERROR:
+            derr << "Invalid mountpoint." << dendl;
+            break;
+        default:
+            derr << "Unknown Dokan error: " << status << dendl;
+            break;
     }
 
     DokanShutdown();
@@ -1006,7 +1006,7 @@ int do_map()
 }
 
 boost::intrusive_ptr < CephContext > do_global_init(int argc, const char **argv,
-                                                    Command cmd)
+        Command cmd)
 {
     auto args = argv_to_vec(argc, argv);
 
@@ -1014,14 +1014,14 @@ boost::intrusive_ptr < CephContext > do_global_init(int argc, const char **argv,
     int flags;
 
     switch (cmd) {
-    case Command::Map:
-        code_env = CODE_ENVIRONMENT_DAEMON;
-        flags = CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS;
-        break;
-    default:
-        code_env = CODE_ENVIRONMENT_UTILITY;
-        flags = CINIT_FLAG_NO_MON_CONFIG;
-        break;
+        case Command::Map:
+            code_env = CODE_ENVIRONMENT_DAEMON;
+            flags = CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS;
+            break;
+        default:
+            code_env = CODE_ENVIRONMENT_UTILITY;
+            flags = CINIT_FLAG_NO_MON_CONFIG;
+            break;
     }
 
     global_pre_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT, code_env, flags);
@@ -1059,26 +1059,26 @@ int main(int argc, const char **argv)
     }
 
     switch (cmd) {
-    case Command::Version:
-        std::cout << pretty_version_to_str() << std::endl;
-        return 0;
-    case Command::Help:
-        print_usage();
-        return 0;
-    default:
-        break;
+        case Command::Version:
+            std::cout << pretty_version_to_str() << std::endl;
+            return 0;
+        case Command::Help:
+            print_usage();
+            return 0;
+        default:
+            break;
     }
 
     auto cct = do_global_init(argc, argv, cmd);
 
     switch (cmd) {
-    case Command::Map:
-        return do_map();
-    case Command::Unmap:
-        return do_unmap(g_cfg->mountpoint);
-    default:
-        print_usage();
-        break;
+        case Command::Map:
+            return do_map();
+        case Command::Unmap:
+            return do_unmap(g_cfg->mountpoint);
+        default:
+            print_usage();
+            break;
     }
 
     return 0;

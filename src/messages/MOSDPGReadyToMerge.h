@@ -3,28 +3,32 @@
 
 #pragma once
 
-class MOSDPGReadyToMerge:public PaxosServiceMessage {
-  public:
+class MOSDPGReadyToMerge: public PaxosServiceMessage
+{
+public:
     pg_t pgid;
     eversion_t source_version, target_version;
     epoch_t last_epoch_started = 0;
     epoch_t last_epoch_clean = 0;
     bool ready = true;
 
-     MOSDPGReadyToMerge()
-    :PaxosServiceMessage {
-    MSG_OSD_PG_READY_TO_MERGE, 0} {
+    MOSDPGReadyToMerge()
+        : PaxosServiceMessage {
+        MSG_OSD_PG_READY_TO_MERGE, 0}
+    {
     }
     MOSDPGReadyToMerge(pg_t p, eversion_t sv, eversion_t tv,
                        epoch_t les, epoch_t lec, bool r, epoch_t v)
-  :    PaxosServiceMessage {
-    MSG_OSD_PG_READY_TO_MERGE, v},
-        pgid(p),
-        source_version(sv),
-        target_version(tv),
-        last_epoch_started(les), last_epoch_clean(lec), ready(r) {
+        :    PaxosServiceMessage {
+        MSG_OSD_PG_READY_TO_MERGE, v},
+    pgid(p),
+    source_version(sv),
+    target_version(tv),
+    last_epoch_started(les), last_epoch_clean(lec), ready(r)
+    {
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         paxos_encode();
         encode(pgid, payload);
@@ -34,7 +38,8 @@ class MOSDPGReadyToMerge:public PaxosServiceMessage {
         encode(last_epoch_clean, payload);
         encode(ready, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         paxos_decode(p);
@@ -45,17 +50,19 @@ class MOSDPGReadyToMerge:public PaxosServiceMessage {
         decode(last_epoch_clean, p);
         decode(ready, p);
     }
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "osd_pg_ready_to_merge";
-    } void print(std::ostream & out) const {
+    } void print(std::ostream &out) const
+    {
         out << get_type_name()
-        << "(" << pgid
+            << "(" << pgid
             << " sv " << source_version
             << " tv " << target_version
             << " les/c " << last_epoch_started << "/" << last_epoch_clean
             << (ready ? " ready" : " NOT READY")
-        << " v" << version << ")";
-  } private:
-     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+            << " v" << version << ")";
+    } private:
+    template < class T, typename ... Args >
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };

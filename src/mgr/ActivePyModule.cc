@@ -27,7 +27,7 @@
 using std::string;
 using namespace std::literals;
 
-int ActivePyModule::load(ActivePyModules * py_modules)
+int ActivePyModule::load(ActivePyModules *py_modules)
 {
     ceph_assert(py_modules);
     Gil gil(py_module->pMyThreadState, true);
@@ -47,20 +47,19 @@ int ActivePyModule::load(ActivePyModules * py_modules)
         derr << handle_pyerror(true, get_name(),
                                "ActivePyModule::load") << dendl;
         return -EINVAL;
-    }
-    else {
+    } else {
         dout(1) << "Constructed class from module: " << get_name() << dendl;
     }
 
     return 0;
 }
 
-void ActivePyModule::notify(const std::string & notify_type,
-                            const std::string & notify_id)
+void ActivePyModule::notify(const std::string &notify_type,
+                            const std::string &notify_id)
 {
     if (is_dead()) {
         dout(5) << "cancelling notify " << notify_type << " " << notify_id <<
-            dendl;
+                dendl;
         return;
     }
 
@@ -76,8 +75,7 @@ void ActivePyModule::notify(const std::string & notify_type,
 
     if (pValue != NULL) {
         Py_DECREF(pValue);
-    }
-    else {
+    } else {
         derr << get_name() << ".notify:" << dendl;
         derr << handle_pyerror(true, get_name(),
                                "ActivePyModule::notify") << dendl;
@@ -88,7 +86,7 @@ void ActivePyModule::notify(const std::string & notify_type,
     }
 }
 
-void ActivePyModule::notify_clog(const LogEntry & log_entry)
+void ActivePyModule::notify_clog(const LogEntry &log_entry)
 {
     if (is_dead()) {
         dout(5) << "cancelling notify_clog" << dendl;
@@ -112,8 +110,7 @@ void ActivePyModule::notify_clog(const LogEntry & log_entry)
 
     if (pValue != NULL) {
         Py_DECREF(pValue);
-    }
-    else {
+    } else {
         derr << get_name() << ".notify_clog:" << dendl;
         derr << handle_pyerror(true, get_name(),
                                "ActivePyModule::notify_clog") << dendl;
@@ -124,23 +121,22 @@ void ActivePyModule::notify_clog(const LogEntry & log_entry)
     }
 }
 
-bool ActivePyModule::method_exists(const std::string & method) const const
+bool ActivePyModule::method_exists(const std::string &method) const const
 {
     Gil gil(py_module->pMyThreadState, true);
 
     auto boundMethod = PyObject_GetAttrString(pClassInstance, method.c_str());
     if (boundMethod == nullptr) {
         return false;
-    }
-    else {
+    } else {
         Py_DECREF(boundMethod);
         return true;
     }
 }
 
-PyObject *ActivePyModule::dispatch_remote(const std::string & method,
-                                          PyObject * args,
-                                          PyObject * kwargs, std::string * err)
+PyObject *ActivePyModule::dispatch_remote(const std::string &method,
+        PyObject *args,
+        PyObject *kwargs, std::string *err)
 {
     ceph_assert(err != nullptr);
 
@@ -160,7 +156,7 @@ PyObject *ActivePyModule::dispatch_remote(const std::string & method,
     ceph_assert(boundMethod != nullptr);
 
     dout(20) << "Calling " << py_module->get_name()
-        << "." << method << "..." << dendl;
+             << "." << method << "..." << dendl;
 
     auto remoteResult = PyObject_Call(boundMethod,
                                       args, kwargs);
@@ -172,8 +168,7 @@ PyObject *ActivePyModule::dispatch_remote(const std::string & method,
         // context later.
         std::string caller = "ActivePyModule::dispatch_remote " s + method;
         *err = handle_pyerror(true, get_name(), caller);
-    }
-    else {
+    } else {
         dout(20) << "Success calling '" << method << "'" << dendl;
     }
 
@@ -189,22 +184,22 @@ void ActivePyModule::config_notify()
 
     Gil gil(py_module->pMyThreadState, true);
     dout(20) << "Calling " << py_module->get_name() << "._config_notify..."
-        << dendl;
+             << dendl;
     auto remoteResult = PyObject_CallMethod(pClassInstance,
                                             const_cast <
-                                            char *>("_config_notify"),
+                                            char * >("_config_notify"),
                                             (char *)NULL);
     if (remoteResult != nullptr) {
         Py_DECREF(remoteResult);
     }
 }
 
-int ActivePyModule::handle_command(const ModuleCommand & module_command,
-                                   const MgrSession & session,
-                                   const cmdmap_t & cmdmap,
-                                   const bufferlist & inbuf,
-                                   std::stringstream * ds,
-                                   std::stringstream * ss)
+int ActivePyModule::handle_command(const ModuleCommand &module_command,
+                                   const MgrSession &session,
+                                   const cmdmap_t &cmdmap,
+                                   const bufferlist &inbuf,
+                                   std::stringstream *ds,
+                                   std::stringstream *ss)
 {
     ceph_assert(ss != nullptr);
     ceph_assert(ds != nullptr);
@@ -241,20 +236,18 @@ int ActivePyModule::handle_command(const ModuleCommand & module_command,
     if (pResult != NULL) {
         if (PyTuple_Size(pResult) != 3) {
             derr << "module '" << py_module->get_name() << "' command handler "
-                "returned wrong type!" << dendl;
+                 "returned wrong type!" << dendl;
             r = -EINVAL;
-        }
-        else {
+        } else {
             r = PyLong_AsLong(PyTuple_GetItem(pResult, 0));
             *ds << PyUnicode_AsUTF8(PyTuple_GetItem(pResult, 1));
             *ss << PyUnicode_AsUTF8(PyTuple_GetItem(pResult, 2));
         }
 
         Py_DECREF(pResult);
-    }
-    else {
+    } else {
         derr << "module '" << py_module->get_name() << "' command handler "
-            "threw exception: " << peek_pyerror() << dendl;
+             "threw exception: " << peek_pyerror() << dendl;
         *ds << "";
         *ss << handle_pyerror();
         r = -EINVAL;
@@ -263,7 +256,7 @@ int ActivePyModule::handle_command(const ModuleCommand & module_command,
     return r;
 }
 
-void ActivePyModule::get_health_checks(health_check_map_t * checks)
+void ActivePyModule::get_health_checks(health_check_map_t *checks)
 {
     if (is_dead()) {
         dout(5) << "cancelling get_health_checks" << dendl;
@@ -273,9 +266,9 @@ void ActivePyModule::get_health_checks(health_check_map_t * checks)
 }
 
 bool ActivePyModule::is_authorized(const std::map < std::string,
-                                   std::string > &arguments) constconst
-{
-    if (m_session == nullptr) {
+                                   std::string > &arguments) constconst {
+    if (m_session == nullptr)
+    {
         return false;
     }
 
@@ -283,7 +276,7 @@ bool ActivePyModule::is_authorized(const std::map < std::string,
     // tested before command invokation. Instead, only test for service/module
     // arguments as defined by the module itself.
     MonCommand mon_command {
-    "", "", "", m_command_perms};
+        "", "", "", m_command_perms};
     return m_session->caps.is_capable(nullptr, m_session->entity_name, "py",
                                       py_module->get_name(), "", arguments,
                                       mon_command.requires_perm('r'),

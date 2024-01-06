@@ -22,9 +22,9 @@
 
 using namespace std;
 
-std::unique_ptr < CrushWrapper > build_indep_map(CephContext * cct,
-                                                 int num_rack, int num_host,
-                                                 int num_osd)
+std::unique_ptr < CrushWrapper > build_indep_map(CephContext *cct,
+        int num_rack, int num_host,
+        int num_osd)
 {
     std::unique_ptr < CrushWrapper > c(new CrushWrapper);
     c->create();
@@ -86,31 +86,35 @@ std::unique_ptr < CrushWrapper > build_indep_map(CephContext * cct,
     return c;
 }
 
-int get_num_dups(const vector < int >&v)
+int get_num_dups(const vector < int > &v)
 {
     std::set < int >s;
     int dups = 0;
-  for (auto n:v) {
-        if (s.count(n))
+    for (auto n : v) {
+        if (s.count(n)) {
             ++dups;
-        else if (n != CRUSH_ITEM_NONE)
+        } else if (n != CRUSH_ITEM_NONE) {
             s.insert(n);
+        }
     }
     return dups;
 }
 
-class CRUSHTest:public::testing::Test {
-  public:
-    void SetUp() final {
+class CRUSHTest: public::testing::Test
+{
+public:
+    void SetUp() final
+    {
         CephInitParameters params(CEPH_ENTITY_TYPE_CLIENT);
         cct = common_preinit(params, CODE_ENVIRONMENT_UTILITY,
                              CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
-    } void TearDown() final {
+    } void TearDown() final
+    {
         cct->put();
         cct = nullptr;
     }
-  protected:
-    CephContext * cct = nullptr;
+protected:
+    CephContext *cct = nullptr;
 };
 
 TEST_F(CRUSHTest, indep_toosmall)
@@ -125,8 +129,9 @@ TEST_F(CRUSHTest, indep_toosmall)
         cout << x << " -> " << out << std::endl;
         int num_none = 0;
         for (unsigned i = 0; i < out.size(); ++i) {
-            if (out[i] == CRUSH_ITEM_NONE)
+            if (out[i] == CRUSH_ITEM_NONE) {
                 num_none++;
+            }
         }
         ASSERT_EQ(2, num_none);
         ASSERT_EQ(0, get_num_dups(out));
@@ -145,8 +150,9 @@ TEST_F(CRUSHTest, indep_basic)
         cout << x << " -> " << out << std::endl;
         int num_none = 0;
         for (unsigned i = 0; i < out.size(); ++i) {
-            if (out[i] == CRUSH_ITEM_NONE)
+            if (out[i] == CRUSH_ITEM_NONE) {
                 num_none++;
+            }
         }
         ASSERT_EQ(0, num_none);
         ASSERT_EQ(0, get_num_dups(out));
@@ -160,8 +166,9 @@ TEST_F(CRUSHTest, indep_out_alt)
 
     // mark a bunch of osds out
     int num = 3 * 3 * 3;
-    for (int i = 0; i < num / 2; ++i)
+    for (int i = 0; i < num / 2; ++i) {
         weight[i * 2] = 0;
+    }
     c->dump_tree(&cout, NULL);
 
     // need more retries to get 9/9 hosts for x in 0..99
@@ -172,8 +179,9 @@ TEST_F(CRUSHTest, indep_out_alt)
         cout << x << " -> " << out << std::endl;
         int num_none = 0;
         for (unsigned i = 0; i < out.size(); ++i) {
-            if (out[i] == CRUSH_ITEM_NONE)
+            if (out[i] == CRUSH_ITEM_NONE) {
                 num_none++;
+            }
         }
         ASSERT_EQ(0, num_none);
         ASSERT_EQ(0, get_num_dups(out));
@@ -187,8 +195,9 @@ TEST_F(CRUSHTest, indep_out_contig)
 
     // mark a bunch of osds out
     int num = 3 * 3 * 3;
-    for (int i = 0; i < num / 3; ++i)
+    for (int i = 0; i < num / 3; ++i) {
         weight[i] = 0;
+    }
     c->dump_tree(&cout, NULL);
 
     c->set_choose_total_tries(100);
@@ -198,8 +207,9 @@ TEST_F(CRUSHTest, indep_out_contig)
         cout << x << " -> " << out << std::endl;
         int num_none = 0;
         for (unsigned i = 0; i < out.size(); ++i) {
-            if (out[i] == CRUSH_ITEM_NONE)
+            if (out[i] == CRUSH_ITEM_NONE) {
                 num_none++;
+            }
         }
         ASSERT_EQ(1, num_none);
         ASSERT_EQ(0, get_num_dups(out));
@@ -223,11 +233,12 @@ TEST_F(CRUSHTest, indep_out_progressive)
             vector < int >out;
             c->do_rule(0, x, out, 7, weight, 0);
             cout << "(" << i << "/" << weight.size() << " out) "
-                << x << " -> " << out << std::endl;
+                 << x << " -> " << out << std::endl;
             int num_none = 0;
             for (unsigned k = 0; k < out.size(); ++k) {
-                if (out[k] == CRUSH_ITEM_NONE)
+                if (out[k] == CRUSH_ITEM_NONE) {
                     num_none++;
+                }
             }
             ASSERT_EQ(0, get_num_dups(out));
 
@@ -246,7 +257,7 @@ TEST_F(CRUSHTest, indep_out_progressive)
                     // result shouldn't have moved position
                     if (j != pos[out[j]]) {
                         cout << " " << out[j] << " moved from " << pos[out[j]]
-                            << " to " << j << std::endl;
+                             << " to " << j << std::endl;
                         ++moved;
                     }
                     //ASSERT_EQ(j, pos[out[j]]);
@@ -254,7 +265,7 @@ TEST_F(CRUSHTest, indep_out_progressive)
             }
             if (moved || changed)
                 cout << " " << moved << " moved, " << changed << " changed" <<
-                    std::endl;
+                     std::endl;
             ASSERT_LE(moved, 1);
             ASSERT_LE(changed, 3);
 
@@ -263,8 +274,9 @@ TEST_F(CRUSHTest, indep_out_progressive)
             prev = out;
             pos.clear();
             for (unsigned j = 0; j < out.size(); ++j) {
-                if (out[j] != CRUSH_ITEM_NONE)
+                if (out[j] != CRUSH_ITEM_NONE) {
                     pos[out[j]] = j;
+                }
             }
         }
     }
@@ -394,10 +406,10 @@ TEST_F(CRUSHTest, straw_same)
 
         for (int i = 0; i < n; ++i) {
             cout << i << "\t" << sb0->item_weights[i]
-                << "\t" << sb1->item_weights[i]
-                << "\t" << "\t" << sb0->straws[i]
-                << "\t" << sb1->straws[i]
-                << std::endl;
+                 << "\t" << sb1->item_weights[i]
+                 << "\t" << "\t" << sb0->straws[i]
+                 << "\t" << sb1->straws[i]
+                 << std::endl;
         }
     }
 
@@ -423,18 +435,19 @@ TEST_F(CRUSHTest, straw_same)
         ASSERT_EQ(1u, out1.size());
         sum0[out0[0]]++;
         sum1[out1[0]]++;
-        if (out0[0] != out1[0])
+        if (out0[0] != out1[0]) {
             different++;
+        }
     }
     for (int i = 0; i < n; ++i) {
         cout << i << "\t" << ((double)weights[i] / (double)weights[0])
-            << "\t" << sum0[i] << "\t" << ((double)sum0[i] / (double)sum0[0])
-            << "\t" << sum1[i] << "\t" << ((double)sum1[i] / (double)sum1[0])
-            << std::endl;
+             << "\t" << sum0[i] << "\t" << ((double)sum0[i] / (double)sum0[0])
+             << "\t" << sum1[i] << "\t" << ((double)sum1[i] / (double)sum1[0])
+             << std::endl;
     }
     double ratio = ((double)different / (double)max);
     cout << different << " of " << max << " = "
-        << ratio << " different" << std::endl;
+         << ratio << " different" << std::endl;
     ASSERT_LT(ratio, .001);
 }
 
@@ -489,12 +502,14 @@ double calc_straw2_stddev(int *weights, int n, bool verbose)
     }
 
     double expected = (double)total / (double)n;
-    if (verbose)
+    if (verbose) {
         cout << "expect\t\t\t" << expected << std::endl;
+    }
     double stddev = 0;
     double exptotal = 0;
-    if (verbose)
+    if (verbose) {
         cout << "osd\tweight\tcount\tadjusted\n";
+    }
     std::streamsize p = cout.precision();
     cout << std::setprecision(4);
     for (int i = 0; i < n; ++i) {
@@ -504,18 +519,20 @@ double calc_straw2_stddev(int *weights, int n, bool verbose)
         exptotal += adj;
         if (verbose)
             cout << i << "\t" << w << "\t" << sum[i]
-                << "\t" << (int)adj << std::endl;
+                 << "\t" << (int)adj << std::endl;
     }
     cout << std::setprecision(p);
     {
         stddev = sqrt(stddev / (double)n);
-        if (verbose)
+        if (verbose) {
             cout << "std dev " << stddev << std::endl;
+        }
 
         double p = 1.0 / (double)n;
         double estddev = sqrt(exptotal * p * (1.0 - p));
-        if (verbose)
+        if (verbose) {
             cout << "     vs " << estddev << "\t(expected)" << std::endl;
+        }
     }
     return stddev;
 }
@@ -533,7 +550,7 @@ TEST_F(CRUSHTest, straw2_stddev)
         }
         double stddev = calc_straw2_stddev(weights, n, true);
         cout << ((double)weights[n - 1] / (double)weights[0])
-            << "\t" << stddev << std::endl;
+             << "\t" << stddev << std::endl;
     }
 }
 
@@ -637,8 +654,7 @@ TEST_F(CRUSHTest, straw2_reweight)
 
         if (out1[0] == changed) {
             ASSERT_EQ(changed, out0[0]);
-        }
-        else if (out0[0] != changed) {
+        } else if (out0[0] != changed) {
             ASSERT_EQ(out0[0], out1[0]);
         }
     }
@@ -654,7 +670,7 @@ TEST_F(CRUSHTest, straw2_reweight)
         double adj = (double)sum[i] * avgweight / w;
         stddev += (adj - expected) * (adj - expected);
         cout << i << "\t" << w << "\t" << sum[i]
-            << "\t" << (int)adj << std::endl;
+             << "\t" << (int)adj << std::endl;
     }
     cout << std::setprecision(p);
     {

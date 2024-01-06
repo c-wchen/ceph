@@ -16,24 +16,29 @@
 using namespace std;
 using namespace testing;
 
-class MockBlkDev:public BlkDev {
-  public:
+class MockBlkDev: public BlkDev
+{
+public:
     // pass 0 as fd, so it won't try to use the empty devname
-    MockBlkDev():BlkDev(0) {
+    MockBlkDev(): BlkDev(0)
+    {
     };
-    virtual ~ MockBlkDev() {
+    virtual ~ MockBlkDev()
+    {
     }
 
     MOCK_CONST_METHOD0(sysfsdir, const char *());
     MOCK_CONST_METHOD2(wholedisk, int (char *device, size_t max));
 };
 
-class BlockDevTest:public::testing::Test {
-  public:
-    string * root;
+class BlockDevTest: public::testing::Test
+{
+public:
+    string *root;
 
-  protected:
-    virtual void SetUp() {
+protected:
+    virtual void SetUp()
+    {
         const char *sda_name = "sda";
         const char *sdb_name = "sdb";
         const char *env = getenv("CEPH_ROOT");
@@ -45,20 +50,21 @@ class BlockDevTest:public::testing::Test {
         .WillRepeatedly(Return(root->c_str()));
         EXPECT_CALL(sda, wholedisk(NotNull(), Ge(0ul)))
         .
-            WillRepeatedly(DoAll
-                           (SetArrayArgument < 0 >
-                            (sda_name, sda_name + strlen(sda_name) + 1),
-                            Return(0)));
+        WillRepeatedly(DoAll
+                       (SetArrayArgument < 0 >
+                        (sda_name, sda_name + strlen(sda_name) + 1),
+                        Return(0)));
 
         EXPECT_CALL(sdb, sysfsdir())
         .WillRepeatedly(Return(root->c_str()));
         EXPECT_CALL(sdb, wholedisk(NotNull(), Ge(0ul)))
         .
-            WillRepeatedly(DoAll
-                           (SetArrayArgument < 0 >
-                            (sdb_name, sdb_name + strlen(sdb_name) + 1),
-                            Return(0)));
-    } virtual void TearDown() {
+        WillRepeatedly(DoAll
+                       (SetArrayArgument < 0 >
+                        (sdb_name, sdb_name + strlen(sdb_name) + 1),
+                        Return(0)));
+    } virtual void TearDown()
+    {
         delete root;
     }
 
@@ -89,8 +95,10 @@ TEST(blkdev, _decode_model_enc)
 {
 
     const char *foo[][2] = {
-        {"WDC\\x20WDS200T2B0A-00SM50\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20",
-         "WDC_WDS200T2B0A-00SM50"},
+        {
+            "WDC\\x20WDS200T2B0A-00SM50\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20\\x20",
+            "WDC_WDS200T2B0A-00SM50"
+        },
         {0, 0},
     };
 
@@ -110,6 +118,6 @@ TEST(blkdev, get_device_id)
         std::string err;
         auto i = get_device_id(devname, &err);
         cout << "devname " << devname << " -> '" << i
-            << "' (" << err << ")" << std::endl;
+             << "' (" << err << ")" << std::endl;
     }
 }

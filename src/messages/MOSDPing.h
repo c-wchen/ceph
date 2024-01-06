@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 /**
@@ -30,12 +30,13 @@
 #include "msg/Message.h"
 #include "osd/osd_types.h"
 
-class MOSDPing final:public Message {
-  private:
+class MOSDPing final: public Message
+{
+private:
     static constexpr int HEAD_VERSION = 5;
     static constexpr int COMPAT_VERSION = 4;
 
-  public:
+public:
     enum {
         HEARTBEAT = 0,
         START_HEARTBEAT = 1,
@@ -44,17 +45,25 @@ class MOSDPing final:public Message {
         PING = 4,
         PING_REPLY = 5,
     };
-    const char *get_op_name(int op) const {
+    const char *get_op_name(int op) const
+    {
         switch (op) {
-        case HEARTBEAT:
-            return "heartbeat";
-            case START_HEARTBEAT:return "start_heartbeat";
-            case STOP_HEARTBEAT:return "stop_heartbeat";
-            case YOU_DIED:return "you_died";
-            case PING:return "ping";
-            case PING_REPLY:return "ping_reply";
-            default:return "???";
-    }} uuid_d fsid;
+            case HEARTBEAT:
+                return "heartbeat";
+            case START_HEARTBEAT:
+                return "start_heartbeat";
+            case STOP_HEARTBEAT:
+                return "stop_heartbeat";
+            case YOU_DIED:
+                return "you_died";
+            case PING:
+                return "ping";
+            case PING_REPLY:
+                return "ping_reply";
+            default:
+                return "???";
+        }
+    } uuid_d fsid;
     epoch_t map_epoch = 0;
     __u8 op = 0;
     utime_t ping_stamp;         ///< when the PING was sent
@@ -65,33 +74,36 @@ class MOSDPing final:public Message {
 
     uint32_t min_message_size = 0;
 
-    MOSDPing(const uuid_d & f, epoch_t e, __u8 o,
+    MOSDPing(const uuid_d &f, epoch_t e, __u8 o,
              utime_t s,
              ceph::signedspan ms,
              ceph::signedspan mss,
              epoch_t upf,
              uint32_t min_message,
-             std::optional < ceph::signedspan > delta_ub = {
-             })
-  :    Message {
-    MSG_OSD_PING, HEAD_VERSION, COMPAT_VERSION},
-        fsid(f), map_epoch(e), op(o),
-        ping_stamp(s),
-        mono_ping_stamp(ms),
-        mono_send_stamp(mss),
-        delta_ub(delta_ub), up_from(upf), min_message_size(min_message) {
-    }
-    MOSDPing()
-  :    Message {
-    MSG_OSD_PING, HEAD_VERSION, COMPAT_VERSION}
+    std::optional < ceph::signedspan > delta_ub = {
+    })
+        :    Message {
+        MSG_OSD_PING, HEAD_VERSION, COMPAT_VERSION},
+    fsid(f), map_epoch(e), op(o),
+    ping_stamp(s),
+    mono_ping_stamp(ms),
+    mono_send_stamp(mss),
+    delta_ub(delta_ub), up_from(upf), min_message_size(min_message)
     {
     }
-  private:
-    ~MOSDPing()final {
+    MOSDPing()
+        :    Message {
+        MSG_OSD_PING, HEAD_VERSION, COMPAT_VERSION}
+    {
+    }
+private:
+    ~MOSDPing()final
+    {
     }
 
-  public:
-    void decode_payload() override {
+public:
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(fsid, p);
@@ -113,7 +125,8 @@ class MOSDPing final:public Message {
         p += size;
         min_message_size = size + payload_mid_length;
     }
-    void encode_payload(uint64_t features) override {
+    void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(fsid, payload);
         encode(map_epoch, payload);
@@ -139,7 +152,7 @@ class MOSDPing final:public Message {
             static char zeros[16384] = { };
             while (s > sizeof(zeros)) {
                 payload.
-                    append(ceph::buffer::create_static(sizeof(zeros), zeros));
+                append(ceph::buffer::create_static(sizeof(zeros), zeros));
                 s -= sizeof(zeros);
             }
             if (s) {
@@ -148,21 +161,24 @@ class MOSDPing final:public Message {
         }
     }
 
-    std::string_view get_type_name()const override {
+    std::string_view get_type_name()const override
+    {
         return "osd_ping";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "osd_ping(" << get_op_name(op)
-        << " e" << map_epoch
+            << " e" << map_epoch
             << " up_from " << up_from
             << " ping_stamp " << ping_stamp << "/" << mono_ping_stamp
             << " send_stamp " << mono_send_stamp;
         if (delta_ub) {
             out << " delta_ub " << *delta_ub;
-        } out << ")";
+        }
+        out << ")";
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

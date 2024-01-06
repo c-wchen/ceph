@@ -21,46 +21,55 @@
 class MDSRank;
 class Session;
 
-class MetricsHandler:public Dispatcher {
-  public:
-    MetricsHandler(CephContext * cct, MDSRank * mds);
+class MetricsHandler: public Dispatcher
+{
+public:
+    MetricsHandler(CephContext *cct, MDSRank *mds);
 
-    bool ms_can_fast_dispatch_any() const override {
+    bool ms_can_fast_dispatch_any() const override
+    {
         return true;
     } bool ms_can_fast_dispatch2(const cref_t < Message > &m)const override;
     void ms_fast_dispatch2(const ref_t < Message > &m) override;
     bool ms_dispatch2(const ref_t < Message > &m) override;
 
-    void ms_handle_connect(Connection * c) override {
-    } bool ms_handle_reset(Connection * c) override {
+    void ms_handle_connect(Connection *c) override
+    {
+    } bool ms_handle_reset(Connection *c) override
+    {
         return false;
     }
-    void ms_handle_remote_reset(Connection * c) override {
+    void ms_handle_remote_reset(Connection *c) override
+    {
     }
-    bool ms_handle_refused(Connection * c) override {
+    bool ms_handle_refused(Connection *c) override
+    {
         return false;
     }
 
-    void add_session(Session * session);
-    void remove_session(Session * session);
+    void add_session(Session *session);
+    void remove_session(Session *session);
 
     void init();
     void shutdown();
 
-    void notify_mdsmap(const MDSMap & mdsmap);
+    void notify_mdsmap(const MDSMap &mdsmap);
 
-  private:
-    struct HandlePayloadVisitor:public boost::static_visitor < void > {
+private:
+    struct HandlePayloadVisitor: public boost::static_visitor < void > {
         MetricsHandler *metrics_handler;
         Session *session;
 
-         HandlePayloadVisitor(MetricsHandler * metrics_handler,
-                              Session * session)
-        :metrics_handler(metrics_handler), session(session) {
+        HandlePayloadVisitor(MetricsHandler *metrics_handler,
+                             Session *session)
+            : metrics_handler(metrics_handler), session(session)
+        {
         } template < typename ClientMetricPayload >
-            inline void operator() (const ClientMetricPayload & payload)const {
+        inline void operator()(const ClientMetricPayload &payload)const
+        {
             metrics_handler->handle_payload(session, payload);
-    }};
+        }
+    };
 
     MDSRank *mds;
     // drop this lock when calling ->send_message_mds() else mds might
@@ -87,18 +96,18 @@ class MetricsHandler:public Dispatcher {
 
     bool stopping = false;
 
-    void handle_payload(Session * session, const CapInfoPayload & payload);
-    void handle_payload(Session * session, const ReadLatencyPayload & payload);
-    void handle_payload(Session * session, const WriteLatencyPayload & payload);
-    void handle_payload(Session * session,
-                        const MetadataLatencyPayload & payload);
-    void handle_payload(Session * session, const DentryLeasePayload & payload);
-    void handle_payload(Session * session, const OpenedFilesPayload & payload);
-    void handle_payload(Session * session, const PinnedIcapsPayload & payload);
-    void handle_payload(Session * session, const OpenedInodesPayload & payload);
-    void handle_payload(Session * session, const ReadIoSizesPayload & payload);
-    void handle_payload(Session * session, const WriteIoSizesPayload & payload);
-    void handle_payload(Session * session, const UnknownPayload & payload);
+    void handle_payload(Session *session, const CapInfoPayload &payload);
+    void handle_payload(Session *session, const ReadLatencyPayload &payload);
+    void handle_payload(Session *session, const WriteLatencyPayload &payload);
+    void handle_payload(Session *session,
+                        const MetadataLatencyPayload &payload);
+    void handle_payload(Session *session, const DentryLeasePayload &payload);
+    void handle_payload(Session *session, const OpenedFilesPayload &payload);
+    void handle_payload(Session *session, const PinnedIcapsPayload &payload);
+    void handle_payload(Session *session, const OpenedInodesPayload &payload);
+    void handle_payload(Session *session, const ReadIoSizesPayload &payload);
+    void handle_payload(Session *session, const WriteIoSizesPayload &payload);
+    void handle_payload(Session *session, const UnknownPayload &payload);
 
     void set_next_seq(version_t seq);
     void reset_seq();

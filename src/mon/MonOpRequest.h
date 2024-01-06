@@ -21,44 +21,55 @@
 #include "mon/Session.h"
 #include "msg/Message.h"
 
-struct MonOpRequest:public TrackedOp {
+struct MonOpRequest: public TrackedOp {
     friend class OpTracker;
 
-    void mark_dispatch() {
+    void mark_dispatch()
+    {
         mark_event("monitor_dispatch");
-    } void mark_wait_for_quorum() {
+    } void mark_wait_for_quorum()
+    {
         mark_event("wait_for_quorum");
     }
-    void mark_zap() {
+    void mark_zap()
+    {
         mark_event("monitor_zap");
     }
-    void mark_forwarded() {
+    void mark_forwarded()
+    {
         mark_event("forwarded");
         forwarded_to_leader = true;
     }
 
-    void mark_svc_event(const std::string & service, const std::string & event) {
+    void mark_svc_event(const std::string &service, const std::string &event)
+    {
         std::string s = service;
         s.append(":").append(event);
         mark_event(s);
     }
 
-    void mark_logmon_event(const std::string & event) {
+    void mark_logmon_event(const std::string &event)
+    {
         mark_svc_event("logm", event);
     }
-    void mark_osdmon_event(const std::string & event) {
+    void mark_osdmon_event(const std::string &event)
+    {
         mark_svc_event("osdmap", event);
     }
-    void mark_pgmon_event(const std::string & event) {
+    void mark_pgmon_event(const std::string &event)
+    {
         mark_svc_event("pgmap", event);
     }
-    void mark_mdsmon_event(const std::string & event) {
+    void mark_mdsmon_event(const std::string &event)
+    {
         mark_svc_event("mdsmap", event);
     }
-    void mark_authmon_event(const std::string & event) {
+    void mark_authmon_event(const std::string &event)
+    {
         mark_svc_event("auth", event);
     }
-    void mark_paxos_event(const std::string & event) {
+    void mark_paxos_event(const std::string &event)
+    {
         mark_svc_event("paxos", event);
     }
 
@@ -71,23 +82,24 @@ struct MonOpRequest:public TrackedOp {
         OP_TYPE_COMMAND,        ///< is a command
     };
 
-    MonOpRequest(const MonOpRequest & other) = delete;
-    MonOpRequest & operator =(const MonOpRequest & other) = delete;
+    MonOpRequest(const MonOpRequest &other) = delete;
+    MonOpRequest &operator =(const MonOpRequest &other) = delete;
 
-  private:
-    Message * request;
+private:
+    Message *request;
     utime_t dequeued_time;
     RefCountedPtr session;
     ConnectionRef con;
     bool forwarded_to_leader;
     op_type_t op_type;
 
-  MonOpRequest(Message * req, OpTracker * tracker):
-    TrackedOp(tracker,
-              req->get_recv_stamp().is_zero()?
-              ceph_clock_now() : req->get_recv_stamp()),
+    MonOpRequest(Message *req, OpTracker *tracker):
+        TrackedOp(tracker,
+                  req->get_recv_stamp().is_zero() ?
+                  ceph_clock_now() : req->get_recv_stamp()),
         request(req),
-        con(NULL), forwarded_to_leader(false), op_type(OP_TYPE_NONE) {
+        con(NULL), forwarded_to_leader(false), op_type(OP_TYPE_NONE)
+    {
         if (req) {
             con = req->get_connection();
             if (con) {
@@ -96,7 +108,8 @@ struct MonOpRequest:public TrackedOp {
         }
     }
 
-    void _dump(ceph::Formatter * f) const override {
+    void _dump(ceph::Formatter *f) const override
+    {
         {
             f->open_array_section("events");
             std::lock_guard l(lock);
@@ -109,8 +122,7 @@ struct MonOpRequest:public TrackedOp {
 
                 if (i_next < events.end()) {
                     f->dump_float("duration", i_next->stamp - i->stamp);
-                }
-                else {
+                } else {
                     f->dump_float("duration",
                                   events.rbegin()->stamp - get_initiated());
                 }
@@ -127,98 +139,122 @@ struct MonOpRequest:public TrackedOp {
         }
     }
 
-  protected:
-    void _dump_op_descriptor_unlocked(std::ostream & stream) const override {
+protected:
+    void _dump_op_descriptor_unlocked(std::ostream &stream) const override
+    {
         get_req()->print(stream);
-  } public:
-    ~MonOpRequest() override {
+    } public:
+    ~MonOpRequest() override
+    {
         request->put();
     }
 
-    MonSession *get_session() const {
+    MonSession *get_session() const
+    {
         return static_cast < MonSession * >(session.get());
-    } template < class T > T * get_req() const {
+    } template < class T > T *get_req() const
+    {
         return static_cast < T * >(request);
-    } Message *get_req() const {
+    } Message *get_req() const
+    {
         return get_req < Message > ();
-    } int get_req_type() const {
-        if (!request)
+    } int get_req_type() const
+    {
+        if (!request) {
             return 0;
+        }
         return request->get_type();
-    } ConnectionRef get_connection() {
+    } ConnectionRef get_connection()
+    {
         return con;
     }
 
-    void set_session(MonSession * s) {
+    void set_session(MonSession *s)
+    {
         session.reset(s);
     }
 
-    bool is_src_mon() const {
+    bool is_src_mon() const
+    {
         return (con && con->get_peer_type() & CEPH_ENTITY_TYPE_MON);
     } typedef boost::intrusive_ptr < MonOpRequest > Ref;
 
-    void set_op_type(op_type_t t) {
+    void set_op_type(op_type_t t)
+    {
         op_type = t;
     }
-    void set_type_service() {
+    void set_type_service()
+    {
         set_op_type(OP_TYPE_SERVICE);
     }
-    void set_type_monitor() {
+    void set_type_monitor()
+    {
         set_op_type(OP_TYPE_MONITOR);
     }
-    void set_type_paxos() {
+    void set_type_paxos()
+    {
         set_op_type(OP_TYPE_PAXOS);
     }
-    void set_type_election_or_ping() {
+    void set_type_election_or_ping()
+    {
         set_op_type(OP_TYPE_ELECTION);
     }
-    void set_type_command() {
+    void set_type_command()
+    {
         set_op_type(OP_TYPE_COMMAND);
     }
 
-    op_type_t get_op_type() {
+    op_type_t get_op_type()
+    {
         return op_type;
     }
 
-    bool is_type_service() {
+    bool is_type_service()
+    {
         return (get_op_type() == OP_TYPE_SERVICE);
     }
-    bool is_type_monitor() {
+    bool is_type_monitor()
+    {
         return (get_op_type() == OP_TYPE_MONITOR);
     }
-    bool is_type_paxos() {
+    bool is_type_paxos()
+    {
         return (get_op_type() == OP_TYPE_PAXOS);
     }
-    bool is_type_election_or_ping() {
+    bool is_type_election_or_ping()
+    {
         return (get_op_type() == OP_TYPE_ELECTION);
     }
-    bool is_type_command() {
+    bool is_type_command()
+    {
         return (get_op_type() == OP_TYPE_COMMAND);
     }
 };
 
 typedef MonOpRequest::Ref MonOpRequestRef;
 
-struct C_MonOp:public Context {
+struct C_MonOp: public Context {
     MonOpRequestRef op;
 
-    explicit C_MonOp(MonOpRequestRef o):op(o) {
-    } void finish(int r) override {
+    explicit C_MonOp(MonOpRequestRef o): op(o)
+    {
+    } void finish(int r) override
+    {
         if (op && r == -ECANCELED) {
             op->mark_event("callback canceled");
-        }
-        else if (op && r == -EAGAIN) {
+        } else if (op && r == -EAGAIN) {
             op->mark_event("callback retry");
-        }
-        else if (op && r == 0) {
+        } else if (op && r == 0) {
             op->mark_event("callback finished");
         }
         _finish(r);
     }
 
-    void mark_op_event(const std::string & event) {
-        if (op)
+    void mark_op_event(const std::string &event)
+    {
+        if (op) {
             op->mark_event(event);
+        }
     }
 
     virtual void _finish(int r) = 0;

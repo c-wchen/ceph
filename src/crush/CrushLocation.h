@@ -14,31 +14,34 @@
 #include "common/ceph_mutex.h"
 #include "include/common_fwd.h"
 
-namespace ceph::crush {
+namespace ceph::crush
+{
 
-    class CrushLocation {
-      public:
-        explicit CrushLocation(CephContext * c):cct(c) {
-            init_on_startup();
-        } int update_from_conf();   ///< refresh from config
-        int update_from_hook(); ///< call hook, if present
-        int init_on_startup();
+class CrushLocation
+{
+public:
+    explicit CrushLocation(CephContext *c): cct(c)
+    {
+        init_on_startup();
+    } int update_from_conf();   ///< refresh from config
+    int update_from_hook(); ///< call hook, if present
+    int init_on_startup();
 
-        std::multimap < std::string, std::string > get_location() const;
+    std::multimap < std::string, std::string > get_location() const;
 
-      private:
-        int _parse(const std::string & s);
-        CephContext *cct;
-        std::multimap < std::string, std::string > loc;
-        mutable ceph::mutex lock = ceph::make_mutex("CrushLocation");
-    };
+private:
+    int _parse(const std::string &s);
+    CephContext *cct;
+    std::multimap < std::string, std::string > loc;
+    mutable ceph::mutex lock = ceph::make_mutex("CrushLocation");
+};
 
-    std::ostream & operator<<(std::ostream & os, const CrushLocation & loc);
+std::ostream &operator<<(std::ostream &os, const CrushLocation &loc);
 }
 
 #if FMT_VERSION >= 90000
 template <> struct fmt::formatter <
-    ceph::crush::CrushLocation >:fmt::ostream_formatter {
+    ceph::crush::CrushLocation > : fmt::ostream_formatter {
 };
 #endif
 

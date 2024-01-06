@@ -8,8 +8,9 @@
 #include "common/dout.h"
 #include "random_string.h"
 
-int gen_rand_base64(CephContext * cct, char *dest, size_t size)
-{                               /* size should be the required string size + 1 */
+int gen_rand_base64(CephContext *cct, char *dest, size_t size)
+{
+    /* size should be the required string size + 1 */
     char buf[size];
     char tmp_dest[size + 4];    /* so that there's space for the extra '=' characters, and some */
     int ret;
@@ -31,7 +32,7 @@ int gen_rand_base64(CephContext * cct, char *dest, size_t size)
 }
 
 // choose 'size' random characters from the given string table
-static void choose_from(CryptoRandom * random, std::string_view table,
+static void choose_from(CryptoRandom *random, std::string_view table,
                         char *dest, size_t size)
 {
     random->get_bytes(dest, size);
@@ -42,8 +43,9 @@ static void choose_from(CryptoRandom * random, std::string_view table,
     }
 }
 
-void gen_rand_alphanumeric(CephContext * cct, char *dest, size_t size)
-{                               /* size should be the required string size + 1 */
+void gen_rand_alphanumeric(CephContext *cct, char *dest, size_t size)
+{
+    /* size should be the required string size + 1 */
     // this is basically a modified base64 charset, url friendly
     static constexpr char table[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -51,7 +53,7 @@ void gen_rand_alphanumeric(CephContext * cct, char *dest, size_t size)
     dest[size - 1] = 0;
 }
 
-std::string gen_rand_alphanumeric(CephContext * cct, size_t size)
+std::string gen_rand_alphanumeric(CephContext *cct, size_t size)
 {
     std::string str;
     str.resize(size + 1);
@@ -60,14 +62,15 @@ std::string gen_rand_alphanumeric(CephContext * cct, size_t size)
     return str;
 }
 
-void gen_rand_alphanumeric_lower(CephContext * cct, char *dest, size_t size)
-{                               /* size should be the required string size + 1 */
+void gen_rand_alphanumeric_lower(CephContext *cct, char *dest, size_t size)
+{
+    /* size should be the required string size + 1 */
     static constexpr char table[] = "0123456789abcdefghijklmnopqrstuvwxyz";
     choose_from(cct->random(), table, dest, size - 1);
     dest[size - 1] = 0;
 }
 
-std::string gen_rand_alphanumeric_lower(CephContext * cct, size_t size)
+std::string gen_rand_alphanumeric_lower(CephContext *cct, size_t size)
 {
     std::string str;
     str.resize(size + 1);
@@ -76,14 +79,15 @@ std::string gen_rand_alphanumeric_lower(CephContext * cct, size_t size)
     return str;
 }
 
-void gen_rand_alphanumeric_upper(CephContext * cct, char *dest, size_t size)
-{                               /* size should be the required string size + 1 */
+void gen_rand_alphanumeric_upper(CephContext *cct, char *dest, size_t size)
+{
+    /* size should be the required string size + 1 */
     static constexpr char table[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     choose_from(cct->random(), table, dest, size - 1);
     dest[size - 1] = 0;
 }
 
-std::string gen_rand_alphanumeric_upper(CephContext * cct, size_t size)
+std::string gen_rand_alphanumeric_upper(CephContext *cct, size_t size)
 {
     std::string str;
     str.resize(size + 1);
@@ -92,16 +96,17 @@ std::string gen_rand_alphanumeric_upper(CephContext * cct, size_t size)
     return str;
 }
 
-void gen_rand_alphanumeric_no_underscore(CephContext * cct, char *dest,
-                                         size_t size)
-{                               /* size should be the required string size + 1 */
+void gen_rand_alphanumeric_no_underscore(CephContext *cct, char *dest,
+        size_t size)
+{
+    /* size should be the required string size + 1 */
     static constexpr char table[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.";
     choose_from(cct->random(), table, dest, size - 1);
     dest[size - 1] = 0;
 }
 
-std::string gen_rand_alphanumeric_no_underscore(CephContext * cct, size_t size)
+std::string gen_rand_alphanumeric_no_underscore(CephContext *cct, size_t size)
 {
     std::string str;
     str.resize(size + 1);
@@ -110,15 +115,16 @@ std::string gen_rand_alphanumeric_no_underscore(CephContext * cct, size_t size)
     return str;
 }
 
-void gen_rand_alphanumeric_plain(CephContext * cct, char *dest, size_t size)
-{                               /* size should be the required string size + 1 */
+void gen_rand_alphanumeric_plain(CephContext *cct, char *dest, size_t size)
+{
+    /* size should be the required string size + 1 */
     static constexpr char table[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     choose_from(cct->random(), table, dest, size - 1);
     dest[size - 1] = 0;
 }
 
-std::string gen_rand_alphanumeric_plain(CephContext * cct, size_t size)
+std::string gen_rand_alphanumeric_plain(CephContext *cct, size_t size)
 {
     std::string str;
     str.resize(size + 1);

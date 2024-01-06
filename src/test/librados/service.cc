@@ -30,7 +30,7 @@ TEST(LibRadosService, RegisterEarly)
     ASSERT_EQ(0, rados_service_register(cluster, "laundry", name.c_str(),
                                         "foo\0bar\0this\0that\0"));
     ASSERT_EQ(-EEXIST, rados_service_register(cluster, "laundry", name.c_str(),
-                                              "foo\0bar\0this\0that\0"));
+              "foo\0bar\0this\0that\0"));
 
     ASSERT_EQ(0, rados_connect(cluster));
     sleep(5);
@@ -49,13 +49,13 @@ TEST(LibRadosService, RegisterLate)
     ASSERT_EQ(0, rados_service_register(cluster, "laundry", name.c_str(),
                                         "foo\0bar\0this\0that\0"));
     ASSERT_EQ(-EEXIST, rados_service_register(cluster, "laundry", name.c_str(),
-                                              "foo\0bar\0this\0that\0"));
+              "foo\0bar\0this\0that\0"));
     rados_shutdown(cluster);
 }
 
-static void status_format_func(const int i, std::mutex & lock,
-                               std::condition_variable & cond,
-                               int &threads_started, bool & stopped)
+static void status_format_func(const int i, std::mutex &lock,
+                               std::condition_variable &cond,
+                               int &threads_started, bool &stopped)
 {
     rados_t cluster;
     char metadata_buf[4096];
@@ -68,16 +68,13 @@ static void status_format_func(const int i, std::mutex & lock,
     if (i == 0) {
         ASSERT_LT(0, sprintf(metadata_buf, "%s%c%s%c",
                              "foo", '\0', "bar", '\0'));
-    }
-    else if (i == 1) {
+    } else if (i == 1) {
         ASSERT_LT(0, sprintf(metadata_buf, "%s%c%s%c",
                              "daemon_type", '\0', "portal", '\0'));
-    }
-    else if (i == 2) {
+    } else if (i == 2) {
         ASSERT_LT(0, sprintf(metadata_buf, "%s%c%s%c",
                              "daemon_prefix", '\0', "gateway", '\0'));
-    }
-    else {
+    } else {
         string prefix = string("gw") + stringify(i % 4);
         string zone = string("z") + stringify(i % 3);
         ASSERT_LT(0, sprintf(metadata_buf, "%s%c%s%c%s%c%s%c%s%c%s%c%s%c%s%c",
@@ -93,9 +90,10 @@ static void status_format_func(const int i, std::mutex & lock,
     std::unique_lock < std::mutex > l(lock);
     threads_started++;
     cond.notify_all();
-    cond.wait(l,[&stopped] {
-              return stopped;}
-    );
+    cond.wait(l, [&stopped] {
+        return stopped;
+    }
+             );
 
     rados_shutdown(cluster);
 }
@@ -126,9 +124,10 @@ TEST(LibRadosService, StatusFormat)
 
     {
         std::unique_lock < std::mutex > l(lock);
-        cond.wait(l,[&threads_started] {
-                  return nthreads == threads_started;}
-        );
+        cond.wait(l, [&threads_started] {
+            return nthreads == threads_started;
+        }
+                 );
     }
 
     int retry = 60;             // mon thrashing may make this take a long time
@@ -180,8 +179,9 @@ TEST(LibRadosService, StatusFormat)
         stopped = true;
         cond.notify_all();
     }
-    for (int i = 0; i < nthreads; ++i)
+    for (int i = 0; i < nthreads; ++i) {
         threads[i].join();
+    }
 
     ASSERT_NE(0, retry);
 #ifndef _WIN32
@@ -197,7 +197,7 @@ TEST(LibRadosService, Status)
     ASSERT_EQ(0, rados_conf_parse_env(cluster, NULL));
 
     ASSERT_EQ(-ENOTCONN, rados_service_update_status(cluster,
-                                                     "testing\0testing\0"));
+              "testing\0testing\0"));
 
     ASSERT_EQ(0, rados_connect(cluster));
     string name = string("pid") + stringify(getpid());

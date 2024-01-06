@@ -21,7 +21,7 @@
 #define ASSERT_RA(expected_offset, expected_length, ra) \
   do { \
     Readahead::extent_t e = ra; \
-    ASSERT_EQ((uint64_t)expected_length, e.second);	\
+    ASSERT_EQ((uint64_t)expected_length, e.second); \
     if (expected_length) { \
       ASSERT_EQ((uint64_t)expected_offset, e.first); \
     } \

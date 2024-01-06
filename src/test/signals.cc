@@ -39,8 +39,9 @@ TEST(SignalApi, SimpleInstallAndTest)
     sigset_t mask;
     sigemptyset(&mask);
     ret = sigsuspend(&mask);
-    if (ret == -1)
+    if (ret == -1) {
         ret = errno;
+    }
 
     // we should have gotten it
     ASSERT_EQ(ret, EINTR);
@@ -63,14 +64,14 @@ void reset()
 void testhandler(int signal)
 {
     switch (signal) {
-    case SIGUSR1:
-        usr1 = true;
-        break;
-    case SIGUSR2:
-        usr2 = true;
-        break;
-    default:
-        ceph_abort_msg("unexpected signal");
+        case SIGUSR1:
+            usr1 = true;
+            break;
+        case SIGUSR2:
+            usr2 = true;
+            break;
+        default:
+            ceph_abort_msg("unexpected signal");
     }
 }
 

@@ -85,8 +85,7 @@ int main(int argc, char *argv[])
     // and print it to stdout
     if (pid != -1) {
         rss = getRssUsage(to_string(pid));
-    }
-    else {
+    } else {
         cout << "Process " << argv[1] << " NOT FOUND!\n" << endl;
         exit(ESRCH);
     }

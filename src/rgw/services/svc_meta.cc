@@ -9,7 +9,7 @@
 
 using namespace std;
 
-RGWSI_Meta::RGWSI_Meta(CephContext * cct):RGWServiceInstance(cct)
+RGWSI_Meta::RGWSI_Meta(CephContext *cct): RGWServiceInstance(cct)
 {
 }
 
@@ -17,20 +17,20 @@ RGWSI_Meta::~RGWSI_Meta()
 {
 }
 
-void RGWSI_Meta::init(RGWSI_SysObj * _sysobj_svc,
-                      RGWSI_MDLog * _mdlog_svc,
-                      vector < RGWSI_MetaBackend * >&_be_svc)
+void RGWSI_Meta::init(RGWSI_SysObj *_sysobj_svc,
+                      RGWSI_MDLog *_mdlog_svc,
+                      vector < RGWSI_MetaBackend * > &_be_svc)
 {
     sysobj_svc = _sysobj_svc;
     mdlog_svc = _mdlog_svc;
 
-  for (auto & be:_be_svc) {
+    for (auto &be : _be_svc) {
         be_svc[be->get_type()] = be;
     }
 }
 
 int RGWSI_Meta::create_be_handler(RGWSI_MetaBackend::Type be_type,
-                                  RGWSI_MetaBackend_Handler ** phandler)
+                                  RGWSI_MetaBackend_Handler **phandler)
 {
     auto iter = be_svc.find(be_type);
     if (iter == be_svc.end()) {

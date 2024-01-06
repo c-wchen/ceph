@@ -20,20 +20,24 @@ DB *DBStoreManager::getDB(string tenant, bool create)
     DB *dbs = nullptr;
     pair < map < string, DB * >::iterator, bool > ret;
 
-    if (tenant.empty())
+    if (tenant.empty()) {
         return default_db;
+    }
 
-    if (DBStoreHandles.empty())
+    if (DBStoreHandles.empty()) {
         goto not_found;
+    }
 
     iter = DBStoreHandles.find(tenant);
 
-    if (iter != DBStoreHandles.end())
+    if (iter != DBStoreHandles.end()) {
         return iter->second;
+    }
 
-  not_found:
-    if (!create)
+not_found:
+    if (!create) {
         return nullptr;
+    }
 
     dbs = createDB(tenant);
 
@@ -45,15 +49,15 @@ DB *DBStoreManager::createDB(std::string tenant)
 {
     DB *dbs = nullptr;
     pair < map < string, DB * >::iterator, bool > ret;
-    const auto & db_path = g_conf().get_val < std::string > ("dbstore_db_dir");
-    const auto & db_name =
+    const auto &db_path = g_conf().get_val < std::string > ("dbstore_db_dir");
+    const auto &db_name =
         g_conf().get_val < std::string >
         ("dbstore_db_name_prefix") + "-" + tenant;
 
     auto db_full_path = std::filesystem::path(db_path) / db_name;
     ldout(cct,
           0) << "DB initialization full db_path(" << db_full_path << ")" <<
-        dendl;
+             dendl;
 
     /* Create the handle */
 #ifdef SQLITE_ENABLED
@@ -70,7 +74,7 @@ DB *DBStoreManager::createDB(std::string tenant)
     if (dbs->Initialize("", -1) < 0) {
         ldout(cct,
               0) << "DB initialization failed for tenant(" << tenant << ")" <<
-            dendl;
+                 dendl;
 
         delete dbs;
         return nullptr;
@@ -99,14 +103,16 @@ void DBStoreManager::deleteDB(string tenant)
     map < string, DB * >::iterator iter;
     DB *dbs = nullptr;
 
-    if (tenant.empty() || DBStoreHandles.empty())
+    if (tenant.empty() || DBStoreHandles.empty()) {
         return;
+    }
 
     /* XXX: Check if we need to perform this operation under a lock */
     iter = DBStoreHandles.find(tenant);
 
-    if (iter == DBStoreHandles.end())
+    if (iter == DBStoreHandles.end()) {
         return;
+    }
 
     dbs = iter->second;
 
@@ -117,10 +123,11 @@ void DBStoreManager::deleteDB(string tenant)
     return;
 }
 
-void DBStoreManager::deleteDB(DB * dbs)
+void DBStoreManager::deleteDB(DB *dbs)
 {
-    if (!dbs)
+    if (!dbs) {
         return;
+    }
 
     (void)deleteDB(dbs->getDBname());
 }
@@ -130,8 +137,9 @@ void DBStoreManager::destroyAllHandles()
     map < string, DB * >::iterator iter;
     DB *dbs = nullptr;
 
-    if (DBStoreHandles.empty())
+    if (DBStoreHandles.empty()) {
         return;
+    }
 
     for (iter = DBStoreHandles.begin(); iter != DBStoreHandles.end(); ++iter) {
         dbs = iter->second;

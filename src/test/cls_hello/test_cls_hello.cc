@@ -87,7 +87,7 @@ TEST(ClsHello, RecordHello)
     ASSERT_EQ(0, destroy_one_pool_pp(pool_name, cluster));
 }
 
-static std::string _get_required_osd_release(Rados & cluster)
+static std::string _get_required_osd_release(Rados &cluster)
 {
     bufferlist inbl;
     std::string cmd =
@@ -102,12 +102,12 @@ static std::string _get_required_osd_release(Rados & cluster)
         return "";
     }
 
-    json_spirit::Object & o = v.get_obj();
+    json_spirit::Object &o = v.get_obj();
     for (json_spirit::Object::size_type i = 0; i < o.size(); i++) {
-        json_spirit::Pair & p = o[i];
+        json_spirit::Pair &p = o[i];
         if (p.name_ == "require_osd_release") {
             std::cout << "require_osd_release = " << p.value_.
-                get_str() << std::endl;
+                      get_str() << std::endl;
             return p.value_.get_str();
         }
     }
@@ -147,7 +147,7 @@ TEST(ClsHello, WriteReturnData)
         int rval;
         ObjectWriteOperation o;
         o.exec("hello", "write_return_data", in, &out, &rval);
-        librados::AioCompletion * completion = cluster.aio_create_completion();
+        librados::AioCompletion *completion = cluster.aio_create_completion();
         ASSERT_EQ(0, ioctx.aio_operate("foo", completion, &o,
                                        librados::OPERATION_RETURNVEC));
         completion->wait_for_complete();
@@ -166,7 +166,7 @@ TEST(ClsHello, WriteReturnData)
         int rval;
         ObjectWriteOperation o;
         o.exec("hello", "write_return_data", in, &out, &rval);
-        librados::AioCompletion * completion = cluster.aio_create_completion();
+        librados::AioCompletion *completion = cluster.aio_create_completion();
         ASSERT_EQ(0, ioctx.aio_operate("foo", completion, &o,
                                        librados::OPERATION_RETURNVEC));
         completion->wait_for_complete();
@@ -195,7 +195,7 @@ TEST(ClsHello, WriteReturnData)
         int rval;
         ObjectWriteOperation o;
         o.exec("hello", "write_too_much_return_data", in, &out, &rval);
-        librados::AioCompletion * completion = cluster.aio_create_completion();
+        librados::AioCompletion *completion = cluster.aio_create_completion();
         ASSERT_EQ(0, ioctx.aio_operate("foo", completion, &o,
                                        librados::OPERATION_RETURNVEC));
         completion->wait_for_complete();

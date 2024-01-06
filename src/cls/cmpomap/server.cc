@@ -16,33 +16,33 @@
 #include "ops.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(cmpomap)
+CLS_NAME(cmpomap)
 
 using namespace cls::cmpomap;
 
 // returns negative error codes or 0/1 for failed/successful comparisons
 template < typename T >
-    static int compare_values(Op op, const T & lhs, const T & rhs)
+static int compare_values(Op op, const T &lhs, const T &rhs)
 {
     switch (op) {
-    case Op::EQ:
-        return (lhs == rhs);
-    case Op::NE:
-        return (lhs != rhs);
-    case Op::GT:
-        return (lhs > rhs);
-    case Op::GTE:
-        return (lhs >= rhs);
-    case Op::LT:
-        return (lhs < rhs);
-    case Op::LTE:
-        return (lhs <= rhs);
-    default:
-        return -EINVAL;
+        case Op::EQ:
+            return (lhs == rhs);
+        case Op::NE:
+            return (lhs != rhs);
+        case Op::GT:
+            return (lhs > rhs);
+        case Op::GTE:
+            return (lhs >= rhs);
+        case Op::LT:
+            return (lhs < rhs);
+        case Op::LTE:
+            return (lhs <= rhs);
+        default:
+            return -EINVAL;
     }
 }
 
-static int compare_values_u64(Op op, uint64_t lhs, const bufferlist & value)
+static int compare_values_u64(Op op, uint64_t lhs, const bufferlist &value)
 {
     // empty values compare as 0 for backward compat
     uint64_t rhs = 0;
@@ -52,8 +52,7 @@ static int compare_values_u64(Op op, uint64_t lhs, const bufferlist & value)
             auto p = value.cbegin();
             using ceph::decode;
             decode(rhs, p);
-        }
-        catch(const buffer::error &) {
+        } catch (const buffer::error &) {
             // failures to decode existing values are reported as EIO
             return -EIO;
         }
@@ -61,45 +60,44 @@ static int compare_values_u64(Op op, uint64_t lhs, const bufferlist & value)
     return compare_values(op, lhs, rhs);
 }
 
-static int compare_value(Mode mode, Op op, const bufferlist & input,
-                         const bufferlist & value)
+static int compare_value(Mode mode, Op op, const bufferlist &input,
+                         const bufferlist &value)
 {
     switch (mode) {
-    case Mode::String:
-        return compare_values(op, input, value);
-    case Mode::U64:
-        try {
-            // decode input value as lhs
-            uint64_t lhs;
-            auto p = input.cbegin();
-            using ceph::decode;
-            decode(lhs, p);
-            return compare_values_u64(op, lhs, value);
-        }
-        catch(const buffer::error &) {
-            // failures to decode input values are reported as EINVAL
+        case Mode::String:
+            return compare_values(op, input, value);
+        case Mode::U64:
+            try {
+                // decode input value as lhs
+                uint64_t lhs;
+                auto p = input.cbegin();
+                using ceph::decode;
+                decode(lhs, p);
+                return compare_values_u64(op, lhs, value);
+            } catch (const buffer::error &) {
+                // failures to decode input values are reported as EINVAL
+                return -EINVAL;
+            }
+        default:
             return -EINVAL;
-        }
-    default:
-        return -EINVAL;
     }
 }
 
-static int cmp_vals(cls_method_context_t hctx, bufferlist * in,
-                    bufferlist * out)
+static int cmp_vals(cls_method_context_t hctx, bufferlist *in,
+                    bufferlist *out)
 {
     cmp_vals_op op;
     try {
         auto p = in->cbegin();
         decode(op, p);
-    } catch(const buffer::error &) {
+    } catch (const buffer::error &) {
         CLS_LOG(1, "ERROR: cmp_vals(): failed to decode input");
         return -EINVAL;
     }
 
     // collect the keys we need to read
     std::set < std::string > keys;
-  for (const auto & kv:op.values) {
+    for (const auto &kv : op.values) {
         keys.insert(kv.first);
     }
 
@@ -112,19 +110,17 @@ static int cmp_vals(cls_method_context_t hctx, bufferlist * in,
     }
 
     auto v = values.cbegin();
-  for (const auto &[key, input]:op.values) {
+    for (const auto &[key, input] : op.values) {
         bufferlist value;
         if (v != values.end() && v->first == key) {
             value = std::move(v->second);
             ++v;
             CLS_LOG(20, "cmp_vals() comparing key=%s mode=%d op=%d",
                     key.c_str(), (int)op.mode, (int)op.comparison);
-        }
-        else if (!op.default_value) {
+        } else if (!op.default_value) {
             CLS_LOG(20, "cmp_vals() missing key=%s", key.c_str());
             return -ECANCELED;
-        }
-        else {
+        } else {
             // use optional default for missing keys
             value = *op.default_value;
             CLS_LOG(20, "cmp_vals() comparing missing key=%s mode=%d op=%d",
@@ -149,21 +145,21 @@ static int cmp_vals(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int cmp_set_vals(cls_method_context_t hctx, bufferlist * in,
-                        bufferlist * out)
+static int cmp_set_vals(cls_method_context_t hctx, bufferlist *in,
+                        bufferlist *out)
 {
     cmp_set_vals_op op;
     try {
         auto p = in->cbegin();
         decode(op, p);
-    } catch(const buffer::error &) {
+    } catch (const buffer::error &) {
         CLS_LOG(1, "ERROR: cmp_set_vals(): failed to decode input");
         return -EINVAL;
     }
 
     // collect the keys we need to read
     std::set < std::string > keys;
-  for (const auto & kv:op.values) {
+    for (const auto &kv : op.values) {
         keys.insert(kv.first);
     }
 
@@ -176,7 +172,7 @@ static int cmp_set_vals(cls_method_context_t hctx, bufferlist * in,
     }
 
     auto v = values.begin();
-  for (const auto &[key, input]:op.values) {
+    for (const auto &[key, input] : op.values) {
         auto k = values.end();
         bufferlist value;
         if (v != values.end() && v->first == key) {
@@ -184,12 +180,10 @@ static int cmp_set_vals(cls_method_context_t hctx, bufferlist * in,
             k = v++;
             CLS_LOG(20, "cmp_set_vals() comparing key=%s mode=%d op=%d",
                     key.c_str(), (int)op.mode, (int)op.comparison);
-        }
-        else if (!op.default_value) {
+        } else if (!op.default_value) {
             CLS_LOG(20, "cmp_set_vals() missing key=%s", key.c_str());
             continue;
-        }
-        else {
+        } else {
             // use optional default for missing keys
             value = *op.default_value;
             CLS_LOG(20, "cmp_set_vals() comparing missing key=%s mode=%d op=%d",
@@ -211,20 +205,17 @@ static int cmp_set_vals(cls_method_context_t hctx, bufferlist * in,
                 values.erase(k);    // remove this key from the values to overwrite
                 CLS_LOG(20, "cmp_set_vals() not overwriting key=%s",
                         key.c_str());
-            }
-            else {
+            } else {
                 CLS_LOG(20, "cmp_set_vals() not writing missing key=%s",
                         key.c_str());
             }
-        }
-        else {
+        } else {
             // successful comparison
             if (k != values.end()) {
                 // overwrite the value
                 k->second = std::move(input);
                 CLS_LOG(20, "cmp_set_vals() overwriting key=%s", key.c_str());
-            }
-            else {
+            } else {
                 // insert the value
                 values.emplace(key, std::move(input));
                 CLS_LOG(20, "cmp_set_vals() overwriting missing key=%s",
@@ -242,21 +233,21 @@ static int cmp_set_vals(cls_method_context_t hctx, bufferlist * in,
     return cls_cxx_map_set_vals(hctx, &values);
 }
 
-static int cmp_rm_keys(cls_method_context_t hctx, bufferlist * in,
-                       bufferlist * out)
+static int cmp_rm_keys(cls_method_context_t hctx, bufferlist *in,
+                       bufferlist *out)
 {
     cmp_rm_keys_op op;
     try {
         auto p = in->cbegin();
         decode(op, p);
-    } catch(const buffer::error &) {
+    } catch (const buffer::error &) {
         CLS_LOG(1, "ERROR: cmp_rm_keys(): failed to decode input");
         return -EINVAL;
     }
 
     // collect the keys we need to read
     std::set < std::string > keys;
-  for (const auto & kv:op.values) {
+    for (const auto &kv : op.values) {
         keys.insert(kv.first);
     }
 
@@ -269,7 +260,7 @@ static int cmp_rm_keys(cls_method_context_t hctx, bufferlist * in,
     }
 
     auto v = values.cbegin();
-  for (const auto &[key, input]:op.values) {
+    for (const auto &[key, input] : op.values) {
         if (v == values.end() || v->first != key) {
             CLS_LOG(20, "cmp_rm_keys() missing key=%s", key.c_str());
             continue;
@@ -277,7 +268,7 @@ static int cmp_rm_keys(cls_method_context_t hctx, bufferlist * in,
         CLS_LOG(20, "cmp_rm_keys() comparing key=%s mode=%d op=%d",
                 key.c_str(), (int)op.mode, (int)op.comparison);
 
-        const bufferlist & value = v->second;
+        const bufferlist &value = v->second;
         ++v;
 
         r = compare_value(op.mode, op.comparison, input, value);
@@ -292,8 +283,7 @@ static int cmp_rm_keys(cls_method_context_t hctx, bufferlist * in,
         if (r == 0) {
             // unsuccessful comparison
             CLS_LOG(20, "cmp_rm_keys() preserving key=%s", key.c_str());
-        }
-        else {
+        } else {
             // successful comparison
             CLS_LOG(20, "cmp_rm_keys() removing key=%s", key.c_str());
             r = cls_cxx_map_remove_key(hctx, key);

@@ -13,7 +13,7 @@ using ceph::Formatter;
 using ceph::bufferlist;
 using ceph::real_clock;
 
-void cls_user_gen_test_bucket(cls_user_bucket * bucket, int i)
+void cls_user_gen_test_bucket(cls_user_bucket *bucket, int i)
 {
     char buf[16];
     snprintf(buf, sizeof(buf), ".%d", i);
@@ -23,14 +23,14 @@ void cls_user_gen_test_bucket(cls_user_bucket * bucket, int i)
     bucket->bucket_id = string("bucket.id") + buf;
 }
 
-void cls_user_bucket::dump(Formatter * f) const const
+void cls_user_bucket::dump(Formatter *f) const const
 {
     encode_json("name", name, f);
     encode_json("marker", marker, f);
     encode_json("bucket_id", bucket_id, f);
 }
 
-void cls_user_bucket::generate_test_instances(list < cls_user_bucket * >&ls)
+void cls_user_bucket::generate_test_instances(list < cls_user_bucket * > &ls)
 {
     ls.push_back(new cls_user_bucket);
     cls_user_bucket *b = new cls_user_bucket;
@@ -38,7 +38,7 @@ void cls_user_bucket::generate_test_instances(list < cls_user_bucket * >&ls)
     ls.push_back(b);
 }
 
-void cls_user_bucket_entry::dump(Formatter * f) const const
+void cls_user_bucket_entry::dump(Formatter *f) const const
 {
     encode_json("bucket", bucket, f);
     encode_json("size", size, f);
@@ -48,7 +48,7 @@ void cls_user_bucket_entry::dump(Formatter * f) const const
     encode_json("user_stats_sync", user_stats_sync, f);
 }
 
-void cls_user_gen_test_bucket_entry(cls_user_bucket_entry * entry, int i)
+void cls_user_gen_test_bucket_entry(cls_user_bucket_entry *entry, int i)
 {
     cls_user_gen_test_bucket(&entry->bucket, i);
     entry->size = i + 1;
@@ -59,8 +59,8 @@ void cls_user_gen_test_bucket_entry(cls_user_bucket_entry * entry, int i)
 }
 
 void cls_user_bucket_entry::generate_test_instances(list <
-                                                    cls_user_bucket_entry *
-                                                    >&ls)
+        cls_user_bucket_entry *
+        > &ls)
 {
     ls.push_back(new cls_user_bucket_entry);
     cls_user_bucket_entry *entry = new cls_user_bucket_entry;
@@ -68,21 +68,21 @@ void cls_user_bucket_entry::generate_test_instances(list <
     ls.push_back(entry);
 }
 
-void cls_user_gen_test_stats(cls_user_stats * s)
+void cls_user_gen_test_stats(cls_user_stats *s)
 {
     s->total_entries = 1;
     s->total_bytes = 2;
     s->total_bytes_rounded = 3;
 }
 
-void cls_user_stats::dump(Formatter * f) const const
+void cls_user_stats::dump(Formatter *f) const const
 {
     f->dump_int("total_entries", total_entries);
     f->dump_int("total_bytes", total_bytes);
     f->dump_int("total_bytes_rounded", total_bytes_rounded);
 }
 
-void cls_user_stats::generate_test_instances(list < cls_user_stats * >&ls)
+void cls_user_stats::generate_test_instances(list < cls_user_stats * > &ls)
 {
     ls.push_back(new cls_user_stats);
     cls_user_stats *s = new cls_user_stats;
@@ -90,21 +90,21 @@ void cls_user_stats::generate_test_instances(list < cls_user_stats * >&ls)
     ls.push_back(s);
 }
 
-void cls_user_gen_test_header(cls_user_header * h)
+void cls_user_gen_test_header(cls_user_header *h)
 {
     cls_user_gen_test_stats(&h->stats);
     h->last_stats_sync = utime_t(1, 0).to_real_time();
     h->last_stats_update = utime_t(2, 0).to_real_time();
 }
 
-void cls_user_header::dump(Formatter * f) const const
+void cls_user_header::dump(Formatter *f) const const
 {
     encode_json("stats", stats, f);
     encode_json("last_stats_sync", utime_t(last_stats_sync), f);
     encode_json("last_stats_update", utime_t(last_stats_update), f);
 }
 
-void cls_user_header::generate_test_instances(list < cls_user_header * >&ls)
+void cls_user_header::generate_test_instances(list < cls_user_header * > &ls)
 {
     ls.push_back(new cls_user_header);
     cls_user_header *h = new cls_user_header;

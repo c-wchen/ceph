@@ -29,7 +29,7 @@ class JSONObj;
 
 struct RGWQuotaInfo {
     template < class T > friend class RGWQuotaCache;
-  public:
+public:
     int64_t max_size;
     int64_t max_objects;
     bool enabled;
@@ -37,14 +37,15 @@ struct RGWQuotaInfo {
      * or maybe rounded-to-4KiB RGWStorageStats::size_rounded (false)? */
     bool check_on_raw;
 
-     RGWQuotaInfo()
-    :max_size(-1), max_objects(-1), enabled(false), check_on_raw(false) {
-    } void encode(bufferlist & bl) const {
+    RGWQuotaInfo()
+        : max_size(-1), max_objects(-1), enabled(false), check_on_raw(false)
+    {
+    } void encode(bufferlist &bl) const
+    {
         ENCODE_START(3, 1, bl);
         if (max_size < 0) {
             encode(-rgw_rounded_kb(abs(max_size)), bl);
-        }
-        else {
+        } else {
             encode(rgw_rounded_kb(max_size), bl);
         }
         encode(max_objects, bl);
@@ -53,7 +54,8 @@ struct RGWQuotaInfo {
         encode(check_on_raw, bl);
         ENCODE_FINISH(bl);
     }
-    void decode(bufferlist::const_iterator & bl) {
+    void decode(bufferlist::const_iterator &bl)
+    {
         DECODE_START_LEGACY_COMPAT_LEN(3, 1, 1, bl);
         int64_t max_size_kb;
         decode(max_size_kb, bl);
@@ -61,8 +63,7 @@ struct RGWQuotaInfo {
         decode(enabled, bl);
         if (struct_v < 2) {
             max_size = max_size_kb * 1024;
-        }
-        else {
+        } else {
             decode(max_size, bl);
         }
         if (struct_v >= 3) {
@@ -71,9 +72,9 @@ struct RGWQuotaInfo {
         DECODE_FINISH(bl);
     }
 
-    void dump(Formatter * f) const;
+    void dump(Formatter *f) const;
 
-    void decode_json(JSONObj * obj);
+    void decode_json(JSONObj *obj);
 
 };
 

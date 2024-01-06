@@ -19,24 +19,30 @@
 template < typename T, int id > struct ptr_wrapper {
     T *_p;
 
-     ptr_wrapper(T * v):_p(v) {
-    } ptr_wrapper():_p(nullptr) {
+    ptr_wrapper(T *v): _p(v)
+    {
+    } ptr_wrapper(): _p(nullptr)
+    {
     }
 
-    T *operator=(T * p) {
+    T *operator=(T *p)
+    {
         _p = p;
         return p;
     }
 
-    T & operator*() {
+    T &operator*()
+    {
         return *_p;
     }
 
-    T *operator->() {
+    T *operator->()
+    {
         return _p;
     }
 
-    T *get() {
+    T *get()
+    {
         return _p;
     }
 };

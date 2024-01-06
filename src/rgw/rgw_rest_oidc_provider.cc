@@ -45,8 +45,7 @@ int RGWRestOIDCProvider::verify_permission(optional_yield y)
         if (!verify_user_permission(this, s, *rgw_arn, op)) {
             return -EACCES;
         }
-    }
-    else {
+    } else {
         return -EACCES;
     }
 
@@ -62,12 +61,12 @@ void RGWRestOIDCProvider::send_response()
     end_header(s, this);
 }
 
-int RGWRestOIDCProviderRead::check_caps(const RGWUserCaps & caps)
+int RGWRestOIDCProviderRead::check_caps(const RGWUserCaps &caps)
 {
     return caps.check_cap("oidc-provider", RGW_CAP_READ);
 }
 
-int RGWRestOIDCProviderWrite::check_caps(const RGWUserCaps & caps)
+int RGWRestOIDCProviderWrite::check_caps(const RGWUserCaps &caps)
 {
     return caps.check_cap("oidc-provider", RGW_CAP_WRITE);
 }
@@ -100,7 +99,7 @@ int RGWCreateOIDCProvider::get_params()
     provider_url = s->info.args.get("Url");
 
     auto val_map = s->info.args.get_params();
-  for (auto & it:val_map) {
+    for (auto &it : val_map) {
         if (it.first.find("ClientIDList.member.") != string::npos) {
             client_ids.emplace_back(it.second);
         }
@@ -135,7 +134,7 @@ void RGWCreateOIDCProvider::execute(optional_yield y)
 
     if (op_ret == 0) {
         s->formatter->
-            open_object_section("CreateOpenIDConnectProviderResponse");
+        open_object_section("CreateOpenIDConnectProviderResponse");
         s->formatter->open_object_section("CreateOpenIDConnectProviderResult");
         provider->dump(s->formatter);
         s->formatter->close_section();
@@ -161,7 +160,7 @@ void RGWDeleteOIDCProvider::execute(optional_yield y)
 
     if (op_ret == 0) {
         s->formatter->
-            open_object_section("DeleteOpenIDConnectProviderResponse");
+        open_object_section("DeleteOpenIDConnectProviderResponse");
         s->formatter->open_object_section("ResponseMetadata");
         s->formatter->dump_string("RequestId", s->trans_id);
         s->formatter->close_section();
@@ -222,9 +221,9 @@ void RGWListOIDCProviders::execute(optional_yield y)
         s->formatter->close_section();
         s->formatter->open_object_section("ListOpenIDConnectProvidersResult");
         s->formatter->open_array_section("OpenIDConnectProviderList");
-      for (const auto & it:result) {
+        for (const auto &it : result) {
             s->formatter->open_object_section("member");
-            auto & arn = it->get_arn();
+            auto &arn = it->get_arn();
             ldpp_dout(s, 0) << "ARN: " << arn << dendl;
             s->formatter->dump_string("Arn", arn);
             s->formatter->close_section();

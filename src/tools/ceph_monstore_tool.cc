@@ -40,36 +40,41 @@ namespace po = boost::program_options;
 
 using namespace std;
 
-class TraceIter {
+class TraceIter
+{
     int fd;
     unsigned idx;
     MonitorDBStore::TransactionRef t;
-  public:
-    explicit TraceIter(string fname):fd(-1), idx(-1) {
+public:
+    explicit TraceIter(string fname): fd(-1), idx(-1)
+    {
         fd =::open(fname.c_str(), O_RDONLY | O_BINARY);
         t.reset(new MonitorDBStore::Transaction);
-    } bool valid() {
+    } bool valid()
+    {
         return fd != -1;
     }
-    MonitorDBStore::TransactionRef cur() {
+    MonitorDBStore::TransactionRef cur()
+    {
         ceph_assert(valid());
         return t;
     }
-    unsigned num() {
+    unsigned num()
+    {
         return idx;
     }
-    void next() {
+    void next()
+    {
         ++idx;
         bufferlist bl;
         int r = bl.read_fd(fd, 6);
         if (r < 0) {
             std::cerr << "Got error: " << cpp_strerror(r) << " on read_fd"
-                << std::endl;
+                      << std::endl;
             ::close(fd);
             fd = -1;
             return;
-        }
-        else if ((unsigned)r < 6) {
+        } else if ((unsigned)r < 6) {
             std::cerr << "short read" << std::endl;
             ::close(fd);
             fd = -1;
@@ -84,12 +89,11 @@ class TraceIter {
         r = bl.read_fd(fd, len);
         if (r < 0) {
             std::cerr << "Got error: " << cpp_strerror(r) << " on read_fd"
-                << std::endl;
+                      << std::endl;
             ::close(fd);
             fd = -1;
             return;
-        }
-        else if ((unsigned)r < len) {
+        } else if ((unsigned)r < len) {
             std::cerr << "short read" << std::endl;
             ::close(fd);
             fd = -1;
@@ -99,10 +103,12 @@ class TraceIter {
         t.reset(new MonitorDBStore::Transaction);
         t->decode(bliter);
     }
-    void init() {
+    void init()
+    {
         next();
     }
-    ~TraceIter() {
+    ~TraceIter()
+    {
         if (fd != -1) {
             ::close(fd);
             fd = -1;
@@ -110,12 +116,12 @@ class TraceIter {
     }
 };
 
-int parse_cmd_args(po::options_description * desc,  /// < visible options description
-                   po::options_description * hidden_desc,   /// < hidden options description
-                   po::positional_options_description * positional, /// < positional args
+int parse_cmd_args(po::options_description *desc,   /// < visible options description
+                   po::options_description *hidden_desc,    /// < hidden options description
+                   po::positional_options_description *positional,  /// < positional args
                    vector < string > &cmd_args, /// < arguments to be parsed
-                   po::variables_map * vm   /// > post-parsing variable map
-    )
+                   po::variables_map *vm    /// > post-parsing variable map
+                  )
 {
     // desc_all will aggregate all visible and hidden options for parsing.
     //
@@ -142,8 +148,9 @@ int parse_cmd_args(po::options_description * desc,  /// < visible options descri
 
     po::options_description desc_all;
     desc_all.add(*desc);
-    if (hidden_desc != NULL)
+    if (hidden_desc != NULL) {
         desc_all.add(*hidden_desc);
+    }
 
     try {
         po::command_line_parser parser =
@@ -156,8 +163,7 @@ int parse_cmd_args(po::options_description * desc,  /// < visible options descri
         po::parsed_options parsed = parser.run();
         po::store(parsed, *vm);
         po::notify(*vm);
-    }
-    catch(po::error & e) {
+    } catch (po::error &e) {
         std::cerr << "error: " << e.what() << std::endl;
         return -EINVAL;
     }
@@ -193,61 +199,61 @@ int parse_cmd_args(po::options_description * desc,  /// < visible options descri
  *
  *
  */
-void usage(const char *n, po::options_description & d)
+void usage(const char *n, po::options_description &d)
 {
     std::cerr <<
-        "usage: " << n << " <store-path> <cmd> [args|options]\n"
-        << "\n"
-        << "Commands:\n"
-        << "  store-copy PATH                 copies store to PATH\n"
-        << "  compact                         compacts the store\n"
-        <<
-        "  get monmap [-- options]         get monmap (version VER if specified)\n"
-        << "                                  (default: last committed)\n" <<
-        "  get osdmap [-- options]         get osdmap (version VER if specified)\n"
-        << "                                  (default: last committed)\n" <<
-        "  get mdsmap [-- options]         get mdsmap (version VER if specified)\n"
-        << "                                  (default: last committed)\n" <<
-        "  get mgr [-- options]            get mgr map (version VER if specified)\n"
-        << "                                  (default: last committed)\n" <<
-        "  get crushmap [-- options]       get crushmap (version VER if specified)\n"
-        << "                                  (default: last committed)\n" <<
-        "  show-versions [-- options]      show the first&last committed version of map\n"
-        <<
-        "                                  (show-versions -- --help for more info)\n"
-        << "  dump-keys                       dumps store keys to FILE\n" <<
-        "                                  (default: stdout)\n" <<
-        "  dump-paxos [-- options]         dump paxos transactions\n" <<
-        "                                  (dump-paxos -- --help for more info)\n"
-        <<
-        "  dump-trace FILE [-- options]    dump contents of trace file FILE\n"
-        <<
-        "                                  (dump-trace -- --help for more info)\n"
-        << "  replay-trace FILE [-- options]  replay trace from FILE\n" <<
-        "                                  (replay-trace -- --help for more info)\n"
-        <<
-        "  random-gen [-- options]         add randomly generated ops to the store\n"
-        <<
-        "                                  (random-gen -- --help for more info)\n"
-        <<
-        "  rewrite-crush [-- options]      add a rewrite commit to the store\n"
-        <<
-        "                                  (rewrite-crush -- --help for more info)\n"
-        << "  rebuild                         rebuild store\n" <<
-        "                                  (rebuild -- --help for more info)\n"
-        << std::endl;
+              "usage: " << n << " <store-path> <cmd> [args|options]\n"
+              << "\n"
+              << "Commands:\n"
+              << "  store-copy PATH                 copies store to PATH\n"
+              << "  compact                         compacts the store\n"
+              <<
+              "  get monmap [-- options]         get monmap (version VER if specified)\n"
+              << "                                  (default: last committed)\n" <<
+              "  get osdmap [-- options]         get osdmap (version VER if specified)\n"
+              << "                                  (default: last committed)\n" <<
+              "  get mdsmap [-- options]         get mdsmap (version VER if specified)\n"
+              << "                                  (default: last committed)\n" <<
+              "  get mgr [-- options]            get mgr map (version VER if specified)\n"
+              << "                                  (default: last committed)\n" <<
+              "  get crushmap [-- options]       get crushmap (version VER if specified)\n"
+              << "                                  (default: last committed)\n" <<
+              "  show-versions [-- options]      show the first&last committed version of map\n"
+              <<
+              "                                  (show-versions -- --help for more info)\n"
+              << "  dump-keys                       dumps store keys to FILE\n" <<
+              "                                  (default: stdout)\n" <<
+              "  dump-paxos [-- options]         dump paxos transactions\n" <<
+              "                                  (dump-paxos -- --help for more info)\n"
+              <<
+              "  dump-trace FILE [-- options]    dump contents of trace file FILE\n"
+              <<
+              "                                  (dump-trace -- --help for more info)\n"
+              << "  replay-trace FILE [-- options]  replay trace from FILE\n" <<
+              "                                  (replay-trace -- --help for more info)\n"
+              <<
+              "  random-gen [-- options]         add randomly generated ops to the store\n"
+              <<
+              "                                  (random-gen -- --help for more info)\n"
+              <<
+              "  rewrite-crush [-- options]      add a rewrite commit to the store\n"
+              <<
+              "                                  (rewrite-crush -- --help for more info)\n"
+              << "  rebuild                         rebuild store\n" <<
+              "                                  (rebuild -- --help for more info)\n"
+              << std::endl;
     std::cerr << d << std::endl;
     std::cerr
-        << "\nPlease Note:\n"
-        << "* Ceph-specific options should be in the format --option-name=VAL\n"
-        << "  (specifically, do not forget the '='!!)\n"
-        << "* Command-specific options need to be passed after a '--'\n"
-        << "  e.g., 'get monmap -- --version 10 --out /tmp/foo'" << std::endl;
+            << "\nPlease Note:\n"
+            << "* Ceph-specific options should be in the format --option-name=VAL\n"
+            << "  (specifically, do not forget the '='!!)\n"
+            << "* Command-specific options need to be passed after a '--'\n"
+            << "  e.g., 'get monmap -- --version 10 --out /tmp/foo'" << std::endl;
 }
 
-int update_osdmap(MonitorDBStore & store, version_t ver, bool copy,
+int update_osdmap(MonitorDBStore &store, version_t ver, bool copy,
                   std::shared_ptr < CrushWrapper > crush,
-                  MonitorDBStore::Transaction * t)
+                  MonitorDBStore::Transaction *t)
 {
     const string prefix("osdmap");
 
@@ -275,13 +281,12 @@ int update_osdmap(MonitorDBStore & store, version_t ver, bool copy,
     if (copy) {
         inc.epoch = osdmap.get_epoch();
         inc.fsid = osdmap.get_fsid();
-    }
-    else {
+    } else {
         bl.clear();
         r = store.get(prefix, ver, bl);
         if (r) {
             std::cerr << "Error getting inc map: " << cpp_strerror(r) << std::
-                endl;
+                      endl;
             return r;
         }
         OSDMap::Incremental inc(bl);
@@ -306,9 +311,9 @@ int update_osdmap(MonitorDBStore & store, version_t ver, bool copy,
     return 0;
 }
 
-int rewrite_transaction(MonitorDBStore & store, int version,
-                        const string & crush_file,
-                        MonitorDBStore::Transaction * t)
+int rewrite_transaction(MonitorDBStore &store, int version,
+                        const string &crush_file,
+                        MonitorDBStore::Transaction *t)
 {
     const string prefix("osdmap");
 
@@ -316,23 +321,21 @@ int rewrite_transaction(MonitorDBStore & store, int version,
     version_t last_committed = store.get(prefix, "last_committed");
     version_t good_version = 0;
     if (version <= 0) {
-        if (last_committed >= (unsigned)-version) {
+        if (last_committed >= (unsigned) - version) {
             good_version = last_committed + version;
-        }
-        else {
+        } else {
             std::
-                cerr << "osdmap-version is less than: -" << last_committed <<
-                std::endl;
+            cerr << "osdmap-version is less than: -" << last_committed <<
+                 std::endl;
             return EINVAL;
         }
-    }
-    else {
+    } else {
         good_version = version;
     }
     if (good_version >= last_committed) {
         std::
-            cout << "good epoch is greater or equal to the last committed one: "
-            << good_version << " >= " << last_committed << std::endl;
+        cout << "good epoch is greater or equal to the last committed one: "
+             << good_version << " >= " << last_committed << std::endl;
         return 0;
     }
 
@@ -349,8 +352,7 @@ int rewrite_transaction(MonitorDBStore & store, int version,
         OSDMap osdmap;
         osdmap.decode(bl);
         crush = osdmap.crush;
-    }
-    else {
+    } else {
         string err;
         bufferlist bl;
         r = bl.read_file(crush_file.c_str(), &err);
@@ -370,8 +372,9 @@ int rewrite_transaction(MonitorDBStore & store, int version,
     for (version_t v = good_version + 1; v <= last_committed; v++) {
         cout << "rewriting epoch #" << v << "/" << last_committed << std::endl;
         r = update_osdmap(store, v, false, crush, t);
-        if (r)
+        if (r) {
             return r;
+        }
     }
 
     // add a new osdmap epoch to store, so monitors will update their current osdmap
@@ -406,8 +409,9 @@ int rewrite_transaction(MonitorDBStore & store, int version,
     //
     cout << "adding a new epoch #" << last_committed + 1 << std::endl;
     r = update_osdmap(store, last_committed++, true, crush, t);
-    if (r)
+    if (r) {
         return r;
+    }
     t->put(prefix, store.combine_strings("full", "latest"), last_committed);
     t->put(prefix, "last_committed", last_committed);
     return 0;
@@ -422,22 +426,22 @@ int rewrite_transaction(MonitorDBStore & store, int version,
  * osdmap epoch with the good crush map in it.
  */
 int rewrite_crush(const char *progname,
-                  vector < string > &subcmds, MonitorDBStore & store)
+                  vector < string > &subcmds, MonitorDBStore &store)
 {
     po::options_description op_desc("Allowed 'rewrite-crush' options");
     int version = -1;
     string crush_file;
     op_desc.add_options()
-        ("help,h", "produce this help message")
-        ("crush", po::value < string > (&crush_file),
-         ("path to the crush map file "
-          "(default: will instead extract it from the known-good osdmap)"))
-        ("good-epoch", po::value < int >(&version),
-         "known-good epoch of osdmap, if a negative number '-N' is given, the "
-         "$last_committed-N is used instead (default: -1). "
-         "Please note, -1 is not necessarily a good epoch, because there are "
-         "good chance that we have more epochs slipped into the monstore after "
-         "the one where the crushmap is firstly injected.");
+           ("help,h", "produce this help message")
+           ("crush", po::value < string > (&crush_file),
+            ("path to the crush map file "
+             "(default: will instead extract it from the known-good osdmap)"))
+           ("good-epoch", po::value < int >(&version),
+            "known-good epoch of osdmap, if a negative number '-N' is given, the "
+            "$last_committed-N is used instead (default: -1). "
+            "Please note, -1 is not necessarily a good epoch, because there are "
+            "good chance that we have more epochs slipped into the monstore after "
+            "the one where the crushmap is firstly injected.");
     po::variables_map op_vm;
     int r = parse_cmd_args(&op_desc, NULL, NULL, subcmds, &op_vm);
     if (r) {
@@ -461,7 +465,7 @@ int rewrite_crush(const char *progname,
     bufferlist bl;
     rewrite_txn.encode(bl);
     cout << "adding pending commit " << pending_v
-        << " " << bl.length() << " bytes" << std::endl;
+         << " " << bl.length() << " bytes" << std::endl;
     t->put(prefix, pending_v, bl);
     t->put(prefix, "pending_v", pending_v);
     // a large enough yet unique proposal number will probably do the trick
@@ -472,7 +476,7 @@ int rewrite_crush(const char *progname,
     return 0;
 }
 
-static int update_auth(MonitorDBStore & st, const string & keyring_path)
+static int update_auth(MonitorDBStore &st, const string &keyring_path)
 {
     // import all keyrings stored in the keyring file
     KeyRing keyring;
@@ -486,7 +490,7 @@ static int update_auth(MonitorDBStore & st, const string & keyring_path)
     __u8 v = 1;
     encode(v, bl);
 
-  for (const auto & k:keyring.get_keys()) {
+    for (const auto &k : keyring.get_keys()) {
         KeyServerData::Incremental auth_inc;
         auth_inc.name = k.first;
         auth_inc.auth = k.second;
@@ -496,14 +500,16 @@ static int update_auth(MonitorDBStore & st, const string & keyring_path)
         }
         map < string, string > caps;
         std::transform(begin(auth_inc.auth.caps), end(auth_inc.auth.caps),
-                       inserter(caps, end(caps)),[](auto & cap) {
-                       string c;
-                       auto p = cap.second.cbegin();
-                       decode(c, p); return make_pair(cap.first, c);}
-        );
+        inserter(caps, end(caps)), [](auto & cap) {
+            string c;
+            auto p = cap.second.cbegin();
+            decode(c, p);
+            return make_pair(cap.first, c);
+        }
+                      );
         cout << "adding auth for '"
-            << auth_inc.name << "': " << auth_inc.auth
-            << " with caps(" << caps << ")" << std::endl;
+             << auth_inc.name << "': " << auth_inc.auth
+             << " with caps(" << caps << ")" << std::endl;
         auth_inc.op = KeyServerData::AUTH_INC_ADD;
 
         AuthMonitor::Incremental inc;
@@ -540,25 +546,24 @@ static int update_auth(MonitorDBStore & st, const string & keyring_path)
     return 0;
 }
 
-static int update_mkfs(MonitorDBStore & st,
-                       const string & monmap_path,
+static int update_mkfs(MonitorDBStore &st,
+                       const string &monmap_path,
                        const vector < string > &mon_ids)
 {
     MonMap monmap;
     if (!monmap_path.empty()) {
         cout << __func__ << " pulling initial monmap from " << monmap_path <<
-            std::endl;
+             std::endl;
         bufferlist bl;
         string err;
         int r = bl.read_file(monmap_path.c_str(), &err);
         if (r < 0) {
             cerr << "failed to read monmap from " << monmap_path << ": "
-                << cpp_strerror(r) << std::endl;
+                 << cpp_strerror(r) << std::endl;
             return r;
         }
         monmap.decode(bl);
-    }
-    else {
+    } else {
         cout << __func__ << " generating seed initial monmap" << std::endl;
         int r = monmap.build_initial(g_ceph_context, true, cerr);
         if (r) {
@@ -569,18 +574,17 @@ static int update_mkfs(MonitorDBStore & st,
         if (!mon_ids.empty()) {
             if (mon_ids.size() != monmap.size()) {
                 cerr <<
-                    "Please pass the same number of <mon-ids> to name the hosts "
-                    << "listed in 'mon_host'. " << mon_ids.
-                    size() << " mon-id(s) specified, " << "while you have " <<
-                    monmap.size() << " mon hosts." << std::endl;
+                     "Please pass the same number of <mon-ids> to name the hosts "
+                     << "listed in 'mon_host'. " << mon_ids.
+                     size() << " mon-id(s) specified, " << "while you have " <<
+                     monmap.size() << " mon hosts." << std::endl;
                 return -EINVAL;
             }
             new_names = mon_ids;
-        }
-        else {
+        } else {
             for (unsigned rank = 0; rank < monmap.size(); rank++) {
                 string new_name {
-                "a"};
+                    "a"};
                 new_name[0] += rank;
                 new_names.push_back(std::move(new_name));
             }
@@ -602,7 +606,7 @@ static int update_mkfs(MonitorDBStore & st,
     return 0;
 }
 
-static int update_monitor(MonitorDBStore & st)
+static int update_monitor(MonitorDBStore &st)
 {
     const string prefix("monitor");
     // a stripped-down Monitor::mkfs()
@@ -616,7 +620,7 @@ static int update_monitor(MonitorDBStore & st)
 
 // rebuild
 //  - creating_pgs
-static int update_creating_pgs(MonitorDBStore & st)
+static int update_creating_pgs(MonitorDBStore &st)
 {
     bufferlist bl;
     auto last_osdmap_epoch = st.get("osdmap", "last_committed");
@@ -629,7 +633,7 @@ static int update_creating_pgs(MonitorDBStore & st)
     OSDMap osdmap;
     osdmap.decode(bl);
     creating_pgs_t creating;
-  for (auto & i:osdmap.get_pools()) {
+    for (auto &i : osdmap.get_pools()) {
         creating.created_pools.insert(i.first);
     }
     creating.last_scan_epoch = last_osdmap_epoch;
@@ -646,7 +650,7 @@ static int update_creating_pgs(MonitorDBStore & st)
 // rebuild
 //  - mgr
 //  - mgr_command_desc
-static int update_mgrmap(MonitorDBStore & st)
+static int update_mgrmap(MonitorDBStore &st)
 {
     auto t = make_shared < MonitorDBStore::Transaction > ();
 
@@ -666,7 +670,7 @@ static int update_mgrmap(MonitorDBStore & st)
     }
     {
         auto mgr_command_descs = mgr_commands;
-      for (auto & c:mgr_command_descs) {
+        for (auto &c : mgr_command_descs) {
             c.set_flag(MonCommand::FLAG_MGR);
         }
         bufferlist bl;
@@ -676,7 +680,7 @@ static int update_mgrmap(MonitorDBStore & st)
     return st.apply_transaction(t);
 }
 
-static int update_paxos(MonitorDBStore & st)
+static int update_paxos(MonitorDBStore &st)
 {
     const string prefix("paxos");
     // a large enough version greater than the maximum possible `last_committed`
@@ -704,8 +708,9 @@ static int update_paxos(MonitorDBStore & st)
     {
         MonitorDBStore::Transaction t;
         vector < string > prefixes = {
-        "auth", "osdmap", "mgr", "mgr_command_desc"};
-      for (const auto & prefix:prefixes) {
+            "auth", "osdmap", "mgr", "mgr_command_desc"
+        };
+        for (const auto &prefix : prefixes) {
             for (auto i = st.get_iterator(prefix); i->valid(); i->next()) {
                 auto key = i->raw_key();
                 auto val = i->value();
@@ -724,19 +729,19 @@ static int update_paxos(MonitorDBStore & st)
 }
 
 int rebuild_monstore(const char *progname,
-                     vector < string > &subcmds, MonitorDBStore & st)
+                     vector < string > &subcmds, MonitorDBStore &st)
 {
     po::options_description op_desc("Allowed 'rebuild' options");
     string keyring_path;
     string monmap_path;
     vector < string > mon_ids;
     op_desc.add_options()
-        ("keyring", po::value < string > (&keyring_path),
-         "path to the client.admin key")
-        ("monmap", po::value < string > (&monmap_path),
-         "path to the initial monmap")
-        ("mon-ids", po::value < vector < string >> (&mon_ids)->multitoken(),
-         "mon ids, use 'a', 'b', ... if not specified");
+           ("keyring", po::value < string > (&keyring_path),
+            "path to the client.admin key")
+           ("monmap", po::value < string > (&monmap_path),
+            "path to the initial monmap")
+           ("mon-ids", po::value < vector < string >> (&mon_ids)->multitoken(),
+            "mon ids, use 'a', 'b', ... if not specified");
     po::positional_options_description pos_desc;
     pos_desc.add("mon-ids", -1);
     po::variables_map op_vm;
@@ -748,8 +753,9 @@ int rebuild_monstore(const char *progname,
         usage(progname, op_desc);
         return 0;
     }
-    if (!keyring_path.empty())
+    if (!keyring_path.empty()) {
         update_auth(st, keyring_path);
+    }
     if ((r = update_creating_pgs(st))) {
         return r;
     }
@@ -793,11 +799,11 @@ int main(int argc, char **argv)
      */
     po::options_description positional_desc("Positional argument options");
     positional_desc.add_options()
-        ("store-path", po::value < string > (&store_path),
-         "path to monitor's store")
-        ("command", po::value < string > (&cmd), "Command")
-        ("subcmd", po::value < vector < string > >(&subcmds),
-         "Command arguments/Sub-Commands");
+                   ("store-path", po::value < string > (&store_path),
+                    "path to monitor's store")
+                   ("command", po::value < string > (&cmd), "Command")
+                   ("subcmd", po::value < vector < string > >(&subcmds),
+                    "Command arguments/Sub-Commands");
     po::positional_options_description positional;
     positional.add("store-path", 1);
     positional.add("command", 1);
@@ -825,9 +831,9 @@ int main(int argc, char **argv)
         // options as --VAR=VAL (note the '='); otherwise we will capture the
         // positional 'VAL' as belonging to us, never being collected.
         ceph_option_strings = po::collect_unrecognized(parsed.options,
-                                                       po::exclude_positional);
+                              po::exclude_positional);
 
-    } catch(po::error & e) {
+    } catch (po::error &e) {
         std::cerr << "error: " << e.what() << std::endl;
         return 1;
     }
@@ -865,9 +871,10 @@ int main(int argc, char **argv)
         }
     }
 
-    auto close_store = make_scope_guard([&]{
-                                        st.close();}
-    );
+    auto close_store = make_scope_guard([&] {
+        st.close();
+    }
+                                       );
 
     if (cmd == "dump-keys") {
         KeyValueDB::WholeSpaceIterator iter = st.get_iterator();
@@ -876,29 +883,27 @@ int main(int argc, char **argv)
             cout << key.first << " / " << key.second << std::endl;
             iter->next();
         }
-    }
-    else if (cmd == "compact") {
+    } else if (cmd == "compact") {
         st.compact();
-    }
-    else if (cmd == "get") {
+    } else if (cmd == "get") {
         unsigned v = 0;
         string outpath;
         string map_type;
         // visible options for this command
         po::options_description op_desc("Allowed 'get' options");
         op_desc.add_options()
-            ("help,h", "produce this help message")
-            ("out,o", po::value < string > (&outpath),
-             "output file (default: stdout)")
-            ("version,v", po::value < unsigned >(&v), "map version to obtain")
-            ("readable,r",
-             "print the map information in human readable format");
+               ("help,h", "produce this help message")
+               ("out,o", po::value < string > (&outpath),
+                "output file (default: stdout)")
+               ("version,v", po::value < unsigned >(&v), "map version to obtain")
+               ("readable,r",
+                "print the map information in human readable format");
         // this is going to be a positional argument; we don't want to show
         // it as an option during --help, but we do want to have it captured
         // when parsing.
         po::options_description hidden_op_desc("Hidden 'get' options");
         hidden_op_desc.add_options()
-            ("map-type", po::value < string > (&map_type), "map-type");
+                      ("map-type", po::value < string > (&map_type), "map-type");
         po::positional_options_description op_positional;
         op_positional.add("map-type", 1);
 
@@ -917,8 +922,7 @@ int main(int argc, char **argv)
         if (v == 0) {
             if (map_type == "crushmap") {
                 v = st.get("osdmap", "last_committed");
-            }
-            else {
+            } else {
                 v = st.get(map_type, "last_committed");
             }
         }
@@ -929,24 +933,24 @@ int main(int argc, char **argv)
                        0666);
             if (fd < 0) {
                 std::cerr << "error opening output file: "
-                    << cpp_strerror(errno) << std::endl;
+                          << cpp_strerror(errno) << std::endl;
                 return EINVAL;
             }
         }
 
-        auto close_fd = make_scope_guard([&]{
-                                         ::close(fd);
-                                         if (r < 0 && fd != STDOUT_FILENO) {
-                                         ::remove(outpath.c_str());}
-                                         }
-        ) ;
+        auto close_fd = make_scope_guard([&] {
+            ::close(fd);
+            if (r < 0 && fd != STDOUT_FILENO) {
+                ::remove(outpath.c_str());
+            }
+        }
+                                        ) ;
 
         bufferlist bl;
         r = 0;
         if (map_type == "osdmap") {
             r = st.get(map_type, st.combine_strings("full", v), bl);
-        }
-        else if (map_type == "crushmap") {
+        } else if (map_type == "crushmap") {
             bufferlist tmp;
             r = st.get("osdmap", st.combine_strings("full", v), tmp);
             if (r >= 0) {
@@ -954,8 +958,7 @@ int main(int argc, char **argv)
                 osdmap.decode(tmp);
                 osdmap.crush->encode(bl, CEPH_FEATURES_SUPPORTED_DEFAULT);
             }
-        }
-        else {
+        } else {
             r = st.get(map_type, v, bl);
         }
         if (r < 0) {
@@ -971,67 +974,59 @@ int main(int argc, char **argv)
                     MonMap monmap;
                     monmap.decode(bl);
                     monmap.print(ss);
-                }
-                else if (map_type == "osdmap") {
+                } else if (map_type == "osdmap") {
                     OSDMap osdmap;
                     osdmap.decode(bl);
                     osdmap.print(cct.get(), ss);
-                }
-                else if (map_type == "mdsmap") {
+                } else if (map_type == "mdsmap") {
                     FSMap fs_map;
                     fs_map.decode(bl);
                     fs_map.print(ss);
-                }
-                else if (map_type == "mgr") {
+                } else if (map_type == "mgr") {
                     MgrMap mgr_map;
                     auto p = bl.cbegin();
                     mgr_map.decode(p);
                     JSONFormatter f;
                     f.dump_object("mgrmap", mgr_map);
                     f.flush(ss);
-                }
-                else if (map_type == "crushmap") {
+                } else if (map_type == "crushmap") {
                     CrushWrapper cw;
                     auto it = bl.cbegin();
                     cw.decode(it);
                     CrushCompiler cc(cw, std::cerr, 0);
                     cc.decompile(ss);
-                }
-                else {
+                } else {
                     std::
-                        cerr << "This type of readable map does not exist: " <<
-                        map_type << std::
-                        endl << "You can only specify[osdmap|monmap|mdsmap"
-                        "|crushmap|mgr]" << std::endl;
+                    cerr << "This type of readable map does not exist: " <<
+                         map_type << std::
+                         endl << "You can only specify[osdmap|monmap|mdsmap"
+                         "|crushmap|mgr]" << std::endl;
                 }
-            }
-            catch(const buffer::error & err) {
+            } catch (const buffer::error &err) {
                 std::
-                    cerr <<
-                    "Could not decode for human readable output (you may still"
-                    " use non-readable mode).  Detail: " << err.
-                    what() << std::endl;
+                cerr <<
+                     "Could not decode for human readable output (you may still"
+                     " use non-readable mode).  Detail: " << err.
+                     what() << std::endl;
             }
 
             out.append(ss);
             out.write_fd(fd);
-        }
-        else {
+        } else {
             bl.write_fd(fd);
         }
 
         if (!outpath.empty()) {
             std::cout << "wrote " << map_type
-                << " version " << v << " to " << outpath << std::endl;
+                      << " version " << v << " to " << outpath << std::endl;
         }
-    }
-    else if (cmd == "show-versions") {
+    } else if (cmd == "show-versions") {
         string map_type;        //map type:osdmap,monmap...
         // visible options for this command
         po::options_description op_desc("Allowed 'show-versions' options");
         op_desc.add_options()
-            ("help,h", "produce this help message")
-            ("map-type", po::value < string > (&map_type), "map_type");
+               ("help,h", "produce this help message")
+               ("map-type", po::value < string > (&map_type), "map_type");
 
         po::positional_options_description op_positional;
         op_positional.add("map-type", 1);
@@ -1054,18 +1049,17 @@ int main(int argc, char **argv)
         v_last = st.get(map_type, "last_committed");
 
         std::cout << "first committed:\t" << v_first << "\n"
-            << "last  committed:\t" << v_last << std::endl;
-    }
-    else if (cmd == "dump-paxos") {
+                  << "last  committed:\t" << v_last << std::endl;
+    } else if (cmd == "dump-paxos") {
         unsigned dstart = 0;
         unsigned dstop = ~0;
         po::options_description op_desc("Allowed 'dump-paxos' options");
         op_desc.add_options()
-            ("help,h", "produce this help message")
-            ("start,s", po::value < unsigned >(&dstart),
-             "starting version (default: 0)")
-            ("end,e", po::value < unsigned >(&dstop),
-             "finish version (default: ~0)");
+               ("help,h", "produce this help message")
+               ("start,s", po::value < unsigned >(&dstart),
+                "starting version (default: 0)")
+               ("end,e", po::value < unsigned >(&dstop),
+                "finish version (default: ~0)");
 
         po::variables_map op_vm;
         int r = parse_cmd_args(&op_desc, NULL, NULL,
@@ -1081,8 +1075,8 @@ int main(int argc, char **argv)
 
         if (dstart > dstop) {
             std::cerr << "error: 'start' version (value: " << dstart << ") "
-                << " is greater than 'end' version (value: " << dstop << ")"
-                << std::endl;
+                      << " is greater than 'end' version (value: " << dstop << ")"
+                      << std::endl;
             return EINVAL;
         }
 
@@ -1090,8 +1084,9 @@ int main(int argc, char **argv)
         for (; v <= dstop; ++v) {
             bufferlist bl;
             st.get("paxos", v, bl);
-            if (bl.length() == 0)
+            if (bl.length() == 0) {
                 break;
+            }
             cout << "\n--- " << v << " ---" << std::endl;
             auto tx(std::make_shared < MonitorDBStore::Transaction > ());
             Paxos::decode_append_transaction(tx, bl);
@@ -1102,8 +1097,7 @@ int main(int argc, char **argv)
 
         std::cout << "dumped " << v << " paxos versions" << std::endl;
 
-    }
-    else if (cmd == "dump-trace") {
+    } else if (cmd == "dump-trace") {
         unsigned dstart = 0;
         unsigned dstop = ~0;
         string outpath;
@@ -1111,18 +1105,18 @@ int main(int argc, char **argv)
         // visible options for this command
         po::options_description op_desc("Allowed 'dump-trace' options");
         op_desc.add_options()
-            ("help,h", "produce this help message")
-            ("start,s", po::value < unsigned >(&dstart),
-             "starting version (default: 0)")
-            ("end,e", po::value < unsigned >(&dstop),
-             "finish version (default: ~0)");
+               ("help,h", "produce this help message")
+               ("start,s", po::value < unsigned >(&dstart),
+                "starting version (default: 0)")
+               ("end,e", po::value < unsigned >(&dstop),
+                "finish version (default: ~0)");
         // this is going to be a positional argument; we don't want to show
         // it as an option during --help, but we do want to have it captured
         // when parsing.
         po::options_description hidden_op_desc("Hidden 'dump-trace' options");
         hidden_op_desc.add_options()
-            ("out,o", po::value < string > (&outpath),
-             "file to write the dump to");
+                      ("out,o", po::value < string > (&outpath),
+                       "file to write the dump to");
         po::positional_options_description op_positional;
         op_positional.add("out", 1);
 
@@ -1145,16 +1139,17 @@ int main(int argc, char **argv)
 
         if (dstart > dstop) {
             std::cerr << "error: 'start' version (value: " << dstart << ") "
-                << " is greater than 'stop' version (value: " << dstop << ")"
-                << std::endl;
+                      << " is greater than 'stop' version (value: " << dstop << ")"
+                      << std::endl;
             return EINVAL;
         }
 
         TraceIter iter(outpath.c_str());
         iter.init();
         while (true) {
-            if (!iter.valid())
+            if (!iter.valid()) {
                 break;
+            }
             if (iter.num() >= dstop) {
                 break;
             }
@@ -1167,23 +1162,22 @@ int main(int argc, char **argv)
             iter.next();
         }
         std::cerr << "Read up to transaction " << iter.num() << std::endl;
-    }
-    else if (cmd == "replay-trace") {
+    } else if (cmd == "replay-trace") {
         string inpath;
         unsigned num_replays = 1;
         // visible options for this command
         po::options_description op_desc("Allowed 'replay-trace' options");
         op_desc.add_options()
-            ("help,h", "produce this help message")
-            ("num-replays,n", po::value < unsigned >(&num_replays),
-             "finish version (default: 1)");
+               ("help,h", "produce this help message")
+               ("num-replays,n", po::value < unsigned >(&num_replays),
+                "finish version (default: 1)");
         // this is going to be a positional argument; we don't want to show
         // it as an option during --help, but we do want to have it captured
         // when parsing.
         po::options_description hidden_op_desc("Hidden 'replay-trace' options");
         hidden_op_desc.add_options()
-            ("in,i", po::value < string > (&inpath),
-             "file to write the dump to");
+                      ("in,i", po::value < string > (&inpath),
+                       "file to write the dump to");
         po::positional_options_description op_positional;
         op_positional.add("in", 1);
 
@@ -1200,7 +1194,7 @@ int main(int argc, char **argv)
                 positional(op_positional).run();
             po::store(op_parsed, op_vm);
             po::notify(op_vm);
-        } catch(po::error & e) {
+        } catch (po::error &e) {
             std::cerr << "error: " << e.what() << std::endl;
             return EINVAL;
         }
@@ -1220,8 +1214,9 @@ int main(int argc, char **argv)
             TraceIter iter(inpath.c_str());
             iter.init();
             while (true) {
-                if (!iter.valid())
+                if (!iter.valid()) {
                     break;
+                }
                 std::cerr << "Replaying trans num " << num << std::endl;
                 st.apply_transaction(iter.cur());
                 iter.next();
@@ -1229,20 +1224,19 @@ int main(int argc, char **argv)
             }
             std::cerr << "Read up to transaction " << iter.num() << std::endl;
         }
-    }
-    else if (cmd == "random-gen") {
+    } else if (cmd == "random-gen") {
         unsigned tsize = 200;
         unsigned tvalsize = 1024;
         unsigned ntrans = 100;
         po::options_description op_desc("Allowed 'random-gen' options");
         op_desc.add_options()
-            ("help,h", "produce this help message")
-            ("num-keys,k", po::value < unsigned >(&tsize),
-             "keys to write in each transaction (default: 200)")
-            ("size,s", po::value < unsigned >(&tvalsize),
-             "size (in bytes) of the value to write in each key (default: 1024)")
-            ("ntrans,n", po::value < unsigned >(&ntrans),
-             "number of transactions to run (default: 100)");
+               ("help,h", "produce this help message")
+               ("num-keys,k", po::value < unsigned >(&tsize),
+                "keys to write in each transaction (default: 200)")
+               ("size,s", po::value < unsigned >(&tvalsize),
+                "size (in bytes) of the value to write in each key (default: 1024)")
+               ("ntrans,n", po::value < unsigned >(&ntrans),
+                "number of transactions to run (default: 100)");
 
         po::variables_map op_vm;
         try {
@@ -1250,7 +1244,7 @@ int main(int argc, char **argv)
                 po::command_line_parser(subcmds).options(op_desc).run();
             po::store(op_parsed, op_vm);
             po::notify(op_vm);
-        } catch(po::error & e) {
+        } catch (po::error &e) {
             std::cerr << "error: " << e.what() << std::endl;
             return EINVAL;
         }
@@ -1270,16 +1264,16 @@ int main(int argc, char **argv)
                 stringstream os;
                 os << num;
                 bufferlist bl;
-                for (unsigned k = 0; k < tvalsize; ++k)
+                for (unsigned k = 0; k < tvalsize; ++k) {
                     bl.append(rand());
+                }
                 t->put(prefix, os.str(), bl);
                 ++num;
             }
             t->compact_prefix(prefix);
             st.apply_transaction(t);
         }
-    }
-    else if (cmd == "store-copy") {
+    } else if (cmd == "store-copy") {
         if (subcmds.size() < 1 || subcmds[0].empty()) {
             usage(argv[0], desc);
             return EINVAL;
@@ -1321,27 +1315,25 @@ int main(int argc, char **argv)
 
             total_keys += num_keys;
 
-            if (!tx->empty())
+            if (!tx->empty()) {
                 out_store.apply_transaction(tx);
+            }
 
             std::cout << "copied " << total_keys << " keys so far ("
-                << stringify(byte_u_t(total_size)) << ")" << std::endl;
+                      << stringify(byte_u_t(total_size)) << ")" << std::endl;
 
         } while (it->valid());
         out_store.close();
         std::cout << "summary: copied " << total_keys << " keys, using "
-            << total_tx << " transactions, totalling "
-            << stringify(byte_u_t(total_size)) << std::endl;
+                  << total_tx << " transactions, totalling "
+                  << stringify(byte_u_t(total_size)) << std::endl;
         std::cout << "from '" << store_path << "' to '" << out_path << "'"
-            << std::endl;
-    }
-    else if (cmd == "rewrite-crush") {
+                  << std::endl;
+    } else if (cmd == "rewrite-crush") {
         err = rewrite_crush(argv[0], subcmds, st);
-    }
-    else if (cmd == "rebuild") {
+    } else if (cmd == "rebuild") {
         err = rebuild_monstore(argv[0], subcmds, st);
-    }
-    else {
+    } else {
         std::cerr << "Unrecognized command: " << cmd << std::endl;
         usage(argv[0], desc);
         return err;

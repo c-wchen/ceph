@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_RANGESET_H
@@ -31,22 +31,26 @@ template < class T > struct _rangeset_base {
     typedef typename map < T, T >::iterator mapit;
 
     // get iterator for range including val.  or ranges.end().
-    mapit get_range_for(T val) {
+    mapit get_range_for(T val)
+    {
         mapit it = ranges.lower_bound(val);
         if (it == ranges.end()) {
             // search backwards
             typename map < T, T >::reverse_iterator it = ranges.rbegin();
-            if (it == ranges.rend())
+            if (it == ranges.rend()) {
                 return ranges.end();
-            if (it->first <= val && it->second >= val)
-                 return ranges.find(it->first);
-             return ranges.end();
-        }
-        else {
-            if (it->first == val)
+            }
+            if (it->first <= val && it->second >= val) {
+                return ranges.find(it->first);
+            }
+            return ranges.end();
+        } else {
+            if (it->first == val) {
                 return it--;
-            if (it->first <= val && it->second >= val)
+            }
+            if (it->first <= val && it->second >= val) {
                 return it;
+            }
             return ranges.end();
         }
     }
@@ -54,96 +58,116 @@ template < class T > struct _rangeset_base {
 };
 
 template < class T > class rangeset_iterator:
-public std::iterator < std::input_iterator_tag, T > {
+    public std::iterator < std::input_iterator_tag, T >
+{
     //typedef typename map<T,T>::iterator mapit;
 
     map < T, T > ranges;
     typename map < T, T >::iterator it;
     T current;
 
-  public:
+public:
     // cons
-    rangeset_iterator() {
+    rangeset_iterator()
+    {
     }
 
-    rangeset_iterator(typename map < T, T >::iterator & it, map < T,
-                      T > &ranges) {
+    rangeset_iterator(typename map < T, T >::iterator &it, map < T,
+                      T > &ranges)
+    {
         this->ranges = ranges;
         this->it = it;
-        if (this->it != ranges.end())
+        if (this->it != ranges.end()) {
             current = it->first;
+        }
     }
 
-    bool operator==(rangeset_iterator < T > rit) {
+    bool operator==(rangeset_iterator < T > rit)
+    {
         return (it == rit.it && rit.current == current);
     }
-    bool operator!=(rangeset_iterator < T > rit) {
+    bool operator!=(rangeset_iterator < T > rit)
+    {
         return (it != rit.it) || (rit.current != current);
     }
 
-    T & operator*() {
+    T &operator*()
+    {
         return current;
     }
 
-    rangeset_iterator < T > operator++(int) {
-        if (current < it->second)
+    rangeset_iterator < T > operator++(int)
+    {
+        if (current < it->second) {
             current++;
-        else {
+        } else {
             it++;
-            if (it != ranges.end())
+            if (it != ranges.end()) {
                 current = it->first;
+            }
         }
 
         return *this;
     }
 };
 
-template < class T > class rangeset {
+template < class T > class rangeset
+{
     typedef typename map < T, T >::iterator map_iterator;
 
     _rangeset_base < T > theset;
     inodeno_t _size;
 
-  public:
-    rangeset() {
+public:
+    rangeset()
+    {
         _size = 0;
     }
     typedef rangeset_iterator < T > iterator;
 
-    iterator begin() {
+    iterator begin()
+    {
         map_iterator it = theset.ranges.begin();
         return iterator(it, theset.ranges);
     }
 
-    iterator end() {
+    iterator end()
+    {
         map_iterator it = theset.ranges.end();
         return iterator(it, theset.ranges);
     }
 
-    map_iterator map_begin() {
+    map_iterator map_begin()
+    {
         return theset.ranges.begin();
     }
-    map_iterator map_end() {
+    map_iterator map_end()
+    {
         return theset.ranges.end();
     }
-    int map_size() {
+    int map_size()
+    {
         return theset.ranges.size();
     }
 
-    void map_insert(T v1, T v2) {
+    void map_insert(T v1, T v2)
+    {
         theset.ranges.insert(pair < T, T > (v1, v2));
         _size += v2 - v1 + 1;
     }
 
     // ...
-    bool contains(T val) {
-        if (theset.get_range_for(val) == theset.ranges.end())
+    bool contains(T val)
+    {
+        if (theset.get_range_for(val) == theset.ranges.end()) {
             return false;
+        }
         ceph_assert(!empty());
         return true;
     }
 
-    void insert(T val) {
+    void insert(T val)
+    {
         ceph_assert(!contains(val));
 
         map_iterator left = theset.get_range_for(val - 1);
@@ -178,11 +202,13 @@ template < class T > class rangeset {
         return;
     }
 
-    unsigned size() {
+    unsigned size()
+    {
         return size();
     }
 
-    bool empty() {
+    bool empty()
+    {
         if (theset.ranges.empty()) {
             ceph_assert(_size == 0);
             return true;
@@ -191,13 +217,15 @@ template < class T > class rangeset {
         return false;
     }
 
-    T first() {
+    T first()
+    {
         ceph_assert(!empty());
         map_iterator it = theset.ranges.begin();
         return it->first;
     }
 
-    void erase(T val) {
+    void erase(T val)
+    {
         ceph_assert(contains(val));
         map_iterator it = theset.get_range_for(val);
         ceph_assert(it != theset.ranges.end());
@@ -232,7 +260,8 @@ template < class T > class rangeset {
         return;
     }
 
-    void dump() {
+    void dump()
+    {
         for (typename map < T, T >::iterator it = theset.ranges.begin();
              it != theset.ranges.end(); it++) {
             cout << " " << it->first << "-" << it->second << endl;

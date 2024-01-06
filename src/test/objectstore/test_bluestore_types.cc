@@ -51,7 +51,7 @@ TEST(bluestore, sizeof)
     P(sb_info_t);
     P(SimpleBitmap);
     cout << "map<uint64_t,uint64_t>\t" << sizeof(map < uint64_t,
-                                                 uint64_t >) << std::endl;
+            uint64_t >) << std::endl;
     cout << "map<char,char>\t" << sizeof(map < char, char >) << std::endl;
 }
 
@@ -90,7 +90,7 @@ TEST(sb_info_space_efficient_map_t, basic)
     sb_info_space_efficient_map_t sb_info;
     const size_t num_shared = 1000;
     for (size_t i = 0; i < num_shared; i += 2) {
-        auto & sbi = sb_info.add_maybe_stray(i);
+        auto &sbi = sb_info.add_maybe_stray(i);
         sbi.pool_id = i;
     }
     ASSERT_TRUE(sb_info.find(0) != sb_info.end());
@@ -126,16 +126,16 @@ TEST(sb_info_space_efficient_map_t, size)
     sb_info_space_efficient_map_t sb_info;
 
     BlueStore store(g_ceph_context, "", 4096);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
 
     auto coll =
         ceph::make_ref < BlueStore::Collection > (&store, oc, bc, coll_t());
 
     for (size_t i = 0; i < num_shared; i++) {
-        auto & sbi = sb_info.add_or_adopt(i);
+        auto &sbi = sb_info.add_or_adopt(i);
         // primarily to silent the 'unused' warning
         ceph_assert(sbi.pool_id == sb_info_t::INVALID_POOL_ID);
     }
@@ -354,7 +354,7 @@ TEST(bluestore_blob_t, calc_csum)
     for (unsigned csum_type = Checksummer::CSUM_NONE + 1;
          csum_type < Checksummer::CSUM_MAX; ++csum_type) {
         cout << "csum_type " << Checksummer::get_csum_type_string(csum_type)
-            << std::endl;
+             << std::endl;
 
         bluestore_blob_t b;
         int bad_off;
@@ -407,8 +407,9 @@ TEST(bluestore_blob_t, csum_bench)
 {
     bufferlist bl;
     bufferptr bp(10485760);
-    for (char *a = bp.c_str(); a < bp.c_str() + bp.length(); ++a)
+    for (char *a = bp.c_str(); a < bp.c_str() + bp.length(); ++a) {
         *a = (unsigned long)a & 0xff;
+    }
     bl.append(bp);
     int count = 256;
     for (unsigned csum_type = 1; csum_type < Checksummer::CSUM_MAX; ++csum_type) {
@@ -424,7 +425,7 @@ TEST(bluestore_blob_t, csum_bench)
             (double)count * (double)bl.length() / 1000000.0 /
             (double)dur.count() * 1000000000.0;
         cout << "csum_type " << Checksummer::get_csum_type_string(csum_type)
-            << ", " << dur << " seconds, " << mbsec << " MB/sec" << std::endl;
+             << ", " << dur << " seconds, " << mbsec << " MB/sec" << std::endl;
     }
 }
 
@@ -432,9 +433,9 @@ TEST(Blob, put_ref)
 {
     {
         BlueStore store(g_ceph_context, "", 4096);
-        BlueStore::OnodeCacheShard * oc =
+        BlueStore::OnodeCacheShard *oc =
             BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-        BlueStore::BufferCacheShard * bc =
+        BlueStore::BufferCacheShard *bc =
             BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
 
         auto coll =
@@ -443,8 +444,8 @@ TEST(Blob, put_ref)
         b.shared_blob = new BlueStore::SharedBlob(coll.get());
         b.dirty_blob().allocated_test(bluestore_pextent_t(0x40715000, 0x2000));
         b.dirty_blob().
-            allocated_test(bluestore_pextent_t
-                           (bluestore_pextent_t::INVALID_OFFSET, 0x8000));
+         allocated_test(bluestore_pextent_t
+                        (bluestore_pextent_t::INVALID_OFFSET, 0x8000));
         b.dirty_blob().allocated_test(bluestore_pextent_t(0x4071f000, 0x5000));
         b.get_ref(coll.get(), 0, 0x1200);
         b.get_ref(coll.get(), 0xae00, 0x4200);
@@ -466,9 +467,9 @@ TEST(Blob, put_ref)
 
     unsigned mas = 4096;
     BlueStore store(g_ceph_context, "", 8192);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
     auto coll =
         ceph::make_ref < BlueStore::Collection > (&store, oc, bc, coll_t());
@@ -476,7 +477,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(0, mas * 2));
         B.get_ref(coll.get(), 0, mas * 2);
@@ -497,7 +498,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(123, mas * 2));
         B.get_ref(coll.get(), 0, mas * 2);
@@ -521,7 +522,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas));
         b.allocated_test(bluestore_pextent_t(2, mas));
@@ -559,7 +560,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas));
         b.allocated_test(bluestore_pextent_t(2, mas));
@@ -600,7 +601,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas * 6));
         B.get_ref(coll.get(), 0, mas * 6);
@@ -632,7 +633,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas * 4));
         b.allocated_test(bluestore_pextent_t(2, mas * 4));
@@ -670,7 +671,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas * 4));
         b.allocated_test(bluestore_pextent_t(2, mas * 4));
@@ -725,7 +726,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas * 4));
         b.allocated_test(bluestore_pextent_t(2, mas * 4));
@@ -780,7 +781,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(1, mas * 8));
         B.get_ref(coll.get(), 0, mas * 8);
@@ -823,7 +824,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         PExtentVector r;
         b.allocated_test(bluestore_pextent_t(0, mas * 4));
         b.init_csum(Checksummer::CSUM_CRC32C, 14, mas * 4);
@@ -841,7 +842,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         b.allocated_test(bluestore_pextent_t(0x40101000, 0x4000));
         b.allocated_test(bluestore_pextent_t
                          (bluestore_pextent_t::INVALID_OFFSET, 0x13000));
@@ -863,7 +864,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         b.allocated_test(bluestore_pextent_t(1, 0x5000));
         b.allocated_test(bluestore_pextent_t(2, 0x5000));
         B.get_ref(coll.get(), 0x0, 0xa000);
@@ -881,7 +882,7 @@ TEST(Blob, put_ref)
     {
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         b.allocated_test(bluestore_pextent_t(1, 0x7000));
         b.allocated_test(bluestore_pextent_t(2, 0x7000));
         B.get_ref(coll.get(), 0x0, 0xe000);
@@ -897,21 +898,21 @@ TEST(Blob, put_ref)
         ASSERT_EQ(1u, r[0].offset);
         ASSERT_EQ(0x7000u, r[0].length);
         ASSERT_EQ(2u, r[1].offset);
-        ASSERT_EQ(0x3000u, r[1].length);    // we have 0x1000 bytes less due to 
+        ASSERT_EQ(0x3000u, r[1].length);    // we have 0x1000 bytes less due to
         // alignment caused by min_alloc_size = 0x2000
     }
     {
         BlueStore store(g_ceph_context, "", 0x4000);
-        BlueStore::OnodeCacheShard * oc =
+        BlueStore::OnodeCacheShard *oc =
             BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-        BlueStore::BufferCacheShard * bc =
+        BlueStore::BufferCacheShard *bc =
             BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
 
         auto coll =
             ceph::make_ref < BlueStore::Collection > (&store, oc, bc, coll_t());
         BlueStore::Blob B;
         B.shared_blob = new BlueStore::SharedBlob(coll.get());
-        bluestore_blob_t & b = B.dirty_blob();
+        bluestore_blob_t &b = B.dirty_blob();
         b.allocated_test(bluestore_pextent_t(1, 0x5000));
         b.allocated_test(bluestore_pextent_t(2, 0x7000));
         B.get_ref(coll.get(), 0x0, 0xc000);
@@ -992,9 +993,9 @@ TEST(bluestore_blob_t, prune_tail)
 TEST(Blob, split)
 {
     BlueStore store(g_ceph_context, "", 4096);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
     auto coll =
         ceph::make_ref < BlueStore::Collection > (&store, oc, bc, coll_t());
@@ -1047,9 +1048,9 @@ TEST(Blob, split)
 TEST(Blob, legacy_decode)
 {
     BlueStore store(g_ceph_context, "", 4096);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
     auto coll =
         ceph::make_ref < BlueStore::Collection > (&store, oc, bc, coll_t());
@@ -1115,9 +1116,9 @@ TEST(Blob, legacy_decode)
 TEST(ExtentMap, seek_lextent)
 {
     BlueStore store(g_ceph_context, "", 4096);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
 
     auto coll =
@@ -1171,9 +1172,9 @@ TEST(ExtentMap, seek_lextent)
 TEST(ExtentMap, has_any_lextents)
 {
     BlueStore store(g_ceph_context, "", 4096);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
     auto coll =
         ceph::make_ref < BlueStore::Collection > (&store, oc, bc, coll_t());
@@ -1221,7 +1222,7 @@ TEST(ExtentMap, has_any_lextents)
     ASSERT_FALSE(em.has_any_lextents(500, 1000));
 }
 
-void erase_and_delete(BlueStore::ExtentMap & em, size_t v)
+void erase_and_delete(BlueStore::ExtentMap &em, size_t v)
 {
     auto d = em.find(v);
     ASSERT_NE(d, em.extent_map.end());
@@ -1232,9 +1233,9 @@ void erase_and_delete(BlueStore::ExtentMap & em, size_t v)
 TEST(ExtentMap, compress_extent_map)
 {
     BlueStore store(g_ceph_context, "", 4096);
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
 
     auto coll =
@@ -1288,11 +1289,11 @@ TEST(ExtentMap, compress_extent_map)
     ASSERT_EQ(6u, em.extent_map.size());
 }
 
-void clear_and_dispose(BlueStore::old_extent_map_t & old_em)
+void clear_and_dispose(BlueStore::old_extent_map_t &old_em)
 {
     auto oep = old_em.begin();
     while (oep != old_em.end()) {
-        auto & lo = *oep;
+        auto &lo = *oep;
         oep = old_em.erase(oep);
         delete & lo;
     }
@@ -1300,9 +1301,9 @@ void clear_and_dispose(BlueStore::old_extent_map_t & old_em)
 
 TEST(GarbageCollector, BasicTest)
 {
-    BlueStore::OnodeCacheShard * oc =
+    BlueStore::OnodeCacheShard *oc =
         BlueStore::OnodeCacheShard::create(g_ceph_context, "lru", NULL);
-    BlueStore::BufferCacheShard * bc =
+    BlueStore::BufferCacheShard *bc =
         BlueStore::BufferCacheShard::create(g_ceph_context, "lru", NULL);
 
     BlueStore store(g_ceph_context, "", 4096);
@@ -1365,7 +1366,7 @@ TEST(GarbageCollector, BasicTest)
 
         saving = gc.estimate(300, 100, em, old_extents, 4096);
         ASSERT_EQ(saving, 1);
-        auto & to_collect = gc.get_extents_to_collect();
+        auto &to_collect = gc.get_extents_to_collect();
         ASSERT_EQ(to_collect.num_intervals(), 1u);
         {
             auto it = to_collect.begin();
@@ -1430,19 +1431,19 @@ TEST(GarbageCollector, BasicTest)
         em.extent_map.insert(*new BlueStore::Extent(0x30000, 0, 0xf000, b4));   // new extent
         b4->get_ref(coll.get(), 0, 0xf000);
         em.extent_map.
-            insert(*new BlueStore::Extent(0x3f000, 0x3f000, 0x1000, b1));
+        insert(*new BlueStore::Extent(0x3f000, 0x3f000, 0x1000, b1));
         b1->get_ref(coll.get(), 0x3f000, 0x1000);
 
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x8000, 0x8000, 0x8000, b1));
+        push_back(*new BlueStore::OldExtent(0x8000, 0x8000, 0x8000, b1));
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x10000, 0x10000, 0x20000, b1));
+        push_back(*new BlueStore::OldExtent(0x10000, 0x10000, 0x20000, b1));
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x30000, 0x30000, 0xf000, b1));
+        push_back(*new BlueStore::OldExtent(0x30000, 0x30000, 0xf000, b1));
 
         saving = gc.estimate(0x30000, 0xf000, em, old_extents, 0x10000);
         ASSERT_EQ(saving, 2);
-        auto & to_collect = gc.get_extents_to_collect();
+        auto &to_collect = gc.get_extents_to_collect();
         ASSERT_EQ(to_collect.num_intervals(), 2u);
         {
             auto it1 = to_collect.begin();
@@ -1495,11 +1496,11 @@ TEST(GarbageCollector, BasicTest)
         b2->get_ref(coll.get(), 0, 0x4000);
 
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x3000, 0x3000, 0x1000, b1));
+        push_back(*new BlueStore::OldExtent(0x3000, 0x3000, 0x1000, b1));
 
         saving = gc.estimate(0x3000, 0x4000, em, old_extents, 0x1000);
         ASSERT_EQ(saving, 0);
-        auto & to_collect = gc.get_extents_to_collect();
+        auto &to_collect = gc.get_extents_to_collect();
         ASSERT_EQ(to_collect.num_intervals(), 0u);
         em.clear();
         clear_and_dispose(old_extents);
@@ -1564,19 +1565,19 @@ TEST(GarbageCollector, BasicTest)
         em.extent_map.insert(*new BlueStore::Extent(0x30000, 0, 0xf000, b4));   // new extent
         b4->get_ref(coll.get(), 0, 0xf000);
         em.extent_map.
-            insert(*new BlueStore::Extent(0x3f000, 0x1f000, 0x1000, b1));
+        insert(*new BlueStore::Extent(0x3f000, 0x1f000, 0x1000, b1));
         b1->get_ref(coll.get(), 0x1f000, 0x1000);
 
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x8000, 0x8000, 0x8000, b0));
+        push_back(*new BlueStore::OldExtent(0x8000, 0x8000, 0x8000, b0));
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x10000, 0x10000, 0x10000, b0));
+        push_back(*new BlueStore::OldExtent(0x10000, 0x10000, 0x10000, b0));
         old_extents.
-            push_back(*new BlueStore::OldExtent(0x20000, 0x00000, 0x1f000, b1));
+        push_back(*new BlueStore::OldExtent(0x20000, 0x00000, 0x1f000, b1));
 
         saving = gc.estimate(0x30000, 0xf000, em, old_extents, 0x10000);
         ASSERT_EQ(saving, 2);
-        auto & to_collect = gc.get_extents_to_collect();
+        auto &to_collect = gc.get_extents_to_collect();
         ASSERT_EQ(to_collect.num_intervals(), 2u);
         {
             auto it1 = to_collect.begin();
@@ -1710,7 +1711,7 @@ TEST(bluestore_blob_t, unused)
         uint64_t suggested_boff = 0;
         PExtentVector extents;
         extents.emplace_back(0x1a560000, min_alloc_size);
-        b.allocated(p2align(suggested_boff, min_alloc_size), 0 /*no matter */ ,
+        b.allocated(p2align(suggested_boff, min_alloc_size), 0 /*no matter */,
                     extents);
         b.mark_used(offset, length);
         ASSERT_FALSE(b.is_unused(offset, length));
@@ -1741,7 +1742,7 @@ TEST(bluestore_blob_t, unused)
         uint64_t suggested_boff = 0x11000;
         PExtentVector extents;
         extents.emplace_back(0x1a560000, min_alloc_size);
-        b.allocated(p2align(suggested_boff, min_alloc_size), 0 /*no matter */ ,
+        b.allocated(p2align(suggested_boff, min_alloc_size), 0 /*no matter */,
                     extents);
         b.add_unused(0, offset);
         b.add_unused(offset + length, min_alloc_size * 2 - offset - length);
@@ -1829,49 +1830,50 @@ TEST(bluestore_blob_t, wrong_map_bl_in_51682)
             {0x153c44d000, 0x3000}
         };
         size_t expected_pos = 0;
-        b.map_bl(0, bl,[&](uint64_t o, bufferlist & bl) {
-                 ASSERT_EQ(o, expected[expected_pos][0]);
-                 ASSERT_EQ(bl.length(), expected[expected_pos][1]);
-                 ++expected_pos;});
+        b.map_bl(0, bl, [&](uint64_t o, bufferlist & bl) {
+            ASSERT_EQ(o, expected[expected_pos][0]);
+            ASSERT_EQ(bl.length(), expected[expected_pos][1]);
+            ++expected_pos;
+        });
         // 0x5000 is an improper offset presumably provided when doing a repair
-        b.map_bl(0x5000, bl,[&](uint64_t o, bufferlist & bl) {
-                 ASSERT_EQ(o, expected[expected_pos][0]);
-                 ASSERT_EQ(bl.length(), expected[expected_pos][1]);
-                 ++expected_pos;});
+        b.map_bl(0x5000, bl, [&](uint64_t o, bufferlist & bl) {
+            ASSERT_EQ(o, expected[expected_pos][0]);
+            ASSERT_EQ(bl.length(), expected[expected_pos][1]);
+            ++expected_pos;
+        });
         ASSERT_EQ(expected_pos, num_expected_entries);
     }
 }
 
 //---------------------------------------------------------------------------------
-static int verify_extent(const extent_t & ext, const extent_t * ext_arr,
+static int verify_extent(const extent_t &ext, const extent_t *ext_arr,
                          uint64_t ext_arr_size, uint64_t idx)
 {
-    const extent_t & ext_ref = ext_arr[idx];
+    const extent_t &ext_ref = ext_arr[idx];
     if (ext.offset == ext_ref.offset && ext.length == ext_ref.length) {
         return 0;
-    }
-    else {
+    } else {
         std::cerr << "mismatch was found at index " << idx << std::endl;
         if (ext.length == 0) {
             std::cerr << "Null extent was returned at idx = " << idx << std::
-                endl;
+                      endl;
         }
-        unsigned start = std::max(((int32_t) (idx) - 3), 0);
+        unsigned start = std::max(((int32_t)(idx) - 3), 0);
         unsigned end = std::min(idx + 3, ext_arr_size);
         for (unsigned j = start; j < end; j++) {
-            const extent_t & ext_ref = ext_arr[j];
+            const extent_t &ext_ref = ext_arr[j];
             std::cerr << j << ") ref_ext = [" << ext_ref.
-                offset << ", " << ext_ref.length << "]" << std::endl;
+                      offset << ", " << ext_ref.length << "]" << std::endl;
         }
         std::cerr << idx << ") ext     = [" << ext.offset << ", " << ext.
-            length << "]" << std::endl;
+                  length << "]" << std::endl;
         return -1;
     }
 }
 
 //---------------------------------------------------------------------------------
-static int test_extents(uint64_t index, extent_t * ext_arr,
-                        uint64_t ext_arr_size, SimpleBitmap & sbmap, bool set)
+static int test_extents(uint64_t index, extent_t *ext_arr,
+                        uint64_t ext_arr_size, SimpleBitmap &sbmap, bool set)
 {
     const uint64_t MAX_JUMP_BIG = 1523;
     const uint64_t MAX_JUMP_SMALL = 19;
@@ -1884,15 +1886,13 @@ static int test_extents(uint64_t index, extent_t * ext_arr,
     for (i = 0; i < ext_arr_size; i++) {
         if (i & 3) {
             jump = std::rand() % MAX_JUMP_BIG;
-        }
-        else {
+        } else {
             jump = std::rand() % MAX_JUMP_SMALL;
         }
         offset += jump;
         if (i & 1) {
             length = std::rand() % MAX_LEN_BIG;
-        }
-        else {
+        } else {
             length = std::rand() % MAX_LEN_SMALL;
         }
         // make sure no zero length will be used
@@ -1904,23 +1904,22 @@ static int test_extents(uint64_t index, extent_t * ext_arr,
         bool success;
         if (set) {
             success = sbmap.set(offset, length);
-        }
-        else {
+        } else {
             success = sbmap.clr(offset, length);
         }
         if (!success) {
             std::
-                cerr << "Failed sbmap." << (set ? "set(" : "clr(") << offset <<
-                ", " << length << ")" << std::endl;
+            cerr << "Failed sbmap." << (set ? "set(" : "clr(") << offset <<
+                 ", " << length << ")" << std::endl;
             return -1;
         }
 
         // if this is not the first entry and no jump -> merge extents
         if ((i == 0) || (jump > 0)) {
             ext_arr[i] = {
-            offset, length};
-        }
-        else {
+                offset, length
+            };
+        } else {
             // merge 2 extents
             i--;
             ext_arr[i].length += length;
@@ -1930,8 +1929,8 @@ static int test_extents(uint64_t index, extent_t * ext_arr,
     unsigned arr_size = std::min((uint64_t) i, ext_arr_size);
     std::cout << std::hex << std::right;
     std::
-        cout << "[" << index << "] " << (set ? "Set::" : "Clr::") <<
-        " extents count = 0x" << arr_size;
+    cout << "[" << index << "] " << (set ? "Set::" : "Clr::") <<
+         " extents count = 0x" << arr_size;
     std::cout << std::dec << std::endl;
 
     offset = 0;
@@ -1939,8 +1938,7 @@ static int test_extents(uint64_t index, extent_t * ext_arr,
     for (unsigned i = 0; i < arr_size; i++) {
         if (set) {
             ext = sbmap.get_next_set_extent(offset);
-        }
-        else {
+        } else {
             ext = sbmap.get_next_clr_extent(offset);
         }
 
@@ -1952,17 +1950,15 @@ static int test_extents(uint64_t index, extent_t * ext_arr,
 
     if (set) {
         ext = sbmap.get_next_set_extent(offset);
-    }
-    else {
+    } else {
         ext = sbmap.get_next_clr_extent(offset);
     }
     if (ext.length == 0) {
         return 0;
-    }
-    else {
+    } else {
         std::
-            cerr << "sbmap.get_next_" << (set ? "set" : "clr") << "_extent(" <<
-            offset << ") return length = " << ext.length << std::endl;
+        cerr << "sbmap.get_next_" << (set ? "set" : "clr") << "_extent(" <<
+             offset << ") return length = " << ext.length << std::endl;
         return -1;
     }
 }
@@ -1993,7 +1989,7 @@ TEST(SimpleBitmap, basic)
 }
 
 //---------------------------------------------------------------------------------
-static int test_intersections(unsigned test_idx, SimpleBitmap & sbmap,
+static int test_intersections(unsigned test_idx, SimpleBitmap &sbmap,
                               uint8_t map[], uint64_t map_size)
 {
     const uint64_t MAX_LEN_BIG = 523;
@@ -2006,8 +2002,7 @@ static int test_intersections(unsigned test_idx, SimpleBitmap & sbmap,
         uint64_t offset = (std::rand() % (map_size - 1));
         if (i & 1) {
             length = std::rand() % MAX_LEN_BIG;
-        }
-        else {
+        } else {
             length = std::rand() % MAX_LEN_SMALL;
         }
         // make sure no zero length will be used
@@ -2021,16 +2016,15 @@ static int test_intersections(unsigned test_idx, SimpleBitmap & sbmap,
             success = sbmap.set(offset, length);
             memset(map + offset, 0xFF, length);
             set_op_count++;
-        }
-        else {
+        } else {
             success = sbmap.clr(offset, length);
             memset(map + offset, 0x0, length);
             clr_op_count++;
         }
         if (!success) {
             std::
-                cerr << "Failed sbmap." << (set ? "set(" : "clr(") << offset <<
-                ", " << length << ")" << std::endl;
+            cerr << "Failed sbmap." << (set ? "set(" : "clr(") << offset <<
+                 ", " << length << ")" << std::endl;
             return -1;
         }
     }
@@ -2041,27 +2035,26 @@ static int test_intersections(unsigned test_idx, SimpleBitmap & sbmap,
         if (map[idx]) {
             set_bit_count++;
             success = sbmap.bit_is_set(idx);
-        }
-        else {
+        } else {
             clr_bit_count++;
             success = sbmap.bit_is_clr(idx);
         }
         if (!success) {
             std::
-                cerr << "expected: sbmap.bit_is_" << (map[idx] ? "set(" :
-                                                      "clr(") << idx << ")" <<
-                std::endl;
+            cerr << "expected: sbmap.bit_is_" << (map[idx] ? "set(" :
+                                                  "clr(") << idx << ")" <<
+                 std::endl;
             return -1;
         }
 
     }
     std::cout << std::hex << std::right << __func__;
     std::cout << " [" << test_idx << "] set_bit_count = 0x" << std::
-        setfill('0') << std::
-        setw(8) << set_bit_count << ", clr_bit_count = 0x" << std::
-        setfill('0') << std::
-        setw(8) << clr_bit_count << ", sum = 0x" << set_bit_count +
-        clr_bit_count << std::endl;
+              setfill('0') << std::
+              setw(8) << set_bit_count << ", clr_bit_count = 0x" << std::
+              setfill('0') << std::
+              setw(8) << clr_bit_count << ", sum = 0x" << set_bit_count +
+              clr_bit_count << std::endl;
     std::cout << std::dec;
     uint64_t offset = 0;
     for (uint64_t i = 0; i < (set_op_count + clr_op_count); i++) {
@@ -2070,7 +2063,7 @@ static int test_intersections(unsigned test_idx, SimpleBitmap & sbmap,
         for (uint64_t idx = ext.offset; idx < ext.offset + ext.length; idx++) {
             if (map[idx] != 0xFF) {
                 std::cerr << "map[" << idx << "] is clear, but extent [" << ext.
-                    offset << ", " << ext.length << "] is set" << std::endl;
+                          offset << ", " << ext.length << "] is set" << std::endl;
                 return -1;
             }
         }
@@ -2084,7 +2077,7 @@ static int test_intersections(unsigned test_idx, SimpleBitmap & sbmap,
         for (uint64_t idx = ext.offset; idx < ext.offset + ext.length; idx++) {
             if (map[idx]) {
                 std::cerr << "map[" << idx << "] is set, but extent [" << ext.
-                    offset << ", " << ext.length << "] is free" << std::endl;
+                          offset << ", " << ext.length << "] is free" << std::endl;
                 return -1;
             }
         }
@@ -2119,8 +2112,8 @@ TEST(SimpleBitmap, intersection)
 }
 
 //---------------------------------------------------------------------------------
-static int test_extents_boundaries(uint64_t index, extent_t * ext_arr,
-                                   uint64_t ext_arr_size, SimpleBitmap & sbmap,
+static int test_extents_boundaries(uint64_t index, extent_t *ext_arr,
+                                   uint64_t ext_arr_size, SimpleBitmap &sbmap,
                                    bool set)
 {
     uint64_t n = sbmap.get_size();
@@ -2142,22 +2135,21 @@ static int test_extents_boundaries(uint64_t index, extent_t * ext_arr,
             bool success;
             if (set) {
                 success = sbmap.set(offset, length);
-            }
-            else {
+            } else {
                 success = sbmap.clr(offset, length);
             }
             if (!success) {
                 std::
-                    cerr << "Failed sbmap." << (set ? "set(" : "clr(") << offset
-                    << ", " << length << ")" << std::endl;
+                cerr << "Failed sbmap." << (set ? "set(" : "clr(") << offset
+                     << ", " << length << ")" << std::endl;
                 return -1;
             }
             ext_arr[k++] = {
-            offset, length};
+                offset, length
+            };
             if (length < 64) {
                 offset += 64;
-            }
-            else {
+            } else {
                 offset += 128;
             }
         }
@@ -2169,8 +2161,8 @@ static int test_extents_boundaries(uint64_t index, extent_t * ext_arr,
     unsigned arr_size = std::min((uint64_t) k, ext_arr_size);
     std::cout << std::hex << std::right << __func__;
     std::
-        cout << " [" << index << "] " << (set ? "Set::" : "Clr::") <<
-        " extents count = 0x" << arr_size;
+    cout << " [" << index << "] " << (set ? "Set::" : "Clr::") <<
+         " extents count = 0x" << arr_size;
     std::cout << std::dec << std::endl;
 
     offset = 0;
@@ -2178,8 +2170,7 @@ static int test_extents_boundaries(uint64_t index, extent_t * ext_arr,
     for (unsigned i = 0; i < arr_size; i++) {
         if (set) {
             ext = sbmap.get_next_set_extent(offset);
-        }
-        else {
+        } else {
             ext = sbmap.get_next_clr_extent(offset);
         }
 
@@ -2191,17 +2182,15 @@ static int test_extents_boundaries(uint64_t index, extent_t * ext_arr,
 
     if (set) {
         ext = sbmap.get_next_set_extent(offset);
-    }
-    else {
+    } else {
         ext = sbmap.get_next_clr_extent(offset);
     }
     if (ext.length == 0) {
         return 0;
-    }
-    else {
+    } else {
         std::
-            cerr << "sbmap.get_next_" << (set ? "set" : "clr") << "_extent(" <<
-            offset << ") return length = " << ext.length << std::endl;
+        cerr << "sbmap.get_next_" << (set ? "set" : "clr") << "_extent(" <<
+             offset << ") return length = " << ext.length << std::endl;
         return -1;
     }
 

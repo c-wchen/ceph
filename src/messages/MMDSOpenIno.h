@@ -17,50 +17,58 @@
 
 #include "messages/MMDSOp.h"
 
-class MMDSOpenIno final:public MMDSOp {
+class MMDSOpenIno final: public MMDSOp
+{
     static constexpr int HEAD_VERSION = 1;
     static constexpr int COMPAT_VERSION = 1;
-  public:
-     inodeno_t ino;
-     std::vector < inode_backpointer_t > ancestors;
+public:
+    inodeno_t ino;
+    std::vector < inode_backpointer_t > ancestors;
 
-  protected:
-     MMDSOpenIno():MMDSOp {
-    MSG_MDS_OPENINO, HEAD_VERSION, COMPAT_VERSION} {
-    }
-  MMDSOpenIno(ceph_tid_t t, inodeno_t i, std::vector < inode_backpointer_t > *pa):
-    MMDSOp
+protected:
+    MMDSOpenIno(): MMDSOp {
+        MSG_MDS_OPENINO, HEAD_VERSION, COMPAT_VERSION}
     {
-    MSG_MDS_OPENINO, HEAD_VERSION, COMPAT_VERSION}, ino(i) {
-        header.tid = t;
-        if (pa)
-            ancestors = *pa;
     }
-    ~MMDSOpenIno()final {
+    MMDSOpenIno(ceph_tid_t t, inodeno_t i, std::vector < inode_backpointer_t > *pa):
+        MMDSOp {
+        MSG_MDS_OPENINO, HEAD_VERSION, COMPAT_VERSION}, ino(i)
+    {
+        header.tid = t;
+        if (pa) {
+            ancestors = *pa;
+        }
+    }
+    ~MMDSOpenIno()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "openino";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "openino(" << header.
             tid << " " << ino << " " << ancestors << ")";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(ino, payload);
         encode(ancestors, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(ino, p);
         decode(ancestors, p);
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
     template < class T, typename ... Args >
-        friend MURef < T > crimson::make_message(Args && ... args);
+    friend MURef < T > crimson::make_message(Args && ... args);
 };
 
 #endif

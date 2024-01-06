@@ -10,14 +10,16 @@
 
 struct Context;
 
-namespace librbd {
-    namespace io {
+namespace librbd
+{
+namespace io
+{
 
-        struct MockQosImageDispatch {
-            MOCK_METHOD4(needs_throttle, bool(bool, const Extents &,
-                                              std::atomic < uint32_t > *,
-                                              Context *));
-        };
+struct MockQosImageDispatch {
+    MOCK_METHOD4(needs_throttle, bool(bool, const Extents &,
+                                      std::atomic < uint32_t > *,
+                                      Context *));
+};
 
 } // namespace io }             // namespace librbd
 #endif                          // CEPH_TEST_LIBRBD_MOCK_IO_QOS_IMAGE_DISPATCH_H

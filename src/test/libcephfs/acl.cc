@@ -33,11 +33,13 @@ static size_t acl_ea_size(int count)
 
 static int acl_ea_count(size_t size)
 {
-    if (size < sizeof(acl_ea_header))
+    if (size < sizeof(acl_ea_header)) {
         return -1;
+    }
     size -= sizeof(acl_ea_header);
-    if (size % sizeof(acl_ea_entry))
+    if (size % sizeof(acl_ea_entry)) {
         return -1;
+    }
     return size / sizeof(acl_ea_entry);
 }
 
@@ -52,47 +54,52 @@ static int check_acl_and_mode(const void *buf, size_t size, mode_t mode)
         __u16 tag = entry->e_tag;
         __u16 perm = entry->e_perm;
         switch (tag) {
-        case ACL_USER_OBJ:
-            if (perm != ((mode >> 6) & 7))
-                return -CEPHFS_EINVAL;
-            break;
-        case ACL_USER:
-        case ACL_GROUP:
-            break;
-        case ACL_GROUP_OBJ:
-            group_entry = entry;
-            break;
-        case ACL_OTHER:
-            if (perm != (mode & 7))
-                return -CEPHFS_EINVAL;
-            break;
-        case ACL_MASK:
-            mask_entry = entry;
-            break;
-        default:
-            return -CEPHFS_EIO;
+            case ACL_USER_OBJ:
+                if (perm != ((mode >> 6) & 7)) {
+                    return -CEPHFS_EINVAL;
+                }
+                break;
+            case ACL_USER:
+            case ACL_GROUP:
+                break;
+            case ACL_GROUP_OBJ:
+                group_entry = entry;
+                break;
+            case ACL_OTHER:
+                if (perm != (mode & 7)) {
+                    return -CEPHFS_EINVAL;
+                }
+                break;
+            case ACL_MASK:
+                mask_entry = entry;
+                break;
+            default:
+                return -CEPHFS_EIO;
         }
         ++entry;
     }
     if (mask_entry) {
         __u16 perm = mask_entry->e_perm;
-        if (perm != ((mode >> 3) & 7))
+        if (perm != ((mode >> 3) & 7)) {
             return -CEPHFS_EINVAL;
-    }
-    else {
-        if (!group_entry)
+        }
+    } else {
+        if (!group_entry) {
             return -CEPHFS_EIO;
+        }
         __u16 perm = group_entry->e_perm;
-        if (perm != ((mode >> 3) & 7))
+        if (perm != ((mode >> 3) & 7)) {
             return -CEPHFS_EINVAL;
+        }
     }
     return 0;
 }
 
 static int generate_test_acl(void *buf, size_t size, mode_t mode)
 {
-    if (acl_ea_count(size) != 5)
+    if (acl_ea_count(size) != 5) {
         return -1;
+    }
     acl_ea_header *header = reinterpret_cast < acl_ea_header * >(buf);
     header->a_version = (__u32) ACL_EA_VERSION;
     acl_ea_entry *entry = header->a_entries;
@@ -117,8 +124,9 @@ static int generate_test_acl(void *buf, size_t size, mode_t mode)
 static int generate_empty_acl(void *buf, size_t size, mode_t mode)
 {
 
-    if (acl_ea_count(size) != 3)
+    if (acl_ea_count(size) != 3) {
         return -1;
+    }
     acl_ea_header *header = reinterpret_cast < acl_ea_header * >(buf);
     header->a_version = (__u32) ACL_EA_VERSION;
     acl_ea_entry *entry = header->a_entries;

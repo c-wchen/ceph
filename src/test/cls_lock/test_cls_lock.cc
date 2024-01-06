@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <iostream>
@@ -30,9 +30,9 @@ using namespace std;
 using namespace librados;
 using namespace rados::cls::lock;
 
-void lock_info(IoCtx * ioctx, string & oid, string & name, map < locker_id_t,
-               locker_info_t > &lockers, ClsLockType * assert_type,
-               string * assert_tag)
+void lock_info(IoCtx *ioctx, string &oid, string &name, map < locker_id_t,
+               locker_info_t > &lockers, ClsLockType *assert_type,
+               string *assert_tag)
 {
     ClsLockType lock_type = ClsLockType::NONE;
     string tag;
@@ -53,31 +53,33 @@ void lock_info(IoCtx * ioctx, string & oid, string & name, map < locker_id_t,
 
     map < locker_id_t, locker_info_t >::iterator liter;
     for (liter = lockers.begin(); liter != lockers.end(); ++liter) {
-        const locker_id_t & locker = liter->first;
+        const locker_id_t &locker = liter->first;
         cout << "    " << locker.locker << " expiration=" << liter->second.
-            expiration << " addr=" << liter->second.
-            addr << " cookie=" << locker.cookie << std::endl;
+             expiration << " addr=" << liter->second.
+             addr << " cookie=" << locker.cookie << std::endl;
     }
 }
 
-void lock_info(IoCtx * ioctx, string & oid, string & name, map < locker_id_t,
+void lock_info(IoCtx *ioctx, string &oid, string &name, map < locker_id_t,
                locker_info_t > &lockers)
 {
     lock_info(ioctx, oid, name, lockers, NULL, NULL);
 }
 
-bool lock_expired(IoCtx * ioctx, string & oid, string & name)
+bool lock_expired(IoCtx *ioctx, string &oid, string &name)
 {
     ClsLockType lock_type = ClsLockType::NONE;
     string tag;
     map < locker_id_t, locker_info_t > lockers;
-    if (0 == get_lock_info(ioctx, oid, name, &lockers, &lock_type, &tag))
+    if (0 == get_lock_info(ioctx, oid, name, &lockers, &lock_type, &tag)) {
         return false;
+    }
     utime_t now = ceph_clock_now();
     map < locker_id_t, locker_info_t >::iterator liter;
     for (liter = lockers.begin(); liter != lockers.end(); ++liter) {
-        if (liter->second.expiration > now)
+        if (liter->second.expiration > now) {
             return false;
+        }
     }
 
     return true;
@@ -161,7 +163,7 @@ TEST(ClsLock, TestMultiLocking)
     lock_info(&ioctx, oid, *iter, lockers);
     ASSERT_EQ(1, (int)lockers.size());
     map < locker_id_t, locker_info_t >::iterator liter = lockers.begin();
-    const locker_id_t & id = liter->first;
+    const locker_id_t &id = liter->first;
     ASSERT_EQ(name2, id.locker);
 
     /* test lock tag */
@@ -315,8 +317,7 @@ TEST(ClsLock, TestLockDuration)
     if (r == 0) {
         // it's possible to get success if we were just really slow...
         ASSERT_TRUE(ceph_clock_now() > start + dur);
-    }
-    else {
+    } else {
         ASSERT_EQ(-EEXIST, r);
     }
 
@@ -386,14 +387,14 @@ TEST(ClsLock, TestSetCookie)
 
     librados::ObjectWriteOperation op2;
     lock(&op2, name, ClsLockType::SHARED, cookie, tag, "", utime_t {
-         }
-         , 0);
+    }
+    , 0);
     ASSERT_EQ(0, ioctx.operate(oid, &op2));
 
     librados::ObjectWriteOperation op3;
     lock(&op3, name, ClsLockType::SHARED, "cookie 2", tag, "", utime_t {
-         }
-         , 0);
+    }
+    , 0);
     ASSERT_EQ(0, ioctx.operate(oid, &op3));
 
     librados::ObjectWriteOperation op4;
@@ -450,8 +451,8 @@ TEST(ClsLock, TestRenew)
     ASSERT_EQ(0, l1.lock_exclusive(&ioctx, oid1));
     sleep(7);
     ASSERT_EQ(0, l1.lock_exclusive(&ioctx, oid1)) <<
-        "when a cls_lock is set to may_renew, a relock after expiration "
-        "should still work";
+            "when a cls_lock is set to may_renew, a relock after expiration "
+            "should still work";
     ASSERT_EQ(0, l1.unlock(&ioctx, oid1));
 
     // ***********************************************
@@ -471,8 +472,8 @@ TEST(ClsLock, TestRenew)
     ASSERT_EQ(0, l2.lock_exclusive(&ioctx, oid2));
     sleep(7);
     ASSERT_EQ(-ENOENT, l2.lock_exclusive(&ioctx, oid2)) <<
-        "when a cls_lock is set to must_renew, a relock after expiration "
-        "should fail";
+            "when a cls_lock is set to must_renew, a relock after expiration "
+            "should fail";
     ASSERT_EQ(-ENOENT, l2.unlock(&ioctx, oid2));
 
     // ***********************************************
@@ -487,7 +488,7 @@ TEST(ClsLock, TestRenew)
     l3.set_must_renew(true);
 
     ASSERT_EQ(-ENOENT, l3.lock_exclusive(&ioctx, oid3)) <<
-        "unable to create a lock with must_renew";
+            "unable to create a lock with must_renew";
 
     ASSERT_EQ(0, destroy_one_pool_pp(pool_name, cluster));
 }
@@ -521,7 +522,7 @@ TEST(ClsLock, TestExclusiveEphemeralBasic)
     EXPECT_TRUE(r1 == 0
                 || ((r1 == -ENOENT)
                     && (lock_expired(&ioctx, oid1, lock_name1))))
-        << "unlock should return 0 or -ENOENT return: " << r1;
+            << "unlock should return 0 or -ENOENT return: " << r1;
     ASSERT_EQ(-ENOENT, ioctx.stat(oid1, &size, &mod_time));
 
     // ***********************************************
@@ -537,7 +538,7 @@ TEST(ClsLock, TestExclusiveEphemeralBasic)
     EXPECT_TRUE(r2 == 0
                 || ((r2 == -ENOENT)
                     && (lock_expired(&ioctx, oid2, lock_name2))))
-        << "unlock should return 0 or -ENOENT return: " << r2;
+            << "unlock should return 0 or -ENOENT return: " << r2;
     ASSERT_EQ(0, ioctx.stat(oid2, &size, &mod_time));
 
     ASSERT_EQ(0, destroy_one_pool_pp(pool_name, cluster));

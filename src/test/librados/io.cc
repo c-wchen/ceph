@@ -79,13 +79,12 @@ TEST_F(LibRadosIo, ReadTimeout)
                 // then check if the buffer was changed after the call
                 if (buf2[startIndex] == 'a') {
                     printf
-                        ("byte at index %d was changed after the timeout to %d\n",
-                         startIndex, (int)buf[startIndex]);
+                    ("byte at index %d was changed after the timeout to %d\n",
+                     startIndex, (int)buf[startIndex]);
                     ASSERT_TRUE(0);
                     break;
                 }
-            }
-            else {
+            } else {
                 printf("no timeout :/\n");
             }
         }
@@ -289,13 +288,11 @@ TEST_F(LibRadosIo, XattrIter)
             && (memcmp(val, attr1_buf, len) == 0)) {
             num_seen++;
             continue;
-        }
-        else if ((strcmp(name, attr2) == 0) && (val != NULL)
-                 && (memcmp(val, attr2_buf, len) == 0)) {
+        } else if ((strcmp(name, attr2) == 0) && (val != NULL)
+                   && (memcmp(val, attr2_buf, len) == 0)) {
             num_seen++;
             continue;
-        }
-        else {
+        } else {
             ASSERT_EQ(0, 1);
         }
     }
@@ -336,7 +333,7 @@ TEST_F(LibRadosIoEC, OverlappingWriteRoundTrip)
     char *buf = (char *)new char[dbsize];
     char *buf2 = (char *)new char[bsize];
     char *buf3 = (char *)new char[dbsize];
-    auto cleanup =[&]{
+    auto cleanup = [&] {
         delete[]buf;
         delete[]buf2;
         delete[]buf3;
@@ -376,7 +373,7 @@ TEST_F(LibRadosIoEC, AppendRoundTrip)
     char *buf3 = (char *)new char[alignment * 2];
     int uasize = alignment / 2;
     char *unalignedbuf = (char *)new char[uasize];
-    auto cleanup =[&]{
+    auto cleanup = [&] {
         delete[]buf;
         delete[]buf2;
         delete[]buf3;
@@ -504,13 +501,11 @@ TEST_F(LibRadosIoEC, XattrIter)
             && (memcmp(val, attr1_buf, len) == 0)) {
             num_seen++;
             continue;
-        }
-        else if ((strcmp(name, attr2) == 0) && (val != NULL)
-                 && (memcmp(val, attr2_buf, len) == 0)) {
+        } else if ((strcmp(name, attr2) == 0) && (val != NULL)
+                   && (memcmp(val, attr2_buf, len) == 0)) {
             num_seen++;
             continue;
-        }
-        else {
+        } else {
             ASSERT_EQ(0, 1);
         }
     }

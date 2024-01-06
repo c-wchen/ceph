@@ -21,17 +21,21 @@ TEST(LibRadosServicePP, RegisterEarly)
     cluster.conf_parse_env(NULL);
     string name = string("pid") + stringify(getpid());
     ASSERT_EQ(0, cluster.service_daemon_register("laundry", name, { {
-                                                 "foo", "bar"}
-                                                 , {
-                                                 "this", "that"}
-                                                 }
-              ));
+            "foo", "bar"
+        }
+        , {
+            "this", "that"
+        }
+    }
+                                                ));
     ASSERT_EQ(-EEXIST, cluster.service_daemon_register("laundry", name, { {
-                                                       "foo", "bar"}
-                                                       , {
-                                                       "this", "that"}
-                                                       }
-              ));
+            "foo", "bar"
+        }
+        , {
+            "this", "that"
+        }
+    }
+                                                      ));
     ASSERT_EQ(0, cluster.connect());
     sleep(5);
     cluster.shutdown();
@@ -46,11 +50,13 @@ TEST(LibRadosServicePP, RegisterLate)
     ASSERT_EQ("", connect_cluster_pp(cluster));
     string name = string("pid") + stringify(getpid());
     ASSERT_EQ(0, cluster.service_daemon_register("laundry", name, { {
-                                                 "foo", "bar"}
-                                                 , {
-                                                 "this", "that"}
-                                                 }
-              ));
+            "foo", "bar"
+        }
+        , {
+            "this", "that"
+        }
+    }
+                                                ));
 }
 
 TEST(LibRadosServicePP, Status)
@@ -60,24 +66,29 @@ TEST(LibRadosServicePP, Status)
     ASSERT_EQ(0, cluster.conf_read_file(NULL));
     cluster.conf_parse_env(NULL);
     string name = string("pid") + stringify(getpid());
-    ASSERT_EQ(-ENOTCONN, cluster.service_daemon_update_status( { {
-                                                              "testing",
-                                                              "starting"}
-                                                              }
-              ));
+    ASSERT_EQ(-ENOTCONN, cluster.service_daemon_update_status({ {
+            "testing",
+            "starting"
+        }
+    }
+                                                             ));
     ASSERT_EQ(0, cluster.connect());
     ASSERT_EQ(0, cluster.service_daemon_register("laundry", name, { {
-                                                 "foo", "bar"}
-                                                 , {
-                                                 "this", "that"}
-                                                 }
-              ));
+            "foo", "bar"
+        }
+        , {
+            "this", "that"
+        }
+    }
+                                                ));
     for (int i = 0; i < 20; ++i) {
-        ASSERT_EQ(0, cluster.service_daemon_update_status( {
-                                                          {
-                                                          "testing", "running"}, {
-                                                          "count", stringify(i)}
-                                                          }));
+        ASSERT_EQ(0, cluster.service_daemon_update_status({
+            {
+                "testing", "running"
+            }, {
+                "count", stringify(i)
+            }
+        }));
         sleep(1);
     }
     cluster.shutdown();
@@ -97,11 +108,13 @@ TEST(LibRadosServicePP, Close)
             cluster.conf_parse_env(NULL);
             ASSERT_EQ(0, cluster.connect());
             ASSERT_EQ(0, cluster.service_daemon_register("laundry", name, { {
-                                                         "foo", "bar"}
-                                                         , {
-                                                         "this", "that"}
-                                                         }
-                      ));
+                    "foo", "bar"
+                }
+                , {
+                    "this", "that"
+                }
+            }
+                                                        ));
             sleep(3);           // let it register
             cluster.shutdown();
         }
@@ -124,8 +137,7 @@ TEST(LibRadosServicePP, Close)
 
             if (s.find(name) != string::npos) {
                 cout << " failed to deregister:\n" << s << std::endl;
-            }
-            else {
+            } else {
                 break;
             }
         }

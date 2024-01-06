@@ -6,7 +6,7 @@
 
 #define dout_subsys ceph_subsys_auth
 
-#define AES_KEY_LEN	16
+#define AES_KEY_LEN 16
 
 #define dout_context g_ceph_context
 
@@ -38,8 +38,9 @@ int main(int argc, char *argv[])
     const char *enc_buf = enc_out.c_str();
     for (unsigned i = 0; i < enc_out.length(); i++) {
         std::cout << hex << (int)(unsigned char)enc_buf[i] << dec << " ";
-        if (i && !(i % 16))
+        if (i && !(i % 16)) {
             std::cout << std::endl;
+        }
     }
 
     bufferlist dec_in, dec_out;

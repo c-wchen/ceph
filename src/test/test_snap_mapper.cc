@@ -16,7 +16,7 @@
 
 using namespace std;
 
-template < typename T > typename T::iterator rand_choose(T & cont)
+template < typename T > typename T::iterator rand_choose(T &cont)
 {
     if (std::empty(cont)) {
         return std::end(cont);
@@ -33,27 +33,34 @@ string random_string(size_t size)
     return name;
 }
 
-class PausyAsyncMap:public MapCacher::StoreDriver < string, bufferlist > {
+class PausyAsyncMap: public MapCacher::StoreDriver < string, bufferlist >
+{
     struct _Op {
         virtual void operate(map < string, bufferlist > *store) = 0;
-        virtual ~ _Op() {
-    }};
+        virtual ~ _Op()
+        {
+        }
+    };
     typedef std::shared_ptr < _Op > Op;
-    struct Remove:public _Op {
+    struct Remove: public _Op {
         set < string > to_remove;
-        explicit Remove(const set < string > &to_remove):to_remove(to_remove) {
-        } void operate(map < string, bufferlist > *store) override {
+        explicit Remove(const set < string > &to_remove): to_remove(to_remove)
+        {
+        } void operate(map < string, bufferlist > *store) override
+        {
             for (set < string >::iterator i = to_remove.begin();
                  i != to_remove.end(); ++i) {
                 store->erase(*i);
             }
         }
     };
-    struct Insert:public _Op {
+    struct Insert: public _Op {
         map < string, bufferlist > to_insert;
         explicit Insert(const map < string,
-                        bufferlist > &to_insert):to_insert(to_insert) {
-        } void operate(map < string, bufferlist > *store) override {
+                        bufferlist > &to_insert): to_insert(to_insert)
+        {
+        } void operate(map < string, bufferlist > *store) override
+        {
             for (map < string, bufferlist >::iterator i = to_insert.begin();
                  i != to_insert.end(); ++i) {
                 store->erase(i->first);
@@ -61,35 +68,42 @@ class PausyAsyncMap:public MapCacher::StoreDriver < string, bufferlist > {
             }
         }
     };
-    struct Callback:public _Op {
+    struct Callback: public _Op {
         Context *context;
-        explicit Callback(Context * c):context(c) {
-        } void operate(map < string, bufferlist > *store) override {
+        explicit Callback(Context *c): context(c)
+        {
+        } void operate(map < string, bufferlist > *store) override
+        {
             context->complete(0);
         }
     };
-  public:
-  class Transaction:public MapCacher::Transaction < string, bufferlist > {
+public:
+    class Transaction: public MapCacher::Transaction < string, bufferlist >
+    {
         friend class PausyAsyncMap;
         list < Op > ops;
         list < Op > callbacks;
-      public:
-        void set_keys(const map < string, bufferlist > &i) override {
+    public:
+        void set_keys(const map < string, bufferlist > &i) override
+        {
             ops.push_back(Op(new Insert(i)));
         }
-        void remove_keys(const set < string > &r) override {
+        void remove_keys(const set < string > &r) override
+        {
             ops.push_back(Op(new Remove(r)));
         }
-        void add_callback(Context * c) override {
+        void add_callback(Context *c) override
+        {
             callbacks.push_back(Op(new Callback(c)));
         }
     };
-  private:
+private:
 
     ceph::mutex lock = ceph::make_mutex("PausyAsyncMap");
     map < string, bufferlist > store;
 
-    class Doer:public Thread {
+    class Doer: public Thread
+    {
         static const size_t MAX_SIZE = 100;
         PausyAsyncMap *parent;
         ceph::mutex lock = ceph::make_mutex("Doer lock");
@@ -97,18 +111,21 @@ class PausyAsyncMap:public MapCacher::StoreDriver < string, bufferlist > {
         int stopping;
         bool paused;
         list < Op > queue;
-      public:
-        explicit Doer(PausyAsyncMap * parent):
-            parent(parent), stopping(0), paused(false) {
-        } void *entry() override {
+    public:
+        explicit Doer(PausyAsyncMap *parent):
+            parent(parent), stopping(0), paused(false)
+        {
+        } void *entry() override
+        {
             while (1) {
                 list < Op > ops;
                 {
                     std::unique_lock l {
-                    lock};
-                    cond.wait(l,[this] {
-                              return stopping || (!queue.empty() && !paused);}
-                    );
+                        lock};
+                    cond.wait(l, [this] {
+                        return stopping || (!queue.empty() && !paused);
+                    }
+                             );
                     if (stopping && queue.empty()) {
                         stopping = 2;
                         cond.notify_all();
@@ -123,122 +140,138 @@ class PausyAsyncMap:public MapCacher::StoreDriver < string, bufferlist > {
 
                 for (list < Op >::iterator i = ops.begin();
                      i != ops.end(); ops.erase(i++)) {
-                    if (!(rand() % 3))
+                    if (!(rand() % 3)) {
                         usleep(1 + (rand() % 5000));
+                    }
                     std::lock_guard l {
-                    parent->lock};
+                        parent->lock};
                     (*i)->operate(&(parent->store));
                 }
             }
         }
 
-        void pause() {
+        void pause()
+        {
             std::lock_guard l {
-            lock};
+                lock};
             paused = true;
             cond.notify_all();
         }
 
-        void resume() {
+        void resume()
+        {
             std::lock_guard l {
-            lock};
+                lock};
             paused = false;
             cond.notify_all();
         }
 
-        void submit(list < Op > &in) {
+        void submit(list < Op > &in)
+        {
             std::unique_lock l {
-            lock};
-            cond.wait(l,[this] {
-                      return queue.size() < MAX_SIZE;
-                      }
-            );
+                lock};
+            cond.wait(l, [this] {
+                return queue.size() < MAX_SIZE;
+            }
+                     );
             queue.splice(queue.end(), in, in.begin(), in.end());
             cond.notify_all();
         }
 
-        void stop() {
+        void stop()
+        {
             std::unique_lock l {
-            lock};
+                lock};
             stopping = 1;
             cond.notify_all();
-            cond.wait(l,[this] {
-                      return stopping == 2;
-                      }
-            );
+            cond.wait(l, [this] {
+                return stopping == 2;
+            }
+                     );
             cond.notify_all();
         }
     }
     doer;
 
-  public:
-  PausyAsyncMap():doer(this) {
+public:
+    PausyAsyncMap(): doer(this)
+    {
         doer.create("doer");
     }
-    ~PausyAsyncMap()override {
+    ~PausyAsyncMap()override
+    {
         doer.join();
     }
     int get_keys(const set < string > &keys,
-                 map < string, bufferlist > *out) override {
+                 map < string, bufferlist > *out) override
+    {
         std::lock_guard l {
-        lock};
+            lock};
         for (set < string >::const_iterator i = keys.begin();
              i != keys.end(); ++i) {
             map < string, bufferlist >::iterator j = store.find(*i);
-            if (j != store.end())
+            if (j != store.end()) {
                 out->insert(*j);
+            }
         }
         return 0;
     }
-    int get_next(const string & key, pair < string, bufferlist > *next) override {
+    int get_next(const string &key, pair < string, bufferlist > *next) override
+    {
         std::lock_guard l {
-        lock};
+            lock};
         map < string, bufferlist >::iterator j = store.upper_bound(key);
         if (j != store.end()) {
-            if (next)
+            if (next) {
                 *next = *j;
+            }
             return 0;
-        }
-        else {
+        } else {
             return -ENOENT;
         }
     }
-    int get_next_or_current(const string & key,
+    int get_next_or_current(const string &key,
                             pair < string,
-                            bufferlist > *next_or_current) override {
+                            bufferlist > *next_or_current) override
+    {
         std::lock_guard l {
-        lock};
+            lock};
         map < string, bufferlist >::iterator j = store.lower_bound(key);
         if (j != store.end()) {
-            if (next_or_current)
+            if (next_or_current) {
                 *next_or_current = *j;
+            }
             return 0;
-        }
-        else {
+        } else {
             return -ENOENT;
         }
     }
-    void submit(Transaction * t) {
+    void submit(Transaction *t)
+    {
         doer.submit(t->ops);
         doer.submit(t->callbacks);
     }
 
-    void flush() {
+    void flush()
+    {
         ceph::mutex lock = ceph::make_mutex("flush lock");
         ceph::condition_variable cond;
         bool done = false;
 
-        class OnFinish:public Context {
-            ceph::mutex * lock;
-            ceph::condition_variable * cond;
+        class OnFinish: public Context
+        {
+            ceph::mutex *lock;
+            ceph::condition_variable *cond;
             bool *done;
-          public:
-            OnFinish(ceph::mutex * lock, ceph::condition_variable * cond,
-                     bool * done)
-            :lock(lock), cond(cond), done(done) {
-            } void finish(int) override {
+        public:
+            OnFinish(ceph::mutex *lock, ceph::condition_variable *cond,
+                     bool *done)
+                : lock(lock), cond(cond), done(done)
+            {
+            } void finish(int) override
+            {
                 std::lock_guard l {
-                *lock};
+                    *lock};
                 *done = true;
                 cond->notify_all();
             }
@@ -248,41 +281,48 @@ class PausyAsyncMap:public MapCacher::StoreDriver < string, bufferlist > {
         submit(&t);
         {
             std::unique_lock l {
-            lock};
-            cond.wait(l,[&] {
-                      return done;
-                      }
-            );
+                lock};
+            cond.wait(l, [&] {
+                return done;
+            }
+                     );
         }
     }
 
-    void pause() {
+    void pause()
+    {
         doer.pause();
     }
-    void resume() {
+    void resume()
+    {
         doer.resume();
     }
-    void stop() {
+    void stop()
+    {
         doer.stop();
     }
 
 };
 
-class MapCacherTest:public::testing::Test {
-  protected:
+class MapCacherTest: public::testing::Test
+{
+protected:
     boost::scoped_ptr < PausyAsyncMap > driver;
     boost::scoped_ptr < MapCacher::MapCacher < string, bufferlist > >cache;
     map < string, bufferlist > truth;
     set < string > names;
-  public:
-    void assert_bl_eq(bufferlist & bl1, bufferlist & bl2) {
+public:
+    void assert_bl_eq(bufferlist &bl1, bufferlist &bl2)
+    {
         ASSERT_EQ(bl1.length(), bl2.length());
         bufferlist::iterator j = bl2.begin();
         for (bufferlist::iterator i = bl1.begin(); !i.end(); ++i, ++j) {
             ASSERT_TRUE(!j.end());
             ASSERT_EQ(*i, *j);
-    }} void assert_bl_map_eq(map < string, bufferlist > &m1,
-                             map < string, bufferlist > &m2) {
+        }
+    } void assert_bl_map_eq(map < string, bufferlist > &m1,
+                            map < string, bufferlist > &m2)
+    {
         ASSERT_EQ(m1.size(), m2.size());
         map < string, bufferlist >::iterator j = m2.begin();
         for (map < string, bufferlist >::iterator i = m1.begin();
@@ -293,18 +333,22 @@ class MapCacherTest:public::testing::Test {
         }
 
     }
-    size_t random_num() {
+    size_t random_num()
+    {
         return random() % 10;
     }
-    size_t random_size() {
+    size_t random_size()
+    {
         return random() % 1000;
     }
-    void random_bl(size_t size, bufferlist * bl) {
+    void random_bl(size_t size, bufferlist *bl)
+    {
         for (size_t i = 0; i < size; ++i) {
             bl->append(rand());
         }
     }
-    void do_set() {
+    void do_set()
+    {
         size_t set_size = random_num();
         map < string, bufferlist > to_set;
         for (size_t i = 0; i < set_size; ++i) {
@@ -324,7 +368,8 @@ class MapCacherTest:public::testing::Test {
             driver->submit(&t);
         }
     }
-    void remove() {
+    void remove()
+    {
         size_t remove_size = random_num();
         set < string > to_remove;
         for (size_t i = 0; i < remove_size; ++i) {
@@ -340,7 +385,8 @@ class MapCacherTest:public::testing::Test {
             driver->submit(&t);
         }
     }
-    void get() {
+    void get()
+    {
         set < string > to_get;
         size_t get_size = random_num();
         for (size_t i = 0; i < get_size; ++i) {
@@ -351,8 +397,9 @@ class MapCacherTest:public::testing::Test {
         for (set < string >::iterator i = to_get.begin();
              i != to_get.end(); ++i) {
             map < string, bufferlist >::iterator j = truth.find(*i);
-            if (j != truth.end())
+            if (j != truth.end()) {
                 got_truth.insert(*j);
+            }
         }
 
         map < string, bufferlist > got;
@@ -361,7 +408,8 @@ class MapCacherTest:public::testing::Test {
         assert_bl_map_eq(got, got_truth);
     }
 
-    void get_next() {
+    void get_next()
+    {
         string cur;
         while (true) {
             pair < string, bufferlist > next;
@@ -369,20 +417,23 @@ class MapCacherTest:public::testing::Test {
 
             pair < string, bufferlist > next_truth;
             map < string, bufferlist >::iterator i = truth.upper_bound(cur);
-            int r_truth = (i == truth.end())? -ENOENT : 0;
-            if (i != truth.end())
+            int r_truth = (i == truth.end()) ? -ENOENT : 0;
+            if (i != truth.end()) {
                 next_truth = *i;
+            }
 
             ASSERT_EQ(r, r_truth);
-            if (r == -ENOENT)
+            if (r == -ENOENT) {
                 break;
+            }
 
             ASSERT_EQ(next.first, next_truth.first);
             assert_bl_eq(next.second, next_truth.second);
             cur = next.first;
         }
     }
-    void SetUp() override {
+    void SetUp() override
+    {
         driver.reset(new PausyAsyncMap());
         cache.reset(new MapCacher::MapCacher < string,
                     bufferlist > (driver.get()));
@@ -393,7 +444,8 @@ class MapCacherTest:public::testing::Test {
             names.insert(random_string(1 + (random_size() % 10)));
         }
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         driver->stop();
         cache.reset();
         driver.reset();
@@ -438,23 +490,24 @@ TEST_F(MapCacherTest, Random)
             std::cout << "On iteration " << i << std::endl;
         }
         switch (rand() % 4) {
-        case 0:
-            get();
-            break;
-        case 1:
-            do_set();
-            break;
-        case 2:
-            get_next();
-            break;
-        case 3:
-            remove();
-            break;
+            case 0:
+                get();
+                break;
+            case 1:
+                do_set();
+                break;
+            case 2:
+                get_next();
+                break;
+            case 3:
+                remove();
+                break;
         }
     }
 }
 
-class MapperVerifier {
+class MapperVerifier
+{
     PausyAsyncMap *driver;
     boost::scoped_ptr < SnapMapper > mapper;
     map < snapid_t, set < hobject_t > >snap_to_hobject;
@@ -463,14 +516,16 @@ class MapperVerifier {
     uint32_t mask;
     uint32_t bits;
     ceph::mutex lock = ceph::make_mutex("lock");
-  public:
+public:
 
-    MapperVerifier(PausyAsyncMap * driver, uint32_t mask, uint32_t bits)
-    :driver(driver),
-        mapper(new
-               SnapMapper(g_ceph_context, driver, mask, bits, 0,
-                          shard_id_t(1))), mask(mask), bits(bits) {
-    } hobject_t random_hobject() {
+    MapperVerifier(PausyAsyncMap *driver, uint32_t mask, uint32_t bits)
+        : driver(driver),
+          mapper(new
+                 SnapMapper(g_ceph_context, driver, mask, bits, 0,
+                            shard_id_t(1))), mask(mask), bits(bits)
+    {
+    } hobject_t random_hobject()
+    {
         return hobject_t(random_string(1 + (rand() % 16)),
                          random_string(1 + (rand() % 16)),
                          snapid_t(rand() % 1000),
@@ -478,7 +533,8 @@ class MapperVerifier {
                          0, random_string(rand() % 16));
     }
 
-    void choose_random_snaps(int num, set < snapid_t > *snaps) {
+    void choose_random_snaps(int num, set < snapid_t > *snaps)
+    {
         ceph_assert(snaps);
         ceph_assert(!snap_to_hobject.empty());
         for (int i = 0; i < num || snaps->empty(); ++i) {
@@ -486,16 +542,19 @@ class MapperVerifier {
         }
     }
 
-    void create_snap() {
+    void create_snap()
+    {
         snap_to_hobject[next];
         ++next;
     }
 
-    void create_object() {
+    void create_object()
+    {
         std::lock_guard l {
-        lock};
-        if (snap_to_hobject.empty())
+            lock};
+        if (snap_to_hobject.empty()) {
             return;
+        }
         hobject_t obj;
         do {
             obj = random_hobject();
@@ -518,34 +577,41 @@ class MapperVerifier {
     }
 
     std::pair < std::string,
-        ceph::buffer::list > to_raw(const std::pair < snapid_t,
-                                    hobject_t > &to_map) {
+    ceph::buffer::list > to_raw(const std::pair < snapid_t,
+                                hobject_t > &to_map)
+    {
         return mapper->to_raw(to_map);
     }
 
     std::string to_legacy_raw_key(const std::pair < snapid_t,
-                                  hobject_t > &to_map) {
+                                  hobject_t > &to_map)
+    {
         return mapper->to_legacy_raw_key(to_map);
     }
 
-    template < typename ... Args > std::string to_object_key(Args && ... args) {
+    template < typename ... Args > std::string to_object_key(Args && ... args)
+    {
         return mapper->to_object_key(std::forward < Args > (args) ...);
     }
 
-    std::string to_raw_key(const std::pair < snapid_t, hobject_t > &to_map) {
+    std::string to_raw_key(const std::pair < snapid_t, hobject_t > &to_map)
+    {
         return mapper->to_raw_key(to_map);
     }
 
     template < typename ... Args >
-        std::string make_purged_snap_key(Args && ... args) {
+    std::string make_purged_snap_key(Args && ... args)
+    {
         return mapper->make_purged_snap_key(std::forward < Args > (args) ...);
     }
 
-    void trim_snap() {
+    void trim_snap()
+    {
         std::lock_guard l {
-        lock};
-        if (snap_to_hobject.empty())
+            lock};
+        if (snap_to_hobject.empty()) {
             return;
+        }
         map < snapid_t, set < hobject_t > >::iterator snap =
             rand_choose(snap_to_hobject);
         set < hobject_t > hobjects = snap->second;
@@ -554,13 +620,13 @@ class MapperVerifier {
         while (mapper->
                get_next_objects_to_trim(snap->first, rand() % 5 + 1,
                                         &hoids) == 0) {
-          for (auto && hoid:hoids) {
+            for (auto && hoid : hoids) {
                 ceph_assert(!hoid.is_max());
                 ceph_assert(hobjects.count(hoid));
                 hobjects.erase(hoid);
 
                 map < hobject_t, set < snapid_t >>::iterator j =
-                    hobject_to_snap.find(hoid);
+                                                    hobject_to_snap.find(hoid);
                 ceph_assert(j->second.count(snap->first));
                 set < snapid_t > old_snaps(j->second);
                 j->second.erase(snap->first);
@@ -581,13 +647,15 @@ class MapperVerifier {
         snap_to_hobject.erase(snap);
     }
 
-    void remove_oid() {
+    void remove_oid()
+    {
         std::lock_guard l {
-        lock};
-        if (hobject_to_snap.empty())
+            lock};
+        if (hobject_to_snap.empty()) {
             return;
+        }
         map < hobject_t, set < snapid_t >>::iterator obj =
-            rand_choose(hobject_to_snap);
+                                            rand_choose(hobject_to_snap);
         for (set < snapid_t >::iterator i = obj->second.begin();
              i != obj->second.end(); ++i) {
             map < snapid_t, set < hobject_t > >::iterator j =
@@ -603,13 +671,15 @@ class MapperVerifier {
         hobject_to_snap.erase(obj);
     }
 
-    void check_oid() {
+    void check_oid()
+    {
         std::lock_guard l {
-        lock};
-        if (hobject_to_snap.empty())
+            lock};
+        if (hobject_to_snap.empty()) {
             return;
+        }
         map < hobject_t, set < snapid_t >>::iterator obj =
-            rand_choose(hobject_to_snap);
+                                            rand_choose(hobject_to_snap);
         set < snapid_t > snaps;
         int r = mapper->get_snaps(obj->first, &snaps);
         ceph_assert(r == 0);
@@ -617,57 +687,64 @@ class MapperVerifier {
     }
 };
 
-class SnapMapperTest:public::testing::Test {
-  protected:
+class SnapMapperTest: public::testing::Test
+{
+protected:
     boost::scoped_ptr < PausyAsyncMap > driver;
     map < pg_t, std::shared_ptr < MapperVerifier > >mappers;
     uint32_t pgnum;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         driver.reset(new PausyAsyncMap());
         pgnum = 0;
-    } void TearDown() override {
+    } void TearDown() override
+    {
         driver->stop();
         mappers.clear();
         driver.reset();
     }
 
-    MapperVerifier & get_tester() {
+    MapperVerifier &get_tester()
+    {
         //return *(mappers.begin()->second);
         return *(rand_choose(mappers)->second);
     }
 
-    void init(uint32_t to_set) {
+    void init(uint32_t to_set)
+    {
         pgnum = to_set;
         for (uint32_t i = 0; i < pgnum; ++i) {
             pg_t pgid(i, 0);
             mappers[pgid].reset(new MapperVerifier(driver.get(),
                                                    i, pgid.get_split_bits(pgnum)
-                                )
-                );
+                                                  )
+                               );
         }
     }
 
-    void run() {
+    void run()
+    {
         for (int i = 0; i < 5000; ++i) {
-            if (!(i % 50))
+            if (!(i % 50)) {
                 std::cout << i << std::endl;
+            }
             switch (rand() % 5) {
-            case 0:
-                get_tester().create_snap();
-                break;
-            case 1:
-                get_tester().create_object();
-                break;
-            case 2:
-                get_tester().trim_snap();
-                break;
-            case 3:
-                get_tester().check_oid();
-                break;
-            case 4:
-                get_tester().remove_oid();
-                break;
+                case 0:
+                    get_tester().create_snap();
+                    break;
+                case 1:
+                    get_tester().create_object();
+                    break;
+                case 2:
+                    get_tester().trim_snap();
+                    break;
+                case 3:
+                    get_tester().check_oid();
+                    break;
+                case 4:
+                    get_tester().remove_oid();
+                    break;
             }
         }
     }
@@ -698,73 +775,77 @@ TEST_F(SnapMapperTest, CheckObjectKeyFormat)
 {
     init(1);
     // <object, test_raw_key>
-    std::vector < std::tuple < hobject_t, std::string >> object_to_object_key( {
-                                                                              {
-                                                                              hobject_t {
-                                                                              "test_object",
-                                                                              "",
-                                                                              20,
-                                                                              0x01234567,
-                                                                              20,
-                                                                              ""}
-                                                                              ,
-                                                                              "OBJ_.1_0000000000000014.76543210.14.test%uobject.."}
-                                                                              , {
-                                                                              hobject_t {
-                                                                              "test._ob.ject",
-                                                                              "k.ey",
-                                                                              20,
-                                                                              0x01234567,
-                                                                              20,
-                                                                              ""}
-                                                                              ,
-                                                                              "OBJ_.1_0000000000000014.76543210.14.test%e%uob%eject.k%eey."}
-                                                                              , {
-                                                                              hobject_t {
-                                                                              "test_object",
-                                                                              "",
-                                                                              20,
-                                                                              0x01234567,
-                                                                              20,
-                                                                              "namespace"}
-                                                                              ,
-                                                                              "OBJ_.1_0000000000000014.76543210.14.test%uobject..namespace"}
-                                                                              , {
-                                                                              hobject_t {
-                                                                              "test_object",
-                                                                              "",
-                                                                              std::
-                                                                              numeric_limits
-                                                                              <
-                                                                              snapid_t
-                                                                              >::
-                                                                              max
-                                                                              ()
-                                                                              -
-                                                                              20,
-                                                                              0x01234567,
-                                                                              std::
-                                                                              numeric_limits
-                                                                              <
-                                                                              int64_t
-                                                                              >::
-                                                                              max
-                                                                              ()
-                                                                              -
-                                                                              20,
-                                                                              "namespace"}
-                                                                              ,
-                                                                              "OBJ_.1_7FFFFFFFFFFFFFEB.76543210.ffffffffffffffec.test%uobject..namespace"}
-                                                                              }
-    );
+    std::vector < std::tuple < hobject_t, std::string >> object_to_object_key({
+        {
+            hobject_t {
+                "test_object",
+                "",
+                20,
+                0x01234567,
+                20,
+                ""}
+            ,
+            "OBJ_.1_0000000000000014.76543210.14.test%uobject.."
+        }
+        , {
+            hobject_t {
+                "test._ob.ject",
+                "k.ey",
+                20,
+                0x01234567,
+                20,
+                ""}
+            ,
+            "OBJ_.1_0000000000000014.76543210.14.test%e%uob%eject.k%eey."
+        }
+        , {
+            hobject_t {
+                "test_object",
+                "",
+                20,
+                0x01234567,
+                20,
+                "namespace"}
+            ,
+            "OBJ_.1_0000000000000014.76543210.14.test%uobject..namespace"
+        }
+        , {
+            hobject_t {
+                "test_object",
+                "",
+                std::
+                numeric_limits
+                <
+                snapid_t
+                >::
+                max
+                ()
+                -
+                20,
+                0x01234567,
+                std::
+                numeric_limits
+                <
+                int64_t
+                >::
+                max
+                ()
+                -
+                20,
+                "namespace"}
+            ,
+            "OBJ_.1_7FFFFFFFFFFFFFEB.76543210.ffffffffffffffec.test%uobject..namespace"
+        }
+    }
+                                                                             );
 
-  for (auto &[object, test_object_key]:object_to_object_key) {
+    for (auto &[object, test_object_key] : object_to_object_key) {
         auto object_key = get_tester().to_object_key(object);
         if (object_key != test_object_key) {
             std::cout << object << " should be "
-                << test_object_key << " is "
-                << get_tester().to_object_key(object)
-                << std::endl;
+                      << test_object_key << " is "
+                      << get_tester().to_object_key(object)
+                      << std::endl;
         }
         ASSERT_EQ(object_key, test_object_key);
     }
@@ -776,46 +857,50 @@ TEST_F(SnapMapperTest, CheckRawKeyFormat)
     init(1);
     // <object, snapid, test_raw_key>
     std::vector < std::tuple < hobject_t, snapid_t,
-        std::string >> object_to_raw_key( {
-                                         {
-                                         hobject_t {
-                                         "test_object", "", 20, 0x01234567, 20,
-                                         ""}
-                                         , 25,
-                                         "SNA_20_0000000000000019_.1_0000000000000014.76543210.14.test%uobject.."}
-                                         , {
-                                         hobject_t {
-                                         "test._ob.ject", "k.ey", 20,
-                                         0x01234567, 20, ""}
-                                         , 25,
-                                         "SNA_20_0000000000000019_.1_0000000000000014.76543210.14.test%e%uob%eject.k%eey."}
-                                         , {
-                                         hobject_t {
-                                         "test_object", "", 20, 0x01234567, 20,
-                                         "namespace"}
-                                         , 25,
-                                         "SNA_20_0000000000000019_.1_0000000000000014.76543210.14.test%uobject..namespace"}
-                                         , {
-                                         hobject_t {
-                                         "test_object", "",
-                                         std::numeric_limits <
-                                         snapid_t >::max() - 20, 0x01234567,
-                                         std::numeric_limits <
-                                         int64_t >::max() - 20, "namespace"}
-                                         ,
-                                         std::numeric_limits <
-                                         snapid_t >::max() - 20,
-                                         "SNA_9223372036854775787_FFFFFFFFFFFFFFEC_.1_7FFFFFFFFFFFFFEB.76543210.ffffffffffffffec.test%uobject..namespace"}
-                                         }
-    );
+    std::string >> object_to_raw_key({
+        {
+            hobject_t {
+                "test_object", "", 20, 0x01234567, 20,
+                ""}
+            , 25,
+            "SNA_20_0000000000000019_.1_0000000000000014.76543210.14.test%uobject.."
+        }
+        , {
+            hobject_t {
+                "test._ob.ject", "k.ey", 20,
+                0x01234567, 20, ""}
+            , 25,
+            "SNA_20_0000000000000019_.1_0000000000000014.76543210.14.test%e%uob%eject.k%eey."
+        }
+        , {
+            hobject_t {
+                "test_object", "", 20, 0x01234567, 20,
+                "namespace"}
+            , 25,
+            "SNA_20_0000000000000019_.1_0000000000000014.76543210.14.test%uobject..namespace"
+        }
+        , {
+            hobject_t {
+                "test_object", "",
+                std::numeric_limits <
+                snapid_t >::max() - 20, 0x01234567,
+                std::numeric_limits <
+                int64_t >::max() - 20, "namespace"}
+            ,
+            std::numeric_limits <
+            snapid_t >::max() - 20,
+            "SNA_9223372036854775787_FFFFFFFFFFFFFFEC_.1_7FFFFFFFFFFFFFEB.76543210.ffffffffffffffec.test%uobject..namespace"
+        }
+    }
+                                        );
 
-  for (auto &[object, snap, test_raw_key]:object_to_raw_key) {
+    for (auto &[object, snap, test_raw_key] : object_to_raw_key) {
         auto raw_key = get_tester().to_raw_key(std::make_pair(snap, object));
         if (raw_key != test_raw_key) {
             std::cout << object << " " << snap << " should be "
-                << test_raw_key << " is "
-                << get_tester().to_raw_key(std::make_pair(snap, object))
-                << std::endl;
+                      << test_raw_key << " is "
+                      << get_tester().to_raw_key(std::make_pair(snap, object))
+                      << std::endl;
         }
         ASSERT_EQ(raw_key, test_raw_key);
     }
@@ -828,25 +913,27 @@ TEST_F(SnapMapperTest, CheckMakePurgedSnapKeyFormat)
     init(1);
     // <pool, snap, test_key>
     std::vector < std::tuple < int64_t, snapid_t,
-        std::string >> purged_snap_to_key( {
-                                          {
-                                          20, 30, "PSN__20_000000000000001e"}
-                                          , {
-                                          std::numeric_limits <
-                                          int64_t >::max() - 20,
-                                          std::numeric_limits <
-                                          snapid_t >::max() - 20,
-                                          "PSN__9223372036854775787_ffffffffffffffec"}
-                                          }
-    );
+    std::string >> purged_snap_to_key({
+        {
+            20, 30, "PSN__20_000000000000001e"
+        }
+        , {
+            std::numeric_limits <
+            int64_t >::max() - 20,
+            std::numeric_limits <
+            snapid_t >::max() - 20,
+            "PSN__9223372036854775787_ffffffffffffffec"
+        }
+    }
+                                         );
 
-  for (auto &[pool, snap, test_key]:purged_snap_to_key) {
+    for (auto &[pool, snap, test_key] : purged_snap_to_key) {
         auto raw_purged_snap_key =
             get_tester().make_purged_snap_key(pool, snap);
         if (raw_purged_snap_key != test_key) {
             std::
-                cout << "<" << pool << ", " << snap << "> should be " <<
-                test_key << " is " << raw_purged_snap_key << std::endl;
+            cout << "<" << pool << ", " << snap << "> should be " <<
+                 test_key << " is " << raw_purged_snap_key << std::endl;
         }
         // retesting (mostly for test numbers accounting)
         ASSERT_EQ(raw_purged_snap_key, test_key);
@@ -866,8 +953,8 @@ TEST_F(SnapMapperTest, LegacyKeyConvertion)
     std::string new_key = get_tester().to_raw_key(snap_obj);
     if (converted_key != new_key) {
         std::
-            cout << "Converted: " << old_key << "\nTo:        " << converted_key
-            << "\nNew key:   " << new_key << std::endl;
+        cout << "Converted: " << old_key << "\nTo:        " << converted_key
+             << "\nNew key:   " << new_key << std::endl;
     }
     ASSERT_EQ(converted_key, new_key);
 }
@@ -876,23 +963,26 @@ TEST_F(SnapMapperTest, LegacyKeyConvertion)
  * 'DirectMapper' provides simple, controlled, interface to the underlying
  * SnapMapper.
  */
-class DirectMapper {
-  public:
+class DirectMapper
+{
+public:
     std::unique_ptr < PausyAsyncMap > driver {
-    make_unique < PausyAsyncMap > ()};
+        make_unique < PausyAsyncMap > ()};
     std::unique_ptr < SnapMapper > mapper;
     uint32_t mask;
     uint32_t bits;
     ceph::mutex lock = ceph::make_mutex("lock");
 
     DirectMapper(uint32_t mask, uint32_t bits)
-  :    
-    mapper(new
-           SnapMapper(g_ceph_context, driver.get(), mask, bits, 0,
-                      shard_id_t(1))), mask(mask), bits(bits) {
+        :
+        mapper(new
+               SnapMapper(g_ceph_context, driver.get(), mask, bits, 0,
+                          shard_id_t(1))), mask(mask), bits(bits)
+    {
     }
 
-    hobject_t random_hobject() {
+    hobject_t random_hobject()
+    {
         return hobject_t(random_string(1 + (rand() % 16)),
                          random_string(1 + (rand() % 16)),
                          snapid_t(rand() % 1000),
@@ -900,9 +990,10 @@ class DirectMapper {
                          0, random_string(rand() % 16));
     }
 
-    void create_object(const hobject_t & obj, const set < snapid_t > &snaps) {
+    void create_object(const hobject_t &obj, const set < snapid_t > &snaps)
+    {
         std::lock_guard l {
-        lock};
+            lock};
         PausyAsyncMap::Transaction t;
         mapper->add_oid(obj, snaps, &t);
         driver->submit(&t);
@@ -910,20 +1001,24 @@ class DirectMapper {
 
     std::pair < std::string,
         ceph::buffer::list > to_raw(const std::pair < snapid_t,
-                                    hobject_t > &to_map) {
+                                    hobject_t > &to_map)
+    {
         return mapper->to_raw(to_map);
     }
 
     std::string to_legacy_raw_key(const std::pair < snapid_t,
-                                  hobject_t > &to_map) {
+                                  hobject_t > &to_map)
+    {
         return mapper->to_legacy_raw_key(to_map);
     }
 
-    std::string to_raw_key(const std::pair < snapid_t, hobject_t > &to_map) {
+    std::string to_raw_key(const std::pair < snapid_t, hobject_t > &to_map)
+    {
         return mapper->to_raw_key(to_map);
     }
 
-    void shorten_mapping_key(snapid_t snap, const hobject_t & clone) {
+    void shorten_mapping_key(snapid_t snap, const hobject_t &clone)
+    {
         // calculate the relevant key
         std::string k = mapper->to_raw_key(snap, clone);
 
@@ -935,24 +1030,27 @@ class DirectMapper {
         // replace the key with its shortened version
         PausyAsyncMap::Transaction t;
         mapper->backend.remove_keys(set {
-                                    k}, &t);
+            k}, &t);
         auto short_k = k.substr(0, 10);
         mapper->backend.set_keys(map < string, bufferlist > { {
-                                 short_k, kvmap[k]}}, &t);
+                short_k, kvmap[k]
+            }
+        }, &t);
         driver->submit(&t);
         driver->flush();
     }
 };
 
-class DirectMapperTest:public::testing::Test {
-  public:
+class DirectMapperTest: public::testing::Test
+{
+public:
     // ctor & initialization
     DirectMapperTest() = default;
     ~DirectMapperTest() = default;
     void SetUp() override;
     void TearDown() override;
 
-  protected:
+protected:
     std::unique_ptr < DirectMapper > direct;
 };
 
@@ -972,7 +1070,7 @@ TEST_F(DirectMapperTest, BasciObject)
 {
     auto obj = direct->random_hobject();
     set < snapid_t > snaps {
-    100, 200};
+        100, 200};
     direct->create_object(obj, snaps);
 
     // verify that the OBJ_ & SNA_ entries are there
@@ -985,22 +1083,22 @@ TEST_F(DirectMapperTest, BasciObject)
 TEST_F(DirectMapperTest, CorruptedSnaRecord)
 {
     object_t base_name {
-    "obj"};
+        "obj"};
     std::string key {
-    "key"};
+        "key"};
 
     hobject_t head {
-    base_name, key, CEPH_NOSNAP, 0x17, 0, ""};
+        base_name, key, CEPH_NOSNAP, 0x17, 0, ""};
     hobject_t cln1 {
-    base_name, key, 10, 0x17, 0, ""};
+        base_name, key, 10, 0x17, 0, ""};
     hobject_t cln2 {
-    base_name, key, 20, 0x17, 0, ""};   // the oldest version
+        base_name, key, 20, 0x17, 0, ""};   // the oldest version
     set < snapid_t > head_snaps {
-    400, 500};
+        400, 500};
     set < snapid_t > cln1_snaps {
-    300};
+        300};
     set < snapid_t > cln2_snaps {
-    100, 200};
+        100, 200};
 
     PausyAsyncMap::Transaction t;
     direct->mapper->add_oid(head, head_snaps, &t);

@@ -19,7 +19,7 @@
 
 #include "include/rados.h"
 
-const boost::system::error_category & osd_category() noexcept;
+const boost::system::error_category &osd_category() noexcept;
 
 // Since the OSD mostly uses POSIX error codes plus a couple
 // additions, this will be a degenerate error category for now that
@@ -30,25 +30,26 @@ enum class osd_errc {
     blocklisted = 108           /* blocklisted */
 };
 
-namespace boost::system {
-    template <> struct is_error_code_enum <::osd_errc > {
-        static const bool value = true;
-    };
+namespace boost::system
+{
+template <> struct is_error_code_enum <::osd_errc > {
+    static const bool value = true;
+};
 
-    template <> struct is_error_condition_enum <::osd_errc > {
-        static const bool value = false;
-    };
+template <> struct is_error_condition_enum <::osd_errc > {
+    static const bool value = false;
+};
 }
 //  implicit conversion:
-    inline boost::system::error_code make_error_code(osd_errc e) noexcept
+inline boost::system::error_code make_error_code(osd_errc e) noexcept
 {
     return {
-    static_cast < int >(e), osd_category()};
+        static_cast < int >(e), osd_category()};
 }
 
 // explicit conversion:
 inline boost::system::error_condition make_error_condition(osd_errc e) noexcept
 {
     return {
-    static_cast < int >(e), osd_category()};
+        static_cast < int >(e), osd_category()};
 }

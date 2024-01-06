@@ -12,7 +12,7 @@
 
 using namespace std;
 
-void RGWObjTags::add_tag(const string & key, const string & val)
+void RGWObjTags::add_tag(const string &key, const string &val)
 {
     tag_map.emplace(std::make_pair(key, val));
 }
@@ -22,7 +22,7 @@ void RGWObjTags::emplace_tag(std::string && key, std::string && val)
     tag_map.emplace(std::move(key), std::move(val));
 }
 
-int RGWObjTags::check_and_add_tag(const string & key, const string & val)
+int RGWObjTags::check_and_add_tag(const string &key, const string &val)
 {
     if (tag_map.size() == max_obj_tags ||
         key.size() > max_tag_key_size ||
@@ -35,7 +35,7 @@ int RGWObjTags::check_and_add_tag(const string & key, const string & val)
     return 0;
 }
 
-int RGWObjTags::set_from_string(const string & input)
+int RGWObjTags::set_from_string(const string &input)
 {
     if (input.empty()) {
         return 0;
@@ -43,27 +43,27 @@ int RGWObjTags::set_from_string(const string & input)
     int ret = 0;
     vector < string > kvs;
     boost::split(kvs, input, boost::is_any_of("&"));
-  for (const auto & kv:kvs) {
+    for (const auto &kv : kvs) {
         auto p = kv.find("=");
         string key, val;
         if (p != string::npos) {
             ret = check_and_add_tag(url_decode(kv.substr(0, p)),
                                     url_decode(kv.substr(p + 1)));
-        }
-        else {
+        } else {
             ret = check_and_add_tag(url_decode(kv));
         }
 
-        if (ret < 0)
+        if (ret < 0) {
             return ret;
+        }
     }
     return ret;
 }
 
-void RGWObjTags::dump(Formatter * f) const const
+void RGWObjTags::dump(Formatter *f) const const
 {
     f->open_object_section("tagset");
-  for (auto & tag:tag_map) {
+    for (auto &tag : tag_map) {
         f->dump_string(tag.first.c_str(), tag.second);
     }
     f->close_section();

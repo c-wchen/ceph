@@ -15,20 +15,26 @@
 
 struct thing {
     int a;
-     thing(int i):a(i) {
-    } friend bool operator==(const thing & a, const thing & b) {
+    thing(int i): a(i)
+    {
+    } friend bool operator==(const thing &a, const thing &b)
+    {
         return a.a == b.a;
     }
-    friend std::size_t hash_value(const thing & value) {
+    friend std::size_t hash_value(const thing &value)
+    {
         return value.a;
     }
 };
 
-namespace std {
-    template <> struct hash <thing > {
-        size_t operator() (const thing & r)const {
-            return r.a;
-    }};
+namespace std
+{
+template <> struct hash <thing > {
+    size_t operator()(const thing &r)const
+    {
+        return r.a;
+    }
+};
 } TEST(LRUSet, insert_complex)
 {
     LRUSet < thing > s;

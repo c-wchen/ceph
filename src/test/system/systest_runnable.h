@@ -29,7 +29,7 @@
     int _rinv_ret = expr;\
     if (_rinv_ret != expected) {\
       printf("%s: file %s, line %d: expected %d, got %d\n",\
-	     get_id_str(), __FILE__, __LINE__, expected, _rinv_ret);\
+         get_id_str(), __FILE__, __LINE__, expected, _rinv_ret);\
       return 1; \
     }\
   } while(0);
@@ -43,12 +43,13 @@ std::string get_temp_pool_name(const char *prefix);
  *
  * Inherit from this class and implement the test body in run().
 */
-class SysTestRunnable {
-  public:
+class SysTestRunnable
+{
+public:
     static const int ID_STR_SZ = 196;
 
-     SysTestRunnable(int argc, const char **argv);
-     virtual ~ SysTestRunnable();
+    SysTestRunnable(int argc, const char **argv);
+    virtual ~ SysTestRunnable();
 
     /* Returns 0 on success; error code otherwise. */
     virtual int run() = 0;
@@ -60,21 +61,21 @@ class SysTestRunnable {
     int start();
 
     /* Wait until the Runnable is finished. Returns an error string on failure. */
-     std::string join();
+    std::string join();
 
     /* Starts a bunch of SystemTestRunnables and waits until they're done.
      *
      * Returns an error string on failure. */
-    static std::string run_until_finished(std::vector < SysTestRunnable * >&
+    static std::string run_until_finished(std::vector < SysTestRunnable * > &
                                           runnables);
 
-  protected:
+protected:
     int m_argc;
     const char **m_argv;
 
-  private:
-     explicit SysTestRunnable(const SysTestRunnable & rhs);
-     SysTestRunnable & operator=(const SysTestRunnable & rhs);
+private:
+    explicit SysTestRunnable(const SysTestRunnable &rhs);
+    SysTestRunnable &operator=(const SysTestRunnable &rhs);
     void update_id_str(bool started);
     void set_argv(int argc, const char **argv);
 

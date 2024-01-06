@@ -15,8 +15,8 @@ int main()
     for (int i = 0; i < 100000; i++) {
         MutableEntry entry(0, 0);
         entry.
-            get_ostream() << "This is log message " << i <<
-            ", which is a little bit looooooooo********ooooooooog and may contains multiple\nlines.";
+        get_ostream() << "This is log message " << i <<
+                      ", which is a little bit looooooooo********ooooooooog and may contains multiple\nlines.";
         journald.log_entry(entry);
     }
 }

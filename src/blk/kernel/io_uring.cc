@@ -34,8 +34,9 @@ static int ioring_get_cqe(struct ioring_data *d, unsigned int max,
 
         paio[nr++] = io;
 
-        if (nr == max)
+        if (nr == max) {
             break;
+        }
     }
     io_uring_cq_advance(ring, nr);
 
@@ -45,8 +46,9 @@ static int ioring_get_cqe(struct ioring_data *d, unsigned int max,
 static int find_fixed_fd(struct ioring_data *d, int real_fd)
 {
     auto it = d->fixed_fds_map.find(real_fd);
-    if (it == d->fixed_fds_map.end())
+    if (it == d->fixed_fds_map.end()) {
         return -1;
+    }
 
     return it->second;
 }
@@ -64,8 +66,9 @@ static void init_sqe(struct ioring_data *d, struct io_uring_sqe *sqe,
     else if (io->iocb.aio_lio_opcode == IO_CMD_PREADV)
         io_uring_prep_readv(sqe, fixed_fd, &io->iov[0],
                             io->iov.size(), io->offset);
-    else
+    else {
         ceph_assert(0);
+    }
 
     io_uring_sqe_set_data(sqe, io);
     io_uring_sqe_set_flags(sqe, IOSQE_FIXED_FILE);
@@ -82,8 +85,9 @@ static int ioring_queue(struct ioring_data *d, void *priv,
 
     do {
         struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
-        if (!sqe)
+        if (!sqe) {
             break;
+        }
 
         io = &*beg;
         io->priv = priv;
@@ -94,23 +98,25 @@ static int ioring_queue(struct ioring_data *d, void *priv,
 
     if (!io)
         /* Queue is full, go and reap something first */
+    {
         return 0;
+    }
 
     return io_uring_submit(ring);
 }
 
-static void build_fixed_fds_map(struct ioring_data *d, std::vector < int >&fds)
+static void build_fixed_fds_map(struct ioring_data *d, std::vector < int > &fds)
 {
     int fixed_fd = 0;
-  for (int real_fd:fds) {
+    for (int real_fd : fds) {
         d->fixed_fds_map[real_fd] = fixed_fd++;
     }
 }
 
 ioring_queue_t::ioring_queue_t(unsigned iodepth_, bool hipri_,
-                               bool sq_thread_):d(make_unique < ioring_data >
-                                                  ()), iodepth(iodepth_),
-hipri(hipri_), sq_thread(sq_thread_)
+                               bool sq_thread_): d(make_unique < ioring_data >
+                                           ()), iodepth(iodepth_),
+    hipri(hipri_), sq_thread(sq_thread_)
 {
 }
 
@@ -118,21 +124,24 @@ ioring_queue_t::~ioring_queue_t()
 {
 }
 
-int ioring_queue_t::init(std::vector < int >&fds)
+int ioring_queue_t::init(std::vector < int > &fds)
 {
     unsigned flags = 0;
 
     pthread_mutex_init(&d->cq_mutex, NULL);
     pthread_mutex_init(&d->sq_mutex, NULL);
 
-    if (hipri)
+    if (hipri) {
         flags |= IORING_SETUP_IOPOLL;
-    if (sq_thread)
+    }
+    if (sq_thread) {
         flags |= IORING_SETUP_SQPOLL;
+    }
 
     int ret = io_uring_queue_init(iodepth, &d->io_uring, flags);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     ret = io_uring_register_files(&d->io_uring, &fds[0], fds.size());
     if (ret < 0) {
@@ -158,9 +167,9 @@ int ioring_queue_t::init(std::vector < int >&fds)
 
     return 0;
 
-  close_epoll_fd:
+close_epoll_fd:
     close(d->epoll_fd);
-  close_ring_fd:
+close_ring_fd:
     io_uring_queue_exit(&d->io_uring);
 
     return ret;
@@ -187,9 +196,9 @@ int ioring_queue_t::submit_batch(aio_iter beg, aio_iter end,
     return rc;
 }
 
-int ioring_queue_t::get_next_completed(int timeout_ms, aio_t ** paio, int max)
+int ioring_queue_t::get_next_completed(int timeout_ms, aio_t **paio, int max)
 {
-  get_cqe:
+get_cqe:
     pthread_mutex_lock(&d->cq_mutex);
     int events = ioring_get_cqe(d.get(), max, paio);
     pthread_mutex_unlock(&d->cq_mutex);
@@ -198,11 +207,13 @@ int ioring_queue_t::get_next_completed(int timeout_ms, aio_t ** paio, int max)
         struct epoll_event ev;
         int ret =
             TEMP_FAILURE_RETRY(epoll_wait(d->epoll_fd, &ev, 1, timeout_ms));
-        if (ret < 0)
+        if (ret < 0) {
             events = -errno;
-        else if (ret > 0)
+        } else if (ret > 0)
             /* Time to reap */
+        {
             goto get_cqe;
+        }
     }
 
     return events;
@@ -234,7 +245,7 @@ ioring_queue_t::~ioring_queue_t()
     ceph_assert(0);
 }
 
-int ioring_queue_t::init(std::vector < int >&fds)
+int ioring_queue_t::init(std::vector < int > &fds)
 {
     ceph_assert(0);
 }
@@ -250,7 +261,7 @@ int ioring_queue_t::submit_batch(aio_iter beg, aio_iter end,
     ceph_assert(0);
 }
 
-int ioring_queue_t::get_next_completed(int timeout_ms, aio_t ** paio, int max)
+int ioring_queue_t::get_next_completed(int timeout_ms, aio_t **paio, int max)
 {
     ceph_assert(0);
 }

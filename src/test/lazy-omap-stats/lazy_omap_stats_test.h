@@ -27,7 +27,8 @@ struct index_t {
     unsigned key_index = 0;
 };
 
-class LazyOmapStatsTest {
+class LazyOmapStatsTest
+{
     librados::IoCtx io_ctx;
     librados::Rados rados;
     std::map < std::string, librados::bufferlist > payload;
@@ -37,8 +38,8 @@ class LazyOmapStatsTest {
         unsigned replica_count = 3;
         unsigned keys = 2000;
         unsigned how_many = 50;
-         std::string pool_name = "lazy_omap_test_pool";
-         std::string pool_id;
+        std::string pool_name = "lazy_omap_test_pool";
+        std::string pool_id;
         unsigned total_bytes = 0;
         unsigned total_keys = 0;
     } conf;
@@ -48,40 +49,40 @@ class LazyOmapStatsTest {
         TARGET_MGR
     } CommandTarget;
 
-     LazyOmapStatsTest(LazyOmapStatsTest &) = delete;
+    LazyOmapStatsTest(LazyOmapStatsTest &) = delete;
     void operator=(LazyOmapStatsTest) = delete;
     void init(const int argc, const char **argv);
     void shutdown();
-    void write_omap(const std::string & object_name);
+    void write_omap(const std::string &object_name);
     const std::string get_name() const;
     void create_payload();
     void write_many(const unsigned how_many);
     void scrub();
-    const int find_matches(std::string & output, std::regex & reg) const;
+    const int find_matches(std::string &output, std::regex &reg) const;
     void check_one();
-    const int find_index(std::string & haystack, std::regex & needle,
+    const int find_index(std::string &haystack, std::regex &needle,
                          std::string label) const;
     const unsigned tally_column(const unsigned omap_bytes_index,
-                                const std::string & table, bool header) const;
-    void check_column(const int index, const std::string & table,
-                      const std::string & type, bool header = true) const;
-    index_t get_indexes(std::regex & reg, std::string & output) const;
+                                const std::string &table, bool header) const;
+    void check_column(const int index, const std::string &table,
+                      const std::string &type, bool header = true) const;
+    index_t get_indexes(std::regex &reg, std::string &output) const;
     void check_pg_dump();
     void check_pg_dump_summary();
     void check_pg_dump_pgs();
     void check_pg_dump_pools();
     void check_pg_ls();
     const std::string get_output(const std::string command =
-                                 R "({" prefix ": " pg dump "})",
+                                     R "({" prefix ": " pg dump "})",
                                  const bool silent =
-                                 false, const CommandTarget target =
-                                 CommandTarget::TARGET_MGR);
-    void get_pool_id(const std::string & pool);
-     std::map < std::string, std::string > get_scrub_stamps();
+                                     false, const CommandTarget target =
+                                     CommandTarget::TARGET_MGR);
+    void get_pool_id(const std::string &pool);
+    std::map < std::string, std::string > get_scrub_stamps();
     void wait_for_active_clean();
 
-  public:
-     LazyOmapStatsTest() = default;
+public:
+    LazyOmapStatsTest() = default;
     const int run(const int argc, const char **argv);
 };
 

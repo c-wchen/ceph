@@ -11,7 +11,7 @@
 #include "objclass/objclass.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(2 pc_queue)
+CLS_NAME(2 pc_queue)
 
 using ceph::bufferlist;
 using ceph::decode;
@@ -19,15 +19,15 @@ using ceph::encode;
 
 constexpr auto CLS_QUEUE_URGENT_DATA_XATTR_NAME = "cls_queue_urgent_data";
 
-static int cls_2pc_queue_init(cls_method_context_t hctx, bufferlist * in,
-                              bufferlist * out)
+static int cls_2pc_queue_init(cls_method_context_t hctx, bufferlist *in,
+                              bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_queue_init_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_init: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -48,7 +48,7 @@ static int cls_2pc_queue_init(cls_method_context_t hctx, bufferlist * in,
 }
 
 static int cls_2pc_queue_get_capacity(cls_method_context_t hctx,
-                                      bufferlist * in, bufferlist * out)
+                                      bufferlist *in, bufferlist *out)
 {
     cls_queue_get_capacity_ret op_ret;
     auto ret = queue_get_capacity(hctx, op_ret);
@@ -60,14 +60,14 @@ static int cls_2pc_queue_get_capacity(cls_method_context_t hctx,
     return 0;
 }
 
-static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
-                                 bufferlist * out)
+static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist *in,
+                                 bufferlist *out)
 {
     cls_2pc_queue_reserve_op res_op;
     try {
         auto in_iter = in->cbegin();
         decode(res_op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_reserve: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -93,8 +93,7 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
     try {
         auto in_iter = head.bl_urgent_data.cbegin();
         decode(urgent_data, in_iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_reserve: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -102,9 +101,9 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
 
     const auto overhead = res_op.entries * QUEUE_ENTRY_OVERHEAD;
     const auto remaining_size = (head.tail.offset >= head.front.offset) ?
-        (head.queue_size - head.tail.offset) + (head.front.offset -
-                                                head.max_head_size) : head.
-        front.offset - head.tail.offset;
+                                (head.queue_size - head.tail.offset) + (head.front.offset -
+                                    head.max_head_size) : head.
+                                front.offset - head.tail.offset;
 
     if (res_op.size + urgent_data.reserved_size + overhead > remaining_size) {
         CLS_LOG(1,
@@ -128,11 +127,11 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
     std::tie(last_reservation, result) =
         urgent_data.reservations.emplace(std::piecewise_construct,
                                          std::forward_as_tuple(urgent_data.
-                                                               last_id),
+                                             last_id),
                                          std::forward_as_tuple(res_op.size,
-                                                               ceph::
-                                                               coarse_real_clock::
-                                                               now()));
+                                             ceph::
+                                             coarse_real_clock::
+                                             now()));
     if (!result) {
         // an old reservation that was never committed or aborted is in the map
         // caller should try again assuming other IDs are ok
@@ -152,7 +151,7 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
         CLS_LOG(10,
                 "INFO: cls_2pc_queue_reserve: urgent data size: %lu exceeded maximum: %lu using xattrs",
                 urgent_data_length, head.max_urgent_data_size);
-        // add the last reservation to xattrs 
+        // add the last reservation to xattrs
         bufferlist bl_xattrs;
         auto ret =
             cls_cxx_getxattr(hctx, CLS_QUEUE_URGENT_DATA_XATTR_NAME,
@@ -169,8 +168,7 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
             auto iter = bl_xattrs.cbegin();
             try {
                 decode(xattr_reservations, iter);
-            }
-            catch(ceph::buffer::error & err) {
+            } catch (ceph::buffer::error &err) {
                 CLS_LOG(1,
                         "ERROR: cls_2pc_queue_reserve: failed to decode xattrs urgent data map");
                 return -EINVAL;
@@ -179,11 +177,11 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
         std::tie(std::ignore, result) =
             xattr_reservations.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(urgent_data.
-                                                             last_id),
+                                           last_id),
                                        std::forward_as_tuple(res_op.size,
-                                                             ceph::
-                                                             coarse_real_clock::
-                                                             now()));
+                                           ceph::
+                                           coarse_real_clock::
+                                           now()));
         if (!result) {
             // an old reservation that was never committed or aborted is in the map
             // caller should try again assuming other IDs are ok
@@ -233,14 +231,14 @@ static int cls_2pc_queue_reserve(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist * in,
-                                bufferlist * out)
+static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist *in,
+                                bufferlist *out)
 {
     cls_2pc_queue_commit_op commit_op;
     try {
         auto in_iter = in->cbegin();
         decode(commit_op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_commit: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -257,8 +255,7 @@ static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist * in,
     try {
         auto in_iter = head.bl_urgent_data.cbegin();
         decode(urgent_data, in_iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_commit: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -294,8 +291,7 @@ static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist * in,
         auto iter = bl_xattrs.cbegin();
         try {
             decode(xattr_reservations, iter);
-        }
-        catch(ceph::buffer::error & err) {
+        } catch (ceph::buffer::error &err) {
             CLS_LOG(1,
                     "ERROR: cls_2pc_queue_commit: failed to decode xattrs urgent data map");
             return -EINVAL;
@@ -309,13 +305,14 @@ static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist * in,
         }
     }
 
-    auto & res = it->second;
+    auto &res = it->second;
     const auto actual_size = std::accumulate(commit_op.bl_data_vec.begin(),
-                                             commit_op.bl_data_vec.end(), 0UL,
-                                             [](uint64_t sum,
-                                                const bufferlist & bl){
-                                             return sum + bl.length();}
-    );
+                             commit_op.bl_data_vec.end(), 0UL,
+                             [](uint64_t sum,
+    const bufferlist & bl) {
+        return sum + bl.length();
+    }
+                                            );
 
     if (res.size < actual_size) {
         CLS_LOG(1,
@@ -337,8 +334,7 @@ static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist * in,
     if (xattr_reservations.empty()) {
         // remove the reservation from urgent data
         urgent_data.reservations.erase(it);
-    }
-    else {
+    } else {
         // remove the reservation from xattrs
         xattr_reservations.erase(it);
         bl_xattrs.clear();
@@ -365,14 +361,14 @@ static int cls_2pc_queue_commit(cls_method_context_t hctx, bufferlist * in,
     return queue_write_head(hctx, head);
 }
 
-static int cls_2pc_queue_abort(cls_method_context_t hctx, bufferlist * in,
-                               bufferlist * out)
+static int cls_2pc_queue_abort(cls_method_context_t hctx, bufferlist *in,
+                               bufferlist *out)
 {
     cls_2pc_queue_abort_op abort_op;
     try {
         auto in_iter = in->cbegin();
         decode(abort_op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_abort: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -389,8 +385,7 @@ static int cls_2pc_queue_abort(cls_method_context_t hctx, bufferlist * in,
     try {
         auto in_iter = head.bl_urgent_data.cbegin();
         decode(urgent_data, in_iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_2pc_queue_abort: failed to decode entry: %s",
                 err.what());
         return -EINVAL;
@@ -427,8 +422,7 @@ static int cls_2pc_queue_abort(cls_method_context_t hctx, bufferlist * in,
         cls_2pc_reservations xattr_reservations;
         try {
             decode(xattr_reservations, iter);
-        }
-        catch(ceph::buffer::error & err) {
+        } catch (ceph::buffer::error &err) {
             CLS_LOG(1,
                     "ERROR: cls_2pc_queue_abort: failed to decode xattrs urgent data map");
             return -EINVAL;
@@ -453,8 +447,7 @@ static int cls_2pc_queue_abort(cls_method_context_t hctx, bufferlist * in,
                     ret);
             return ret;
         }
-    }
-    else {
+    } else {
         reservation_size = it->second.size;
         urgent_data.reservations.erase(it);
     }
@@ -472,7 +465,7 @@ static int cls_2pc_queue_abort(cls_method_context_t hctx, bufferlist * in,
 }
 
 static int cls_2pc_queue_list_reservations(cls_method_context_t hctx,
-                                           bufferlist * in, bufferlist * out)
+        bufferlist *in, bufferlist *out)
 {
     //get head
     cls_queue_head head;
@@ -485,8 +478,7 @@ static int cls_2pc_queue_list_reservations(cls_method_context_t hctx,
     try {
         auto in_iter = head.bl_urgent_data.cbegin();
         decode(urgent_data, in_iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1,
                 "ERROR: cls_2pc_queue_list_reservations: failed to decode entry: %s",
                 err.what());
@@ -515,8 +507,7 @@ static int cls_2pc_queue_list_reservations(cls_method_context_t hctx,
             auto iter = bl_xattrs.cbegin();
             try {
                 decode(xattr_reservations, iter);
-            }
-            catch(ceph::buffer::error & err) {
+            } catch (ceph::buffer::error &err) {
                 CLS_LOG(1,
                         "ERROR: cls_2pc_queue_list_reservations: failed to decode xattrs urgent data map");
                 return -EINVAL;
@@ -533,13 +524,13 @@ static int cls_2pc_queue_list_reservations(cls_method_context_t hctx,
 }
 
 static int cls_2pc_queue_expire_reservations(cls_method_context_t hctx,
-                                             bufferlist * in, bufferlist * out)
+        bufferlist *in, bufferlist *out)
 {
     cls_2pc_queue_expire_op expire_op;
     try {
         auto in_iter = in->cbegin();
         decode(expire_op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1,
                 "ERROR: cls_2pc_queue_expire_reservations: failed to decode entry: %s",
                 err.what());
@@ -557,8 +548,7 @@ static int cls_2pc_queue_expire_reservations(cls_method_context_t hctx,
     try {
         auto in_iter = head.bl_urgent_data.cbegin();
         decode(urgent_data, in_iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1,
                 "ERROR: cls_2pc_queue_expire_reservations: failed to decode entry: %s",
                 err.what());
@@ -585,8 +575,7 @@ static int cls_2pc_queue_expire_reservations(cls_method_context_t hctx,
             reservation_size += it->second.size;
             it = urgent_data.reservations.erase(it);
             stale_found = true;
-        }
-        else {
+        } else {
             ++it;
         }
     }
@@ -608,8 +597,7 @@ static int cls_2pc_queue_expire_reservations(cls_method_context_t hctx,
             auto iter = bl_xattrs.cbegin();
             try {
                 decode(xattr_reservations, iter);
-            }
-            catch(ceph::buffer::error & err) {
+            } catch (ceph::buffer::error &err) {
                 CLS_LOG(1,
                         "ERROR: cls_2pc_queue_expire_reservations: failed to decode xattrs urgent data map");
                 return -EINVAL;
@@ -626,8 +614,7 @@ static int cls_2pc_queue_expire_reservations(cls_method_context_t hctx,
                     reservation_size += it->second.size;
                     it = xattr_reservations.erase(it);
                     xattr_stale_found = true;
-                }
-                else {
+                } else {
                     ++it;
                 }
             }
@@ -663,13 +650,13 @@ static int cls_2pc_queue_expire_reservations(cls_method_context_t hctx,
 }
 
 static int cls_2pc_queue_list_entries(cls_method_context_t hctx,
-                                      bufferlist * in, bufferlist * out)
+                                      bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
     cls_queue_list_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1,
                 "ERROR: cls_2pc_queue_list_entries: failed to decode entry: %s",
                 err.what());
@@ -693,13 +680,13 @@ static int cls_2pc_queue_list_entries(cls_method_context_t hctx,
 }
 
 static int cls_2pc_queue_remove_entries(cls_method_context_t hctx,
-                                        bufferlist * in, bufferlist * out)
+                                        bufferlist *in, bufferlist *out)
 {
     auto in_iter = in->cbegin();
     cls_queue_remove_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1,
                 "ERROR: cls_2pc_queue_remove_entries: failed to decode entry: %s",
                 err.what());

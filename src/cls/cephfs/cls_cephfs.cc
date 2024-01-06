@@ -21,13 +21,13 @@
 #include "cls_cephfs.h"
 
 CLS_VER(1, 0)
-    CLS_NAME(cephfs)
+CLS_NAME(cephfs)
 
 using ceph::bufferlist;
 using ceph::decode;
 using ceph::encode;
 
-std::ostream & operator<<(std::ostream & out, const ObjCeiling & in)
+std::ostream &operator<<(std::ostream &out, const ObjCeiling &in)
 {
     out << "id: " << in.id << " size: " << in.size;
     return out;
@@ -45,8 +45,8 @@ std::ostream & operator<<(std::ostream & out, const ObjCeiling & in)
  *          was used) else an error code
  */
 template < typename A >
-    static int set_if_greater(cls_method_context_t hctx,
-                              const std::string & xattr_name, const A input_val)
+static int set_if_greater(cls_method_context_t hctx,
+                          const std::string &xattr_name, const A input_val)
 {
     bufferlist existing_val_bl;
 
@@ -54,8 +54,7 @@ template < typename A >
     int r = cls_cxx_getxattr(hctx, xattr_name.c_str(), &existing_val_bl);
     if (r == -ENOENT || existing_val_bl.length() == 0) {
         set_val = true;
-    }
-    else if (r >= 0) {
+    } else if (r >= 0) {
         auto existing_p = existing_val_bl.cbegin();
         try {
             A existing_val;
@@ -63,18 +62,15 @@ template < typename A >
             if (!existing_p.end()) {
                 // Trailing junk?  Consider it invalid and overwrite
                 set_val = true;
-            }
-            else {
+            } else {
                 // Valid existing value, do comparison
                 set_val = input_val > existing_val;
             }
-        }
-        catch(const ceph::buffer::error & err) {
+        } catch (const ceph::buffer::error &err) {
             // Corrupt or empty existing value, overwrite it
             set_val = true;
         }
-    }
-    else {
+    } else {
         return r;
     }
 
@@ -83,14 +79,13 @@ template < typename A >
         bufferlist set_bl;
         encode(input_val, set_bl);
         return cls_cxx_setxattr(hctx, xattr_name.c_str(), &set_bl);
-    }
-    else {
+    } else {
         return 0;
     }
 }
 
 static int accumulate_inode_metadata(cls_method_context_t hctx,
-                                     bufferlist * in, bufferlist * out)
+                                     bufferlist *in, bufferlist *out)
 {
     ceph_assert(in != NULL);
     ceph_assert(out != NULL);
@@ -102,7 +97,7 @@ static int accumulate_inode_metadata(cls_method_context_t hctx,
     AccumulateArgs args;
     try {
         args.decode(q);
-    } catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         return -EINVAL;
     }
 
@@ -129,42 +124,45 @@ static int accumulate_inode_metadata(cls_method_context_t hctx,
 // and an xattr (scrub_tag) not equal to a specific value.
 // This is so special case that we can't really pretend it's
 // generic, so just fess up and call this the cephfs filter.
-class PGLSCephFSFilter:public PGLSFilter {
-  protected:
+class PGLSCephFSFilter: public PGLSFilter
+{
+protected:
     std::string scrub_tag;
-  public:
-    int init(bufferlist::const_iterator & params) override {
+public:
+    int init(bufferlist::const_iterator &params) override
+    {
         try {
             InodeTagFilterArgs args;
-             args.decode(params);
-             scrub_tag = args.scrub_tag;
-        } catch(ceph::buffer::error & e) {
+            args.decode(params);
+            scrub_tag = args.scrub_tag;
+        } catch (ceph::buffer::error &e) {
             return -EINVAL;
         }
 
         if (scrub_tag.empty()) {
             xattr = "";
-        }
-        else {
+        } else {
             xattr = "_scrub_tag";
         }
 
         return 0;
     }
 
-    ~PGLSCephFSFilter()override {
+    ~PGLSCephFSFilter()override
+    {
     }
-    bool reject_empty_xattr() const override {
+    bool reject_empty_xattr() const override
+    {
         return false;
-    } bool filter(const hobject_t & obj,
-                  const bufferlist & xattr_data)const override;
+    } bool filter(const hobject_t &obj,
+                  const bufferlist &xattr_data)const override;
 };
 
-bool PGLSCephFSFilter::filter(const hobject_t & obj,
-                              const bufferlist & xattr_data) const const
+bool PGLSCephFSFilter::filter(const hobject_t &obj,
+                              const bufferlist &xattr_data) const const
 {
     const std::string need_ending = ".00000000";
-    const std::string & obj_name = obj.oid.name;
+    const std::string &obj_name = obj.oid.name;
 
     if (obj_name.length() < need_ending.length()) {
         return false;
@@ -182,10 +180,10 @@ bool PGLSCephFSFilter::filter(const hobject_t & obj,
         auto q = xattr_data.cbegin();
         try {
             decode(tag_ondisk, q);
-            if (tag_ondisk == scrub_tag)
+            if (tag_ondisk == scrub_tag) {
                 return false;
-        }
-        catch(const ceph::buffer::error & err) {
+            }
+        } catch (const ceph::buffer::error &err) {
         }
     }
 

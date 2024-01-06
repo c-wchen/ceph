@@ -27,7 +27,7 @@ bool test_config_get_admin_socket(std::string& output) {
 }
 */
 
-bool test_dump_pgstate_history(std::string & output)
+bool test_dump_pgstate_history(std::string &output)
 {
     JSONParser parser;
     bool ret = parser.parse(output.c_str(), output.size());
@@ -39,7 +39,7 @@ bool test_dump_pgstate_history(std::string & output)
     JSONObjIter iterone = parser.find_first();
     if (iterone.end()) {        //Empty
         std::cerr << "test_dump_pgstate_history: command output empty, failing"
-            << std::endl;
+                  << std::endl;
         return false;
     }
 
@@ -51,58 +51,54 @@ bool test_dump_pgstate_history(std::string & output)
                 ret = !(*iter)->get_data().empty();
                 if (ret == false) {
                     std::
-                        cerr <<
-                        "test_dump_pgstate_history: pg value empty, failing" <<
-                        std::endl;
+                    cerr <<
+                         "test_dump_pgstate_history: pg value empty, failing" <<
+                         std::endl;
                     std::cerr << "Dumping full output: " << std::endl;
                     std::cerr << output << std::endl;
                     break;
                 }
                 total++;
-            }
-            else if ((*iter)->get_name() == "history") {
+            } else if ((*iter)->get_name() == "history") {
                 ret = std::string::npos != (*iter)->get_data().find("epoch") &&
-                    std::string::npos != (*iter)->get_data().find("state") &&
-                    std::string::npos != (*iter)->get_data().find("enter") &&
-                    std::string::npos != (*iter)->get_data().find("exit");
+                      std::string::npos != (*iter)->get_data().find("state") &&
+                      std::string::npos != (*iter)->get_data().find("enter") &&
+                      std::string::npos != (*iter)->get_data().find("exit");
                 if (ret == false) {
                     std::
-                        cerr <<
-                        "test_dump_pgstate_history: Can't find expected values in "
-                        "history object, failing" << std::endl;
+                    cerr <<
+                         "test_dump_pgstate_history: Can't find expected values in "
+                         "history object, failing" << std::endl;
                     std::cerr << "Problem output was:" << std::endl;
                     std::cerr << (*iter)->get_data() << std::endl;
                     break;
                 }
                 total++;
-            }
-            else if ((*iter)->get_name() == "currently") {
+            } else if ((*iter)->get_name() == "currently") {
                 ret = !(*iter)->get_data().empty();
                 if (ret == false) {
                     std::
-                        cerr <<
-                        "test_dump_pgstate_history: currently value empty, failing"
-                        << std::endl;
+                    cerr <<
+                         "test_dump_pgstate_history: currently value empty, failing"
+                         << std::endl;
                     std::cerr << "Dumping full output: " << std::endl;
                     std::cerr << output << std::endl;
                     break;
                 }
                 total++;
-            }
-            else {
+            } else {
                 std::
-                    cerr << "test_dump_pgstate_history: unrecognised field " <<
-                    (*iter)->get_name()
-                    << ", failing" << std::endl;
+                cerr << "test_dump_pgstate_history: unrecognised field " <<
+                     (*iter)->get_name()
+                     << ", failing" << std::endl;
                 std::cerr << "Dumping full output: " << std::endl;
                 std::cerr << output << std::endl;
                 break;
             }
         }
-    }
-    else {
+    } else {
         std::cerr << "test_dump_pgstate_history: unrecognised format, failing"
-            << std::endl;
+                  << std::endl;
         std::cerr << "Dumping full output: " << std::endl;
         std::cerr << output << std::endl;
         return false;

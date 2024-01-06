@@ -13,68 +13,72 @@
 struct uuid_d;
 class LogEntry;
 
-namespace ceph {
+namespace ceph
+{
 
-    class Formatter;
+class Formatter;
 
-    namespace logging {
+namespace logging
+{
 
-        class Entry;
-        class SubsystemMap;
+class Entry;
+class SubsystemMap;
 
 // Graylog logging backend: Convert log datastructures (LogEntry, Entry) to
 // GELF (http://www.graylog2.org/resources/gelf/specification) and send it
 // to a GELF UDP receiver
 
-        class Graylog {
-          public:
+class Graylog
+{
+public:
 
-  /**
-   * Create Graylog with SubsystemMap. log_entry will resolve the subsystem
-   * id to string. Logging will not be ready until set_destination is called
-   * @param s SubsystemMap
-   * @param logger Value for key "_logger" in GELF
-   */
-            Graylog(const SubsystemMap * const s, const std::string & logger);
+    /**
+     * Create Graylog with SubsystemMap. log_entry will resolve the subsystem
+     * id to string. Logging will not be ready until set_destination is called
+     * @param s SubsystemMap
+     * @param logger Value for key "_logger" in GELF
+     */
+    Graylog(const SubsystemMap *const s, const std::string &logger);
 
-  /**
-   * Create Graylog without SubsystemMap. Logging will not be ready
-   * until set_destination is called
-   * @param logger Value for key "_logger" in GELF
-   */
-            explicit Graylog(const std::string & logger);
-             virtual ~ Graylog();
+    /**
+     * Create Graylog without SubsystemMap. Logging will not be ready
+     * until set_destination is called
+     * @param logger Value for key "_logger" in GELF
+     */
+    explicit Graylog(const std::string &logger);
+    virtual ~ Graylog();
 
-            void set_hostname(const std::string & host);
-            void set_fsid(const uuid_d & fsid);
+    void set_hostname(const std::string &host);
+    void set_fsid(const uuid_d &fsid);
 
-            void set_destination(const std::string & host, int port);
+    void set_destination(const std::string &host, int port);
 
-            void log_entry(const Entry & e);
-            void log_log_entry(LogEntry const *const e);
+    void log_entry(const Entry &e);
+    void log_log_entry(LogEntry const *const e);
 
-            typedef std::shared_ptr < Graylog > Ref;
+    typedef std::shared_ptr < Graylog > Ref;
 
-          private:
-             SubsystemMap const *const m_subs;
+private:
+    SubsystemMap const *const m_subs;
 
-            bool m_log_dst_valid = false;
+    bool m_log_dst_valid = false;
 
-             std::string m_hostname;
-             std::string m_fsid;
-             std::string m_logger;
+    std::string m_hostname;
+    std::string m_fsid;
+    std::string m_logger;
 
-             boost::asio::ip::udp::endpoint m_endpoint;
-             boost::asio::io_service m_io_service;
+    boost::asio::ip::udp::endpoint m_endpoint;
+    boost::asio::io_service m_io_service;
 
-             std::unique_ptr < Formatter > m_formatter;
-             std::unique_ptr < Formatter > m_formatter_section;
-             std::stringstream m_ostream_section;
-             std::stringstream m_ostream_compressed;
-             boost::iostreams::filtering_ostream m_ostream;
-             boost::iostreams::zlib_compressor m_compressor;
+    std::unique_ptr < Formatter > m_formatter;
+    std::unique_ptr < Formatter > m_formatter_section;
+    std::stringstream m_ostream_section;
+    std::stringstream m_ostream_compressed;
+    boost::iostreams::filtering_ostream m_ostream;
+    boost::iostreams::zlib_compressor m_compressor;
 
-        };
+};
 
-}}
+}
+}
 #endif

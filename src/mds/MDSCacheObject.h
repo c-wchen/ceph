@@ -28,11 +28,13 @@ class SimpleLock;
 class MDSCacheObject;
 class MDSContext;
 
-namespace ceph {
-    class Formatter;
+namespace ceph
+{
+class Formatter;
 } struct ClientLease {
-    ClientLease(client_t c, MDSCacheObject * p):client(c), parent(p),
-        item_session_lease(this), item_lease(this) {
+    ClientLease(client_t c, MDSCacheObject *p): client(c), parent(p),
+        item_session_lease(this), item_lease(this)
+    {
     } ClientLease() = delete;
 
     client_t client;
@@ -46,19 +48,23 @@ namespace ceph {
 
 // print hack
 struct mdsco_db_line_prefix {
-    explicit mdsco_db_line_prefix(MDSCacheObject * o):object(o) {
+    explicit mdsco_db_line_prefix(MDSCacheObject *o): object(o)
+    {
     } MDSCacheObject *object;
 };
 
-class MDSCacheObject {
-  public:
+class MDSCacheObject
+{
+public:
     typedef mempool::mds_co::compact_map < mds_rank_t,
-        unsigned >replica_map_type;
+            unsigned >replica_map_type;
 
     struct ptr_lt {
-        bool operator() (const MDSCacheObject * l, const MDSCacheObject * r)const {
+        bool operator()(const MDSCacheObject *l, const MDSCacheObject *r)const
+        {
             return l->is_lt(r);
-    }};
+        }
+    };
 
     // -- pins --
     const static int PIN_REPLICATED = 1000;
@@ -86,54 +92,67 @@ class MDSCacheObject {
     const static uint64_t WAIT_SINGLEAUTH = (1ull << 60);
     const static uint64_t WAIT_UNFREEZE = (1ull << 59); // pka AUTHPINNABLE
 
-     elist < MDSCacheObject * >::item item_scrub;   // for scrub inode or dir
+    elist < MDSCacheObject * >::item item_scrub;   // for scrub inode or dir
 
-     MDSCacheObject() {
-    } virtual ~ MDSCacheObject() {
+    MDSCacheObject()
+    {
+    } virtual ~ MDSCacheObject()
+    {
     }
 
     std::string_view generic_pin_name(int p) const;
 
     // printing
-    virtual void print(std::ostream & out) = 0;
-    virtual std::ostream & print_db_line_prefix(std::ostream & out) {
+    virtual void print(std::ostream &out) = 0;
+    virtual std::ostream &print_db_line_prefix(std::ostream &out)
+    {
         return out << "mdscacheobject(" << this << ") ";
     }
 
-    unsigned get_state() const {
+    unsigned get_state() const
+    {
         return state;
-    } unsigned state_test(unsigned mask) const {
+    } unsigned state_test(unsigned mask) const
+    {
         return (state & mask);
-    } void state_clear(unsigned mask) {
+    } void state_clear(unsigned mask)
+    {
         state &= ~mask;
     }
-    void state_set(unsigned mask) {
+    void state_set(unsigned mask)
+    {
         state |= mask;
     }
-    void state_reset(unsigned s) {
+    void state_reset(unsigned s)
+    {
         state = s;
     }
 
-    bool is_auth() const {
+    bool is_auth() const
+    {
         return state_test(STATE_AUTH);
-    } bool is_dirty() const {
+    } bool is_dirty() const
+    {
         return state_test(STATE_DIRTY);
-    } bool is_clean() const {
+    } bool is_clean() const
+    {
         return !is_dirty();
-    } bool is_rejoining() const {
+    } bool is_rejoining() const
+    {
         return state_test(STATE_REJOINING);
     }
     // --------------------------------------------// authority
-        virtual mds_authority_t authority() const = 0;
-    virtual bool is_ambiguous_auth() const {
+    virtual mds_authority_t authority() const = 0;
+    virtual bool is_ambiguous_auth() const
+    {
         return authority().second != CDIR_AUTH_UNKNOWN;
-    } int get_num_ref(int by = -1) const {
+    } int get_num_ref(int by = -1) const
+    {
 #ifdef MDS_REF_SET
         if (by >= 0) {
             if (ref_map.find(by) == ref_map.end()) {
                 return 0;
-            }
-            else {
+            } else {
                 return ref_map.find(by)->second;
             }
         }
@@ -144,73 +163,86 @@ class MDSCacheObject {
     //bool is_pinned_by(int by) { return ref_set.count(by); }
     //multiset<int>& get_ref_set() { return ref_set; }
 
-    virtual void last_put() {
+    virtual void last_put()
+    {
     }
-    virtual void bad_put(int by) {
+    virtual void bad_put(int by)
+    {
 #ifdef MDS_REF_SET
         ceph_assert(ref_map[by] > 0);
 #endif
         ceph_assert(ref > 0);
     }
-    virtual void _put() {
+    virtual void _put()
+    {
     }
-    void put(int by) {
+    void put(int by)
+    {
 #ifdef MDS_REF_SET
         if (ref == 0 || ref_map[by] == 0) {
 #else
         if (ref == 0) {
 #endif
             bad_put(by);
-        }
-        else {
+        } else {
             ref--;
 #ifdef MDS_REF_SET
             ref_map[by]--;
 #endif
-            if (ref == 0)
+            if (ref == 0) {
                 last_put();
-            if (state_test(STATE_NOTIFYREF))
+            }
+            if (state_test(STATE_NOTIFYREF)) {
                 _put();
+            }
         }
     }
 
-    virtual void first_get() {
+    virtual void first_get()
+    {
     }
-    virtual void bad_get(int by) {
+    virtual void bad_get(int by)
+    {
 #ifdef MDS_REF_SET
         ceph_assert(by < 0 || ref_map[by] == 0);
 #endif
         ceph_abort();
     }
-    void get(int by) {
-        if (ref == 0)
+    void get(int by)
+    {
+        if (ref == 0) {
             first_get();
+        }
         ref++;
 #ifdef MDS_REF_SET
-        if (ref_map.find(by) == ref_map.end())
+        if (ref_map.find(by) == ref_map.end()) {
             ref_map[by] = 0;
+        }
         ref_map[by]++;
 #endif
     }
 
-    void print_pin_set(std::ostream & out) const {
+    void print_pin_set(std::ostream &out) const
+    {
 #ifdef MDS_REF_SET
-        for (auto const &p:ref_map) {
+        for (auto const &p : ref_map) {
             out << " " << pin_name(p.first) << "=" << p.second;
         }
 #else
-         out << " nref=" << ref;
+        out << " nref=" << ref;
 #endif
-    } int get_num_auth_pins() const {
+    } int get_num_auth_pins() const
+    {
         return auth_pins;
     }
 #ifdef MDS_AUTHPIN_SET
-    void print_authpin_set(std::ostream & out) const {
+    void print_authpin_set(std::ostream &out) const
+    {
         out << " (" << auth_pin_set << ")";
     }
 #endif
-    void dump_states(ceph::Formatter * f) const;
-    void dump(ceph::Formatter * f) const;
+    void dump_states(ceph::Formatter *f) const;
+    void dump(ceph::Formatter *f) const;
 
     // auth pins
     enum {
@@ -225,60 +257,81 @@ class MDSCacheObject {
     virtual void auth_unpin(void *who) = 0;
     virtual bool is_frozen() const = 0;
     virtual bool is_freezing() const = 0;
-    virtual bool is_freezing_or_frozen() const {
+    virtual bool is_freezing_or_frozen() const
+    {
         return is_frozen() || is_freezing();
-    } bool is_replicated() const {
+    } bool is_replicated() const
+    {
         return !get_replicas().empty();
-    } bool is_replica(mds_rank_t mds) const {
+    } bool is_replica(mds_rank_t mds) const
+    {
         return get_replicas().count(mds);
-    } int num_replicas() const {
+    } int num_replicas() const
+    {
         return get_replicas().size();
-    } unsigned add_replica(mds_rank_t mds) {
-        if (get_replicas().count(mds))
-            return ++get_replicas()[mds];   // inc nonce
-        if (get_replicas().empty())
+    } unsigned add_replica(mds_rank_t mds)
+    {
+        if (get_replicas().count(mds)) {
+            return ++get_replicas()[mds];    // inc nonce
+        }
+        if (get_replicas().empty()) {
             get(PIN_REPLICATED);
+        }
         return get_replicas()[mds] = 1;
     }
-    void add_replica(mds_rank_t mds, unsigned nonce) {
-        if (get_replicas().empty())
+    void add_replica(mds_rank_t mds, unsigned nonce)
+    {
+        if (get_replicas().empty()) {
             get(PIN_REPLICATED);
+        }
         get_replicas()[mds] = nonce;
     }
-    unsigned get_replica_nonce(mds_rank_t mds) {
+    unsigned get_replica_nonce(mds_rank_t mds)
+    {
         ceph_assert(get_replicas().count(mds));
         return get_replicas()[mds];
     }
-    void remove_replica(mds_rank_t mds) {
+    void remove_replica(mds_rank_t mds)
+    {
         ceph_assert(get_replicas().count(mds));
         get_replicas().erase(mds);
         if (get_replicas().empty()) {
             put(PIN_REPLICATED);
         }
     }
-    void clear_replica_map() {
-        if (!get_replicas().empty())
+    void clear_replica_map()
+    {
+        if (!get_replicas().empty()) {
             put(PIN_REPLICATED);
+        }
         replica_map.clear();
     }
-    replica_map_type & get_replicas() {
+    replica_map_type &get_replicas()
+    {
         return replica_map;
     }
-    const replica_map_type & get_replicas() const {
+    const replica_map_type &get_replicas() const
+    {
         return replica_map;
-    } void list_replicas(std::set < mds_rank_t > &ls) const {
-        for (const auto & p:get_replicas()) {
+    } void list_replicas(std::set < mds_rank_t > &ls) const
+    {
+        for (const auto &p : get_replicas()) {
             ls.insert(p.first);
-    }} unsigned get_replica_nonce() const {
+        }
+    } unsigned get_replica_nonce() const
+    {
         return replica_nonce;
-    } void set_replica_nonce(unsigned n) {
+    } void set_replica_nonce(unsigned n)
+    {
         replica_nonce = n;
     }
 
     bool is_waiter_for(uint64_t mask, uint64_t min = 0);
-    virtual void add_waiter(uint64_t mask, MDSContext * c) {
-        if (waiting.empty())
+    virtual void add_waiter(uint64_t mask, MDSContext *c)
+    {
+        if (waiting.empty()) {
             get(PIN_WAITER);
+        }
 
         uint64_t seq = 0;
         if (mask & WAIT_ORDERED) {
@@ -288,52 +341,60 @@ class MDSCacheObject {
         waiting.insert(std::pair < uint64_t, std::pair < uint64_t,
                        MDSContext * > >(mask, std::pair < uint64_t,
                                         MDSContext * >(seq, c)));
-//    pdout(10,g_conf()->debug_mds) << (mdsco_db_line_prefix(this)) 
+//    pdout(10,g_conf()->debug_mds) << (mdsco_db_line_prefix(this))
 //                 << "add_waiter " << hex << mask << dec << " " << c
 //                 << " on " << *this
 //                 << dendl;
 
     }
-    virtual void take_waiting(uint64_t mask, MDSContext::vec & ls);
+    virtual void take_waiting(uint64_t mask, MDSContext::vec &ls);
     void finish_waiting(uint64_t mask, int result = 0);
 
     // ---------------------------------------------
     // locking
     // noop unless overloaded.
-    virtual SimpleLock *get_lock(int type) {
+    virtual SimpleLock *get_lock(int type)
+    {
         ceph_abort();
         return 0;
     }
-    virtual void set_object_info(MDSCacheObjectInfo & info) {
+    virtual void set_object_info(MDSCacheObjectInfo &info)
+    {
         ceph_abort();
     }
-    virtual void encode_lock_state(int type, ceph::buffer::list & bl) {
+    virtual void encode_lock_state(int type, ceph::buffer::list &bl)
+    {
         ceph_abort();
     }
-    virtual void decode_lock_state(int type, const ceph::buffer::list & bl) {
+    virtual void decode_lock_state(int type, const ceph::buffer::list &bl)
+    {
         ceph_abort();
     }
-    virtual void finish_lock_waiters(int type, uint64_t mask, int r = 0) {
+    virtual void finish_lock_waiters(int type, uint64_t mask, int r = 0)
+    {
         ceph_abort();
     }
-    virtual void add_lock_waiter(int type, uint64_t mask, MDSContext * c) {
+    virtual void add_lock_waiter(int type, uint64_t mask, MDSContext *c)
+    {
         ceph_abort();
     }
-    virtual bool is_lock_waiting(int type, uint64_t mask) {
+    virtual bool is_lock_waiting(int type, uint64_t mask)
+    {
         ceph_abort();
         return false;
     }
 
-    virtual void clear_dirty_scattered(int type) {
+    virtual void clear_dirty_scattered(int type)
+    {
         ceph_abort();
     }
 
     // ---------------------------------------------
     // ordering
-    virtual bool is_lt(const MDSCacheObject * r) const = 0;
+    virtual bool is_lt(const MDSCacheObject *r) const = 0;
 
     // state
-  protected:
+protected:
     __u32 state = 0;            // state bits
 
     // pins
@@ -353,24 +414,24 @@ class MDSCacheObject {
 
     // ---------------------------------------------
     // waiting
-  private:
+private:
     mempool::mds_co::compact_multimap < uint64_t, std::pair < uint64_t,
-        MDSContext * >>waiting;
+            MDSContext * >>waiting;
     static uint64_t last_wait_seq;
 };
 
-std::ostream & operator<<(std::ostream & out, const mdsco_db_line_prefix & o);
+std::ostream &operator<<(std::ostream &out, const mdsco_db_line_prefix &o);
 // printer
-std::ostream & operator<<(std::ostream & out, const MDSCacheObject & o);
+std::ostream &operator<<(std::ostream &out, const MDSCacheObject &o);
 
-inline std::ostream & operator<<(std::ostream & out, MDSCacheObject & o)
+inline std::ostream &operator<<(std::ostream &out, MDSCacheObject &o)
 {
     o.print(out);
     return out;
 }
 
-inline std::ostream & operator<<(std::ostream & out,
-                                 const mdsco_db_line_prefix & o)
+inline std::ostream &operator<<(std::ostream &out,
+                                const mdsco_db_line_prefix &o)
 {
     o.object->print_db_line_prefix(out);
     return out;

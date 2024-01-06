@@ -23,14 +23,14 @@
 
 #include "Gil.h"
 
-SafeThreadState::SafeThreadState(PyThreadState * ts_)
-:  ts(ts_)
+SafeThreadState::SafeThreadState(PyThreadState *ts_)
+    :  ts(ts_)
 {
     ceph_assert(ts != nullptr);
     thread = pthread_self();
 }
 
-Gil::Gil(SafeThreadState & ts, bool new_thread):pThreadState(ts)
+Gil::Gil(SafeThreadState &ts, bool new_thread): pThreadState(ts)
 {
     // Acquire the GIL, set the current thread state
     PyEval_RestoreThread(pThreadState.ts);
@@ -58,8 +58,7 @@ Gil::Gil(SafeThreadState & ts, bool new_thread):pThreadState(ts)
         pNewThreadState = PyThreadState_New(pThreadState.ts->interp);
         PyThreadState_Swap(pNewThreadState);
         dout(20) << "Switched to new thread state " << pNewThreadState << dendl;
-    }
-    else {
+    } else {
         ceph_assert(pthread_self() == pThreadState.thread);
     }
 }
@@ -102,10 +101,9 @@ void without_gil_t::acquire_gil()
     save = nullptr;
 }
 
-with_gil_t::with_gil_t(without_gil_t & allow_threads)
-:  allow_threads
-{
-allow_threads}
+with_gil_t::with_gil_t(without_gil_t &allow_threads)
+    :  allow_threads {
+    allow_threads}
 
 {
     allow_threads.acquire_gil();

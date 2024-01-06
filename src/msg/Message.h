@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MESSAGE_H
@@ -49,7 +49,7 @@
 #define MSG_MON_PAXOS              66
 #define MSG_MON_PROBE              67
 #define MSG_MON_JOIN               68
-#define MSG_MON_SYNC		   69
+#define MSG_MON_SYNC           69
 #define MSG_MON_PING               140
 
 /* monitor <-> mon admin tool */
@@ -158,7 +158,7 @@
 #define MSG_MDS_TABLE_REQUEST      102
 #define MSG_MDS_SCRUB              135
 
-                                // 150 already in use (MSG_OSD_RECOVERY_RESERVE)
+// 150 already in use (MSG_OSD_RECOVERY_RESERVE)
 
 #define MSG_MDS_RESOLVE            0x200    // 0x2xx are for mdcache of mds
 #define MSG_MDS_RESOLVEACK         0x201
@@ -247,20 +247,21 @@
 
 // abstract Message class
 
-class Message:public RefCountedObject {
-  public:
+class Message: public RefCountedObject
+{
+public:
 #ifdef WITH_SEASTAR
     using ConnectionRef = crimson::net::ConnectionRef;
 #else
     using ConnectionRef =::ConnectionRef;
 #endif                          // WITH_SEASTAR
 
-  protected:
+protected:
     ceph_msg_header header;     // headerelope
     ceph_msg_footer footer;
-     ceph::buffer::list payload;    // "front" unaligned blob
-     ceph::buffer::list middle; // "middle" unaligned blob
-     ceph::buffer::list data;   // data payload (page-alignment will be preserved where possible)
+    ceph::buffer::list payload;    // "front" unaligned blob
+    ceph::buffer::list middle; // "middle" unaligned blob
+    ceph::buffer::list data;   // data payload (page-alignment will be preserved where possible)
 
     /* recv_stamp is set when the Messenger starts reading the
      * Message off the wire */
@@ -277,33 +278,37 @@ class Message:public RefCountedObject {
 
     uint32_t magic = 0;
 
-     boost::intrusive::list_member_hook <> dispatch_q;
+    boost::intrusive::list_member_hook <> dispatch_q;
 
-  public:
+public:
     // zipkin tracing
-     ZTracer::Trace trace;
-    void encode_trace(ceph::buffer::list & bl, uint64_t features) const;
-    void decode_trace(ceph::buffer::list::const_iterator & p, bool create =
-                      false);
+    ZTracer::Trace trace;
+    void encode_trace(ceph::buffer::list &bl, uint64_t features) const;
+    void decode_trace(ceph::buffer::list::const_iterator &p, bool create =
+                          false);
 
-    class CompletionHook:public Context {
-      protected:
-        Message * m;
+    class CompletionHook: public Context
+    {
+    protected:
+        Message *m;
         friend class Message;
-      public:
-         explicit CompletionHook(Message * _m):m(_m) {
-        } virtual void set_message(Message * _m) {
+    public:
+        explicit CompletionHook(Message *_m): m(_m)
+        {
+        } virtual void set_message(Message *_m)
+        {
             m = _m;
-    }};
+        }
+    };
 
     typedef boost::intrusive::list < Message,
-        boost::intrusive::member_hook <
-        Message,
-        boost::intrusive::list_member_hook <>, &Message::dispatch_q >> Queue;
+            boost::intrusive::member_hook <
+            Message,
+            boost::intrusive::list_member_hook <>, &Message::dispatch_q >> Queue;
 
     ceph::mono_time queue_start;
-  protected:
-    CompletionHook * completion_hook = nullptr; // owned by Messenger
+protected:
+    CompletionHook *completion_hook = nullptr;  // owned by Messenger
 
     // release our size in bytes back to this throttler when our payload
     // is adjusted or when we are destroyed.
@@ -321,12 +326,14 @@ class Message:public RefCountedObject {
 
     friend class Messenger;
 
-  public:
-    Message() {
+public:
+    Message()
+    {
         memset(&header, 0, sizeof(header));
         memset(&footer, 0, sizeof(footer));
     }
-    Message(int t, int version = 1, int compat_version = 0) {
+    Message(int t, int version = 1, int compat_version = 0)
+    {
         memset(&header, 0, sizeof(header));
         header.type = t;
         header.version = version;
@@ -334,76 +341,96 @@ class Message:public RefCountedObject {
         memset(&footer, 0, sizeof(footer));
     }
 
-    Message *get() {
+    Message *get()
+    {
         return static_cast < Message * >(RefCountedObject::get());
     }
 
-  protected:
-    ~Message()override {
+protected:
+    ~Message()override
+    {
         if (byte_throttler)
             byte_throttler->put(payload.length() + middle.length() +
                                 data.length());
         release_message_throttle();
         trace.event("message destructed");
         /* call completion hooks (if any) */
-        if (completion_hook)
+        if (completion_hook) {
             completion_hook->complete(0);
+        }
     }
-  public:
-    const ConnectionRef & get_connection() const {
+public:
+    const ConnectionRef &get_connection() const
+    {
 #ifdef WITH_SEASTAR
         // In crimson, conn is independently maintained outside Message.
         ceph_abort();
 #endif
         return connection;
-    } void set_connection(ConnectionRef c) {
+    } void set_connection(ConnectionRef c)
+    {
 #ifdef WITH_SEASTAR
         // In crimson, conn is independently maintained outside Message.
         ceph_assert(c == nullptr);
 #endif
         connection = std::move(c);
     }
-    CompletionHook *get_completion_hook() {
+    CompletionHook *get_completion_hook()
+    {
         return completion_hook;
     }
-    void set_completion_hook(CompletionHook * hook) {
+    void set_completion_hook(CompletionHook *hook)
+    {
         completion_hook = hook;
     }
-    void set_byte_throttler(ThrottleInterface * t) {
+    void set_byte_throttler(ThrottleInterface *t)
+    {
         byte_throttler = t;
     }
-    void set_message_throttler(ThrottleInterface * t) {
+    void set_message_throttler(ThrottleInterface *t)
+    {
         msg_throttler = t;
     }
 
-    void set_dispatch_throttle_size(uint64_t s) {
+    void set_dispatch_throttle_size(uint64_t s)
+    {
         dispatch_throttle_size = s;
     }
-    uint64_t get_dispatch_throttle_size() const {
+    uint64_t get_dispatch_throttle_size() const
+    {
         return dispatch_throttle_size;
-    } const ceph_msg_header & get_header() const {
+    } const ceph_msg_header &get_header() const
+    {
         return header;
-    } ceph_msg_header & get_header() {
+    } ceph_msg_header &get_header()
+    {
         return header;
     }
-    void set_header(const ceph_msg_header & e) {
+    void set_header(const ceph_msg_header &e)
+    {
         header = e;
     }
-    void set_footer(const ceph_msg_footer & e) {
+    void set_footer(const ceph_msg_footer &e)
+    {
         footer = e;
     }
-    const ceph_msg_footer & get_footer() const {
+    const ceph_msg_footer &get_footer() const
+    {
         return footer;
-    } ceph_msg_footer & get_footer() {
+    } ceph_msg_footer &get_footer()
+    {
         return footer;
     }
-    void set_src(const entity_name_t & src) {
+    void set_src(const entity_name_t &src)
+    {
         header.src = src;
     }
 
-    uint32_t get_magic() const {
+    uint32_t get_magic() const
+    {
         return magic;
-    } void set_magic(int _magic) {
+    } void set_magic(int _magic)
+    {
         magic = _magic;
     }
 
@@ -414,7 +441,8 @@ class Message:public RefCountedObject {
      * functions are throttling-aware as appropriate.
      */
 
-    void clear_payload() {
+    void clear_payload()
+    {
         if (byte_throttler) {
             byte_throttler->put(payload.length() + middle.length());
         }
@@ -422,215 +450,283 @@ class Message:public RefCountedObject {
         middle.clear();
     }
 
-    virtual void clear_buffers() {
+    virtual void clear_buffers()
+    {
     }
-    void clear_data() {
-        if (byte_throttler)
+    void clear_data()
+    {
+        if (byte_throttler) {
             byte_throttler->put(data.length());
+        }
         data.clear();
         clear_buffers();        // let subclass drop buffers as well
     }
-    void release_message_throttle() {
-        if (msg_throttler)
+    void release_message_throttle()
+    {
+        if (msg_throttler) {
             msg_throttler->put();
+        }
         msg_throttler = nullptr;
     }
 
-    bool empty_payload() const {
+    bool empty_payload() const
+    {
         return payload.length() == 0;
-    } ceph::buffer::list & get_payload() {
+    } ceph::buffer::list &get_payload()
+    {
         return payload;
     }
-    const ceph::buffer::list & get_payload() const {
+    const ceph::buffer::list &get_payload() const
+    {
         return payload;
-    } void set_payload(ceph::buffer::list & bl) {
-        if (byte_throttler)
+    } void set_payload(ceph::buffer::list &bl)
+    {
+        if (byte_throttler) {
             byte_throttler->put(payload.length());
+        }
         payload = std::move(bl);
-        if (byte_throttler)
+        if (byte_throttler) {
             byte_throttler->take(payload.length());
+        }
     }
 
-    void set_middle(ceph::buffer::list & bl) {
-        if (byte_throttler)
+    void set_middle(ceph::buffer::list &bl)
+    {
+        if (byte_throttler) {
             byte_throttler->put(middle.length());
+        }
         middle = std::move(bl);
-        if (byte_throttler)
+        if (byte_throttler) {
             byte_throttler->take(middle.length());
+        }
     }
-    ceph::buffer::list & get_middle() {
+    ceph::buffer::list &get_middle()
+    {
         return middle;
     }
 
-    void set_data(const ceph::buffer::list & bl) {
-        if (byte_throttler)
+    void set_data(const ceph::buffer::list &bl)
+    {
+        if (byte_throttler) {
             byte_throttler->put(data.length());
+        }
         data.share(bl);
-        if (byte_throttler)
+        if (byte_throttler) {
             byte_throttler->take(data.length());
+        }
     }
 
-    const ceph::buffer::list & get_data() const {
+    const ceph::buffer::list &get_data() const
+    {
         return data;
-    } ceph::buffer::list & get_data() {
+    } ceph::buffer::list &get_data()
+    {
         return data;
     }
-    void claim_data(ceph::buffer::list & bl) {
-        if (byte_throttler)
+    void claim_data(ceph::buffer::list &bl)
+    {
+        if (byte_throttler) {
             byte_throttler->put(data.length());
+        }
         bl = std::move(data);
     }
-    uint32_t get_data_len() const {
+    uint32_t get_data_len() const
+    {
         return data.length();
-    } void set_recv_stamp(utime_t t) {
+    } void set_recv_stamp(utime_t t)
+    {
         recv_stamp = t;
     }
-    const utime_t & get_recv_stamp() const {
+    const utime_t &get_recv_stamp() const
+    {
         return recv_stamp;
-    } void set_dispatch_stamp(utime_t t) {
+    } void set_dispatch_stamp(utime_t t)
+    {
         dispatch_stamp = t;
     }
-    const utime_t & get_dispatch_stamp() const {
+    const utime_t &get_dispatch_stamp() const
+    {
         return dispatch_stamp;
-    } void set_throttle_stamp(utime_t t) {
+    } void set_throttle_stamp(utime_t t)
+    {
         throttle_stamp = t;
     }
-    const utime_t & get_throttle_stamp() const {
+    const utime_t &get_throttle_stamp() const
+    {
         return throttle_stamp;
-    } void set_recv_complete_stamp(utime_t t) {
+    } void set_recv_complete_stamp(utime_t t)
+    {
         recv_complete_stamp = t;
     }
-    const utime_t & get_recv_complete_stamp() const {
+    const utime_t &get_recv_complete_stamp() const
+    {
         return recv_complete_stamp;
-    } void calc_header_crc() {
+    } void calc_header_crc()
+    {
         header.crc = ceph_crc32c(0, (unsigned char *)&header,
                                  sizeof(header) - sizeof(header.crc));
     }
-    void calc_front_crc() {
+    void calc_front_crc()
+    {
         footer.front_crc = payload.crc32c(0);
         footer.middle_crc = middle.crc32c(0);
     }
-    void calc_data_crc() {
+    void calc_data_crc()
+    {
         footer.data_crc = data.crc32c(0);
     }
 
-    virtual int get_cost() const {
+    virtual int get_cost() const
+    {
         return data.length();
     }
     // type int get_type() const {
-        return header.type;
-    } void set_type(int t) {
-        header.type = t;
-    }
+    return header.type;
+} void set_type(int t)
+{
+    header.type = t;
+}
 
-    uint64_t get_tid() const {
-        return header.tid;
-    } void set_tid(uint64_t t) {
-        header.tid = t;
-    }
+uint64_t get_tid() const
+{
+    return header.tid;
+}
+void set_tid(uint64_t t)
+{
+    header.tid = t;
+}
 
-    uint64_t get_seq() const {
-        return header.seq;
-    } void set_seq(uint64_t s) {
-        header.seq = s;
-    }
+uint64_t get_seq() const
+{
+    return header.seq;
+}
+void set_seq(uint64_t s)
+{
+    header.seq = s;
+}
 
-    unsigned get_priority() const {
-        return header.priority;
-    } void set_priority(__s16 p) {
-        header.priority = p;
-    }
+unsigned get_priority() const
+{
+    return header.priority;
+}
+void set_priority(__s16 p)
+{
+    header.priority = p;
+}
 
-    // source/dest
-    entity_inst_t get_source_inst() const {
-        return entity_inst_t(get_source(), get_source_addr());
-    } entity_name_t get_source() const {
-        return entity_name_t(header.src);
-    } entity_addr_t get_source_addr() const {
-        if (connection)
-            return connection->get_peer_addr();
-        return entity_addr_t();
-    } entity_addrvec_t get_source_addrs() const {
-        if (connection)
-            return connection->get_peer_addrs();
-        return entity_addrvec_t();
+// source/dest
+entity_inst_t get_source_inst() const
+{
+    return entity_inst_t(get_source(), get_source_addr());
+}
+entity_name_t get_source() const
+{
+    return entity_name_t(header.src);
+}
+entity_addr_t get_source_addr() const
+{
+    if (connection) {
+        return connection->get_peer_addr();
     }
-    // forwarded? entity_inst_t get_orig_source_inst() const {
-        return get_source_inst();
-    } entity_name_t get_orig_source() const {
-        return get_source();
-    } entity_addr_t get_orig_source_addr() const {
-        return get_source_addr();
-    } entity_addrvec_t get_orig_source_addrs() const {
-        return get_source_addrs();
+    return entity_addr_t();
+}
+entity_addrvec_t get_source_addrs() const
+{
+    if (connection) {
+        return connection->get_peer_addrs();
     }
-    // virtual bits virtual void decode_payload() = 0;
-    virtual void encode_payload(uint64_t features) = 0;
-    virtual std::string_view get_type_name() const = 0;
-    virtual void print(std::ostream & out) const {
-        out << get_type_name() << " magic: " << magic;
-    } virtual void dump(ceph::Formatter * f) const;
+    return entity_addrvec_t();
+}
+// forwarded? entity_inst_t get_orig_source_inst() const {
+return get_source_inst();
+} entity_name_t get_orig_source() const
+{
+    return get_source();
+}
+entity_addr_t get_orig_source_addr() const
+{
+    return get_source_addr();
+}
+entity_addrvec_t get_orig_source_addrs() const
+{
+    return get_source_addrs();
+}
+// virtual bits virtual void decode_payload() = 0;
+virtual void encode_payload(uint64_t features) = 0;
+virtual std::string_view get_type_name() const = 0;
+virtual void print(std::ostream &out) const
+{
+    out << get_type_name() << " magic: " << magic;
+}
+virtual void dump(ceph::Formatter *f) const;
 
-    void encode(uint64_t features, int crcflags, bool skip_header_crc = false);
+void encode(uint64_t features, int crcflags, bool skip_header_crc = false);
 };
 
-extern Message *decode_message(CephContext * cct,
+extern Message *decode_message(CephContext *cct,
                                int crcflags,
-                               ceph_msg_header & header,
-                               ceph_msg_footer & footer,
-                               ceph::buffer::list & front,
-                               ceph::buffer::list & middle,
-                               ceph::buffer::list & data,
+                               ceph_msg_header &header,
+                               ceph_msg_footer &footer,
+                               ceph::buffer::list &front,
+                               ceph::buffer::list &middle,
+                               ceph::buffer::list &data,
                                Message::ConnectionRef conn);
-inline std::ostream & operator<<(std::ostream & out, const Message & m)
+inline std::ostream &operator<<(std::ostream &out, const Message &m)
 {
     m.print(out);
-    if (m.get_header().version)
+    if (m.get_header().version) {
         out << " v" << m.get_header().version;
+    }
     return out;
 }
 
-extern void encode_message(Message * m, uint64_t features,
-                           ceph::buffer::list & bl);
-extern Message *decode_message(CephContext * cct, int crcflags,
-                               ceph::buffer::list::const_iterator & bl);
+extern void encode_message(Message *m, uint64_t features,
+                           ceph::buffer::list &bl);
+extern Message *decode_message(CephContext *cct, int crcflags,
+                               ceph::buffer::list::const_iterator &bl);
 
 /// this is a "safe" version of Message. it does not allow calling get/put
 /// methods on its derived classes. This is intended to prevent some accidental
 /// reference leaks by forcing . Instead, you must either cast the derived class to a
 /// RefCountedObject to do the get/put or detach a temporary reference.
-class SafeMessage:public Message {
-  public:
+class SafeMessage: public Message
+{
+public:
     using Message::Message;
-    bool is_a_client() const {
+    bool is_a_client() const
+    {
         return get_connection()->get_peer_type() == CEPH_ENTITY_TYPE_CLIENT;
-  } private:
+    } private:
     using RefCountedObject::get;
     using RefCountedObject::put;
 };
 
-namespace ceph {
-    template < class T, typename ... Args >
-        ceph::ref_t < T > make_message(Args && ... args) {
-        return {
+namespace ceph
+{
+template < class T, typename ... Args >
+ceph::ref_t < T > make_message(Args && ... args)
+{
+    return {
         new T(std::forward < Args > (args) ...), false};
-    }
+}
 }
 
-namespace crimson {
-    template < class T, typename ... Args >
-        MURef < T > make_message(Args && ... args) {
-        return {
-            new T(std::forward < Args > (args) ...),
-                TOPNSPC::common::UniquePtrDeleter {
-            }
-        };
-    }
+namespace crimson
+{
+template < class T, typename ... Args >
+MURef < T > make_message(Args && ... args)
+{
+    return {
+        new T(std::forward < Args > (args) ...),
+        TOPNSPC::common::UniquePtrDeleter {
+        }
+    };
+}
 }
 
 #if FMT_VERSION >= 90000
 template < std::derived_from < Message > M > struct fmt::formatter <
-    M >:fmt::ostream_formatter {
+    M > : fmt::ostream_formatter {
 };
 #endif
 

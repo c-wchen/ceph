@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -11,7 +11,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include <unistd.h>
@@ -22,11 +22,14 @@
 
 using namespace std;
 
-class CompressorPluginExample:public CompressionPlugin {
-  public:
+class CompressorPluginExample: public CompressionPlugin
+{
+public:
 
-    explicit CompressorPluginExample(CephContext * cct):CompressionPlugin(cct) {
-    } int factory(CompressorRef * cs, ostream * ss) override {
+    explicit CompressorPluginExample(CephContext *cct): CompressionPlugin(cct)
+    {
+    } int factory(CompressorRef *cs, ostream *ss) override
+    {
         if (compressor == 0) {
             CompressorExample *interface = new CompressorExample();
             compressor = CompressorRef(interface);
@@ -45,8 +48,8 @@ const char *__ceph_plugin_version()
 
 // -----------------------------------------------------------------------------
 
-int __ceph_plugin_init(CephContext * cct,
-                       const std::string & type, const std::string & name)
+int __ceph_plugin_init(CephContext *cct,
+                       const std::string &type, const std::string &name)
 {
     PluginRegistry *instance = cct->get_plugin_registry();
 

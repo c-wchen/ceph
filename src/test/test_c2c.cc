@@ -19,12 +19,13 @@ static void usage(void)
 }
 
 mempool::shard_t shards[mempool::num_shards] = {
-0};
+    0
+};
 
 void sigterm_handler(int signum)
 {
     size_t total = 0;
-  for (auto & shard:shards) {
+    for (auto &shard : shards) {
         total += shard.bytes;
     }
     std::cout << total << std::endl;
@@ -46,14 +47,11 @@ int main(int argc, const char **argv)
          i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &threads, cerr, "--threads", "-t", (char *)NULL)) {
-        }
-        else if (ceph_argparse_flag(args, i, "--sharding", "-s", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &threads, cerr, "--threads", "-t", (char *)NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--sharding", "-s", (char *)NULL)) {
             sharding = true;
-        }
-        else {
+        } else {
             cerr << "unknown command line option: " << *i << std::endl;
             cerr << std::endl;
             usage();
@@ -67,17 +65,20 @@ int main(int argc, const char **argv)
     std::vector < std::thread > workers;
     for (int i = 0; i < threads; i++) {
         workers.push_back(std::thread([&]() {
-                                      while (1) {
-                                      size_t i; if (sharding) {
-                                      i = mempool::pool_t::pick_a_shard_int();}
-                                      else {
-                                      i = 0;}
-                                      shards[i].bytes++;}
-                                      }
-                          )) ;
+            while (1) {
+                size_t i;
+                if (sharding) {
+                    i = mempool::pool_t::pick_a_shard_int();
+                } else {
+                    i = 0;
+                }
+                shards[i].bytes++;
+            }
+        }
+                                     )) ;
     }
 
-  for (auto & t:workers) {
+    for (auto &t : workers) {
         t.join();
     }
     workers.clear();

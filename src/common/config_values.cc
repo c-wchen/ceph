@@ -6,9 +6,8 @@
 #include "crimson/common/log.h"
 #endif
 
-ConfigValues::set_value_result_t
-    ConfigValues::set_value(const std::string_view key,
-                            Option::value_t && new_value, int level)
+ConfigValues::set_value_result_t ConfigValues::set_value(const std::string_view key,
+        Option::value_t && new_value, int level)
 {
     if (auto p = values.find(key); p != values.end()) {
         auto q = p->second.find(level);
@@ -17,19 +16,16 @@ ConfigValues::set_value_result_t
                 return SET_NO_CHANGE;
             }
             q->second = std::move(new_value);
-        }
-        else {
+        } else {
             p->second[level] = std::move(new_value);
         }
         if (p->second.rbegin()->first > level) {
             // there was a higher priority value; no effect
             return SET_NO_EFFECT;
-        }
-        else {
+        } else {
             return SET_HAVE_EFFECT;
         }
-    }
-    else {
+    } else {
         values[key][level] = std::move(new_value);
         return SET_HAVE_EFFECT;
     }
@@ -49,31 +45,28 @@ int ConfigValues::rm_val(const std::string_view key, int level)
     i->second.erase(j);
     if (matters) {
         return SET_HAVE_EFFECT;
-    }
-    else {
+    } else {
         return SET_NO_EFFECT;
     }
 }
 
-std::pair < Option::value_t, bool >
-    ConfigValues::get_value(const std::string_view name, int level) constconst
-{
+std::pair < Option::value_t, bool > ConfigValues::get_value(const std::string_view name, int level) constconst {
     auto p = values.find(name);
-    if (p != values.end() && !p->second.empty()) {
+    if (p != values.end() && !p->second.empty())
+    {
         // use highest-priority value available (see CONF_*)
         if (level < 0) {
             return {
-            p->second.rbegin()->second, true};
-        }
-        else if (auto found = p->second.find(level); found != p->second.end()) {
+                p->second.rbegin()->second, true};
+        } else if (auto found = p->second.find(level); found != p->second.end()) {
             return {
-            found->second, true};
+                found->second, true};
         }
     }
     return {
         Option::value_t {
         }
-    , false};
+        , false};
 }
 
 void ConfigValues::set_logging(int which, const char *val)

@@ -21,8 +21,9 @@
 // << target_bits.  However, in reality the average is ~1.25x that
 // because of the hard mininum chunk size.
 
-class FastCDC:public CDC {
-  private:
+class FastCDC: public CDC
+{
+private:
     int target_bits;            ///< target chunk size bits (1 << target_bits)
     int min_bits;               ///< hard minimum chunk size bits (1 << min_bits)
     int max_bits;               ///< hard maximum chunk size bits (1 << max_bits)
@@ -39,16 +40,18 @@ class FastCDC:public CDC {
 
     void _setup(int target, int window_bits);
 
-  public:
-     FastCDC(int target = 18, int window_bits = 0) {
+public:
+    FastCDC(int target = 18, int window_bits = 0)
+    {
         _setup(target, window_bits);
     };
 
-    void set_target_bits(int target, int window_bits) override {
+    void set_target_bits(int target, int window_bits) override
+    {
         _setup(target, window_bits);
     }
 
-    void calc_chunks(const bufferlist & bl,
+    void calc_chunks(const bufferlist &bl,
                      std::vector < std::pair < uint64_t,
                      uint64_t >> *chunks) const override;
 };

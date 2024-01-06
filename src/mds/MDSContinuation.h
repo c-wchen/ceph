@@ -18,16 +18,20 @@
 
 #include "MDSContext.h"
 
-class MDSContinuation:public Continuation {
-  protected:
-    Server * server;
-    MDSInternalContext *get_internal_callback(int stage) {
+class MDSContinuation: public Continuation
+{
+protected:
+    Server *server;
+    MDSInternalContext *get_internal_callback(int stage)
+    {
         return new MDSInternalContextWrapper(server->mds, get_callback(stage));
-    } MDSIOContextBase *get_io_callback(int stage) {
+    } MDSIOContextBase *get_io_callback(int stage)
+    {
         return new MDSIOContextWrapper(server->mds, get_callback(stage));
     }
-  public:
-  MDSContinuation(Server * s):
-    Continuation(NULL), server(s) {
+public:
+    MDSContinuation(Server *s):
+        Continuation(NULL), server(s)
+    {
     }
 };

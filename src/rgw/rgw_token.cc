@@ -30,27 +30,28 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-namespace {
+namespace
+{
 
-    using namespace rgw;
-    using std::get;
-    using std::string;
+using namespace rgw;
+using std::get;
+using std::string;
 
-    RGWToken::token_type type {
+RGWToken::token_type type {
     RGWToken::TOKEN_NONE};
-    string access_key {
+string access_key {
     ""};
-    string secret_key {
+string secret_key {
     ""};
 
-    Formatter *token_formatter {
+Formatter *token_formatter {
     nullptr};
 
-    bool verbose {
+bool verbose {
     false};
-    bool do_encode {
+bool do_encode {
     false};
-    bool do_decode {
+bool do_decode {
     false};
 
 }
@@ -60,9 +61,9 @@ using namespace std;
 void usage()
 {
     cout << "usage: radosgw-token --encode --ttype=<token type> [options...]" <<
-        std::endl;
+         std::endl;
     cout << "\t(maybe exporting RGW_ACCESS_KEY_ID and RGW_SECRET_ACCESS_KEY)" <<
-        std::endl;
+         std::endl;
     cout << "\t <token type> := ad | ldap" << std::endl;
     cout << "\n";
     generic_client_usage();
@@ -86,7 +87,7 @@ int main(int argc, char **argv)
     common_init_finish(g_ceph_context);
 
     char *v {
-    nullptr};
+        nullptr};
     v = getenv("RGW_ACCESS_KEY_ID");
     if (v) {
         access_key = v;
@@ -101,34 +102,29 @@ int main(int argc, char **argv)
         if (ceph_argparse_witharg(args, arg_iter, &val, "--access",
                                   (char *)nullptr)) {
             access_key = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--secret",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--secret",
+                                         (char *)nullptr)) {
             secret_key = val;
-        }
-        else if (ceph_argparse_witharg(args, arg_iter, &val, "--ttype",
-                                       (char *)nullptr)) {
-          for (const auto & ttype:{
-                 "ad", "ldap"}) {
+        } else if (ceph_argparse_witharg(args, arg_iter, &val, "--ttype",
+                                         (char *)nullptr)) {
+            for (const auto &ttype : {
+                     "ad", "ldap"
+                 }) {
                 if (boost::iequals(val, ttype)) {
                     type = RGWToken::to_type(val);
                     break;
                 }
             }
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--encode",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--encode",
+                                      (char *)nullptr)) {
             do_encode = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--decode",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--decode",
+                                      (char *)nullptr)) {
             do_decode = true;
-        }
-        else if (ceph_argparse_flag(args, arg_iter, "--verbose",
-                                    (char *)nullptr)) {
+        } else if (ceph_argparse_flag(args, arg_iter, "--verbose",
+                                      (char *)nullptr)) {
             verbose = true;
-        }
-        else {
+        } else {
             ++arg_iter;
         }
     }
@@ -137,7 +133,7 @@ int main(int argc, char **argv)
         return -EINVAL;
     }
 
-    token_formatter = new JSONFormatter(true /* pretty */ );
+    token_formatter = new JSONFormatter(true /* pretty */);
 
     RGWToken token(type, access_key, secret_key);
     if (do_encode) {

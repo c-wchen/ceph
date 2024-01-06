@@ -31,19 +31,21 @@ constexpr size_t max_object_size = 4 * 1024 * 1024;
 constexpr size_t max_part_size = 1024 * 1024;
 
 // create/destroy a pool that's shared by all tests in the process
-struct RadosEnv:public::testing::Environment {
+struct RadosEnv: public::testing::Environment {
     static std::optional < std::string > pool_name;
-  public:
+public:
     static librados::Rados rados;
     static librados::IoCtx ioctx;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         // create pool
         std::string name = get_temp_pool_name();
         ASSERT_EQ("", create_one_pool_pp(name, rados));
         pool_name = name;
         ASSERT_EQ(rados.ioctx_create(name.c_str(), ioctx), 0);
-    } void TearDown() override {
+    } void TearDown() override
+    {
         ioctx.close();
         if (pool_name) {
             ASSERT_EQ(destroy_one_pool_pp(*pool_name, rados), 0);
@@ -57,14 +59,14 @@ librados::IoCtx RadosEnv::ioctx;
 
 auto *const rados_env =::testing::AddGlobalTestEnvironment(new RadosEnv);
 
-std::ostream & operator<<(std::ostream & out,
-                          const rgw_bucket_category_stats & c)
+std::ostream &operator<<(std::ostream &out,
+                         const rgw_bucket_category_stats &c)
 {
     return out << "{count=" << c.num_entries << " size=" << c.total_size << '}';
 }
 
 // librados helpers
-rgw_bucket_entry_ver last_version(librados::IoCtx & ioctx)
+rgw_bucket_entry_ver last_version(librados::IoCtx &ioctx)
 {
     rgw_bucket_entry_ver ver;
     ver.pool = ioctx.get_id();
@@ -72,15 +74,15 @@ rgw_bucket_entry_ver last_version(librados::IoCtx & ioctx)
     return ver;
 }
 
-int index_init(librados::IoCtx & ioctx, const std::string & oid)
+int index_init(librados::IoCtx &ioctx, const std::string &oid)
 {
     librados::ObjectWriteOperation op;
     cls_rgw_bucket_init_index(op);
     return ioctx.operate(oid, &op);
 }
 
-int index_prepare(librados::IoCtx & ioctx, const std::string & oid,
-                  const cls_rgw_obj_key & key, const std::string & tag,
+int index_prepare(librados::IoCtx &ioctx, const std::string &oid,
+                  const cls_rgw_obj_key &key, const std::string &tag,
                   RGWModifyOp type)
 {
     librados::ObjectWriteOperation op;
@@ -92,10 +94,10 @@ int index_prepare(librados::IoCtx & ioctx, const std::string & oid,
     return ioctx.operate(oid, &op);
 }
 
-int index_complete(librados::IoCtx & ioctx, const std::string & oid,
-                   const cls_rgw_obj_key & key, const std::string & tag,
-                   RGWModifyOp type, const rgw_bucket_entry_ver & ver,
-                   const rgw_bucket_dir_entry_meta & meta,
+int index_complete(librados::IoCtx &ioctx, const std::string &oid,
+                   const cls_rgw_obj_key &key, const std::string &tag,
+                   RGWModifyOp type, const rgw_bucket_entry_ver &ver,
+                   const rgw_bucket_dir_entry_meta &meta,
                    std::list < cls_rgw_obj_key > *remove_objs)
 {
     librados::ObjectWriteOperation op;
@@ -107,31 +109,33 @@ int index_complete(librados::IoCtx & ioctx, const std::string & oid,
     return ioctx.operate(oid, &op);
 }
 
-void read_stats(librados::IoCtx & ioctx, const std::string & oid,
-                rgw_bucket_dir_stats & stats)
+void read_stats(librados::IoCtx &ioctx, const std::string &oid,
+                rgw_bucket_dir_stats &stats)
 {
     auto oids = std::map < int, std::string > { {
-    0, oid}};
+            0, oid
+        }
+    };
     std::map < int, rgw_cls_list_ret > results;
-    ASSERT_EQ(0, CLSRGWIssueGetDirHeader(ioctx, oids, results, 8) ());
+    ASSERT_EQ(0, CLSRGWIssueGetDirHeader(ioctx, oids, results, 8)());
     ASSERT_EQ(1, results.size());
     stats = std::move(results.begin()->second.dir.header.stats);
 }
 
-static void account_entry(rgw_bucket_dir_stats & stats,
-                          const rgw_bucket_dir_entry_meta & meta)
+static void account_entry(rgw_bucket_dir_stats &stats,
+                          const rgw_bucket_dir_entry_meta &meta)
 {
-    rgw_bucket_category_stats & c = stats[meta.category];
+    rgw_bucket_category_stats &c = stats[meta.category];
     c.num_entries++;
     c.total_size += meta.accounted_size;
     c.total_size_rounded += cls_rgw_get_rounded_size(meta.accounted_size);
     c.actual_size += meta.size;
 }
 
-static void unaccount_entry(rgw_bucket_dir_stats & stats,
-                            const rgw_bucket_dir_entry_meta & meta)
+static void unaccount_entry(rgw_bucket_dir_stats &stats,
+                            const rgw_bucket_dir_entry_meta &meta)
 {
-    rgw_bucket_category_stats & c = stats[meta.category];
+    rgw_bucket_category_stats &c = stats[meta.category];
     c.num_entries--;
     c.total_size -= meta.accounted_size;
     c.total_size_rounded -= cls_rgw_get_rounded_size(meta.accounted_size);
@@ -139,24 +143,29 @@ static void unaccount_entry(rgw_bucket_dir_stats & stats,
 }
 
 // a map of cached dir entries representing the expected state of cls_rgw
-struct object:rgw_bucket_dir_entry, boost::intrusive::set_base_hook <> {
-    explicit object(const cls_rgw_obj_key & key) {
+struct object: rgw_bucket_dir_entry, boost::intrusive::set_base_hook <> {
+    explicit object(const cls_rgw_obj_key &key)
+    {
         this->key = key;
-}};
+    }
+};
 
 struct object_key {
     using type = cls_rgw_obj_key;
-    const type & operator() (const object & o)const {
+    const type &operator()(const object &o)const
+    {
         return o.key;
-}};
+    }
+};
 
 using object_map_base = boost::intrusive::set < object,
-    boost::intrusive::key_of_value < object_key >>;
+      boost::intrusive::key_of_value < object_key >>;
 
-struct object_map:object_map_base {
-    ~object_map() {
+struct object_map: object_map_base {
+    ~object_map()
+    {
         clear_and_dispose(std::default_delete < object > {
-                          });
+        });
     }
 };
 
@@ -173,30 +182,33 @@ struct operation {
     rgw_bucket_dir_entry_meta meta;
 };
 
-class simulator {
-  public:
-    simulator(librados::IoCtx & ioctx, std::string oid)
-    :ioctx(ioctx), oid(std::move(oid)), pending(max_pending) {
+class simulator
+{
+public:
+    simulator(librados::IoCtx &ioctx, std::string oid)
+        : ioctx(ioctx), oid(std::move(oid)), pending(max_pending)
+    {
         // generate a set of object keys. each operation chooses one at random
         keys.reserve(max_entries);
         for (size_t i = 0; i < max_entries; i++) {
             keys.emplace_back(gen_rand_alphanumeric_upper(g_ceph_context, 12));
-    }} void run();
+        }
+    } void run();
 
-  private:
+private:
     void start();
-    int try_start(const cls_rgw_obj_key & key, const std::string & tag);
+    int try_start(const cls_rgw_obj_key &key, const std::string &tag);
 
-    void finish(const operation & op);
-    void complete(const operation & op, RGWModifyOp type);
-    void suggest(const operation & op, char suggestion);
+    void finish(const operation &op);
+    void complete(const operation &op, RGWModifyOp type);
+    void suggest(const operation &op, char suggestion);
 
-    int init_multipart(const operation & op);
-    void complete_multipart(const operation & op);
+    int init_multipart(const operation &op);
+    void complete_multipart(const operation &op);
 
-    object_map::iterator find_or_create(const cls_rgw_obj_key & key);
+    object_map::iterator find_or_create(const cls_rgw_obj_key &key);
 
-    librados::IoCtx & ioctx;
+    librados::IoCtx &ioctx;
     std::string oid;
 
     std::vector < cls_rgw_obj_key > keys;
@@ -213,7 +225,7 @@ void simulator::run()
     for (size_t i = 0; i < max_operations; i++) {
         if (pending.full()) {
             // if we're at max_pending, finish the oldest operation
-            auto & op = pending.front();
+            auto &op = pending.front();
             finish(op);
             pending.pop_front();
 
@@ -221,7 +233,7 @@ void simulator::run()
             rgw_bucket_dir_stats stored_stats;
             read_stats(ioctx, oid, stored_stats);
 
-            const rgw_bucket_dir_stats & expected_stats = stats;
+            const rgw_bucket_dir_stats &expected_stats = stats;
             ASSERT_EQ(expected_stats, stored_stats);
         }
 
@@ -232,12 +244,12 @@ void simulator::run()
         rgw_bucket_dir_stats stored_stats;
         read_stats(ioctx, oid, stored_stats);
 
-        const rgw_bucket_dir_stats & expected_stats = stats;
+        const rgw_bucket_dir_stats &expected_stats = stats;
         ASSERT_EQ(expected_stats, stored_stats);
     }
 }
 
-object_map::iterator simulator::find_or_create(const cls_rgw_obj_key & key)
+object_map::iterator simulator::find_or_create(const cls_rgw_obj_key &key)
 {
     object_map::insert_commit_data commit;
     auto result =
@@ -249,18 +261,18 @@ object_map::iterator simulator::find_or_create(const cls_rgw_obj_key & key)
     return result.first;
 }
 
-int simulator::try_start(const cls_rgw_obj_key & key, const std::string & tag)
+int simulator::try_start(const cls_rgw_obj_key &key, const std::string &tag)
 {
     // choose randomly betwen create and delete
     const auto type =
-        static_cast < RGWModifyOp > (ceph::util::generate_random_number <
-                                     size_t, size_t > (CLS_RGW_OP_ADD,
-                                                       CLS_RGW_OP_DEL));
+        static_cast < RGWModifyOp >(ceph::util::generate_random_number <
+                                    size_t, size_t >(CLS_RGW_OP_ADD,
+                                        CLS_RGW_OP_DEL));
     auto op = operation { type, key, tag };
 
     op.meta.category = RGWObjCategory::Main;
     op.meta.size = op.meta.accounted_size =
-        ceph::util::generate_random_number(1, max_object_size);
+                       ceph::util::generate_random_number(1, max_object_size);
 
     if (type == CLS_RGW_OP_ADD && op.meta.size > max_part_size) {
         // simulate multipart for uploads over the max_part_size threshold
@@ -269,28 +281,27 @@ int simulator::try_start(const cls_rgw_obj_key & key, const std::string & tag)
         int r = init_multipart(op);
         if (r != 0) {
             derr << "> failed to prepare multipart upload key=" << key
-                << " upload=" << op.upload_id << " tag=" << tag
-                << " type=" << type << ": " << cpp_strerror(r) << dendl;
+                 << " upload=" << op.upload_id << " tag=" << tag
+                 << " type=" << type << ": " << cpp_strerror(r) << dendl;
             return r;
         }
 
         dout(1) << "> prepared multipart upload key=" << key
-            << " upload=" << op.upload_id << " tag=" << tag
-            << " type=" << type << " size=" << op.meta.size << dendl;
-    }
-    else {
+                << " upload=" << op.upload_id << " tag=" << tag
+                << " type=" << type << " size=" << op.meta.size << dendl;
+    } else {
         // prepare operation
         int r = index_prepare(ioctx, oid, op.key, op.tag, op.type);
         if (r != 0) {
             derr << "> failed to prepare operation key=" << key
-                << " tag=" << tag << " type=" << type
-                << ": " << cpp_strerror(r) << dendl;
+                 << " tag=" << tag << " type=" << type
+                 << ": " << cpp_strerror(r) << dendl;
             return r;
         }
 
         dout(1) << "> prepared operation key=" << key
-            << " tag=" << tag << " type=" << type
-            << " size=" << op.meta.size << dendl;
+                << " tag=" << tag << " type=" << type
+                << " size=" << op.meta.size << dendl;
     }
     op.ver = last_version(ioctx);
 
@@ -303,7 +314,7 @@ void simulator::start()
 {
     // choose a random object key
     const size_t index = ceph::util::generate_random_number(0, keys.size() - 1);
-    const auto & key = keys[index];
+    const auto &key = keys[index];
     // generate a random tag
     const auto tag = gen_rand_alphanumeric_upper(g_ceph_context, 12);
 
@@ -311,7 +322,7 @@ void simulator::start()
     while (try_start(key, tag) != 0) ;
 }
 
-void simulator::finish(const operation & op)
+void simulator::finish(const operation &op)
 {
     if (op.type == CLS_RGW_OP_ADD && !op.upload_id.empty()) {
         // multipart uploads either complete or abort based on part uploads
@@ -342,23 +353,22 @@ void simulator::finish(const operation & op)
     complete(op, op.type);
 }
 
-void simulator::complete(const operation & op, RGWModifyOp type)
+void simulator::complete(const operation &op, RGWModifyOp type)
 {
     int r = index_complete(ioctx, oid, op.key, op.tag, type,
                            op.ver, op.meta, nullptr);
     if (r != 0) {
         derr << "< failed to complete operation key=" << op.key
-            << " tag=" << op.tag << " type=" << op.type
-            << " size=" << op.meta.size << ": " << cpp_strerror(r) << dendl;
+             << " tag=" << op.tag << " type=" << op.type
+             << " size=" << op.meta.size << ": " << cpp_strerror(r) << dendl;
         return;
     }
 
     if (type == CLS_RGW_OP_CANCEL) {
         dout(1) << "< canceled operation key=" << op.key
-            << " tag=" << op.tag << " type=" << op.type
-            << " size=" << op.meta.size << dendl;
-    }
-    else if (type == CLS_RGW_OP_ADD) {
+                << " tag=" << op.tag << " type=" << op.type
+                << " size=" << op.meta.size << dendl;
+    } else if (type == CLS_RGW_OP_ADD) {
         auto obj = find_or_create(op.key);
         if (obj->exists) {
             unaccount_entry(stats, obj->meta);
@@ -367,35 +377,34 @@ void simulator::complete(const operation & op, RGWModifyOp type)
         obj->meta = op.meta;
         account_entry(stats, obj->meta);
         dout(1) << "< completed write operation key=" << op.key
-            << " tag=" << op.tag << " type=" << type
-            << " size=" << op.meta.size << dendl;
-    }
-    else {
+                << " tag=" << op.tag << " type=" << type
+                << " size=" << op.meta.size << dendl;
+    } else {
         ceph_assert(type == CLS_RGW_OP_DEL);
         auto obj = objects.find(op.key, std::less < cls_rgw_obj_key > { }
-        );
+                               );
         if (obj != objects.end()) {
             if (obj->exists) {
                 unaccount_entry(stats, obj->meta);
             }
             objects.erase_and_dispose(obj, std::default_delete < object > {
-                                      }
-            );
+            }
+                                     );
         }
         dout(1) << "< completed delete operation key=" << op.key
-            << " tag=" << op.tag << " type=" << type << dendl;
+                << " tag=" << op.tag << " type=" << type << dendl;
     }
 }
 
-void simulator::suggest(const operation & op, char suggestion)
+void simulator::suggest(const operation &op, char suggestion)
 {
     // read and decode the current dir entry
     rgw_cls_bi_entry bi_entry;
     int r = cls_rgw_bi_get(ioctx, oid, BIIndexType::Plain, op.key, &bi_entry);
     if (r != 0) {
         derr << "< no bi entry to suggest for operation key=" << op.key
-            << " tag=" << op.tag << " type=" << op.type
-            << " size=" << op.meta.size << ": " << cpp_strerror(r) << dendl;
+             << " tag=" << op.tag << " type=" << op.type
+             << " size=" << op.meta.size << ": " << cpp_strerror(r) << dendl;
         return;
     }
     ASSERT_EQ(bi_entry.type, BIIndexType::Plain);
@@ -430,8 +439,8 @@ void simulator::suggest(const operation & op, char suggestion)
     r = ioctx.operate(oid, &write_op);
     if (r != 0) {
         derr << "< failed to suggest operation key=" << op.key
-            << " tag=" << op.tag << " type=" << op.type
-            << " size=" << op.meta.size << ": " << cpp_strerror(r) << dendl;
+             << " tag=" << op.tag << " type=" << op.type
+             << " size=" << op.meta.size << ": " << cpp_strerror(r) << dendl;
         return;
     }
 
@@ -445,27 +454,26 @@ void simulator::suggest(const operation & op, char suggestion)
         obj->meta = op.meta;
         account_entry(stats, obj->meta);
         dout(1) << "< suggested update operation key=" << op.key
-            << " tag=" << op.tag << " type=" << op.type
-            << " size=" << op.meta.size << dendl;
-    }
-    else {
+                << " tag=" << op.tag << " type=" << op.type
+                << " size=" << op.meta.size << dendl;
+    } else {
         ceph_assert(suggestion == CEPH_RGW_REMOVE);
         auto obj = objects.find(op.key, std::less < cls_rgw_obj_key > { }
-        );
+                               );
         if (obj != objects.end()) {
             if (obj->exists) {
                 unaccount_entry(stats, obj->meta);
             }
             objects.erase_and_dispose(obj, std::default_delete < object > {
-                                      }
-            );
+            }
+                                     );
         }
         dout(1) << "< suggested remove operation key=" << op.key
-            << " tag=" << op.tag << " type=" << op.type << dendl;
+                << " tag=" << op.tag << " type=" << op.type << dendl;
     }
 }
 
-int simulator::init_multipart(const operation & op)
+int simulator::init_multipart(const operation &op)
 {
     // create (not just prepare) the meta object
     const auto meta_key = cls_rgw_obj_key {
@@ -479,10 +487,9 @@ int simulator::init_multipart(const operation & op)
                            empty_ver, meta_meta, nullptr);
     if (r != 0) {
         derr << "  < failed to create multipart meta key=" << meta_key
-            << ": " << cpp_strerror(r) << dendl;
+             << ": " << cpp_strerror(r) << dendl;
         return r;
-    }
-    else {
+    } else {
         // account for meta object
         auto obj = find_or_create(meta_key);
         if (obj->exists) {
@@ -514,17 +521,17 @@ int simulator::init_multipart(const operation & op)
                 index_complete(ioctx, oid, meta_key, empty_tag, CLS_RGW_OP_DEL,
                                empty_ver, meta_meta, &remove_objs);
             derr << "  > failed to prepare part key=" << part_key
-                << " size=" << part_size << dendl;
+                 << " size=" << part_size << dendl;
             return r;           // return the error from prepare
         }
         dout(1) << "  > prepared part key=" << part_key
-            << " size=" << part_size << dendl;
+                << " size=" << part_size << dendl;
         remove_objs.push_back(part_key);
     }
     return 0;
 }
 
-void simulator::complete_multipart(const operation & op)
+void simulator::complete_multipart(const operation &op)
 {
     const std::string empty_tag;    // empty tag enables complete without prepare
     const rgw_bucket_entry_ver empty_ver;
@@ -551,9 +558,8 @@ void simulator::complete_multipart(const operation & op)
         if (result < cancel_percent) {
             type = CLS_RGW_OP_CANCEL;   // abort multipart
             dout(1) << "  < canceled part key=" << part_key
-                << " size=" << part_size << dendl;
-        }
-        else {
+                    << " size=" << part_size << dendl;
+        } else {
             rgw_bucket_dir_entry_meta meta;
             meta.category = op.meta.category;
             meta.size = meta.accounted_size = part_size;
@@ -562,13 +568,12 @@ void simulator::complete_multipart(const operation & op)
                                    empty_ver, meta, nullptr);
             if (r != 0) {
                 derr << "  < failed to complete part key=" << part_key
-                    << " size=" << meta.
-                    size << ": " << cpp_strerror(r) << dendl;
+                     << " size=" << meta.
+                     size << ": " << cpp_strerror(r) << dendl;
                 type = CLS_RGW_OP_CANCEL;   // abort multipart
-            }
-            else {
+            } else {
                 dout(1) << "  < completed part key=" << part_key
-                    << " size=" << meta.size << dendl;
+                        << " size=" << meta.size << dendl;
                 // account for successful part upload
                 auto obj = find_or_create(part_key);
                 if (obj->exists) {
@@ -593,19 +598,18 @@ void simulator::complete_multipart(const operation & op)
                            empty_ver, meta_meta, nullptr);
     if (r != 0) {
         derr << "  < failed to remove multipart meta key=" << meta_key
-            << ": " << cpp_strerror(r) << dendl;
-    }
-    else {
+             << ": " << cpp_strerror(r) << dendl;
+    } else {
         // unaccount for meta object
         auto obj = objects.find(meta_key, std::less < cls_rgw_obj_key > { }
-        );
+                               );
         if (obj != objects.end()) {
             if (obj->exists) {
                 unaccount_entry(stats, obj->meta);
             }
             objects.erase_and_dispose(obj, std::default_delete < object > {
-                                      }
-            );
+            }
+                                     );
         }
     }
 
@@ -614,16 +618,16 @@ void simulator::complete_multipart(const operation & op)
                        empty_ver, op.meta, &remove_objs);
     if (r != 0) {
         derr << "< failed to complete multipart upload key=" << op.key
-            << " upload=" << op.upload_id << " tag=" << op.tag
-            << " type=" << type << " size=" << op.meta.size
-            << ": " << cpp_strerror(r) << dendl;
+             << " upload=" << op.upload_id << " tag=" << op.tag
+             << " type=" << type << " size=" << op.meta.size
+             << ": " << cpp_strerror(r) << dendl;
         return;
     }
 
     if (type == CLS_RGW_OP_ADD) {
         dout(1) << "< completed multipart upload key=" << op.key
-            << " upload=" << op.upload_id << " tag=" << op.tag
-            << " type=" << op.type << " size=" << op.meta.size << dendl;
+                << " upload=" << op.upload_id << " tag=" << op.tag
+                << " type=" << op.type << " size=" << op.meta.size << dendl;
 
         // account for head stats
         auto obj = find_or_create(op.key);
@@ -633,23 +637,22 @@ void simulator::complete_multipart(const operation & op)
         obj->exists = true;
         obj->meta = op.meta;
         account_entry(stats, obj->meta);
-    }
-    else {
+    } else {
         dout(1) << "< canceled multipart upload key=" << op.key
-            << " upload=" << op.upload_id << " tag=" << op.tag
-            << " type=" << op.type << " size=" << op.meta.size << dendl;
+                << " upload=" << op.upload_id << " tag=" << op.tag
+                << " type=" << op.type << " size=" << op.meta.size << dendl;
     }
 
     // unaccount for remove_objs
-  for (const auto & part_key:remove_objs) {
+    for (const auto &part_key : remove_objs) {
         auto obj = objects.find(part_key, std::less < cls_rgw_obj_key > { });
         if (obj != objects.end()) {
             if (obj->exists) {
                 unaccount_entry(stats, obj->meta);
             }
             objects.erase_and_dispose(obj, std::default_delete < object > {
-                                      }
-            );
+            }
+                                     );
         }
     }
 }

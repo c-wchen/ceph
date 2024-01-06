@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 /*
  * This file is open source software, licensed to you under the terms
  * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
@@ -43,16 +43,18 @@
 
 template < typename ... T > class subscription;
 
-template < typename ... T > class stream {
-    subscription < T ... >*_sub = nullptr;
+template < typename ... T > class stream
+{
+    subscription < T ... > *_sub = nullptr;
     int done;
     bool ready;
-  public:
+public:
     using next_fn = std::function < int (T ...) >;
     stream() = default;
     stream(const stream &) = delete;
     stream(stream &&) = delete;
-    ~stream() {
+    ~stream()
+    {
         if (_sub) {
             _sub->_stream = nullptr;
         }
@@ -63,13 +65,15 @@ template < typename ... T > class stream {
 
     // Returns a subscription that reads value from this
     // stream.
-    subscription < T ... >listen() {
+    subscription < T ... >listen()
+    {
         return subscription < T ... >(this);
     }
 
     // Returns a subscription that reads value from this
     // stream, and also sets up the listen function.
-    subscription < T ... >listen(next_fn next) {
+    subscription < T ... >listen(next_fn next)
+    {
         auto sub = subscription < T ... >(this);
         sub.start(std::move(next));
         return sub;
@@ -78,55 +82,63 @@ template < typename ... T > class stream {
     // Becomes ready when the listener is ready to accept
     // values.  Call only once, when beginning to produce
     // values.
-    bool started() {
+    bool started()
+    {
         return ready;
     }
 
     // Produce a value.  Call only after started(), and after
     // a previous produce() is ready.
-    int produce(T ... data) {
+    int produce(T ... data)
+    {
         return _sub->_next(std::move(data) ...);
     }
 
     // End the stream.   Call only after started(), and after
     // a previous produce() is ready.  No functions may be called
     // after this.
-    void close() {
+    void close()
+    {
         done = 1;
     }
 
     // Signal an error.   Call only after started(), and after
     // a previous produce() is ready.  No functions may be called
     // after this.
-    void set_exception(int error) {
+    void set_exception(int error)
+    {
         done = error;
     }
-  private:
+private:
     void start();
     friend class subscription < T ... >;
 };
 
-template < typename ... T > class subscription {
-  public:
+template < typename ... T > class subscription
+{
+public:
     using next_fn = typename stream < T ... >::next_fn;
-  private:
-    stream < T ... >*_stream;
+private:
+    stream < T ... > *_stream;
     next_fn _next;
-  private:
-  explicit subscription(stream < T ... >*s):_stream(s) {
+private:
+    explicit subscription(stream < T ... > *s): _stream(s)
+    {
         ceph_assert(!_stream->_sub);
         _stream->_sub = this;
     }
 
-  public:
+public:
     subscription(subscription && x)
-  :    _stream(x._stream), _next(std::move(x._next)) {
+        :    _stream(x._stream), _next(std::move(x._next))
+    {
         x._stream = nullptr;
         if (_stream) {
             _stream->_sub = this;
         }
     }
-    ~subscription() {
+    ~subscription()
+    {
         if (_stream) {
             _stream->_sub = nullptr;
         }
@@ -135,14 +147,16 @@ template < typename ... T > class subscription {
     /// \brief Start receiving events from the stream.
     ///
     /// \param next Callback to call for each event
-    void start(std::function < int (T ...) > next) {
+    void start(std::function < int (T ...) > next)
+    {
         _next = std::move(next);
         _stream->ready = true;
     }
 
     // Becomes ready when the stream is empty, or when an error
     // happens (in that case, an exception is held).
-    int done() {
+    int done()
+    {
         return _stream->done;
     }
 

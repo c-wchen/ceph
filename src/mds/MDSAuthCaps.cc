@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <string_view>
@@ -38,9 +38,9 @@ namespace ascii = boost::spirit::ascii;
 namespace phoenix = boost::phoenix;
 
 template < typename Iterator >
-    struct MDSCapParser:qi::grammar < Iterator, MDSAuthCaps() >
-{
-  MDSCapParser():MDSCapParser::base_type(mdscaps) {
+struct MDSCapParser: qi::grammar < Iterator, MDSAuthCaps() > {
+    MDSCapParser(): MDSCapParser::base_type(mdscaps)
+    {
         using qi::attr;
         using qi::bool_;
         using qi::char_;
@@ -75,71 +75,71 @@ template < typename Iterator >
         fs_name %= -(spaces >> lit("fsname") >> lit('=') >> fs_name_str);
         root_squash %= (spaces >> lit("root_squash") >> attr(true));
         match = -((fs_name >> path >> root_squash)[_val =
-                                                   phoenix::construct <
-                                                   MDSCapMatch > (_2, _1,
-                                                                  _3)] | (uid >>
-                                                                          gidlist)
+                      phoenix::construct <
+                      MDSCapMatch > (_2, _1,
+                                     _3)] | (uid >>
+                                             gidlist)
                   [_val =
-                   phoenix::construct < MDSCapMatch > (_1,
-                                                       _2)] | (path >> uid >>
-                                                               gidlist)[_val =
-                                                                        phoenix::
-                                                                        construct
-                                                                        <
-                                                                        MDSCapMatch
-                                                                        > (_1,
-                                                                           _2,
-                                                                           _3)]
+                       phoenix::construct < MDSCapMatch > (_1,
+                           _2)] | (path >> uid >>
+                                   gidlist)[_val =
+                                                phoenix::
+                                                construct
+                                                <
+                                                MDSCapMatch
+                                                > (_1,
+                                                    _2,
+                                                    _3)]
                   | (fs_name >> path)[_val =
-                                      phoenix::construct < MDSCapMatch > (_2,
-                                                                          _1)] |
+                                          phoenix::construct < MDSCapMatch > (_2,
+                                              _1)] |
                   (fs_name >> root_squash)[_val =
-                                           phoenix::construct < MDSCapMatch >
-                                           (std::string(), _1,
-                                            _2)] | (path >> root_squash)[_val =
-                                                                         phoenix::
-                                                                         construct
-                                                                         <
-                                                                         MDSCapMatch
-                                                                         > (_1,
-                                                                            std::
-                                                                            string
-                                                                            (),
-                                                                            _2)]
+                                               phoenix::construct < MDSCapMatch >
+                                               (std::string(), _1,
+                                                _2)] | (path >> root_squash)[_val =
+                                                        phoenix::
+                                                        construct
+                                                        <
+                                                        MDSCapMatch
+                                                        > (_1,
+                                                            std::
+                                                            string
+                                                            (),
+                                                            _2)]
                   | (path)[_val =
-                           phoenix::construct < MDSCapMatch >
-                           (_1)] | (root_squash)[_val =
-                                                 phoenix::construct <
-                                                 MDSCapMatch > (std::string(),
-                                                                std::string(),
-                                                                _1)] |
+                               phoenix::construct < MDSCapMatch >
+                               (_1)] | (root_squash)[_val =
+                                       phoenix::construct <
+                                       MDSCapMatch > (std::string(),
+                                           std::string(),
+                                           _1)] |
                   (fs_name)[_val =
-                            phoenix::construct < MDSCapMatch > (std::string(),
-                                                                _1)]);
+                                phoenix::construct < MDSCapMatch > (std::string(),
+                                    _1)]);
 
         // capspec = * | r[w][f][p][s]
         capspec = spaces >> (lit("*")[_val = MDSCapSpec(MDSCapSpec::ALL)]
                              | lit("all")[_val = MDSCapSpec(MDSCapSpec::ALL)]
                              |
                              (lit("rwfps"))[_val =
-                                            MDSCapSpec(MDSCapSpec::RWFPS)]
+                                                MDSCapSpec(MDSCapSpec::RWFPS)]
                              | (lit("rwps"))[_val =
-                                             MDSCapSpec(MDSCapSpec::RWPS)]
+                                     MDSCapSpec(MDSCapSpec::RWPS)]
                              | (lit("rwfp"))[_val =
-                                             MDSCapSpec(MDSCapSpec::RWFP)]
+                                     MDSCapSpec(MDSCapSpec::RWFP)]
                              | (lit("rwfs"))[_val =
-                                             MDSCapSpec(MDSCapSpec::RWFS)]
+                                     MDSCapSpec(MDSCapSpec::RWFS)]
                              | (lit("rwp"))[_val = MDSCapSpec(MDSCapSpec::RWP)]
                              | (lit("rws"))[_val = MDSCapSpec(MDSCapSpec::RWS)]
                              | (lit("rwf"))[_val = MDSCapSpec(MDSCapSpec::RWF)]
                              | (lit("rw"))[_val = MDSCapSpec(MDSCapSpec::RW)]
                              | (lit("r"))[_val = MDSCapSpec(MDSCapSpec::READ)]
-            );
+                            );
 
         grant = lit("allow") >> (capspec >> match >>
                                  -(spaces >> lit("network") >> spaces >>
                                    network_str))
-            [_val = phoenix::construct < MDSCapGrant > (_1, _2, _3)];
+                [_val = phoenix::construct < MDSCapGrant > (_1, _2, _3)];
         grants %= (grant % (*lit(' ') >> (lit(';') | lit(',')) >> *lit(' ')));
         mdscaps = grants[_val = phoenix::construct < MDSAuthCaps > (_1)];
     }
@@ -175,12 +175,14 @@ bool MDSCapMatch::match(std::string_view target_path,
                         const vector < uint64_t > *caller_gid_list) const const
 {
     if (uid != MDS_AUTH_UID_ANY) {
-        if (uid != caller_uid)
+        if (uid != caller_uid) {
             return false;
+        }
         if (!gids.empty()) {
             bool gid_matched = false;
-            if (std::find(gids.begin(), gids.end(), caller_gid) != gids.end())
+            if (std::find(gids.begin(), gids.end(), caller_gid) != gids.end()) {
                 gid_matched = true;
+            }
             if (caller_gid_list) {
                 for (auto i = caller_gid_list->begin();
                      i != caller_gid_list->end(); ++i) {
@@ -190,8 +192,9 @@ bool MDSCapMatch::match(std::string_view target_path,
                     }
                 }
             }
-            if (!gid_matched)
+            if (!gid_matched) {
                 return false;
+            }
         }
     }
 
@@ -205,13 +208,15 @@ bool MDSCapMatch::match(std::string_view target_path,
 bool MDSCapMatch::match_path(std::string_view target_path) const const
 {
     if (path.length()) {
-        if (target_path.find(path) != 0)
+        if (target_path.find(path) != 0) {
             return false;
+        }
         // if path doesn't already have a trailing /, make sure the target
         // does so that path=/foo doesn't match target_path=/food
         if (target_path.length() > path.length() &&
-            path[path.length() - 1] != '/' && target_path[path.length()] != '/')
+            path[path.length() - 1] != '/' && target_path[path.length()] != '/') {
             return false;
+        }
     }
 
     return true;
@@ -229,7 +234,7 @@ void MDSCapGrant::parse_network()
  */
 bool MDSAuthCaps::path_capable(std::string_view inode_path) const const
 {
-  for (const auto & i:grants) {
+    for (const auto &i : grants) {
         if (i.match.match_path(inode_path)) {
             return true;
         }
@@ -252,19 +257,19 @@ bool MDSAuthCaps::is_capable(std::string_view inode_path,
                              const vector < uint64_t > *caller_gid_list,
                              unsigned mask,
                              uid_t new_uid, gid_t new_gid,
-                             const entity_addr_t & addr) constconst
-{
+                             const entity_addr_t &addr) constconst {
     if (cct)
         ldout(cct, 10) << __func__ << " inode(path /" << inode_path
-            << " owner " << inode_uid << ":" << inode_gid
-            << " mode 0" << std::oct << inode_mode << std::dec
-            << ") by caller " << caller_uid << ":" << caller_gid
+                       << " owner " << inode_uid << ":" << inode_gid
+                       << " mode 0" << std::oct << inode_mode << std::dec
+                       << ") by caller " << caller_uid << ":" << caller_gid
 // << "[" << caller_gid_list << "]";
-            << " mask " << mask
-            << " new " << new_uid << ":" << new_gid
-            << " cap: " << *this << dendl;
+                       << " mask " << mask
+                       << " new " << new_uid << ":" << new_gid
+                       << " cap: " << *this << dendl;
 
-  for (const auto & grant:grants) {
+    for (const auto &grant : grants)
+    {
         if (grant.network.size() &&
             (!grant.network_valid ||
              !network_contains(grant.network_parsed,
@@ -343,16 +348,14 @@ bool MDSAuthCaps::is_capable(std::string_view inode_path,
                     (!(mask & MAY_EXECUTE) || (inode_mode & S_IXUSR))) {
                     return true;
                 }
-            }
-            else if (std::find(gids.begin(), gids.end(),
-                               inode_gid) != gids.end()) {
+            } else if (std::find(gids.begin(), gids.end(),
+                                 inode_gid) != gids.end()) {
                 if ((!(mask & MAY_READ) || (inode_mode & S_IRGRP)) &&
                     (!(mask & MAY_WRITE) || (inode_mode & S_IWGRP)) &&
                     (!(mask & MAY_EXECUTE) || (inode_mode & S_IXGRP))) {
                     return true;
                 }
-            }
-            else {
+            } else {
                 if ((!(mask & MAY_READ) || (inode_mode & S_IROTH)) &&
                     (!(mask & MAY_WRITE) || (inode_mode & S_IWOTH)) &&
                     (!(mask & MAY_EXECUTE) || (inode_mode & S_IXOTH))) {
@@ -369,18 +372,18 @@ void MDSAuthCaps::set_allow_all()
 {
     grants.clear();
     grants.push_back(MDSCapGrant(MDSCapSpec(MDSCapSpec::ALL), MDSCapMatch(), {
-                                 }));
+    }));
 }
 
-bool MDSAuthCaps::parse(CephContext * c, std::string_view str, ostream * err)
+bool MDSAuthCaps::parse(CephContext *c, std::string_view str, ostream *err)
 {
     // Special case for legacy caps
     if (str == "allow") {
         grants.clear();
         grants.
-            push_back(MDSCapGrant(MDSCapSpec(MDSCapSpec::RWPS), MDSCapMatch(), {
-                                  }
-                      ));
+        push_back(MDSCapGrant(MDSCapSpec(MDSCapSpec::RWPS), MDSCapMatch(), {
+        }
+                             ));
         return true;
     }
 
@@ -391,27 +394,26 @@ bool MDSAuthCaps::parse(CephContext * c, std::string_view str, ostream * err)
     bool r = qi::phrase_parse(iter, end, g, ascii::space, *this);
     cct = c;                    // set after parser self-assignment
     if (r && iter == end) {
-      for (auto & grant:grants) {
+        for (auto &grant : grants) {
             std::sort(grant.match.gids.begin(), grant.match.gids.end());
             grant.parse_network();
         }
         return true;
-    }
-    else {
+    } else {
         // Make sure no grants are kept after parsing failed!
         grants.clear();
 
         if (err)
             *err << "mds capability parse failed, stopped at '"
-                << std::string(iter, end)
-                << "' of '" << str << "'";
+                 << std::string(iter, end)
+                 << "' of '" << str << "'";
         return false;
     }
 }
 
 bool MDSAuthCaps::allow_all() const const
 {
-  for (const auto & grant:grants) {
+    for (const auto &grant : grants) {
         if (grant.match.is_match_all() && grant.spec.allow_all()) {
             return true;
         }
@@ -420,7 +422,7 @@ bool MDSAuthCaps::allow_all() const const
     return false;
 }
 
-ostream & operator<<(ostream & out, const MDSCapMatch & match)
+ostream &operator<<(ostream &out, const MDSCapMatch &match)
 {
     if (!match.fs_name.empty()) {
         out << " fsname=" << match.fs_name;
@@ -436,9 +438,10 @@ ostream & operator<<(ostream & out, const MDSCapMatch & match)
         if (!match.gids.empty()) {
             out << " gids=";
             bool first = true;
-          for (const auto & gid:match.gids) {
-                if (!first)
+            for (const auto &gid : match.gids) {
+                if (!first) {
                     out << ',';
+                }
                 out << gid;
                 first = false;
             }
@@ -448,12 +451,11 @@ ostream & operator<<(ostream & out, const MDSCapMatch & match)
     return out;
 }
 
-ostream & operator<<(ostream & out, const MDSCapSpec & spec)
+ostream &operator<<(ostream &out, const MDSCapSpec &spec)
 {
     if (spec.allow_all()) {
         out << "*";
-    }
-    else {
+    } else {
         if (spec.allow_read()) {
             out << "r";
         }
@@ -474,7 +476,7 @@ ostream & operator<<(ostream & out, const MDSCapSpec & spec)
     return out;
 }
 
-ostream & operator<<(ostream & out, const MDSCapGrant & grant)
+ostream &operator<<(ostream &out, const MDSCapGrant &grant)
 {
     out << "allow ";
     out << grant.spec;
@@ -485,7 +487,7 @@ ostream & operator<<(ostream & out, const MDSCapGrant & grant)
     return out;
 }
 
-ostream & operator<<(ostream & out, const MDSAuthCaps & cap)
+ostream &operator<<(ostream &out, const MDSAuthCaps &cap)
 {
     out << "MDSAuthCaps[";
     for (size_t i = 0; i < cap.grants.size(); ++i) {

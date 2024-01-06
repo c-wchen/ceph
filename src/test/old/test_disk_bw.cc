@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
     posix_memalign(&buf, sysconf(_SC_PAGESIZE), bsize);
 
-    //if ((fd = open(argv[1], O_SYNC|O_RDWR)) < 0) {  
+    //if ((fd = open(argv[1], O_SYNC|O_RDWR)) < 0) {
     if ((fd = open(argv[1], O_DIRECT | O_RDWR)) < 0) {
 
         fprintf(stderr, "Can't open device %s\n", argv[1]);
@@ -41,9 +41,10 @@ int main(int argc, char **argv)
     utime_t start = ceph_clock_now();
     while (loop++ < count) {
         int ret = safe_write(fd, buf, bsize);
-        if (ret)
+        if (ret) {
             ceph_abort();
-        //if ((loop % 100) == 0) 
+        }
+        //if ((loop % 100) == 0)
         //fprintf(stderr, ".");
     }
     ::fsync(fd);
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
     double mb = bsize * count / 1024 / 1024;
 
     cout << hostname << "\t" << mb << " MB\t" << end << " seconds\t" << (mb /
-                                                                         (double)
-                                                                         end) <<
-        " MB/sec" << std::endl;
+            (double)
+            end) <<
+         " MB/sec" << std::endl;
 }

@@ -3,36 +3,41 @@
 
 #include "test/crimson/seastore/test_block.h"
 
-namespace crimson::os::seastore {
+namespace crimson::os::seastore
+{
 
-    ceph::bufferlist TestBlock::get_delta() {
-        ceph::bufferlist bl;
-        encode(delta, bl);
-        return bl;
-    } void TestBlock::apply_delta(const ceph::bufferlist & bl) {
-        auto biter = bl.begin();
-        decltype(delta) deltas;
-        decode(deltas, biter);
-      for (auto && d:deltas) {
-            set_contents(d.val, d.offset, d.len);
-        }
+ceph::bufferlist TestBlock::get_delta()
+{
+    ceph::bufferlist bl;
+    encode(delta, bl);
+    return bl;
+} void TestBlock::apply_delta(const ceph::bufferlist &bl)
+{
+    auto biter = bl.begin();
+    decltype(delta) deltas;
+    decode(deltas, biter);
+    for (auto && d : deltas) {
+        set_contents(d.val, d.offset, d.len);
     }
+}
 
-    ceph::bufferlist TestBlockPhysical::get_delta() {
-        ceph::bufferlist bl;
-        encode(delta, bl);
-        return bl;
-    }
+ceph::bufferlist TestBlockPhysical::get_delta()
+{
+    ceph::bufferlist bl;
+    encode(delta, bl);
+    return bl;
+}
 
-    void TestBlockPhysical::apply_delta_and_adjust_crc(paddr_t,
-                                                       const ceph::
-                                                       bufferlist & bl) {
-        auto biter = bl.begin();
-        decltype(delta) deltas;
-        decode(deltas, biter);
-      for (auto && d:deltas) {
-            set_contents(d.val, d.offset, d.len);
-        }
+void TestBlockPhysical::apply_delta_and_adjust_crc(paddr_t,
+        const ceph::
+        bufferlist &bl)
+{
+    auto biter = bl.begin();
+    decltype(delta) deltas;
+    decode(deltas, biter);
+    for (auto && d : deltas) {
+        set_contents(d.val, d.offset, d.len);
     }
+}
 
 }

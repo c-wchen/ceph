@@ -47,8 +47,8 @@ using execution_path = dml::automatic;
 #undef dout_prefix
 #define dout_prefix *_dout << "bdev-PMEM("  << path << ") "
 
-PMEMDevice::PMEMDevice(CephContext * cct, aio_callback_t cb, void *cbpriv)
-:BlockDevice(cct, cb, cbpriv), fd(-1), addr(0), injecting_crash(0)
+PMEMDevice::PMEMDevice(CephContext *cct, aio_callback_t cb, void *cbpriv)
+    : BlockDevice(cct, cb, cbpriv), fd(-1), addr(0), injecting_crash(0)
 {
 }
 
@@ -61,13 +61,14 @@ int PMEMDevice::_lock()
     l.l_start = 0;
     l.l_len = 0;
     int r =::fcntl(fd, F_SETLK, &l);
-    if (r < 0)
+    if (r < 0) {
         return -errno;
+    }
     return 0;
 }
 
 static int pmem_check_file_type(int fd, const char *pmem_file,
-                                uint64_t * total_size)
+                                uint64_t *total_size)
 {
     namespace fs = std::filesystem;
     if (!fs::is_character_file(pmem_file)) {
@@ -91,13 +92,12 @@ static int pmem_check_file_type(int fd, const char *pmem_file,
     if (std::ifstream size_file(char_dir / "size"); size_file) {
         size_file >> *total_size;
         return size_file ? 0 : -EINVAL;
-    }
-    else {
+    } else {
         return -EINVAL;
     }
 }
 
-int PMEMDevice::open(const std::string & p)
+int PMEMDevice::open(const std::string &p)
 {
     path = p;
     int r = 0;
@@ -113,7 +113,7 @@ int PMEMDevice::open(const std::string & p)
     r = pmem_check_file_type(fd, path.c_str(), &size);
     if (!r) {
         dout(1) << __func__ << " This path " << path << " is a devdax dev " <<
-            dendl;
+                dendl;
         devdax_device = true;
         // If using devdax char device, set it to not rotational device.
         rotational = false;
@@ -122,8 +122,8 @@ int PMEMDevice::open(const std::string & p)
     r = _lock();
     if (r < 0) {
         derr << __func__ << " failed to lock " << path << ": " <<
-            cpp_strerror(r)
-            << dendl;
+             cpp_strerror(r)
+             << dendl;
         goto out_fail;
     }
 
@@ -141,7 +141,7 @@ int PMEMDevice::open(const std::string & p)
                                  &map_len, NULL);
     if (addr == NULL) {
         derr << __func__ << " pmem_map_file failed: " << pmem_errormsg() <<
-            dendl;
+             dendl;
         goto out_fail;
     }
     size = map_len;
@@ -153,18 +153,18 @@ int PMEMDevice::open(const std::string & p)
     block_size = g_conf()->bdev_block_size;
     if (block_size != (unsigned)st.st_blksize) {
         dout(1) << __func__ << " backing device/file reports st_blksize "
-            << st.st_blksize << ", using bdev_block_size "
-            << block_size << " anyway" << dendl;
+                << st.st_blksize << ", using bdev_block_size "
+                << block_size << " anyway" << dendl;
     }
 
     dout(1) << __func__
-        << " size " << size
-        << " (" << byte_u_t(size) << ")"
-        << " block_size " << block_size
-        << " (" << byte_u_t(block_size) << ")" << dendl;
+            << " size " << size
+            << " (" << byte_u_t(size) << ")"
+            << " block_size " << block_size
+            << " (" << byte_u_t(block_size) << ")" << dendl;
     return 0;
 
-  out_fail:
+out_fail:
     VOID_TEMP_FAILURE_RETRY(::close(fd));
     fd = -1;
     return r;
@@ -187,7 +187,7 @@ void PMEMDevice::close()
     path.clear();
 }
 
-int PMEMDevice::collect_metadata(const std::string & prefix,
+int PMEMDevice::collect_metadata(const std::string &prefix,
                                  std::map < std::string,
                                  std::string > *pm) const const
 {
@@ -199,8 +199,9 @@ int PMEMDevice::collect_metadata(const std::string & prefix,
 
     struct stat st;
     int r =::fstat(fd, &st);
-    if (r < 0)
+    if (r < 0) {
         return -errno;
+    }
     if (S_ISBLK(st.st_mode)) {
         (*pm)[prefix + "access_mode"] = "blk";
         char buffer[1024] = { 0 };
@@ -218,20 +219,18 @@ int PMEMDevice::collect_metadata(const std::string & prefix,
         blkdev.serial(buffer, sizeof(buffer));
         (*pm)[prefix + "serial"] = buffer;
 
-    }
-    else if (S_ISCHR(st.st_mode)) {
+    } else if (S_ISCHR(st.st_mode)) {
         (*pm)[prefix + "access_mode"] = "chardevice";
         (*pm)[prefix + "path"] = path;
 
-    }
-    else {
+    } else {
         (*pm)[prefix + "access_mode"] = "file";
         (*pm)[prefix + "path"] = path;
     }
     return 0;
 }
 
-bool PMEMDevice::support(const std::string & path)
+bool PMEMDevice::support(const std::string &path)
 {
     int is_pmem = 0;
     size_t map_len = 0;
@@ -268,19 +267,18 @@ int PMEMDevice::flush()
     return 0;
 }
 
-void PMEMDevice::aio_submit(IOContext * ioc)
+void PMEMDevice::aio_submit(IOContext *ioc)
 {
     if (ioc->priv) {
         ceph_assert(ioc->num_running == 0);
         aio_callback(aio_callback_priv, ioc->priv);
-    }
-    else {
+    } else {
         ioc->try_aio_wake();
     }
     return;
 }
 
-int PMEMDevice::write(uint64_t off, bufferlist & bl, bool buffered,
+int PMEMDevice::write(uint64_t off, bufferlist &bl, bool buffered,
                       int write_hint)
 {
     uint64_t len = bl.length();
@@ -294,7 +292,7 @@ int PMEMDevice::write(uint64_t off, bufferlist & bl, bool buffered,
     if (g_conf()->bdev_inject_crash &&
         rand() % g_conf()->bdev_inject_crash == 0) {
         derr << __func__ << " bdev_inject_crash: dropping io " << off << "~" <<
-            len << dendl;
+             len << dendl;
         ++injecting_crash;
         return 0;
     }
@@ -322,14 +320,14 @@ int PMEMDevice::write(uint64_t off, bufferlist & bl, bool buffered,
 }
 
 int PMEMDevice::aio_write(uint64_t off,
-                          bufferlist & bl,
-                          IOContext * ioc, bool buffered, int write_hint)
+                          bufferlist &bl,
+                          IOContext *ioc, bool buffered, int write_hint)
 {
     return write(off, bl, buffered);
 }
 
-int PMEMDevice::read(uint64_t off, uint64_t len, bufferlist * pbl,
-                     IOContext * ioc, bool buffered)
+int PMEMDevice::read(uint64_t off, uint64_t len, bufferlist *pbl,
+                     IOContext *ioc, bool buffered)
 {
     dout(5) << __func__ << " " << off << "~" << len << dendl;
     ceph_assert(is_valid_io(off, len));
@@ -356,8 +354,8 @@ int PMEMDevice::read(uint64_t off, uint64_t len, bufferlist * pbl,
     return 0;
 }
 
-int PMEMDevice::aio_read(uint64_t off, uint64_t len, bufferlist * pbl,
-                         IOContext * ioc)
+int PMEMDevice::aio_read(uint64_t off, uint64_t len, bufferlist *pbl,
+                         IOContext *ioc)
 {
     return read(off, len, pbl, ioc, false);
 }

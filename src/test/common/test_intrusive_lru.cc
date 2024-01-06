@@ -7,26 +7,33 @@
 
 template < typename TestLRUItem > struct item_to_unsigned {
     using type = unsigned;
-    const type & operator() (const TestLRUItem & item) {
+    const type &operator()(const TestLRUItem &item)
+    {
         return item.key;
-}};
+    }
+};
 
-struct TestLRUItem:public ceph::common::intrusive_lru_base <
+struct TestLRUItem: public ceph::common::intrusive_lru_base <
     ceph::common::intrusive_lru_config <
     unsigned, TestLRUItem, item_to_unsigned < TestLRUItem >>> {
     unsigned key = 0;
     int value = 0;
 
-    TestLRUItem(unsigned key):key(key) {
-}};
+    TestLRUItem(unsigned key): key(key)
+    {
+    }
+};
 
-class LRUTest:public TestLRUItem::lru_t {
-  public:
-    auto add(unsigned int key, int value) {
+class LRUTest: public TestLRUItem::lru_t
+{
+public:
+    auto add(unsigned int key, int value)
+    {
         auto[ref, key_existed] = get_or_create(key);
         if (!key_existed) {
             ref->value = value;
-        } return std::pair(ref, key_existed);
+        }
+        return std::pair(ref, key_existed);
     }
 };
 
@@ -122,8 +129,7 @@ TEST(LRU, eviction_live_ref)
         ASSERT_TRUE(ref);
         if (i == 1) {
             ASSERT_TRUE(existed);
-        }
-        else {
+        } else {
             ASSERT_FALSE(existed);
         }
     }
@@ -143,8 +149,7 @@ TEST(LRU, eviction_live_ref)
         ASSERT_TRUE(ref);
         if (i == 1) {
             ASSERT_TRUE(existed);
-        }
-        else {
+        } else {
             ASSERT_FALSE(existed);
         }
     }

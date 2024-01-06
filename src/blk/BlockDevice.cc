@@ -52,7 +52,7 @@ blk_access_mode_t buffermode(bool buffered)
     return buffered ? blk_access_mode_t::BUFFERED : blk_access_mode_t::DIRECT;
 }
 
-std::ostream & operator<<(std::ostream & os, const blk_access_mode_t buffered)
+std::ostream &operator<<(std::ostream &os, const blk_access_mode_t buffered)
 {
     os << (buffered == blk_access_mode_t::BUFFERED ? "(buffered)" : "(direct)");
     return os;
@@ -64,8 +64,8 @@ void IOContext::aio_wait()
     // see _aio_thread for waker logic
     while (num_running.load() > 0) {
         dout(10) << __func__ << " " << this
-            << " waiting for " << num_running.load() << " aios to complete"
-            << dendl;
+                 << " waiting for " << num_running.load() << " aios to complete"
+                 << dendl;
         cond.wait(l);
     }
     dout(20) << __func__ << " " << this << " done" << dendl;
@@ -97,8 +97,7 @@ void IOContext::release_running_aios()
 #endif
 }
 
-BlockDevice::block_device_t
-    BlockDevice::detect_device_type(const std::string & path)
+BlockDevice::block_device_t BlockDevice::detect_device_type(const std::string &path)
 {
 #if defined(HAVE_SPDK)
     if (NVMEDevice::support(path)) {
@@ -122,8 +121,7 @@ BlockDevice::block_device_t
 #endif
 }
 
-BlockDevice::block_device_t
-    BlockDevice::device_type_from_name(const std::string & blk_dev_name)
+BlockDevice::block_device_t BlockDevice::device_type_from_name(const std::string &blk_dev_name)
 {
 #if defined(HAVE_LIBAIO) || defined(HAVE_POSIXAIO)
     if (blk_dev_name == "aio") {
@@ -149,36 +147,36 @@ BlockDevice::block_device_t
 }
 
 BlockDevice *BlockDevice::create_with_type(block_device_t device_type,
-                                           CephContext * cct,
-                                           const std::string & path,
-                                           aio_callback_t cb, void *cbpriv,
-                                           aio_callback_t d_cb, void *d_cbpriv)
+        CephContext *cct,
+        const std::string &path,
+        aio_callback_t cb, void *cbpriv,
+        aio_callback_t d_cb, void *d_cbpriv)
 {
 
     switch (device_type) {
 #if defined(HAVE_LIBAIO) || defined(HAVE_POSIXAIO)
-    case block_device_t::aio:
-        return new KernelDevice(cct, cb, cbpriv, d_cb, d_cbpriv);
+        case block_device_t::aio:
+            return new KernelDevice(cct, cb, cbpriv, d_cb, d_cbpriv);
 #endif
 #if defined(HAVE_SPDK)
-    case block_device_t::spdk:
-        return new NVMEDevice(cct, cb, cbpriv);
+        case block_device_t::spdk:
+            return new NVMEDevice(cct, cb, cbpriv);
 #endif
 #if defined(HAVE_BLUESTORE_PMEM)
-    case block_device_t::pmem:
-        return new PMEMDevice(cct, cb, cbpriv);
+        case block_device_t::pmem:
+            return new PMEMDevice(cct, cb, cbpriv);
 #endif
 #if (defined(HAVE_LIBAIO) || defined(HAVE_POSIXAIO)) && defined(HAVE_LIBZBD)
-    case block_device_t::hm_smr:
-        return new HMSMRDevice(cct, cb, cbpriv, d_cb, d_cbpriv);
+        case block_device_t::hm_smr:
+            return new HMSMRDevice(cct, cb, cbpriv, d_cb, d_cbpriv);
 #endif
-    default:
-        ceph_abort_msg("unsupported device");
-        return nullptr;
+        default:
+            ceph_abort_msg("unsupported device");
+            return nullptr;
     }
 }
 
-BlockDevice *BlockDevice::create(CephContext * cct, const string & path,
+BlockDevice *BlockDevice::create(CephContext *cct, const string &path,
                                  aio_callback_t cb, void *cbpriv,
                                  aio_callback_t d_cb, void *d_cbpriv)
 {
@@ -186,8 +184,7 @@ BlockDevice *BlockDevice::create(CephContext * cct, const string & path,
     block_device_t device_type = block_device_t::unknown;
     if (blk_dev_name.empty()) {
         device_type = detect_device_type(path);
-    }
-    else {
+    } else {
         device_type = device_type_from_name(blk_dev_name);
     }
     return create_with_type(device_type, cct, path, cb, cbpriv, d_cb, d_cbpriv);
@@ -201,9 +198,9 @@ bool BlockDevice::is_valid_io(uint64_t off, uint64_t len) const const
 
     if (!ret) {
         derr << __func__ << " " << std::hex
-            << off << "~" << len
-            << " block_size " << block_size
-            << " size " << size << std::dec << dendl;
+             << off << "~" << len
+             << " block_size " << block_size
+             << " size " << size << std::dec << dendl;
     }
     return ret;
 }

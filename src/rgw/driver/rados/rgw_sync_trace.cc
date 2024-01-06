@@ -19,12 +19,12 @@ static constexpr auto dout_subsys = ceph_subsys_rgw;
 
 using namespace std;
 
-RGWSyncTraceNode::RGWSyncTraceNode(CephContext * _cct, uint64_t _handle,
-                                   const RGWSyncTraceNodeRef & _parent,
-                                   const string & _type,
-                                   const string & _id):cct(_cct),
-parent(_parent), type(_type), id(_id), handle(_handle),
-history(cct->_conf->rgw_sync_trace_per_node_log_size)
+RGWSyncTraceNode::RGWSyncTraceNode(CephContext *_cct, uint64_t _handle,
+                                   const RGWSyncTraceNodeRef &_parent,
+                                   const string &_type,
+                                   const string &_id): cct(_cct),
+    parent(_parent), type(_type), id(_id), handle(_handle),
+    history(cct->_conf->rgw_sync_trace_per_node_log_size)
 {
     if (parent.get()) {
         prefix = parent->get_prefix();
@@ -39,7 +39,7 @@ history(cct->_conf->rgw_sync_trace_per_node_log_size)
     }
 }
 
-void RGWSyncTraceNode::log(int level, const string & s)
+void RGWSyncTraceNode::log(int level, const string &s)
 {
     status = s;
     history.push_back(status);
@@ -48,30 +48,32 @@ void RGWSyncTraceNode::log(int level, const string & s)
         lsubdout(cct, rgw_sync,
                  ceph::dout::
                  need_dynamic(level)) << "RGW-SYNC:" << to_str() << dendl;
-    }
-    else {
+    } else {
         lsubdout(cct, rgw,
                  ceph::dout::
                  need_dynamic(level)) << "RGW-SYNC:" << to_str() << dendl;
     }
 }
 
-class RGWSyncTraceServiceMapThread:public RGWRadosThread {
+class RGWSyncTraceServiceMapThread: public RGWRadosThread
+{
     RGWRados *store;
     RGWSyncTraceManager *manager;
 
-    uint64_t interval_msec() override {
+    uint64_t interval_msec() override
+    {
         return cct->_conf->rgw_sync_trace_servicemap_update_interval * 1000;
-  } public:
-    RGWSyncTraceServiceMapThread(RGWRados * _store,
-                                 RGWSyncTraceManager * _manager)
-    :RGWRadosThread(_store, "sync-trace"), store(_store), manager(_manager) {
+    } public:
+    RGWSyncTraceServiceMapThread(RGWRados *_store,
+                                 RGWSyncTraceManager *_manager)
+        : RGWRadosThread(_store, "sync-trace"), store(_store), manager(_manager)
+    {
     }
 
-    int process(const DoutPrefixProvider * dpp) override;
+    int process(const DoutPrefixProvider *dpp) override;
 };
 
-int RGWSyncTraceServiceMapThread::process(const DoutPrefixProvider * dpp)
+int RGWSyncTraceServiceMapThread::process(const DoutPrefixProvider *dpp)
 {
     map < string, string > status;
     status["current_sync"] = manager->get_active_names();
@@ -84,22 +86,23 @@ int RGWSyncTraceServiceMapThread::process(const DoutPrefixProvider * dpp)
 }
 
 RGWSyncTraceNodeRef RGWSyncTraceManager::
-add_node(const RGWSyncTraceNodeRef & parent, const std::string & type,
-         const std::string & id)
+add_node(const RGWSyncTraceNodeRef &parent, const std::string &type,
+         const std::string &id)
 {
     shunique_lock wl(lock, ceph::acquire_unique);
     auto handle = alloc_handle();
-    RGWSyncTraceNodeRef & ref = nodes[handle];
+    RGWSyncTraceNodeRef &ref = nodes[handle];
     ref.reset(new RGWSyncTraceNode(cct, handle, parent, type, id));
     // return a separate shared_ptr that calls finish() on the node instead of
     // deleting it. the lambda capture holds a reference to the original 'ref'
-    auto deleter =[ref, this] (RGWSyncTraceNode * node) { finish_node(node);
+    auto deleter = [ref, this](RGWSyncTraceNode * node) {
+        finish_node(node);
     };
     return {
-    ref.get(), deleter};
+        ref.get(), deleter};
 }
 
-bool RGWSyncTraceNode::match(const string & search_term, bool search_history)
+bool RGWSyncTraceNode::match(const string &search_term, bool search_history)
 {
     try {
         std::regex expr(search_term);
@@ -115,22 +118,21 @@ bool RGWSyncTraceNode::match(const string & search_term, bool search_history)
             return false;
         }
 
-      for (auto h:history) {
+        for (auto h : history) {
             if (regex_search(h, m, expr)) {
                 return true;
             }
         }
-    }
-    catch(const std::regex_error & e) {
+    } catch (const std::regex_error &e) {
         ldout(cct,
               5) << "NOTICE: sync trace: bad expression: bad regex search term"
-            << dendl;
+                 << dendl;
     }
 
     return false;
 }
 
-void RGWSyncTraceManager::init(RGWRados * store)
+void RGWSyncTraceManager::init(RGWRados *store)
 {
     service_map_thread = new RGWSyncTraceServiceMapThread(store, this);
     service_map_thread->start();
@@ -150,36 +152,41 @@ int RGWSyncTraceManager::hook_to_admin_command()
     AdminSocket *admin_socket = cct->get_admin_socket();
 
     admin_commands = { {
-    "sync trace show name=search,type=CephString,req=false",
-                "sync trace show [filter_str]: show current multisite tracing information"},
-    {
-    "sync trace history name=search,type=CephString,req=false",
-            "sync trace history [filter_str]: show history of multisite tracing information"},
-    {
-    "sync trace active name=search,type=CephString,req=false",
-            "show active multisite sync entities information"}, {
-    "sync trace active_short name=search,type=CephString,req=false",
-            "show active multisite sync entities entries"}};
-  for (auto cmd:admin_commands) {
+            "sync trace show name=search,type=CephString,req=false",
+            "sync trace show [filter_str]: show current multisite tracing information"
+        },
+        {
+            "sync trace history name=search,type=CephString,req=false",
+            "sync trace history [filter_str]: show history of multisite tracing information"
+        },
+        {
+            "sync trace active name=search,type=CephString,req=false",
+            "show active multisite sync entities information"
+        }, {
+            "sync trace active_short name=search,type=CephString,req=false",
+            "show active multisite sync entities entries"
+        }
+    };
+    for (auto cmd : admin_commands) {
         int r = admin_socket->register_command(cmd[0], this,
                                                cmd[1]);
         if (r < 0) {
             lderr(cct) << "ERROR: fail to register admin socket command (r=" <<
-                r << ")" << dendl;
+                       r << ")" << dendl;
             return r;
         }
     }
     return 0;
 }
 
-static void dump_node(RGWSyncTraceNode * entry, bool show_history,
-                      Formatter * f)
+static void dump_node(RGWSyncTraceNode *entry, bool show_history,
+                      Formatter *f)
 {
     f->open_object_section("entry");
     ::encode_json("status", entry->to_str(), f);
     if (show_history) {
         f->open_array_section("history");
-      for (auto h:entry->get_history()) {
+        for (auto h : entry->get_history()) {
             ::encode_json("entry", h, f);
         }
         f->close_section();
@@ -195,13 +202,13 @@ string RGWSyncTraceManager::get_active_names()
     JSONFormatter f;
 
     f.open_array_section("result");
-  for (auto n:nodes) {
-        auto & entry = n.second;
+    for (auto n : nodes) {
+        auto &entry = n.second;
 
         if (!entry->test_flags(RGW_SNS_FLAG_ACTIVE)) {
             continue;
         }
-        const string & name = entry->get_resource_name();
+        const string &name = entry->get_resource_name();
         if (!name.empty()) {
             ::encode_json("entry", name, &f);
         }
@@ -213,10 +220,10 @@ string RGWSyncTraceManager::get_active_names()
     return ss.str();
 }
 
-int RGWSyncTraceManager::call(std::string_view command, const cmdmap_t & cmdmap,
+int RGWSyncTraceManager::call(std::string_view command, const cmdmap_t &cmdmap,
                               const bufferlist &,
-                              Formatter * f,
-                              std::ostream & ss, bufferlist & out)
+                              Formatter *f,
+                              std::ostream &ss, bufferlist &out)
 {
 
     bool show_history = (command == "sync trace history");
@@ -234,8 +241,8 @@ int RGWSyncTraceManager::call(std::string_view command, const cmdmap_t & cmdmap,
 
     f->open_object_section("result");
     f->open_array_section("running");
-  for (auto n:nodes) {
-        auto & entry = n.second;
+    for (auto n : nodes) {
+        auto &entry = n.second;
 
         if (!search.empty() && !entry->match(search, show_history)) {
             continue;
@@ -244,12 +251,11 @@ int RGWSyncTraceManager::call(std::string_view command, const cmdmap_t & cmdmap,
             continue;
         }
         if (show_short) {
-            const string & name = entry->get_resource_name();
+            const string &name = entry->get_resource_name();
             if (!name.empty()) {
                 ::encode_json("entry", name, f);
             }
-        }
-        else {
+        } else {
             dump_node(entry.get(), show_history, f);
         }
         f->flush(out);
@@ -257,7 +263,7 @@ int RGWSyncTraceManager::call(std::string_view command, const cmdmap_t & cmdmap,
     f->close_section();
 
     f->open_array_section("complete");
-  for (auto & entry:complete_nodes) {
+    for (auto &entry : complete_nodes) {
         if (!search.empty() && !entry->match(search, show_history)) {
             continue;
         }
@@ -274,7 +280,7 @@ int RGWSyncTraceManager::call(std::string_view command, const cmdmap_t & cmdmap,
     return 0;
 }
 
-void RGWSyncTraceManager::finish_node(RGWSyncTraceNode * node)
+void RGWSyncTraceManager::finish_node(RGWSyncTraceNode *node)
 {
     RGWSyncTraceNodeRef old_node;
 

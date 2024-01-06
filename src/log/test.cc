@@ -69,14 +69,14 @@ TEST(Log, ReuseBad)
     const int l = 0;
     {
         MutableEntry e(l, 1);
-        auto & out = e.get_ostream();
+        auto &out = e.get_ostream();
         out << (std::streambuf *) nullptr;
         EXPECT_TRUE(out.bad()); // writing nullptr to a stream sets its badbit
         log.submit_entry(std::move(e));
     }
     {
         MutableEntry e(l, 1);
-        auto & out = e.get_ostream();
+        auto &out = e.get_ostream();
         EXPECT_FALSE(out.bad());    // should not see failures from previous log entry
         out << "hello world";
         log.submit_entry(std::move(e));
@@ -99,8 +99,9 @@ TEST(Log, ManyNoGather)
     log.reopen_log_file();
     for (int i = 0; i < many; i++) {
         int l = 10;
-        if (subs.should_gather(1, l))
+        if (subs.should_gather(1, l)) {
             log.submit_entry(MutableEntry(1, 0));
+        }
     }
     log.flush();
     log.stop();
@@ -120,7 +121,7 @@ TEST(Log, ManyGatherLog)
         if (subs.should_gather(1, l)) {
             MutableEntry e(l, 1);
             e.get_ostream() <<
-                "this is a long string asdf asdf asdf asdf asdf asdf asd fasd fasdf ";
+             "this is a long string asdf asdf asdf asdf asdf asdf asd fasd fasdf ";
             log.submit_entry(std::move(e));
         }
     }
@@ -141,7 +142,7 @@ TEST(Log, ManyGatherLogStackSpillover)
         int l = 10;
         if (subs.should_gather(1, l)) {
             MutableEntry e(l, 1);
-            auto & s = e.get_ostream();
+            auto &s = e.get_ostream();
             s << "foo";
             s << std::string(sizeof(e) * 2, '-');
             log.submit_entry(std::move(e));
@@ -162,8 +163,9 @@ TEST(Log, ManyGather)
     log.reopen_log_file();
     for (int i = 0; i < many; i++) {
         int l = 10;
-        if (subs.should_gather(1, l))
+        if (subs.should_gather(1, l)) {
             log.submit_entry(MutableEntry(l, 1));
+        }
     }
     log.flush();
     log.stop();
@@ -181,25 +183,22 @@ static void readpipe(int fd, int verify)
         int rc = read(fd, buf, (sizeof buf) - 1);
         if (rc == 0) {
             _exit(0);
-        }
-        else if (rc == -1) {
+        } else if (rc == -1) {
             _exit(1);
-        }
-        else if (rc > 0) {
+        } else if (rc > 0) {
             if (verify) {
                 char *p = strrchr(buf, '\n');
                 /* verify no torn writes */
                 if (p == NULL) {
                     _exit(2);
-                }
-                else if (p[1] != '\0') {
+                } else if (p[1] != '\0') {
                     write(2, buf, strlen(buf));
                     _exit(3);
                 }
             }
-        }
-        else
+        } else {
             _exit(100);
+        }
         usleep(500);
     }
 }
@@ -213,8 +212,7 @@ TEST(Log, StderrPipeAtomic)
     if (pid == 0) {
         close(pfd[1]);
         readpipe(pfd[0], 1);
-    }
-    else if (pid == (pid_t) - 1) {
+    } else if (pid == (pid_t) - 1) {
         ASSERT_EQ(0, 1);
     }
     close(pfd[0]);
@@ -231,7 +229,7 @@ TEST(Log, StderrPipeAtomic)
     /* -128 for prefix space */
     for (int i = 0; i < PIPE_BUF - 128; i++) {
         MutableEntry e(1, 1);
-        auto & s = e.get_ostream();
+        auto &s = e.get_ostream();
         for (int j = 0; j < i; j++) {
             char c = 'a';
             c += (j % 26);
@@ -259,8 +257,7 @@ TEST(Log, StderrPipeBig)
         /* no verification as some reads will be torn due to size > PIPE_BUF */
         close(pfd[1]);
         readpipe(pfd[0], 0);
-    }
-    else if (pid == (pid_t) - 1) {
+    } else if (pid == (pid_t) - 1) {
         ASSERT_EQ(0, 1);
     }
     close(pfd[0]);
@@ -277,7 +274,7 @@ TEST(Log, StderrPipeBig)
     /* -128 for prefix space */
     for (int i = 0; i < PIPE_BUF * 2; i++) {
         MutableEntry e(1, 1);
-        auto & s = e.get_ostream();
+        auto &s = e.get_ostream();
         for (int j = 0; j < i; j++) {
             char c = 'a';
             c += (j % 26);
@@ -380,8 +377,9 @@ TEST(Log, TimeSwitch)
         MutableEntry e(l, 1);
         e.get_ostream() << "SQUID THEFT! PUNISHABLE BY DEATH!";
         log.submit_entry(std::move(e));
-        if (i % 50)
+        if (i % 50) {
             log.set_coarse_timestamps(coarse = !coarse);
+        }
     }
     log.flush();
     log.stop();
@@ -413,38 +411,36 @@ TEST(Log, TimeFormat)
 #define dout_subsys ceph_subsys_context
 
 template < int depth, int x > struct do_log {
-    void log(CephContext * cct);
+    void log(CephContext *cct);
 };
 
 template < int x > struct do_log <12, x > {
-    void log(CephContext * cct);
+    void log(CephContext *cct);
 };
 
-template < int depth, int x > void do_log < depth, x >::log(CephContext * cct)
+template < int depth, int x > void do_log < depth, x >::log(CephContext *cct)
 {
     ldout(cct, 20) << "Log depth=" << depth << " x=" << x << dendl;
     if (rand() % 2) {
         do_log < depth + 1, x * 2 > log;
         log.log(cct);
-    }
-    else {
+    } else {
         do_log < depth + 1, x * 2 + 1 > log;
         log.log(cct);
     }
 }
 
-std::string recursion(CephContext * cct)
+std::string recursion(CephContext *cct)
 {
     ldout(cct, 20) << "Preparing recursion string" << dendl;
     return "here-recursion";
 }
 
-template < int x > void do_log < 12, x >::log(CephContext * cct)
+template < int x > void do_log < 12, x >::log(CephContext *cct)
 {
     if ((rand() % 16) == 0) {
         ldout(cct, 20) << "End " << recursion(cct) << "x=" << x << dendl;
-    }
-    else {
+    } else {
         ldout(cct, 20) << "End x=" << x << dendl;
     }
 }

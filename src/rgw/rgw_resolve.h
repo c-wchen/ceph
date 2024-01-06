@@ -5,16 +5,18 @@
 
 #include "rgw_common.h"
 
-namespace ceph {
-    class DNSResolver;
-} class RGWResolver {
+namespace ceph
+{
+class DNSResolver;
+} class RGWResolver
+{
     DNSResolver *resolver;
 
-  public:
+public:
     ~RGWResolver();
-     RGWResolver();
-    int resolve_cname(const std::string & hostname, std::string & cname,
-                      bool * found);
+    RGWResolver();
+    int resolve_cname(const std::string &hostname, std::string &cname,
+                      bool *found);
 };
 
 extern void rgw_init_resolver(void);

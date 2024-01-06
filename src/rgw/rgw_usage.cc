@@ -11,8 +11,8 @@
 
 using namespace std;
 
-static void dump_usage_categories_info(Formatter * formatter,
-                                       const rgw_usage_log_entry & entry,
+static void dump_usage_categories_info(Formatter *formatter,
+                                       const rgw_usage_log_entry &entry,
                                        map < string, bool > *categories)
 {
     formatter->open_array_section("categories");
@@ -20,9 +20,10 @@ static void dump_usage_categories_info(Formatter * formatter,
     for (uiter = entry.usage_map.begin(); uiter != entry.usage_map.end();
          ++uiter) {
         if (categories && !categories->empty()
-            && !categories->count(uiter->first))
+            && !categories->count(uiter->first)) {
             continue;
-        const rgw_usage_data & usage = uiter->second;
+        }
+        const rgw_usage_data &usage = uiter->second;
         formatter->open_object_section("entry");
         formatter->dump_string("category", uiter->first);
         formatter->dump_unsigned("bytes_sent", usage.bytes_sent);
@@ -34,11 +35,11 @@ static void dump_usage_categories_info(Formatter * formatter,
     formatter->close_section(); // categories
 }
 
-int RGWUsage::show(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver,
-                   rgw::sal::User * user, rgw::sal::Bucket * bucket,
+int RGWUsage::show(const DoutPrefixProvider *dpp, rgw::sal::Driver *driver,
+                   rgw::sal::User *user, rgw::sal::Bucket *bucket,
                    uint64_t start_epoch, uint64_t end_epoch,
                    bool show_log_entries, bool show_log_sum, map < string,
-                   bool > *categories, RGWFormatterFlusher & flusher)
+                   bool > *categories, RGWFormatterFlusher &flusher)
 {
     uint32_t max_entries = 1000;
 
@@ -65,13 +66,11 @@ int RGWUsage::show(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver,
             ret =
                 bucket->read_usage(dpp, start_epoch, end_epoch, max_entries,
                                    &is_truncated, usage_iter, usage);
-        }
-        else if (user) {
+        } else if (user) {
             ret =
                 user->read_usage(dpp, start_epoch, end_epoch, max_entries,
                                  &is_truncated, usage_iter, usage);
-        }
-        else {
+        } else {
             ret =
                 driver->read_all_usage(dpp, start_epoch, end_epoch, max_entries,
                                        &is_truncated, usage_iter, usage);
@@ -88,8 +87,8 @@ int RGWUsage::show(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver,
 
         map < rgw_user_bucket, rgw_usage_log_entry >::iterator iter;
         for (iter = usage.begin(); iter != usage.end(); ++iter) {
-            const rgw_user_bucket & ub = iter->first;
-            const rgw_usage_log_entry & entry = iter->second;
+            const rgw_user_bucket &ub = iter->first;
+            const rgw_usage_log_entry &entry = iter->second;
 
             if (show_log_entries) {
                 if (ub.user.compare(last_owner) != 0) {
@@ -134,7 +133,7 @@ int RGWUsage::show(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver,
         formatter->open_array_section("summary");
         map < string, rgw_usage_log_entry >::iterator siter;
         for (siter = summary_map.begin(); siter != summary_map.end(); ++siter) {
-            const rgw_usage_log_entry & entry = siter->second;
+            const rgw_usage_log_entry &entry = siter->second;
             formatter->open_object_section("user");
             formatter->dump_string("user", siter->first);
             dump_usage_categories_info(formatter, entry, categories);
@@ -163,22 +162,20 @@ int RGWUsage::show(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver,
     return 0;
 }
 
-int RGWUsage::trim(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver,
-                   rgw::sal::User * user, rgw::sal::Bucket * bucket,
+int RGWUsage::trim(const DoutPrefixProvider *dpp, rgw::sal::Driver *driver,
+                   rgw::sal::User *user, rgw::sal::Bucket *bucket,
                    uint64_t start_epoch, uint64_t end_epoch)
 {
     if (bucket) {
         return bucket->trim_usage(dpp, start_epoch, end_epoch);
-    }
-    else if (user) {
+    } else if (user) {
         return user->trim_usage(dpp, start_epoch, end_epoch);
-    }
-    else {
+    } else {
         return driver->trim_all_usage(dpp, start_epoch, end_epoch);
     }
 }
 
-int RGWUsage::clear(const DoutPrefixProvider * dpp, rgw::sal::Driver * driver)
+int RGWUsage::clear(const DoutPrefixProvider *dpp, rgw::sal::Driver *driver)
 {
     return driver->clear_usage(dpp);
 }

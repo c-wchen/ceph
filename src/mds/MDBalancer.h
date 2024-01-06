@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 #ifndef CEPH_MDBALANCER_H
 #define CEPH_MDBALANCER_H
@@ -30,56 +30,58 @@ class CDir;
 class Messenger;
 class MonClient;
 
-class MDBalancer {
-  public:
+class MDBalancer
+{
+public:
     using clock = ceph::coarse_mono_clock;
     using time = ceph::coarse_mono_time;
     friend class C_Bal_SendHeartbeat;
 
-     MDBalancer(MDSRank * m, Messenger * msgr, MonClient * monc);
+    MDBalancer(MDSRank *m, Messenger *msgr, MonClient *monc);
 
     void handle_conf_change(const std::set < std::string > &changed,
-                            const MDSMap & mds_map);
+                            const MDSMap &mds_map);
 
     int proc_message(const cref_t < Message > &m);
 
-  /**
-   * Regularly called upkeep function.
-   *
-   * Sends MHeartbeat messages to the mons.
-   */
+    /**
+     * Regularly called upkeep function.
+     *
+     * Sends MHeartbeat messages to the mons.
+     */
     void tick();
 
     void handle_export_pins(void);
 
-    void subtract_export(CDir * ex);
-    void add_import(CDir * im);
-    void adjust_pop_for_rename(CDir * pdir, CDir * dir, bool inc);
+    void subtract_export(CDir *ex);
+    void add_import(CDir *im);
+    void adjust_pop_for_rename(CDir *pdir, CDir *dir, bool inc);
 
-    void hit_inode(CInode * in, int type);
-    void hit_dir(CDir * dir, int type, double amount = 1.0);
+    void hit_inode(CInode *in, int type);
+    void hit_dir(CDir *dir, int type, double amount = 1.0);
 
-    void queue_split(const CDir * dir, bool fast);
-    void queue_merge(CDir * dir);
-    bool is_fragment_pending(dirfrag_t df) {
+    void queue_split(const CDir *dir, bool fast);
+    void queue_merge(CDir *dir);
+    bool is_fragment_pending(dirfrag_t df)
+    {
         return split_pending.count(df) || merge_pending.count(df);
     }
-  /**
-   * Based on size and configuration, decide whether to issue a queue_split
-   * or queue_merge for this CDir.
-   *
-   * \param hot whether the directory's temperature is enough to split it
-   */ void maybe_fragment(CDir * dir, bool hot);
+    /**
+     * Based on size and configuration, decide whether to issue a queue_split
+     * or queue_merge for this CDir.
+     *
+     * \param hot whether the directory's temperature is enough to split it
+     */ void maybe_fragment(CDir *dir, bool hot);
 
     void handle_mds_failure(mds_rank_t who);
 
-    int dump_loads(Formatter * f, int64_t depth = -1) const;
+    int dump_loads(Formatter *f, int64_t depth = -1) const;
 
-  private:
+private:
     typedef struct {
         std::map < mds_rank_t, double >targets;
-         std::map < mds_rank_t, double >imported;
-         std::map < mds_rank_t, double >exported;
+        std::map < mds_rank_t, double >imported;
+        std::map < mds_rank_t, double >exported;
     } balance_state_t;
 
     //set up the rebalancing targets for export and do one if the
@@ -91,32 +93,34 @@ class MDBalancer {
     int localize_balancer();
     void send_heartbeat();
     void handle_heartbeat(const cref_t < MHeartbeat > &m);
-    void find_exports(CDir * dir,
+    void find_exports(CDir *dir,
                       double amount,
-                      std::vector < CDir * >*exports,
-                      double &have, std::set < CDir * >&already_exporting);
+                      std::vector < CDir * > *exports,
+                      double &have, std::set < CDir * > &already_exporting);
 
-    double try_match(balance_state_t & state,
+    double try_match(balance_state_t &state,
                      mds_rank_t ex, double &maxex,
                      mds_rank_t im, double &maxim);
 
-    double get_maxim(balance_state_t & state, mds_rank_t im,
-                     double im_target_load) {
+    double get_maxim(balance_state_t &state, mds_rank_t im,
+                     double im_target_load)
+    {
         return im_target_load - mds_meta_load[im] - state.imported[im];
     }
-    double get_maxex(balance_state_t & state, mds_rank_t ex,
-                     double ex_target_load) {
+    double get_maxex(balance_state_t &state, mds_rank_t ex,
+                     double ex_target_load)
+    {
         return mds_meta_load[ex] - ex_target_load - state.exported[ex];
     }
 
-  /**
-   * Try to rebalance.
-   *
-   * Check if the monitor has recorded the current export targets;
-   * if it has then do the actual export. Otherwise send off our
-   * export targets message again.
-   */
-    void try_rebalance(balance_state_t & state);
+    /**
+     * Try to rebalance.
+     *
+     * Check if the monitor has recorded the current export targets;
+     * if it has then do the actual export. Otherwise send off our
+     * export targets message again.
+     */
+    void try_rebalance(balance_state_t &state);
     bool test_rank_mask(mds_rank_t rank);
 
     bool bal_fragment_dirs;

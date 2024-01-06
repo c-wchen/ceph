@@ -55,25 +55,30 @@
 
 struct FileOfLines {
     const char *filename;
-     std::ifstream input;
-     std::string this_line, prev_line;
+    std::ifstream input;
+    std::string this_line, prev_line;
     bool next_eof;
     bool is_eof;
 
-     FileOfLines(const char *_filename):filename(_filename),
-        input(filename), next_eof(false), is_eof(false) {
-    } void dump(const std::string & prefix) {
+    FileOfLines(const char *_filename): filename(_filename),
+        input(filename), next_eof(false), is_eof(false)
+    {
+    } void dump(const std::string &prefix)
+    {
         do {
             std::cout << prefix << this_line << std::endl;
             advance();
         } while (!eof());
     }
 
-    bool eof() const {
+    bool eof() const
+    {
         return is_eof;
-    } bool good() const {
+    } bool good() const
+    {
         return input.good();
-    } void advance() {
+    } void advance()
+    {
         if (next_eof) {
             is_eof = true;
             return;
@@ -84,28 +89,29 @@ struct FileOfLines {
         if (this_line.empty()) {
             if (!input.eof()) {
                 std::cerr << "Error: " << filename << " has an empty line." <<
-                    std::endl;
+                          std::endl;
                 exit(4);
             }
             is_eof = true;
             return;
-        }
-        else if (input.eof()) {
+        } else if (input.eof()) {
             next_eof = true;
         }
 
         if (this_line < prev_line) {
             std::
-                cerr << "Error: " << filename << " is not in sorted order; \""
-                << this_line << "\" follows \"" << prev_line << "\"." << std::
-                endl;
+            cerr << "Error: " << filename << " is not in sorted order; \""
+                 << this_line << "\" follows \"" << prev_line << "\"." << std::
+                 endl;
             exit(4);
         }
     }
 
-    const std::string line() const {
+    const std::string line() const
+    {
         return this_line;
-}};
+    }
+};
 
 int main(int argc, const char *argv[])
 {
@@ -135,13 +141,11 @@ int main(int argc, const char *argv[])
         if (input1.line() == input2.line()) {
             input1.advance();
             input2.advance();
-        }
-        else if (input1.line() < input2.line()) {
+        } else if (input1.line() < input2.line()) {
             files_same = false;
             std::cout << "< " << input1.line() << std::endl;
             input1.advance();
-        }
-        else {
+        } else {
             files_same = false;
             std::cout << "> " << input2.line() << std::endl;
             input2.advance();
@@ -151,16 +155,14 @@ int main(int argc, const char *argv[])
     if (!input1.eof()) {
         files_same = false;
         input1.dump("< ");
-    }
-    else if (!input2.eof()) {
+    } else if (!input2.eof()) {
         files_same = false;
         input2.dump("> ");
     }
 
     if (files_same) {
         exit(0);
-    }
-    else {
+    } else {
         exit(1);
     }
 }

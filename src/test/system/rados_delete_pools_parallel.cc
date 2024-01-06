@@ -60,8 +60,9 @@ int main(int argc, const char **argv)
     const std::string pool = get_temp_pool_name(argv[0]);
     if (num_objects) {
         g_num_objects = atoi(num_objects);
-        if (g_num_objects == 0)
+        if (g_num_objects == 0) {
             return 100;
+        }
     }
 
     CrossProcessSem *pool_setup_sem = NULL;

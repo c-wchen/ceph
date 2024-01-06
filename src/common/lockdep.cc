@@ -25,9 +25,11 @@
 bool g_lockdep;
 struct lockdep_stopper_t {
     // disable lockdep when this module destructs.
-    ~lockdep_stopper_t() {
+    ~lockdep_stopper_t()
+    {
         g_lockdep = 0;
-}};
+    }
+};
 
 static pthread_mutex_t lockdep_mutex = PTHREAD_MUTEX_INITIALIZER;
 static CephContext *g_lockdep_ceph_ctx = NULL;
@@ -38,7 +40,7 @@ static std::map < int, int >lock_refs;
 static constexpr size_t MAX_LOCKS = 128 * 1024; // increase me as needed
 static std::bitset < MAX_LOCKS > free_ids;  // bit set = free
 static ceph::unordered_map < pthread_t, std::map < int,
-    ceph::BackTrace * >>held;
+       ceph::BackTrace * >>held;
 static constexpr size_t NR_LOCKS = 4096;    // the initial number of locks
 static std::vector < std::bitset < MAX_LOCKS >> follows(NR_LOCKS);  // follows[a][b] means b taken after a
 static std::vector < std::map < int, ceph::BackTrace * >>follows_bt(NR_LOCKS);
@@ -54,7 +56,7 @@ static bool lockdep_force_backtrace()
 }
 
 /******* Functions **********/
-void lockdep_register_ceph_context(CephContext * cct)
+void lockdep_register_ceph_context(CephContext *cct)
 {
     static_assert((MAX_LOCKS > 0) && (MAX_LOCKS % 8 == 0),
                   "lockdep's MAX_LOCKS needs to be divisible by 8 to operate correctly.");
@@ -76,7 +78,7 @@ void lockdep_register_ceph_context(CephContext * cct)
     pthread_mutex_unlock(&lockdep_mutex);
 }
 
-void lockdep_unregister_ceph_context(CephContext * cct)
+void lockdep_unregister_ceph_context(CephContext *cct)
 {
     pthread_mutex_lock(&lockdep_mutex);
     if (cct == g_lockdep_ceph_ctx) {
@@ -97,15 +99,15 @@ void lockdep_unregister_ceph_context(CephContext * cct)
         lock_ids.clear();
         std::for_each(follows.begin(),
                       std::next(follows.begin(), current_maxid),
-                      [](auto & follow) {
-                      follow.reset();
-                      });
+        [](auto & follow) {
+            follow.reset();
+        });
         std::for_each(follows_bt.begin(),
                       std::next(follows_bt.begin(), current_maxid),
-                      [](auto & follow_bt) {
-                      follow_bt = {
-                      };
-                      });
+        [](auto & follow_bt) {
+            follow_bt = {
+            };
+        });
     }
     pthread_mutex_unlock(&lockdep_mutex);
 }
@@ -113,19 +115,21 @@ void lockdep_unregister_ceph_context(CephContext * cct)
 int lockdep_dump_locks()
 {
     pthread_mutex_lock(&lockdep_mutex);
-    if (!g_lockdep)
+    if (!g_lockdep) {
         goto out;
+    }
 
     for (auto p = held.begin(); p != held.end(); ++p) {
         lockdep_dout(0) << "--- thread " << p->first << " ---" << dendl;
         for (auto q = p->second.begin(); q != p->second.end(); ++q) {
             lockdep_dout(0) << "  * " << lock_names[q->first] << "\n";
-            if (q->second)
+            if (q->second) {
                 *_dout << *(q->second);
+            }
             *_dout << dendl;
         }
     }
-  out:
+out:
     pthread_mutex_unlock(&lockdep_mutex);
     return 0;
 }
@@ -159,17 +163,18 @@ static int _lockdep_register(const char *name)
 {
     int id = -1;
 
-    if (!g_lockdep)
+    if (!g_lockdep) {
         return id;
+    }
     ceph::unordered_map < std::string, int >::iterator p = lock_ids.find(name);
     if (p == lock_ids.end()) {
         id = lockdep_get_free_id();
         if (id < 0) {
             lockdep_dout(0) << "ERROR OUT OF IDS .. have 0"
-                << " max " << MAX_LOCKS << dendl;
-          for (auto & p:lock_names) {
+                            << " max " << MAX_LOCKS << dendl;
+            for (auto &p : lock_names) {
                 lockdep_dout(0) << "  lock " << p.first << " " << p.
-                    second << dendl;
+                                second << dendl;
             }
             ceph_abort();
         }
@@ -183,8 +188,7 @@ static int _lockdep_register(const char *name)
         lock_ids[name] = id;
         lock_names[id] = name;
         lockdep_dout(10) << "registered '" << name << "' as " << id << dendl;
-    }
-    else {
+    } else {
         id = p->second;
         lockdep_dout(20) << "had '" << name << "' as " << id << dendl;
     }
@@ -214,10 +218,11 @@ void lockdep_unregister(int id)
 
     std::string name;
     auto p = lock_names.find(id);
-    if (p == lock_names.end())
+    if (p == lock_names.end()) {
         name = "unknown";
-    else
+    } else {
         name = p->second;
+    }
 
     int &refs = lock_refs[id];
     if (--refs == 0) {
@@ -234,17 +239,16 @@ void lockdep_unregister(int id)
             }
 
             lockdep_dout(10) << "unregistered '" << name << "' from " << id <<
-                dendl;
+                             dendl;
             lock_ids.erase(p->second);
             lock_names.erase(id);
         }
         lock_refs.erase(id);
         free_ids.set(id);
         last_freed_id = id;
-    }
-    else if (g_lockdep) {
+    } else if (g_lockdep) {
         lockdep_dout(20) << "have " << refs << " of '" << name << "' " <<
-            "from " << id << dendl;
+                         "from " << id << dendl;
     }
     pthread_mutex_unlock(&lockdep_mutex);
 }
@@ -256,7 +260,7 @@ static bool does_follow(int a, int b)
         lockdep_dout(0) << "\n";
         *_dout << "------------------------------------" << "\n";
         *_dout << "existing dependency " << lock_names[a] << " (" << a <<
-            ") -> " << lock_names[b] << " (" << b << ") at:\n";
+               ") -> " << lock_names[b] << " (" << b << ") at:\n";
         if (follows_bt[a][b]) {
             follows_bt[a][b]->print(*_dout);
         }
@@ -267,9 +271,9 @@ static bool does_follow(int a, int b)
     for (unsigned i = 0; i < current_maxid; i++) {
         if (follows[a].test(i) && does_follow(i, b)) {
             lockdep_dout(0) << "existing intermediate dependency " <<
-                lock_names[a]
-                << " (" << a << ") -> " << lock_names[i] << " (" << i <<
-                ") at:\n";
+                            lock_names[a]
+                            << " (" << a << ") -> " << lock_names[i] << " (" << i <<
+                            ") at:\n";
             if (follows_bt[a][i]) {
                 follows_bt[a][i]->print(*_dout);
             }
@@ -292,13 +296,14 @@ int lockdep_will_lock(const char *name, int id, bool force_backtrace,
         return id;
     }
 
-    if (id < 0)
+    if (id < 0) {
         id = _lockdep_register(name);
+    }
 
     lockdep_dout(20) << "_will_lock " << name << " (" << id << ")" << dendl;
 
     // check dependency graph
-    auto & m = held[p];
+    auto &m = held[p];
     for (auto p = m.begin(); p != m.end(); ++p) {
         if (p->first == id) {
             if (!recursive) {
@@ -314,16 +319,15 @@ int lockdep_will_lock(const char *name, int id, bool force_backtrace,
                 *_dout << dendl;
                 ceph_abort();
             }
-        }
-        else if (!follows[p->first].test(id)) {
+        } else if (!follows[p->first].test(id)) {
             // new dependency
 
             // did we just create a cycle?
             if (does_follow(id, p->first)) {
                 auto bt = new ceph::ClibBackTrace(BACKTRACE_SKIP);
                 lockdep_dout(0) << "new dependency " << lock_names[p->first]
-                    << " (" << p->first << ") -> " << name << " (" << id << ")"
-                    << " creates a cycle at\n";
+                                << " (" << p->first << ") -> " << name << " (" << id << ")"
+                                << " creates a cycle at\n";
                 bt->print(*_dout);
                 *_dout << dendl;
 
@@ -331,7 +335,7 @@ int lockdep_will_lock(const char *name, int id, bool force_backtrace,
                 for (auto q = m.begin(); q != m.end(); ++q) {
                     lockdep_dout(0) << "  " << lock_names[q->
                                                           first] << " (" << q->
-                        first << ")" << dendl;
+                                    first << ")" << dendl;
                     if (q->second) {
                         lockdep_dout(0) << " ";
                         q->second->print(*_dout);
@@ -345,9 +349,8 @@ int lockdep_will_lock(const char *name, int id, bool force_backtrace,
                 // does_follow() won't terminate.
 
                 ceph_abort();   // actually, we should just die here.
-            }
-            else {
-                ceph::BackTrace * bt = NULL;
+            } else {
+                ceph::BackTrace *bt = NULL;
                 if (force_backtrace || lockdep_force_backtrace()) {
                     bt = new ceph::ClibBackTrace(BACKTRACE_SKIP);
                 }
@@ -355,7 +358,7 @@ int lockdep_will_lock(const char *name, int id, bool force_backtrace,
                 follows_bt[p->first][id] = bt;
                 lockdep_dout(10) << lock_names[p->
                                                first] << " -> " << name << " at"
-                    << dendl;
+                                 << dendl;
                 //bt->print(*_dout);
             }
         }
@@ -369,17 +372,20 @@ int lockdep_locked(const char *name, int id, bool force_backtrace)
     pthread_t p = pthread_self();
 
     pthread_mutex_lock(&lockdep_mutex);
-    if (!g_lockdep)
+    if (!g_lockdep) {
         goto out;
-    if (id < 0)
+    }
+    if (id < 0) {
         id = _lockdep_register(name);
+    }
 
     lockdep_dout(20) << "_locked " << name << dendl;
-    if (force_backtrace || lockdep_force_backtrace())
+    if (force_backtrace || lockdep_force_backtrace()) {
         held[p][id] = new ceph::ClibBackTrace(BACKTRACE_SKIP);
-    else
+    } else {
         held[p][id] = 0;
-  out:
+    }
+out:
     pthread_mutex_unlock(&lockdep_mutex);
     return id;
 }
@@ -395,8 +401,9 @@ int lockdep_will_unlock(const char *name, int id)
     }
 
     pthread_mutex_lock(&lockdep_mutex);
-    if (!g_lockdep)
+    if (!g_lockdep) {
         goto out;
+    }
     lockdep_dout(20) << "_will_unlock " << name << dendl;
 
     // don't assert.. lockdep may be enabled at any point in time
@@ -405,7 +412,7 @@ int lockdep_will_unlock(const char *name, int id)
 
     delete held[p][id];
     held[p].erase(id);
-  out:
+out:
     pthread_mutex_unlock(&lockdep_mutex);
     return id;
 }

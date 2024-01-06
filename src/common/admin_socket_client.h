@@ -20,12 +20,13 @@
 /* This is a simple client that talks to an AdminSocket using blocking I/O.
  * We put a 5-second timeout on send and recv operations.
  */
-class AdminSocketClient {
-  public:
-    AdminSocketClient(const std::string & path);
-    std::string do_request(std::string request, std::string * result);
-    std::string ping(bool * ok);
-  private:
+class AdminSocketClient
+{
+public:
+    AdminSocketClient(const std::string &path);
+    std::string do_request(std::string request, std::string *result);
+    std::string ping(bool *ok);
+private:
     std::string m_path;
 };
 

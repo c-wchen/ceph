@@ -125,23 +125,22 @@ TEST_F(LibRadosListPP, ListObjectsEndIter)
     ASSERT_TRUE(iter2 == iter_end2);
 }
 
-static void check_listpp(std::set < std::string > &myset, IoCtx & ioctx,
-                         const std::string & check_nspace)
+static void check_listpp(std::set < std::string > &myset, IoCtx &ioctx,
+                         const std::string &check_nspace)
 {
     NObjectIterator iter(ioctx.nobjects_begin());
     std::set < std::string > orig_set(myset);
-  /**
-   * During splitting, we might see duplicate items.
-   * We assert that every object returned is in myset and that
-   * we don't hit ENOENT until we have hit every item in myset
-   * at least once.
-   */
+    /**
+     * During splitting, we might see duplicate items.
+     * We assert that every object returned is in myset and that
+     * we don't hit ENOENT until we have hit every item in myset
+     * at least once.
+     */
     while (iter != ioctx.nobjects_end()) {
         std::string test_name;
         if (check_nspace == all_nspaces) {
             test_name = iter->get_nspace() + ":" + iter->get_oid();
-        }
-        else {
+        } else {
             ASSERT_TRUE(iter->get_nspace() == check_nspace);
             test_name = iter->get_oid();
         }
@@ -221,15 +220,16 @@ TEST_F(LibRadosListPP, ListObjectsManyPP)
     std::set < int >saw_pg;
     for (; it != ioctx.nobjects_end(); ++it) {
         std::cout << it->get_oid()
-            << " " << it.get_pg_hash_position() << std::endl;
+                  << " " << it.get_pg_hash_position() << std::endl;
         saw_obj.insert(it->get_oid());
         saw_pg.insert(it.get_pg_hash_position());
     }
     std::cout << "saw " << saw_pg.size() << " pgs " << std::endl;
 
     // make sure they are 0..n
-    for (unsigned i = 0; i < saw_pg.size(); ++i)
+    for (unsigned i = 0; i < saw_pg.size(); ++i) {
         ASSERT_TRUE(saw_pg.count(i));
+    }
 }
 
 TEST_F(LibRadosListPP, ListObjectsStartPP)
@@ -247,7 +247,7 @@ TEST_F(LibRadosListPP, ListObjectsStartPP)
     std::map < int, std::set < std::string > >pg_to_obj;
     for (; it != ioctx.nobjects_end(); ++it) {
         std::cout << it->get_oid() << " " << it.
-            get_pg_hash_position() << std::endl;
+                  get_pg_hash_position() << std::endl;
         pg_to_obj[it.get_pg_hash_position()].insert(it->get_oid());
     }
 
@@ -257,7 +257,7 @@ TEST_F(LibRadosListPP, ListObjectsStartPP)
     while (p != pg_to_obj.rend()) {
         ASSERT_EQ((uint32_t) p->first, it.seek(p->first));
         std::cout << "have " << it->get_oid() << " expect one of " << p->
-            second << std::endl;
+                  second << std::endl;
         ASSERT_TRUE(p->second.count(it->get_oid()));
         ++p;
     }
@@ -314,7 +314,7 @@ TEST_F(LibRadosListPP, ListObjectsCursorNSPP)
 
         it.seek(cursor);
         cout << ": seek to " << cursor << " it.cursor=" << it.
-            get_cursor() << std::endl;
+             get_cursor() << std::endl;
         ASSERT_EQ(oid, it->get_oid());
         ASSERT_LT(count, max_objs); /* avoid infinite loops due to bad seek */
 
@@ -336,21 +336,21 @@ TEST_F(LibRadosListPP, ListObjectsCursorNSPP)
     }
 
     /* seek to all cursors, check that we get expected obj */
-  for (auto & niter:ns_to_cursors) {
-        const string & ns = niter.first;
+    for (auto &niter : ns_to_cursors) {
+        const string &ns = niter.first;
         list < librados::ObjectCursor > &cursors = niter.second;
 
-      for (auto & cursor:cursors) {
+        for (auto &cursor : cursors) {
             cout << ": seek to " << cursor << std::endl;
             it.seek(cursor);
             ASSERT_EQ(cursor, it.get_cursor());
-            string & expected_oid = cursor_to_obj[cursor];
+            string &expected_oid = cursor_to_obj[cursor];
             cout << ": it->get_cursor()=" << it.
-                get_cursor() << " expected=" << cursor << std::endl;
+                 get_cursor() << " expected=" << cursor << std::endl;
             cout << ": it->get_oid()=" << it->
-                get_oid() << " expected=" << expected_oid << std::endl;
+                 get_oid() << " expected=" << expected_oid << std::endl;
             cout << ": it->get_nspace()=" << it->
-                get_oid() << " expected=" << ns << std::endl;
+                 get_oid() << " expected=" << ns << std::endl;
             ASSERT_EQ(expected_oid, it->get_oid());
             ASSERT_EQ(it->get_nspace(), ns);
         }
@@ -402,9 +402,9 @@ TEST_F(LibRadosListPP, ListObjectsCursorPP)
         it.seek(p->first);
         ASSERT_EQ(p->first, it.get_cursor());
         cout << ": it->get_cursor()=" << it.get_cursor() << " expected=" << p->
-            first << std::endl;
+             first << std::endl;
         cout << ": it->get_oid()=" << it->get_oid() << " expected=" << p->
-            second << std::endl;
+             second << std::endl;
         ASSERT_EQ(p->second, it->get_oid());
 
         librados::NObjectIterator it2 = ioctx.nobjects_begin(it.get_cursor());
@@ -580,15 +580,16 @@ TEST_F(LibRadosListECPP, ListObjectsManyPP)
     std::set < int >saw_pg;
     for (; it != ioctx.nobjects_end(); ++it) {
         std::cout << it->get_oid()
-            << " " << it.get_pg_hash_position() << std::endl;
+                  << " " << it.get_pg_hash_position() << std::endl;
         saw_obj.insert(it->get_oid());
         saw_pg.insert(it.get_pg_hash_position());
     }
     std::cout << "saw " << saw_pg.size() << " pgs " << std::endl;
 
     // make sure they are 0..n
-    for (unsigned i = 0; i < saw_pg.size(); ++i)
+    for (unsigned i = 0; i < saw_pg.size(); ++i) {
         ASSERT_TRUE(saw_pg.count(i));
+    }
 }
 
 TEST_F(LibRadosListECPP, ListObjectsStartPP)
@@ -607,7 +608,7 @@ TEST_F(LibRadosListECPP, ListObjectsStartPP)
     std::map < int, std::set < std::string > >pg_to_obj;
     for (; it != ioctx.nobjects_end(); ++it) {
         std::cout << it->get_oid() << " " << it.
-            get_pg_hash_position() << std::endl;
+                  get_pg_hash_position() << std::endl;
         pg_to_obj[it.get_pg_hash_position()].insert(it->get_oid());
     }
 
@@ -617,7 +618,7 @@ TEST_F(LibRadosListECPP, ListObjectsStartPP)
     while (p != pg_to_obj.rend()) {
         ASSERT_EQ((uint32_t) p->first, it.seek(p->first));
         std::cout << "have " << it->get_oid() << " expect one of " << p->
-            second << std::endl;
+                  second << std::endl;
         ASSERT_TRUE(p->second.count(it->get_oid()));
         ++p;
     }
@@ -738,8 +739,8 @@ TEST_F(LibRadosListPP, EnumerateObjectsSplitPP)
             int r = ioctx.object_list(c, shard_end, 12, { }, &result, &c);
             ASSERT_GE(r, 0);
 
-          for (const auto & i:result) {
-                const auto & oid = i.oid;
+            for (const auto &i : result) {
+                const auto &oid = i.oid;
                 if (saw_obj.count(oid)) {
                     std::cerr << "duplicate obj " << oid << std::endl;
                 }

@@ -37,8 +37,7 @@ std::string ceph_get_short_hostname()
     size_t pos = hostname.find('.');
     if (pos == std::string::npos) {
         return hostname;
-    }
-    else {
+    } else {
         return hostname.substr(0, pos);
     }
 }

@@ -24,7 +24,7 @@ XMLObjIter::~XMLObjIter()
 }
 
 void XMLObjIter::
-set(const XMLObjIter::map_iter_t & _cur, const XMLObjIter::map_iter_t & _end)
+set(const XMLObjIter::map_iter_t &_cur, const XMLObjIter::map_iter_t &_end)
 {
     cur = _cur;
     end = _end;
@@ -40,7 +40,7 @@ XMLObj *XMLObjIter::get_next()
     return obj;
 }
 
-bool XMLObjIter::get_name(std::string & name) const const
+bool XMLObjIter::get_name(std::string &name) const const
 {
     if (cur == end) {
         return false;
@@ -50,7 +50,7 @@ bool XMLObjIter::get_name(std::string & name) const const
     return true;
 }
 
-ostream & operator<<(ostream & out, const XMLObj & obj)
+ostream &operator<<(ostream &out, const XMLObj &obj)
 {
     out << obj.obj_type << ": " << obj.data;
     return out;
@@ -60,7 +60,7 @@ XMLObj::~XMLObj()
 {
 }
 
-bool XMLObj::xml_start(XMLObj * parent, const char *el, const char **attr)
+bool XMLObj::xml_start(XMLObj *parent, const char *el, const char **attr)
 {
     this->parent = parent;
     obj_type = el;
@@ -80,12 +80,12 @@ void XMLObj:: xml_handle_data(const char *s, int len)
     data.append(s, len);
 }
 
-const std::string & XMLObj:: XMLObj::get_data() const const
+const std::string &XMLObj:: XMLObj::get_data() const const
 {
     return data;
 }
 
-const std::string & XMLObj:: XMLObj::get_obj_type() const const
+const std::string &XMLObj:: XMLObj::get_obj_type() const const
 {
     return obj_type;
 }
@@ -95,31 +95,32 @@ XMLObj *XMLObj::XMLObj::get_parent()
     return parent;
 }
 
-void XMLObj:: add_child(const std::string & el, XMLObj * obj)
+void XMLObj:: add_child(const std::string &el, XMLObj *obj)
 {
     children.insert(std::pair < std::string, XMLObj * >(el, obj));
 }
 
-bool XMLObj::get_attr(const std::string & name, std::string & attr) const const
+bool XMLObj::get_attr(const std::string &name, std::string &attr) const const
 {
     const std::map < std::string, std::string >::const_iterator iter =
         attr_map.find(name);
-    if (iter == attr_map.end())
+    if (iter == attr_map.end()) {
         return false;
+    }
     attr = iter->second;
     return true;
 }
 
-XMLObjIter XMLObj::find(const std::string & name)
+XMLObjIter XMLObj::find(const std::string &name)
 {
     XMLObjIter iter;
     const XMLObjIter::const_map_iter_t first = children.find(name);
     XMLObjIter::const_map_iter_t last;
     if (first != children.end()) {
         last = children.upper_bound(name);
-    }
-    else
+    } else {
         last = children.end();
+    }
     iter.set(first, last);
     return iter;
 }
@@ -133,16 +134,17 @@ XMLObjIter XMLObj::find_first()
     return iter;
 }
 
-XMLObj *XMLObj::find_first(const std::string & name)
+XMLObj *XMLObj::find_first(const std::string &name)
 {
     const XMLObjIter::const_map_iter_t first = children.find(name);
-    if (first != children.end())
+    if (first != children.end()) {
         return first->second;
+    }
     return nullptr;
 }
 
-RGWXMLParser::RGWXMLParser():buf(nullptr), buf_len(0), cur_obj(nullptr), success(true),
-init_called(false)
+RGWXMLParser::RGWXMLParser(): buf(nullptr), buf_len(0), cur_obj(nullptr), success(true),
+    init_called(false)
 {
     p = XML_ParserCreate(nullptr);
 }
@@ -167,8 +169,7 @@ void RGWXMLParser::call_xml_start(void *user_data, const char *el,
     if (!obj) {
         handler->unallocated_objs.push_back(XMLObj());
         obj = &handler->unallocated_objs.back();
-    }
-    else {
+    } else {
         handler->allocated_objs.push_back(obj);
     }
     if (!obj->xml_start(handler->cur_obj, el, attr)) {
@@ -177,8 +178,7 @@ void RGWXMLParser::call_xml_start(void *user_data, const char *el,
     }
     if (handler->cur_obj) {
         handler->cur_obj->add_child(el, obj);
-    }
-    else {
+    } else {
         handler->children.insert(std::pair < std::string, XMLObj * >(el, obj));
     }
     handler->cur_obj = obj;
@@ -226,8 +226,7 @@ bool RGWXMLParser::parse(const char *_buf, int len, int done)
         free(buf);
         buf = NULL;
         return false;
-    }
-    else {
+    } else {
         buf = tmp_buf;
     }
 
@@ -245,9 +244,9 @@ bool RGWXMLParser::parse(const char *_buf, int len, int done)
     return success;
 }
 
-void decode_xml_obj(unsigned long &val, XMLObj * obj)
+void decode_xml_obj(unsigned long &val, XMLObj *obj)
 {
-    auto & s = obj->get_data();
+    auto &s = obj->get_data();
     const char *start = s.c_str();
     char *p;
 
@@ -272,7 +271,7 @@ void decode_xml_obj(unsigned long &val, XMLObj * obj)
     }
 }
 
-void decode_xml_obj(long &val, XMLObj * obj)
+void decode_xml_obj(long &val, XMLObj *obj)
 {
     const std::string s = obj->get_data();
     const char *start = s.c_str();
@@ -300,7 +299,7 @@ void decode_xml_obj(long &val, XMLObj * obj)
     }
 }
 
-void decode_xml_obj(long long &val, XMLObj * obj)
+void decode_xml_obj(long long &val, XMLObj *obj)
 {
     const std::string s = obj->get_data();
     const char *start = s.c_str();
@@ -328,7 +327,7 @@ void decode_xml_obj(long long &val, XMLObj * obj)
     }
 }
 
-void decode_xml_obj(unsigned long long &val, XMLObj * obj)
+void decode_xml_obj(unsigned long long &val, XMLObj *obj)
 {
     const std::string s = obj->get_data();
     const char *start = s.c_str();
@@ -355,7 +354,7 @@ void decode_xml_obj(unsigned long long &val, XMLObj * obj)
     }
 }
 
-void decode_xml_obj(int &val, XMLObj * obj)
+void decode_xml_obj(int &val, XMLObj *obj)
 {
     long l;
     decode_xml_obj(l, obj);
@@ -368,7 +367,7 @@ void decode_xml_obj(int &val, XMLObj * obj)
     val = (int)l;
 }
 
-void decode_xml_obj(unsigned &val, XMLObj * obj)
+void decode_xml_obj(unsigned &val, XMLObj *obj)
 {
     unsigned long l;
     decode_xml_obj(l, obj);
@@ -381,7 +380,7 @@ void decode_xml_obj(unsigned &val, XMLObj * obj)
     val = (unsigned)l;
 }
 
-void decode_xml_obj(bool & val, XMLObj * obj)
+void decode_xml_obj(bool &val, XMLObj *obj)
 {
     const std::string s = obj->get_data();
     if (strncasecmp(s.c_str(), "true", 8) == 0) {
@@ -397,7 +396,7 @@ void decode_xml_obj(bool & val, XMLObj * obj)
     val = (bool) i;
 }
 
-void decode_xml_obj(bufferlist & val, XMLObj * obj)
+void decode_xml_obj(bufferlist &val, XMLObj *obj)
 {
     const std::string s = obj->get_data();
 
@@ -405,12 +404,12 @@ void decode_xml_obj(bufferlist & val, XMLObj * obj)
     bl.append(s.c_str(), s.size());
     try {
         val.decode_base64(bl);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         throw RGWXMLDecoder::err("failed to decode base64");
     }
 }
 
-void decode_xml_obj(utime_t & val, XMLObj * obj)
+void decode_xml_obj(utime_t &val, XMLObj *obj)
 {
     const std::string s = obj->get_data();
     uint64_t epoch;
@@ -418,69 +417,69 @@ void decode_xml_obj(utime_t & val, XMLObj * obj)
     int r = utime_t::parse_date(s, &epoch, &nsec);
     if (r == 0) {
         val = utime_t(epoch, nsec);
-    }
-    else {
+    } else {
         throw RGWXMLDecoder::err("failed to decode utime_t");
     }
 }
 
-void encode_xml(const char *name, const string & val, Formatter * f)
+void encode_xml(const char *name, const string &val, Formatter *f)
 {
     f->dump_string(name, val);
 }
 
-void encode_xml(const char *name, const char *val, Formatter * f)
+void encode_xml(const char *name, const char *val, Formatter *f)
 {
     f->dump_string(name, val);
 }
 
-void encode_xml(const char *name, bool val, Formatter * f)
+void encode_xml(const char *name, bool val, Formatter *f)
 {
     std::string s;
-    if (val)
+    if (val) {
         s = "True";
-    else
+    } else {
         s = "False";
+    }
 
     f->dump_string(name, s);
 }
 
-void encode_xml(const char *name, int val, Formatter * f)
+void encode_xml(const char *name, int val, Formatter *f)
 {
     f->dump_int(name, val);
 }
 
-void encode_xml(const char *name, long val, Formatter * f)
+void encode_xml(const char *name, long val, Formatter *f)
 {
     f->dump_int(name, val);
 }
 
-void encode_xml(const char *name, unsigned val, Formatter * f)
+void encode_xml(const char *name, unsigned val, Formatter *f)
 {
     f->dump_unsigned(name, val);
 }
 
-void encode_xml(const char *name, unsigned long val, Formatter * f)
+void encode_xml(const char *name, unsigned long val, Formatter *f)
 {
     f->dump_unsigned(name, val);
 }
 
-void encode_xml(const char *name, unsigned long long val, Formatter * f)
+void encode_xml(const char *name, unsigned long long val, Formatter *f)
 {
     f->dump_unsigned(name, val);
 }
 
-void encode_xml(const char *name, long long val, Formatter * f)
+void encode_xml(const char *name, long long val, Formatter *f)
 {
     f->dump_int(name, val);
 }
 
-void encode_xml(const char *name, const utime_t & val, Formatter * f)
+void encode_xml(const char *name, const utime_t &val, Formatter *f)
 {
     val.gmtime(f->dump_stream(name));
 }
 
-void encode_xml(const char *name, const bufferlist & bl, Formatter * f)
+void encode_xml(const char *name, const bufferlist &bl, Formatter *f)
 {
     /* need to copy data from bl, as it is const bufferlist */
     bufferlist src = bl;

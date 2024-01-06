@@ -11,21 +11,21 @@
 bool RotatingKeyRing::need_new_secrets() const const
 {
     std::lock_guard l {
-    lock};
+        lock};
     return secrets.need_new_secrets();
 }
 
 bool RotatingKeyRing::need_new_secrets(utime_t now) const const
 {
     std::lock_guard l {
-    lock};
+        lock};
     return secrets.need_new_secrets(now);
 }
 
 void RotatingKeyRing::set_secrets(RotatingSecrets && s)
 {
     std::lock_guard l {
-    lock};
+        lock};
     secrets = std::move(s);
     dump_rotating();
 }
@@ -34,28 +34,29 @@ void RotatingKeyRing::dump_rotating() const const
 {
     ldout(cct, 10) << "dump_rotating:" << dendl;
     for (auto iter = secrets.secrets.begin();
-         iter != secrets.secrets.end(); ++iter)
+         iter != secrets.secrets.end(); ++iter) {
         ldout(cct, 10) << " id " << iter->first << " " << iter->second << dendl;
+    }
 }
 
-bool RotatingKeyRing::get_secret(const EntityName & name, CryptoKey & secret) const const
+bool RotatingKeyRing::get_secret(const EntityName &name, CryptoKey &secret) const const
 {
     std::lock_guard l {
-    lock};
+        lock};
     return keyring->get_secret(name, secret);
 }
 
 bool RotatingKeyRing::get_service_secret(uint32_t service_id_,
-                                         uint64_t secret_id,
-                                         CryptoKey & secret) const const
+        uint64_t secret_id,
+        CryptoKey &secret) const const
 {
     std::lock_guard l {
-    lock};
+        lock};
 
     if (service_id_ != this->service_id) {
         ldout(cct,
               0) << "do not have service " << ceph_entity_type_name(service_id_)
-            << ", i am " << ceph_entity_type_name(this->service_id) << dendl;
+                 << ", i am " << ceph_entity_type_name(this->service_id) << dendl;
         return false;
     }
 

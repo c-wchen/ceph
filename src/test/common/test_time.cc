@@ -9,7 +9,7 @@
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License version 2.1, as published by the Free Software
- * Foundation.	See file COPYING.
+ * Foundation.  See file COPYING.
  *
  */
 
@@ -199,30 +199,33 @@ TEST(TimePoints, stringify)
     ASSERT_EQ(s.substr(0, 9), "2019-04-2");
 }
 
-namespace {
-    template < typename Rep, typename Period >
-        std::string to_string(const chrono::duration < Rep, Period > &t) {
-        std::ostringstream ss;
-        ss << t;
-        return ss.str();
-    }
+namespace
+{
+template < typename Rep, typename Period >
+std::string to_string(const chrono::duration < Rep, Period > &t)
+{
+    std::ostringstream ss;
+    ss << t;
+    return ss.str();
+}
 
-    void float_format_eq(string_view lhs, string_view rhs, unsigned precision) {
-        const float TOLERANCE =
-            10.0F / pow(10.0F, static_cast < float >(precision));
-        ASSERT_FALSE(lhs.empty());
-        ASSERT_EQ(lhs.back(), 's');
-        float lhs_v = std::stof(string { lhs, 0, lhs.find('s') });
-        ASSERT_NE(lhs.npos, lhs.find('.'));
-        ASSERT_EQ(precision, lhs.find('s') - lhs.find('.') - 1);
+void float_format_eq(string_view lhs, string_view rhs, unsigned precision)
+{
+    const float TOLERANCE =
+        10.0F / pow(10.0F, static_cast < float >(precision));
+    ASSERT_FALSE(lhs.empty());
+    ASSERT_EQ(lhs.back(), 's');
+    float lhs_v = std::stof(string { lhs, 0, lhs.find('s') });
+    ASSERT_NE(lhs.npos, lhs.find('.'));
+    ASSERT_EQ(precision, lhs.find('s') - lhs.find('.') - 1);
 
-        ASSERT_FALSE(rhs.empty());
-        ASSERT_EQ(rhs.back(), 's');
-        float rhs_v = std::stof(string { rhs, 0, rhs.find('s') });
-        EXPECT_NEAR(lhs_v, rhs_v, TOLERANCE);
-        ASSERT_NE(rhs.npos, rhs.find('.'));
-        EXPECT_EQ(precision, rhs.find('s') - rhs.find('.') - 1);
-    }
+    ASSERT_FALSE(rhs.empty());
+    ASSERT_EQ(rhs.back(), 's');
+    float rhs_v = std::stof(string { rhs, 0, rhs.find('s') });
+    EXPECT_NEAR(lhs_v, rhs_v, TOLERANCE);
+    ASSERT_NE(rhs.npos, rhs.find('.'));
+    EXPECT_EQ(precision, rhs.find('s') - rhs.find('.') - 1);
+}
 }
 
 TEST(TimeDurations, print)

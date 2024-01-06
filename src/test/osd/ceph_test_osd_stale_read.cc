@@ -24,13 +24,13 @@
 using namespace std;
 using namespace librados;
 
-int get_primary_osd(Rados & rados, const string & pool_name,
-                    const string & oid, int *pprimary)
+int get_primary_osd(Rados &rados, const string &pool_name,
+                    const string &oid, int *pprimary)
 {
     bufferlist inbl;
     string cmd = string("{\"prefix\": \"osd map\",\"pool\":\"")
-        + pool_name + string("\",\"object\": \"")
-        + oid + string("\",\"format\": \"json\"}");
+                 + pool_name + string("\",\"object\": \"")
+                 + oid + string("\",\"format\": \"json\"}");
     bufferlist outbl;
     if (int r = rados.mon_command(cmd, inbl, &outbl, nullptr); r < 0) {
         return r;
@@ -42,9 +42,9 @@ int get_primary_osd(Rados & rados, const string & pool_name,
         return -1;
     }
 
-    json_spirit::Object & o = v.get_obj();
+    json_spirit::Object &o = v.get_obj();
     for (json_spirit::Object::size_type i = 0; i < o.size(); i++) {
-        json_spirit::Pair & p = o[i];
+        json_spirit::Pair &p = o[i];
         if (p.name_ == "acting_primary") {
             cout << "primary = " << p.value_.get_int() << std::endl;
             *pprimary = p.value_.get_int();
@@ -55,7 +55,7 @@ int get_primary_osd(Rados & rados, const string & pool_name,
     return -1;
 }
 
-int fence_osd(Rados & rados, int osd)
+int fence_osd(Rados &rados, int osd)
 {
     bufferlist inbl, outbl;
     string cmd("{\"prefix\": \"injectargs\",\"injected_args\":["
@@ -63,7 +63,7 @@ int fence_osd(Rados & rados, int osd)
     return rados.osd_command(osd, cmd, inbl, &outbl, NULL);
 }
 
-int mark_down_osd(Rados & rados, int osd)
+int mark_down_osd(Rados &rados, int osd)
 {
     bufferlist inbl, outbl;
     string cmd("{\"prefix\": \"osd down\",\"ids\":[\"" +

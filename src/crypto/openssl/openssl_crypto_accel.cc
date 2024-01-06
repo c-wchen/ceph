@@ -23,7 +23,7 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-static std::ostream & _prefix(std::ostream * _dout)
+static std::ostream &_prefix(std::ostream *_dout)
 {
     return *_dout << "OpensslCryptoAccel: ";
 }
@@ -37,13 +37,13 @@ static std::ostream & _prefix(std::ostream * _dout)
 bool evp_transform(unsigned char *out, const unsigned char *in, size_t size,
                    const unsigned char *iv,
                    const unsigned char *key,
-                   ENGINE * engine,
-                   const EVP_CIPHER * const type, const int encrypt)
+                   ENGINE *engine,
+                   const EVP_CIPHER *const type, const int encrypt)
 {
     using pctx_t =
         std::unique_ptr < EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free) >;
     pctx_t pctx {
-    EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free};
+        EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free};
 
     if (!pctx) {
         derr << "failed to create evp cipher context" << dendl;
@@ -88,7 +88,8 @@ bool OpenSSLCryptoAccel::cbc_encrypt(unsigned char *out,
         return false;
     }
 
-    return evp_transform(out, in, size, const_cast < unsigned char *>(&iv[0]), const_cast < unsigned char *>(&key[0]), nullptr, // Hardware acceleration engine can be used in the future
+    return evp_transform(out, in, size, const_cast < unsigned char *>(&iv[0]), const_cast < unsigned char *>(&key[0]),
+                         nullptr, // Hardware acceleration engine can be used in the future
                          EVP_aes_256_cbc(), AES_ENCRYPT);
 }
 
@@ -102,6 +103,7 @@ bool OpenSSLCryptoAccel::cbc_decrypt(unsigned char *out,
         return false;
     }
 
-    return evp_transform(out, in, size, const_cast < unsigned char *>(&iv[0]), const_cast < unsigned char *>(&key[0]), nullptr, // Hardware acceleration engine can be used in the future
+    return evp_transform(out, in, size, const_cast < unsigned char *>(&iv[0]), const_cast < unsigned char *>(&key[0]),
+                         nullptr, // Hardware acceleration engine can be used in the future
                          EVP_aes_256_cbc(), AES_DECRYPT);
 }

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 /*
  * This file is open source software, licensed to you under the terms
  * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
@@ -55,7 +55,7 @@ void Packet::linearize(size_t at_frag, size_t desired_size)
     char *new_frag = new char[accum_size];
     auto p = new_frag;
     for (size_t i = 0; i < nr_frags; ++i) {
-        auto & f = _impl->frags[at_frag + i];
+        auto &f = _impl->frags[at_frag + i];
         p = std::copy(f.base, f.base + f.size, p);
     }
     // collapse nr_frags into one fragment
@@ -63,31 +63,34 @@ void Packet::linearize(size_t at_frag, size_t desired_size)
               _impl->frags + _impl->_nr_frags, _impl->frags + at_frag + 1);
     _impl->_nr_frags -= nr_frags - 1;
     _impl->frags[at_frag] = fragment {
-    new_frag, accum_size};
+        new_frag, accum_size};
     if (at_frag == 0 && desired_size == len()) {
         // We can drop the old buffer safely
         auto x = std::move(_impl->_deleter);
         _impl->_deleter = make_deleter([new_frag] {
-                                       delete[]new_frag;
-                                       }
-        );
-    }
-    else {
-        auto del = std::bind([new_frag] (deleter & d) { delete[]new_frag;
-                             }
-                             , std::move(_impl->_deleter));
+            delete[]new_frag;
+        }
+                                      );
+    } else {
+        auto del = std::bind([new_frag](deleter & d) {
+            delete[]new_frag;
+        }
+        , std::move(_impl->_deleter));
         _impl->_deleter = make_deleter(std::move(del));
     }
 }
 
-class C_free_on_cpu:public EventCallback {
+class C_free_on_cpu: public EventCallback
+{
     deleter del;
     std::function < void () > cb;
-  public:
+public:
     C_free_on_cpu(deleter
-                  && d, std::function < void () > &&c):del(std::move(d)),
-        cb(std::move(c)) {
-    } void do_request(uint64_t fd) {
+                  && d, std::function < void () > &&c): del(std::move(d)),
+        cb(std::move(c))
+    {
+    } void do_request(uint64_t fd)
+    {
         // deleter needs to be moved from lambda capture to be destroyed here
         // otherwise deleter destructor will be called on a cpu that called
         // create_external_event when work_item is destroyed.
@@ -97,56 +100,52 @@ class C_free_on_cpu:public EventCallback {
     }
 };
 
-Packet Packet::free_on_cpu(EventCenter * center, std::function < void () > cb)
+Packet Packet::free_on_cpu(EventCenter *center, std::function < void () > cb)
 {
-    auto del = std::bind([center, cb] (deleter & del) mutable {
-                         center->
-                         dispatch_event_external(new
-                                                 C_free_on_cpu(std::move(del),
-                                                               std::
-                                                               move(cb)));},
-                         std::move(_impl->_deleter));
+    auto del = std::bind([center, cb](deleter & del) mutable {
+        center->
+        dispatch_event_external(new
+                                C_free_on_cpu(std::move(del),
+                                              std::
+                                              move(cb)));},
+    std::move(_impl->_deleter));
     // make new deleter that runs old deleter on an origin cpu
     _impl->_deleter = make_deleter(deleter(), std::move(del));
 
     return Packet(impl::copy(_impl.get()));
 }
 
-std::ostream & operator<<(std::ostream & os, const Packet & p)
+std::ostream &operator<<(std::ostream &os, const Packet &p)
 {
     os << "Packet{";
     bool first = true;
-  for (auto && frag:p.fragments()) {
+    for (auto && frag : p.fragments()) {
         if (!first) {
             os << ", ";
         }
         first = false;
-        if (std::all_of(frag.base, frag.base + frag.size,[](int c) {
-                        return c >= 9 && c <= 0x7f;}
-            )) {
+        if (std::all_of(frag.base, frag.base + frag.size, [](int c) {
+        return c >= 9 && c <= 0x7f;
+    }
+                   )) {
             os << '"';
             for (auto p = frag.base; p != frag.base + frag.size; ++p) {
                 auto c = *p;
                 if (isprint(c)) {
                     os << c;
-                }
-                else if (c == '\r') {
+                } else if (c == '\r') {
                     os << "\\r";
-                }
-                else if (c == '\n') {
+                } else if (c == '\n') {
                     os << "\\n";
-                }
-                else if (c == '\t') {
+                } else if (c == '\t') {
                     os << "\\t";
-                }
-                else {
+                } else {
                     uint8_t b = c;
                     os << "\\x" << (b / 16) << (b % 16);
                 }
             }
             os << '"';
-        }
-        else {
+        } else {
             os << "{";
             bool nfirst = true;
             for (auto p = frag.base; p != frag.base + frag.size; ++p) {

@@ -17,7 +17,7 @@ using std::set;
 // list
 #if defined(__linux__)
 int parse_cpu_set_list(const char *s,
-                       size_t * cpu_set_size, cpu_set_t * cpu_set)
+                       size_t *cpu_set_size, cpu_set_t *cpu_set)
 {
     CPU_ZERO(cpu_set);
     while (*s) {
@@ -36,8 +36,7 @@ int parse_cpu_set_list(const char *s,
                 CPU_SET(a, cpu_set);
             }
             *cpu_set_size = a;
-        }
-        else {
+        } else {
             CPU_SET(a, cpu_set);
             *cpu_set_size = a + 1;
         }
@@ -52,7 +51,7 @@ int parse_cpu_set_list(const char *s,
     return 0;
 }
 
-std::string cpu_set_to_str_list(size_t cpu_set_size, const cpu_set_t * cpu_set)
+std::string cpu_set_to_str_list(size_t cpu_set_size, const cpu_set_t *cpu_set)
 {
     std::string r;
     unsigned a = 0;
@@ -72,8 +71,7 @@ std::string cpu_set_to_str_list(size_t cpu_set_size, const cpu_set_t * cpu_set)
         }
         if (b > a + 1) {
             r += stringify(a) + "-" + stringify(b - 1);
-        }
-        else {
+        } else {
             r += stringify(a);
         }
         a = b;
@@ -81,7 +79,7 @@ std::string cpu_set_to_str_list(size_t cpu_set_size, const cpu_set_t * cpu_set)
     return r;
 }
 
-std::set < int >cpu_set_to_set(size_t cpu_set_size, const cpu_set_t * cpu_set)
+std::set < int >cpu_set_to_set(size_t cpu_set_size, const cpu_set_t *cpu_set)
 {
     set < int >r;
     unsigned a = 0;
@@ -104,7 +102,7 @@ std::set < int >cpu_set_to_set(size_t cpu_set_size, const cpu_set_t * cpu_set)
     return r;
 }
 
-int get_numa_node_cpu_set(int node, size_t * cpu_set_size, cpu_set_t * cpu_set)
+int get_numa_node_cpu_set(int node, size_t *cpu_set_size, cpu_set_t *cpu_set)
 {
     std::string fn = "/sys/devices/system/node/node";
     fn += stringify(node);
@@ -127,12 +125,12 @@ int get_numa_node_cpu_set(int node, size_t * cpu_set_size, cpu_set_t * cpu_set)
         goto out;
     }
     r = 0;
-  out:
+out:
     ::close(fd);
     return r;
 }
 
-static int easy_readdir(const std::string & dir, std::set < std::string > *out)
+static int easy_readdir(const std::string &dir, std::set < std::string > *out)
 {
     DIR *h =::opendir(dir.c_str());
     if (!h) {
@@ -167,18 +165,17 @@ static std::string get_task_comm(pid_t tid)
     if (n < 0) {
         return "";
     }
-    assert(static_cast < size_t > (n) <= sizeof(name));
+    assert(static_cast < size_t >(n) <= sizeof(name));
     if (name[n - 1] == '\n') {
         name[n - 1] = '\0';
-    }
-    else {
+    } else {
         name[n] = '\0';
     }
     return name;
 }
 #endif
 
-int set_cpu_affinity_all_threads(size_t cpu_set_size, cpu_set_t * cpu_set)
+int set_cpu_affinity_all_threads(size_t cpu_set_size, cpu_set_t *cpu_set)
 {
     // first set my affinity
     int r = sched_setaffinity(getpid(), cpu_set_size, cpu_set);
@@ -196,7 +193,7 @@ int set_cpu_affinity_all_threads(size_t cpu_set_size, cpu_set_t * cpu_set)
         if (r < 0) {
             return r;
         }
-      for (auto & i:ls) {
+        for (auto &i : ls) {
             pid_t tid = atoll(i.c_str());
             if (!tid) {
                 continue;       // wtf
@@ -221,29 +218,29 @@ int set_cpu_affinity_all_threads(size_t cpu_set_size, cpu_set_t * cpu_set)
 
 #else
 int parse_cpu_set_list(const char *s,
-                       size_t * cpu_set_size, cpu_set_t * cpu_set)
+                       size_t *cpu_set_size, cpu_set_t *cpu_set)
 {
     return -ENOTSUP;
 }
 
-std::string cpu_set_to_str_list(size_t cpu_set_size, const cpu_set_t * cpu_set)
+std::string cpu_set_to_str_list(size_t cpu_set_size, const cpu_set_t *cpu_set)
 {
     return {
     };
 }
 
-std::set < int >cpu_set_to_set(size_t cpu_set_size, const cpu_set_t * cpu_set)
+std::set < int >cpu_set_to_set(size_t cpu_set_size, const cpu_set_t *cpu_set)
 {
     return {
     };
 }
 
-int get_numa_node_cpu_set(int node, size_t * cpu_set_size, cpu_set_t * cpu_set)
+int get_numa_node_cpu_set(int node, size_t *cpu_set_size, cpu_set_t *cpu_set)
 {
     return -ENOTSUP;
 }
 
-int set_cpu_affinity_all_threads(size_t cpu_set_size, cpu_set_t * cpu_set)
+int set_cpu_affinity_all_threads(size_t cpu_set_size, cpu_set_t *cpu_set)
 {
     return -ENOTSUP;
 }

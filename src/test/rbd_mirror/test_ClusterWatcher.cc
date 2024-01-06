@@ -30,37 +30,43 @@ void register_test_cluster_watcher()
 {
 }
 
-class TestClusterWatcher:public::rbd::mirror::TestFixture {
-  public:
+class TestClusterWatcher: public::rbd::mirror::TestFixture
+{
+public:
 
-    TestClusterWatcher() {
+    TestClusterWatcher()
+    {
         m_cluster = std::make_shared < librados::Rados > ();
         EXPECT_EQ("", connect_cluster_pp(*m_cluster));
-    } ~TestClusterWatcher() override {
+    } ~TestClusterWatcher() override
+    {
         m_cluster->wait_for_latest_osdmap();
-      for (auto & pool:m_pools) {
+        for (auto &pool : m_pools) {
             EXPECT_EQ(0, m_cluster->pool_delete(pool.c_str()));
         }
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         TestFixture::SetUp();
         m_service_daemon.
-            reset(new rbd::mirror::
-                  ServiceDaemon <> (g_ceph_context, m_cluster, m_threads));
+        reset(new rbd::mirror::
+              ServiceDaemon <> (g_ceph_context, m_cluster, m_threads));
         m_cluster_watcher.
-            reset(new
-                  ClusterWatcher(m_cluster, m_lock, m_service_daemon.get()));
+        reset(new
+              ClusterWatcher(m_cluster, m_lock, m_service_daemon.get()));
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         m_service_daemon.reset();
         m_cluster_watcher.reset();
         TestFixture::TearDown();
     }
 
-    void create_pool(bool enable_mirroring, const PeerSpec & peer,
-                     string * uuid = nullptr, string * name = nullptr) {
+    void create_pool(bool enable_mirroring, const PeerSpec &peer,
+                     string *uuid = nullptr, string *name = nullptr)
+    {
         string pool_name = get_temp_pool_name("test-rbd-mirror-");
         ASSERT_EQ(0, m_cluster->pool_create(pool_name.c_str()));
 
@@ -74,17 +80,17 @@ class TestClusterWatcher:public::rbd::mirror::TestFixture {
         m_pools.insert(pool_name);
         if (enable_mirroring) {
             ASSERT_EQ(0, librbd::api::Mirror <>::mode_set(ioctx,
-                                                          RBD_MIRROR_MODE_POOL));
+                      RBD_MIRROR_MODE_POOL));
 
             std::string gen_uuid;
             ASSERT_EQ(0,
                       librbd::api::Mirror <>::peer_site_add(ioctx,
-                                                            uuid !=
-                                                            nullptr ? uuid :
-                                                            &gen_uuid,
-                                                            RBD_MIRROR_PEER_DIRECTION_RX_TX,
-                                                            peer.cluster_name,
-                                                            peer.client_name));
+                              uuid !=
+                              nullptr ? uuid :
+                              &gen_uuid,
+                              RBD_MIRROR_PEER_DIRECTION_RX_TX,
+                              peer.cluster_name,
+                              peer.client_name));
             m_pool_peers[pool_id].insert(peer);
         }
         if (name != nullptr) {
@@ -92,7 +98,8 @@ class TestClusterWatcher:public::rbd::mirror::TestFixture {
         }
     }
 
-    void delete_pool(const string & name, const PeerSpec & peer) {
+    void delete_pool(const string &name, const PeerSpec &peer)
+    {
         int64_t pool_id = m_cluster->pool_lookup(name.c_str());
         ASSERT_GE(pool_id, 0);
         if (m_pool_peers.find(pool_id) != m_pool_peers.end()) {
@@ -105,8 +112,9 @@ class TestClusterWatcher:public::rbd::mirror::TestFixture {
         ASSERT_EQ(0, m_cluster->pool_delete(name.c_str()));
     }
 
-    void set_peer_config_key(const std::string & pool_name,
-                             const PeerSpec & peer) {
+    void set_peer_config_key(const std::string &pool_name,
+                             const PeerSpec &peer)
+    {
         int64_t pool_id = m_cluster->pool_lookup(pool_name.c_str());
         ASSERT_GE(pool_id, 0);
 
@@ -126,7 +134,8 @@ class TestClusterWatcher:public::rbd::mirror::TestFixture {
                                             nullptr));
     }
 
-    void create_cache_pool(const string & base_pool, string * cache_pool_name) {
+    void create_cache_pool(const string &base_pool, string *cache_pool_name)
+    {
         bufferlist inbl;
         *cache_pool_name = get_temp_pool_name("test-rbd-mirror-");
         ASSERT_EQ(0, m_cluster->pool_create(cache_pool_name->c_str()));
@@ -153,7 +162,8 @@ class TestClusterWatcher:public::rbd::mirror::TestFixture {
         m_cluster->wait_for_latest_osdmap();
     }
 
-    void remove_cache_pool(const string & base_pool, const string & cache_pool) {
+    void remove_cache_pool(const string &base_pool, const string &cache_pool)
+    {
         bufferlist inbl;
         // tear down tiers
         ASSERT_EQ(0,
@@ -170,10 +180,11 @@ class TestClusterWatcher:public::rbd::mirror::TestFixture {
         m_cluster->pool_delete(cache_pool.c_str());
     }
 
-    void check_peers() {
+    void check_peers()
+    {
         m_cluster_watcher->refresh_pools();
         std::lock_guard l {
-        m_lock};
+            m_lock};
         ASSERT_EQ(m_pool_peers, m_cluster_watcher->get_pool_peers());
     }
 
@@ -238,14 +249,16 @@ TEST_F(TestClusterWatcher, CachePools)
     create_cache_pool(base1, &cache1);
     BOOST_SCOPE_EXIT(base1, cache1, this_) {
         this_->remove_cache_pool(base1, cache1);
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
     check_peers();
 
     create_pool(false, PeerSpec(), nullptr, &base2);
     create_cache_pool(base2, &cache2);
     BOOST_SCOPE_EXIT(base2, cache2, this_) {
         this_->remove_cache_pool(base2, cache2);
-    } BOOST_SCOPE_EXIT_END;
+    }
+    BOOST_SCOPE_EXIT_END;
     check_peers();
 }
 
@@ -280,6 +293,6 @@ TEST_F(TestClusterWatcher, SiteName)
     m_cluster_watcher->refresh_pools();
 
     std::lock_guard l {
-    m_lock};
+        m_lock};
     ASSERT_EQ(site_name, m_cluster_watcher->get_site_name());
 }

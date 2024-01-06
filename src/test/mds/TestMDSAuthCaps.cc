@@ -399,46 +399,80 @@ TEST(MDSAuthCaps, OutputParsed)
         const char *output;
     };
     CapsTest test_values[] = {
-        {"allow",
-         "MDSAuthCaps[allow rwps]"},
-        {"allow *",
-         "MDSAuthCaps[allow *]"},
-        {"allow r",
-         "MDSAuthCaps[allow r]"},
-        {"allow rw",
-         "MDSAuthCaps[allow rw]"},
-        {"allow * uid=1",
-         "MDSAuthCaps[allow * uid=1]"},
-        {"allow * uid=1 gids=1",
-         "MDSAuthCaps[allow * uid=1 gids=1]"},
-        {"allow * uid=1 gids=1,2,3",
-         "MDSAuthCaps[allow * uid=1 gids=1,2,3]"},
-        {"allow * path=/foo",
-         "MDSAuthCaps[allow * path=\"/foo\"]"},
-        {"allow * path=\"/foo\"",
-         "MDSAuthCaps[allow * path=\"/foo\"]"},
-        {"allow rw root_squash",
-         "MDSAuthCaps[allow rw root_squash]"},
-        {"allow rw fsname=a root_squash",
-         "MDSAuthCaps[allow rw fsname=a root_squash]"},
-        {"allow * path=\"/foo\" root_squash",
-         "MDSAuthCaps[allow * path=\"/foo\" root_squash]"},
-        {"allow * path=\"/foo\" uid=1",
-         "MDSAuthCaps[allow * path=\"/foo\" uid=1]"},
-        {"allow * path=\"/foo\" uid=1 gids=1,2,3",
-         "MDSAuthCaps[allow * path=\"/foo\" uid=1 gids=1,2,3]"},
-        {"allow r uid=1 gids=1,2,3, allow * uid=2",
-         "MDSAuthCaps[allow r uid=1 gids=1,2,3, allow * uid=2]"},
-        {"allow r uid=1 gids=1,2,3, allow * uid=2 network 10.0.0.0/8",
-         "MDSAuthCaps[allow r uid=1 gids=1,2,3, allow * uid=2 network 10.0.0.0/8]"},
-        {"allow rw fsname=b, allow rw fsname=a root_squash",
-         "MDSAuthCaps[allow rw fsname=b, allow rw fsname=a root_squash]"},
+        {
+            "allow",
+            "MDSAuthCaps[allow rwps]"
+        },
+        {
+            "allow *",
+            "MDSAuthCaps[allow *]"
+        },
+        {
+            "allow r",
+            "MDSAuthCaps[allow r]"
+        },
+        {
+            "allow rw",
+            "MDSAuthCaps[allow rw]"
+        },
+        {
+            "allow * uid=1",
+            "MDSAuthCaps[allow * uid=1]"
+        },
+        {
+            "allow * uid=1 gids=1",
+            "MDSAuthCaps[allow * uid=1 gids=1]"
+        },
+        {
+            "allow * uid=1 gids=1,2,3",
+            "MDSAuthCaps[allow * uid=1 gids=1,2,3]"
+        },
+        {
+            "allow * path=/foo",
+            "MDSAuthCaps[allow * path=\"/foo\"]"
+        },
+        {
+            "allow * path=\"/foo\"",
+            "MDSAuthCaps[allow * path=\"/foo\"]"
+        },
+        {
+            "allow rw root_squash",
+            "MDSAuthCaps[allow rw root_squash]"
+        },
+        {
+            "allow rw fsname=a root_squash",
+            "MDSAuthCaps[allow rw fsname=a root_squash]"
+        },
+        {
+            "allow * path=\"/foo\" root_squash",
+            "MDSAuthCaps[allow * path=\"/foo\" root_squash]"
+        },
+        {
+            "allow * path=\"/foo\" uid=1",
+            "MDSAuthCaps[allow * path=\"/foo\" uid=1]"
+        },
+        {
+            "allow * path=\"/foo\" uid=1 gids=1,2,3",
+            "MDSAuthCaps[allow * path=\"/foo\" uid=1 gids=1,2,3]"
+        },
+        {
+            "allow r uid=1 gids=1,2,3, allow * uid=2",
+            "MDSAuthCaps[allow r uid=1 gids=1,2,3, allow * uid=2]"
+        },
+        {
+            "allow r uid=1 gids=1,2,3, allow * uid=2 network 10.0.0.0/8",
+            "MDSAuthCaps[allow r uid=1 gids=1,2,3, allow * uid=2 network 10.0.0.0/8]"
+        },
+        {
+            "allow rw fsname=b, allow rw fsname=a root_squash",
+            "MDSAuthCaps[allow rw fsname=b, allow rw fsname=a root_squash]"
+        },
     };
     size_t num_tests = sizeof(test_values) / sizeof(*test_values);
     for (size_t i = 0; i < num_tests; ++i) {
         MDSAuthCaps cap;
         std::cout << "Testing input '" << test_values[i].
-            input << "'" << std::endl;
+                  input << "'" << std::endl;
         ASSERT_TRUE(cap.parse(g_ceph_context, test_values[i].input, &cout));
         ASSERT_EQ(test_values[i].output, stringify(cap));
     }

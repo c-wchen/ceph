@@ -36,14 +36,14 @@ using std::vector;
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-static ostream & _prefix(std::ostream * _dout)
+static ostream &_prefix(std::ostream *_dout)
 {
     return *_dout << "OpenSSLOptsHandler: ";
 }
 
 // -----------------------------------------------------------------------------
 
-string construct_engine_conf(const string & opts)
+string construct_engine_conf(const string &opts)
 {
     const string conf_header = "openssl_conf=openssl_def\n[openssl_def]\n";
     const string engine_header = "engines=engine_section\n[engine_section]\n";
@@ -55,7 +55,7 @@ string construct_engine_conf(const string & opts)
 
     int index = 1;
     vector < string > confs = get_str_vec(opts, ":");
-  for (auto conf:confs) {
+    for (auto conf : confs) {
         // Construct engine section statement like "engine1=engine1_section"
         engine_id = id_prefix + std::to_string(index++);
         engine_statement += engine_id + "=" + engine_id + suffix + delimiter;
@@ -84,15 +84,15 @@ string get_openssl_error()
     return ret;
 }
 
-void log_error(const string & err)
+void log_error(const string &err)
 {
     derr << "Intended OpenSSL engine acceleration failed.\n"
-        << "set by openssl_engine_opts = "
-        << g_ceph_context->_conf->openssl_engine_opts
-        << "\ndetail error information:\n" << err << dendl;
+         << "set by openssl_engine_opts = "
+         << g_ceph_context->_conf->openssl_engine_opts
+         << "\ndetail error information:\n" << err << dendl;
 }
 
-void load_module(const string & engine_conf)
+void load_module(const string &engine_conf)
 {
     BIO *mem = BIO_new_mem_buf(engine_conf.c_str(), engine_conf.size());
     if (mem == nullptr) {
@@ -100,8 +100,8 @@ void load_module(const string & engine_conf)
         return;
     }
     auto sg_mem = make_scope_guard([&mem] { BIO_free(mem);
-                                   }
-    );
+                                          }
+                                  );
 
     CONF *conf = NCONF_new(nullptr);
     if (conf == nullptr) {
@@ -109,8 +109,8 @@ void load_module(const string & engine_conf)
         return;
     }
     auto sg_conf = make_scope_guard([&conf] { NCONF_free(conf);
-                                    }
-    );
+                                            }
+                                   );
 
     if (NCONF_load_bio(conf, mem, nullptr) <= 0) {
         log_error("failed to load CONF from BIO:\n" + get_openssl_error());

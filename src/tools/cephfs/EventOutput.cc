@@ -1,4 +1,4 @@
-// -*- mode:c++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:c++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * ceph - scalable distributed file system
@@ -30,8 +30,8 @@ int EventOutput::binary() const const
         r = -errno;
         if (r != -EEXIST) {
             std::
-                cerr << "Error creating output directory: " << cpp_strerror(r)
-                << std::endl;
+            cerr << "Error creating output directory: " << cpp_strerror(r)
+                 << std::endl;
             return r;
         }
     }
@@ -40,15 +40,14 @@ int EventOutput::binary() const const
          i != scan.events.end(); ++i) {
         bufferlist bin;
         std::stringstream filename;
-        if (auto & le = i->second.log_event; le) {
+        if (auto &le = i->second.log_event; le) {
             le->encode(bin, CEPH_FEATURES_SUPPORTED_DEFAULT);
             filename << "0x" << std::hex << i->first << std::dec << "_" << le->
-                get_type_str() << ".bin";
-        }
-        else if (auto & pi = i->second.pi; pi) {
+                     get_type_str() << ".bin";
+        } else if (auto &pi = i->second.pi; pi) {
             pi->encode(bin);
             filename << "0x" << std::hex << i->first << std::dec << "_" << pi->
-                get_type_str() << ".bin";
+                     get_type_str() << ".bin";
         }
 
         std::string const file_path = path + std::string("/") + filename.str();
@@ -61,8 +60,8 @@ int EventOutput::binary() const const
         }
     }
     std::
-        cerr << "Wrote output to binary files in directory '" << path << "'" <<
-        std::endl;
+    cerr << "Wrote output to binary files in directory '" << path << "'" <<
+         std::endl;
 
     return 0;
 }
@@ -75,12 +74,11 @@ int EventOutput::json() const const
     {
         for (JournalScanner::EventMap::const_iterator i = scan.events.begin();
              i != scan.events.end(); ++i) {
-            if (auto & le = i->second.log_event; le) {
+            if (auto &le = i->second.log_event; le) {
                 jf.open_object_section("log_event");
                 le->dump(&jf);
                 jf.close_section(); // log_event
-            }
-            else if (auto & pi = i->second.pi; pi) {
+            } else if (auto &pi = i->second.pi; pi) {
                 jf.open_object_section("purge_action");
                 pi->dump(&jf);
                 jf.close_section();
@@ -93,8 +91,7 @@ int EventOutput::json() const const
 
     if (out_file.fail()) {
         return -EIO;
-    }
-    else {
+    } else {
         std::cerr << "Wrote output to JSON file '" << path << "'" << std::endl;
         return 0;
     }
@@ -104,7 +101,7 @@ void EventOutput::list() const const
 {
     for (JournalScanner::EventMap::const_iterator i = scan.events.begin();
          i != scan.events.end(); ++i) {
-        if (auto & le = i->second.log_event; le) {
+        if (auto &le = i->second.log_event; le) {
             std::vector < std::string > ev_paths;
             EMetaBlob const *emb = le->get_metablob();
             if (emb) {
@@ -113,23 +110,22 @@ void EventOutput::list() const const
 
             std::string detail;
             if (le->get_type() == EVENT_UPDATE) {
-                auto & eu = reinterpret_cast < EUpdate & >(*le);
+                auto &eu = reinterpret_cast < EUpdate & >(*le);
                 detail = eu.type;
             }
 
             std::cout << le->get_stamp() << " 0x"
-                << std::hex << i->first << std::dec << " "
-                << le->get_type_str() << ": "
-                << " (" << detail << ")" << std::endl;
+                      << std::hex << i->first << std::dec << " "
+                      << le->get_type_str() << ": "
+                      << " (" << detail << ")" << std::endl;
             for (std::vector < std::string >::iterator i = ev_paths.begin();
                  i != ev_paths.end(); ++i) {
                 std::cout << "  " << *i << std::endl;
             }
-        }
-        else if (auto & pi = i->second.pi; pi) {
+        } else if (auto &pi = i->second.pi; pi) {
             std::cout << pi->stamp << " 0x"
-                << std::hex << i->first << std::dec << " "
-                << pi->get_type_str() << std::endl;
+                      << std::hex << i->first << std::dec << " "
+                      << pi->get_type_str() << std::endl;
         }
     }
 }
@@ -140,10 +136,11 @@ void EventOutput::summary() const const
     for (JournalScanner::EventMap::const_iterator i = scan.events.begin();
          i != scan.events.end(); ++i) {
         std::string type;
-        if (auto & le = i->second.log_event; le)
+        if (auto &le = i->second.log_event; le) {
             type = le->get_type_str();
-        else if (auto & pi = i->second.pi; pi)
+        } else if (auto &pi = i->second.pi; pi) {
             type = pi->get_type_str();
+        }
         if (type_count.count(type) == 0) {
             type_count[type] = 0;
         }
@@ -161,8 +158,8 @@ void EventOutput::summary() const const
         for (JournalScanner::ErrorMap::const_iterator i = scan.errors.begin();
              i != scan.errors.end(); ++i) {
             std::cout << "  0x" << std::hex << i->first << std::dec
-                << ": " << i->second.r << " "
-                << i->second.description << std::endl;
+                      << ": " << i->second.r << " "
+                      << i->second.description << std::endl;
         }
     }
 }

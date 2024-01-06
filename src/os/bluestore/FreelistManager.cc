@@ -7,8 +7,8 @@
 #include "ZonedFreelistManager.h"
 #endif
 
-FreelistManager *FreelistManager::create(CephContext * cct,
-                                         std::string type, std::string prefix)
+FreelistManager *FreelistManager::create(CephContext *cct,
+        std::string type, std::string prefix)
 {
     // a bit of a hack... we hard-code the prefixes here.  we need to
     // put the freelistmanagers in different prefixes because the merge
@@ -32,20 +32,21 @@ FreelistManager *FreelistManager::create(CephContext * cct,
     // we open the device and it turns out to be is zoned.  We ignore |prefix|
     // passed to create and use the prefixes defined for zoned devices at the top
     // of BlueStore.cc.
-    if (type == "zoned")
+    if (type == "zoned") {
         return new ZonedFreelistManager(cct, "Z", "z");
+    }
 #endif
 
     return NULL;
 }
 
-void FreelistManager::setup_merge_operators(KeyValueDB * db,
-                                            const std::string & type)
+void FreelistManager::setup_merge_operators(KeyValueDB *db,
+        const std::string &type)
 {
 #ifdef HAVE_LIBZBD
-    if (type == "zoned")
+    if (type == "zoned") {
         ZonedFreelistManager::setup_merge_operator(db, "z");
-    else
+    } else
 #endif
         BitmapFreelistManager::setup_merge_operator(db, "b");
 }

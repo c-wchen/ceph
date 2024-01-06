@@ -49,18 +49,21 @@ TEST(SimpleSpin, Test1)
     // Should also work with pass-by-reference:
     // (Note that we don't care about cross-threading here as-such.)
     counter = 0;
-    auto f = async(std::launch::async,[](){
-                   for (int i = 0; n != i; ++i) {
-                   spin_lock(lock); counter++; spin_unlock(lock);}
-                   }) ;
+    auto f = async(std::launch::async, []() {
+        for (int i = 0; n != i; ++i) {
+            spin_lock(lock);
+            counter++;
+            spin_unlock(lock);
+        }
+    }) ;
     f.wait();
     ASSERT_EQ(n, counter);
 }
 
 template < typename LockT >
-    int64_t check_lock_unlock(const int64_t n, int64_t & cntr, LockT & lock)
+int64_t check_lock_unlock(const int64_t n, int64_t &cntr, LockT &lock)
 {
-    auto do_lock_unlock =[&]()->int64_t {
+    auto do_lock_unlock = [&]()->int64_t {
         int64_t i = 0;
 
         for (; n != i; ++i) {
@@ -81,8 +84,9 @@ template < typename LockT >
     auto three = fthree.get();
 
     // Google test doesn't like us using its macros out of individual tests, so:
-    if (n != one || n != two || n != three)
+    if (n != one || n != two || n != three) {
         return 0;
+    }
 
     return one + two + three;
 }
@@ -111,15 +115,19 @@ TEST(SimpleSpin, spinlock_guard)
     ceph::spinlock sl;
 
     counter = 0;
-    auto f = async(std::launch::async,[&sl] (){
-                   for (int i = 0; n != i; ++i) {
-                   std::lock_guard < ceph::spinlock > g(sl); counter++;}
-                   }) ;
+    auto f = async(std::launch::async, [&sl]() {
+        for (int i = 0; n != i; ++i) {
+            std::lock_guard < ceph::spinlock > g(sl);
+            counter++;
+        }
+    }) ;
 
-    auto g = async(std::launch::async,[&sl] (){
-                   for (int i = 0; n != i; ++i) {
-                   std::lock_guard < ceph::spinlock > g(sl); counter++;}
-                   }) ;
+    auto g = async(std::launch::async, [&sl]() {
+        for (int i = 0; n != i; ++i) {
+            std::lock_guard < ceph::spinlock > g(sl);
+            counter++;
+        }
+    }) ;
 
     f.wait();
     g.wait();

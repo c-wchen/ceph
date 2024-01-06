@@ -8,8 +8,8 @@ using namespace rgw;
 
 const int BASIC_ENTRIES = 6;
 
-const std::string basic_str[BASIC_ENTRIES] =
-    { "arn:aws:s3:us-east-1:12345:resource",
+const std::string basic_str[BASIC_ENTRIES] = {
+    "arn:aws:s3:us-east-1:12345:resource",
     "arn:aws:s3:us-east-1:12345:resourceType/resource",
     "arn:aws:s3:us-east-1:12345:resourceType/resource/qualifier",
     "arn:aws:s3:us-east-1:12345:resourceType/resource:qualifier",
@@ -18,12 +18,12 @@ const std::string basic_str[BASIC_ENTRIES] =
 };
 
 const std::string expected_basic_resource[BASIC_ENTRIES] = { "resource",
-    "resourceType/resource",
-    "resourceType/resource/qualifier",
-    "resourceType/resource:qualifier",
-    "resourceType:resource",
-    "resourceType:resource/qualifier"
-};
+                                                             "resourceType/resource",
+                                                             "resourceType/resource/qualifier",
+                                                             "resourceType/resource:qualifier",
+                                                             "resourceType:resource",
+                                                             "resourceType:resource/qualifier"
+                                                           };
 
 TEST(TestARN, Basic)
 {
@@ -47,11 +47,12 @@ TEST(TestARN, ToString)
     }
 }
 
-const std::string expected_basic_resource_type[BASIC_ENTRIES] =
-    { "", "resourceType", "resourceType", "resourceType", "resourceType",
-"resourceType" };
+const std::string expected_basic_resource_type[BASIC_ENTRIES] = {
+    "", "resourceType", "resourceType", "resourceType", "resourceType",
+    "resourceType"
+};
 const std::string expected_basic_qualifier[BASIC_ENTRIES] =
-    { "", "", "qualifier", "qualifier", "", "qualifier" };
+{ "", "", "qualifier", "qualifier", "", "qualifier" };
 
 TEST(TestARNResource, Basic)
 {
@@ -73,10 +74,10 @@ TEST(TestARNResource, Basic)
 const int EMPTY_ENTRIES = 4;
 
 const std::string empty_str[EMPTY_ENTRIES] = { "arn:aws:s3:::resource",
-    "arn:aws:s3::12345:resource",
-    "arn:aws:s3:us-east-1::resource",
-    "arn:aws:s3:us-east-1:12345:"
-};
+                                               "arn:aws:s3::12345:resource",
+                                               "arn:aws:s3:us-east-1::resource",
+                                               "arn:aws:s3:us-east-1:12345:"
+                                             };
 
 TEST(TestARN, Empty)
 {
@@ -94,12 +95,12 @@ TEST(TestARN, Empty)
 const int WILDCARD_ENTRIES = 3;
 
 const std::string wildcard_str[WILDCARD_ENTRIES] = { "arn:aws:s3:*:*:resource",
-    "arn:aws:s3:*:12345:resource",
-    "arn:aws:s3:us-east-1:*:resource"
-};
+                                                     "arn:aws:s3:*:12345:resource",
+                                                     "arn:aws:s3:us-east-1:*:resource"
+                                                   };
 
 // FIXME: currently the following: "arn:aws:s3:us-east-1:12345:*"
-// does not fail, even if "wildcard" is not set to "true" 
+// does not fail, even if "wildcard" is not set to "true"
 
 TEST(TestARN, Wildcard)
 {

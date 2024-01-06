@@ -10,8 +10,9 @@
 
 #include "xxHash/xxhash.h"
 
-class Checksummer {
-  public:
+class Checksummer
+{
+public:
     enum CSumType {
         CSUM_NONE = 1,          //intentionally set to 1 to be aligned with OSDMnitor's pool_opts_t handling - it treats 0 as unset while we need to distinguish none and unset cases
         CSUM_XXHASH32 = 2,
@@ -21,66 +22,83 @@ class Checksummer {
         CSUM_CRC32C_8 = 6,      // low 8 bits of crc32c
         CSUM_MAX,
     };
-    static const char *get_csum_type_string(unsigned t) {
+    static const char *get_csum_type_string(unsigned t)
+    {
         switch (t) {
-        case CSUM_NONE:
-            return "none";
-            case CSUM_XXHASH32:return "xxhash32";
-            case CSUM_XXHASH64:return "xxhash64";
-            case CSUM_CRC32C:return "crc32c";
-            case CSUM_CRC32C_16:return "crc32c_16";
-            case CSUM_CRC32C_8:return "crc32c_8";
-            default:return "???";
-    }} static int get_csum_string_type(const std::string & s) {
-        if (s == "none")
+            case CSUM_NONE:
+                return "none";
+            case CSUM_XXHASH32:
+                return "xxhash32";
+            case CSUM_XXHASH64:
+                return "xxhash64";
+            case CSUM_CRC32C:
+                return "crc32c";
+            case CSUM_CRC32C_16:
+                return "crc32c_16";
+            case CSUM_CRC32C_8:
+                return "crc32c_8";
+            default:
+                return "???";
+        }
+    } static int get_csum_string_type(const std::string &s)
+    {
+        if (s == "none") {
             return CSUM_NONE;
-        if (s == "xxhash32")
+        }
+        if (s == "xxhash32") {
             return CSUM_XXHASH32;
-        if (s == "xxhash64")
+        }
+        if (s == "xxhash64") {
             return CSUM_XXHASH64;
-        if (s == "crc32c")
+        }
+        if (s == "crc32c") {
             return CSUM_CRC32C;
-        if (s == "crc32c_16")
+        }
+        if (s == "crc32c_16") {
             return CSUM_CRC32C_16;
-        if (s == "crc32c_8")
+        }
+        if (s == "crc32c_8") {
             return CSUM_CRC32C_8;
+        }
         return -EINVAL;
     }
 
-    static size_t get_csum_init_value_size(int csum_type) {
+    static size_t get_csum_init_value_size(int csum_type)
+    {
         switch (csum_type) {
-        case CSUM_NONE:
-            return 0;
-        case CSUM_XXHASH32:
-            return sizeof(xxhash32::init_value_t);
-        case CSUM_XXHASH64:
-            return sizeof(xxhash64::init_value_t);
-        case CSUM_CRC32C:
-            return sizeof(crc32c::init_value_t);
-        case CSUM_CRC32C_16:
-            return sizeof(crc32c_16::init_value_t);
-        case CSUM_CRC32C_8:
-            return sizeof(crc32c_8::init_value_t);
-        default:
-            return 0;
+            case CSUM_NONE:
+                return 0;
+            case CSUM_XXHASH32:
+                return sizeof(xxhash32::init_value_t);
+            case CSUM_XXHASH64:
+                return sizeof(xxhash64::init_value_t);
+            case CSUM_CRC32C:
+                return sizeof(crc32c::init_value_t);
+            case CSUM_CRC32C_16:
+                return sizeof(crc32c_16::init_value_t);
+            case CSUM_CRC32C_8:
+                return sizeof(crc32c_8::init_value_t);
+            default:
+                return 0;
         }
     }
-    static size_t get_csum_value_size(int csum_type) {
+    static size_t get_csum_value_size(int csum_type)
+    {
         switch (csum_type) {
-        case CSUM_NONE:
-            return 0;
-        case CSUM_XXHASH32:
-            return 4;
-        case CSUM_XXHASH64:
-            return 8;
-        case CSUM_CRC32C:
-            return 4;
-        case CSUM_CRC32C_16:
-            return 2;
-        case CSUM_CRC32C_8:
-            return 1;
-        default:
-            return 0;
+            case CSUM_NONE:
+                return 0;
+            case CSUM_XXHASH32:
+                return 4;
+            case CSUM_XXHASH64:
+                return 8;
+            case CSUM_CRC32C:
+                return 4;
+            case CSUM_CRC32C_16:
+                return 2;
+            case CSUM_CRC32C_8:
+                return 1;
+            default:
+                return 0;
         }
     }
 
@@ -90,14 +108,17 @@ class Checksummer {
 
         // we have no execution context/state.
         typedef int state_t;
-        static void init(state_t * state) {
-        } static void fini(state_t * state) {
+        static void init(state_t *state)
+        {
+        } static void fini(state_t *state)
+        {
         }
 
         static init_value_t calc(state_t state,
                                  init_value_t init_value,
                                  size_t len,
-                                 ceph::buffer::list::const_iterator & p) {
+                                 ceph::buffer::list::const_iterator &p)
+        {
             return p.crc32c(len, init_value);
         }
     };
@@ -108,14 +129,17 @@ class Checksummer {
 
         // we have no execution context/state.
         typedef int state_t;
-        static void init(state_t * state) {
-        } static void fini(state_t * state) {
+        static void init(state_t *state)
+        {
+        } static void fini(state_t *state)
+        {
         }
 
         static init_value_t calc(state_t state,
                                  init_value_t init_value,
                                  size_t len,
-                                 ceph::buffer::list::const_iterator & p) {
+                                 ceph::buffer::list::const_iterator &p)
+        {
             return p.crc32c(len, init_value) & 0xffff;
         }
     };
@@ -126,14 +150,17 @@ class Checksummer {
 
         // we have no execution context/state.
         typedef int state_t;
-        static void init(state_t * state) {
-        } static void fini(state_t * state) {
+        static void init(state_t *state)
+        {
+        } static void fini(state_t *state)
+        {
         }
 
         static init_value_t calc(state_t state,
                                  init_value_t init_value,
                                  size_t len,
-                                 ceph::buffer::list::const_iterator & p) {
+                                 ceph::buffer::list::const_iterator &p)
+        {
             return p.crc32c(len, init_value) & 0xff;
         }
     };
@@ -143,16 +170,19 @@ class Checksummer {
         typedef ceph_le32 value_t;
 
         typedef XXH32_state_t *state_t;
-        static void init(state_t * s) {
+        static void init(state_t *s)
+        {
             *s = XXH32_createState();
-        } static void fini(state_t * s) {
+        } static void fini(state_t *s)
+        {
             XXH32_freeState(*s);
         }
 
         static init_value_t calc(state_t state,
                                  init_value_t init_value,
                                  size_t len,
-                                 ceph::buffer::list::const_iterator & p) {
+                                 ceph::buffer::list::const_iterator &p)
+        {
             XXH32_reset(state, init_value);
             while (len > 0) {
                 const char *data;
@@ -169,16 +199,19 @@ class Checksummer {
         typedef ceph_le64 value_t;
 
         typedef XXH64_state_t *state_t;
-        static void init(state_t * s) {
+        static void init(state_t *s)
+        {
             *s = XXH64_createState();
-        } static void fini(state_t * s) {
+        } static void fini(state_t *s)
+        {
             XXH64_freeState(*s);
         }
 
         static init_value_t calc(state_t state,
                                  init_value_t init_value,
                                  size_t len,
-                                 ceph::buffer::list::const_iterator & p) {
+                                 ceph::buffer::list::const_iterator &p)
+        {
             XXH64_reset(state, init_value);
             while (len > 0) {
                 const char *data;
@@ -191,22 +224,24 @@ class Checksummer {
     };
 
     template < class Alg >
-        static int calculate(size_t csum_block_size,
-                             size_t offset,
-                             size_t length,
-                             const ceph::buffer::list & bl,
-                             ceph::buffer::ptr * csum_data) {
+    static int calculate(size_t csum_block_size,
+                         size_t offset,
+                         size_t length,
+                         const ceph::buffer::list &bl,
+                         ceph::buffer::ptr *csum_data)
+    {
         return calculate < Alg > (-1, csum_block_size, offset, length, bl,
                                   csum_data);
     }
 
     template < class Alg >
-        static int calculate(typename Alg::init_value_t init_value,
-                             size_t csum_block_size,
-                             size_t offset,
-                             size_t length,
-                             const ceph::buffer::list & bl,
-                             ceph::buffer::ptr * csum_data) {
+    static int calculate(typename Alg::init_value_t init_value,
+                         size_t csum_block_size,
+                         size_t offset,
+                         size_t length,
+                         const ceph::buffer::list &bl,
+                         ceph::buffer::ptr *csum_data)
+    {
         ceph_assert(length % csum_block_size == 0);
         size_t blocks = length / csum_block_size;
         ceph::buffer::list::const_iterator p = bl.begin();
@@ -218,7 +253,7 @@ class Checksummer {
         ceph_assert(csum_data->length() >= (offset + length) / csum_block_size *
                     sizeof(typename Alg::value_t));
 
-        typename Alg::value_t * pv =
+        typename Alg::value_t *pv =
             reinterpret_cast < typename Alg::value_t * >(csum_data->c_str());
         pv += offset / csum_block_size;
         while (blocks--) {
@@ -230,12 +265,13 @@ class Checksummer {
     }
 
     template < class Alg >
-        static int verify(size_t csum_block_size,
-                          size_t offset,
-                          size_t length,
-                          const ceph::buffer::list & bl,
-                          const ceph::buffer::ptr & csum_data,
-                          uint64_t * bad_csum = 0) {
+    static int verify(size_t csum_block_size,
+                      size_t offset,
+                      size_t length,
+                      const ceph::buffer::list &bl,
+                      const ceph::buffer::ptr &csum_data,
+                      uint64_t *bad_csum = 0)
+    {
         ceph_assert(length % csum_block_size == 0);
         ceph::buffer::list::const_iterator p = bl.begin();
         ceph_assert(bl.length() >= length);
@@ -243,7 +279,7 @@ class Checksummer {
         typename Alg::state_t state;
         Alg::init(&state);
 
-        const typename Alg::value_t * pv =
+        const typename Alg::value_t *pv =
             reinterpret_cast <
             const typename Alg::value_t * >(csum_data.c_str());
         pv += offset / csum_block_size;

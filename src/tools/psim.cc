@@ -9,22 +9,21 @@ using namespace std;
 int main(int argc, char **argv)
 {
     /*
-     * you need to create a suitable osdmap first.  e.g., for 40 osds, 
+     * you need to create a suitable osdmap first.  e.g., for 40 osds,
      * $ ./osdmaptool --createsimple 40 --clobber .ceph_osdmap
      */
     bufferlist bl;
     std::string error;
     if (bl.read_file(".ceph_osdmap", &error)) {
         cout << argv[0] << ": error reading .ceph_osdmap: " << error << std::
-            endl;
+             endl;
         return 1;
     }
     OSDMap osdmap;
 
     try {
         osdmap.decode(bl);
-    }
-    catch(ceph::buffer::end_of_buffer & eob) {
+    } catch (ceph::buffer::end_of_buffer &eob) {
         cout << "Exception (end_of_buffer) in decode(), exit." << std::endl;
         exit(1);
     }
@@ -84,10 +83,12 @@ int main(int argc, char **argv)
                     //cout << " rep " << i << " on " << osds[i] << std::endl;
                     count[osds[i]]++;
                 }
-                if (osds.size())
+                if (osds.size()) {
                     first_count[osds[0]]++;
-                if (primary >= 0)
+                }
+                if (primary >= 0) {
                     primary_count[primary]++;
+                }
             }
         }
     }
@@ -95,25 +96,26 @@ int main(int argc, char **argv)
     uint64_t avg = 0;
     for (int i = 0; i < n; i++) {
         cout << "osd." << i << "\t" << count[i]
-            << "\t" << first_count[i]
-            << "\t" << primary_count[i]
-            << std::endl;
+             << "\t" << first_count[i]
+             << "\t" << primary_count[i]
+             << std::endl;
         avg += count[i];
     }
     avg /= n;
     double dev = 0;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
         dev += (avg - count[i]) * (avg - count[i]);
+    }
     dev /= n;
     dev = sqrt(dev);
 
     double pgavg = (double)osdmap.get_pg_pool(0)->get_pg_num() / (double)n;
     double edev = sqrt(pgavg) * (double)avg / pgavg;
     cout << " avg " << avg
-        << " stddev " << dev
-        << " (expected " << edev << ")"
-        << " (indep object placement would be " << sqrt(avg) << ")" << std::
-        endl;
+         << " stddev " << dev
+         << " (expected " << edev << ")"
+         << " (indep object placement would be " << sqrt(avg) << ")" << std::
+         endl;
 
     for (int i = 0; i < 4; i++) {
         cout << "size" << i << "\t" << size[i] << std::endl;

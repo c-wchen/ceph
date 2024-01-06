@@ -46,7 +46,7 @@ bool move_eof(HANDLE handle, LARGE_INTEGER offset)
     // Move file pointer to FILE_BEGIN + offset
     if (!SetFilePointerEx(handle, offset, NULL, FILE_BEGIN)) {
         std::cerr << "Setting file pointer failed. err: "
-            << GetLastError() << std::endl;
+                  << GetLastError() << std::endl;
         return false;
     }
 
@@ -64,7 +64,7 @@ void write_file(std::string file_path, std::string data)
     file.open(file_path);
 
     ASSERT_TRUE(file.is_open())
-        << "Failed to open file: " << file_path;
+            << "Failed to open file: " << file_path;
     file << data;
     file.flush();
 
@@ -103,14 +103,15 @@ int wait_for_mount(std::string mount_path)
     int attempts = 0;
     do {
         attempts++;
-        if (attempts < MOUNT_POLL_ATTEMPT)
+        if (attempts < MOUNT_POLL_ATTEMPT) {
             Sleep(MOUNT_POLL_INTERVAL_MS);
+        }
     } while (!fs::exists(mount_path)
              && attempts < MOUNT_POLL_ATTEMPT);
 
     if (!fs::exists(mount_path)) {
         std::cerr << "Timed out waiting for ceph-dokan mount: "
-            << mount_path << std::endl;
+                  << mount_path << std::endl;
         return -ETIMEDOUT;
     }
 
@@ -119,7 +120,7 @@ int wait_for_mount(std::string mount_path)
     return 0;
 }
 
-void map_dokan(SubProcess ** mount, const char *mountpoint)
+void map_dokan(SubProcess **mount, const char *mountpoint)
 {
     SubProcess *new_mount = new SubProcess("ceph-dokan");
 
@@ -132,7 +133,7 @@ void map_dokan(SubProcess ** mount, const char *mountpoint)
     ASSERT_EQ(wait_for_mount(mountpoint), 0);
 }
 
-void map_dokan_read_only(SubProcess ** mount, const char *mountpoint)
+void map_dokan_read_only(SubProcess **mount, const char *mountpoint)
 {
     SubProcess *new_mount = new SubProcess("ceph-dokan");
     new_mount->add_cmd_args("map", "--win-vol-name", "TestCeph",
@@ -145,7 +146,7 @@ void map_dokan_read_only(SubProcess ** mount, const char *mountpoint)
     std::cerr << mountpoint << " mounted in read-only mode" << std::endl;
 }
 
-void map_dokan_with_maxpath(SubProcess ** mount,
+void map_dokan_with_maxpath(SubProcess **mount,
                             const char *mountpoint, uint64_t max_path_len)
 {
     SubProcess *new_mount = new SubProcess("ceph-dokan");
@@ -160,13 +161,12 @@ void map_dokan_with_maxpath(SubProcess ** mount,
     ASSERT_EQ(new_mount->spawn(), 0);
     if (256 <= max_path_len && max_path_len <= 4096) {
         ASSERT_EQ(wait_for_mount(mountpoint), 0);
-    }
-    else {
+    } else {
         ASSERT_NE(wait_for_mount(mountpoint), 0);
     }
 }
 
-void unmap_dokan(SubProcess * mount, const char *mountpoint)
+void unmap_dokan(SubProcess *mount, const char *mountpoint)
 {
     std::string ret = run_cmd("ceph-dokan", "unmap", "-l",
                               mountpoint, (char *)NULL);
@@ -193,7 +193,7 @@ int get_volume_max_path(std::string mountpoint)
                              file_system_name,
                              sizeof(file_system_name)) != TRUE) {
         std::cerr << "GetVolumeInformation() failed, error: "
-            << GetLastError() << std::endl;
+                  << GetLastError() << std::endl;
     }
 
     return max_component_len;
@@ -201,12 +201,15 @@ int get_volume_max_path(std::string mountpoint)
 
 static SubProcess *shared_mount = nullptr;
 
-class DokanTests:public testing::Test {
-  protected:
+class DokanTests: public testing::Test
+{
+protected:
 
-    static void SetUpTestSuite() {
+    static void SetUpTestSuite()
+    {
         map_dokan(&shared_mount, DEFAULT_MOUNTPOINT);
-    } static void TearDownTestSuite() {
+    } static void TearDownTestSuite()
+    {
         if (shared_mount) {
             unmap_dokan(shared_mount, DEFAULT_MOUNTPOINT);
         }
@@ -247,14 +250,18 @@ TEST_F(DokanTests, test_mount_read_only)
     ASSERT_EQ(read_file(mountpoint + success_file_path), data);
 
     std::
-        string exception_msg("filesystem error: cannot remove: No such device ["
-                             + mountpoint + success_file_path + "]");
-    EXPECT_THROW( {
-                 try {
-                 fs::remove(mountpoint + success_file_path);}
-                 catch(const fs::filesystem_error & e) {
-                 EXPECT_STREQ(e.what(), exception_msg.c_str()); throw;}
-                 }, fs::filesystem_error);
+    string exception_msg("filesystem error: cannot remove: No such device ["
+                         + mountpoint + success_file_path + "]");
+    EXPECT_THROW({
+        try
+        {
+            fs::remove(mountpoint + success_file_path);
+        } catch (const fs::filesystem_error &e)
+        {
+            EXPECT_STREQ(e.what(), exception_msg.c_str());
+            throw;
+        }
+    }, fs::filesystem_error);
     unmap_dokan(mount, mountpoint.c_str());
 
     map_dokan(&mount, mountpoint.c_str());
@@ -275,9 +282,9 @@ TEST_F(DokanTests, test_delete_on_close)
                               0);
 
     ASSERT_NE(hFile, INVALID_HANDLE_VALUE)
-        << "Could not open file: "
-        << DEFAULT_MOUNTPOINT "test_create.txt "
-        << "err: " << GetLastError() << std::endl;
+            << "Could not open file: "
+            << DEFAULT_MOUNTPOINT "test_create.txt "
+            << "err: " << GetLastError() << std::endl;
 
     ASSERT_NE(CloseHandle(hFile), 0);
 
@@ -312,7 +319,7 @@ TEST_F(DokanTests, test_io)
 TEST_F(DokanTests, test_subfolders)
 {
     std::string base_dir_path = DEFAULT_MOUNTPOINT "base_dir_"
-        + get_uuid() + "\\";
+                                + get_uuid() + "\\";
     std::string sub_dir_path = base_dir_path + "test_sub_dir" + get_uuid();
     std::string base_dir_file = base_dir_path + "file_" + get_uuid();
     std::string sub_dir_file = sub_dir_path + "file_" + get_uuid();
@@ -332,16 +339,16 @@ TEST_F(DokanTests, test_subfolders)
     ASSERT_TRUE(fs::exists(sub_dir_file));
 
     ASSERT_TRUE(fs::remove((sub_dir_file).c_str()))
-        << "Failed to remove file: " << sub_dir_file;
+            << "Failed to remove file: " << sub_dir_file;
     ASSERT_FALSE(fs::exists(sub_dir_file));
 
     // Remove empty dir
     ASSERT_TRUE(fs::remove((sub_dir_path).c_str()))
-        << "Failed to remove directory: " << sub_dir_path;
+            << "Failed to remove directory: " << sub_dir_path;
     ASSERT_FALSE(fs::exists(sub_dir_file));
 
     ASSERT_NE(fs::remove_all((base_dir_path).c_str()), 0)
-        << "Failed to remove directory: " << base_dir_path;
+            << "Failed to remove directory: " << base_dir_path;
     ASSERT_FALSE(fs::exists(sub_dir_file));
 }
 
@@ -353,17 +360,17 @@ TEST_F(DokanTests, test_find_files)
     std::string file2_path = subdir_path + "/file2_" + get_uuid();
 
     ASSERT_TRUE(fs::create_directories(subdir_path)
-        );
+               );
 
     std::ofstream {
-    file1_path};
+        file1_path};
     std::ofstream {
-    file2_path};
+        file2_path};
 
     std::vector < std::string > paths;
 
-  for (const auto & entry:
-fs::recursive_directory_iterator(basedir_path)
+    for (const auto &entry :
+         fs::recursive_directory_iterator(basedir_path)
         ) {
         paths.push_back(entry.path().generic_string());
     }
@@ -426,11 +433,11 @@ TEST_F(DokanTests, test_max_path)
         long_dir_path.append(crt_dir);
         int stat = _mkdir(long_dir_path.c_str());
         ASSERT_EQ(stat, 0) << "Error creating directory " << i
-            << ": " << GetLastError() << std::endl;
+                           << ": " << GetLastError() << std::endl;
         dir_names[i] = crt_dir;
     }
     std::string file_path = long_dir_path + "\\" + std::string(file)
-        + "_" + get_uuid();
+                            + "_" + get_uuid();
 
     check_write_file(file_path, data);
 
@@ -478,9 +485,9 @@ TEST_F(DokanTests, test_set_eof)
                               0);
 
     ASSERT_NE(hFile, INVALID_HANDLE_VALUE)
-        << "Could not open file: "
-        << DEFAULT_MOUNTPOINT "test_create.txt "
-        << "err: " << GetLastError() << std::endl;
+            << "Could not open file: "
+            << DEFAULT_MOUNTPOINT "test_create.txt "
+            << "err: " << GetLastError() << std::endl;
 
     LARGE_INTEGER offset;
     offset.QuadPart = 2 * MByte;    // 2MB
@@ -515,9 +522,9 @@ TEST_F(DokanTests, test_set_alloc_size)
                               0);
 
     ASSERT_NE(hFile, INVALID_HANDLE_VALUE)
-        << "Could not open file: "
-        << DEFAULT_MOUNTPOINT "test_create.txt "
-        << "err: " << GetLastError() << std::endl;
+            << "Could not open file: "
+            << DEFAULT_MOUNTPOINT "test_create.txt "
+            << "err: " << GetLastError() << std::endl;
 
     LARGE_INTEGER li;
     li.QuadPart = MByte;
@@ -527,7 +534,7 @@ TEST_F(DokanTests, test_set_alloc_size)
     ASSERT_NE(SetFileInformationByHandle(hFile,
                                          FileAllocationInfo,
                                          &fai, sizeof(FILE_ALLOCATION_INFO)
-              ), 0) << "Error: " << GetLastError();
+                                        ), 0) << "Error: " << GetLastError();
 
     LARGE_INTEGER offset;
     offset.QuadPart = 2 * MByte;
@@ -558,7 +565,7 @@ TEST_F(DokanTests, test_file_type)
     ASSERT_TRUE(fs::create_directory(test_dir));
 
     std::ofstream {
-    file_path};
+        file_path};
     ASSERT_TRUE(fs::create_directory(dir_path));
 
     ASSERT_TRUE(fs::is_regular_file(fs::status(file_path)));
@@ -585,18 +592,18 @@ TEST_F(DokanTests, test_volume_info)
                                    &file_system_flags,
                                    file_system_name,
                                    sizeof(file_system_name)), TRUE)
-        << "GetVolumeInformation() failed, error: "
-        << GetLastError() << std::endl;
+            << "GetVolumeInformation() failed, error: "
+            << GetLastError() << std::endl;
 
     ASSERT_STREQ(volume_name, "TestCeph")
-        << "Received: " << volume_name << std::endl;
+            << "Received: " << volume_name << std::endl;
     ASSERT_STREQ(file_system_name, "Ceph")
-        << "Received: " << file_system_name << std::endl;
+            << "Received: " << file_system_name << std::endl;
     ASSERT_EQ(max_component_len, 256);
     ASSERT_EQ(serial_number, std::stoi(TEST_VOL_SERIAL))
-        << "Received: " << serial_number << std::endl;
+            << "Received: " << serial_number << std::endl;
 
-    // Consider adding specific flags 
+    // Consider adding specific flags
     // and check for them
     // ASSERT_EQ(file_system_flags, 271);
 }
@@ -608,9 +615,9 @@ TEST_F(DokanTests, test_get_free_space)
         std::filesystem::space(DEFAULT_MOUNTPOINT, ec);
     ASSERT_EQ(ec.value(), 0);
 
-    ASSERT_NE(static_cast < std::intmax_t > (si.capacity), 0);
-    ASSERT_NE(static_cast < std::intmax_t > (si.free), 0);
-    ASSERT_NE(static_cast < std::intmax_t > (si.available), 0);
+    ASSERT_NE(static_cast < std::intmax_t >(si.capacity), 0);
+    ASSERT_NE(static_cast < std::intmax_t >(si.free), 0);
+    ASSERT_NE(static_cast < std::intmax_t >(si.available), 0);
 }
 
 TEST_F(DokanTests, test_file_timestamp)
@@ -620,20 +627,20 @@ TEST_F(DokanTests, test_file_timestamp)
     std::string file3 = DEFAULT_MOUNTPOINT "test_time3_" + get_uuid();
 
     std::ofstream {
-    file1};
+        file1};
     Sleep(1000);
     std::ofstream {
-    file2};
+        file2};
     Sleep(1000);
     std::ofstream {
-    file3};
+        file3};
 
     int64_t file1_creation = fs::last_write_time(file1)
-        .time_since_epoch().count();
+                             .time_since_epoch().count();
     int64_t file2_creation = fs::last_write_time(file2)
-        .time_since_epoch().count();
+                             .time_since_epoch().count();
     int64_t file3_creation = fs::last_write_time(file3)
-        .time_since_epoch().count();
+                             .time_since_epoch().count();
 
     EXPECT_LT(file1_creation, file2_creation);
     EXPECT_LT(file2_creation, file3_creation);
@@ -644,7 +651,7 @@ TEST_F(DokanTests, test_file_timestamp)
     fs::last_write_time(file1, file1_time + 1 h);
 
     int64_t file1_new_time = fs::last_write_time(file1)
-        .time_since_epoch().count();
+                             .time_since_epoch().count();
 
     EXPECT_EQ((file1_time + 1 h).time_since_epoch().count(), file1_new_time);
     EXPECT_GT(file1_new_time, file2_creation);
@@ -667,8 +674,8 @@ TEST_F(DokanTests, test_delete_disposition)
                               NULL);
 
     ASSERT_NE(hFile, INVALID_HANDLE_VALUE)
-        << "Could not open file: " << file_path
-        << "err: " << GetLastError() << std::endl;
+            << "Could not open file: " << file_path
+            << "err: " << GetLastError() << std::endl;
 
     FILE_DISPOSITION_INFO fdi;
     fdi.DeleteFile = TRUE;      // marking for deletion
@@ -707,7 +714,7 @@ TEST_F(DokanTests, test_create_dispositions)
 {
     std::string file_path = DEFAULT_MOUNTPOINT "test_create_" + get_uuid();
     std::string non_existant_file = DEFAULT_MOUNTPOINT
-        "test_create_" + get_uuid();
+                                    "test_create_" + get_uuid();
 
     EXPECT_TRUE(check_create_disposition(file_path, CREATE_NEW));
 

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef BEACON_STATE_H
@@ -37,57 +37,64 @@ class MDSRank;
  * we keep copies of the data needed to generate beacon messages.  The MDS is
  * responsible for calling Beacon::notify_* when things change.
  */
-class Beacon:public Dispatcher {
-  public:
+class Beacon: public Dispatcher
+{
+public:
     using clock = ceph::coarse_mono_clock;
     using time = ceph::coarse_mono_time;
     bool missed_beacon_ack_dump = false;
     bool missed_internal_heartbeat_dump = false;
 
-     Beacon(CephContext * cct, MonClient * monc, std::string_view name);
+    Beacon(CephContext *cct, MonClient *monc, std::string_view name);
     ~Beacon() override;
 
-    void init(const MDSMap & mdsmap);
+    void init(const MDSMap &mdsmap);
     void shutdown();
 
-    bool ms_can_fast_dispatch_any() const override {
+    bool ms_can_fast_dispatch_any() const override
+    {
         return true;
     } bool ms_can_fast_dispatch2(const cref_t < Message > &m)const override;
     void ms_fast_dispatch2(const ref_t < Message > &m) override;
     bool ms_dispatch2(const ref_t < Message > &m) override;
-    void ms_handle_connect(Connection * c) override {
-    } bool ms_handle_reset(Connection * c) override {
+    void ms_handle_connect(Connection *c) override
+    {
+    } bool ms_handle_reset(Connection *c) override
+    {
         return false;
     }
-    void ms_handle_remote_reset(Connection * c) override {
+    void ms_handle_remote_reset(Connection *c) override
+    {
     }
-    bool ms_handle_refused(Connection * c) override {
+    bool ms_handle_refused(Connection *c) override
+    {
         return false;
     }
 
-    void notify_mdsmap(const MDSMap & mdsmap);
-    void notify_health(const MDSRank * mds);
+    void notify_mdsmap(const MDSMap &mdsmap);
+    void notify_health(const MDSRank *mds);
 
     void handle_mds_beacon(const cref_t < MMDSBeacon > &m);
     void send();
 
-    void set_want_state(const MDSMap & mdsmap, MDSMap::DaemonState newstate);
+    void set_want_state(const MDSMap &mdsmap, MDSMap::DaemonState newstate);
     MDSMap::DaemonState get_want_state()const;
 
-  /**
-   * Send a beacon, and block until the ack is received from the mon
-   * or `duration` seconds pass, whichever happens sooner.  Useful
-   * for emitting a last message on shutdown.
-   */
+    /**
+     * Send a beacon, and block until the ack is received from the mon
+     * or `duration` seconds pass, whichever happens sooner.  Useful
+     * for emitting a last message on shutdown.
+     */
     void send_and_wait(const double duration);
 
     bool is_laggy();
-    double last_cleared_laggy() const {
+    double last_cleared_laggy() const
+    {
         std::unique_lock lock(mutex);
         return std::chrono::duration <
-            double >(clock::now() - last_laggy).count();
-  } private:
-    void _notify_mdsmap(const MDSMap & mdsmap);
+               double > (clock::now() - last_laggy).count();
+    } private:
+    void _notify_mdsmap(const MDSMap &mdsmap);
     bool _send();
 
     mutable std::mutex mutex;

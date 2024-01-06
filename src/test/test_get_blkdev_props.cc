@@ -8,7 +8,7 @@
 #include "include/uuid.h"
 #include "common/blkdev.h"
 
-#define BUFSIZE	80
+#define BUFSIZE 80
 
 int main(int argc, char **argv)
 {
@@ -62,8 +62,7 @@ int main(int argc, char **argv)
     ret = blkdev.model(model, BUFSIZE);
     if (ret == -ENOENT) {
         snprintf(model, BUFSIZE, "unknown");
-    }
-    else if (ret < 0) {
+    } else if (ret < 0) {
         fprintf(stderr, "model: %s\n", strerror(-ret));
         return -1;
     }
@@ -71,8 +70,7 @@ int main(int argc, char **argv)
     ret = blkdev.serial(serial, BUFSIZE);
     if (ret == -ENOENT) {
         snprintf(serial, BUFSIZE, "unknown");
-    }
-    else if (ret < 0) {
+    } else if (ret < 0) {
         fprintf(stderr, "serial: %s\n", strerror(-ret));
         return -1;
     }

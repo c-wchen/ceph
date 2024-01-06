@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "MDSTableServer.h"
@@ -30,33 +30,37 @@ void MDSTableServer::handle_request(const cref_t < MMDSTableRequest > &req)
 {
     ceph_assert(req->op >= 0);
     switch (req->op) {
-    case TABLESERVER_OP_QUERY:
-        return handle_query(req);
-    case TABLESERVER_OP_PREPARE:
-        return handle_prepare(req);
-    case TABLESERVER_OP_COMMIT:
-        return handle_commit(req);
-    case TABLESERVER_OP_ROLLBACK:
-        return handle_rollback(req);
-    case TABLESERVER_OP_NOTIFY_ACK:
-        return handle_notify_ack(req);
-    default:
-        ceph_abort_msg("unrecognized mds_table_server request op");
+        case TABLESERVER_OP_QUERY:
+            return handle_query(req);
+        case TABLESERVER_OP_PREPARE:
+            return handle_prepare(req);
+        case TABLESERVER_OP_COMMIT:
+            return handle_commit(req);
+        case TABLESERVER_OP_ROLLBACK:
+            return handle_rollback(req);
+        case TABLESERVER_OP_NOTIFY_ACK:
+            return handle_notify_ack(req);
+        default:
+            ceph_abort_msg("unrecognized mds_table_server request op");
     }
 }
 
-class C_Prepare:public MDSLogContextBase {
+class C_Prepare: public MDSLogContextBase
+{
     MDSTableServer *server;
     cref_t < MMDSTableRequest > req;
     version_t tid;
-    MDSRank *get_mds() override {
+    MDSRank *get_mds() override
+    {
         return server->mds;
-  } public:
+    } public:
 
-    C_Prepare(MDSTableServer * s, const cref_t < MMDSTableRequest > r,
-              version_t v):server(s), req(r), tid(v) {
+    C_Prepare(MDSTableServer *s, const cref_t < MMDSTableRequest > r,
+              version_t v): server(s), req(r), tid(v)
+    {
     }
-    void finish(int r) override {
+    void finish(int r) override
+    {
         server->_prepare_logged(req, tid);
     }
 };
@@ -99,12 +103,11 @@ void MDSTableServer::_prepare_logged(const cref_t < MMDSTableRequest > &req,
     reply->bl = std::move(out);
 
     if (_notify_prep(tid)) {
-        auto & p = pending_notifies[tid];
+        auto &p = pending_notifies[tid];
         p.notify_ack_gather = active_clients;
         p.mds = from;
         p.reply = reply;
-    }
-    else {
+    } else {
         mds->send_message_mds(reply, from);
     }
 }
@@ -119,32 +122,35 @@ void MDSTableServer::handle_notify_ack(const cref_t < MMDSTableRequest > &m)
     if (p != pending_notifies.end()) {
         if (p->second.notify_ack_gather.erase(from)) {
             if (p->second.notify_ack_gather.empty()) {
-                if (p->second.onfinish)
+                if (p->second.onfinish) {
                     p->second.onfinish->complete(0);
-                else
+                } else {
                     mds->send_message_mds(p->second.reply, p->second.mds);
+                }
                 pending_notifies.erase(p);
             }
-        }
-        else {
+        } else {
             dout(0) << "got unexpected notify ack for tid " << tid <<
-                " from mds." << from << dendl;
+                    " from mds." << from << dendl;
         }
-    }
-    else {
+    } else {
     }
 }
 
-class C_Commit:public MDSLogContextBase {
+class C_Commit: public MDSLogContextBase
+{
     MDSTableServer *server;
     cref_t < MMDSTableRequest > req;
-    MDSRank *get_mds() override {
+    MDSRank *get_mds() override
+    {
         return server->mds;
-  } public:
-    C_Commit(MDSTableServer * s,
-             const cref_t < MMDSTableRequest > &r):server(s), req(r) {
+    } public:
+    C_Commit(MDSTableServer *s,
+             const cref_t < MMDSTableRequest > &r): server(s), req(r)
+    {
     }
-    void finish(int r) override {
+    void finish(int r) override
+    {
         server->_commit_logged(req);
     }
 };
@@ -160,7 +166,7 @@ void MDSTableServer::handle_commit(const cref_t < MMDSTableRequest > &req)
 
         if (committing_tids.count(tid)) {
             dout(0) << "got commit for tid " << tid <<
-                ", already committing, waiting." << dendl;
+                    ", already committing, waiting." << dendl;
             return;
         }
 
@@ -170,21 +176,19 @@ void MDSTableServer::handle_commit(const cref_t < MMDSTableRequest > &req)
         committing_tids.insert(tid);
 
         mds->mdlog->
-            start_submit_entry(new
-                               ETableServer(table, TABLESERVER_OP_COMMIT, 0,
-                                            MDS_RANK_NONE, tid,
-                                            projected_version),
-                               new C_Commit(this, req));
-    }
-    else if (tid <= version) {
+        start_submit_entry(new
+                           ETableServer(table, TABLESERVER_OP_COMMIT, 0,
+                                        MDS_RANK_NONE, tid,
+                                        projected_version),
+                           new C_Commit(this, req));
+    } else if (tid <= version) {
         dout(0) << "got commit for tid " << tid << " <= " << version
-            << ", already committed, sending ack." << dendl;
+                << ", already committed, sending ack." << dendl;
         auto reply =
             make_message < MMDSTableRequest > (table, TABLESERVER_OP_ACK,
                                                req->reqid, tid);
         mds->send_message(reply, req->get_connection());
-    }
-    else {
+    } else {
         // wtf.
         dout(0) << "got commit for tid " << tid << " > " << version << dendl;
         ceph_assert(tid <= version);
@@ -210,16 +214,20 @@ void MDSTableServer::_commit_logged(const cref_t < MMDSTableRequest > &req)
     mds->send_message_mds(reply, mds_rank_t(req->get_source().num()));
 }
 
-class C_Rollback:public MDSLogContextBase {
+class C_Rollback: public MDSLogContextBase
+{
     MDSTableServer *server;
     cref_t < MMDSTableRequest > req;
-    MDSRank *get_mds() override {
+    MDSRank *get_mds() override
+    {
         return server->mds;
-  } public:
-    C_Rollback(MDSTableServer * s,
-               const cref_t < MMDSTableRequest > &r):server(s), req(r) {
+    } public:
+    C_Rollback(MDSTableServer *s,
+               const cref_t < MMDSTableRequest > &r): server(s), req(r)
+    {
     }
-    void finish(int r) override {
+    void finish(int r) override
+    {
         server->_rollback_logged(req);
     }
 };
@@ -238,10 +246,10 @@ void MDSTableServer::handle_rollback(const cref_t < MMDSTableRequest > &req)
     committing_tids.insert(tid);
 
     mds->mdlog->
-        start_submit_entry(new
-                           ETableServer(table, TABLESERVER_OP_ROLLBACK, 0,
-                                        MDS_RANK_NONE, tid, projected_version),
-                           new C_Rollback(this, req));
+    start_submit_entry(new
+                       ETableServer(table, TABLESERVER_OP_ROLLBACK, 0,
+                                    MDS_RANK_NONE, tid, projected_version),
+                       new C_Rollback(this, req));
 }
 
 void MDSTableServer::_rollback_logged(const cref_t < MMDSTableRequest > &req)
@@ -258,20 +266,24 @@ void MDSTableServer::_rollback_logged(const cref_t < MMDSTableRequest > &req)
 }
 
 // SERVER UPDATE
-class C_ServerUpdate:public MDSLogContextBase {
+class C_ServerUpdate: public MDSLogContextBase
+{
     MDSTableServer *server;
     bufferlist bl;
-    MDSRank *get_mds() override {
+    MDSRank *get_mds() override
+    {
         return server->mds;
-  } public:
-    C_ServerUpdate(MDSTableServer * s, bufferlist & b):server(s), bl(b) {
+    } public:
+    C_ServerUpdate(MDSTableServer *s, bufferlist &b): server(s), bl(b)
+    {
     }
-    void finish(int r) override {
+    void finish(int r) override
+    {
         server->_server_update_logged(bl);
     }
 };
 
-void MDSTableServer::do_server_update(bufferlist & bl)
+void MDSTableServer::do_server_update(bufferlist &bl)
 {
     dout(10) << "do_server_update len " << bl.length() << dendl;
 
@@ -285,7 +297,7 @@ void MDSTableServer::do_server_update(bufferlist & bl)
     mds->mdlog->submit_entry(le, new C_ServerUpdate(this, bl));
 }
 
-void MDSTableServer::_server_update_logged(bufferlist & bl)
+void MDSTableServer::_server_update_logged(bufferlist &bl)
 {
     dout(10) << "_server_update_logged len " << bl.length() << dendl;
     _server_update(bl);
@@ -294,14 +306,18 @@ void MDSTableServer::_server_update_logged(bufferlist & bl)
 
 // recovery
 
-class C_ServerRecovery:public MDSContext {
+class C_ServerRecovery: public MDSContext
+{
     MDSTableServer *server;
-    MDSRank *get_mds() override {
+    MDSRank *get_mds() override
+    {
         return server->mds;
-  } public:
-    C_ServerRecovery(MDSTableServer * s):server(s) {
+    } public:
+    C_ServerRecovery(MDSTableServer *s): server(s)
+    {
     }
-    void finish(int r) override {
+    void finish(int r) override
+    {
         server->_do_server_recovery();
     }
 };
@@ -311,13 +327,15 @@ void MDSTableServer::_do_server_recovery()
     dout(7) << __func__ << " " << active_clients << dendl;
     map < mds_rank_t, uint64_t > next_reqids;
 
-  for (auto p:pending_for_mds) {
+    for (auto p : pending_for_mds) {
         mds_rank_t who = p.second.mds;
-        if (!active_clients.count(who))
+        if (!active_clients.count(who)) {
             continue;
+        }
 
-        if (p.second.reqid >= next_reqids[who])
+        if (p.second.reqid >= next_reqids[who]) {
             next_reqids[who] = p.second.reqid + 1;
+        }
 
         version_t tid = p.second.tid;
         auto reply =
@@ -327,7 +345,7 @@ void MDSTableServer::_do_server_recovery()
         mds->send_message_mds(reply, who);
     }
 
-  for (auto p:active_clients) {
+    for (auto p : active_clients) {
         auto reply =
             make_message < MMDSTableRequest > (table,
                                                TABLESERVER_OP_SERVER_READY,
@@ -346,12 +364,11 @@ void MDSTableServer::finish_recovery(set < mds_rank_t > &active)
     // don't know if survivor mds have received all 'notify prep' messages.
     // so we need to send 'notify prep' again.
     if (!pending_for_mds.empty() && _notify_prep(version)) {
-        auto & q = pending_notifies[version];
+        auto &q = pending_notifies[version];
         q.notify_ack_gather = active_clients;
         q.mds = MDS_RANK_NONE;
         q.onfinish = new C_ServerRecovery(this);
-    }
-    else {
+    } else {
         _do_server_recovery();
     }
 }
@@ -369,12 +386,14 @@ void MDSTableServer::handle_mds_recovery(mds_rank_t who)
     uint64_t next_reqid = 0;
     // resend agrees for recovered mds
     for (auto p = pending_for_mds.begin(); p != pending_for_mds.end(); ++p) {
-        if (p->second.mds != who)
+        if (p->second.mds != who) {
             continue;
+        }
         ceph_assert(!pending_notifies.count(p->second.tid));
 
-        if (p->second.reqid >= next_reqid)
+        if (p->second.reqid >= next_reqid) {
             next_reqid = p->second.reqid + 1;
+        }
 
         auto reply =
             make_message < MMDSTableRequest > (table, TABLESERVER_OP_AGREE,
@@ -402,21 +421,21 @@ void MDSTableServer::handle_mds_failure_or_stop(mds_rank_t who)
             // haven't sent reply yet.
             rollback.push_back(q->second.reply);
             pending_notifies.erase(q);
-        }
-        else if (q->second.notify_ack_gather.erase(who)) {
+        } else if (q->second.notify_ack_gather.erase(who)) {
             // the failed mds will reload snaptable when it recovers.
             // so we can remove it from the gather set.
             if (q->second.notify_ack_gather.empty()) {
-                if (q->second.onfinish)
+                if (q->second.onfinish) {
                     q->second.onfinish->complete(0);
-                else
+                } else {
                     mds->send_message_mds(q->second.reply, q->second.mds);
+                }
                 pending_notifies.erase(q);
             }
         }
     }
 
-  for (auto & req:rollback) {
+    for (auto &req : rollback) {
         req->op = TABLESERVER_OP_ROLLBACK;
         handle_rollback(req);
     }

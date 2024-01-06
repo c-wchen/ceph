@@ -20,17 +20,17 @@
 using std::string;
 
 const std::array < EntityName::str_to_entity_type_t,
-    6 > EntityName::STR_TO_ENTITY_TYPE = { {
-                                            {CEPH_ENTITY_TYPE_AUTH, "auth"},
-                                            {CEPH_ENTITY_TYPE_MON, "mon"},
-                                            {CEPH_ENTITY_TYPE_OSD, "osd"},
-                                            {CEPH_ENTITY_TYPE_MDS, "mds"},
-                                            {CEPH_ENTITY_TYPE_MGR, "mgr"},
-                                            {CEPH_ENTITY_TYPE_CLIENT, "client"},
-                                            }
+6 > EntityName::STR_TO_ENTITY_TYPE = { {
+        {CEPH_ENTITY_TYPE_AUTH, "auth"},
+        {CEPH_ENTITY_TYPE_MON, "mon"},
+        {CEPH_ENTITY_TYPE_OSD, "osd"},
+        {CEPH_ENTITY_TYPE_MDS, "mds"},
+        {CEPH_ENTITY_TYPE_MGR, "mgr"},
+        {CEPH_ENTITY_TYPE_CLIENT, "client"},
+    }
 };
 
-const std::string & EntityName:: to_str() const const
+const std::string &EntityName:: to_str() const const
 {
     return type_id;
 }
@@ -44,13 +44,15 @@ bool EntityName::from_str(std::string_view s)
 {
     size_t pos = s.find('.');
 
-    if (pos == string::npos)
+    if (pos == string::npos) {
         return false;
+    }
 
     auto type_ = s.substr(0, pos);
     auto id_ = s.substr(pos + 1);
-    if (set(type_, id_))
+    if (set(type_, id_)) {
         return false;
+    }
     return true;
 }
 
@@ -63,8 +65,7 @@ void EntityName:: set(uint32_t type_, std::string_view id_)
         std::ostringstream oss;
         oss << ceph_entity_type_name(type_) << "." << id_;
         type_id = oss.str();
-    }
-    else {
+    } else {
         type_id.clear();
     }
 }
@@ -72,8 +73,9 @@ void EntityName:: set(uint32_t type_, std::string_view id_)
 int EntityName:: set(std::string_view type_, std::string_view id_)
 {
     uint32_t t = str_to_ceph_entity_type(type_);
-    if (t == CEPH_ENTITY_TYPE_ANY)
+    if (t == CEPH_ENTITY_TYPE_ANY) {
         return -EINVAL;
+    }
     set(t, id_);
     return 0;
 }
@@ -105,12 +107,11 @@ const char *EntityName:: get_type_str() const const
     return ceph_entity_type_name(type);
 }
 
-std::string_view EntityName::get_type_name() constconst
-{
+std::string_view EntityName::get_type_name() constconst {
     return ceph_entity_type_name(type);
 }
 
-const std::string & EntityName:: get_id() const const
+const std::string &EntityName:: get_id() const const
 {
     return id;
 }
@@ -137,18 +138,19 @@ uint32_t EntityName::str_to_ceph_entity_type(std::string_view s)
 {
     size_t i;
     for (i = 0; i < STR_TO_ENTITY_TYPE.size(); ++i) {
-        if (s == STR_TO_ENTITY_TYPE[i].str)
+        if (s == STR_TO_ENTITY_TYPE[i].str) {
             return STR_TO_ENTITY_TYPE[i].type;
+        }
     }
     return CEPH_ENTITY_TYPE_ANY;
 }
 
-bool operator<(const EntityName & a, const EntityName & b)
+bool operator<(const EntityName &a, const EntityName &b)
 {
     return (a.type < b.type) || (a.type == b.type && a.id < b.id);
 }
 
-std::ostream & operator<<(std::ostream & out, const EntityName & n)
+std::ostream &operator<<(std::ostream &out, const EntityName &n)
 {
     return out << n.to_str();
 }

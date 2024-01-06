@@ -11,22 +11,26 @@
 
 using std::vector;
 
-class PrioritizedQueueTest:public testing::Test {
-  protected:
+class PrioritizedQueueTest: public testing::Test
+{
+protected:
     typedef int Klass;
     typedef unsigned Item;
     typedef PrioritizedQueue < Item, Klass > PQ;
     enum { item_size = 100, };
     vector < Item > items;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         for (int i = 0; i < item_size; i++) {
             items.push_back(Item(i));
-        } std::random_device rd;
+        }
+        std::random_device rd;
         std::default_random_engine rng(rd());
         std::shuffle(items.begin(), items.end(), rng);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         items.clear();
     }
 };
@@ -63,7 +67,7 @@ TEST_F(PrioritizedQueueTest, strict_pq)
     // 0 .. item_size-1
     for (unsigned i = 0; i < item_size; i++) {
         unsigned priority = items[i];
-        const Item & item = items[i];
+        const Item &item = items[i];
         pq.enqueue_strict(Klass(0), priority, Item(item));
     }
     // item_size-1 .. 0
@@ -85,13 +89,12 @@ TEST_F(PrioritizedQueueTest, lowest_among_eligible_otherwise_highest)
 #define ITEM_TO_COST(item_) (item_ % 5 ? min_cost : max_tokens_per_subqueue)
     unsigned num_low_cost = 0, num_high_cost = 0;
     for (int i = 0; i < item_size; i++) {
-        const Item & item = items[i];
+        const Item &item = items[i];
         unsigned cost = ITEM_TO_COST(item);
         unsigned priority = item;
         if (cost == min_cost) {
             num_low_cost++;
-        }
-        else {
+        } else {
             num_high_cost++;
         }
         pq.enqueue(Klass(0), priority, cost, Item(item));
@@ -105,8 +108,7 @@ TEST_F(PrioritizedQueueTest, lowest_among_eligible_otherwise_highest)
         unsigned priority = item;
         if (cost == min_cost) {
             num_low_cost--;
-        }
-        else {
+        } else {
             num_high_cost--;
         }
         EXPECT_EQ(item_size - 1u, priority);
@@ -144,7 +146,7 @@ TEST_F(PrioritizedQueueTest, fairness_by_class)
     PQ pq(max_tokens_per_subqueue, min_cost);
 
     for (int i = 0; i < item_size; i++) {
-        const Item & item = items[i];
+        const Item &item = items[i];
         Klass k = ITEM_TO_CLASS(item);
         unsigned priority = 0;
         unsigned cost = 1;
@@ -177,7 +179,7 @@ TEST_F(PrioritizedQueueTest, remove_by_class)
     const Klass class_to_remove(2);
     unsigned num_to_remove = 0;
     for (int i = 0; i < item_size; i++) {
-        const Item & item = items[i];
+        const Item &item = items[i];
         Klass k = ITEM_TO_CLASS(item);
         pq.enqueue(k, 0, 0, Item(item));
         if (k == class_to_remove) {
@@ -190,7 +192,7 @@ TEST_F(PrioritizedQueueTest, remove_by_class)
     // see if the removed items are expected ones.
     for (std::list < Item >::iterator it = removed.begin();
          it != removed.end(); ++it) {
-        const Item & item = *it;
+        const Item &item = *it;
         Klass k = ITEM_TO_CLASS(item);
         EXPECT_EQ(class_to_remove, k);
         items.erase(remove(items.begin(), items.end(), item), items.end());

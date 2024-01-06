@@ -36,20 +36,21 @@ void RGWCORSRule::dump_origins()
 {
     unsigned num_origins = allowed_origins.size();
     dout(10) << "Allowed origins : " << num_origins << dendl;
-  for (auto & origin:allowed_origins) {
+    for (auto &origin : allowed_origins) {
         dout(10) << origin << "," << dendl;
     }
 }
 
-void RGWCORSRule::erase_origin_if_present(string & origin, bool * rule_empty)
+void RGWCORSRule::erase_origin_if_present(string &origin, bool *rule_empty)
 {
     set < string >::iterator it = allowed_origins.find(origin);
-    if (!rule_empty)
+    if (!rule_empty) {
         return;
+    }
     *rule_empty = false;
     if (it != allowed_origins.end()) {
         dout(10) << "Found origin " << origin << ", set size:" <<
-            allowed_origins.size() << dendl;
+                 allowed_origins.size() << dendl;
         allowed_origins.erase(it);
         *rule_empty = (allowed_origins.empty());
     }
@@ -69,7 +70,7 @@ void RGWCORSRule::erase_origin_if_present(string & origin, bool * rule_empty)
  *
  * @todo When UTF-8 is allowed in HTTP headers, this function will need to change
  */
-string lowercase_http_attr(const string & orig)
+string lowercase_http_attr(const string &orig)
 {
     const char *s = orig.c_str();
     char buf[orig.size() + 1];
@@ -98,22 +99,25 @@ static bool is_string_in_set(set < string > &s, string h)
                 string sl = ssplit.front();
                 flen = sl.length();
                 dout(10) << "Finding " << sl << ", in " << h << ", at offset 0"
-                    << dendl;
-                if (!boost::algorithm::starts_with(h, sl))
+                         << dendl;
+                if (!boost::algorithm::starts_with(h, sl)) {
                     continue;
+                }
                 ssplit.pop_front();
             }
             if (off != ((*it).length() - 1)) {
                 string sl = ssplit.front();
                 dout(10) << "Finding " << sl << ", in " << h
-                    << ", at offset not less than " << flen << dendl;
+                         << ", at offset not less than " << flen << dendl;
                 if (h.size() < sl.size() ||
-                    h.compare((h.size() - sl.size()), sl.size(), sl) != 0)
+                    h.compare((h.size() - sl.size()), sl.size(), sl) != 0) {
                     continue;
+                }
                 ssplit.pop_front();
             }
-            if (!ssplit.empty())
+            if (!ssplit.empty()) {
                 continue;
+            }
             return true;
         }
     }
@@ -122,8 +126,9 @@ static bool is_string_in_set(set < string > &s, string h)
 
 bool RGWCORSRule::has_wildcard_origin()
 {
-    if (allowed_origins.find("*") != allowed_origins.end())
+    if (allowed_origins.find("*") != allowed_origins.end()) {
         return true;
+    }
 
     return false;
 }
@@ -146,12 +151,13 @@ bool RGWCORSRule::is_header_allowed(const char *h, size_t len)
     return is_string_in_set(lowercase_allowed_hdrs, lowercase_http_attr(hdr));
 }
 
-void RGWCORSRule::format_exp_headers(string & s)
+void RGWCORSRule::format_exp_headers(string &s)
 {
     s = "";
-  for (const auto & header:exposable_hdrs) {
-        if (s.length() > 0)
+    for (const auto &header : exposable_hdrs) {
+        if (s.length() > 0) {
             s.append(",");
+        }
         // these values are sent to clients in a 'Access-Control-Expose-Headers'
         // response header, so we escape '\n' to avoid header injection
         boost::replace_all_copy(std::back_inserter(s), header, "\n", "\\n");
@@ -162,14 +168,15 @@ RGWCORSRule *RGWCORSConfiguration::host_name_rule(const char *origin)
 {
     for (list < RGWCORSRule >::iterator it_r = rules.begin();
          it_r != rules.end(); ++it_r) {
-        RGWCORSRule & r = (*it_r);
-        if (r.is_origin_present(origin))
+        RGWCORSRule &r = (*it_r);
+        if (r.is_origin_present(origin)) {
             return &r;
+        }
     }
     return NULL;
 }
 
-void RGWCORSConfiguration::erase_host_name_rule(string & origin)
+void RGWCORSConfiguration::erase_host_name_rule(string &origin)
 {
     bool rule_empty;
     unsigned loop = 0;
@@ -177,10 +184,10 @@ void RGWCORSConfiguration::erase_host_name_rule(string & origin)
     dout(10) << "Num of rules : " << rules.size() << dendl;
     for (list < RGWCORSRule >::iterator it_r = rules.begin();
          it_r != rules.end(); ++it_r, loop++) {
-        RGWCORSRule & r = (*it_r);
+        RGWCORSRule &r = (*it_r);
         r.erase_origin_if_present(origin, &rule_empty);
         dout(10) << "Origin:" << origin << ", rule num:"
-            << loop << ", emptying now:" << rule_empty << dendl;
+                 << loop << ", emptying now:" << rule_empty << dendl;
         if (rule_empty) {
             rules.erase(it_r);
             break;

@@ -24,37 +24,38 @@
 
 using namespace std;
 
-namespace {
+namespace
+{
+using tcp = boost::asio::ip::tcp;
+
+// if we have a racing where another thread manages to bind and listen the
+// port picked by this acceptor, try again.
+static constexpr int MAX_BIND_RETRIES = 60;
+
+tcp::acceptor try_bind(boost::asio::io_context &ioctx)
+{
     using tcp = boost::asio::ip::tcp;
-
-    // if we have a racing where another thread manages to bind and listen the
-    // port picked by this acceptor, try again.
-    static constexpr int MAX_BIND_RETRIES = 60;
-
-    tcp::acceptor try_bind(boost::asio::io_context & ioctx) {
-        using tcp = boost::asio::ip::tcp;
-        tcp::endpoint endpoint(tcp::v4(), 0);
-        tcp::acceptor acceptor(ioctx);
-        acceptor.open(endpoint.protocol());
-        for (int retries = 0;; retries++) {
-            try {
-                acceptor.bind(endpoint);
-                // yay!
-                break;
+    tcp::endpoint endpoint(tcp::v4(), 0);
+    tcp::acceptor acceptor(ioctx);
+    acceptor.open(endpoint.protocol());
+    for (int retries = 0;; retries++) {
+        try {
+            acceptor.bind(endpoint);
+            // yay!
+            break;
+        } catch (const boost::system::system_error &e) {
+            if (retries == MAX_BIND_RETRIES) {
+                throw;
             }
-            catch(const boost::system::system_error & e) {
-                if (retries == MAX_BIND_RETRIES) {
-                    throw;
-                }
-                if (e.code() != boost::system::errc::address_in_use) {
-                    throw;
-                }
+            if (e.code() != boost::system::errc::address_in_use) {
+                throw;
             }
-            // backoff a little bit
-            sleep(1);
         }
-        return acceptor;
+        // backoff a little bit
+        sleep(1);
     }
+    return acceptor;
+}
 }
 
 TEST(HTTPManager, ReadTruncated)
@@ -67,7 +68,7 @@ TEST(HTTPManager, ReadTruncated)
     std::thread server {
         [&] {
             tcp::socket socket {
-            ioctx};
+                ioctx};
             acceptor.accept(socket);
             std::string_view response =
                 "HTTP/1.1 200 OK\r\n"
@@ -77,11 +78,11 @@ TEST(HTTPManager, ReadTruncated)
     };
     const auto url =
         std::string { "http://127.0.0.1:" } +std::to_string(acceptor.
-                                                            local_endpoint().
-                                                            port());
+                local_endpoint().
+                port());
 
     RGWHTTPClient client {
-    g_ceph_context, "GET", url};
+        g_ceph_context, "GET", url};
     EXPECT_EQ(-EAGAIN, RGWHTTP::process(&client, null_yield));
 
     server.join();
@@ -97,19 +98,19 @@ TEST(HTTPManager, Head)
     std::thread server {
         [&] {
             tcp::socket socket {
-            ioctx};
+                ioctx};
             acceptor.accept(socket);
             std::string_view response =
                 "HTTP/1.1 200 OK\r\n" "Content-Length: 1024\r\n" "\r\n";
             boost::asio::write(socket, boost::asio::buffer(response));
-    }};
+        }};
     const auto url =
         std::string { "http://127.0.0.1:" } +std::to_string(acceptor.
-                                                            local_endpoint().
-                                                            port());
+                local_endpoint().
+                port());
 
     RGWHTTPClient client {
-    g_ceph_context, "HEAD", url};
+        g_ceph_context, "HEAD", url};
     EXPECT_EQ(0, RGWHTTP::process(&client, null_yield));
 
     server.join();
@@ -136,7 +137,7 @@ TEST(HTTPManager, SignalThread)
 
     for (size_t i = 0; i < num_requests; i++) {
         RGWHTTPClient client {
-        cct, "PUT", "http://127.0.0.1:80"};
+            cct, "PUT", "http://127.0.0.1:80"};
         http.add_request(&client);
     }
 }

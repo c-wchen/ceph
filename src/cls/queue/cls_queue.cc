@@ -18,14 +18,14 @@ using ceph::encode;
 CLS_VER(1, 0)
 CLS_NAME(queue)
 
-static int cls_queue_init(cls_method_context_t hctx, bufferlist * in,
-                          bufferlist * out)
+static int cls_queue_init(cls_method_context_t hctx, bufferlist *in,
+                          bufferlist *out)
 {
     auto in_iter = in->cbegin();
     cls_queue_init_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_queue_init_op(): failed to decode entry\n");
         return -EINVAL;
     }
@@ -33,8 +33,8 @@ static int cls_queue_init(cls_method_context_t hctx, bufferlist * in,
     return queue_init(hctx, op);
 }
 
-static int cls_queue_get_capacity(cls_method_context_t hctx, bufferlist * in,
-                                  bufferlist * out)
+static int cls_queue_get_capacity(cls_method_context_t hctx, bufferlist *in,
+                                  bufferlist *out)
 {
     cls_queue_get_capacity_ret op_ret;
     auto ret = queue_get_capacity(hctx, op_ret);
@@ -46,14 +46,14 @@ static int cls_queue_get_capacity(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int cls_queue_enqueue(cls_method_context_t hctx, bufferlist * in,
-                             bufferlist * out)
+static int cls_queue_enqueue(cls_method_context_t hctx, bufferlist *in,
+                             bufferlist *out)
 {
     auto iter = in->cbegin();
     cls_queue_enqueue_op op;
     try {
         decode(op, iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_queue_enqueue: failed to decode input data \n");
         return -EINVAL;
     }
@@ -73,14 +73,14 @@ static int cls_queue_enqueue(cls_method_context_t hctx, bufferlist * in,
     return queue_write_head(hctx, head);
 }
 
-static int cls_queue_list_entries(cls_method_context_t hctx, bufferlist * in,
-                                  bufferlist * out)
+static int cls_queue_list_entries(cls_method_context_t hctx, bufferlist *in,
+                                  bufferlist *out)
 {
     auto in_iter = in->cbegin();
     cls_queue_list_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(5,
                 "ERROR: cls_queue_list_entries(): failed to decode input data\n");
         return -EINVAL;
@@ -102,14 +102,14 @@ static int cls_queue_list_entries(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int cls_queue_remove_entries(cls_method_context_t hctx, bufferlist * in,
-                                    bufferlist * out)
+static int cls_queue_remove_entries(cls_method_context_t hctx, bufferlist *in,
+                                    bufferlist *out)
 {
     auto in_iter = in->cbegin();
     cls_queue_remove_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(5,
                 "ERROR: cls_queue_remove_entries: failed to decode input data\n");
         return -EINVAL;

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -12,7 +12,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include <errno.h>
@@ -27,17 +27,18 @@
 
 using namespace std;
 
-template < typename T > class ErasureCodeTest:public::testing::Test {
-  public:
+template < typename T > class ErasureCodeTest: public::testing::Test
+{
+public:
 };
 
 typedef::testing::Types <
-    ErasureCodeJerasureReedSolomonVandermonde,
-    ErasureCodeJerasureReedSolomonRAID6,
-    ErasureCodeJerasureCauchyOrig,
-    ErasureCodeJerasureCauchyGood,
-    ErasureCodeJerasureLiberation,
-    ErasureCodeJerasureBlaumRoth, ErasureCodeJerasureLiber8tion > JerasureTypes;
+ErasureCodeJerasureReedSolomonVandermonde,
+ErasureCodeJerasureReedSolomonRAID6,
+ErasureCodeJerasureCauchyOrig,
+ErasureCodeJerasureCauchyGood,
+ErasureCodeJerasureLiberation,
+ErasureCodeJerasureBlaumRoth, ErasureCodeJerasureLiber8tion > JerasureTypes;
 TYPED_TEST_SUITE(ErasureCodeTest, JerasureTypes);
 
 TYPED_TEST(ErasureCodeTest, sanity_check_k)
@@ -83,7 +84,7 @@ TYPED_TEST(ErasureCodeTest, encode_decode)
         map < int, bufferlist > encoded;
         EXPECT_EQ(0,
                   jerasure.encode(set <
-                                  int >(want_to_encode, want_to_encode + 4), in,
+                                  int > (want_to_encode, want_to_encode + 4), in,
                                   &encoded));
         EXPECT_EQ(4u, encoded.size());
         unsigned length = encoded[0].length();
@@ -97,8 +98,8 @@ TYPED_TEST(ErasureCodeTest, encode_decode)
             map < int, bufferlist > decoded;
             EXPECT_EQ(0,
                       jerasure._decode(set <
-                                       int >(want_to_decode,
-                                             want_to_decode + 2), encoded,
+                                       int > (want_to_decode,
+                                              want_to_decode + 2), encoded,
                                        &decoded));
             EXPECT_EQ(2u, decoded.size());
             EXPECT_EQ(length, decoded[0].length());
@@ -107,7 +108,7 @@ TYPED_TEST(ErasureCodeTest, encode_decode)
                                 in.length() - length));
         }
 
-        // two chunks are missing 
+        // two chunks are missing
         {
             map < int, bufferlist > degraded = encoded;
             degraded.erase(0);
@@ -117,8 +118,8 @@ TYPED_TEST(ErasureCodeTest, encode_decode)
             map < int, bufferlist > decoded;
             EXPECT_EQ(0,
                       jerasure._decode(set <
-                                       int >(want_to_decode,
-                                             want_to_decode + 2), degraded,
+                                       int > (want_to_decode,
+                                              want_to_decode + 2), degraded,
                                        &decoded));
             // always decode all, regardless of want_to_decode
             EXPECT_EQ(4u, decoded.size());
@@ -149,7 +150,7 @@ TYPED_TEST(ErasureCodeTest, minimum_to_decode)
         set < int >minimum;
 
         EXPECT_EQ(0, jerasure._minimum_to_decode(want_to_read,
-                                                 available_chunks, &minimum));
+                  available_chunks, &minimum));
         EXPECT_TRUE(minimum.empty());
     }
     //
@@ -163,8 +164,8 @@ TYPED_TEST(ErasureCodeTest, minimum_to_decode)
         want_to_read.insert(0);
 
         EXPECT_EQ(-EIO, jerasure._minimum_to_decode(want_to_read,
-                                                    available_chunks,
-                                                    &minimum));
+                  available_chunks,
+                  &minimum));
     }
     //
     // Reading a subset of the available chunks is always possible.
@@ -178,7 +179,7 @@ TYPED_TEST(ErasureCodeTest, minimum_to_decode)
         available_chunks.insert(0);
 
         EXPECT_EQ(0, jerasure._minimum_to_decode(want_to_read,
-                                                 available_chunks, &minimum));
+                  available_chunks, &minimum));
         EXPECT_EQ(want_to_read, minimum);
     }
     //
@@ -195,8 +196,8 @@ TYPED_TEST(ErasureCodeTest, minimum_to_decode)
         available_chunks.insert(0);
 
         EXPECT_EQ(-EIO, jerasure._minimum_to_decode(want_to_read,
-                                                    available_chunks,
-                                                    &minimum));
+                  available_chunks,
+                  &minimum));
     }
     //
     // When chunks are not available, the minimum can be made of any
@@ -219,7 +220,7 @@ TYPED_TEST(ErasureCodeTest, minimum_to_decode)
         available_chunks.insert(3);
 
         EXPECT_EQ(0, jerasure._minimum_to_decode(want_to_read,
-                                                 available_chunks, &minimum));
+                  available_chunks, &minimum));
         EXPECT_EQ(2u, minimum.size());
         EXPECT_EQ(0u, minimum.count(3));
     }
@@ -247,7 +248,7 @@ TEST(ErasureCodeTest, encode)
         in.append(string(aligned_object_size + trail_length, 'X'));
         EXPECT_EQ(0,
                   jerasure.encode(set <
-                                  int >(want_to_encode, want_to_encode + 4), in,
+                                  int > (want_to_encode, want_to_encode + 4), in,
                                   &encoded));
         EXPECT_EQ(4u, encoded.size());
         char *last_chunk = encoded[1].c_str();
@@ -329,8 +330,9 @@ TEST(ErasureCodeTest, create_rule)
         int x = 0;
         c->do_rule(rule, x, out, jerasure.get_chunk_count(), weight, 0);
         ASSERT_EQ(out.size(), jerasure.get_chunk_count());
-        for (unsigned i = 0; i < out.size(); ++i)
+        for (unsigned i = 0; i < out.size(); ++i) {
             ASSERT_NE(CRUSH_ITEM_NONE, out[i]);
+        }
     }
     {
         stringstream ss;
@@ -358,7 +360,7 @@ TEST(ErasureCodeTest, create_rule)
     }
 }
 
-/* 
+/*
  * Local Variables:
  * compile-command: "cd ../.. ;
  *   make -j4 unittest_erasure_code_jerasure &&

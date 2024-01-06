@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -9,7 +9,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include <errno.h>
@@ -21,7 +21,7 @@
 
 using namespace std;
 
-static void get_jf(const string & s, JSONFormattable * f)
+static void get_jf(const string &s, JSONFormattable *f)
 {
     JSONParser p;
     bool result = p.parse(s.c_str(), s.size());
@@ -31,8 +31,7 @@ static void get_jf(const string & s, JSONFormattable * f)
     ASSERT_EQ(true, result);
     try {
         decode_json_obj(*f, &p);
-    }
-    catch(JSONDecoder::err & e) {
+    } catch (JSONDecoder::err &e) {
         ASSERT_TRUE(0 == "Failed to decode JSON object");
     }
 }
@@ -43,7 +42,7 @@ TEST(formatable, str)
     get_jf("{ \"foo\": \"bar\" }", &f);
     ASSERT_EQ((string) f["foo"], "bar");
     ASSERT_EQ((string) f["fooz"], "");
-    ASSERT_EQ((string) f["fooz"] ("lala"), "lala");
+    ASSERT_EQ((string) f["fooz"]("lala"), "lala");
 }
 
 TEST(formatable, str2)
@@ -52,14 +51,14 @@ TEST(formatable, str2)
     get_jf("{ \"foo\": \"bar\" }", &f);
     ASSERT_EQ((string) f["foo"], "bar");
     ASSERT_EQ((string) f["fooz"], "");
-    ASSERT_EQ((string) f["fooz"] ("lala"), "lala");
+    ASSERT_EQ((string) f["fooz"]("lala"), "lala");
 
     JSONFormattable f2;
     get_jf("{ \"foo\": \"bar\", \"fooz\": \"zzz\" }", &f2);
     ASSERT_EQ((string) f2["foo"], "bar");
     ASSERT_NE((string) f2["fooz"], "");
     ASSERT_EQ((string) f2["fooz"], "zzz");
-    ASSERT_EQ((string) f2["fooz"] ("lala"), "zzz");
+    ASSERT_EQ((string) f2["fooz"]("lala"), "zzz");
 
 }
 
@@ -76,14 +75,14 @@ TEST(formatable, int)
     get_jf("{ \"foo\": 1 }", &f);
     ASSERT_EQ((int)f["foo"], 1);
     ASSERT_EQ((int)f["fooz"], 0);
-    ASSERT_EQ((int)f["fooz"] (3), 3);
+    ASSERT_EQ((int)f["fooz"](3), 3);
 
     JSONFormattable f2;
     get_jf("{ \"foo\": \"bar\", \"fooz\": \"123\" }", &f2);
     ASSERT_EQ((string) f2["foo"], "bar");
     ASSERT_NE((int)f2["fooz"], 0);
     ASSERT_EQ((int)f2["fooz"], 123);
-    ASSERT_EQ((int)f2["fooz"] (111), 123);
+    ASSERT_EQ((int)f2["fooz"](111), 123);
 }
 
 TEST(formatable, bool)
@@ -92,7 +91,7 @@ TEST(formatable, bool)
     get_jf("{ \"foo\": \"true\" }", &f);
     ASSERT_EQ((bool) f["foo"], true);
     ASSERT_EQ((bool) f["fooz"], false);
-    ASSERT_EQ((bool) f["fooz"] (true), true);
+    ASSERT_EQ((bool) f["fooz"](true), true);
 
     JSONFormattable f2;
     get_jf("{ \"foo\": \"false\" }", &f);
@@ -115,7 +114,7 @@ TEST(formatable, array)
            "{ \"foo\": 2 } ] }", &f);
 
     int i = 1;
-  for (auto a:f.array()) {
+    for (auto a : f.array()) {
         ASSERT_EQ((int)a["foo"], i);
         ++i;
     }
@@ -124,7 +123,7 @@ TEST(formatable, array)
     get_jf("{ \"arr\": [ 0, 1, 2, 3, 4 ]}", &f2);
 
     i = 0;
-  for (auto a:f2.array()) {
+    for (auto a : f2.array()) {
         ASSERT_EQ((int)a, i);
         ++i;
     }
@@ -134,11 +133,11 @@ TEST(formatable, bin_encode)
 {
     JSONFormattable f, f2;
     get_jf
-        ("{ \"arr\": [ { \"foo\": 1, \"bar\": \"aaa\", \"inobj\": { \"foo\": 2 } },"
-         "{ \"foo\": 2, \"inobj\": { \"foo\": 3 } } ] }", &f);
+    ("{ \"arr\": [ { \"foo\": 1, \"bar\": \"aaa\", \"inobj\": { \"foo\": 2 } },"
+     "{ \"foo\": 2, \"inobj\": { \"foo\": 3 } } ] }", &f);
 
     int i = 1;
-  for (auto a:f.array()) {
+    for (auto a : f.array()) {
         ASSERT_EQ((int)a["foo"], i);
         ASSERT_EQ((int)a["foo"]["inobj"], i + 1);
         ASSERT_EQ((string) a["bar"], "aaa");
@@ -150,12 +149,12 @@ TEST(formatable, bin_encode)
     auto iter = bl.cbegin();
     try {
         ::decode(f2, iter);
-    } catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         ASSERT_TRUE(0 == "Failed to decode object");
     }
 
     i = 1;
-  for (auto a:f2.array()) {
+    for (auto a : f2.array()) {
         ASSERT_EQ((int)a["foo"], i);
         ASSERT_EQ((int)a["foo"]["inobj"], i + 1);
         ASSERT_EQ((string) a["bar"], "aaa");
@@ -168,8 +167,8 @@ TEST(formatable, json_encode)
 {
     JSONFormattable f, f2;
     get_jf
-        ("{ \"arr\": [ { \"foo\": 1, \"bar\": \"aaa\", \"inobj\": { \"foo\": 2 } },"
-         "{ \"foo\": 2, \"inobj\": { \"foo\": 3 } } ] }", &f);
+    ("{ \"arr\": [ { \"foo\": 1, \"bar\": \"aaa\", \"inobj\": { \"foo\": 2 } },"
+     "{ \"foo\": 2, \"inobj\": { \"foo\": 3 } } ] }", &f);
 
     JSONFormatter formatter;
     formatter.open_object_section("bla");
@@ -182,7 +181,7 @@ TEST(formatable, json_encode)
     get_jf(ss.str(), &f2);
 
     int i = 1;
-  for (auto a:f2.array()) {
+    for (auto a : f2.array()) {
         ASSERT_EQ((int)a["foo"], i);
         ASSERT_EQ((int)a["foo"]["inobj"], i + 1);
         ASSERT_EQ((string) a["bar"], "aaa");
@@ -239,7 +238,7 @@ TEST(formatable, erase)
     ASSERT_EQ((int)f["obj"]["b"], 20);
 }
 
-template < class T > static void dumpt(const T & t, const char *n)
+template < class T > static void dumpt(const T &t, const char *n)
 {
     JSONFormatter formatter;
     formatter.open_object_section("bla");
@@ -248,7 +247,7 @@ template < class T > static void dumpt(const T & t, const char *n)
     formatter.flush(cout);
 }
 
-static void dumpf(const JSONFormattable & f)
+static void dumpf(const JSONFormattable &f)
 {
     dumpt(f, "f");
 }
@@ -323,7 +322,7 @@ TEST(formatable, erase_array)
     }
 }
 
-void formatter_convert(JSONFormatter & formatter, JSONFormattable * dest)
+void formatter_convert(JSONFormatter &formatter, JSONFormattable *dest)
 {
     stringstream ss;
     formatter.flush(ss);
@@ -355,60 +354,70 @@ struct struct1 {
     string s;
     bool b;
 
-     struct1() {
+    struct1()
+    {
         void *p = (void *)this;
-         i = (long)p;
+        i = (long)p;
         char buf[32];
-         snprintf(buf, sizeof(buf), "%p", p);
-         s = buf;
-         b = (bool) (i % 2);
-    } void dump(Formatter * f) const {
+        snprintf(buf, sizeof(buf), "%p", p);
+        s = buf;
+        b = (bool)(i % 2);
+    } void dump(Formatter *f) const
+    {
         encode_json("i", i, f);
         encode_json("s", s, f);
         encode_json("b", b, f);
-    } void decode_json(JSONObj * obj) {
+    } void decode_json(JSONObj *obj)
+    {
         JSONDecoder::decode_json("i", i, obj);
         JSONDecoder::decode_json("s", s, obj);
         JSONDecoder::decode_json("b", b, obj);
     }
 
-    bool compare(const JSONFormattable & jf) const {
+    bool compare(const JSONFormattable &jf) const
+    {
         bool ret = (s == (string) jf["s"] &&
                     i == (long)jf["i"] && b == (bool) jf["b"]);
 
         if (!ret) {
             cout << "failed comparison: s=" << s << " jf[s]=" << (string)
-                jf["s"] << " i=" << i << " jf[i]=" << (long)jf["i"] << " b=" <<
-                b << " jf[b]=" << (bool) jf["b"] << std::endl;
+                 jf["s"] << " i=" << i << " jf[i]=" << (long)jf["i"] << " b=" <<
+                 b << " jf[b]=" << (bool) jf["b"] << std::endl;
             dumpf(jf);
-        } return ret;
+        }
+        return ret;
     }
 };
 
 struct struct2 {
     struct1 s1;
-     vector < struct1 > v;
+    vector < struct1 > v;
 
-     struct2() {
+    struct2()
+    {
         void *p = (void *)this;
         long i = (long)p;
-         v.resize((i >> 16) % 16 + 1);
-    } void dump(Formatter * f) const {
+        v.resize((i >> 16) % 16 + 1);
+    } void dump(Formatter *f) const
+    {
         encode_json("s1", s1, f);
         encode_json("v", v, f);
-    } void decode_json(JSONObj * obj) {
+    } void decode_json(JSONObj *obj)
+    {
         JSONDecoder::decode_json("s1", s1, obj);
         JSONDecoder::decode_json("v", v, obj);
     }
 
-    bool compare(const JSONFormattable & jf) const {
+    bool compare(const JSONFormattable &jf) const
+    {
         if (!s1.compare(jf["s1"])) {
             cout << "s1.compare(jf[s1] failed" << std::endl;
             return false;
-        } if (v.size() != jf["v"].array().size()) {
+        }
+        if (v.size() != jf["v"].array().size()) {
             cout << "v.size()=" << v.
-                size() << " jf[v].array().size()=" << jf["v"].array().
-                size() << std::endl;
+                 size() << " jf[v].array().size()=" << jf["v"].array().
+                 size() << std::endl;
             return false;
         }
 

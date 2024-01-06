@@ -69,8 +69,8 @@ static const rss_key_type default_rsskey_52bytes = {
 };
 
 template < typename T >
-    static inline uint32_t toeplitz_hash(const rss_key_type & key,
-                                         const T & data)
+static inline uint32_t toeplitz_hash(const rss_key_type &key,
+                                     const T &data)
 {
     uint32_t hash = 0, v;
     u_int i, b;
@@ -80,11 +80,13 @@ template < typename T >
     v = (key[0] << 24) + (key[1] << 16) + (key[2] << 8) + key[3];
     for (i = 0; i < data.size(); i++) {
         for (b = 0; b < 8; b++) {
-            if (data[i] & (1 << (7 - b)))
+            if (data[i] & (1 << (7 - b))) {
                 hash ^= v;
+            }
             v <<= 1;
-            if ((i + 4) < key.size() && (key[i + 4] & (1 << (7 - b))))
+            if ((i + 4) < key.size() && (key[i + 4] & (1 << (7 - b)))) {
                 v |= 1;
+            }
         }
     }
     return (hash);

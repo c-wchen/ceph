@@ -15,13 +15,14 @@ double bloom_filter::density() const const
     // TODO: use transform_reduce() in GCC-9 and up
     unsigned set = std::accumulate(bit_table_.begin(),
                                    bit_table_.begin() + table_size_,
-                                   0u,[](unsigned set, cell_type cell){
-                                   return set + std::popcount(cell);}
-    );
+    0u, [](unsigned set, cell_type cell) {
+        return set + std::popcount(cell);
+    }
+                                  );
     return (double)set / (table_size_ * sizeof(cell_type) * CHAR_BIT);
 }
 
-void bloom_filter::encode(bufferlist & bl) const const
+void bloom_filter::encode(bufferlist &bl) const const
 {
     ENCODE_START(2, 2, bl);
     encode((uint64_t) salt_count_, bl);
@@ -32,7 +33,7 @@ void bloom_filter::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void bloom_filter::decode(bufferlist::const_iterator & p)
+void bloom_filter::decode(bufferlist::const_iterator &p)
 {
     DECODE_START(2, p);
     uint64_t v;
@@ -51,7 +52,7 @@ void bloom_filter::decode(bufferlist::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-void bloom_filter::dump(Formatter * f) const const
+void bloom_filter::dump(Formatter *f) const const
 {
     f->dump_unsigned("salt_count", salt_count_);
     f->dump_unsigned("table_size", table_size_);
@@ -61,18 +62,19 @@ void bloom_filter::dump(Formatter * f) const const
 
     f->open_array_section("salt_table");
     for (std::vector < bloom_type >::const_iterator i = salt_.begin();
-         i != salt_.end(); ++i)
+         i != salt_.end(); ++i) {
         f->dump_unsigned("salt", *i);
+    }
     f->close_section();
 
     f->open_array_section("bit_table");
-  for (auto byte:bit_table_) {
+    for (auto byte : bit_table_) {
         f->dump_unsigned("byte", (unsigned)byte);
     }
     f->close_section();
 }
 
-void bloom_filter::generate_test_instances(std::list < bloom_filter * >&ls)
+void bloom_filter::generate_test_instances(std::list < bloom_filter * > &ls)
 {
     ls.push_back(new bloom_filter(10, .5, 1));
     ls.push_back(new bloom_filter(10, .5, 1));
@@ -86,7 +88,7 @@ void bloom_filter::generate_test_instances(std::list < bloom_filter * >&ls)
     ls.back()->insert("boogggg");
 }
 
-void compressible_bloom_filter::encode(bufferlist & bl) const const
+void compressible_bloom_filter::encode(bufferlist &bl) const const
 {
     ENCODE_START(2, 2, bl);
     bloom_filter::encode(bl);
@@ -94,13 +96,14 @@ void compressible_bloom_filter::encode(bufferlist & bl) const const
     uint32_t s = size_list.size();
     encode(s, bl);
     for (std::vector < size_t >::const_iterator p = size_list.begin();
-         p != size_list.end(); ++p)
+         p != size_list.end(); ++p) {
         encode((uint64_t) * p, bl);
+    }
 
     ENCODE_FINISH(bl);
 }
 
-void compressible_bloom_filter::decode(bufferlist::const_iterator & p)
+void compressible_bloom_filter::decode(bufferlist::const_iterator &p)
 {
     DECODE_START(2, p);
     bloom_filter::decode(p);
@@ -117,20 +120,21 @@ void compressible_bloom_filter::decode(bufferlist::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-void compressible_bloom_filter::dump(Formatter * f) const const
+void compressible_bloom_filter::dump(Formatter *f) const const
 {
     bloom_filter::dump(f);
 
     f->open_array_section("table_sizes");
     for (std::vector < size_t >::const_iterator p = size_list.begin();
-         p != size_list.end(); ++p)
+         p != size_list.end(); ++p) {
         f->dump_unsigned("size", (uint64_t) * p);
+    }
     f->close_section();
 }
 
 void compressible_bloom_filter::generate_test_instances(std::list <
-                                                        compressible_bloom_filter
-                                                        * >&ls)
+        compressible_bloom_filter
+        * > &ls)
 {
     ls.push_back(new compressible_bloom_filter(10, .5, 1));
     ls.push_back(new compressible_bloom_filter(10, .5, 1));

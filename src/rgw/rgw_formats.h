@@ -19,21 +19,26 @@ struct plain_stack_entry {
  * FIXME: This was a hack to send certain swift messages.
  * There is a much better way to do this.
  */
-class RGWFormatter_Plain:public Formatter {
+class RGWFormatter_Plain: public Formatter
+{
     void reset_buf();
-  public:
-     explicit RGWFormatter_Plain(bool use_kv = false);
+public:
+    explicit RGWFormatter_Plain(bool use_kv = false);
     ~RGWFormatter_Plain() override;
 
-    void set_status(int status, const char *status_name) override {
+    void set_status(int status, const char *status_name) override
+    {
     };
-    void output_header() override {
+    void output_header() override
+    {
     };
-    void output_footer() override {
+    void output_footer() override
+    {
     };
-    void enable_line_break() override {
+    void enable_line_break() override
+    {
     };
-    void flush(std::ostream & os) override;
+    void flush(std::ostream &os) override;
     void reset() override;
 
     void open_array_section(std::string_view name) override;
@@ -47,13 +52,13 @@ class RGWFormatter_Plain:public Formatter {
     void dump_int(std::string_view name, int64_t u) override;
     void dump_float(std::string_view name, double d) override;
     void dump_string(std::string_view name, std::string_view s) override;
-    std::ostream & dump_stream(std::string_view name) override;
+    std::ostream &dump_stream(std::string_view name) override;
     void dump_format_va(std::string_view name, const char *ns, bool quoted,
                         const char *fmt, va_list ap) override;
     int get_len() const override;
     void write_raw_data(const char *data) override;
 
-  private:
+private:
     void write_data(const char *fmt, ...);
     void dump_value_int(std::string_view name, const char *fmt, ...);
 
@@ -68,78 +73,97 @@ class RGWFormatter_Plain:public Formatter {
 };
 
 /* This is a presentation layer. No logic inside, please. */
-class RGWSwiftWebsiteListingFormatter {
-    std::ostream & ss;
+class RGWSwiftWebsiteListingFormatter
+{
+    std::ostream &ss;
     const std::string prefix;
-  protected:
-     std::string format_name(const std::string & item_name) const;
-  public:
-     RGWSwiftWebsiteListingFormatter(std::ostream & ss, std::string prefix)
-    :ss(ss), prefix(std::move(prefix)) {
+protected:
+    std::string format_name(const std::string &item_name) const;
+public:
+    RGWSwiftWebsiteListingFormatter(std::ostream &ss, std::string prefix)
+        : ss(ss), prefix(std::move(prefix))
+    {
     }
     /* The supplied css_path can be empty. In such situation a default,
      * embedded style sheet will be generated. */
-        void generate_header(const std::string & dir_path,
-                             const std::string & css_path);
+    void generate_header(const std::string &dir_path,
+                         const std::string &css_path);
     void generate_footer();
-    void dump_object(const rgw_bucket_dir_entry & objent);
-    void dump_subdir(const std::string & name);
+    void dump_object(const rgw_bucket_dir_entry &objent);
+    void dump_subdir(const std::string &name);
 };
 
-class RGWFormatterFlusher {
-  protected:
-    Formatter * formatter;
+class RGWFormatterFlusher
+{
+protected:
+    Formatter *formatter;
     bool flushed;
     bool started;
     virtual void do_flush() = 0;
-    virtual void do_start(int ret) {
-    } void set_formatter(Formatter * f) {
+    virtual void do_start(int ret)
+    {
+    } void set_formatter(Formatter *f)
+    {
         formatter = f;
     }
-  public:
-  explicit RGWFormatterFlusher(Formatter * f):formatter(f), flushed(false),
-        started(false) {
+public:
+    explicit RGWFormatterFlusher(Formatter *f): formatter(f), flushed(false),
+        started(false)
+    {
     }
-    virtual ~ RGWFormatterFlusher() {
+    virtual ~ RGWFormatterFlusher()
+    {
     }
 
-    void flush() {
+    void flush()
+    {
         do_flush();
         flushed = true;
     }
 
-    virtual void start(int client_ret) {
-        if (!started)
+    virtual void start(int client_ret)
+    {
+        if (!started) {
             do_start(client_ret);
+        }
         started = true;
     }
 
-    Formatter *get_formatter() {
+    Formatter *get_formatter()
+    {
         return formatter;
     }
-    bool did_flush() {
+    bool did_flush()
+    {
         return flushed;
     }
-    bool did_start() {
+    bool did_start()
+    {
         return started;
     }
 };
 
-class RGWStreamFlusher:public RGWFormatterFlusher {
-    std::ostream & os;
-  protected:
-    void do_flush() override {
+class RGWStreamFlusher: public RGWFormatterFlusher
+{
+    std::ostream &os;
+protected:
+    void do_flush() override
+    {
         formatter->flush(os);
-  } public:
-     RGWStreamFlusher(Formatter * f, std::ostream & _os):RGWFormatterFlusher(f),
-        os(_os) {
+    } public:
+    RGWStreamFlusher(Formatter *f, std::ostream &_os): RGWFormatterFlusher(f),
+        os(_os)
+    {
     }
 };
 
-class RGWNullFlusher:public RGWFormatterFlusher {
-  protected:
-    void do_flush() override {
-  } public:
-     RGWNullFlusher():RGWFormatterFlusher(nullptr) {
+class RGWNullFlusher: public RGWFormatterFlusher
+{
+protected:
+    void do_flush() override
+    {
+    } public:
+    RGWNullFlusher(): RGWFormatterFlusher(nullptr)
+    {
     }
 };

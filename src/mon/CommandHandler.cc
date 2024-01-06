@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "CommandHandler.h"
@@ -21,8 +21,8 @@
 #include <string>
 #include <string_view>
 
-int CommandHandler::parse_bool(std::string_view str, bool * result,
-                               std::ostream & ss)
+int CommandHandler::parse_bool(std::string_view str, bool *result,
+                               std::ostream &ss)
 {
     ceph_assert(result != nullptr);
 
@@ -32,12 +32,10 @@ int CommandHandler::parse_bool(std::string_view str, bool * result,
     if (str == "false" || str == "no" || (interr.length() == 0 && n == 0)) {
         *result = false;
         return 0;
-    }
-    else if (str == "true" || str == "yes" || (interr.length() == 0 && n == 1)) {
+    } else if (str == "true" || str == "yes" || (interr.length() == 0 && n == 1)) {
         *result = true;
         return 0;
-    }
-    else {
+    } else {
         ss << "value must be false|no|0 or true|yes|1";
         return -EINVAL;
     }

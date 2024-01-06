@@ -17,8 +17,8 @@ const std::string RGWMetadataLogHistory::oid = "meta.history";
 
 struct obj_version;
 
-void rgw_shard_name(const string & prefix, unsigned max_shards,
-                    const string & key, string & name, int *shard_id)
+void rgw_shard_name(const string &prefix, unsigned max_shards,
+                    const string &key, string &name, int *shard_id)
 {
     uint32_t val = ceph_str_hash_linux(key.c_str(), key.size());
     char buf[16];
@@ -29,8 +29,8 @@ void rgw_shard_name(const string & prefix, unsigned max_shards,
     name = prefix + buf;
 }
 
-void rgw_shard_name(const string & prefix, unsigned max_shards,
-                    const string & section, const string & key, string & name)
+void rgw_shard_name(const string &prefix, unsigned max_shards,
+                    const string &section, const string &key, string &name)
 {
     uint32_t val = ceph_str_hash_linux(key.c_str(), key.size());
     val ^= ceph_str_hash_linux(section.c_str(), section.size());
@@ -39,19 +39,20 @@ void rgw_shard_name(const string & prefix, unsigned max_shards,
     name = prefix + buf;
 }
 
-void rgw_shard_name(const string & prefix, unsigned shard_id, string & name)
+void rgw_shard_name(const string &prefix, unsigned shard_id, string &name)
 {
     char buf[16];
     snprintf(buf, sizeof(buf), "%u", shard_id);
     name = prefix + buf;
 }
 
-int RGWMetadataLog::add_entry(const DoutPrefixProvider * dpp,
-                              const string & hash_key, const string & section,
-                              const string & key, bufferlist & bl)
+int RGWMetadataLog::add_entry(const DoutPrefixProvider *dpp,
+                              const string &hash_key, const string &section,
+                              const string &key, bufferlist &bl)
 {
-    if (!svc.zone->need_to_log_metadata())
+    if (!svc.zone->need_to_log_metadata()) {
         return 0;
+    }
 
     string oid;
     int shard_id;
@@ -63,7 +64,7 @@ int RGWMetadataLog::add_entry(const DoutPrefixProvider * dpp,
     return svc.cls->timelog.add(dpp, oid, now, section, key, bl, null_yield);
 }
 
-int RGWMetadataLog::get_shard_id(const string & hash_key, int *shard_id)
+int RGWMetadataLog::get_shard_id(const string &hash_key, int *shard_id)
 {
     string oid;
 
@@ -72,10 +73,10 @@ int RGWMetadataLog::get_shard_id(const string & hash_key, int *shard_id)
     return 0;
 }
 
-int RGWMetadataLog::store_entries_in_shard(const DoutPrefixProvider * dpp,
-                                           list < cls_log_entry > &entries,
-                                           int shard_id,
-                                           librados::AioCompletion * completion)
+int RGWMetadataLog::store_entries_in_shard(const DoutPrefixProvider *dpp,
+        list < cls_log_entry > &entries,
+        int shard_id,
+        librados::AioCompletion *completion)
 {
     string oid;
 
@@ -86,9 +87,9 @@ int RGWMetadataLog::store_entries_in_shard(const DoutPrefixProvider * dpp,
 }
 
 void RGWMetadataLog::init_list_entries(int shard_id,
-                                       const real_time & from_time,
-                                       const real_time & end_time,
-                                       const string & marker, void **handle)
+                                       const real_time &from_time,
+                                       const real_time &end_time,
+                                       const string &marker, void **handle)
 {
     LogListCtx *ctx = new LogListCtx();
 
@@ -108,10 +109,10 @@ void RGWMetadataLog::complete_list_entries(void *handle)
     delete ctx;
 }
 
-int RGWMetadataLog::list_entries(const DoutPrefixProvider * dpp, void *handle,
+int RGWMetadataLog::list_entries(const DoutPrefixProvider *dpp, void *handle,
                                  int max_entries,
                                  list < cls_log_entry > &entries,
-                                 string * last_marker, bool * truncated)
+                                 string *last_marker, bool *truncated)
 {
     LogListCtx *ctx = static_cast < LogListCtx * >(handle);
 
@@ -125,22 +126,24 @@ int RGWMetadataLog::list_entries(const DoutPrefixProvider * dpp, void *handle,
         svc.cls->timelog.list(dpp, ctx->cur_oid, ctx->from_time, ctx->end_time,
                               max_entries, entries, ctx->marker,
                               &next_marker, truncated, null_yield);
-    if ((ret < 0) && (ret != -ENOENT))
+    if ((ret < 0) && (ret != -ENOENT)) {
         return ret;
+    }
 
     ctx->marker = std::move(next_marker);
     if (last_marker) {
         *last_marker = ctx->marker;
     }
 
-    if (ret == -ENOENT)
+    if (ret == -ENOENT) {
         *truncated = false;
+    }
 
     return 0;
 }
 
-int RGWMetadataLog::get_info(const DoutPrefixProvider * dpp, int shard_id,
-                             RGWMetadataLogInfo * info)
+int RGWMetadataLog::get_info(const DoutPrefixProvider *dpp, int shard_id,
+                             RGWMetadataLogInfo *info)
 {
     string oid;
     get_shard_oid(shard_id, oid);
@@ -148,8 +151,9 @@ int RGWMetadataLog::get_info(const DoutPrefixProvider * dpp, int shard_id,
     cls_log_header header;
 
     int ret = svc.cls->timelog.info(dpp, oid, &header, null_yield);
-    if ((ret < 0) && (ret != -ENOENT))
+    if ((ret < 0) && (ret != -ENOENT)) {
         return ret;
+    }
 
     info->marker = header.max_marker;
     info->last_update = header.max_time.to_real_time();
@@ -165,10 +169,10 @@ static void _mdlog_info_completion(librados::completion_t cb, void *arg)
 }
 
 RGWMetadataLogInfoCompletion::RGWMetadataLogInfoCompletion(info_callback_t cb)
-:  
-completion(librados::Rados::aio_create_completion((void *)this,
-                                              _mdlog_info_completion)),
-callback(cb)
+    :
+    completion(librados::Rados::aio_create_completion((void *)this,
+               _mdlog_info_completion)),
+    callback(cb)
 {
 }
 
@@ -177,8 +181,8 @@ RGWMetadataLogInfoCompletion::~RGWMetadataLogInfoCompletion()
     completion->release();
 }
 
-int RGWMetadataLog::get_info_async(const DoutPrefixProvider * dpp, int shard_id,
-                                   RGWMetadataLogInfoCompletion * completion)
+int RGWMetadataLog::get_info_async(const DoutPrefixProvider *dpp, int shard_id,
+                                   RGWMetadataLogInfoCompletion *completion)
 {
     string oid;
     get_shard_oid(shard_id, oid);
@@ -190,10 +194,10 @@ int RGWMetadataLog::get_info_async(const DoutPrefixProvider * dpp, int shard_id,
                                        completion->get_completion());
 }
 
-int RGWMetadataLog::trim(const DoutPrefixProvider * dpp, int shard_id,
-                         const real_time & from_time,
-                         const real_time & end_time,
-                         const string & start_marker, const string & end_marker)
+int RGWMetadataLog::trim(const DoutPrefixProvider *dpp, int shard_id,
+                         const real_time &from_time,
+                         const real_time &end_time,
+                         const string &start_marker, const string &end_marker)
 {
     string oid;
     get_shard_oid(shard_id, oid);
@@ -202,9 +206,9 @@ int RGWMetadataLog::trim(const DoutPrefixProvider * dpp, int shard_id,
                                  end_marker, nullptr, null_yield);
 }
 
-int RGWMetadataLog::lock_exclusive(const DoutPrefixProvider * dpp, int shard_id,
-                                   timespan duration, string & zone_id,
-                                   string & owner_id)
+int RGWMetadataLog::lock_exclusive(const DoutPrefixProvider *dpp, int shard_id,
+                                   timespan duration, string &zone_id,
+                                   string &owner_id)
 {
     string oid;
     get_shard_oid(shard_id, oid);
@@ -214,8 +218,8 @@ int RGWMetadataLog::lock_exclusive(const DoutPrefixProvider * dpp, int shard_id,
                                         oid, duration, zone_id, owner_id);
 }
 
-int RGWMetadataLog::unlock(const DoutPrefixProvider * dpp, int shard_id,
-                           string & zone_id, string & owner_id)
+int RGWMetadataLog::unlock(const DoutPrefixProvider *dpp, int shard_id,
+                           string &zone_id, string &owner_id)
 {
     string oid;
     get_shard_oid(shard_id, oid);
@@ -234,26 +238,26 @@ void RGWMetadataLog::mark_modified(int shard_id)
     lock.unlock();
 
     std::unique_lock wl {
-    lock};
+        lock};
     modified_shards.insert(shard_id);
 }
 
-void RGWMetadataLog::read_clear_modified(set < int >&modified)
+void RGWMetadataLog::read_clear_modified(set < int > &modified)
 {
     std::unique_lock wl {
-    lock};
+        lock};
     modified.swap(modified_shards);
     modified_shards.clear();
 }
 
-void RGWMetadataLogInfo::dump(Formatter * f) const const
+void RGWMetadataLogInfo::dump(Formatter *f) const const
 {
     encode_json("marker", marker, f);
     utime_t ut(last_update);
     encode_json("last_update", ut, f);
 }
 
-void RGWMetadataLogInfo::decode_json(JSONObj * obj)
+void RGWMetadataLogInfo::decode_json(JSONObj *obj)
 {
     JSONDecoder::decode_json("marker", marker, obj);
     utime_t ut;

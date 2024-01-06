@@ -13,27 +13,30 @@
 using namespace std::chrono_literals;
 using std::shared_ptr;
 
-class TestObjectRecorder:public RadosTestFixture {
-  public:
+class TestObjectRecorder: public RadosTestFixture
+{
+public:
     TestObjectRecorder() = default;
 
-    struct Handler:public journal::ObjectRecorder::Handler {
+    struct Handler: public journal::ObjectRecorder::Handler {
         ceph::mutex lock = ceph::make_mutex("lock");
-        ceph::mutex * object_lock = nullptr;
+        ceph::mutex *object_lock = nullptr;
         ceph::condition_variable cond;
         bool is_closed = false;
         uint32_t overflows = 0;
 
         Handler() = default;
 
-        void closed(journal::ObjectRecorder * object_recorder) override {
+        void closed(journal::ObjectRecorder *object_recorder) override
+        {
             std::lock_guard locker {
-            lock};
+                lock};
             is_closed = true;
             cond.notify_all();
-        } void overflow(journal::ObjectRecorder * object_recorder) override {
+        } void overflow(journal::ObjectRecorder *object_recorder) override
+        {
             std::lock_guard locker {
-            lock};
+                lock};
             journal::AppendBuffers append_buffers;
             object_lock->lock();
             object_recorder->claim_append_buffers(&append_buffers);
@@ -45,53 +48,56 @@ class TestObjectRecorder:public RadosTestFixture {
     };
 
     // flush the pending buffers in dtor
-    class ObjectRecorderFlusher {
-      public:
-        ObjectRecorderFlusher(librados::IoCtx & ioctx, ContextWQ * work_queue)
-        :m_ioctx {
-        ioctx}, m_work_queue {
-        work_queue}
+    class ObjectRecorderFlusher
+    {
+    public:
+        ObjectRecorderFlusher(librados::IoCtx &ioctx, ContextWQ *work_queue)
+            : m_ioctx {
+            ioctx}, m_work_queue {
+            work_queue}
         {
         }
-        ObjectRecorderFlusher(librados::IoCtx & ioctx,
-                              ContextWQ * work_queue,
+        ObjectRecorderFlusher(librados::IoCtx &ioctx,
+                              ContextWQ *work_queue,
                               uint32_t flush_interval,
                               uint16_t flush_bytes,
                               double flush_age, int max_in_flight)
-        :m_ioctx {
-        ioctx}, m_work_queue {
-        work_queue}, m_flush_interval {
-        flush_interval}, m_flush_bytes {
-        flush_bytes}, m_flush_age {
-        flush_age}, m_max_in_flight_appends {
-        max_in_flight < 0 ?
-                std::numeric_limits < uint64_t >::max() :
-                static_cast < uint64_t > (max_in_flight)}
+            : m_ioctx {
+            ioctx}, m_work_queue {
+            work_queue}, m_flush_interval {
+            flush_interval}, m_flush_bytes {
+            flush_bytes}, m_flush_age {
+            flush_age}, m_max_in_flight_appends {
+            max_in_flight < 0 ?
+            std::numeric_limits < uint64_t >::max() :
+            static_cast < uint64_t >(max_in_flight)}
         {
         }
-        ~ObjectRecorderFlusher() {
-          for (auto &[object_recorder, m]:m_object_recorders) {
+        ~ObjectRecorderFlusher()
+        {
+            for (auto &[object_recorder, m] : m_object_recorders) {
                 C_SaferCond cond;
                 object_recorder->flush(&cond);
                 cond.wait();
                 std::scoped_lock l {
-                *m};
+                    *m};
                 if (!object_recorder->is_closed()) {
                     object_recorder->close();
                 }
             }
         }
         auto create_object(std::string_view oid, uint8_t order,
-                           ceph::mutex * lock) {
+                           ceph::mutex *lock)
+        {
             auto object =
                 ceph::make_ref < journal::ObjectRecorder > (m_ioctx, oid, 0,
-                                                            lock, m_work_queue,
-                                                            &m_handler,
-                                                            order,
-                                                            m_max_in_flight_appends);
+                    lock, m_work_queue,
+                    &m_handler,
+                    order,
+                    m_max_in_flight_appends);
             {
                 std::lock_guard locker {
-                *lock};
+                    *lock};
                 object->set_append_batch_options(m_flush_interval,
                                                  m_flush_bytes, m_flush_age);
             }
@@ -99,29 +105,31 @@ class TestObjectRecorder:public RadosTestFixture {
             m_handler.object_lock = lock;
             return object;
         }
-        bool wait_for_closed() {
+        bool wait_for_closed()
+        {
             std::unique_lock locker {
-            m_handler.lock};
-            return m_handler.cond.wait_for(locker, 10 s,[this] {
-                                           return m_handler.is_closed;
-                                           }
-            );
+                m_handler.lock};
+            return m_handler.cond.wait_for(locker, 10 s, [this] {
+                return m_handler.is_closed;
+            }
+                                          );
         }
-        bool wait_for_overflow() {
+        bool wait_for_overflow()
+        {
             std::unique_lock locker {
-            m_handler.lock};
-            if (m_handler.cond.wait_for(locker, 10 s,[this] {
-                                        return m_handler.overflows > 0;}
-                )) {
+                m_handler.lock};
+            if (m_handler.cond.wait_for(locker, 10 s, [this] {
+            return m_handler.overflows > 0;
+        }
+                                   )) {
                 m_handler.overflows = 0;
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
-      private:
-        librados::IoCtx & m_ioctx;
+    private:
+        librados::IoCtx &m_ioctx;
         ContextWQ *m_work_queue;
         uint32_t m_flush_interval = std::numeric_limits < uint32_t >::max();
         uint64_t m_flush_bytes = std::numeric_limits < uint64_t >::max();
@@ -135,8 +143,9 @@ class TestObjectRecorder:public RadosTestFixture {
     };
 
     journal::AppendBuffer create_append_buffer(uint64_t tag_tid,
-                                               uint64_t entry_tid,
-                                               const std::string & payload) {
+            uint64_t entry_tid,
+            const std::string &payload)
+    {
         auto future =
             ceph::make_ref < journal::FutureImpl > (tag_tid, entry_tid, 456);
         future->init(ceph::ref_t < journal::FutureImpl > ());
@@ -160,19 +169,21 @@ TEST_F(TestObjectRecorder, Append)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                "payload");
+                                           "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
     ASSERT_EQ(0U, object->get_pending_appends());
 
     journal::AppendBuffer append_buffer2 = create_append_buffer(234, 124,
-                                                                "payload");
+                                           "payload");
     append_buffers = {
-    append_buffer2};
+        append_buffer2
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -197,19 +208,21 @@ TEST_F(TestObjectRecorder, AppendFlushByCount)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                "payload");
+                                           "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
     ASSERT_EQ(1U, object->get_pending_appends());
 
     journal::AppendBuffer append_buffer2 = create_append_buffer(234, 124,
-                                                                "payload");
+                                           "payload");
     append_buffers = {
-    append_buffer2};
+        append_buffer2
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -233,19 +246,21 @@ TEST_F(TestObjectRecorder, AppendFlushByBytes)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                "payload");
+                                           "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
     ASSERT_EQ(1U, object->get_pending_appends());
 
     journal::AppendBuffer append_buffer2 = create_append_buffer(234, 124,
-                                                                "payload");
+                                           "payload");
     append_buffers = {
-    append_buffer2};
+        append_buffer2
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -269,10 +284,11 @@ TEST_F(TestObjectRecorder, AppendFlushByAge)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                "payload");
+                                           "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -286,7 +302,8 @@ TEST_F(TestObjectRecorder, AppendFlushByAge)
         append_buffer2 = create_append_buffer(234, 124 + offset, "payload");
         ++offset;
         append_buffers = {
-        append_buffer2};
+            append_buffer2
+        };
 
         lock.lock();
         ASSERT_FALSE(object->append(std::move(append_buffers)));
@@ -313,18 +330,20 @@ TEST_F(TestObjectRecorder, AppendFilledObject)
 
     std::string payload(2048, '1');
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                payload);
+                                           payload);
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
 
     journal::AppendBuffer append_buffer2 = create_append_buffer(234, 124,
-                                                                payload);
+                                           payload);
     append_buffers = {
-    append_buffer2};
+        append_buffer2
+    };
     lock.lock();
     ASSERT_TRUE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -348,10 +367,11 @@ TEST_F(TestObjectRecorder, Flush)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                "payload");
+                                           "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -380,10 +400,11 @@ TEST_F(TestObjectRecorder, FlushFuture)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer = create_append_buffer(234, 123,
-                                                               "payload");
+                                          "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer};
+        append_buffer
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -410,11 +431,12 @@ TEST_F(TestObjectRecorder, FlushDetachedFuture)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer = create_append_buffer(234, 123,
-                                                               "payload");
+                                          "payload");
 
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer};
+        append_buffer
+    };
 
     object->flush(append_buffer.first);
     ASSERT_FALSE(append_buffer.first->is_flush_in_progress());
@@ -441,10 +463,11 @@ TEST_F(TestObjectRecorder, Close)
     auto object = flusher.create_object(oid, 24, &lock);
 
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                "payload");
+                                           "payload");
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1};
+        append_buffer1
+    };
     lock.lock();
     ASSERT_FALSE(object->append(std::move(append_buffers)));
     lock.unlock();
@@ -476,12 +499,13 @@ TEST_F(TestObjectRecorder, Overflow)
 
     std::string payload(1 << 11, '1');
     journal::AppendBuffer append_buffer1 = create_append_buffer(234, 123,
-                                                                payload);
+                                           payload);
     journal::AppendBuffer append_buffer2 = create_append_buffer(234, 124,
-                                                                payload);
+                                           payload);
     journal::AppendBuffers append_buffers;
     append_buffers = {
-    append_buffer1, append_buffer2};
+        append_buffer1, append_buffer2
+    };
     lock1.lock();
     ASSERT_TRUE(object1->append(std::move(append_buffers)));
     lock1.unlock();
@@ -494,9 +518,10 @@ TEST_F(TestObjectRecorder, Overflow)
     auto object2 = flusher.create_object(oid, 12, &lock2);
 
     journal::AppendBuffer append_buffer3 = create_append_buffer(456, 123,
-                                                                payload);
+                                           payload);
     append_buffers = {
-    append_buffer3};
+        append_buffer3
+    };
     lock2.lock();
     ASSERT_FALSE(object2->append(std::move(append_buffers)));
     lock2.unlock();

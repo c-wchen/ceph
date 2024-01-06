@@ -19,9 +19,9 @@
 
 using namespace std;
 
-int fetch_access_keys_from_master(const DoutPrefixProvider * dpp,
-                                  rgw::sal::Driver * driver,
-                                  RGWUserAdminOpState & op_state, req_state * s,
+int fetch_access_keys_from_master(const DoutPrefixProvider *dpp,
+                                  rgw::sal::Driver *driver,
+                                  RGWUserAdminOpState &op_state, req_state *s,
                                   optional_yield y)
 {
     bufferlist data;
@@ -33,7 +33,7 @@ int fetch_access_keys_from_master(const DoutPrefixProvider * dpp,
     if (op_ret < 0) {
         ldpp_dout(dpp,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return op_ret;
     }
     ui.decode_json(&jp);
@@ -42,19 +42,24 @@ int fetch_access_keys_from_master(const DoutPrefixProvider * dpp,
     return 0;
 }
 
-class RGWOp_User_List:public RGWRESTOp {
+class RGWOp_User_List: public RGWRESTOp
+{
 
-  public:
-    RGWOp_User_List() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_User_List()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_READ);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "list_user";
-}};
+    }
+};
 
 void RGWOp_User_List::execute(optional_yield y)
 {
@@ -70,19 +75,24 @@ void RGWOp_User_List::execute(optional_yield y)
     op_ret = RGWUserAdminOp_User::list(this, driver, op_state, flusher);
 }
 
-class RGWOp_User_Info:public RGWRESTOp {
+class RGWOp_User_Info: public RGWRESTOp
+{
 
-  public:
-    RGWOp_User_Info() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_User_Info()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_READ);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_user_info";
-}};
+    }
+};
 
 void RGWOp_User_Info::execute(optional_yield y)
 {
@@ -117,19 +127,24 @@ void RGWOp_User_Info::execute(optional_yield y)
     op_ret = RGWUserAdminOp_User::info(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_User_Create:public RGWRESTOp {
+class RGWOp_User_Create: public RGWRESTOp
+{
 
-  public:
-    RGWOp_User_Create() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_User_Create()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "create_user";
-}};
+    }
+};
 
 void RGWOp_User_Create::execute(optional_yield y)
 {
@@ -209,10 +224,11 @@ void RGWOp_User_Create::execute(optional_yield y)
 
     if (!key_type_str.empty()) {
         int32_t key_type = KEY_TYPE_UNDEFINED;
-        if (key_type_str.compare("swift") == 0)
+        if (key_type_str.compare("swift") == 0) {
             key_type = KEY_TYPE_SWIFT;
-        else if (key_type_str.compare("s3") == 0)
+        } else if (key_type_str.compare("s3") == 0) {
             key_type = KEY_TYPE_S3;
+        }
 
         op_state.set_key_type(key_type);
     }
@@ -223,14 +239,17 @@ void RGWOp_User_Create::execute(optional_yield y)
         }
         op_state.set_max_buckets(max_buckets);
     }
-    if (s->info.args.exists("suspended"))
+    if (s->info.args.exists("suspended")) {
         op_state.set_suspension(suspended);
+    }
 
-    if (s->info.args.exists("system"))
+    if (s->info.args.exists("system")) {
         op_state.set_system(system);
+    }
 
-    if (s->info.args.exists("exclusive"))
+    if (s->info.args.exists("exclusive")) {
         op_state.set_exclusive(exclusive);
+    }
 
     if (!default_placement_str.empty()) {
         rgw_placement_rule target_rule;
@@ -238,7 +257,7 @@ void RGWOp_User_Create::execute(optional_yield y)
         if (!driver->valid_placement(target_rule)) {
             ldpp_dout(this,
                       0) << "NOTICE: invalid dest placement: " << target_rule.
-                to_str() << dendl;
+                         to_str() << dendl;
             op_ret = -EINVAL;
             return;
         }
@@ -256,8 +275,7 @@ void RGWOp_User_Create::execute(optional_yield y)
 
         if (op_ret < 0) {
             return;
-        }
-        else {
+        } else {
             // set_generate_key() is not set if keys have already been fetched from master zone
             gen_key = false;
         }
@@ -270,19 +288,24 @@ void RGWOp_User_Create::execute(optional_yield y)
     op_ret = RGWUserAdminOp_User::create(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_User_Modify:public RGWRESTOp {
+class RGWOp_User_Modify: public RGWRESTOp
+{
 
-  public:
-    RGWOp_User_Modify() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_User_Modify()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "modify_user";
-}};
+    }
+};
 
 void RGWOp_User_Modify::execute(optional_yield y)
 {
@@ -335,8 +358,9 @@ void RGWOp_User_Modify::execute(optional_yield y)
     op_state.set_user_id(uid);
     op_state.set_display_name(display_name);
 
-    if (email_set)
+    if (email_set) {
         op_state.set_user_email(email);
+    }
 
     op_state.set_access_key(access_key);
     op_state.set_secret_key(secret_key);
@@ -350,10 +374,11 @@ void RGWOp_User_Modify::execute(optional_yield y)
 
     if (!key_type_str.empty()) {
         int32_t key_type = KEY_TYPE_UNDEFINED;
-        if (key_type_str.compare("swift") == 0)
+        if (key_type_str.compare("swift") == 0) {
             key_type = KEY_TYPE_SWIFT;
-        else if (key_type_str.compare("s3") == 0)
+        } else if (key_type_str.compare("s3") == 0) {
             key_type = KEY_TYPE_S3;
+        }
 
         op_state.set_key_type(key_type);
     }
@@ -368,11 +393,13 @@ void RGWOp_User_Modify::execute(optional_yield y)
         op_state.set_op_mask(op_mask);
     }
 
-    if (s->info.args.exists("suspended"))
+    if (s->info.args.exists("suspended")) {
         op_state.set_suspension(suspended);
+    }
 
-    if (s->info.args.exists("system"))
+    if (s->info.args.exists("system")) {
         op_state.set_system(system);
+    }
 
     if (!op_mask_str.empty()) {
         uint32_t op_mask;
@@ -391,7 +418,7 @@ void RGWOp_User_Modify::execute(optional_yield y)
         if (!driver->valid_placement(target_rule)) {
             ldpp_dout(this,
                       0) << "NOTICE: invalid dest placement: " << target_rule.
-                to_str() << dendl;
+                         to_str() << dendl;
             op_ret = -EINVAL;
             return;
         }
@@ -409,8 +436,7 @@ void RGWOp_User_Modify::execute(optional_yield y)
 
         if (op_ret < 0) {
             return;
-        }
-        else {
+        } else {
             // set_generate_key() is not set if keys have already been fetched from master zone
             gen_key = false;
         }
@@ -423,19 +449,24 @@ void RGWOp_User_Modify::execute(optional_yield y)
     op_ret = RGWUserAdminOp_User::modify(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_User_Remove:public RGWRESTOp {
+class RGWOp_User_Remove: public RGWRESTOp
+{
 
-  public:
-    RGWOp_User_Remove() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_User_Remove()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "remove_user";
-}};
+    }
+};
 
 void RGWOp_User_Remove::execute(optional_yield y)
 {
@@ -450,8 +481,9 @@ void RGWOp_User_Remove::execute(optional_yield y)
     RESTArgs::get_bool(s, "purge-data", false, &purge_data);
 
     // FIXME: no double checking
-    if (!uid.empty())
+    if (!uid.empty()) {
         op_state.set_user_id(uid);
+    }
 
     op_state.set_purge_data(purge_data);
 
@@ -462,26 +494,31 @@ void RGWOp_User_Remove::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret =
         RGWUserAdminOp_User::remove(s, driver, op_state, flusher, s->yield);
 }
 
-class RGWOp_Subuser_Create:public RGWRESTOp {
+class RGWOp_Subuser_Create: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Subuser_Create() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Subuser_Create()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "create_subuser";
-}};
+    }
+};
 
 void RGWOp_Subuser_Create::execute(optional_yield y)
 {
@@ -521,17 +558,20 @@ void RGWOp_Subuser_Create::execute(optional_yield y)
     op_state.set_secret_key(secret_key);
     op_state.set_generate_subuser(gen_subuser);
 
-    if (gen_access)
+    if (gen_access) {
         op_state.set_gen_access();
+    }
 
-    if (gen_secret)
+    if (gen_secret) {
         op_state.set_gen_secret();
+    }
 
     if (!key_type_str.empty()) {
-        if (key_type_str.compare("swift") == 0)
+        if (key_type_str.compare("swift") == 0) {
             key_type = KEY_TYPE_SWIFT;
-        else if (key_type_str.compare("s3") == 0)
+        } else if (key_type_str.compare("s3") == 0) {
             key_type = KEY_TYPE_S3;
+        }
     }
     op_state.set_key_type(key_type);
 
@@ -542,25 +582,30 @@ void RGWOp_Subuser_Create::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWUserAdminOp_Subuser::create(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_Subuser_Modify:public RGWRESTOp {
+class RGWOp_Subuser_Modify: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Subuser_Modify() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Subuser_Modify()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "modify_subuser";
-}};
+    }
+};
 
 void RGWOp_Subuser_Modify::execute(optional_yield y)
 {
@@ -592,17 +637,20 @@ void RGWOp_Subuser_Modify::execute(optional_yield y)
     op_state.set_user_id(uid);
     op_state.set_subuser(subuser);
 
-    if (!secret_key.empty())
+    if (!secret_key.empty()) {
         op_state.set_secret_key(secret_key);
+    }
 
-    if (gen_secret)
+    if (gen_secret) {
         op_state.set_gen_secret();
+    }
 
     if (!key_type_str.empty()) {
-        if (key_type_str.compare("swift") == 0)
+        if (key_type_str.compare("swift") == 0) {
             key_type = KEY_TYPE_SWIFT;
-        else if (key_type_str.compare("s3") == 0)
+        } else if (key_type_str.compare("s3") == 0) {
             key_type = KEY_TYPE_S3;
+        }
     }
     op_state.set_key_type(key_type);
 
@@ -613,25 +661,30 @@ void RGWOp_Subuser_Modify::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWUserAdminOp_Subuser::modify(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_Subuser_Remove:public RGWRESTOp {
+class RGWOp_Subuser_Remove: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Subuser_Remove() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Subuser_Remove()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "remove_subuser";
-}};
+    }
+};
 
 void RGWOp_Subuser_Remove::execute(optional_yield y)
 {
@@ -650,8 +703,9 @@ void RGWOp_Subuser_Remove::execute(optional_yield y)
     op_state.set_user_id(uid);
     op_state.set_subuser(subuser);
 
-    if (purge_keys)
+    if (purge_keys) {
         op_state.set_purge_keys();
+    }
 
     bufferlist data;
     op_ret =
@@ -660,25 +714,30 @@ void RGWOp_Subuser_Remove::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWUserAdminOp_Subuser::remove(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_Key_Create:public RGWRESTOp {
+class RGWOp_Key_Create: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Key_Create() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Key_Create()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "create_access_key";
-}};
+    }
+};
 
 void RGWOp_Key_Create::execute(optional_yield y)
 {
@@ -706,15 +765,17 @@ void RGWOp_Key_Create::execute(optional_yield y)
     op_state.set_access_key(access_key);
     op_state.set_secret_key(secret_key);
 
-    if (gen_key)
+    if (gen_key) {
         op_state.set_generate_key();
+    }
 
     if (!key_type_str.empty()) {
         int32_t key_type = KEY_TYPE_UNDEFINED;
-        if (key_type_str.compare("swift") == 0)
+        if (key_type_str.compare("swift") == 0) {
             key_type = KEY_TYPE_SWIFT;
-        else if (key_type_str.compare("s3") == 0)
+        } else if (key_type_str.compare("s3") == 0) {
             key_type = KEY_TYPE_S3;
+        }
 
         op_state.set_key_type(key_type);
     }
@@ -722,19 +783,24 @@ void RGWOp_Key_Create::execute(optional_yield y)
     op_ret = RGWUserAdminOp_Key::create(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_Key_Remove:public RGWRESTOp {
+class RGWOp_Key_Remove: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Key_Remove() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Key_Remove()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "remove_access_key";
-}};
+    }
+};
 
 void RGWOp_Key_Remove::execute(optional_yield y)
 {
@@ -758,10 +824,11 @@ void RGWOp_Key_Remove::execute(optional_yield y)
 
     if (!key_type_str.empty()) {
         int32_t key_type = KEY_TYPE_UNDEFINED;
-        if (key_type_str.compare("swift") == 0)
+        if (key_type_str.compare("swift") == 0) {
             key_type = KEY_TYPE_SWIFT;
-        else if (key_type_str.compare("s3") == 0)
+        } else if (key_type_str.compare("s3") == 0) {
             key_type = KEY_TYPE_S3;
+        }
 
         op_state.set_key_type(key_type);
     }
@@ -769,19 +836,24 @@ void RGWOp_Key_Remove::execute(optional_yield y)
     op_ret = RGWUserAdminOp_Key::remove(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_Caps_Add:public RGWRESTOp {
+class RGWOp_Caps_Add: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Caps_Add() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Caps_Add()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "add_user_caps";
-}};
+    }
+};
 
 void RGWOp_Caps_Add::execute(optional_yield y)
 {
@@ -805,25 +877,30 @@ void RGWOp_Caps_Add::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWUserAdminOp_Caps::add(s, driver, op_state, flusher, y);
 }
 
-class RGWOp_Caps_Remove:public RGWRESTOp {
+class RGWOp_Caps_Remove: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Caps_Remove() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Caps_Remove()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "remove_user_caps";
-}};
+    }
+};
 
 void RGWOp_Caps_Remove::execute(optional_yield y)
 {
@@ -847,7 +924,7 @@ void RGWOp_Caps_Remove::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   0) << "forward_request_to_master returned ret=" << op_ret <<
-            dendl;
+                     dendl;
         return;
     }
     op_ret = RGWUserAdminOp_Caps::remove(s, driver, op_state, flusher, y);
@@ -856,34 +933,43 @@ void RGWOp_Caps_Remove::execute(optional_yield y)
 struct UserQuotas {
     RGWQuota quota;
 
-    UserQuotas() {
-    } explicit UserQuotas(RGWUserInfo & info) {
+    UserQuotas()
+    {
+    } explicit UserQuotas(RGWUserInfo &info)
+    {
         quota.bucket_quota = info.quota.bucket_quota;
         quota.user_quota = info.quota.user_quota;
     }
 
-    void dump(Formatter * f) const {
+    void dump(Formatter *f) const
+    {
         encode_json("bucket_quota", quota.bucket_quota, f);
         encode_json("user_quota", quota.user_quota, f);
-    } void decode_json(JSONObj * obj) {
+    } void decode_json(JSONObj *obj)
+    {
         JSONDecoder::decode_json("bucket_quota", quota.bucket_quota, obj);
         JSONDecoder::decode_json("user_quota", quota.user_quota, obj);
     }
 };
 
-class RGWOp_Quota_Info:public RGWRESTOp {
+class RGWOp_Quota_Info: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Quota_Info() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Quota_Info()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_READ);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_quota_info";
-}};
+    }
+};
 
 void RGWOp_Quota_Info::execute(optional_yield y)
 {
@@ -915,8 +1001,9 @@ void RGWOp_Quota_Info::execute(optional_yield y)
 
     RGWUser user;
     op_ret = user.init(s, driver, op_state, y);
-    if (op_ret < 0)
+    if (op_ret < 0) {
         return;
+    }
 
     if (!op_state.has_existing_user()) {
         op_ret = -ERR_NO_SUCH_USER;
@@ -926,37 +1013,41 @@ void RGWOp_Quota_Info::execute(optional_yield y)
     RGWUserInfo info;
     string err_msg;
     op_ret = user.info(info, &err_msg);
-    if (op_ret < 0)
+    if (op_ret < 0) {
         return;
+    }
 
     flusher.start(0);
     if (show_all) {
         UserQuotas quotas(info);
         encode_json("quota", quotas, s->formatter);
-    }
-    else if (show_user) {
+    } else if (show_user) {
         encode_json("user_quota", info.quota.user_quota, s->formatter);
-    }
-    else {
+    } else {
         encode_json("bucket_quota", info.quota.bucket_quota, s->formatter);
     }
 
     flusher.flush();
 }
 
-class RGWOp_Quota_Set:public RGWRESTOp {
+class RGWOp_Quota_Set: public RGWRESTOp
+{
 
-  public:
-    RGWOp_Quota_Set() {
-    } int check_caps(const RGWUserCaps & caps) override {
+public:
+    RGWOp_Quota_Set()
+    {
+    } int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("users", RGW_CAP_WRITE);
     }
 
     void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "set_quota_info";
-}};
+    }
+};
 
 /**
  * set quota
@@ -1037,8 +1128,7 @@ void RGWOp_Quota_Set::execute(optional_yield y)
 
     if (s->content_length > 0) {
         use_http_params = false;
-    }
-    else {
+    } else {
         const char *encoding = s->info.env->get("HTTP_TRANSFER_ENCODING");
         use_http_params = (!encoding || strcmp(encoding, "chunked") != 0);
     }
@@ -1046,8 +1136,8 @@ void RGWOp_Quota_Set::execute(optional_yield y)
     if (use_http_params && set_all) {
         ldpp_dout(this,
                   20) <<
-            "quota type was not specified, can't set all quotas via http headers"
-            << dendl;
+                      "quota type was not specified, can't set all quotas via http headers"
+                      << dendl;
         op_ret = -EINVAL;
         return;
     }
@@ -1072,16 +1162,15 @@ void RGWOp_Quota_Set::execute(optional_yield y)
         UserQuotas quotas;
 
         if ((op_ret =
-             get_json_input(driver->ctx(), s, quotas, QUOTA_INPUT_MAX_LEN,
-                            NULL)) < 0) {
+                 get_json_input(driver->ctx(), s, quotas, QUOTA_INPUT_MAX_LEN,
+                                NULL)) < 0) {
             ldpp_dout(this, 20) << "failed to retrieve input" << dendl;
             return;
         }
 
         op_state.set_user_quota(quotas.quota.user_quota);
         op_state.set_bucket_quota(quotas.quota.bucket_quota);
-    }
-    else {
+    } else {
         RGWQuotaInfo quota;
 
         if (!use_http_params) {
@@ -1091,8 +1180,9 @@ void RGWOp_Quota_Set::execute(optional_yield y)
                                &empty);
             if (op_ret < 0) {
                 ldpp_dout(this, 20) << "failed to retrieve input" << dendl;
-                if (!empty)
+                if (!empty) {
                     return;
+                }
 
                 /* was probably chunked input, but no content provided, configure via http params */
                 use_http_params = true;
@@ -1111,8 +1201,7 @@ void RGWOp_Quota_Set::execute(optional_yield y)
             RGWQuotaInfo *old_quota;
             if (set_user) {
                 old_quota = &info.quota.user_quota;
-            }
-            else {
+            } else {
                 old_quota = &info.quota.bucket_quota;
             }
 
@@ -1133,8 +1222,7 @@ void RGWOp_Quota_Set::execute(optional_yield y)
 
         if (set_user) {
             op_state.set_user_quota(quota);
-        }
-        else {
+        } else {
             op_state.set_bucket_quota(quota);
         }
     }
@@ -1144,57 +1232,67 @@ void RGWOp_Quota_Set::execute(optional_yield y)
     if (op_ret < 0) {
         ldpp_dout(this,
                   20) << "failed updating user info: " << op_ret << ": " << err
-            << dendl;
+                      << dendl;
         return;
     }
 }
 
 RGWOp *RGWHandler_User::op_get()
 {
-    if (s->info.args.sub_resource_exists("quota"))
+    if (s->info.args.sub_resource_exists("quota")) {
         return new RGWOp_Quota_Info;
+    }
 
-    if (s->info.args.sub_resource_exists("list"))
+    if (s->info.args.sub_resource_exists("list")) {
         return new RGWOp_User_List;
+    }
 
     return new RGWOp_User_Info;
 }
 
 RGWOp *RGWHandler_User::op_put()
 {
-    if (s->info.args.sub_resource_exists("subuser"))
+    if (s->info.args.sub_resource_exists("subuser")) {
         return new RGWOp_Subuser_Create;
+    }
 
-    if (s->info.args.sub_resource_exists("key"))
+    if (s->info.args.sub_resource_exists("key")) {
         return new RGWOp_Key_Create;
+    }
 
-    if (s->info.args.sub_resource_exists("caps"))
+    if (s->info.args.sub_resource_exists("caps")) {
         return new RGWOp_Caps_Add;
+    }
 
-    if (s->info.args.sub_resource_exists("quota"))
+    if (s->info.args.sub_resource_exists("quota")) {
         return new RGWOp_Quota_Set;
+    }
 
     return new RGWOp_User_Create;
 }
 
 RGWOp *RGWHandler_User::op_post()
 {
-    if (s->info.args.sub_resource_exists("subuser"))
+    if (s->info.args.sub_resource_exists("subuser")) {
         return new RGWOp_Subuser_Modify;
+    }
 
     return new RGWOp_User_Modify;
 }
 
 RGWOp *RGWHandler_User::op_delete()
 {
-    if (s->info.args.sub_resource_exists("subuser"))
+    if (s->info.args.sub_resource_exists("subuser")) {
         return new RGWOp_Subuser_Remove;
+    }
 
-    if (s->info.args.sub_resource_exists("key"))
+    if (s->info.args.sub_resource_exists("key")) {
         return new RGWOp_Key_Remove;
+    }
 
-    if (s->info.args.sub_resource_exists("caps"))
+    if (s->info.args.sub_resource_exists("caps")) {
         return new RGWOp_Caps_Remove;
+    }
 
     return new RGWOp_User_Remove;
 }

@@ -31,10 +31,10 @@ class ipv4_traits;
 template < typename InetTraits > class tcp;
 
 int tcpv4_listen(tcp < ipv4_traits > &tcpv4, uint16_t port,
-                 const SocketOptions & opts, int type, unsigned addr_slot,
-                 ServerSocket * sa);
+                 const SocketOptions &opts, int type, unsigned addr_slot,
+                 ServerSocket *sa);
 
-int tcpv4_connect(tcp < ipv4_traits > &tcpv4, const entity_addr_t & addr,
-                  ConnectedSocket * sa);
+int tcpv4_connect(tcp < ipv4_traits > &tcpv4, const entity_addr_t &addr,
+                  ConnectedSocket *sa);
 
 #endif

@@ -27,7 +27,7 @@ static void _fork_function_dummy_sighandler(int sig)
 // int8_t only due to unix exit code limitations.  Returns -ETIMEDOUT
 // if timeout is reached.
 static inline int fork_function(int timeout,
-                                std::ostream & errstr,
+                                std::ostream &errstr,
                                 std::function < int8_t(void) > f)
 {
     // first fork the forker.
@@ -55,15 +55,19 @@ static inline int fork_function(int timeout,
 
     // close all fds
     int maxfd = sysconf(_SC_OPEN_MAX);
-    if (maxfd == -1)
+    if (maxfd == -1) {
         maxfd = 16384;
+    }
     for (int fd = 0; fd <= maxfd; fd++) {
-        if (fd == STDIN_FILENO)
+        if (fd == STDIN_FILENO) {
             continue;
-        if (fd == STDOUT_FILENO)
+        }
+        if (fd == STDOUT_FILENO) {
             continue;
-        if (fd == STDERR_FILENO)
+        }
+        if (fd == STDERR_FILENO) {
             continue;
+        }
         ::close(fd);
     }
 
@@ -109,7 +113,7 @@ static inline int fork_function(int timeout,
         // Restore old sigmask.
         if (sigprocmask(SIG_SETMASK, &oldmask, NULL) == -1) {
             std::cerr << ": sigprocmask failed: "
-                << cpp_strerror(errno) << "\n";
+                      << cpp_strerror(errno) << "\n";
             goto fail_exit;
         }
         (void)setpgid(0, 0);    // Become process group leader.
@@ -127,47 +131,49 @@ static inline int fork_function(int timeout,
             goto fail_exit;
         }
         switch (signo) {
-        case SIGCHLD:
-            int status;
-            if (waitpid(pid, &status, WNOHANG) == -1) {
-                std::
+            case SIGCHLD:
+                int status;
+                if (waitpid(pid, &status, WNOHANG) == -1) {
+                    std::
                     cerr << ": waitpid failed: " << cpp_strerror(errno) << "\n";
+                    goto fail_exit;
+                }
+                if (WIFEXITED(status)) {
+                    _exit(WEXITSTATUS(status));
+                }
+                if (WIFSIGNALED(status)) {
+                    _exit(128 + WTERMSIG(status));
+                }
+                std::cerr << ": unknown status returned\n";
                 goto fail_exit;
-            }
-            if (WIFEXITED(status))
-                _exit(WEXITSTATUS(status));
-            if (WIFSIGNALED(status))
-                _exit(128 + WTERMSIG(status));
-            std::cerr << ": unknown status returned\n";
-            goto fail_exit;
-        case SIGINT:
-        case SIGTERM:
-            // Pass SIGINT and SIGTERM, which are usually used to terminate
-            // a process, to the child.
-            if (::kill(pid, signo) == -1) {
-                std::cerr << ": kill failed: " << cpp_strerror(errno) << "\n";
+            case SIGINT:
+            case SIGTERM:
+                // Pass SIGINT and SIGTERM, which are usually used to terminate
+                // a process, to the child.
+                if (::kill(pid, signo) == -1) {
+                    std::cerr << ": kill failed: " << cpp_strerror(errno) << "\n";
+                    goto fail_exit;
+                }
+                continue;
+            case SIGALRM:
+                std::cerr << ": timed out (" << timeout << " sec)\n";
+                if (::killpg(pid, SIGKILL) == -1) {
+                    std::cerr << ": kill failed: " << cpp_strerror(errno) << "\n";
+                    goto fail_exit;
+                }
+                _exit(-ETIMEDOUT);
+            default:
+                std::cerr << ": sigwait: invalid signal: " << signo << "\n";
                 goto fail_exit;
-            }
-            continue;
-        case SIGALRM:
-            std::cerr << ": timed out (" << timeout << " sec)\n";
-            if (::killpg(pid, SIGKILL) == -1) {
-                std::cerr << ": kill failed: " << cpp_strerror(errno) << "\n";
-                goto fail_exit;
-            }
-            _exit(-ETIMEDOUT);
-        default:
-            std::cerr << ": sigwait: invalid signal: " << signo << "\n";
-            goto fail_exit;
         }
     }
     return 0;
-  fail_exit:
+fail_exit:
     _exit(EXIT_FAILURE);
 }
 #else
 static inline int fork_function(int timeout,
-                                std::ostream & errstr,
+                                std::ostream &errstr,
                                 std::function < int8_t(void) > f)
 {
     errstr << "Forking is not available on Windows.\n";

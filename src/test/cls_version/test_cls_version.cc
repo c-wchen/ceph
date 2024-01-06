@@ -16,12 +16,12 @@
 
 using namespace std;
 
-static librados::ObjectWriteOperation * new_op()
+static librados::ObjectWriteOperation *new_op()
 {
     return new librados::ObjectWriteOperation();
 }
 
-static librados::ObjectReadOperation * new_rop()
+static librados::ObjectReadOperation *new_rop()
 {
     return new librados::ObjectReadOperation();
 }
@@ -50,7 +50,7 @@ TEST(cls_rgw, test_version_inc_read)
     ASSERT_EQ(0, (int)ver.tag.size());
 
     /* inc version */
-    librados::ObjectWriteOperation * op = new_op();
+    librados::ObjectWriteOperation *op = new_op();
     cls_version_inc(*op);
     ASSERT_EQ(0, ioctx.operate(oid, op));
 
@@ -74,7 +74,7 @@ TEST(cls_rgw, test_version_inc_read)
 
     obj_version ver3;
 
-    librados::ObjectReadOperation * rop = new_rop();
+    librados::ObjectReadOperation *rop = new_rop();
     cls_version_read(*rop, &ver3);
     bufferlist outbl;
     ASSERT_EQ(0, ioctx.operate(oid, rop, &outbl));
@@ -111,7 +111,7 @@ TEST(cls_rgw, test_version_set)
     ver.tag = "foo";
 
     /* set version */
-    librados::ObjectWriteOperation * op = new_op();
+    librados::ObjectWriteOperation *op = new_op();
     cls_version_set(*op, ver);
     ASSERT_EQ(0, ioctx.operate(oid, op));
 
@@ -149,7 +149,7 @@ TEST(cls_rgw, test_version_inc_cond)
     ASSERT_EQ(0, (int)ver.tag.size());
 
     /* inc version */
-    librados::ObjectWriteOperation * op = new_op();
+    librados::ObjectWriteOperation *op = new_op();
     cls_version_inc(*op);
     ASSERT_EQ(0, ioctx.operate(oid, op));
 
@@ -252,7 +252,7 @@ TEST(cls_rgw, test_version_inc_check)
     ASSERT_EQ(0, (int)ver.tag.size());
 
     /* inc version */
-    librados::ObjectWriteOperation * op = new_op();
+    librados::ObjectWriteOperation *op = new_op();
     cls_version_inc(*op);
     ASSERT_EQ(0, ioctx.operate(oid, op));
 
@@ -263,7 +263,7 @@ TEST(cls_rgw, test_version_inc_check)
     obj_version cond_ver = ver;
 
     /* a bunch of conditions that should succeed */
-    librados::ObjectReadOperation * rop = new_rop();
+    librados::ObjectReadOperation *rop = new_rop();
     cls_version_check(*rop, cond_ver, VER_COND_EQ);
     bufferlist bl;
     ASSERT_EQ(0, ioctx.operate(oid, rop, &bl));

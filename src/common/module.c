@@ -39,19 +39,18 @@ static int run_command(const char *command)
     int status;
 
     status = system(command);
-    if (status >= 0 && WIFEXITED(status))
+    if (status >= 0 && WIFEXITED(status)) {
         return WEXITSTATUS(status);
+    }
 
     if (status < 0) {
         char error_buf[80];
         char *errp = ceph_strerror_r(errno, error_buf, sizeof(error_buf));
         fprintf(stderr, "couldn't run '%s': %s\n", command, errp);
-    }
-    else if (WIFSIGNALED(status)) {
+    } else if (WIFSIGNALED(status)) {
         fprintf(stderr, "'%s' killed by signal %d\n", command,
                 WTERMSIG(status));
-    }
-    else {
+    } else {
         fprintf(stderr, "weird status from '%s': %d\n", command, status);
     }
 

@@ -31,14 +31,15 @@ class RGWSyncTraceServiceMapThread;
 
 using RGWSyncTraceNodeRef = std::shared_ptr < RGWSyncTraceNode >;
 
-class RGWSyncTraceNode final {
+class RGWSyncTraceNode final
+{
     friend class RGWSyncTraceManager;
 
     CephContext *cct;
     RGWSyncTraceNodeRef parent;
 
     uint16_t state {
-    0};
+        0};
     std::string status;
 
     ceph::mutex lock = ceph::make_mutex("RGWSyncTraceNode::lock");
@@ -55,49 +56,59 @@ class RGWSyncTraceNode final {
     boost::circular_buffer < std::string > history;
 
     // private constructor, create with RGWSyncTraceManager::add_node()
-    RGWSyncTraceNode(CephContext * _cct, uint64_t _handle,
-                     const RGWSyncTraceNodeRef & _parent,
-                     const std::string & _type, const std::string & _id);
+    RGWSyncTraceNode(CephContext *_cct, uint64_t _handle,
+                     const RGWSyncTraceNodeRef &_parent,
+                     const std::string &_type, const std::string &_id);
 
-  public:
-    void set_resource_name(const std::string & s) {
+public:
+    void set_resource_name(const std::string &s)
+    {
         resource_name = s;
-    } const std::string & get_resource_name() {
+    } const std::string &get_resource_name()
+    {
         return resource_name;
     }
 
-    void set_flag(uint16_t s) {
+    void set_flag(uint16_t s)
+    {
         state |= s;
     }
-    void unset_flag(uint16_t s) {
+    void unset_flag(uint16_t s)
+    {
         state &= ~s;
     }
-    bool test_flags(uint16_t f) {
+    bool test_flags(uint16_t f)
+    {
         return (state & f) == f;
     }
-    void log(int level, const std::string & s);
+    void log(int level, const std::string &s);
 
-    std::string to_str() {
+    std::string to_str()
+    {
         return prefix + " " + status;
     }
 
-    const std::string & get_prefix() {
+    const std::string &get_prefix()
+    {
         return prefix;
     }
 
-    std::ostream & operator<<(std::ostream & os) {
+    std::ostream &operator<<(std::ostream &os)
+    {
         os << to_str();
         return os;
     }
 
-    boost::circular_buffer < std::string > &get_history() {
+    boost::circular_buffer < std::string > &get_history()
+    {
         return history;
     }
 
-    bool match(const std::string & search_term, bool search_history);
+    bool match(const std::string &search_term, bool search_history);
 };
 
-class RGWSyncTraceManager:public AdminSocketHook {
+class RGWSyncTraceManager: public AdminSocketHook
+{
     friend class RGWSyncTraceNode;
 
     mutable std::shared_timed_mutex lock;
@@ -105,38 +116,41 @@ class RGWSyncTraceManager:public AdminSocketHook {
 
     CephContext *cct;
     RGWSyncTraceServiceMapThread *service_map_thread {
-    nullptr};
+        nullptr};
 
     std::map < uint64_t, RGWSyncTraceNodeRef > nodes;
     boost::circular_buffer < RGWSyncTraceNodeRef > complete_nodes;
 
     std::atomic < uint64_t > count = {
-    0};
+        0
+    };
 
     std::list < std::array < std::string, 3 > >admin_commands;
 
-    uint64_t alloc_handle() {
+    uint64_t alloc_handle()
+    {
         return ++count;
     }
-    void finish_node(RGWSyncTraceNode * node);
+    void finish_node(RGWSyncTraceNode *node);
 
-  public:
-    RGWSyncTraceManager(CephContext * _cct, int max_lru):cct(_cct),
-        complete_nodes(max_lru) {
+public:
+    RGWSyncTraceManager(CephContext *_cct, int max_lru): cct(_cct),
+        complete_nodes(max_lru)
+    {
     }
     ~RGWSyncTraceManager();
 
-    void init(RGWRados * store);
+    void init(RGWRados *store);
 
     const RGWSyncTraceNodeRef root_node;
 
-    RGWSyncTraceNodeRef add_node(const RGWSyncTraceNodeRef & parent,
-                                 const std::string & type,
-                                 const std::string & id = "");
+    RGWSyncTraceNodeRef add_node(const RGWSyncTraceNodeRef &parent,
+                                 const std::string &type,
+                                 const std::string &id = "");
 
     int hook_to_admin_command();
-    int call(std::string_view command, const cmdmap_t & cmdmap,
+    int call(std::string_view command, const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & ss, bufferlist & out) override;
+             Formatter *f, std::ostream &ss, bufferlist &out) override;
     std::string get_active_names();
 };

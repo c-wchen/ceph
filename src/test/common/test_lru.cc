@@ -19,13 +19,17 @@
 
 #include "include/lru.h"
 
-class Item:public LRUObject {
-  public:
+class Item: public LRUObject
+{
+public:
     int id;
-     Item():id(0) {
-    } explicit Item(int i):id(i) {
+    Item(): id(0)
+    {
+    } explicit Item(int i): id(i)
+    {
     }
-    void set(int i) {
+    void set(int i)
+    {
         id = i;
     }
 };
@@ -94,8 +98,9 @@ TEST(lru, Adjust)
     for (int i = 0; i < n; i++) {
         items[i].set(i);
         lru.lru_insert_top(&items[i]);
-        if (i % 5 == 0)
+        if (i % 5 == 0) {
             items[i].lru_pin();
+        }
     }
     ASSERT_EQ(48U, lru.lru_get_top());  /* 60% of unpinned */
     ASSERT_EQ(52U, lru.lru_get_bot());

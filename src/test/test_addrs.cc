@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -33,12 +33,18 @@ const char *addr_checks[][3] = {
     {"[2607:f298:4:2243::5522]", "v2:[2607:f298:4:2243::5522]:0/0", ""},
     {"2607:f298:4:2243::5522a", "", "2607:f298:4:2243::5522a"},
     {"[2607:f298:4:2243::5522]a", "v2:[2607:f298:4:2243::5522]:0/0", "a"},
-    {"[2607:f298:4:2243::5522]:1234a", "v2:[2607:f298:4:2243::5522]:1234/0",
-     "a"},
-    {"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-     "v2:[2001:db8:85a3::8a2e:370:7334]:0/0", ""},
-    {"2001:2db8:85a3:4334:4324:8a2e:1370:7334",
-     "v2:[2001:2db8:85a3:4334:4324:8a2e:1370:7334]:0/0", ""},
+    {
+        "[2607:f298:4:2243::5522]:1234a", "v2:[2607:f298:4:2243::5522]:1234/0",
+        "a"
+    },
+    {
+        "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        "v2:[2001:db8:85a3::8a2e:370:7334]:0/0", ""
+    },
+    {
+        "2001:2db8:85a3:4334:4324:8a2e:1370:7334",
+        "v2:[2001:2db8:85a3:4334:4324:8a2e:1370:7334]:0/0", ""
+    },
     {"::", "v2:[::]:0/0", ""},
     {"::zz", "v2:[::]:0/0", "zz"},
     {":: 12:34", "v2:[::]:0/0", " 12:34"},
@@ -55,16 +61,19 @@ const char *addr_checks[][3] = {
 
 const char *addr_only_checks[][3] = {
     // we shouldn't parse an addrvec...
-    {"[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]", "",
-     "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]"},
+    {
+        "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]", "",
+        "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]"
+    },
     {NULL, NULL, NULL},
 };
 
 TEST(Msgr, TestAddrParsing)
 {
-  for (auto & addr_checks:{
-         addr_checks, addr_only_checks}
-    ) {
+    for (auto &addr_checks : {
+             addr_checks, addr_only_checks
+         }
+        ) {
         for (unsigned i = 0; addr_checks[i][0]; ++i) {
             entity_addr_t a;
             const char *end = "";
@@ -78,14 +87,13 @@ TEST(Msgr, TestAddrParsing)
             string left = end;
 
             cout << "'" << addr_checks[i][0] << "' -> '" << out << "' + '" <<
-                left << "'" << std::endl;
+                 left << "'" << std::endl;
 
             ASSERT_EQ(out, addr_checks[i][1]);
             ASSERT_EQ(left, addr_checks[i][2]);
             if (addr_checks[i][0] == end) {
                 ASSERT_FALSE(ok);
-            }
-            else {
+            } else {
                 ASSERT_TRUE(ok);
             }
         }
@@ -102,12 +110,18 @@ const char *addr_checks2[][3] = {
     {"v1:2607:f298:4:2243::5522", "v1:[2607:f298:4:2243::5522]:0/0", ""},
     {"v1:[2607:f298:4:2243::5522]", "v1:[2607:f298:4:2243::5522]:0/0", ""},
     {"v1:[2607:f298:4:2243::5522]a", "v1:[2607:f298:4:2243::5522]:0/0", "a"},
-    {"v1:[2607:f298:4:2243::5522]:1234a", "v1:[2607:f298:4:2243::5522]:1234/0",
-     "a"},
-    {"v1:2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-     "v1:[2001:db8:85a3::8a2e:370:7334]:0/0", ""},
-    {"v1:2001:2db8:85a3:4334:4324:8a2e:1370:7334",
-     "v1:[2001:2db8:85a3:4334:4324:8a2e:1370:7334]:0/0", ""},
+    {
+        "v1:[2607:f298:4:2243::5522]:1234a", "v1:[2607:f298:4:2243::5522]:1234/0",
+        "a"
+    },
+    {
+        "v1:2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        "v1:[2001:db8:85a3::8a2e:370:7334]:0/0", ""
+    },
+    {
+        "v1:2001:2db8:85a3:4334:4324:8a2e:1370:7334",
+        "v1:[2001:2db8:85a3:4334:4324:8a2e:1370:7334]:0/0", ""
+    },
     {"v1:1.2.3.4", "v1:1.2.3.4:0/0", ""},
     {"v1:1.2.3.4:12", "v1:1.2.3.4:12/0", ""},
     {"v1:1.2.3.4:12/34", "v1:1.2.3.4:12/34", ""},
@@ -127,12 +141,11 @@ TEST(Msgr, TestAddrEncodeAddrvecDecode)
         auto bli = bl.cbegin();
         addrvec.decode(bli);
         cout << addr_checks2[i][0] << " " << addr << " " << addrvec << std::
-            endl;
+             endl;
         ASSERT_EQ(addr, addrvec.v[0]);
         if (addr_checks2[i][0] == end) {
             ASSERT_FALSE(ok);
-        }
-        else {
+        } else {
             ASSERT_TRUE(ok);
         }
     }
@@ -299,16 +312,17 @@ TEST(entity_addrvec_t, parse)
 {
     entity_addrvec_t addrvec;
 
-  for (auto v:{
-         addr_checks, addr_checks2, addrvec_parse_checks}
-    ) {
+    for (auto v : {
+             addr_checks, addr_checks2, addrvec_parse_checks
+         }
+        ) {
         for (unsigned i = 0; v[i][0]; ++i) {
             const char *end = "";
             bool ret = addrvec.parse(v[i][0], &end);
             string out = stringify(addrvec);
             string left = end;
             cout << "'" << v[i][0] << "' -> '" << out << "' + '" << left << "'"
-                << std::endl;
+                 << std::endl;
             ASSERT_EQ(out, v[i][1]);
             ASSERT_EQ(left, v[i][2]);
             ASSERT_TRUE(out.empty() || ret);

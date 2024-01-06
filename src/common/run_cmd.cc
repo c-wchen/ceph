@@ -47,8 +47,7 @@ std::string run_cmd(const char *cmd, ...)
         oss << "run_cmd(" << cmd << "): unable to fork(): " <<
             cpp_strerror(err);
         return oss.str();
-    }
-    else if (fret == 0) {
+    } else if (fret == 0) {
         // execvp doesn't modify its arguments, so the const-cast here is safe.
         close(STDIN_FILENO);
         close(STDOUT_FILENO);
@@ -59,8 +58,9 @@ std::string run_cmd(const char *cmd, ...)
     int status;
     while (waitpid(fret, &status, 0) == -1) {
         int err = errno;
-        if (err == EINTR)
+        if (err == EINTR) {
             continue;
+        }
         ostringstream oss;
         oss << "run_cmd(" << cmd << "): waitpid error: " << cpp_strerror(err);
         return oss.str();
@@ -73,8 +73,7 @@ std::string run_cmd(const char *cmd, ...)
             return oss.str();
         }
         return "";
-    }
-    else if (WIFSIGNALED(status)) {
+    } else if (WIFSIGNALED(status)) {
         ostringstream oss;
         oss << "run_cmd(" << cmd << "): terminated by signal";
         return oss.str();

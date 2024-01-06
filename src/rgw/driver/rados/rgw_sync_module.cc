@@ -22,24 +22,26 @@ RGWMetadataHandler *RGWSyncModuleInstance::alloc_bucket_meta_handler()
 }
 
 RGWBucketInstanceMetadataHandlerBase *RGWSyncModuleInstance::
-alloc_bucket_instance_meta_handler(rgw::sal::Driver * driver)
+alloc_bucket_instance_meta_handler(rgw::sal::Driver *driver)
 {
     return RGWBucketInstanceMetaHandlerAllocator::alloc(driver);
 }
 
-RGWStatRemoteObjCBCR::RGWStatRemoteObjCBCR(RGWDataSyncCtx * _sc, rgw_bucket & _src_bucket, rgw_obj_key & _key):RGWCoroutine(_sc->cct),
-sc(_sc), sync_env(_sc->env),
-src_bucket(_src_bucket), key(_key)
+RGWStatRemoteObjCBCR::RGWStatRemoteObjCBCR(RGWDataSyncCtx *_sc, rgw_bucket &_src_bucket,
+        rgw_obj_key &_key): RGWCoroutine(_sc->cct),
+    sc(_sc), sync_env(_sc->env),
+    src_bucket(_src_bucket), key(_key)
 {
 }
 
-RGWCallStatRemoteObjCR::RGWCallStatRemoteObjCR(RGWDataSyncCtx * _sc, rgw_bucket & _src_bucket, rgw_obj_key & _key):RGWCoroutine(_sc->cct),
-sc(_sc), sync_env(_sc->env),
-src_bucket(_src_bucket), key(_key)
+RGWCallStatRemoteObjCR::RGWCallStatRemoteObjCR(RGWDataSyncCtx *_sc, rgw_bucket &_src_bucket,
+        rgw_obj_key &_key): RGWCoroutine(_sc->cct),
+    sc(_sc), sync_env(_sc->env),
+    src_bucket(_src_bucket), key(_key)
 {
 }
 
-int RGWCallStatRemoteObjCR::operate(const DoutPrefixProvider * dpp)
+int RGWCallStatRemoteObjCR::operate(const DoutPrefixProvider *dpp)
 {
     reenter(this) {
         yield {
@@ -51,15 +53,16 @@ int RGWCallStatRemoteObjCR::operate(const DoutPrefixProvider * dpp)
         if (retcode < 0) {
             ldpp_dout(dpp,
                       10) << "RGWStatRemoteObjCR() returned " << retcode <<
-                dendl;
+                          dendl;
             return set_cr_error(retcode);
         }
         ldpp_dout(dpp, 20) << "stat of remote obj: z=" << sc->source_zone
-            << " b=" << src_bucket << " k=" << key
-            << " size=" << size << " mtime=" << mtime << dendl;
+                           << " b=" << src_bucket << " k=" << key
+                           << " size=" << size << " mtime=" << mtime << dendl;
         yield {
             RGWStatRemoteObjCBCR *cb = allocate_callback();
-            if (cb) {
+            if (cb)
+            {
                 cb->set_result(mtime, size, etag, std::move(attrs),
                                std::move(headers));
                 call(cb);
@@ -68,7 +71,7 @@ int RGWCallStatRemoteObjCR::operate(const DoutPrefixProvider * dpp)
         if (retcode < 0) {
             ldpp_dout(dpp,
                       10) << "RGWStatRemoteObjCR() callback returned " <<
-                retcode << dendl;
+                          retcode << dendl;
             return set_cr_error(retcode);
         }
         return set_cr_done();
@@ -76,7 +79,7 @@ int RGWCallStatRemoteObjCR::operate(const DoutPrefixProvider * dpp)
     return 0;
 }
 
-void rgw_register_sync_modules(RGWSyncModulesManager * modules_manager)
+void rgw_register_sync_modules(RGWSyncModulesManager *modules_manager)
 {
     RGWSyncModuleRef default_module(std::make_shared < RGWDefaultSyncModule >
                                     ());

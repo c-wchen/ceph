@@ -17,144 +17,152 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "random-write: "
 
-namespace {
+namespace
+{
 
-    const uint32_t NUM_THREADS = 8;
-    const uint32_t MAX_IO_SIZE = 24576;
-    const uint32_t MIN_IO_SIZE = 4;
+const uint32_t NUM_THREADS = 8;
+const uint32_t MAX_IO_SIZE = 24576;
+const uint32_t MIN_IO_SIZE = 4;
 
-    void usage() {
-        std::
-            cout << "usage: ceph_test_rbd_mirror_random_write [options...] \\"
-            << std::endl;
-        std::cout << "           <pool> <image>" << std::endl;
-        std::cout << std::endl;
-        std::cout << "  pool                 image pool" << std::endl;
-        std::cout << "  image         image to write" << std::endl;
-        std::cout << std::endl;
-        std::cout << "options:\n";
-        std::
-            cout <<
-            "  -m monaddress[:port]      connect to specified monitor\n";
-        std::
-            cout <<
-            "  --keyring=<path>          path to keyring for local cluster\n";
-        std::cout << "  --log-file=<logfile>      file to log debug output\n";
-        std::
-            cout <<
-            "  --debug-rbd-mirror=<log-level>/<memory-level>  set rbd-mirror debug level\n";
-        generic_server_usage();
-    }
+void usage()
+{
+    std::
+    cout << "usage: ceph_test_rbd_mirror_random_write [options...] \\"
+         << std::endl;
+    std::cout << "           <pool> <image>" << std::endl;
+    std::cout << std::endl;
+    std::cout << "  pool                 image pool" << std::endl;
+    std::cout << "  image         image to write" << std::endl;
+    std::cout << std::endl;
+    std::cout << "options:\n";
+    std::
+    cout <<
+         "  -m monaddress[:port]      connect to specified monitor\n";
+    std::
+    cout <<
+         "  --keyring=<path>          path to keyring for local cluster\n";
+    std::cout << "  --log-file=<logfile>      file to log debug output\n";
+    std::
+    cout <<
+         "  --debug-rbd-mirror=<log-level>/<memory-level>  set rbd-mirror debug level\n";
+    generic_server_usage();
+}
 
-    void rbd_bencher_completion(void *c, void *pc);
+void rbd_bencher_completion(void *c, void *pc);
 
-    struct rbd_bencher {
-        librbd::Image * image;
-        ceph::mutex lock = ceph::make_mutex("rbd_bencher::lock");
-        ceph::condition_variable cond;
-        int in_flight;
+struct rbd_bencher {
+    librbd::Image *image;
+    ceph::mutex lock = ceph::make_mutex("rbd_bencher::lock");
+    ceph::condition_variable cond;
+    int in_flight;
 
-        explicit rbd_bencher(librbd::Image * i)
-        :image(i), in_flight(0) {
-        } bool start_write(int max, uint64_t off, uint64_t len, bufferlist & bl,
-                           int op_flags) {
-            {
-                std::lock_guard l {
+    explicit rbd_bencher(librbd::Image *i)
+        : image(i), in_flight(0)
+    {
+    } bool start_write(int max, uint64_t off, uint64_t len, bufferlist &bl,
+                       int op_flags)
+    {
+        {
+            std::lock_guard l {
                 lock};
-                if (in_flight >= max)
-                    return false;
-                in_flight++;
+            if (in_flight >= max) {
+                return false;
             }
-            librbd::RBD::AioCompletion * c =
-                new librbd::RBD::AioCompletion((void *)this,
-                                               rbd_bencher_completion);
-            image->aio_write2(off, len, bl, c, op_flags);
-            //cout << "start " << c << " at " << off << "~" << len << std::endl;
-            return true;
+            in_flight++;
         }
+        librbd::RBD::AioCompletion *c =
+            new librbd::RBD::AioCompletion((void *)this,
+                                           rbd_bencher_completion);
+        image->aio_write2(off, len, bl, c, op_flags);
+        //cout << "start " << c << " at " << off << "~" << len << std::endl;
+        return true;
+    }
 
-        void wait_for(int max) {
-            using namespace std::chrono_literals;
-            std::unique_lock l {
+    void wait_for(int max)
+    {
+        using namespace std::chrono_literals;
+        std::unique_lock l {
             lock};
-            while (in_flight > max) {
-                cond.wait_for(l, 200 ms);
-            }
+        while (in_flight > max) {
+            cond.wait_for(l, 200 ms);
         }
-
-    };
-
-    void rbd_bencher_completion(void *vc, void *pc) {
-        librbd::RBD::AioCompletion * c = (librbd::RBD::AioCompletion *) vc;
-        rbd_bencher *b = static_cast < rbd_bencher * >(pc);
-        //cout << "complete " << c << std::endl;
-        int ret = c->get_return_value();
-        if (ret != 0) {
-            std::cout << "write error: " << cpp_strerror(ret) << std::endl;
-            exit(ret < 0 ? -ret : ret);
-        }
-        b->lock.lock();
-        b->in_flight--;
-        b->cond.notify_all();
-        b->lock.unlock();
-        c->release();
     }
 
-    void write_image(librbd::Image & image) {
-        srand(time(NULL) % (unsigned long)-1);
+};
 
-        uint64_t max_io_bytes = MAX_IO_SIZE * 1024;
-        bufferptr bp(max_io_bytes);
-        memset(bp.c_str(), rand() & 0xff, bp.length());
-        bufferlist bl;
-        bl.push_back(bp);
+void rbd_bencher_completion(void *vc, void *pc)
+{
+    librbd::RBD::AioCompletion *c = (librbd::RBD::AioCompletion *) vc;
+    rbd_bencher *b = static_cast < rbd_bencher * >(pc);
+    //cout << "complete " << c << std::endl;
+    int ret = c->get_return_value();
+    if (ret != 0) {
+        std::cout << "write error: " << cpp_strerror(ret) << std::endl;
+        exit(ret < 0 ? -ret : ret);
+    }
+    b->lock.lock();
+    b->in_flight--;
+    b->cond.notify_all();
+    b->lock.unlock();
+    c->release();
+}
 
-        uint64_t size = 0;
-        image.size(&size);
-        ceph_assert(size != 0);
+void write_image(librbd::Image &image)
+{
+    srand(time(NULL) % (unsigned long) -1);
 
-        std::vector < uint64_t > thread_offset;
-        uint64_t i;
-        uint64_t start_pos;
+    uint64_t max_io_bytes = MAX_IO_SIZE * 1024;
+    bufferptr bp(max_io_bytes);
+    memset(bp.c_str(), rand() & 0xff, bp.length());
+    bufferlist bl;
+    bl.push_back(bp);
 
-        // disturb all thread's offset, used by seq write
-        for (i = 0; i < NUM_THREADS; i++) {
-            start_pos = (rand() % (size / max_io_bytes)) * max_io_bytes;
-            thread_offset.push_back(start_pos);
-        }
+    uint64_t size = 0;
+    image.size(&size);
+    ceph_assert(size != 0);
 
-        uint64_t total_ios = 0;
-        uint64_t total_bytes = 0;
-        rbd_bencher b(&image);
-        while (true) {
-            b.wait_for(NUM_THREADS - 1);
-            for (uint32_t i = 0; i < NUM_THREADS; ++i) {
-                // mostly small writes with a small chance of large writes
-                uint32_t io_modulo = MIN_IO_SIZE + 1;
-                if (rand() % 30 == 0) {
-                    io_modulo += MAX_IO_SIZE;
-                }
+    std::vector < uint64_t > thread_offset;
+    uint64_t i;
+    uint64_t start_pos;
 
-                uint32_t io_size =
-                    (((rand() % io_modulo) + MIN_IO_SIZE) * 1024);
-                thread_offset[i] = (rand() % (size / io_size)) * io_size;
-                if (!b.start_write(NUM_THREADS, thread_offset[i], io_size, bl,
-                                   LIBRADOS_OP_FLAG_FADVISE_RANDOM)) {
-                    break;
-                }
-                ++i;
+    // disturb all thread's offset, used by seq write
+    for (i = 0; i < NUM_THREADS; i++) {
+        start_pos = (rand() % (size / max_io_bytes)) * max_io_bytes;
+        thread_offset.push_back(start_pos);
+    }
 
-                ++total_ios;
-                total_bytes += io_size;
-                if (total_ios % 100 == 0) {
-                    std::
-                        cout << total_ios << " IOs, " << total_bytes << " bytes"
-                        << std::endl;
-                }
+    uint64_t total_ios = 0;
+    uint64_t total_bytes = 0;
+    rbd_bencher b(&image);
+    while (true) {
+        b.wait_for(NUM_THREADS - 1);
+        for (uint32_t i = 0; i < NUM_THREADS; ++i) {
+            // mostly small writes with a small chance of large writes
+            uint32_t io_modulo = MIN_IO_SIZE + 1;
+            if (rand() % 30 == 0) {
+                io_modulo += MAX_IO_SIZE;
+            }
+
+            uint32_t io_size =
+                (((rand() % io_modulo) + MIN_IO_SIZE) * 1024);
+            thread_offset[i] = (rand() % (size / io_size)) * io_size;
+            if (!b.start_write(NUM_THREADS, thread_offset[i], io_size, bl,
+                               LIBRADOS_OP_FLAG_FADVISE_RANDOM)) {
+                break;
+            }
+            ++i;
+
+            ++total_ios;
+            total_bytes += io_size;
+            if (total_ios % 100 == 0) {
+                std::
+                cout << total_ios << " IOs, " << total_bytes << " bytes"
+                     << std::endl;
             }
         }
-        b.wait_for(0);
     }
+    b.wait_for(0);
+}
 
 }                               // anonymous namespace
 
@@ -204,14 +212,14 @@ int main(int argc, const char **argv)
     r = rados.ioctx_create(pool_name.c_str(), io_ctx);
     if (r < 0) {
         derr << "error finding local pool " << pool_name << ": "
-            << cpp_strerror(r) << dendl;
+             << cpp_strerror(r) << dendl;
         return EXIT_FAILURE;
     }
 
     r = rbd.open(io_ctx, image, image_name.c_str());
     if (r < 0) {
         derr << "error opening image " << image_name << ": "
-            << cpp_strerror(r) << dendl;
+             << cpp_strerror(r) << dendl;
         return EXIT_FAILURE;
     }
 

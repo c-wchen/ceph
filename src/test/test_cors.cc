@@ -37,55 +37,65 @@ static void print_usage(char *exec)
 {
     cout << "Usage: " << exec << " <Options>\n";
     cout << "Options:\n"
-        "-g <gw-ip> - The ip address of the gateway\n"
-        "-p <gw-port> - The port number of the gateway\n"
-        "-k <SWIFT|S3> - The key type, either SWIFT or S3\n"
-        "-s3 <AWSAccessKeyId:SecretAccessKeyID> - Only, if the key type is S3, gives S3 credentials\n"
-        "-swift <Auth-Token> - Only if the key type is SWIFT, and gives the SWIFT credentials\n";
+         "-g <gw-ip> - The ip address of the gateway\n"
+         "-p <gw-port> - The port number of the gateway\n"
+         "-k <SWIFT|S3> - The key type, either SWIFT or S3\n"
+         "-s3 <AWSAccessKeyId:SecretAccessKeyID> - Only, if the key type is S3, gives S3 credentials\n"
+         "-swift <Auth-Token> - Only if the key type is SWIFT, and gives the SWIFT credentials\n";
 }
 
-class test_cors_helper {
-  private:
+class test_cors_helper
+{
+private:
     string host;
     string port;
     string creds;
     CURL *curl_inst;
-     map < string, string > response;
-     list < string > extra_hdrs;
+    map < string, string > response;
+    list < string > extra_hdrs;
     string *resp_data;
     unsigned resp_code;
     key_type kt;
-  public:
-     test_cors_helper():curl_inst(NULL), resp_data(NULL), resp_code(0),
-        kt(KEY_TYPE_UNDEFINED) {
+public:
+    test_cors_helper(): curl_inst(NULL), resp_data(NULL), resp_code(0),
+        kt(KEY_TYPE_UNDEFINED)
+    {
         curl_global_init(CURL_GLOBAL_ALL);
-    } ~test_cors_helper() {
+    } ~test_cors_helper()
+    {
         curl_global_cleanup();
     }
     int send_request(string method, string uri,
-                     size_t(*function) (void *, size_t, size_t, void *) = 0,
+                     size_t(*function)(void *, size_t, size_t, void *) = 0,
                      void *ud = 0, size_t length = 0);
     int extract_input(unsigned argc, char *argv[]);
-    string & get_response(string hdr) {
+    string &get_response(string hdr)
+    {
         return response[hdr];
     }
-    void set_extra_header(string hdr) {
+    void set_extra_header(string hdr)
+    {
         extra_hdrs.push_back(hdr);
     }
     void set_response(char *val);
-    void set_response_data(char *data, size_t len) {
-        if (resp_data)
+    void set_response_data(char *data, size_t len)
+    {
+        if (resp_data) {
             delete resp_data;
+        }
         resp_data = new string(data, len);
         /*cout << resp_data->c_str() << "\n"; */
     }
-    const string *get_response_data() {
+    const string *get_response_data()
+    {
         return resp_data;
     }
-    unsigned get_resp_code() {
+    unsigned get_resp_code()
+    {
         return resp_code;
     }
-    key_type get_key_type() {
+    key_type get_key_type()
+    {
         return kt;
     }
 };
@@ -99,29 +109,27 @@ int test_cors_helper::extract_input(unsigned argc, char *argv[])
     for (unsigned loop = 1; loop < argc; loop += 2) {
         if (strcmp(argv[loop], "-g") == 0) {
             ERR_CHECK_NEXT_PARAM(host);
-        }
-        else if (strcmp(argv[loop], "-k") == 0) {
+        } else if (strcmp(argv[loop], "-k") == 0) {
             string type;
             ERR_CHECK_NEXT_PARAM(type);
-            if (type.compare("S3") == 0)
+            if (type.compare("S3") == 0) {
                 kt = KEY_TYPE_S3;
-            else if (type.compare("SWIFT") == 0)
+            } else if (type.compare("SWIFT") == 0) {
                 kt = KEY_TYPE_SWIFT;
-        }
-        else if (strcmp(argv[loop], "-s3") == 0) {
+            }
+        } else if (strcmp(argv[loop], "-s3") == 0) {
             ERR_CHECK_NEXT_PARAM(creds);
-        }
-        else if (strcmp(argv[loop], "-swift") == 0) {
+        } else if (strcmp(argv[loop], "-swift") == 0) {
             ERR_CHECK_NEXT_PARAM(creds);
-        }
-        else if (strcmp(argv[loop], "-p") == 0) {
+        } else if (strcmp(argv[loop], "-p") == 0) {
             ERR_CHECK_NEXT_PARAM(port);
-        }
-        else
+        } else {
             return -1;
+        }
     }
-    if (host.empty() || creds.empty())
+    if (host.empty() || creds.empty()) {
         return -1;
+    }
     return 0;
 }
 
@@ -132,8 +140,7 @@ void test_cors_helper::set_response(char *r)
     if (off != string::npos) {
         h.assign(sr, 0, off);
         v.assign(sr, off + 2, sr.find("\r\n") - (off + 2));
-    }
-    else {
+    } else {
         /*Could be the status code */
         if (sr.find("HTTP/") != string::npos) {
             h.assign(HTTP_RESPONSE_STR);
@@ -180,8 +187,8 @@ static void calc_hmac_sha1(const char *key, int key_len,
     buf_to_hex((unsigned char *)dest, CEPH_CRYPTO_HMACSHA1_DIGESTSIZE, hex_str);
 }
 
-static int get_s3_auth(const string & method, string creds, const string & date,
-                       const string & res, string & out)
+static int get_s3_auth(const string &method, string creds, const string &date,
+                       const string &res, string &out)
 {
     string aid, secret, auth_hdr;
     size_t off = creds.find(":");
@@ -204,45 +211,46 @@ static int get_s3_auth(const string & method, string creds, const string & date,
         }
         b64[ret] = 0;
         out.append(aid + string(":") + b64);
-    }
-    else
+    } else {
         return -1;
+    }
     return 0;
 }
 
-void get_date(string & d)
+void get_date(string &d)
 {
     struct timeval tv;
     char date[64];
     struct tm tm;
     char *days[] = { (char *)"Sun", (char *)"Mon", (char *)"Tue",
-        (char *)"Wed", (char *)"Thu", (char *)"Fri",
-        (char *)"Sat"
-    };
+                     (char *)"Wed", (char *)"Thu", (char *)"Fri",
+                     (char *)"Sat"
+                   };
     char *months[] = { (char *)"Jan", (char *)"Feb", (char *)"Mar",
-        (char *)"Apr", (char *)"May", (char *)"Jun",
-        (char *)"Jul", (char *)"Aug", (char *)"Sep",
-        (char *)"Oct", (char *)"Nov", (char *)"Dec"
-    };
+                       (char *)"Apr", (char *)"May", (char *)"Jun",
+                       (char *)"Jul", (char *)"Aug", (char *)"Sep",
+                       (char *)"Oct", (char *)"Nov", (char *)"Dec"
+                     };
     gettimeofday(&tv, NULL);
     gmtime_r(&tv.tv_sec, &tm);
     sprintf(date, "%s, %d %s %d %d:%d:%d GMT",
             days[tm.tm_wday],
             tm.tm_mday, months[tm.tm_mon],
-            tm.tm_year + 1900, tm.tm_hour, tm.tm_min, 0 /*tm.tm_sec */ );
+            tm.tm_year + 1900, tm.tm_hour, tm.tm_min, 0 /*tm.tm_sec */);
     d = date;
 }
 
 int test_cors_helper::send_request(string method, string res,
-                                   size_t(*read_function) (void *, size_t,
-                                                           size_t, void *),
+                                   size_t(*read_function)(void *, size_t,
+                                           size_t, void *),
                                    void *ud, size_t length)
 {
     string url;
     string auth, date;
     url.append(string("http://") + host);
-    if (port.length() > 0)
+    if (port.length() > 0) {
         url.append(string(":") + port);
+    }
     url.append(res);
     curl_inst = curl_easy_init();
     if (curl_inst) {
@@ -266,14 +274,13 @@ int test_cors_helper::send_request(string method, string res,
         http_date.append(string("Date: ") + date);
         if (kt == KEY_TYPE_S3) {
             string s3auth;
-            if (get_s3_auth(method, creds, date, res, s3auth) < 0)
+            if (get_s3_auth(method, creds, date, res, s3auth) < 0) {
                 return -1;
+            }
             auth.append(string("Authorization: AWS ") + s3auth);
-        }
-        else if (kt == KEY_TYPE_SWIFT) {
+        } else if (kt == KEY_TYPE_SWIFT) {
             auth.append(string("X-Auth-Token: ") + creds);
-        }
-        else {
+        } else {
             cout << "Unknown state (" << kt << ")\n";
             return -1;
         }
@@ -285,8 +292,9 @@ int test_cors_helper::send_request(string method, string res,
              it != extra_hdrs.end(); ++it) {
             slist = curl_slist_append(slist, (*it).c_str());
         }
-        if (read_function)
+        if (read_function) {
             curl_slist_append(slist, "Expect:");
+        }
         curl_easy_setopt(curl_inst, CURLOPT_HTTPHEADER, slist);
 
         response.erase(response.begin(), response.end());
@@ -294,7 +302,7 @@ int test_cors_helper::send_request(string method, string res,
         CURLcode res = curl_easy_perform(curl_inst);
         if (res != CURLE_OK) {
             cout << "Curl perform failed for " << url << ", res: " <<
-                curl_easy_strerror(res) << "\n";
+                 curl_easy_strerror(res) << "\n";
             return -1;
         }
         curl_slist_free_all(slist);
@@ -312,21 +320,20 @@ static int create_bucket(void)
         g_test->send_request(string("PUT"), string("/" S3_BUCKET_NAME));
         if (g_test->get_resp_code() != 200U) {
             cout << "Error creating bucket, http code " << g_test->
-                get_resp_code();
+                 get_resp_code();
             return -1;
         }
-    }
-    else if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
+    } else if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
         g_test->send_request(string("PUT"),
                              string("/swift/v1/" SWIFT_BUCKET_NAME));
         if (g_test->get_resp_code() != 201U) {
             cout << "Error creating bucket, http code " << g_test->
-                get_resp_code();
+                 get_resp_code();
             return -1;
         }
-    }
-    else
+    } else {
         return -1;
+    }
     return 0;
 }
 
@@ -336,21 +343,20 @@ static int delete_bucket(void)
         g_test->send_request(string("DELETE"), string("/" S3_BUCKET_NAME));
         if (g_test->get_resp_code() != 204U) {
             cout << "Error deleting bucket, http code " << g_test->
-                get_resp_code();
+                 get_resp_code();
             return -1;
         }
-    }
-    else if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
+    } else if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
         g_test->send_request(string("DELETE"),
                              string("/swift/v1/" SWIFT_BUCKET_NAME));
         if (g_test->get_resp_code() != 204U) {
             cout << "Error deleting bucket, http code " << g_test->
-                get_resp_code();
+                 get_resp_code();
             return -1;
         }
-    }
-    else
+    } else {
         return -1;
+    }
     return 0;
 }
 
@@ -400,52 +406,54 @@ void send_cors(set < string > o, set < string > h,
 
         g_test->send_request(string("PUT"), string("/" S3_BUCKET_NAME "?cors"),
                              cors_read_xml, (void *)&ss, ss.str().length());
-    }
-    else if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
+    } else if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
         set < string >::iterator it;
         string a_o;
         for (it = o.begin(); it != o.end(); ++it) {
-            if (a_o.length() > 0)
+            if (a_o.length() > 0) {
                 a_o.append(" ");
+            }
             a_o.append(*it);
         }
         g_test->
-            set_extra_header(string
-                             ("X-Container-Meta-Access-Control-Allow-Origin: ")
-                             + a_o);
+        set_extra_header(string
+                         ("X-Container-Meta-Access-Control-Allow-Origin: ")
+                         + a_o);
 
         if (!h.empty()) {
             string a_h;
             for (it = h.begin(); it != h.end(); ++it) {
-                if (a_h.length() > 0)
+                if (a_h.length() > 0) {
                     a_h.append(" ");
+                }
                 a_h.append(*it);
             }
             g_test->
-                set_extra_header(string
-                                 ("X-Container-Meta-Access-Control-Allow-Headers: ")
-                                 + a_h);
+            set_extra_header(string
+                             ("X-Container-Meta-Access-Control-Allow-Headers: ")
+                             + a_h);
         }
         if (!e.empty()) {
             string e_h;
             for (list < string >::iterator lit = e.begin(); lit != e.end();
                  ++lit) {
-                if (e_h.length() > 0)
+                if (e_h.length() > 0) {
                     e_h.append(" ");
+                }
                 e_h.append(*lit);
             }
             g_test->
-                set_extra_header(string
-                                 ("X-Container-Meta-Access-Control-Expose-Headers: ")
-                                 + e_h);
+            set_extra_header(string
+                             ("X-Container-Meta-Access-Control-Expose-Headers: ")
+                             + e_h);
         }
         if (max_age != CORS_MAX_AGE_INVALID) {
             char age[32];
             sprintf(age, "%u", max_age);
             g_test->
-                set_extra_header(string
-                                 ("X-Container-Meta-Access-Control-Max-Age: ") +
-                                 string(age));
+            set_extra_header(string
+                             ("X-Container-Meta-Access-Control-Max-Age: ") +
+                             string(age));
         }
         //const char *data = "1";
         stringstream ss;
@@ -458,8 +466,9 @@ void send_cors(set < string > o, set < string > h,
 
 TEST(TestCORS, getcors_firsttime)
 {
-    if (g_test->get_key_type() == KEY_TYPE_SWIFT)
+    if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
         return;
+    }
     ASSERT_EQ(0, create_bucket());
     g_test->send_request(string("GET"), string("/" S3_BUCKET_NAME "?cors"));
     EXPECT_EQ(404U, g_test->get_resp_code());
@@ -486,8 +495,9 @@ TEST(TestCORS, putcors_firsttime)
 
         RGWCORSRule *r = xml_to_cors_rule(string("example.com"));
         EXPECT_TRUE(r != NULL);
-        if (!r)
+        if (!r) {
             return;
+        }
 
         EXPECT_TRUE((r->get_allowed_methods() & (RGW_CORS_GET | RGW_CORS_PUT))
                     == (RGW_CORS_GET | RGW_CORS_PUT));
@@ -555,7 +565,7 @@ TEST(TestCORS, optionscors_test_options_1)
     g_test->set_extra_header(string("Origin: a.example.com"));
     g_test->set_extra_header(string("Access-Control-Request-Method: GET"));
     g_test->
-        set_extra_header(string("Access-Control-Allow-Headers: SomeHeader"));
+    set_extra_header(string("Access-Control-Allow-Headers: SomeHeader"));
     g_test->send_request(string("OPTIONS"), BUCKET_URL);
     EXPECT_EQ(200U, g_test->get_resp_code());
     if (g_test->get_resp_code() == 200) {
@@ -673,8 +683,7 @@ TEST(TestCORS, optionscors_test_options_3)
         if (g_test->get_key_type() == KEY_TYPE_S3) {
             s = g_test->get_response(string("Access-Control-Allow-Methods"));
             EXPECT_EQ(0U, s.length());
-        }
-        else {
+        } else {
             s = g_test->get_response(string("Access-Control-Allow-Methods"));
             EXPECT_EQ(0, s.compare("POST"));
         }
@@ -739,8 +748,8 @@ TEST(TestCORS, optionscors_test_options_4)
     g_test->set_extra_header(string("Origin: example.com"));
     g_test->set_extra_header(string("Access-Control-Request-Method: GET"));
     g_test->
-        set_extra_header(string
-                         ("Access-Control-Allow-Headers: Header2, Header1"));
+    set_extra_header(string
+                     ("Access-Control-Allow-Headers: Header2, Header1"));
     g_test->send_request(string("OPTIONS"), BUCKET_URL);
     EXPECT_EQ(200U, g_test->get_resp_code());
     if (g_test->get_resp_code() == 200) {
@@ -754,8 +763,8 @@ TEST(TestCORS, optionscors_test_options_4)
     g_test->set_extra_header(string("Origin: example.com"));
     g_test->set_extra_header(string("Access-Control-Request-Method: GET"));
     g_test->
-        set_extra_header(string
-                         ("Access-Control-Allow-Headers: Header1, Header2"));
+    set_extra_header(string
+                     ("Access-Control-Allow-Headers: Header1, Header2"));
     g_test->send_request(string("OPTIONS"), BUCKET_URL);
     EXPECT_EQ(200U, g_test->get_resp_code());
     if (g_test->get_resp_code() == 200) {
@@ -769,8 +778,8 @@ TEST(TestCORS, optionscors_test_options_4)
     g_test->set_extra_header(string("Origin: example.com"));
     g_test->set_extra_header(string("Access-Control-Request-Method: GET"));
     g_test->
-        set_extra_header(string
-                         ("Access-Control-Allow-Headers: Header1, Header2, Header3"));
+    set_extra_header(string
+                     ("Access-Control-Allow-Headers: Header1, Header2, Header3"));
     g_test->send_request(string("OPTIONS"), BUCKET_URL);
     EXPECT_EQ(200U, g_test->get_resp_code());
     if (g_test->get_resp_code() == 200) {
@@ -928,9 +937,9 @@ TEST(TestCORS, optionscors_test_options_7)
     g_test->set_extra_header(string("Origin: example.com"));
     g_test->set_extra_header(string("Access-Control-Request-Method: GET"));
     g_test->
-        set_extra_header(string
-                         ("Access-Control-Allow-Headers: Header1, Header2, Header3, "
-                          "Hdr--Length, Hdr-1-Length, Header-Length, Content-Length, foofoofoo"));
+    set_extra_header(string
+                     ("Access-Control-Allow-Headers: Header1, Header2, Header3, "
+                      "Hdr--Length, Hdr-1-Length, Header-Length, Content-Length, foofoofoo"));
     g_test->send_request(string("OPTIONS"), BUCKET_URL);
     EXPECT_EQ(200U, g_test->get_resp_code());
     if (g_test->get_resp_code() == 200) {
@@ -947,8 +956,9 @@ TEST(TestCORS, optionscors_test_options_7)
 
 TEST(TestCORS, deletecors_firsttime)
 {
-    if (g_test->get_key_type() == KEY_TYPE_SWIFT)
+    if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
         return;
+    }
     ASSERT_EQ(0, create_bucket());
     g_test->send_request("DELETE", "/" S3_BUCKET_NAME "?cors");
     EXPECT_EQ(204U, g_test->get_resp_code());
@@ -959,8 +969,9 @@ TEST(TestCORS, deletecors_test)
 {
     set < string > origins, h;
     list < string > e;
-    if (g_test->get_key_type() == KEY_TYPE_SWIFT)
+    if (g_test->get_key_type() == KEY_TYPE_SWIFT) {
         return;
+    }
     ASSERT_EQ(0, create_bucket());
     origins.insert(origins.end(), "example.com");
     uint8_t flags = RGW_CORS_GET | RGW_CORS_PUT;

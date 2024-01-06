@@ -24,20 +24,25 @@ using std::string;
 static sem_t sem;
 static std::atomic < bool > stop_flag = { false };
 
-class WatchNotifyTestCtx:public WatchCtx {
-  public:
-    void notify(uint8_t opcode, uint64_t ver, bufferlist & bl) override {
+class WatchNotifyTestCtx: public WatchCtx
+{
+public:
+    void notify(uint8_t opcode, uint64_t ver, bufferlist &bl) override
+    {
         sem_post(&sem);
-}};
+    }
+};
 
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-struct WatcherUnwatcher:public Thread {
+struct WatcherUnwatcher: public Thread {
     string pool;
-    explicit WatcherUnwatcher(string & _pool):pool(_pool) {
-    } void *entry() override {
+    explicit WatcherUnwatcher(string &_pool): pool(_pool)
+    {
+    } void *entry() override
+    {
         Rados cluster;
         connect_cluster_pp(cluster);
         while (!stop_flag) {
@@ -47,8 +52,9 @@ struct WatcherUnwatcher:public Thread {
             uint64_t handle;
             WatchNotifyTestCtx watch_ctx;
             int r = ioctx.watch("foo", 0, &handle, &watch_ctx);
-            if (r == 0)
+            if (r == 0) {
                 ioctx.unwatch("foo", handle);
+            }
             ioctx.close();
         }
         return NULL;
@@ -58,7 +64,7 @@ struct WatcherUnwatcher:public Thread {
 typedef RadosTestParamPP WatchStress;
 
 INSTANTIATE_TEST_SUITE_P(WatchStressTests,
-                         WatchStress,::testing::Values("", "cache"));
+                         WatchStress, ::testing::Values("", "cache"));
 
 TEST_P(WatchStress, Stress1)
 {
@@ -96,8 +102,7 @@ TEST_P(WatchStress, Stress1)
 
         if (do_blocklist) {
             sleep(1);           // Give a change to see an incorrect notify
-        }
-        else {
+        } else {
             TestAlarm alarm;
             sem_wait(&sem);
         }

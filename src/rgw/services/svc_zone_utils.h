@@ -8,25 +8,28 @@
 class RGWSI_RADOS;
 class RGWSI_Zone;
 
-class RGWSI_ZoneUtils:public RGWServiceInstance {
+class RGWSI_ZoneUtils: public RGWServiceInstance
+{
     friend struct RGWServices_Def;
 
     RGWSI_RADOS *rados_svc {
-    nullptr};
+        nullptr};
     RGWSI_Zone *zone_svc {
-    nullptr};
+        nullptr};
 
-     std::string trans_id_suffix;
+    std::string trans_id_suffix;
 
-    void init(RGWSI_RADOS * _rados_svc, RGWSI_Zone * _zone_svc) {
+    void init(RGWSI_RADOS *_rados_svc, RGWSI_Zone *_zone_svc)
+    {
         rados_svc = _rados_svc;
         zone_svc = _zone_svc;
-    } int do_start(optional_yield, const DoutPrefixProvider * dpp) override;
+    } int do_start(optional_yield, const DoutPrefixProvider *dpp) override;
 
     void init_unique_trans_id_deps();
 
-  public:
-  RGWSI_ZoneUtils(CephContext * cct):RGWServiceInstance(cct) {
+public:
+    RGWSI_ZoneUtils(CephContext *cct): RGWServiceInstance(cct)
+    {
     }
 
     std::string gen_host_id();

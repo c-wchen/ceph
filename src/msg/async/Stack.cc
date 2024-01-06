@@ -34,9 +34,9 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "stack "
 
-std::function < void () > NetworkStack::add_thread(Worker * w)
+std::function < void () > NetworkStack::add_thread(Worker *w)
 {
-    return[this, w] () {
+    return[this, w]() {
         rename_thread(w->id);
         const unsigned EventMaxWaitUs = 30000000;
         w->center.set_owner();
@@ -50,7 +50,7 @@ std::function < void () > NetworkStack::add_thread(Worker * w)
             int r = w->center.process_events(EventMaxWaitUs, &dur);
             if (r < 0) {
                 ldout(cct, 20) << __func__ << " process events failed: "
-                    << cpp_strerror(errno) << dendl;
+                               << cpp_strerror(errno) << dendl;
                 // TODO do something?
             }
             w->perf_logger->tinc(l_msgr_running_total_time, dur);
@@ -60,25 +60,28 @@ std::function < void () > NetworkStack::add_thread(Worker * w)
     };
 }
 
-std::shared_ptr < NetworkStack > NetworkStack::create(CephContext * c,
-                                                      const std::string & t)
+std::shared_ptr < NetworkStack > NetworkStack::create(CephContext *c,
+        const std::string &t)
 {
     std::shared_ptr < NetworkStack > stack = nullptr;
 
-    if (t == "posix")
+    if (t == "posix") {
         stack.reset(new PosixNetworkStack(c));
+    }
 #ifdef HAVE_RDMA
-    else if (t == "rdma")
+    else if (t == "rdma") {
         stack.reset(new RDMAStack(c));
+    }
 #endif
 #ifdef HAVE_DPDK
-    else if (t == "dpdk")
+    else if (t == "dpdk") {
         stack.reset(new DPDKStack(c));
+    }
 #endif
 
     if (stack == nullptr) {
         lderr(c) << __func__ << " ms_async_transport_type " << t <<
-            " is not supported! " << dendl;
+                 " is not supported! " << dendl;
         ceph_abort();
         return nullptr;
     }
@@ -87,25 +90,26 @@ std::shared_ptr < NetworkStack > NetworkStack::create(CephContext * c,
     ceph_assert(num_workers > 0);
     if (num_workers >= EventCenter::MAX_EVENTCENTER) {
         ldout(c, 0) << __func__ << " max thread limit is "
-            << EventCenter::MAX_EVENTCENTER << ", switching to this now. "
-            << "Higher thread values are unnecessary and currently unsupported."
-            << dendl;
+                    << EventCenter::MAX_EVENTCENTER << ", switching to this now. "
+                    << "Higher thread values are unnecessary and currently unsupported."
+                    << dendl;
         num_workers = EventCenter::MAX_EVENTCENTER;
     }
     const int InitEventNumber = 5000;
     for (unsigned worker_id = 0; worker_id < num_workers; ++worker_id) {
         Worker *w = stack->create_worker(c, worker_id);
         int ret = w->center.init(InitEventNumber, worker_id, t);
-        if (ret)
+        if (ret) {
             throw std::system_error(-ret, std::generic_category());
+        }
         stack->workers.push_back(w);
     }
 
     return stack;
 }
 
-NetworkStack::NetworkStack(CephContext * c)
-:  cct(c)
+NetworkStack::NetworkStack(CephContext *c)
+    :  cct(c)
 {
 }
 
@@ -117,15 +121,16 @@ void NetworkStack::start()
         return;
     }
 
-  for (Worker * worker:workers) {
-        if (worker->is_init())
+    for (Worker *worker : workers) {
+        if (worker->is_init()) {
             continue;
+        }
         spawn_worker(add_thread(worker));
     }
     started = true;
     lk.unlock();
 
-  for (Worker * worker:workers) {
+    for (Worker *worker : workers) {
         worker->wait_for_init();
     }
 }
@@ -142,7 +147,7 @@ Worker *NetworkStack::get_worker()
     // find worker with least references
     // tempting case is returning on references == 0, but in reality
     // this will happen so rarely that there's no need for special case.
-  for (Worker * worker:workers) {
+    for (Worker *worker : workers) {
         unsigned worker_load = worker->references.load();
         if (worker_load < min_load) {
             current_best = worker;
@@ -160,7 +165,7 @@ void NetworkStack::stop()
 {
     std::lock_guard lk(pool_spin);
     unsigned i = 0;
-  for (Worker * worker:workers) {
+    for (Worker *worker : workers) {
         worker->done = true;
         worker->center.wakeup();
         join_worker(i++);
@@ -168,28 +173,33 @@ void NetworkStack::stop()
     started = false;
 }
 
-class C_drain:public EventCallback {
+class C_drain: public EventCallback
+{
     ceph::mutex drain_lock = ceph::make_mutex("C_drain::drain_lock");
     ceph::condition_variable drain_cond;
     unsigned drain_count;
 
-  public:
+public:
     explicit C_drain(size_t c)
-    :drain_count(c) {
-    } void do_request(uint64_t id) override {
+        : drain_count(c)
+    {
+    } void do_request(uint64_t id) override
+    {
         std::lock_guard l {
-        drain_lock};
+            drain_lock};
         drain_count--;
-        if (drain_count == 0)
+        if (drain_count == 0) {
             drain_cond.notify_all();
+        }
     }
-    void wait() {
+    void wait()
+    {
         std::unique_lock l {
-        drain_lock};
-        drain_cond.wait(l,[this] {
-                        return drain_count == 0;
-                        }
-        );
+            drain_lock};
+        drain_cond.wait(l, [this] {
+            return drain_count == 0;
+        }
+                       );
     }
 };
 
@@ -199,7 +209,7 @@ void NetworkStack::drain()
     pthread_t cur = pthread_self();
     pool_spin.lock();
     C_drain drain(get_num_worker());
-  for (Worker * worker:workers) {
+    for (Worker *worker : workers) {
         ceph_assert(cur != worker->center.get_owner());
         worker->center.dispatch_event_external(EventCallbackRef(&drain));
     }

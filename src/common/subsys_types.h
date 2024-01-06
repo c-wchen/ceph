@@ -32,7 +32,7 @@ enum ceph_subsys_id_t {
 
 constexpr static std::size_t ceph_subsys_get_num()
 {
-    return static_cast < std::size_t > (ceph_subsys_max);
+    return static_cast < std::size_t >(ceph_subsys_max);
 }
 
 struct ceph_subsys_item_t {
@@ -41,8 +41,7 @@ struct ceph_subsys_item_t {
     uint8_t gather_level;
 };
 
-constexpr static std::array < ceph_subsys_item_t, ceph_subsys_get_num() >
-ceph_subsys_get_as_array()
+constexpr static std::array < ceph_subsys_item_t, ceph_subsys_get_num() > ceph_subsys_get_as_array()
 {
 #define SUBSYS(name, log, gather) \
   ceph_subsys_item_t{ #name, log, gather },
@@ -56,8 +55,7 @@ ceph_subsys_get_as_array()
 #undef DEFAULT_SUBSYS
 }
 
-constexpr static std::uint8_t
-ceph_subsys_get_max_default_level(const std::size_t subidx)
+constexpr static std::uint8_t ceph_subsys_get_max_default_level(const std::size_t subidx)
 {
     const auto item = ceph_subsys_get_as_array()[subidx];
     return std::max(item.log_level, item.gather_level);
@@ -77,7 +75,7 @@ constexpr static std::size_t strlen_ct(const char *const s)
 
 constexpr static std::size_t ceph_subsys_max_name_length()
 {
-    return std::max( {
+    return std::max({
 #define SUBSYS(name, log, gather) \
   strlen_ct(#name),
 #define DEFAULT_SUBSYS(log, gather) \
@@ -85,8 +83,8 @@ constexpr static std::size_t ceph_subsys_max_name_length()
 #include "common/subsys.h"
 #undef SUBSYS
 #undef DEFAULT_SUBSYS
-                    }
-    );
+    }
+                   );
 }
 
 #endif // CEPH_SUBSYS_TYPES_H

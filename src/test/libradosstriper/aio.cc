@@ -14,25 +14,30 @@ using namespace librados;
 using namespace libradosstriper;
 using std::pair;
 
-class AioTestData {
-  public:
-    AioTestData():m_complete(false) {
+class AioTestData
+{
+public:
+    AioTestData(): m_complete(false)
+    {
         sem_init(&m_sem, 0, 0);
-    } ~AioTestData() {
+    } ~AioTestData()
+    {
         sem_destroy(&m_sem);
     }
 
-    void notify() {
+    void notify()
+    {
         sem_post(&m_sem);
     }
 
-    void wait() {
+    void wait()
+    {
         sem_wait(&m_sem);
     }
 
     bool m_complete;
 
-  private:
+private:
     sem_t m_sem;
 };
 
@@ -48,8 +53,8 @@ TEST_F(StriperTest, SimpleWrite)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -64,7 +69,7 @@ TEST_F(StriperTestPP, SimpleWritePP)
 {
     AioTestData test_data;
     AioCompletion *my_completion = librados::Rados::aio_create_completion
-        ((void *)&test_data, set_completion_complete);
+                                   ((void *)&test_data, set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -82,8 +87,8 @@ TEST_F(StriperTest, WaitForSafe)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -100,7 +105,7 @@ TEST_F(StriperTestPP, WaitForSafePP)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -119,8 +124,8 @@ TEST_F(StriperTest, RoundTrip)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -134,8 +139,8 @@ TEST_F(StriperTest, RoundTrip)
     memset(buf2, 0, sizeof(buf2));
     rados_completion_t my_completion2;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "RoundTrip", my_completion2, buf2,
                                      sizeof(buf2), 0));
@@ -154,8 +159,8 @@ TEST_F(StriperTest, RoundTrip2)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -169,8 +174,8 @@ TEST_F(StriperTest, RoundTrip2)
     memset(buf2, 0, sizeof(buf2));
     rados_completion_t my_completion2;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "RoundTrip2", my_completion2,
                                      buf2, sizeof(buf2), 0));
@@ -189,7 +194,7 @@ TEST_F(StriperTestPP, RoundTripPP)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -204,7 +209,7 @@ TEST_F(StriperTestPP, RoundTripPP)
     bufferlist bl2;
     AioCompletion *my_completion2 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_read("RoundTripPP", my_completion2, &bl2, sizeof(buf),
                                0));
@@ -223,7 +228,7 @@ TEST_F(StriperTestPP, RoundTripPP2)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -238,7 +243,7 @@ TEST_F(StriperTestPP, RoundTripPP2)
     bufferlist bl2;
     AioCompletion *my_completion2 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_read("RoundTripPP2", my_completion2, &bl2,
                                sizeof(buf), 0));
@@ -257,8 +262,8 @@ TEST_F(StriperTest, IsComplete)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -272,8 +277,8 @@ TEST_F(StriperTest, IsComplete)
     memset(buf2, 0, sizeof(buf2));
     rados_completion_t my_completion2;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "IsComplete", my_completion2,
                                      buf2, sizeof(buf2), 0));
@@ -283,8 +288,9 @@ TEST_F(StriperTest, IsComplete)
         // Normally we wouldn't do this, but we want to test rados_aio_is_complete.
         while (true) {
             int is_complete = rados_aio_is_complete(my_completion2);
-            if (is_complete)
+            if (is_complete) {
                 break;
+            }
         }
     }
     ASSERT_EQ(0, memcmp(buf, buf2, sizeof(buf)));
@@ -298,7 +304,7 @@ TEST_F(StriperTestPP, IsCompletePP)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -313,7 +319,7 @@ TEST_F(StriperTestPP, IsCompletePP)
     bufferlist bl2;
     AioCompletion *my_completion2 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_read("IsCompletePP", my_completion2, &bl2,
                                sizeof(buf), 0));
@@ -323,8 +329,9 @@ TEST_F(StriperTestPP, IsCompletePP)
         // Normally we wouldn't do this, but we want to test rados_aio_is_complete.
         while (true) {
             int is_complete = my_completion2->is_complete();
-            if (is_complete)
+            if (is_complete) {
                 break;
+            }
         }
     }
     ASSERT_EQ(0, memcmp(buf, bl2.c_str(), sizeof(buf)));
@@ -338,8 +345,8 @@ TEST_F(StriperTest, IsSafe)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -351,16 +358,17 @@ TEST_F(StriperTest, IsSafe)
         // Normally we wouldn't do this, but we want to test rados_aio_is_safe.
         while (true) {
             int is_safe = rados_aio_is_safe(my_completion);
-            if (is_safe)
+            if (is_safe) {
                 break;
+            }
         }
     }
     char buf2[128];
     memset(buf2, 0, sizeof(buf2));
     rados_completion_t my_completion2;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "IsSafe", my_completion2, buf2,
                                      sizeof(buf2), 0));
@@ -379,8 +387,8 @@ TEST_F(StriperTest, RoundTripAppend)
     AioTestData test_data;
     rados_completion_t my_completion, my_completion2, my_completion3;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -393,8 +401,8 @@ TEST_F(StriperTest, RoundTripAppend)
     char buf2[128];
     memset(buf2, 0xdd, sizeof(buf2));
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_append(striper, "RoundTripAppend",
                                        my_completion2, buf2, sizeof(buf)));
@@ -405,8 +413,8 @@ TEST_F(StriperTest, RoundTripAppend)
     char buf3[sizeof(buf) + sizeof(buf2)];
     memset(buf3, 0, sizeof(buf3));
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion3));
+              set_completion_complete,
+              &my_completion3));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "RoundTripAppend", my_completion3,
                                      buf3, sizeof(buf3), 0));
@@ -429,7 +437,7 @@ TEST_F(StriperTestPP, RoundTripAppendPP)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -447,7 +455,7 @@ TEST_F(StriperTestPP, RoundTripAppendPP)
     bl2.append(buf2, sizeof(buf2));
     AioCompletion *my_completion2 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_append("RoundTripAppendPP", my_completion2, bl2,
                                  sizeof(buf2)));
@@ -458,7 +466,7 @@ TEST_F(StriperTestPP, RoundTripAppendPP)
     bufferlist bl3;
     AioCompletion *my_completion3 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_read("RoundTripAppendPP", my_completion3, &bl3,
                                2 * sizeof(buf), 0));
@@ -481,8 +489,8 @@ TEST_F(StriperTest, Flush)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xee, sizeof(buf));
     ASSERT_EQ(0,
@@ -493,8 +501,8 @@ TEST_F(StriperTest, Flush)
     memset(buf2, 0, sizeof(buf2));
     rados_completion_t my_completion2;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "Flush", my_completion2, buf2,
                                      sizeof(buf2), 0));
@@ -513,7 +521,7 @@ TEST_F(StriperTestPP, FlushPP)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xee, sizeof(buf));
     bufferlist bl1;
@@ -524,7 +532,7 @@ TEST_F(StriperTestPP, FlushPP)
     bufferlist bl2;
     AioCompletion *my_completion2 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_read("FlushPP", my_completion2, &bl2, sizeof(buf),
                                0));
@@ -543,8 +551,8 @@ TEST_F(StriperTest, RoundTripWriteFull)
     AioTestData test_data;
     rados_completion_t my_completion, my_completion2, my_completion3;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     ASSERT_EQ(0,
@@ -557,8 +565,8 @@ TEST_F(StriperTest, RoundTripWriteFull)
     char buf2[64];
     memset(buf2, 0xdd, sizeof(buf2));
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion2));
+              set_completion_complete,
+              &my_completion2));
     ASSERT_EQ(0,
               rados_striper_aio_write_full(striper, "RoundTripWriteFull",
                                            my_completion2, buf2, sizeof(buf2)));
@@ -569,8 +577,8 @@ TEST_F(StriperTest, RoundTripWriteFull)
     char buf3[sizeof(buf) + sizeof(buf2)];
     memset(buf3, 0, sizeof(buf3));
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion3));
+              set_completion_complete,
+              &my_completion3));
     ASSERT_EQ(0,
               rados_striper_aio_read(striper, "RoundTripWriteFull",
                                      my_completion3, buf3, sizeof(buf3), 0));
@@ -592,7 +600,7 @@ TEST_F(StriperTestPP, RoundTripWriteFullPP)
     AioTestData test_data;
     AioCompletion *my_completion =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     char buf[128];
     memset(buf, 0xcc, sizeof(buf));
     bufferlist bl1;
@@ -610,7 +618,7 @@ TEST_F(StriperTestPP, RoundTripWriteFullPP)
     bl2.append(buf2, sizeof(buf2));
     AioCompletion *my_completion2 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_write_full("RoundTripWriteFullPP", my_completion2,
                                      bl2));
@@ -621,7 +629,7 @@ TEST_F(StriperTestPP, RoundTripWriteFullPP)
     bufferlist bl3;
     AioCompletion *my_completion3 =
         librados::Rados::aio_create_completion(&test_data,
-                                               set_completion_complete);
+            set_completion_complete);
     ASSERT_EQ(0,
               striper.aio_read("RoundTripWriteFullPP", my_completion3, &bl3,
                                sizeof(buf), 0));
@@ -649,8 +657,8 @@ TEST_F(StriperTest, RemoveTest)
     AioTestData test_data;
     rados_completion_t my_completion;
     ASSERT_EQ(0, rados_aio_create_completion2(&test_data,
-                                              set_completion_complete,
-                                              &my_completion));
+              set_completion_complete,
+              &my_completion));
     ASSERT_EQ(0,
               rados_striper_aio_remove(striper, "RemoveTest", my_completion));
     {

@@ -26,45 +26,53 @@ class MDSRank;
 
 struct ObjectOperation;
 
-class OpenFileTable {
-  public:
-    explicit OpenFileTable(MDSRank * m);
+class OpenFileTable
+{
+public:
+    explicit OpenFileTable(MDSRank *m);
     ~OpenFileTable();
 
-    void add_inode(CInode * in);
-    void remove_inode(CInode * in);
-    void add_dirfrag(CDir * dir);
-    void remove_dirfrag(CDir * dir);
-    void notify_link(CInode * in);
-    void notify_unlink(CInode * in);
-    bool is_any_dirty() const {
+    void add_inode(CInode *in);
+    void remove_inode(CInode *in);
+    void add_dirfrag(CDir *dir);
+    void remove_dirfrag(CDir *dir);
+    void notify_link(CInode *in);
+    void notify_unlink(CInode *in);
+    bool is_any_dirty() const
+    {
         return !dirty_items.empty();
-    } void commit(MDSContext * c, uint64_t log_seq, int op_prio);
-    uint64_t get_committed_log_seq() const {
+    } void commit(MDSContext *c, uint64_t log_seq, int op_prio);
+    uint64_t get_committed_log_seq() const
+    {
         return committed_log_seq;
-    } bool is_any_committing() const {
+    } bool is_any_committing() const
+    {
         return num_pending_commit > 0;
-    } void load(MDSContext * c);
-    bool is_loaded() const {
+    } void load(MDSContext *c);
+    bool is_loaded() const
+    {
         return load_done;
-    } void wait_for_load(MDSContext * c) {
+    } void wait_for_load(MDSContext *c)
+    {
         ceph_assert(!load_done);
         waiting_for_load.push_back(c);
     } bool prefetch_inodes();
-    bool is_prefetched() const {
+    bool is_prefetched() const
+    {
         return prefetch_state == DONE;
-    } void wait_for_prefetch(MDSContext * c) {
+    } void wait_for_prefetch(MDSContext *c)
+    {
         ceph_assert(!is_prefetched());
         waiting_for_prefetch.push_back(c);
     }
 
-    bool should_log_open(CInode * in);
+    bool should_log_open(CInode *in);
 
     void note_destroyed_inos(uint64_t seq,
                              const std::vector < inodeno_t > &inos);
     void trim_destroyed_inos(uint64_t seq);
 
-  protected:
+protected:
     friend class C_IO_OFT_Recover;
     friend class C_IO_OFT_Load;
     friend class C_IO_OFT_Save;
@@ -80,28 +88,29 @@ class OpenFileTable {
     static const int DIRTY_UNDEF = -2;
 
     unsigned num_pending_commit = 0;
-    void _encode_header(bufferlist & bl, int j_state);
-    void _commit_finish(int r, uint64_t log_seq, MDSContext * fin);
-    void _journal_finish(int r, uint64_t log_seq, MDSContext * fin,
+    void _encode_header(bufferlist &bl, int j_state);
+    void _commit_finish(int r, uint64_t log_seq, MDSContext *fin);
+    void _journal_finish(int r, uint64_t log_seq, MDSContext *fin,
                          std::map < unsigned,
-                         std::vector < ObjectOperation > >&ops);
+                         std::vector < ObjectOperation > > &ops);
 
-    void get_ref(CInode * in, frag_t fg = -1U);
-    void put_ref(CInode * in, frag_t fg = -1U);
+    void get_ref(CInode *in, frag_t fg = -1U);
+    void put_ref(CInode *in, frag_t fg = -1U);
 
     object_t get_object_name(unsigned idx) const;
 
-    void _reset_states() {
+    void _reset_states()
+    {
         omap_num_objs = 0;
         omap_num_items.resize(0);
         journal_state = JOURNAL_NONE;
         loaded_journals.clear();
         loaded_anchor_map.clear();
     }
-    void _read_omap_values(const std::string & key, unsigned idx, bool first);
+    void _read_omap_values(const std::string &key, unsigned idx, bool first);
     void _load_finish(int op_r, int header_r, int values_r,
                       unsigned idx, bool first, bool more,
-                      bufferlist & header_bl,
+                      bufferlist &header_bl,
                       std::map < std::string, bufferlist > &values);
     void _recover_finish(int r);
 
@@ -109,9 +118,9 @@ class OpenFileTable {
     void _prefetch_inodes();
     void _prefetch_dirfrags();
 
-    void _get_ancestors(const Anchor & parent,
+    void _get_ancestors(const Anchor &parent,
                         std::vector < inode_backpointer_t > &ancestors,
-                        mds_rank_t & auth_hint);
+                        mds_rank_t &auth_hint);
 
     MDSRank *mds;
 

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -11,7 +11,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #ifndef CEPH_STRMAP_H
@@ -24,7 +24,7 @@
 #include <sstream>
 
 template < typename Func >
-    void for_each_pair(std::string_view s, const char *delims, Func && f)
+void for_each_pair(std::string_view s, const char *delims, Func && f)
 {
     auto pos = s.find_first_not_of(delims);
     while (pos != s.npos) {
@@ -33,8 +33,7 @@ template < typename Func >
         auto kv = s.substr(0, end);
         if (auto equal = kv.find('='); equal != kv.npos) {
             f(kv.substr(0, equal), kv.substr(equal + 1));
-        }
-        else {
+        } else {
             f(kv.substr(0, equal), std::string_view());
         }
         pos = s.find_first_not_of(delims, end);
@@ -58,16 +57,16 @@ using str_map_t = std::map < std::string, std::string >;
  * separated key=value pairs. A white space is either space, tab or newline.
  * Function **get_str_map** will be leveraged to parse the plain-text
  * key/value pairs.
- * 
+ *
  * @param [in] str JSON or plain text key/value pairs
  * @param [out] ss human readable message on error
  * @param [out] str_map key/value pairs read from str
  * @param [in] fallback_to_plain attempt parsing as plain-text if json fails
  * @return **0** on success or a -EINVAL on error.
  */
-int get_json_str_map(const std::string & str,
-                     std::ostream & ss,
-                     str_map_t * str_map, bool fallback_to_plain = true);
+int get_json_str_map(const std::string &str,
+                     std::ostream &ss,
+                     str_map_t *str_map, bool fallback_to_plain = true);
 
 /**
  * Parse **str** and set **str_map** with the key/value pairs read from
@@ -78,12 +77,12 @@ int get_json_str_map(const std::string & str,
  * key/values.  The value is optional resulting in an empty string when
  * not provided.  For example, using white space as delimiters:
  *
- *     insert your own=political/ideological    statement=here 
+ *     insert your own=political/ideological    statement=here
  *
  * will be parsed into:
  *
- *     { "insert": "", 
- *       "your": "", 
+ *     { "insert": "",
+ *       "your": "",
  *       "own": "political/ideological",
  *       "statement": "here" }
  *
@@ -107,11 +106,11 @@ int get_json_str_map(const std::string & str,
  * @param [out] str_map key/value pairs parsed from str
  * @return **0**
  */
-int get_str_map(const std::string & str,
-                str_map_t * str_map, const char *delims = CONST_DELIMS);
+int get_str_map(const std::string &str,
+                str_map_t *str_map, const char *delims = CONST_DELIMS);
 
 // an alternate form (as we never fail):
-str_map_t get_str_map(const std::string & str,
+str_map_t get_str_map(const std::string &str,
                       const char *delim = CONST_DELIMS);
 
 /**
@@ -126,9 +125,9 @@ str_map_t get_str_map(const std::string & str,
  * @param[in] key The key to search for in the map
  * @param[in] def_val The value to return in case **key** is not present
  */
-std::string get_str_map_value(const str_map_t & str_map,
-                              const std::string & key,
-                              const std::string * def_val = nullptr);
+std::string get_str_map_value(const str_map_t &str_map,
+                              const std::string &key,
+                              const std::string *def_val = nullptr);
 
 /**
  * Returns the value of **key** in **str_map** if available.
@@ -146,9 +145,9 @@ std::string get_str_map_value(const str_map_t & str_map,
  * @param[in] def_key Key to fallback to if **key** is not present
  *                    in **str_map**
  */
-std::string get_str_map_key(const str_map_t & str_map,
-                            const std::string & key,
-                            const std::string * fallback_key = nullptr);
+std::string get_str_map_key(const str_map_t &str_map,
+                            const std::string &key,
+                            const std::string *fallback_key = nullptr);
 
 // This function's only purpose is to check whether a given map has only
 // ONE key with an empty value (which would mean that 'get_str_map()' read
@@ -156,16 +155,16 @@ std::string get_str_map_key(const str_map_t & str_map,
 // event, to assign said 'VALUE' to a given 'def_key', such that we end up
 // with a map of the form "m = { 'def_key' : 'VALUE' }" instead of the
 // original "m = { 'VALUE' : '' }".
-int get_conf_str_map_helper(const std::string & str,
-                            std::ostringstream & oss,
-                            str_map_t * str_map,
-                            const std::string & default_key);
+int get_conf_str_map_helper(const std::string &str,
+                            std::ostringstream &oss,
+                            str_map_t *str_map,
+                            const std::string &default_key);
 
-std::string get_value_via_strmap(const std::string & conf_string,
+std::string get_value_via_strmap(const std::string &conf_string,
                                  std::string_view default_key);
 
-std::string get_value_via_strmap(const std::string & conf_string,
-                                 const std::string & key,
+std::string get_value_via_strmap(const std::string &conf_string,
+                                 const std::string &key,
                                  std::string_view default_key);
 
 #endif

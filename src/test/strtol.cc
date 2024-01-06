@@ -26,8 +26,7 @@ static void test_strict_strtoll(const char *str, long long expected, int base)
     long long val = strict_strtoll(str, base, &err);
     if (!err.empty()) {
         ASSERT_EQ(err, "");
-    }
-    else {
+    } else {
         ASSERT_EQ(val, expected);
     }
 }
@@ -38,8 +37,7 @@ static void test_strict_strtol(const char *str, long expected)
     long val = strict_strtol(str, 10, &err);
     if (!err.empty()) {
         ASSERT_EQ(err, "");
-    }
-    else {
+    } else {
         ASSERT_EQ(val, expected);
     }
 }
@@ -50,8 +48,7 @@ static void test_strict_strtod(const char *str, double expected)
     double val = strict_strtod(str, &err);
     if (!err.empty()) {
         ASSERT_EQ(err, "");
-    }
-    else {
+    } else {
         // when comparing floats, use a margin of error
         if ((expected - 0.001 > val) || (expected + 0.001 < val)) {
             ASSERT_EQ(val, expected);
@@ -65,8 +62,7 @@ static void test_strict_strtof(const char *str, float expected)
     float val = strict_strtof(str, &err);
     if (!err.empty()) {
         ASSERT_EQ(err, "");
-    }
-    else {
+    } else {
         // when comparing floats, use a margin of error
         if ((expected - 0.001 > val) || (expected + 0.001 < val)) {
             ASSERT_EQ(val, expected);
@@ -152,8 +148,8 @@ static void test_strict_iecstrtoll(const char *str)
     ASSERT_EQ(err, "");
 }
 
-static void test_strict_iecstrtoll_units(const std::string & foo,
-                                         std::string u, const int m)
+static void test_strict_iecstrtoll_units(const std::string &foo,
+        std::string u, const int m)
 {
     std::string s(foo);
     s.append(u);
@@ -286,7 +282,7 @@ static void test_strict_sistrtoll(const char *str)
     ASSERT_EQ(err, "");
 }
 
-static void test_strict_sistrtoll_units(const std::string & foo,
+static void test_strict_sistrtoll_units(const std::string &foo,
                                         std::string u, const long long m)
 {
     std::string s(foo);
@@ -422,11 +418,10 @@ template < typename T > inline void test_parse()
 
     r = parse < T > ("-5" sv);
     if constexpr
-        (std::is_signed_v < T >) {
+    (std::is_signed_v < T >) {
         ASSERT_TRUE(r);
         EXPECT_EQ(*r, -5);
-        }
-    else {
+    } else {
         EXPECT_FALSE(r);
     }
 
@@ -564,12 +559,11 @@ template < typename T > inline void test_consume()
     v = neg;
     r = consume < T > (v);
     if constexpr
-        (std::is_signed_v < T >) {
+    (std::is_signed_v < T >) {
         ASSERT_TRUE(r);
         EXPECT_EQ(*r, -5);
         EXPECT_TRUE(v.empty());
-        }
-    else {
+    } else {
         EXPECT_FALSE(r);
         EXPECT_EQ(v, neg);
     }

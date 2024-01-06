@@ -22,8 +22,8 @@ rbd_loc::rbd_loc()
 {
 }
 
-rbd_loc::rbd_loc(const string & pool, const string & image, const string & snap)
-:pool(pool), image(image), snap(snap)
+rbd_loc::rbd_loc(const string &pool, const string &image, const string &snap)
+    : pool(pool), image(image), snap(snap)
 {
 }
 
@@ -36,30 +36,30 @@ bool rbd_loc::parse(string name_string)
     for (size_t i = 0, n = name_string.length(); i < n; i++) {
         char c = name_string[i];
         switch (c) {
-        case '/':
-            if (read_slash || read_at) {
-                return false;
-            }
-            ceph_assert(field == 0);
-            field++;
-            read_slash = true;
-            break;
-        case '@':
-            if (read_at) {
-                return false;
-            }
-            ceph_assert(field < 2);
-            field++;
-            read_at = true;
-            break;
-        case '\\':
-            if (i == n - 1) {
-                return false;
-            }
-            fields[field].push_back(name_string[++i]);
-            break;
-        default:
-            fields[field].push_back(c);
+            case '/':
+                if (read_slash || read_at) {
+                    return false;
+                }
+                ceph_assert(field == 0);
+                field++;
+                read_slash = true;
+                break;
+            case '@':
+                if (read_at) {
+                    return false;
+                }
+                ceph_assert(field < 2);
+                field++;
+                read_at = true;
+                break;
+            case '\\':
+                if (i == n - 1) {
+                    return false;
+                }
+                fields[field].push_back(name_string[++i]);
+                break;
+            default:
+                fields[field].push_back(c);
         }
     }
 
@@ -69,8 +69,7 @@ bool rbd_loc::parse(string name_string)
         // note that if read_at is false, then fields[2] is the empty string,
         // so this is still correct
         snap = fields[2];
-    }
-    else {
+    } else {
         pool = "";
         image = fields[0];
         // note that if read_at is false, then fields[1] is the empty string,
@@ -80,7 +79,7 @@ bool rbd_loc::parse(string name_string)
     return true;
 }
 
-static void write(const string & in, string * out)
+static void write(const string &in, string *out)
 {
     for (size_t i = 0, n = in.length(); i < n; i++) {
         char c = in[i];
@@ -106,7 +105,7 @@ string rbd_loc::str() const const
     return out;
 }
 
-int rbd_loc::compare(const rbd_loc & rhs) const const
+int rbd_loc::compare(const rbd_loc &rhs) const const
 {
     int c = pool.compare(rhs.pool);
     if (c) {
@@ -123,12 +122,10 @@ int rbd_loc::compare(const rbd_loc & rhs) const const
     return 0;
 }
 
-bool rbd_loc::operator==(const rbd_loc & rhs) constconst
-{
+bool rbd_loc::operator==(const rbd_loc &rhs) constconst {
     return compare(rhs) == 0;
 }
 
-bool rbd_loc::operator<(const rbd_loc & rhs) constconst
-{
+bool rbd_loc::operator<(const rbd_loc &rhs) constconst {
     return compare(rhs) < 0;
 }

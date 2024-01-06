@@ -27,7 +27,7 @@ static struct extent_t null_extent = { 0, 0 };
 
 //----------------------------------------------------------------------------
 //throw bad_alloc
-SimpleBitmap::SimpleBitmap(CephContext * _cct, uint64_t num_bits):cct(_cct)
+SimpleBitmap::SimpleBitmap(CephContext *_cct, uint64_t num_bits): cct(_cct)
 {
     m_num_bits = num_bits;
     m_word_count = bits_to_words(num_bits);
@@ -51,7 +51,7 @@ bool SimpleBitmap::set(uint64_t offset, uint64_t length)
 
     if (offset + length > m_num_bits) {
         derr << __func__ << "::offset + length = " << offset +
-            length << " exceeds map size = " << m_num_bits << dendl;
+             length << " exceeds map size = " << m_num_bits << dendl;
         ceph_assert(offset + length <= m_num_bits);
         return false;
     }
@@ -76,8 +76,7 @@ bool SimpleBitmap::set(uint64_t offset, uint64_t length)
             }
             m_arr[word_index] |= set_mask;
             return true;
-        }
-        else {
+        } else {
             // set all bits in this word starting from first_bit_set
             m_arr[word_index] |= set_mask;
             word_index++;
@@ -107,7 +106,7 @@ bool SimpleBitmap::clr(uint64_t offset, uint64_t length)
 {
     if (offset + length > m_num_bits) {
         derr << __func__ << "::offset + length = " << offset +
-            length << " exceeds map size = " << m_num_bits << dendl;
+             length << " exceeds map size = " << m_num_bits << dendl;
         ceph_assert(offset + length <= m_num_bits);
         return false;
     }
@@ -134,8 +133,7 @@ bool SimpleBitmap::clr(uint64_t offset, uint64_t length)
             }
             m_arr[word_index] &= clr_mask;
             return true;
-        }
-        else {
+        } else {
             // clear all bits in this word starting from first_bit_clr
             // and continue to the next word
             m_arr[word_index] &= clr_mask;
@@ -179,8 +177,7 @@ extent_t SimpleBitmap::get_next_set_extent(uint64_t offset)
 
         if (word_idx < m_word_count) {
             word = m_arr[word_idx];
-        }
-        else {
+        } else {
             return null_extent;
         }
     }
@@ -204,8 +201,7 @@ extent_t SimpleBitmap::get_next_set_extent(uint64_t offset)
 
         if (word_idx < m_word_count) {
             word = m_arr[word_idx];
-        }
-        else {
+        } else {
             // bitmap is set from ext.offset until the last bit
             ext.length = (m_num_bits - ext.offset);
             return ext;
@@ -243,8 +239,7 @@ extent_t SimpleBitmap::get_next_clr_extent(uint64_t offset)
 
         if (word_idx < m_word_count) {
             word = m_arr[word_idx];
-        }
-        else {
+        } else {
             dout(10) << "2)Reached the end of the bitmap" << dendl;
             return null_extent;
         }
@@ -266,8 +261,7 @@ extent_t SimpleBitmap::get_next_clr_extent(uint64_t offset)
 
         if (word_idx < m_word_count) {
             word = m_arr[word_idx];
-        }
-        else {
+        } else {
             // bitmap is set from ext.offset until the last bit
             ext.length = (m_num_bits - ext.offset);
             return ext;

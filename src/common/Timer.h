@@ -26,9 +26,10 @@ class Context;
 
 template < class Mutex > class CommonSafeTimerThread;
 
-template < class Mutex > class CommonSafeTimer {
+template < class Mutex > class CommonSafeTimer
+{
     CephContext *cct;
-    Mutex & lock;
+    Mutex &lock;
     std::condition_variable_any cond;
     bool safe_callbacks;
 
@@ -48,10 +49,10 @@ template < class Mutex > class CommonSafeTimer {
 
     void dump(const char *caller = 0) const;
 
-  public:
+public:
     // This class isn't supposed to be copied
     CommonSafeTimer(const CommonSafeTimer &) = delete;
-    CommonSafeTimer & operator=(const CommonSafeTimer &) = delete;
+    CommonSafeTimer &operator=(const CommonSafeTimer &) = delete;
 
     /* Safe callbacks determines whether callbacks are called with the lock
      * held.
@@ -63,7 +64,7 @@ template < class Mutex > class CommonSafeTimer {
      * If you are able to relax requirements on cancelled callbacks, then
      * setting safe_callbacks = false eliminates the lock cycle issue.
      * */
-    CommonSafeTimer(CephContext * cct, Mutex & l, bool safe_callbacks = true);
+    CommonSafeTimer(CephContext *cct, Mutex &l, bool safe_callbacks = true);
     virtual ~ CommonSafeTimer();
 
     /* Call with the event_lock UNLOCKED.
@@ -77,18 +78,18 @@ template < class Mutex > class CommonSafeTimer {
 
     /* Schedule an event in the future
      * Call with the event_lock LOCKED */
-    Context *add_event_after(ceph::timespan duration, Context * callback);
-    Context *add_event_after(double seconds, Context * callback);
-    Context *add_event_at(clock_t::time_point when, Context * callback);
+    Context *add_event_after(ceph::timespan duration, Context *callback);
+    Context *add_event_after(double seconds, Context *callback);
+    Context *add_event_at(clock_t::time_point when, Context *callback);
     Context *add_event_at(ceph::real_clock::time_point when,
-                          Context * callback);
+                          Context *callback);
     /* Cancel an event.
      * Call with the event_lock LOCKED
      *
      * Returns true if the callback was cancelled.
      * Returns false if you never added the callback in the first place.
      */
-    bool cancel_event(Context * callback);
+    bool cancel_event(Context *callback);
 
     /* Cancel all events.
      * Call with the event_lock LOCKED

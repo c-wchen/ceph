@@ -15,7 +15,8 @@
 #include "DirectMessenger.h"
 #include "DispatchStrategy.h"
 
-class DirectConnection:public Connection {
+class DirectConnection: public Connection
+{
     /// sent messages are dispatched here
     DispatchStrategy *const dispatchers;
 
@@ -25,17 +26,18 @@ class DirectConnection:public Connection {
     /// on this Connection to avoid cyclical refs. we don't need a reference
     /// because its owning DirectMessenger will mark both connections down (and
     /// clear this pointer) before dropping its own reference
-     std::atomic < Connection * >reply_connection {
-    nullptr};
+    std::atomic < Connection * >reply_connection {
+        nullptr};
 
-  private:
+private:
     FRIEND_MAKE_REF(DirectConnection);
-    DirectConnection(CephContext * cct, DirectMessenger * m,
-                     DispatchStrategy * dispatchers)
-  :    Connection(cct, m), dispatchers(dispatchers) {
+    DirectConnection(CephContext *cct, DirectMessenger *m,
+                     DispatchStrategy *dispatchers)
+        :    Connection(cct, m), dispatchers(dispatchers)
+    {
     }
 
-  public:
+public:
     /// sets the Connection that will receive replies to outgoing messages
     void set_direct_reply_connection(ConnectionRef conn);
 
@@ -43,18 +45,20 @@ class DirectConnection:public Connection {
     bool is_connected() override;
 
     /// pass the given message directly to our dispatchers
-    int send_message(Message * m) override;
+    int send_message(Message *m) override;
 
     /// release our pointer to the peer connection. later calls to is_connected()
     /// will return false, and send_message() will fail with -ENOTCONN
     void mark_down() override;
 
     /// noop - keepalive messages are not needed within a process
-    void send_keepalive() override {
+    void send_keepalive() override
+    {
     }
 
     /// noop - reconnect/recovery semantics are not needed within a process
-    void mark_disposable() override {
+    void mark_disposable() override
+    {
     }
 };
 
@@ -69,7 +73,7 @@ bool DirectConnection::is_connected()
     return reply_connection.load() != nullptr;
 }
 
-int DirectConnection::send_message(Message * m)
+int DirectConnection::send_message(Message *m)
 {
     // read reply_connection atomically and take a reference
     ConnectionRef conn = reply_connection.load();
@@ -98,9 +102,9 @@ void DirectConnection::mark_down()
     conn->mark_down();
 }
 
-static ConnectionRef create_loopback(DirectMessenger * m,
+static ConnectionRef create_loopback(DirectMessenger *m,
                                      entity_name_t name,
-                                     DispatchStrategy * dispatchers)
+                                     DispatchStrategy *dispatchers)
 {
     auto loopback =
         ceph::make_ref < DirectConnection > (m->cct, m, dispatchers);
@@ -111,13 +115,13 @@ static ConnectionRef create_loopback(DirectMessenger * m,
     return loopback;
 }
 
-DirectMessenger::DirectMessenger(CephContext * cct, entity_name_t name,
+DirectMessenger::DirectMessenger(CephContext *cct, entity_name_t name,
                                  string mname, uint64_t nonce,
-                                 DispatchStrategy * dispatchers)
-:  
-SimplePolicyMessenger(cct, name, mname, nonce),
-dispatchers(dispatchers),
-loopback_connection(create_loopback(this, name, dispatchers))
+                                 DispatchStrategy *dispatchers)
+    :
+    SimplePolicyMessenger(cct, name, mname, nonce),
+    dispatchers(dispatchers),
+    loopback_connection(create_loopback(this, name, dispatchers))
 {
     dispatchers->set_messenger(this);
 }
@@ -126,7 +130,7 @@ DirectMessenger::~DirectMessenger()
 {
 }
 
-int DirectMessenger::set_direct_peer(DirectMessenger * peer)
+int DirectMessenger::set_direct_peer(DirectMessenger *peer)
 {
     if (get_myinst() == peer->get_myinst()) {
         return -EADDRINUSE;     // must have a different entity instance
@@ -136,7 +140,7 @@ int DirectMessenger::set_direct_peer(DirectMessenger * peer)
     // allocate a Connection that dispatches to the peer messenger
     auto direct_connection =
         ceph::make_ref < DirectConnection > (cct, peer,
-                                             peer->dispatchers.get());
+            peer->dispatchers.get());
 
     direct_connection->set_peer_addr(peer_inst.addr);
     direct_connection->set_peer_type(peer_inst.name.type());
@@ -157,7 +161,7 @@ int DirectMessenger::set_direct_peer(DirectMessenger * peer)
     return 0;
 }
 
-int DirectMessenger::bind(const entity_addr_t & bind_addr)
+int DirectMessenger::bind(const entity_addr_t &bind_addr)
 {
     if (peer_connection) {
         return -EINVAL;         // can't change address after sharing it with the peer
@@ -167,7 +171,7 @@ int DirectMessenger::bind(const entity_addr_t & bind_addr)
     return 0;
 }
 
-int DirectMessenger::client_bind(const entity_addr_t & bind_addr)
+int DirectMessenger::client_bind(const entity_addr_t &bind_addr)
 {
     // same as bind
     return bind(bind_addr);
@@ -208,7 +212,7 @@ void DirectMessenger::wait()
     dispatchers->wait();
 }
 
-ConnectionRef DirectMessenger::get_connection(const entity_inst_t & dst)
+ConnectionRef DirectMessenger::get_connection(const entity_inst_t &dst)
 {
     if (dst == peer_inst) {
         return peer_connection;
@@ -224,7 +228,7 @@ ConnectionRef DirectMessenger::get_loopback_connection()
     return loopback_connection;
 }
 
-int DirectMessenger::send_message(Message * m, const entity_inst_t & dst)
+int DirectMessenger::send_message(Message *m, const entity_inst_t &dst)
 {
     auto conn = get_connection(dst);
     if (!conn) {
@@ -234,13 +238,12 @@ int DirectMessenger::send_message(Message * m, const entity_inst_t & dst)
     return conn->send_message(m);
 }
 
-void DirectMessenger::mark_down(const entity_addr_t & addr)
+void DirectMessenger::mark_down(const entity_addr_t &addr)
 {
     ConnectionRef conn;
     if (addr == peer_inst.addr) {
         conn = peer_connection;
-    }
-    else if (addr == get_myaddr_legacy()) {
+    } else if (addr == get_myaddr_legacy()) {
         conn = loopback_connection;
     }
     if (conn) {

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #include "common/SloppyCRCMap.h"
@@ -7,16 +7,17 @@
 using namespace std;
 using ceph::bufferlist;
 
-void SloppyCRCMap::write(uint64_t offset, uint64_t len, const bufferlist & bl,
-                         std::ostream * out)
+void SloppyCRCMap::write(uint64_t offset, uint64_t len, const bufferlist &bl,
+                         std::ostream *out)
 {
     int64_t left = len;
     uint64_t pos = offset;
     unsigned o = offset % block_size;
     if (o) {
         crc_map.erase(offset - o);
-        if (out)
+        if (out) {
             *out << "write invalidate " << (offset - o) << "\n";
+        }
         pos += (block_size - o);
         left -= (block_size - o);
     }
@@ -24,20 +25,22 @@ void SloppyCRCMap::write(uint64_t offset, uint64_t len, const bufferlist & bl,
         bufferlist t;
         t.substr_of(bl, pos - offset, block_size);
         crc_map[pos] = t.crc32c(crc_iv);
-        if (out)
+        if (out) {
             *out << "write set " << pos << " " << crc_map[pos] << "\n";
+        }
         pos += block_size;
         left -= block_size;
     }
     if (left > 0) {
         crc_map.erase(pos);
-        if (out)
+        if (out) {
             *out << "write invalidate " << pos << "\n";
+        }
     }
 }
 
-int SloppyCRCMap::read(uint64_t offset, uint64_t len, const bufferlist & bl,
-                       std::ostream * err)
+int SloppyCRCMap::read(uint64_t offset, uint64_t len, const bufferlist &bl,
+                       std::ostream *err)
 {
     int errors = 0;
     int64_t left = len;
@@ -59,8 +62,8 @@ int SloppyCRCMap::read(uint64_t offset, uint64_t len, const bufferlist & bl,
                 errors++;
                 if (err)
                     *err << "offset " << pos << " len " << block_size
-                        << " has crc " << crc << " expected " << p->
-                        second << "\n";
+                         << " has crc " << crc << " expected " << p->
+                         second << "\n";
             }
         }
         pos += block_size;
@@ -73,8 +76,9 @@ void SloppyCRCMap::truncate(uint64_t offset)
 {
     offset -= offset % block_size;
     std::map < uint64_t, uint32_t >::iterator p = crc_map.lower_bound(offset);
-    while (p != crc_map.end())
+    while (p != crc_map.end()) {
         crc_map.erase(p++);
+    }
 }
 
 void SloppyCRCMap::zero(uint64_t offset, uint64_t len)
@@ -92,13 +96,14 @@ void SloppyCRCMap::zero(uint64_t offset, uint64_t len)
         pos += block_size;
         left -= block_size;
     }
-    if (left > 0)
+    if (left > 0) {
         crc_map.erase(pos);
+    }
 }
 
 void SloppyCRCMap::clone_range(uint64_t offset, uint64_t len,
-                               uint64_t srcoff, const SloppyCRCMap & src,
-                               std::ostream * out)
+                               uint64_t srcoff, const SloppyCRCMap &src,
+                               std::ostream *out)
 {
     int64_t left = len;
     uint64_t pos = offset;
@@ -109,8 +114,9 @@ void SloppyCRCMap::clone_range(uint64_t offset, uint64_t len,
         pos += (block_size - o);
         srcpos += (block_size - o);
         left -= (block_size - o);
-        if (out)
+        if (out) {
             *out << "clone_range invalidate " << (offset - o) << "\n";
+        }
     }
     while (left >= block_size) {
         // FIXME: this could be more efficient.
@@ -121,18 +127,18 @@ void SloppyCRCMap::clone_range(uint64_t offset, uint64_t len,
                 crc_map[pos] = p->second;
                 if (out)
                     *out << "clone_range copy " << pos << " " << p->
-                        second << "\n";
-            }
-            else {
+                         second << "\n";
+            } else {
                 crc_map.erase(pos);
-                if (out)
+                if (out) {
                     *out << "clone_range invalidate " << pos << "\n";
+                }
             }
-        }
-        else {
+        } else {
             crc_map.erase(pos);
-            if (out)
+            if (out) {
                 *out << "clone_range invalidate " << pos << "\n";
+            }
         }
         pos += block_size;
         srcpos += block_size;
@@ -140,12 +146,13 @@ void SloppyCRCMap::clone_range(uint64_t offset, uint64_t len,
     }
     if (left > 0) {
         crc_map.erase(pos);
-        if (out)
+        if (out) {
             *out << "clone_range invalidate " << pos << "\n";
+        }
     }
 }
 
-void SloppyCRCMap::encode(bufferlist & bl) const const
+void SloppyCRCMap::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(block_size, bl);
@@ -153,7 +160,7 @@ void SloppyCRCMap::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void SloppyCRCMap::decode(bufferlist::const_iterator & bl)
+void SloppyCRCMap::decode(bufferlist::const_iterator &bl)
 {
     DECODE_START(1, bl);
     uint32_t bs;
@@ -163,7 +170,7 @@ void SloppyCRCMap::decode(bufferlist::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void SloppyCRCMap::dump(ceph::Formatter * f) const const
+void SloppyCRCMap::dump(ceph::Formatter *f) const const
 {
     f->dump_unsigned("block_size", block_size);
     f->open_array_section("crc_map");
@@ -177,7 +184,7 @@ void SloppyCRCMap::dump(ceph::Formatter * f) const const
     f->close_section();
 }
 
-void SloppyCRCMap::generate_test_instances(list < SloppyCRCMap * >&ls)
+void SloppyCRCMap::generate_test_instances(list < SloppyCRCMap * > &ls)
 {
     ls.push_back(new SloppyCRCMap);
     ls.push_back(new SloppyCRCMap(2));

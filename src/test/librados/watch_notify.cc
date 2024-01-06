@@ -25,8 +25,9 @@ static void watch_notify_test_cb(uint8_t opcode, uint64_t ver, void *arg)
     sem_post(&sem);
 }
 
-class LibRadosWatchNotify:public RadosTest {
-  protected:
+class LibRadosWatchNotify: public RadosTest
+{
+protected:
     // notify 2
     bufferlist notify_bl;
     std::set < uint64_t > notify_cookies;
@@ -42,39 +43,40 @@ class LibRadosWatchNotify:public RadosTest {
                                       void *data, size_t data_len);
     static void watch_notify2_test_errcb(void *arg, uint64_t cookie, int err);
     static void watch_notify2_test_errcb_reconnect(void *arg, uint64_t cookie,
-                                                   int err);
+            int err);
     static void watch_notify2_test_errcb_aio_reconnect(void *arg,
-                                                       uint64_t cookie,
-                                                       int err);
+            uint64_t cookie,
+            int err);
 };
 
 void LibRadosWatchNotify::watch_notify2_test_cb(void *arg,
-                                                uint64_t notify_id,
-                                                uint64_t cookie,
-                                                uint64_t notifier_gid,
-                                                void *data, size_t data_len)
+        uint64_t notify_id,
+        uint64_t cookie,
+        uint64_t notifier_gid,
+        void *data, size_t data_len)
 {
     std::
-        cout << __func__ << " from " << notifier_gid << " notify_id " <<
-        notify_id << " cookie " << cookie << std::endl;
+    cout << __func__ << " from " << notifier_gid << " notify_id " <<
+         notify_id << " cookie " << cookie << std::endl;
     ceph_assert(notifier_gid > 0);
     auto thiz = reinterpret_cast < LibRadosWatchNotify * >(arg);
     ceph_assert(thiz);
     thiz->notify_cookies.insert(cookie);
     thiz->notify_bl.clear();
     thiz->notify_bl.append((char *)data, data_len);
-    if (notify_sleep)
+    if (notify_sleep) {
         sleep(notify_sleep);
+    }
     thiz->notify_err = 0;
     rados_notify_ack(thiz->notify_io, thiz->notify_oid, notify_id, cookie,
                      "reply", 5);
 }
 
 void LibRadosWatchNotify::watch_notify2_test_errcb(void *arg,
-                                                   uint64_t cookie, int err)
+        uint64_t cookie, int err)
 {
     std::cout << __func__ << " cookie " << cookie << " err " << err << std::
-        endl;
+              endl;
     ceph_assert(cookie > 1000);
     auto thiz = reinterpret_cast < LibRadosWatchNotify * >(arg);
     ceph_assert(thiz);
@@ -82,11 +84,11 @@ void LibRadosWatchNotify::watch_notify2_test_errcb(void *arg,
 }
 
 void LibRadosWatchNotify::watch_notify2_test_errcb_reconnect(void *arg,
-                                                             uint64_t cookie,
-                                                             int err)
+        uint64_t cookie,
+        int err)
 {
     std::cout << __func__ << " cookie " << cookie << " err " << err << std::
-        endl;
+              endl;
     ceph_assert(cookie > 1000);
     auto thiz = reinterpret_cast < LibRadosWatchNotify * >(arg);
     ceph_assert(thiz);
@@ -97,19 +99,19 @@ void LibRadosWatchNotify::watch_notify2_test_errcb_reconnect(void *arg,
                                     watch_notify2_test_errcb_reconnect, thiz);
     if (thiz->notify_err < 0) {
         std::cout << __func__ << " reconnect watch failed with error " << thiz->
-            notify_err << std::endl;
+                  notify_err << std::endl;
         return;
     }
     return;
 }
 
 void LibRadosWatchNotify::watch_notify2_test_errcb_aio_reconnect(void *arg,
-                                                                 uint64_t
-                                                                 cookie,
-                                                                 int err)
+        uint64_t
+        cookie,
+        int err)
 {
     std::cout << __func__ << " cookie " << cookie << " err " << err << std::
-        endl;
+              endl;
     ceph_assert(cookie > 1000);
     auto thiz = reinterpret_cast < LibRadosWatchNotify * >(arg);
     ceph_assert(thiz);
@@ -128,7 +130,7 @@ void LibRadosWatchNotify::watch_notify2_test_errcb_aio_reconnect(void *arg,
     rados_aio_release(thiz->notify_comp);
     if (thiz->notify_err < 0) {
         std::cout << __func__ << " reconnect watch failed with error " << thiz->
-            notify_err << std::endl;
+                  notify_err << std::endl;
         return;
     }
     return;
@@ -220,7 +222,7 @@ TEST_F(LibRadosWatchNotify, Watch2Delete)
     ASSERT_EQ(0, rados_remove(ioctx, notify_oid));
     int left = 300;
     std::cout << "waiting up to " << left << " for disconnect notification ..."
-        << std::endl;
+              << std::endl;
     while (notify_err == 0 && --left) {
         sleep(1);
     }
@@ -230,7 +232,7 @@ TEST_F(LibRadosWatchNotify, Watch2Delete)
     // We may hit ENOENT due to socket failure and a forced reconnect
     EXPECT_TRUE(rados_watch_check_err == -ENOTCONN
                 || rados_watch_check_err == -ENOENT)
-        << "Where rados_watch_check_err = " << rados_watch_check_err;
+            << "Where rados_watch_check_err = " << rados_watch_check_err;
     rados_unwatch2(ioctx, handle);
     rados_watch_flush(cluster);
 }
@@ -255,7 +257,7 @@ TEST_F(LibRadosWatchNotify, AioWatchDelete)
     ASSERT_EQ(0, rados_remove(ioctx, notify_oid));
     int left = 300;
     std::cout << "waiting up to " << left << " for disconnect notification ..."
-        << std::endl;
+              << std::endl;
     while (notify_err == 0 && --left) {
         sleep(1);
     }
@@ -265,7 +267,7 @@ TEST_F(LibRadosWatchNotify, AioWatchDelete)
     // We may hit ENOENT due to socket failure injection and a forced reconnect
     EXPECT_TRUE(rados_watch_check_err == -ENOTCONN
                 || rados_watch_check_err == -ENOENT)
-        << "Where rados_watch_check_err = " << rados_watch_check_err;
+            << "Where rados_watch_check_err = " << rados_watch_check_err;
     ASSERT_EQ(0, rados_aio_create_completion2(nullptr, nullptr, &comp));
     rados_aio_unwatch(ioctx, handle, comp);
     ASSERT_EQ(0, rados_aio_wait_for_complete(comp));
@@ -407,8 +409,8 @@ TEST_F(LibRadosWatchNotify, AioNotify)
     notify_ack_t *acks = nullptr;
     notify_timeout_t *timeouts = nullptr;
     ASSERT_EQ(0, rados_decode_notify_response(reply_buf, reply_buf_len,
-                                              &acks, &nr_acks, &timeouts,
-                                              &nr_timeouts));
+              &acks, &nr_acks, &timeouts,
+              &nr_timeouts));
     ASSERT_EQ(1u, nr_acks);
     ASSERT_EQ(0u, nr_timeouts);
     ASSERT_EQ(1u, notify_cookies.size());
@@ -574,7 +576,7 @@ TEST_F(LibRadosWatchNotify, Watch3Timeout)
     // watch.
     int left = 256 * timeout;
     std::cout << "waiting up to " << left << " for osd to time us out ..."
-        << std::endl;
+              << std::endl;
     while (notify_err == 0 && --left) {
         sleep(1);
     }
@@ -663,7 +665,7 @@ TEST_F(LibRadosWatchNotify, AioWatchDelete2)
     ASSERT_EQ(0, rados_remove(ioctx, notify_oid));
     int left = 30;
     std::cout << "waiting up to " << left << " for disconnect notification ..."
-        << std::endl;
+              << std::endl;
     while (notify_err == 0 && --left) {
         sleep(1);
     }
@@ -673,7 +675,7 @@ TEST_F(LibRadosWatchNotify, AioWatchDelete2)
     // We may hit ENOENT due to socket failure injection and a forced reconnect
     EXPECT_TRUE(rados_watch_check_err == -ENOTCONN
                 || rados_watch_check_err == -ENOENT)
-        << "Where rados_watch_check_err = " << rados_watch_check_err;
+            << "Where rados_watch_check_err = " << rados_watch_check_err;
     ASSERT_EQ(0, rados_aio_create_completion2(nullptr, nullptr, &comp));
     rados_aio_unwatch(ioctx, handle, comp);
     ASSERT_EQ(0, rados_aio_wait_for_complete(comp));

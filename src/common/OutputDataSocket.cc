@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <poll.h>
@@ -74,8 +74,9 @@ static void remove_all_cleanup_files()
 static void add_cleanup_file(const char *file)
 {
     char *fname = strdup(file);
-    if (!fname)
+    if (!fname) {
         return;
+    }
     pthread_mutex_lock(&cleanup_lock);
     cleanup_files.push_back(fname);
     if (!cleanup_atexit) {
@@ -85,13 +86,13 @@ static void add_cleanup_file(const char *file)
     pthread_mutex_unlock(&cleanup_lock);
 }
 
-OutputDataSocket::OutputDataSocket(CephContext * cct, uint64_t _backlog)
-:  
-m_cct(cct),
-data_max_backlog(_backlog),
-m_sock_fd(-1),
-m_shutdown_rd_fd(-1),
-m_shutdown_wr_fd(-1), going_down(false), data_size(0), skipped(0)
+OutputDataSocket::OutputDataSocket(CephContext *cct, uint64_t _backlog)
+    :
+    m_cct(cct),
+    data_max_backlog(_backlog),
+    m_sock_fd(-1),
+    m_shutdown_rd_fd(-1),
+    m_shutdown_wr_fd(-1), going_down(false), data_size(0), skipped(0)
 {
 }
 
@@ -129,8 +130,8 @@ std::string OutputDataSocket::create_shutdown_pipe(int *pipe_rd, int *pipe_wr)
     return "";
 }
 
-std::string OutputDataSocket::bind_and_listen(const std::string & sock_path,
-                                              int *fd)
+std::string OutputDataSocket::bind_and_listen(const std::string &sock_path,
+        int *fd)
 {
     ldout(m_cct, 5) << "bind_and_listen " << sock_path << dendl;
 
@@ -166,8 +167,7 @@ std::string OutputDataSocket::bind_and_listen(const std::string & sock_path,
             if (::bind(sock_fd, (struct sockaddr *)&address,
                        sizeof(struct sockaddr_un)) == 0) {
                 err = 0;
-            }
-            else {
+            } else {
                 err = errno;
             }
         }
@@ -212,7 +212,7 @@ void *OutputDataSocket::entry()
                 continue;
             }
             lderr(m_cct) << "OutputDataSocket: poll(2) error: '"
-                << cpp_strerror(err) << dendl;
+                         << cpp_strerror(err) << dendl;
             return PFL_FAIL;
         }
 
@@ -240,7 +240,7 @@ bool OutputDataSocket::do_accept()
     if (connection_fd < 0) {
         int err = errno;
         lderr(m_cct) << "OutputDataSocket: do_accept error: '"
-            << cpp_strerror(err) << dendl;
+                     << cpp_strerror(err) << dendl;
         return false;
     }
     ldout(m_cct, 30) << "OutputDataSocket: finished accept" << dendl;
@@ -272,8 +272,9 @@ void OutputDataSocket::handle_connection(int fd)
     }
 
     int ret = dump_data(fd);
-    if (ret < 0)
+    if (ret < 0) {
         return;
+    }
 
     do {
         {
@@ -298,7 +299,7 @@ int OutputDataSocket::dump_data(int fd)
     m_lock.unlock();
 
     for (auto iter = l.begin(); iter != l.end(); ++iter) {
-        ceph::buffer::list & bl = *iter;
+        ceph::buffer::list &bl = *iter;
         int ret = safe_write(fd, bl.c_str(), bl.length());
         if (ret >= 0) {
             ret = safe_write(fd, delim.c_str(), delim.length());
@@ -306,7 +307,7 @@ int OutputDataSocket::dump_data(int fd)
         if (ret < 0) {
             std::scoped_lock lock(m_lock);
             for (; iter != l.end(); ++iter) {
-                ceph::buffer::list & bl = *iter;
+                ceph::buffer::list &bl = *iter;
                 data.push_back(bl);
                 data_size += bl.length();
             }
@@ -322,7 +323,7 @@ void OutputDataSocket::close_connection(int fd)
     VOID_TEMP_FAILURE_RETRY(close(fd));
 }
 
-bool OutputDataSocket::init(const std::string & path)
+bool OutputDataSocket::init(const std::string &path)
 {
     ldout(m_cct, 5) << "init " << path << dendl;
 
@@ -332,14 +333,14 @@ bool OutputDataSocket::init(const std::string & path)
     err = create_shutdown_pipe(&pipe_rd, &pipe_wr);
     if (!err.empty()) {
         lderr(m_cct) << "OutputDataSocketConfigObs::init: error: " << err <<
-            dendl;
+                     dendl;
         return false;
     }
     int sock_fd;
     err = bind_and_listen(path, &sock_fd);
     if (!err.empty()) {
         lderr(m_cct) << "OutputDataSocketConfigObs::init: failed: " << err <<
-            dendl;
+                     dendl;
         close(pipe_rd);
         close(pipe_wr);
         return false;
@@ -362,8 +363,9 @@ void OutputDataSocket::shutdown()
     cond.notify_all();
     m_lock.unlock();
 
-    if (m_shutdown_wr_fd < 0)
+    if (m_shutdown_wr_fd < 0) {
         return;
+    }
 
     ldout(m_cct, 5) << "shutdown" << dendl;
 
@@ -375,17 +377,16 @@ void OutputDataSocket::shutdown()
 
     if (ret == 0) {
         join();
-    }
-    else {
+    } else {
         lderr(m_cct) << "OutputDataSocket::shutdown: failed to write "
-            "to thread shutdown pipe: error " << ret << dendl;
+                     "to thread shutdown pipe: error " << ret << dendl;
     }
 
     remove_cleanup_file(m_path.c_str());
     m_path.clear();
 }
 
-void OutputDataSocket::append_output(ceph::buffer::list & bl)
+void OutputDataSocket::append_output(ceph::buffer::list &bl)
 {
     std::lock_guard l(m_lock);
 
@@ -393,11 +394,11 @@ void OutputDataSocket::append_output(ceph::buffer::list & bl)
         if (skipped % 100 == 0) {
             ldout(m_cct,
                   0) << "dropping data output, max backlog reached (skipped=="
-                << skipped << ")" << dendl;
+                     << skipped << ")" << dendl;
             skipped = 1;
-        }
-        else
+        } else {
             ++skipped;
+        }
 
         cond.notify_all();
         return;

@@ -28,8 +28,7 @@ const char *ceph_version_to_str()
     char *debug_version_for_testing = getenv("ceph_debug_version_for_testing");
     if (debug_version_for_testing) {
         return debug_version_for_testing;
-    }
-    else {
+    } else {
         return CEPH_GIT_NICE_VER;
     }
 }

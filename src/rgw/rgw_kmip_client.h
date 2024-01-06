@@ -5,8 +5,9 @@
 
 class RGWKMIPManager;
 
-class RGWKMIPTransceiver {
-  public:
+class RGWKMIPTransceiver
+{
+public:
     enum kmip_operation {
         CREATE,
         LOCATE,
@@ -25,12 +26,15 @@ class RGWKMIPTransceiver {
         char **strings;
         int string_count;
     } outlist[1] = { {
-    0, 0}};
+            0, 0
+        }
+    };
     struct {                    // key, get
         unsigned char *data;
         int keylen;
     } outkey[1] = {
-    0, 0};
+        0, 0
+    };
     // end must free
     int ret;
     bool done;
@@ -38,8 +42,9 @@ class RGWKMIPTransceiver {
     ceph::condition_variable cond;
 
     int wait(optional_yield y);
-    RGWKMIPTransceiver(CephContext * const cct, kmip_operation operation)
-    :cct(cct), operation(operation), ret(-EDOM), done(false) {
+    RGWKMIPTransceiver(CephContext *const cct, kmip_operation operation)
+        : cct(cct), operation(operation), ret(-EDOM), done(false)
+    {
     }
     ~RGWKMIPTransceiver();
 
@@ -47,14 +52,17 @@ class RGWKMIPTransceiver {
     int process(optional_yield y);
 };
 
-class RGWKMIPManager {
-  protected:
-    CephContext * cct;
+class RGWKMIPManager
+{
+protected:
+    CephContext *cct;
     bool is_started = false;
-     RGWKMIPManager(CephContext * cct):cct(cct) {
+    RGWKMIPManager(CephContext *cct): cct(cct)
+    {
     };
-  public:
-    virtual ~ RGWKMIPManager() {
+public:
+    virtual ~ RGWKMIPManager()
+    {
     };
     virtual int start() = 0;
     virtual void stop() = 0;

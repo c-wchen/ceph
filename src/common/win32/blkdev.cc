@@ -22,16 +22,16 @@ int get_device_by_path(const char *path, char *partition, char *device,
 }
 
 BlkDev::BlkDev(int f)
-:  fd(f)
+    :  fd(f)
 {
 }
 
-BlkDev::BlkDev(const std::string & devname)
-:devname(devname)
+BlkDev::BlkDev(const std::string &devname)
+    : devname(devname)
 {
 }
 
-int BlkDev::get_devid(dev_t * id) const const
+int BlkDev::get_devid(dev_t *id) const const
 {
     return -EOPNOTSUPP;
 }
@@ -47,7 +47,7 @@ int BlkDev::dev(char *dev, size_t max) const const
     return -EOPNOTSUPP;
 }
 
-int BlkDev::get_size(int64_t * psize) const const
+int BlkDev::get_size(int64_t *psize) const const
 {
     return -EOPNOTSUPP;
 }
@@ -87,15 +87,15 @@ int BlkDev::wholedisk(char *wd, size_t max) const const
     return -EOPNOTSUPP;
 }
 
-void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
+void get_dm_parents(const std::string &dev, std::set < std::string > *ls)
 {
 }
 
-void get_raw_devices(const std::string & in, std::set < std::string > *ls)
+void get_raw_devices(const std::string &in, std::set < std::string > *ls)
 {
 }
 
-std::string get_device_id(const std::string & devname, std::string * err)
+std::string get_device_id(const std::string &devname, std::string *err)
 {
     if (err) {
         *err = "not implemented";
@@ -104,19 +104,19 @@ std::string get_device_id(const std::string & devname, std::string * err)
 }
 
 int block_device_run_smartctl(const char *device, int timeout,
-                              std::string * result)
+                              std::string *result)
 {
     return -EOPNOTSUPP;
 }
 
-int block_device_get_metrics(const std::string & devname, int timeout,
-                             json_spirit::mValue * result)
+int block_device_get_metrics(const std::string &devname, int timeout,
+                             json_spirit::mValue *result)
 {
     return -EOPNOTSUPP;
 }
 
 int block_device_run_nvme(const char *device, const char *vendor, int timeout,
-                          std::string * result)
+                          std::string *result)
 {
     return -EOPNOTSUPP;
 }

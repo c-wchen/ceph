@@ -49,8 +49,9 @@ static int _set_affinity(int id)
 
         CPU_SET(id, &cpuset);
 
-        if (sched_setaffinity(0, sizeof(cpuset), &cpuset) < 0)
+        if (sched_setaffinity(0, sizeof(cpuset), &cpuset) < 0) {
             return -errno;
+        }
         /* guaranteed to take effect immediately */
         sched_yield();
     }
@@ -59,7 +60,7 @@ static int _set_affinity(int id)
 }
 
 Thread::Thread()
-:  thread_id(0), pid(0), cpuid(-1)
+    :  thread_id(0), pid(0), cpuid(-1)
 {
 }
 
@@ -76,16 +77,18 @@ void *Thread::_entry_func(void *arg)
 void *Thread::entry_wrapper()
 {
     int p = ceph_gettid();      // may return -ENOSYS on other platforms
-    if (p > 0)
+    if (p > 0) {
         pid = p;
-    if (pid && cpuid >= 0)
+    }
+    if (pid && cpuid >= 0) {
         _set_affinity(cpuid);
+    }
 
     ceph_pthread_setname(pthread_self(), thread_name.c_str());
     return entry();
 }
 
-const pthread_t & Thread::get_thread_id() const const
+const pthread_t &Thread::get_thread_id() const const
 {
     return thread_id;
 }
@@ -102,10 +105,11 @@ bool Thread::am_self() const const
 
 int Thread::kill(int signal)
 {
-    if (thread_id)
+    if (thread_id) {
         return pthread_kill(thread_id, signal);
-    else
+    } else {
         return -EINVAL;
+    }
 }
 
 int Thread::try_create(size_t stacksize)
@@ -131,8 +135,7 @@ int Thread::try_create(size_t stacksize)
     sigset_t old_sigset;
     if (g_code_env == CODE_ENVIRONMENT_LIBRARY) {
         block_signals(NULL, &old_sigset);
-    }
-    else {
+    } else {
         int to_block[] = { SIGPIPE, 0 };
         block_signals(to_block, &old_sigset);
     }
@@ -193,15 +196,16 @@ int Thread::set_affinity(int id)
 {
     int r = 0;
     cpuid = id;
-    if (pid && ceph_gettid() == pid)
+    if (pid && ceph_gettid() == pid) {
         r = _set_affinity(id);
+    }
     return r;
 }
 
 // Functions for std::thread
 // =========================
 
-void set_thread_name(std::thread & t, const std::string & s)
+void set_thread_name(std::thread &t, const std::string &s)
 {
     int r = ceph_pthread_setname(t.native_handle(), s.c_str());
     if (r != 0) {
@@ -209,7 +213,7 @@ void set_thread_name(std::thread & t, const std::string & s)
     }
 }
 
-std::string get_thread_name(const std::thread & t)
+std::string get_thread_name(const std::thread &t)
 {
     std::string s(256, '\0');
 
@@ -223,7 +227,7 @@ std::string get_thread_name(const std::thread & t)
     return s;
 }
 
-void kill(std::thread & t, int signal)
+void kill(std::thread &t, int signal)
 {
     auto r = pthread_kill(t.native_handle(), signal);
     if (r != 0) {

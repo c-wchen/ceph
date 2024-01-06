@@ -20,10 +20,13 @@
 class CryptoAccel;
 typedef std::shared_ptr < CryptoAccel > CryptoAccelRef;
 
-class CryptoAccel {
-  public:
-    CryptoAccel() {
-    } virtual ~ CryptoAccel() {
+class CryptoAccel
+{
+public:
+    CryptoAccel()
+    {
+    } virtual ~ CryptoAccel()
+    {
     }
 
     static const int AES_256_IVSIZE = 128 / 8;

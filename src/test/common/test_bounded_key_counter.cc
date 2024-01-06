@@ -14,28 +14,33 @@
 #include "common/bounded_key_counter.h"
 #include <gtest/gtest.h>
 
-namespace {
+namespace
+{
 
 // call get_highest() and return the number of callbacks
-    template < typename Key, typename Count >
-        size_t count_highest(BoundedKeyCounter < Key, Count > &counter,
-                             size_t count) {
-        size_t callbacks = 0;
-        counter.get_highest(count,[&callbacks] (const Key & key, Count count) {
-                            ++callbacks;});
-        return callbacks;
-    }
+template < typename Key, typename Count >
+size_t count_highest(BoundedKeyCounter < Key, Count > &counter,
+                     size_t count)
+{
+    size_t callbacks = 0;
+    counter.get_highest(count, [&callbacks](const Key & key, Count count) {
+        ++callbacks;
+    });
+    return callbacks;
+}
 
 // call get_highest() and return the key/value pairs as a vector
-    template < typename Key, typename Count,
-        typename Vector = std::vector < std::pair < Key, Count >>>
-        Vector get_highest(BoundedKeyCounter < Key, Count > &counter,
-                           size_t count) {
-        Vector results;
-        counter.get_highest(count,[&results] (const Key & key, Count count) {
-                            results.emplace_back(key, count);});
-        return results;
-    }
+template < typename Key, typename Count,
+           typename Vector = std::vector < std::pair < Key, Count >>>
+               Vector get_highest(BoundedKeyCounter < Key, Count > &counter,
+                                  size_t count)
+{
+    Vector results;
+    counter.get_highest(count, [&results](const Key & key, Count count) {
+        results.emplace_back(key, count);
+    });
+    return results;
+}
 
 }                               // anonymous namespace
 
@@ -106,25 +111,34 @@ TEST(BoundedKeyCounter, GetHighest)
     EXPECT_EQ(0u, count_highest(counter, 999)); // ok to request count >> 10
 
     EXPECT_EQ(1, counter.insert(1, 1));
-    EXPECT_EQ(Vector( { {
-                     1, 1}}), get_highest(counter, 10));
+    EXPECT_EQ(Vector({ {
+            1, 1
+        }}), get_highest(counter, 10));
     EXPECT_EQ(2, counter.insert(2, 2));
-    EXPECT_EQ(Vector( { {
-                     2, 2}, {
-                     1, 1}}), get_highest(counter, 10));
+    EXPECT_EQ(Vector({ {
+            2, 2
+        }, {
+            1, 1
+        }}), get_highest(counter, 10));
     EXPECT_EQ(3, counter.insert(3, 3));
-    EXPECT_EQ(Vector( { {
-                     3, 3}, {
-                     2, 2}, {
-                     1, 1}}), get_highest(counter, 10));
+    EXPECT_EQ(Vector({ {
+            3, 3
+        }, {
+            2, 2
+        }, {
+            1, 1
+        }}), get_highest(counter, 10));
     EXPECT_EQ(3, counter.insert(4, 3)); // insert duplicated count=3
     // still returns 4 entries (but order of {3,3} and {4,3} is unspecified)
     EXPECT_EQ(4u, count_highest(counter, 10));
     counter.erase(3);
-    EXPECT_EQ(Vector( { {
-                     4, 3}, {
-                     2, 2}, {
-                     1, 1}}), get_highest(counter, 10));
+    EXPECT_EQ(Vector({ {
+            4, 3
+        }, {
+            2, 2
+        }, {
+            1, 1
+        }}), get_highest(counter, 10));
     EXPECT_EQ(0u, count_highest(counter, 0));   // requesting 0 still returns 0
 }
 
@@ -146,7 +160,7 @@ TEST(BoundedKeyCounter, Clear)
 // tests for partial sort and invalidation
 TEST(BoundedKeyCounter, GetNumSorted)
 {
-    struct MockCounter:public BoundedKeyCounter < int, int > {
+    struct MockCounter: public BoundedKeyCounter < int, int > {
         using BoundedKeyCounter < int, int >::BoundedKeyCounter;
         // expose as public for testing sort invalidations
         using BoundedKeyCounter < int, int >::get_num_sorted;

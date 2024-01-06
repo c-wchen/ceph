@@ -23,12 +23,15 @@
 
 static int32_t is_leap(int32_t year)
 {
-    if (year % 400 == 0)
+    if (year % 400 == 0) {
         return 1;
-    if (year % 100 == 0)
+    }
+    if (year % 100 == 0) {
         return 0;
-    if (year % 4 == 0)
+    }
+    if (year % 4 == 0) {
         return 1;
+    }
     return 0;
 }
 
@@ -61,8 +64,7 @@ static time_t internal_timegm(tm const *t)
     if (month > 11) {
         year += month / 12;
         month %= 12;
-    }
-    else if (month < 0) {
+    } else if (month < 0) {
         int years_diff = (-month + 11) / 12;
         year -= years_diff;
         month += 12 * years_diff;

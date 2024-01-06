@@ -21,35 +21,41 @@ using std::to_string;
 using ceph::bufferlist;
 using ceph::Formatter;
 
-class Allocator::SocketHook:public AdminSocketHook {
+class Allocator::SocketHook: public AdminSocketHook
+{
     Allocator *alloc;
 
     friend class Allocator;
     std::string name;
-  public:
-    SocketHook(Allocator * alloc, std::string_view _name):
-        alloc(alloc), name(_name) {
+public:
+    SocketHook(Allocator *alloc, std::string_view _name):
+        alloc(alloc), name(_name)
+    {
         AdminSocket *admin_socket = g_ceph_context->get_admin_socket();
         if (name.empty()) {
             name = to_string((uintptr_t) this);
-        } if (admin_socket) {
+        }
+        if (admin_socket) {
             int r = admin_socket->register_command(("bluestore allocator dump "
                                                     + name).c_str(),
                                                    this,
                                                    "dump allocator free regions");
-            if (r != 0)
+            if (r != 0) {
                 alloc = nullptr;    //some collision, disable
+            }
             if (alloc) {
                 r = admin_socket->register_command(("bluestore allocator score "
                                                     + name).c_str(), this,
                                                    "give score on allocator fragmentation (0-no fragmentation, 1-absolute fragmentation)");
                 ceph_assert(r == 0);
-                r = admin_socket->register_command(("bluestore allocator fragmentation " + name).c_str(), this, "give allocator fragmentation (0-no fragmentation, 1-absolute fragmentation)");
+                r = admin_socket->register_command(("bluestore allocator fragmentation " + name).c_str(), this,
+                                                   "give allocator fragmentation (0-no fragmentation, 1-absolute fragmentation)");
                 ceph_assert(r == 0);
             }
         }
     }
-    ~SocketHook() {
+    ~SocketHook()
+    {
         AdminSocket *admin_socket = g_ceph_context->get_admin_socket();
         if (admin_socket && alloc) {
             admin_socket->unregister_commands(this);
@@ -57,9 +63,10 @@ class Allocator::SocketHook:public AdminSocketHook {
     }
 
     int call(std::string_view command,
-             const cmdmap_t & cmdmap,
+             const cmdmap_t &cmdmap,
              const bufferlist &,
-             Formatter * f, std::ostream & ss, bufferlist & out) override {
+             Formatter *f, std::ostream &ss, bufferlist &out) override
+    {
         int r = 0;
         if (command == "bluestore allocator dump " + name) {
             f->open_object_section("allocator_dump");
@@ -69,7 +76,7 @@ class Allocator::SocketHook:public AdminSocketHook {
             f->dump_string("alloc_name", name);
 
             f->open_array_section("extents");
-            auto iterated_allocation =[&](size_t off, size_t len) {
+            auto iterated_allocation = [&](size_t off, size_t len) {
                 ceph_assert(len > 0);
                 f->open_object_section("free");
                 char off_hex[30];
@@ -83,19 +90,16 @@ class Allocator::SocketHook:public AdminSocketHook {
             alloc->foreach(iterated_allocation);
             f->close_section();
             f->close_section();
-        }
-        else if (command == "bluestore allocator score " + name) {
+        } else if (command == "bluestore allocator score " + name) {
             f->open_object_section("fragmentation_score");
             f->dump_float("fragmentation_rating",
                           alloc->get_fragmentation_score());
             f->close_section();
-        }
-        else if (command == "bluestore allocator fragmentation " + name) {
+        } else if (command == "bluestore allocator fragmentation " + name) {
             f->open_object_section("fragmentation");
             f->dump_float("fragmentation_rating", alloc->get_fragmentation());
             f->close_section();
-        }
-        else {
+        } else {
             ss << "Invalid command" << std::endl;
             r = -ENOSYS;
         }
@@ -106,7 +110,7 @@ class Allocator::SocketHook:public AdminSocketHook {
 
 Allocator::Allocator(std::string_view name,
                      int64_t _capacity, int64_t _block_size)
-:  device_size(_capacity), block_size(_block_size)
+    :  device_size(_capacity), block_size(_block_size)
 {
     asok_hook = new SocketHook(this, name);
 }
@@ -116,12 +120,12 @@ Allocator::~Allocator()
     delete asok_hook;
 }
 
-const string & Allocator::get_name() const const
+const string &Allocator::get_name() const const
 {
     return asok_hook->name;
 }
 
-Allocator *Allocator::create(CephContext * cct,
+Allocator *Allocator::create(CephContext *cct,
                              std::string_view type,
                              int64_t size,
                              int64_t block_size,
@@ -132,38 +136,33 @@ Allocator *Allocator::create(CephContext * cct,
     Allocator *alloc = nullptr;
     if (type == "stupid") {
         alloc = new StupidAllocator(cct, size, block_size, name);
-    }
-    else if (type == "bitmap") {
+    } else if (type == "bitmap") {
         alloc = new BitmapAllocator(cct, size, block_size, name);
-    }
-    else if (type == "avl") {
+    } else if (type == "avl") {
         return new AvlAllocator(cct, size, block_size, name);
-    }
-    else if (type == "btree") {
+    } else if (type == "btree") {
         return new BtreeAllocator(cct, size, block_size, name);
-    }
-    else if (type == "hybrid") {
+    } else if (type == "hybrid") {
         return new HybridAllocator(cct, size, block_size,
                                    cct->_conf.get_val < uint64_t >
                                    ("bluestore_hybrid_alloc_mem_cap"), name);
 #ifdef HAVE_LIBZBD
-    }
-    else if (type == "zoned") {
+    } else if (type == "zoned") {
         return new ZonedAllocator(cct, size, block_size, zone_size,
                                   first_sequential_zone, name);
 #endif
     }
     if (alloc == nullptr) {
         lderr(cct) << "Allocator::" << __func__ << " unknown alloc type "
-            << type << dendl;
+                   << type << dendl;
     }
     return alloc;
 }
 
-void Allocator::release(const PExtentVector & release_vec)
+void Allocator::release(const PExtentVector &release_vec)
 {
     interval_set < uint64_t > release_set;
-  for (auto e:release_vec) {
+    for (auto e : release_vec) {
         release_set.insert(e.offset, e.length);
     }
     release(release_set);
@@ -190,24 +189,25 @@ double Allocator::get_fragmentation_score()
     // this value represents how much worth is 2X bytes in one chunk then in X + X bytes
     static const double double_size_worth = 1.1;
     std::vector < double >scales {
-    1};
+        1};
     double score_sum = 0;
     size_t sum = 0;
 
-    auto get_score =[&](size_t v)->double {
+    auto get_score = [&](size_t v)->double {
         size_t sc = sizeof(v) * 8 - std::countl_zero(v) - 1;    //assign to grade depending on log2(len)
         while (scales.size() <= sc + 1) {
             //unlikely expand scales vector
             scales.push_back(scales[scales.size() - 1] * double_size_worth);
-        } size_t sc_shifted = size_t(1) << sc;
+        }
+        size_t sc_shifted = size_t(1) << sc;
         double x = double (v - sc_shifted) / sc_shifted;    //x is <0,1) in its scale grade
         // linear extrapolation in its scale grade
         double score = (sc_shifted) * scales[sc] * (1 - x) +
-            (sc_shifted * 2) * scales[sc + 1] * x;
+        (sc_shifted * 2) * scales[sc + 1] * x;
         return score;
     };
 
-    auto iterated_allocation =[&](size_t off, size_t len) {
+    auto iterated_allocation = [&](size_t off, size_t len) {
         ceph_assert(len > 0);
         score_sum += get_score(len);
         sum += len;

@@ -46,8 +46,9 @@ static std::string get_temp_dir()
 
     if (temp_dir.empty()) {
         const char *tmpdir = getenv("TMPDIR");
-        if (!tmpdir)
+        if (!tmpdir) {
             tmpdir = "/tmp";
+        }
         srand(time(NULL));
         ostringstream oss;
         oss << tmpdir << "/confutils_test_dir." << rand() << "." << getpid();
@@ -56,7 +57,7 @@ static std::string get_temp_dir()
             std::error_code ec;
             if (!fs::create_directory(oss.str(), ec)) {
                 cerr << "failed to create temp directory '" << temp_dir << "' "
-                    << ec.message() << std::endl;
+                     << ec.message() << std::endl;
                 return "";
             }
             fs::permissions(oss.str(), fs::perms::sticky_bit | fs::perms::all);
@@ -77,18 +78,19 @@ static void unlink_all(void)
     rmdir(get_temp_dir().c_str());
 }
 
-static int create_tempfile(const std::string & fname, const char *text)
+static int create_tempfile(const std::string &fname, const char *text)
 {
     FILE *fp = fopen(fname.c_str(), "w");
     if (!fp) {
         int err = errno;
         cerr << "Failed to write file '" << fname << "' to temp directory '"
-            << get_temp_dir() << "'. " << cpp_strerror(err) << std::endl;
+             << get_temp_dir() << "'. " << cpp_strerror(err) << std::endl;
         return err;
     }
     std::shared_ptr < FILE > fpp(fp, fclose);
-    if (unlink_idx >= MAX_FILES_TO_DELETE)
+    if (unlink_idx >= MAX_FILES_TO_DELETE) {
         return -ENOBUFS;
+    }
     if (unlink_idx == 0) {
         memset(to_unlink, 0, sizeof(to_unlink));
         atexit(unlink_all);
@@ -99,7 +101,7 @@ static int create_tempfile(const std::string & fname, const char *text)
     if (res != strlen_text) {
         int err = errno;
         cerr << "fwrite error while writing to " << fname
-            << ": " << cpp_strerror(err) << std::endl;
+             << ": " << cpp_strerror(err) << std::endl;
         return err;
     }
     return 0;
@@ -109,12 +111,14 @@ static std::string next_tempfile(const char *text)
 {
     ostringstream oss;
     std::string temp_dir(get_temp_dir());
-    if (temp_dir.empty())
+    if (temp_dir.empty()) {
         return "";
+    }
     oss << temp_dir << "/test_config." << config_idx++ << ".config";
     int ret = create_tempfile(oss.str(), text);
-    if (ret)
+    if (ret) {
         return "";
+    }
     return oss.str();
 }
 
@@ -432,7 +436,7 @@ TEST(ConfUtils, EscapingFiles)
 TEST(ConfUtils, Overrides)
 {
     ConfigProxy conf {
-    false};
+        false};
     std::ostringstream warn;
     std::string override_conf_1_f(next_tempfile(override_config_1));
 
@@ -455,7 +459,7 @@ TEST(ConfUtils, Overrides)
 TEST(ConfUtils, DupKey)
 {
     ConfigProxy conf {
-    false};
+        false};
     std::ostringstream warn;
     std::string dup_key_config_f(next_tempfile(dup_key_config_1));
 

@@ -26,27 +26,34 @@ using namespace std::literals;
 
 static constexpr auto dout_subsys = ceph_subsys_rgw;
 
-static rgw::sal::RadosStore * store = nullptr;
+static rgw::sal::RadosStore *store = nullptr;
 
 static const DoutPrefixProvider *dpp()
 {
-    struct GlobalPrefix:public DoutPrefixProvider {
-        CephContext *get_cct() const override {
+    struct GlobalPrefix: public DoutPrefixProvider {
+        CephContext *get_cct() const override
+        {
             return g_ceph_context;
-        } unsigned get_subsys() const override {
+        } unsigned get_subsys() const override
+        {
             return dout_subsys;
-        } std::ostream & gen_prefix(std::ostream & out) const override {
+        } std::ostream &gen_prefix(std::ostream &out) const override
+        {
             return out;
-    }};
+        }
+    };
     static GlobalPrefix global_dpp;
     return &global_dpp;
 }
 
-class StoreDestructor {
-    rgw::sal::Driver * driver;
-  public:
-    explicit StoreDestructor(rgw::sal::RadosStore * _s):driver(_s) {
-    } ~StoreDestructor() {
+class StoreDestructor
+{
+    rgw::sal::Driver *driver;
+public:
+    explicit StoreDestructor(rgw::sal::RadosStore *_s): driver(_s)
+    {
+    } ~StoreDestructor()
+    {
         DriverManager::close_storage(store);
     }
 };
@@ -54,37 +61,41 @@ class StoreDestructor {
 struct TempPool {
     inline static uint64_t num = 0;
     std::string name =
-        fmt::format("{}-{}-{}",::time(nullptr),::getpid(), num++);
+        fmt::format("{}-{}-{}", ::time(nullptr), ::getpid(), num++);
 
-    TempPool() {
+    TempPool()
+    {
         auto r =
             store->getRados()->get_rados_handle()->pool_create(name.c_str());
         assert(r == 0);
-    } ~TempPool() {
+    } ~TempPool()
+    {
         auto r =
             store->getRados()->get_rados_handle()->pool_delete(name.c_str());
         assert(r == 0);
     }
 
-    operator  rgw_pool() {
+    operator  rgw_pool()
+    {
         return {
-        name};
+            name};
     }
 
-    operator  librados::IoCtx() {
+    operator  librados::IoCtx()
+    {
         librados::IoCtx ioctx;
         auto r =
             store->getRados()->get_rados_handle()->ioctx_create(name.c_str(),
-                                                                ioctx);
+                ioctx);
         assert(r == 0);
         return ioctx;
     }
 };
 
-int run(RGWCoroutine * cr)
+int run(RGWCoroutine *cr)
 {
     RGWCoroutinesManager cr_mgr {
-    store->ctx(), store->getRados()->get_cr_registry()};
+        store->ctx(), store->getRados()->get_cr_registry()};
     std::list < RGWCoroutinesStack * >stacks;
     auto stack = new RGWCoroutinesStack(store->ctx(), &cr_mgr);
     stack->call(cr);
@@ -100,9 +111,12 @@ TEST(ReadAttrs, Unfiltered)
     encode(dummy, bl);
     const std::map < std::string, ceph::bufferlist > ref_attrs {
         {
-        "foo" s, bl}, {
-        "bar" s, bl}, {
-        "baz" s, bl}
+            "foo" s, bl
+        }, {
+            "bar" s, bl
+        }, {
+            "baz" s, bl
+        }
     };
     auto oid = "object" s;
     {
@@ -130,9 +144,12 @@ TEST(ReadAttrs, Filtered)
     encode(dummy, bl);
     const std::map < std::string, ceph::bufferlist > ref_attrs {
         {
-        RGW_ATTR_PREFIX "foo" s, bl}, {
-        RGW_ATTR_PREFIX "bar" s, bl}, {
-        RGW_ATTR_PREFIX "baz" s, bl}
+            RGW_ATTR_PREFIX "foo" s, bl
+        }, {
+            RGW_ATTR_PREFIX "bar" s, bl
+        }, {
+            RGW_ATTR_PREFIX "baz" s, bl
+        }
     };
     auto oid = "object" s;
     {
@@ -221,13 +238,15 @@ TEST(Read, ReadVersion)
     }
     result.clear();
     r = run(new RGWSimpleRadosReadCR(dpp(), store, {
-                                     pool, oid}, &result, false, &robjv));
+        pool, oid
+    }, &result, false, &robjv));
     ASSERT_EQ(-ECANCELED, r);
     ASSERT_TRUE(result.empty());
 
     robjv.clear();
     r = run(new RGWSimpleRadosReadCR(dpp(), store, {
-                                     pool, oid}, &result, false, &robjv));
+        pool, oid
+    }, &result, false, &robjv));
     ASSERT_EQ(0, r);
     ASSERT_EQ(result, data);
     ASSERT_EQ(wobjv.read_version, robjv.read_version);
@@ -279,14 +298,16 @@ TEST(Write, ObjV)
                                            true));
     RGWObjVersionTracker interfering_objv(objv);
     r = run(new RGWSimpleRadosWriteCR(dpp(), store, {
-                                      pool, oid},
-                                      "I'm some newer, better data!" s,
-                                      &interfering_objv, false));
+        pool, oid
+    },
+    "I'm some newer, better data!" s,
+    &interfering_objv, false));
     ASSERT_EQ(0, r);
     r = run(new RGWSimpleRadosWriteCR(dpp(), store, {
-                                      pool, oid},
-                                      "I'm some treacherous, obsolete data!" s,
-                                      &objv, false));
+        pool, oid
+    },
+    "I'm some treacherous, obsolete data!" s,
+    &objv, false));
     ASSERT_EQ(-ECANCELED, r);
 }
 
@@ -298,12 +319,15 @@ TEST(WriteAttrs, Attrs)
     bl.append("I'm some data.");
     std::map < std::string, bufferlist > wrattrs {
         {
-        "foo", bl}, {
-        "bar", bl}, {
-        "baz", bl}
+            "foo", bl
+        }, {
+            "bar", bl
+        }, {
+            "baz", bl
+        }
     };
     auto r = run(new RGWSimpleRadosWriteAttrsCR(dpp(), store, { pool, oid },
-                                                wrattrs, nullptr, true));
+                 wrattrs, nullptr, true));
     ASSERT_EQ(0, r);
     std::map < std::string, bufferlist > rdattrs;
     librados::IoCtx ioctx(pool);
@@ -319,13 +343,16 @@ TEST(WriteAttrs, Empty)
     bufferlist bl;
     std::map < std::string, bufferlist > wrattrs {
         {
-        "foo", bl}, {
-        "bar", bl}, {
-        "baz", bl}
+            "foo", bl
+        }, {
+            "bar", bl
+        }, {
+            "baz", bl
+        }
     };
     // With an empty bufferlist all attributes should be skipped.
     auto r = run(new RGWSimpleRadosWriteAttrsCR(dpp(), store, { pool, oid },
-                                                wrattrs, nullptr, true));
+                 wrattrs, nullptr, true));
     ASSERT_EQ(0, r);
     std::map < std::string, bufferlist > rdattrs;
     librados::IoCtx ioctx(pool);
@@ -364,7 +391,7 @@ int main(int argc, const char **argv)
                                      rgw::sal::RadosStore * >(store));
 
     std::string pool {
-    "rgw_cr_test"};
+        "rgw_cr_test"};
     store->getRados()->create_pool(dpp(), pool);
 
     testing::InitGoogleTest();

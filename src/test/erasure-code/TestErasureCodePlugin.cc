@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -12,7 +12,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #include <errno.h>
@@ -26,34 +26,36 @@
 
 using namespace std;
 
-class ErasureCodePluginRegistryTest:public::testing::Test {
+class ErasureCodePluginRegistryTest: public::testing::Test
+{
 };
 
 TEST_F(ErasureCodePluginRegistryTest, factory_mutex)
 {
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
 
     {
         unique_lock l {
-        instance.lock, std::try_to_lock};
+            instance.lock, std::try_to_lock};
         EXPECT_TRUE(l.owns_lock());
     }
-    // 
+    //
     // Test that the loading of a plugin is protected by a mutex.
 
     std::thread sleep_for_10_secs([] {
-                                  ErasureCodeProfile profile;
-                                  ErasureCodePluginRegistry & instance =
-                                  ErasureCodePluginRegistry::instance();
-                                  ErasureCodeInterfaceRef erasure_code;
-                                  instance.factory("hangs",
-                                                   g_conf().get_val <
-                                                   std::string >
-                                                   ("erasure_code_dir"),
-                                                   profile, &erasure_code,
-                                                   &cerr);});
-    auto wait_until =[&instance] (bool loading, unsigned max_secs){
+        ErasureCodeProfile profile;
+        ErasureCodePluginRegistry &instance =
+        ErasureCodePluginRegistry::instance();
+        ErasureCodeInterfaceRef erasure_code;
+        instance.factory("hangs",
+                         g_conf().get_val <
+                         std::string >
+                         ("erasure_code_dir"),
+                         profile, &erasure_code,
+                         &cerr);
+    });
+    auto wait_until = [&instance](bool loading, unsigned max_secs) {
         auto delay = 0 ms;
         const auto DELAY_MAX = std::chrono::seconds(max_secs);
         for (; delay < DELAY_MAX; delay = (delay + 1 ms) * 2) {
@@ -71,14 +73,14 @@ TEST_F(ErasureCodePluginRegistryTest, factory_mutex)
     ASSERT_TRUE(wait_until(true, 5));
     {
         unique_lock l {
-        instance.lock, std::try_to_lock};
+            instance.lock, std::try_to_lock};
         EXPECT_TRUE(!l.owns_lock());
     }
     // should finish loading in 15 seconds
     ASSERT_TRUE(wait_until(false, 15));
     {
         unique_lock l {
-        instance.lock, std::try_to_lock};
+            instance.lock, std::try_to_lock};
         EXPECT_TRUE(l.owns_lock());
     }
     sleep_for_10_secs.join();
@@ -89,7 +91,7 @@ TEST_F(ErasureCodePluginRegistryTest, all)
     ErasureCodeProfile profile;
     string directory = g_conf().get_val < std::string > ("erasure_code_dir");
     ErasureCodeInterfaceRef erasure_code;
-    ErasureCodePluginRegistry & instance =
+    ErasureCodePluginRegistry &instance =
         ErasureCodePluginRegistry::instance();
     EXPECT_FALSE(erasure_code);
     EXPECT_EQ(-EIO, instance.factory("invalid",
@@ -125,7 +127,7 @@ TEST_F(ErasureCodePluginRegistryTest, all)
     ErasureCodePlugin *plugin = 0;
     {
         std::lock_guard l {
-        instance.lock};
+            instance.lock};
         EXPECT_EQ(-EEXIST, instance.load("example", directory, &plugin, &cerr));
         EXPECT_EQ(-ENOENT, instance.remove("does not exist"));
         EXPECT_EQ(0, instance.remove("example"));
@@ -136,7 +138,7 @@ TEST_F(ErasureCodePluginRegistryTest, all)
 /*
  * Local Variables:
  * compile-command: "cd ../../../build ; make -j4 &&
- *   make unittest_erasure_code_plugin && 
+ *   make unittest_erasure_code_plugin &&
  *   valgrind --tool=memcheck \
  *      ./bin/unittest_erasure_code_plugin \
  *      --gtest_filter=*.* --log-to-stderr=true --debug-osd=20"

@@ -30,20 +30,22 @@ using namespace std;
 
 ErasureCodeIsaTableCache tcache;
 
-class IsaErasureCodeTest:public::testing::Test {
-  public:
-    void compare_chunks(bufferlist & in, map < int, bufferlist > &encoded);
+class IsaErasureCodeTest: public::testing::Test
+{
+public:
+    void compare_chunks(bufferlist &in, map < int, bufferlist > &encoded);
     void encode_decode(unsigned object_size);
 };
 
-void IsaErasureCodeTest::compare_chunks(bufferlist & in, map < int,
+void IsaErasureCodeTest::compare_chunks(bufferlist &in, map < int,
                                         bufferlist > &encoded)
 {
     unsigned object_size = in.length();
     unsigned chunk_size = encoded[0].length();
     for (unsigned i = 0; i < encoded.size(); i++) {
-        if (i * chunk_size >= object_size)
+        if (i * chunk_size >= object_size) {
             break;
+        }
         int chunk_length =
             object_size >
             (i + 1) * chunk_size ? chunk_size : object_size - i * chunk_size;
@@ -381,9 +383,8 @@ TEST_F(IsaErasureCodeTest, sanity_check_k)
     EXPECT_NE(std::string::npos, errors.str().find("must be >= 2"));
 }
 
-bool
-DecodeAndVerify(ErasureCodeIsaDefault & Isa, map < int, bufferlist > &degraded,
-                set < int >want_to_decode, buffer::ptr * enc, int length)
+bool DecodeAndVerify(ErasureCodeIsaDefault &Isa, map < int, bufferlist > &degraded,
+                     set < int >want_to_decode, buffer::ptr *enc, int length)
 {
     map < int, bufferlist > decoded;
     bool ok;
@@ -790,7 +791,7 @@ TEST_F(IsaErasureCodeTest, isa_cauchy_cache_trash)
 TEST_F(IsaErasureCodeTest, isa_xor_codec)
 {
     // Test all possible failure scenarios and reconstruction cases for
-    // a (4,1) RAID-5 like configuration 
+    // a (4,1) RAID-5 like configuration
 
     ErasureCodeIsaDefault Isa(tcache);
     ErasureCodeProfile profile;
@@ -937,8 +938,9 @@ TEST_F(IsaErasureCodeTest, create_rule)
         int x = 0;
         c->do_rule(rule, x, out, isa.get_chunk_count(), weight, 0);
         ASSERT_EQ(out.size(), isa.get_chunk_count());
-        for (unsigned i = 0; i < out.size(); ++i)
+        for (unsigned i = 0; i < out.size(); ++i) {
             ASSERT_NE(CRUSH_ITEM_NONE, out[i]);
+        }
     }
     {
         stringstream ss;

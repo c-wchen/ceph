@@ -26,14 +26,16 @@
 
 namespace bs = boost::system;
 
-class mon_error_category:public ceph::converting_category {
-  public:
-    mon_error_category() {
+class mon_error_category: public ceph::converting_category
+{
+public:
+    mon_error_category()
+    {
     } const char *name() const noexcept override;
     const char *message(int ev, char *, std::size_t) const noexcept override;
     std::string message(int ev) const override;
     bs::error_condition default_error_condition(int ev) const noexcept override;
-    bool equivalent(int ev, const bs::error_condition & c) const
+    bool equivalent(int ev, const bs::error_condition &c) const
     noexcept override;
     using ceph::converting_category::equivalent;
     int from_code(int ev) const noexcept override;
@@ -47,8 +49,9 @@ const char *mon_error_category::name() const const noexcept
 const char *mon_error_category::message(int ev, char *buf,
                                         std::size_t len) const const noexcept
 {
-    if (ev == 0)
+    if (ev == 0) {
         return "No error";
+    }
 
     if (len) {
         auto s = cpp_strerror(ev);
@@ -58,25 +61,23 @@ const char *mon_error_category::message(int ev, char *buf,
     return buf;
 }
 
-std::string mon_error_category::message(int ev) constconst
-{
+std::string mon_error_category::message(int ev) constconst {
     if (ev == 0)
+    {
         return "No error";
+    }
 
     return cpp_strerror(ev);
 }
 
-bs::error_condition
-    mon_error_category::default_error_condition(int ev) constconst noexcept
-{
+bs::error_condition mon_error_category::default_error_condition(int ev) constconst noexcept {
     return {
-    ev, bs::generic_category()};
+        ev, bs::generic_category()};
 }
 
 bool mon_error_category::equivalent(int ev,
                                     const bs::
-                                    error_condition & c) constconst noexcept
-{
+                                    error_condition &c) constconst noexcept {
     return default_error_condition(ev) == c;
 }
 
@@ -85,7 +86,7 @@ int mon_error_category::from_code(int ev) const const noexcept
     return -ev;
 }
 
-const bs::error_category & mon_category() noexcept
+const bs::error_category &mon_category() noexcept
 {
     static const mon_error_category c;
     return c;

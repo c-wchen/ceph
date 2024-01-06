@@ -108,42 +108,50 @@ struct counts_t {
     int num_bound_encode = 0;
     int num_encode = 0;
     int num_decode = 0;
-    void reset() {
+    void reset()
+    {
         num_bound_encode = 0;
         num_encode = 0;
         num_decode = 0;
-}} counts;
+    }
+} counts;
 
 struct denc_counter_t {
-    void bound_encode(size_t & p) const {
+    void bound_encode(size_t &p) const
+    {
         ++counts.num_bound_encode;
         ++p;                    // denc.h does not like 0-length objects
-    } void encode(buffer::list::contiguous_appender & p) const {
+    } void encode(buffer::list::contiguous_appender &p) const
+    {
         p.append("a", 1);
         ++counts.num_encode;
-    } void decode(buffer::ptr::const_iterator & p) {
+    } void decode(buffer::ptr::const_iterator &p)
+    {
         p += 1;
         ++counts.num_decode;
-}};
+    }
+};
 WRITE_CLASS_DENC(denc_counter_t)
 
 struct denc_counter_bounded_t {
-    void bound_encode(size_t & p) const {
+    void bound_encode(size_t &p) const
+    {
         ++counts.num_bound_encode;
         ++p;                    // denc.h does not like 0-length objects
-    } void encode(buffer::list::contiguous_appender & p) const const
-{
-    p.append("a", 1);
-    ++counts.num_encode;
-} void decode(buffer::ptr::const_iterator & p) {
-    p += 1;
-    ++counts.num_decode;
-}
+    } void encode(buffer::list::contiguous_appender &p) const const
+    {
+        p.append("a", 1);
+        ++counts.num_encode;
+    } void decode(buffer::ptr::const_iterator &p)
+    {
+        p += 1;
+        ++counts.num_decode;
+    }
 };
 
 WRITE_CLASS_DENC_BOUNDED(denc_counter_bounded_t)
 
-    TEST(denc, denc_counter)
+TEST(denc, denc_counter)
 {
     denc_counter_t single, single2;
     {
@@ -179,20 +187,26 @@ TEST(denc, string)
 
 struct legacy_t {
     int32_t a = 1;
-    void encode(bufferlist & bl) const {
+    void encode(bufferlist &bl) const
+    {
         using ceph::encode;
-         encode(a, bl);
-    } void decode(bufferlist::const_iterator & p) {
+        encode(a, bl);
+    } void decode(bufferlist::const_iterator &p)
+    {
         using ceph::decode;
-         decode(a, p);
-    } legacy_t() {
+        decode(a, p);
+    } legacy_t()
+    {
     }
-    explicit legacy_t(int32_t i):a(i) {
+    explicit legacy_t(int32_t i): a(i)
+    {
     }
-    friend bool operator<(const legacy_t & l, const legacy_t & r) {
+    friend bool operator<(const legacy_t &l, const legacy_t &r)
+    {
         return l.a < r.a;
     }
-    friend bool operator==(const legacy_t & l, const legacy_t & r) {
+    friend bool operator==(const legacy_t &l, const legacy_t &r)
+    {
         return l.a == r.a;
     }
 };
@@ -321,7 +335,7 @@ TEST(denc, set)
 }
 
 template < typename T >
-    using default_flat_set = boost::container::flat_set < T >;
+using default_flat_set = boost::container::flat_set < T >;
 
 TEST(denc, flat_set)
 {
@@ -332,12 +346,14 @@ struct foo_t {
     int32_t a = 0;
     uint64_t b = 123;
 
-    DENC(foo_t, v, p) {
+    DENC(foo_t, v, p)
+    {
         DENC_START(1, 1, p);
         ::denc(v.a, p);
         ::denc(v.b, p);
         DENC_FINISH(p);
-    } friend bool operator==(const foo_t & l, const foo_t & r) {
+    } friend bool operator==(const foo_t &l, const foo_t &r)
+    {
         return l.a == r.a && l.b == r.b;
     }
 };
@@ -349,14 +365,15 @@ struct foo2_t {
     uint64_t d = 123;
 
     DENC(foo2_t, v, p)
-{
-    DENC_START(1, 1, p);
-    ::denc(v.c, p);
-    ::denc(v.d, p);
-    DENC_FINISH(p);
-} friend bool operator==(const foo2_t & l, const foo2_t & r) {
-    return l.c == r.c && l.d == r.d;
-}
+    {
+        DENC_START(1, 1, p);
+        ::denc(v.c, p);
+        ::denc(v.d, p);
+        DENC_FINISH(p);
+    } friend bool operator==(const foo2_t &l, const foo2_t &r)
+    {
+        return l.c == r.c && l.d == r.d;
+    }
 };
 
 WRITE_CLASS_DENC_BOUNDED(foo2_t)
@@ -366,12 +383,13 @@ struct bar_t {
     uint64_t b = 123;
 
     DENC_FEATURED(bar_t, v, p, f)
-{
-    ::denc(v.a, p, f);
-    ::denc(v.b, p, f);
-} friend bool operator==(const bar_t & l, const bar_t & r) {
-    return l.a == r.a && l.b == r.b;
-}
+    {
+        ::denc(v.a, p, f);
+        ::denc(v.b, p, f);
+    } friend bool operator==(const bar_t &l, const bar_t &r)
+    {
+        return l.a == r.a && l.b == r.b;
+    }
 };
 
 WRITE_CLASS_DENC_FEATURED_BOUNDED(bar_t)
@@ -406,7 +424,7 @@ TEST(denc, pair)
 }
 
 template < template < class, class > class C >
-    void test_common_maplike(const char *c)
+void test_common_maplike(const char *c)
 {
     {
         cout << c << "<std::string, foo_t>" << std::endl;
@@ -441,7 +459,7 @@ TEST(denc, map)
 }
 
 template < typename U, typename V >
-    using default_flat_map = boost::container::flat_map < U, V >;
+using default_flat_map = boost::container::flat_map < U, V >;
 
 TEST(denc, flat_map)
 {
@@ -505,14 +523,16 @@ TEST(denc, array)
     {
         cout << "std::array<std::string, 3>" << std::endl;
         std::array < std::string, 3 > s = {
-        "foo", "bar", "baz"};
+            "foo", "bar", "baz"
+        };
         counts.reset();
         test_denc(s);
     }
     {
         cout << "std::array<uint32_t, 3>" << std::endl;
         std::array < uint32_t, 3 > s = {
-        1UL, 2UL, 3UL};
+            1UL, 2UL, 3UL
+        };
         test_denc(s);
     }
 }
@@ -533,11 +553,11 @@ TEST(denc, tuple)
     {
         cout << "std::tuple<std::string, std::set<uint32_t>>" << std::endl;
         std::tuple < std::string, std::set < uint32_t >> s("bar",
-                                                           std::set < uint32_t >
-                                                           {
-                                                           uint32_t(1),
-                                                           uint32_t(2),
-                                                           uint32_t(3)});
+        std::set < uint32_t > {
+            uint32_t(1),
+            uint32_t(2),
+            uint32_t(3)
+        });
         test_denc(s);
     }
 }
@@ -554,7 +574,7 @@ TEST(denc, optional)
     {
         cout << "boost::optional<std::string>" << std::endl;
         boost::optional < std::string > s = std::string("Meow"), t =
-            boost::none;
+                                                boost::none;
         counts.reset();
         test_denc(s);
         test_denc(t);
@@ -624,25 +644,28 @@ struct Legacy {
     static unsigned n_denc;
     static unsigned n_decode;
     uint8_t value = 0;
-    DENC(Legacy, v, p) {
+    DENC(Legacy, v, p)
+    {
         n_denc++;
         denc(v.value, p);
-    } void decode(buffer::list::const_iterator & p) {
+    } void decode(buffer::list::const_iterator &p)
+    {
         n_decode++;
         using ceph::decode;
         decode(value, p);
     }
-    static void reset() {
+    static void reset()
+    {
         n_denc = n_decode = 0;
     }
-    static bufferlist encode_n(unsigned n, const vector < unsigned >&segments);
+    static bufferlist encode_n(unsigned n, const vector < unsigned > &segments);
 };
 
 WRITE_CLASS_DENC(Legacy)
 unsigned Legacy::n_denc = 0;
 unsigned Legacy::n_decode = 0;
 
-bufferlist Legacy::encode_n(unsigned n, const vector < unsigned >&segments)
+bufferlist Legacy::encode_n(unsigned n, const vector < unsigned > &segments)
 {
     vector < Legacy > v;
     for (unsigned i = 0; i < n; i++) {
@@ -656,7 +679,7 @@ bufferlist Legacy::encode_n(unsigned n, const vector < unsigned >&segments)
 
     auto sum = std::accumulate(segments.begin(), segments.end(), 0u);
     ceph_assert(sum != 0u);
-  for (auto i:segments) {
+    for (auto i : segments) {
         buffer::ptr seg;
         p.copy_deep(bl.length() * i / sum, seg);
         segmented.push_back(seg);
@@ -673,7 +696,7 @@ TEST(denc, no_copy_if_segmented_and_lengthy)
         // use denc() which shallow_copy() if the buffer is small
         constexpr unsigned N_COPIES = 42;
         const vector < unsigned >segs {
-        50, 50};                // half-half
+            50, 50};                // half-half
         bufferlist segmented = Legacy::encode_n(N_COPIES, segs);
         ASSERT_GT(segmented.get_num_buffers(), 1u);
         ASSERT_LT(segmented.length(), CEPH_PAGE_SIZE);
@@ -691,7 +714,7 @@ TEST(denc, no_copy_if_segmented_and_lengthy)
         // use denc() which shallow_copy() if the buffer is not segmented and large
         const unsigned N_COPIES = CEPH_PAGE_SIZE * 2;
         const vector < unsigned >segs {
-        100};
+            100};
         bufferlist segmented = Legacy::encode_n(N_COPIES, segs);
         ASSERT_EQ(segmented.get_num_buffers(), 1u);
         ASSERT_GT(segmented.length(), CEPH_PAGE_SIZE);

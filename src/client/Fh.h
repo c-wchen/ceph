@@ -26,36 +26,40 @@ struct Fh {
     int mode;                   // the mode i opened the file with
 
     bool pos_locked = false;    // pos is currently in use
-     std::list < ceph::condition_variable * >pos_waiters;   // waiters for pos
+    std::list < ceph::condition_variable * >pos_waiters;   // waiters for pos
 
     Readahead readahead;
 
     // file lock
-     std::unique_ptr < ceph_lock_state_t > fcntl_locks;
-     std::unique_ptr < ceph_lock_state_t > flock_locks;
+    std::unique_ptr < ceph_lock_state_t > fcntl_locks;
+    std::unique_ptr < ceph_lock_state_t > flock_locks;
 
-    bool has_any_filelocks() {
+    bool has_any_filelocks()
+    {
         return
             (fcntl_locks && !fcntl_locks->empty()) ||
             (flock_locks && !flock_locks->empty());
     }
     // IO error encountered by any writeback on this Inode while// this Fh existed (i.e. an fsync on another Fh will still show// up as an async_err here because it could have been the same// bytes we wrote via this Fh).
-        int async_err = { 0 };
+    int async_err = { 0 };
 
-    int take_async_err() {
+    int take_async_err()
+    {
         int e = async_err;
         async_err = 0;
         return e;
     }
 
     Fh() = delete;
-    Fh(InodeRef in, int flags, int cmode, uint64_t gen, const UserPerm & perms);
+    Fh(InodeRef in, int flags, int cmode, uint64_t gen, const UserPerm &perms);
     ~Fh();
 
-    void get() {
+    void get()
+    {
         ++_ref;
     }
-    int put() {
+    int put()
+    {
         return --_ref;
     }
 };

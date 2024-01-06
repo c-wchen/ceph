@@ -38,6 +38,6 @@
 
 int socket_cloexec(int domain, int type, int protocol);
 int socketpair_cloexec(int domain, int type, int protocol, int sv[2]);
-int accept_cloexec(int sockfd, struct sockaddr *addr, socklen_t * addrlen);
+int accept_cloexec(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 
 #endif

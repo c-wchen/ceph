@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
     if (argc != 2) {
         cout << "Syntax: "
-            << "ceph_test_mon_memory_target <mon-memory-target-bytes>" << endl;
+             << "ceph_test_mon_memory_target <mon-memory-target-bytes>" << endl;
         exit(EINVAL);
     }
 
@@ -61,17 +61,17 @@ int main(int argc, char **argv)
     cout << "Mean average: " << mean << endl;
     vector < unsigned long >diff(results.size());
     transform(results.begin(), results.end(), diff.begin(),
-              [mean] (unsigned long x) {
-              return x - mean;
-              }
-    );
+    [mean](unsigned long x) {
+        return x - mean;
+    }
+             );
     auto sump = inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
     auto stdev = sqrt(sump / results.size());
     cout << "Standard deviation: " << stdev << endl;
 
     if (maxe > maxallowed) {
         cout << "Error: Mon memory consumption exceeds maximum allowed!" <<
-            endl;
+             endl;
         exit(ENOMEM);
     }
 

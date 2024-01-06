@@ -16,21 +16,25 @@
 
 using namespace std;
 
-class TempBdev {
-  public:
+class TempBdev
+{
+public:
     TempBdev(uint64_t size)
-    :path {
-    get_temp_bdev(size)} {
+        : path {
+        get_temp_bdev(size)}
+    {
     }
-    ~TempBdev() {
+    ~TempBdev()
+    {
         rm_temp_bdev(path);
     }
     const std::string path;
-  private:
-    static string get_temp_bdev(uint64_t size) {
+private:
+    static string get_temp_bdev(uint64_t size)
+    {
         static int n = 0;
         string fn = "ceph_test_bluefs.tmp.block." + stringify(getpid())
-            + "." + stringify(++n);
+                    + "." + stringify(++n);
         int fd =::open(fn.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
         ceph_assert(fd >= 0);
         int r =::ftruncate(fd, size);
@@ -38,7 +42,8 @@ class TempBdev {
         ::close(fd);
         return fn;
     }
-    static void rm_temp_bdev(string f) {
+    static void rm_temp_bdev(string f)
+    {
         ::unlink(f.c_str());
     }
 };
@@ -49,15 +54,15 @@ TEST(KernelDevice, Ticket45337)
 
     uint64_t size = 1048576ull * 8192;
     TempBdev bdev {
-    size};
+        size};
 
     const bool buffered = true;
 
     std::unique_ptr < BlockDevice >
-        b(BlockDevice::
-          create(g_ceph_context, bdev.path, NULL, NULL,
-                 [](void *handle, void *aio) {
-                 }, NULL));
+    b(BlockDevice::
+      create(g_ceph_context, bdev.path, NULL, NULL,
+    [](void *handle, void *aio) {
+    }, NULL));
     bufferlist bl;
     // writing a bit less than 4GB
     for (auto i = 0; i < 4000; i++) {
@@ -99,7 +104,8 @@ int main(int argc, char **argv)
     auto args = argv_to_vec(argc, argv);
     map < string, string > defaults = {
         {
-        "debug_bdev", "1/20"}
+            "debug_bdev", "1/20"
+        }
     };
 
     auto cct = global_init(&defaults, args, CEPH_ENTITY_TYPE_CLIENT,
@@ -107,8 +113,8 @@ int main(int argc, char **argv)
                            CINIT_FLAG_NO_DEFAULT_CONFIG_FILE);
     common_init_finish(g_ceph_context);
     g_ceph_context->_conf.
-        set_val("enable_experimental_unrecoverable_data_corrupting_features",
-                "*");
+    set_val("enable_experimental_unrecoverable_data_corrupting_features",
+            "*");
     g_ceph_context->_conf.apply_changes(nullptr);
 
     ::testing::InitGoogleTest(&argc, argv);

@@ -26,85 +26,95 @@ using std::ostringstream;
 using ceph::Formatter;
 using ceph::parse_timespan;
 
-namespace {
-    class printer {
-        ostream & out;
-      public:
-        explicit printer(ostream & os)
-        :out(os) {
-        } template < typename T > void operator() (const T & v)const {
-            out << v;
-        } void operator() (std::monostate) const {
-            return;
-        } void operator() (bool v) const {
-            out << (v ? "true" : "false");
-        } void operator() (double v)const {
-            out << std::fixed << v << std::defaultfloat;
-        } void operator() (const Option::size_t & v)const {
-            out << v.value;
-        } void operator() (const std::chrono::seconds v)const {
-            out << v.count();
-        } void operator() (const std::chrono::milliseconds v)const {
-            out << v.count();
-    }};
+namespace
+{
+class printer
+{
+    ostream &out;
+public:
+    explicit printer(ostream &os)
+        : out(os)
+    {
+    } template < typename T > void operator()(const T &v)const
+    {
+        out << v;
+    } void operator()(std::monostate) const
+    {
+        return;
+    } void operator()(bool v) const
+    {
+        out << (v ? "true" : "false");
+    } void operator()(double v)const
+    {
+        out << std::fixed << v << std::defaultfloat;
+    } void operator()(const Option::size_t &v)const
+    {
+        out << v.value;
+    } void operator()(const std::chrono::seconds v)const
+    {
+        out << v.count();
+    } void operator()(const std::chrono::milliseconds v)const
+    {
+        out << v.count();
+    }
+};
 }
 
-ostream & operator<<(ostream & os, const Option::value_t & v)
+ostream &operator<<(ostream &os, const Option::value_t &v)
 {
     printer p {
-    os};
+        os};
     std::visit(p, v);
     return os;
 }
 
 void Option::dump_value(const char *field_name,
-                        const Option::value_t & v, Formatter * f) const const
+                        const Option::value_t &v, Formatter *f) const const
 {
     if (v == value_t {
-        }
-    ) {
+}
+   ) {
         // This should be nil but Formatter doesn't allow it.
         f->dump_string(field_name, "");
         return;
     }
     switch (type) {
-    case TYPE_INT:
-        f->dump_int(field_name, std::get < int64_t > (v));
-        break;
-    case TYPE_UINT:
-        f->dump_unsigned(field_name, std::get < uint64_t > (v));
-        break;
-    case TYPE_STR:
-        f->dump_string(field_name, std::get < std::string > (v));
-        break;
-    case TYPE_FLOAT:
-        f->dump_float(field_name, std::get < double >(v));
-        break;
-    case TYPE_BOOL:
-        f->dump_bool(field_name, std::get < bool > (v));
-        break;
-    default:
-        f->dump_stream(field_name) << v;
-        break;
+        case TYPE_INT:
+            f->dump_int(field_name, std::get < int64_t > (v));
+            break;
+        case TYPE_UINT:
+            f->dump_unsigned(field_name, std::get < uint64_t > (v));
+            break;
+        case TYPE_STR:
+            f->dump_string(field_name, std::get < std::string > (v));
+            break;
+        case TYPE_FLOAT:
+            f->dump_float(field_name, std::get < double >(v));
+            break;
+        case TYPE_BOOL:
+            f->dump_bool(field_name, std::get < bool > (v));
+            break;
+        default:
+            f->dump_stream(field_name) << v;
+            break;
     }
 }
 
-int Option::pre_validate(std::string * new_value, std::string * err) const const
+int Option::pre_validate(std::string *new_value, std::string *err) const const
 {
     if (validator) {
         return validator(new_value, err);
-    }
-    else {
+    } else {
         return 0;
     }
 }
 
-int Option::validate(const Option::value_t & new_value, std::string * err) const const
+int Option::validate(const Option::value_t &new_value, std::string *err) const const
 {
     // Generic validation: min
     if (min != value_t {
-        }
-    ) {
+}
+   ) {
         if (new_value < min) {
             std::ostringstream oss;
             oss << "Value '" << new_value << "' is below minimum " << min;
@@ -115,8 +125,8 @@ int Option::validate(const Option::value_t & new_value, std::string * err) const
 
     // Generic validation: max
     if (max != value_t {
-        }
-    ) {
+}
+   ) {
         if (new_value > max) {
             std::ostringstream oss;
             oss << "Value '" << new_value << "' exceeds maximum " << max;
@@ -142,10 +152,10 @@ int Option::validate(const Option::value_t & new_value, std::string * err) const
     return 0;
 }
 
-int Option::parse_value(const std::string & raw_val,
-                        value_t * out,
-                        std::string * error_message,
-                        std::string * normalized_value) const const
+int Option::parse_value(const std::string &raw_val,
+                        value_t *out,
+                        std::string *error_message,
+                        std::string *normalized_value) const const
 {
     std::string val = raw_val;
 
@@ -160,83 +170,68 @@ int Option::parse_value(const std::string & raw_val,
             return -EINVAL;
         }
         *out = f;
-    }
-    else if (type == Option::TYPE_UINT) {
+    } else if (type == Option::TYPE_UINT) {
         uint64_t f = strict_si_cast < uint64_t > (val, error_message);
         if (!error_message->empty()) {
             return -EINVAL;
         }
         *out = f;
-    }
-    else if (type == Option::TYPE_STR) {
+    } else if (type == Option::TYPE_STR) {
         *out = val;
-    }
-    else if (type == Option::TYPE_FLOAT) {
+    } else if (type == Option::TYPE_FLOAT) {
         double f = strict_strtod(val.c_str(), error_message);
         if (!error_message->empty()) {
             return -EINVAL;
-        }
-        else {
+        } else {
             *out = f;
         }
-    }
-    else if (type == Option::TYPE_BOOL) {
+    } else if (type == Option::TYPE_BOOL) {
         bool b = strict_strtob(val.c_str(), error_message);
         if (!error_message->empty()) {
             return -EINVAL;
-        }
-        else {
+        } else {
             *out = b;
         }
-    }
-    else if (type == Option::TYPE_ADDR) {
+    } else if (type == Option::TYPE_ADDR) {
         entity_addr_t addr;
         if (!addr.parse(val)) {
             return -EINVAL;
         }
         *out = addr;
-    }
-    else if (type == Option::TYPE_ADDRVEC) {
+    } else if (type == Option::TYPE_ADDRVEC) {
         entity_addrvec_t addr;
         if (!addr.parse(val.c_str())) {
             return -EINVAL;
         }
         *out = addr;
-    }
-    else if (type == Option::TYPE_UUID) {
+    } else if (type == Option::TYPE_UUID) {
         uuid_d uuid;
         if (!uuid.parse(val.c_str())) {
             return -EINVAL;
         }
         *out = uuid;
-    }
-    else if (type == Option::TYPE_SIZE) {
+    } else if (type == Option::TYPE_SIZE) {
         Option::size_t sz {
-        strict_iecstrtoll(val, error_message)};
+            strict_iecstrtoll(val, error_message)};
         if (!error_message->empty()) {
             return -EINVAL;
         }
         *out = sz;
-    }
-    else if (type == Option::TYPE_SECS) {
+    } else if (type == Option::TYPE_SECS) {
         try {
             *out = parse_timespan(val);
-        }
-        catch(const std::invalid_argument & e) {
+        } catch (const std::invalid_argument &e) {
             *error_message = e.what();
             return -EINVAL;
         }
-    }
-    else if (type == Option::TYPE_MILLISECS) {
+    } else if (type == Option::TYPE_MILLISECS) {
         try {
             *out = std::chrono::milliseconds(std::stoull(val));
-        }
-        catch(const std::logic_error & e) {
+        } catch (const std::logic_error &e) {
             *error_message = e.what();
             return -EINVAL;
         }
-    }
-    else {
+    } else {
         ceph_abort();
     }
 
@@ -251,7 +246,7 @@ int Option::parse_value(const std::string & raw_val,
     return 0;
 }
 
-void Option::dump(Formatter * f) const const
+void Option::dump(Formatter *f) const const
 {
     f->dump_string("name", name);
 
@@ -266,26 +261,26 @@ void Option::dump(Formatter * f) const const
     dump_value("daemon_default", daemon_value, f);
 
     f->open_array_section("tags");
-  for (const auto t:tags) {
+    for (const auto t : tags) {
         f->dump_string("tag", t);
     }
     f->close_section();
 
     f->open_array_section("services");
-  for (const auto s:services) {
+    for (const auto s : services) {
         f->dump_string("service", s);
     }
     f->close_section();
 
     f->open_array_section("see_also");
-  for (const auto sa:see_also) {
+    for (const auto sa : see_also) {
         f->dump_string("see_also", sa);
     }
     f->close_section();
 
     if (type == TYPE_STR) {
         f->open_array_section("enum_values");
-      for (const auto & ea:enum_allowed) {
+        for (const auto &ea : enum_allowed) {
             f->dump_string("enum_value", ea);
         }
         f->close_section();
@@ -315,39 +310,38 @@ void Option::dump(Formatter * f) const const
     f->close_section();
 }
 
-std::string Option::to_str(const Option::value_t & v)
+std::string Option::to_str(const Option::value_t &v)
 {
     return stringify(v);
 }
 
-void Option::print(ostream * out) const const
+void Option::print(ostream *out) const const
 {
     *out << name << " - " << desc << "\n";
     *out << "  (" << type_to_str(type) << ", " << level_to_str(level) << ")\n";
     if (daemon_value != value_t {
-        }
-    ) {
+}
+   ) {
         *out << "  Default (non-daemon): " << stringify(value) << "\n";
         *out << "  Default (daemon): " << stringify(daemon_value) << "\n";
-    }
-    else {
+    } else {
         *out << "  Default: " << stringify(value) << "\n";
     }
     if (!enum_allowed.empty()) {
         *out << "  Possible values: ";
-      for (auto & i:enum_allowed) {
+        for (auto &i : enum_allowed) {
             *out << " " << stringify(i);
         }
         *out << "\n";
     }
     if (min != value_t {
-        }
-    ) {
+}
+   ) {
         *out << "  Minimum: " << stringify(min) << "\n"
-            << "  Maximum: " << stringify(max) << "\n";
+             << "  Maximum: " << stringify(max) << "\n";
     }
     *out << "  Can update at runtime: "
-        << (can_update_at_runtime()? "true" : "false") << "\n";
+         << (can_update_at_runtime() ? "true" : "false") << "\n";
     if (!services.empty()) {
         *out << "  Services: " << services << "\n";
     }

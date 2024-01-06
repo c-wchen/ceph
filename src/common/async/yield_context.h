@@ -25,38 +25,45 @@
 // use explicit executor types instead of the type-erased boost::asio::executor.
 // coroutines wrap the default io_context executor with a strand executor
 using yield_context = spawn::basic_yield_context <
-    boost::asio::executor_binder < void (*)(),
-    boost::asio::strand < boost::asio::io_context::executor_type >>>;
+                      boost::asio::executor_binder < void (*)(),
+                      boost::asio::strand < boost::asio::io_context::executor_type > >>;
 
 /// optional-like wrapper for a spawn::yield_context and its associated
 /// boost::asio::io_context. operations that take an optional_yield argument
 /// will, when passed a non-empty yield context, suspend this coroutine instead
 /// of the blocking the thread of execution
-class optional_yield {
-    boost::asio::io_context * c = nullptr;
+class optional_yield
+{
+    boost::asio::io_context *c = nullptr;
     yield_context *y = nullptr;
-  public:
+public:
     /// construct with a valid io and yield_context
-    explicit optional_yield(boost::asio::io_context & c,
-                            yield_context & y) noexcept:c(&c), y(&y) {
+    explicit optional_yield(boost::asio::io_context &c,
+                            yield_context &y) noexcept: c(&c), y(&y)
+    {
     }
     /// type tag to construct an empty object struct empty_t {
-    };
-    optional_yield(empty_t) noexcept {
-    }
+};
+optional_yield(empty_t) noexcept
+{
+}
 
-    /// implicit conversion to bool, returns true if non-empty
-    operator  bool() const noexcept {
-        return y;
-    }
-    /// return a reference to the associated io_context. only valid if non-empty
-        boost::asio::io_context & get_io_context() const noexcept {
-        return *c;
-    }
-    /// return a reference to the yield_context. only valid if non-empty
-        yield_context & get_yield_context() const noexcept {
-        return *y;
-}};
+/// implicit conversion to bool, returns true if non-empty
+operator  bool() const noexcept
+{
+    return y;
+}
+/// return a reference to the associated io_context. only valid if non-empty
+boost::asio::io_context &get_io_context() const noexcept
+{
+    return *c;
+}
+/// return a reference to the yield_context. only valid if non-empty
+yield_context &get_yield_context() const noexcept
+{
+    return *y;
+}
+};
 
 // type tag object to construct an empty optional_yield
 static constexpr optional_yield::empty_t null_yield {

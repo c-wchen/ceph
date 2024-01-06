@@ -24,24 +24,29 @@
 
 using namespace std;
 
-namespace {
+namespace
+{
 
-    const coll_t cid;
+const coll_t cid;
 
-    ghobject_t make_ghobject(const char *oid) {
-        return ghobject_t {
-            hobject_t {
+ghobject_t make_ghobject(const char *oid)
+{
+    return ghobject_t {
+        hobject_t {
             oid, "", CEPH_NOSNAP, 0, 0, ""}
-        };
-    }
+    };
+}
 
 }                               // anonymous namespace
 
-class MemStoreClone:public StoreTestFixture {
-  public:
+class MemStoreClone: public StoreTestFixture
+{
+public:
     MemStoreClone()
-    :StoreTestFixture("memstore") {
-    } void SetUp() override {
+        : StoreTestFixture("memstore")
+    {
+    } void SetUp() override
+    {
         StoreTestFixture::SetUp();
         if (HasFailure()) {
             return;
@@ -52,11 +57,12 @@ class MemStoreClone:public StoreTestFixture {
         unsigned r = store->queue_transaction(ch, std::move(t));
         if (r != 0) {
             derr << "failed to create collection with " << cpp_strerror(r) <<
-                dendl;
+                 dendl;
         }
         ASSERT_EQ(0U, r);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         ch.reset();
         StoreTestFixture::TearDown();
     }
@@ -189,9 +195,12 @@ int main(int argc, char **argv)
     // default to memstore
     map < string, string > defaults = {
         {
-        "osd_objectstore", "memstore"}, {
-        "osd_data", "msc.test_temp_dir"}, {
-        "memstore_page_size", "4"}
+            "osd_objectstore", "memstore"
+        }, {
+            "osd_data", "msc.test_temp_dir"
+        }, {
+            "memstore_page_size", "4"
+        }
     };
 
     auto args = argv_to_vec(argc, argv);

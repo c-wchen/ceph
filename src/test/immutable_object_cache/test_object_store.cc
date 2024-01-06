@@ -23,26 +23,32 @@ using namespace ceph::immutable_obj_cache;
 
 std::string test_cache_path("/tmp/test_ceph_immutable_shared_cache");
 
-class TestObjectStore:public::testing::Test {
-  public:
-    ObjectCacheStore * m_object_cache_store;
-    librados::Rados * m_test_rados;
+class TestObjectStore: public::testing::Test
+{
+public:
+    ObjectCacheStore *m_object_cache_store;
+    librados::Rados *m_test_rados;
     CephContext *m_ceph_context;
     librados::IoCtx m_local_io_ctx;
     std::string m_temp_pool_name;
     std::string m_temp_volume_name;
 
-    TestObjectStore():m_object_cache_store(nullptr), m_test_rados(nullptr),
-        m_ceph_context(nullptr) {
-    } ~TestObjectStore() {
+    TestObjectStore(): m_object_cache_store(nullptr), m_test_rados(nullptr),
+        m_ceph_context(nullptr)
+    {
+    } ~TestObjectStore()
+    {
     }
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
     }
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         m_test_rados = new librados::Rados();
         ASSERT_EQ("", connect_cluster_pp(*m_test_rados));
         ASSERT_EQ(0, m_test_rados->conf_set("rbd_cache", "false"));
@@ -55,7 +61,8 @@ class TestObjectStore:public::testing::Test {
 
     }
 
-    void create_object_cache_store(uint64_t entry_num) {
+    void create_object_cache_store(uint64_t entry_num)
+    {
         m_temp_pool_name = get_temp_pool_name("test_pool_");
         ASSERT_EQ(0, m_test_rados->pool_create(m_temp_pool_name.c_str()));
         ASSERT_EQ(0,
@@ -68,27 +75,33 @@ class TestObjectStore:public::testing::Test {
     }
 
     void init_object_cache_store(std::string pool_name, std::string vol_name,
-                                 uint64_t vol_size, bool reset) {
+                                 uint64_t vol_size, bool reset)
+    {
         ASSERT_EQ(0, m_object_cache_store->init(reset));
         ASSERT_EQ(0, m_object_cache_store->init_cache());
     }
 
-    void shutdown_object_cache_store() {
+    void shutdown_object_cache_store()
+    {
         ASSERT_EQ(0, m_object_cache_store->shutdown());
     }
 
     void lookup_object_cache_store(std::string pool_name, std::string vol_name,
-                                   std::string obj_name, int &ret) {
+                                   std::string obj_name, int &ret)
+    {
         std::string cache_path;
         ret = m_object_cache_store->lookup_object(pool_name, 1, 2, 3,
-                                                  obj_name, true, cache_path);
+              obj_name, true, cache_path);
     }
 
-    void TearDown() override {
-        if (m_test_rados)
+    void TearDown() override
+    {
+        if (m_test_rados) {
             delete m_test_rados;
-        if (m_object_cache_store)
+        }
+        if (m_object_cache_store) {
             delete m_object_cache_store;
+        }
     }
 };
 

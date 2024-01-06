@@ -27,8 +27,9 @@ static int set_version(cls_method_context_t hctx, struct obj_version *objv)
             (int)objv->ver);
 
     int ret = cls_cxx_setxattr(hctx, VERSION_ATTR, &bl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
@@ -39,8 +40,9 @@ static int init_version(cls_method_context_t hctx, struct obj_version *objv)
     char buf[TAG_LEN + 1];
 
     int ret = cls_gen_rand_base64(buf, sizeof(buf));
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     objv->ver = 1;
     objv->tag = buf;
@@ -52,7 +54,7 @@ static int init_version(cls_method_context_t hctx, struct obj_version *objv)
 }
 
 /* implicit create should be true only if called from a write operation (set, inc), never from a read operation (read, check) */
-static int read_version(cls_method_context_t hctx, obj_version * objv,
+static int read_version(cls_method_context_t hctx, obj_version *objv,
                         bool implicit_create)
 {
     bufferlist bl;
@@ -65,14 +67,14 @@ static int read_version(cls_method_context_t hctx, obj_version * objv,
         }
         return 0;
     }
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     try {
         auto iter = bl.cbegin();
         decode(*objv, iter);
-    }
-    catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: read_version(): failed to decode version entry\n");
         return -EIO;
     }
@@ -82,92 +84,102 @@ static int read_version(cls_method_context_t hctx, obj_version * objv,
     return 0;
 }
 
-static int cls_version_set(cls_method_context_t hctx, bufferlist * in,
-                           bufferlist * out)
+static int cls_version_set(cls_method_context_t hctx, bufferlist *in,
+                           bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_version_set_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_version_get(): failed to decode entry\n");
         return -EINVAL;
     }
 
     int ret = set_version(hctx, &op.objv);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
-static bool check_conds(list < obj_version_cond > &conds, obj_version & objv)
+static bool check_conds(list < obj_version_cond > &conds, obj_version &objv)
 {
-    if (conds.empty())
+    if (conds.empty()) {
         return true;
+    }
 
     for (list < obj_version_cond >::iterator iter = conds.begin();
          iter != conds.end(); ++iter) {
-        obj_version_cond & cond = *iter;
-        obj_version & v = cond.ver;
+        obj_version_cond &cond = *iter;
+        obj_version &v = cond.ver;
         CLS_LOG(20, "cls_version: check_version %s:%d (cond=%d)", v.tag.c_str(),
                 (int)v.ver, (int)cond.cond);
 
         switch (cond.cond) {
-        case VER_COND_NONE:
-            break;
-        case VER_COND_EQ:
-            if (!objv.compare(&v))
-                return false;
-            break;
-        case VER_COND_GT:
-            if (!(objv.ver > v.ver))
-                return false;
-            break;
-        case VER_COND_GE:
-            if (!(objv.ver >= v.ver))
-                return false;
-            break;
-        case VER_COND_LT:
-            if (!(objv.ver < v.ver))
-                return false;
-            break;
-        case VER_COND_LE:
-            if (!(objv.ver <= v.ver))
-                return false;
-            break;
-        case VER_COND_TAG_EQ:
-            if (objv.tag.compare(v.tag) != 0)
-                return false;
-            break;
-        case VER_COND_TAG_NE:
-            if (objv.tag.compare(v.tag) == 0)
-                return false;
-            break;
+            case VER_COND_NONE:
+                break;
+            case VER_COND_EQ:
+                if (!objv.compare(&v)) {
+                    return false;
+                }
+                break;
+            case VER_COND_GT:
+                if (!(objv.ver > v.ver)) {
+                    return false;
+                }
+                break;
+            case VER_COND_GE:
+                if (!(objv.ver >= v.ver)) {
+                    return false;
+                }
+                break;
+            case VER_COND_LT:
+                if (!(objv.ver < v.ver)) {
+                    return false;
+                }
+                break;
+            case VER_COND_LE:
+                if (!(objv.ver <= v.ver)) {
+                    return false;
+                }
+                break;
+            case VER_COND_TAG_EQ:
+                if (objv.tag.compare(v.tag) != 0) {
+                    return false;
+                }
+                break;
+            case VER_COND_TAG_NE:
+                if (objv.tag.compare(v.tag) == 0) {
+                    return false;
+                }
+                break;
         }
     }
 
     return true;
 }
 
-static int cls_version_inc(cls_method_context_t hctx, bufferlist * in,
-                           bufferlist * out)
+static int cls_version_inc(cls_method_context_t hctx, bufferlist *in,
+                           bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_version_inc_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_version_get(): failed to decode entry\n");
         return -EINVAL;
     }
 
     obj_version objv;
     int ret = read_version(hctx, &objv, true);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     if (!check_conds(op.conds, objv)) {
         return -ECANCELED;
@@ -175,29 +187,31 @@ static int cls_version_inc(cls_method_context_t hctx, bufferlist * in,
     objv.inc();
 
     ret = set_version(hctx, &objv);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
-static int cls_version_check(cls_method_context_t hctx, bufferlist * in,
-                             bufferlist * out)
+static int cls_version_check(cls_method_context_t hctx, bufferlist *in,
+                             bufferlist *out)
 {
     auto in_iter = in->cbegin();
 
     cls_version_check_op op;
     try {
         decode(op, in_iter);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         CLS_LOG(1, "ERROR: cls_version_get(): failed to decode entry\n");
         return -EINVAL;
     }
 
     obj_version objv;
     int ret = read_version(hctx, &objv, false);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     if (!check_conds(op.conds, objv)) {
         CLS_LOG(20, "cls_version: failed condition check");
@@ -207,15 +221,16 @@ static int cls_version_check(cls_method_context_t hctx, bufferlist * in,
     return 0;
 }
 
-static int cls_version_read(cls_method_context_t hctx, bufferlist * in,
-                            bufferlist * out)
+static int cls_version_read(cls_method_context_t hctx, bufferlist *in,
+                            bufferlist *out)
 {
     obj_version objv;
 
     cls_version_read_ret read_ret;
     int ret = read_version(hctx, &read_ret.objv, false);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     encode(read_ret, *out);
 

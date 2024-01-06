@@ -23,10 +23,10 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-int ErasureCodePluginClay::factory(const std::string & directory,
-                                   ceph::ErasureCodeProfile & profile,
-                                   ceph::ErasureCodeInterfaceRef * erasure_code,
-                                   std::ostream * ss)
+int ErasureCodePluginClay::factory(const std::string &directory,
+                                   ceph::ErasureCodeProfile &profile,
+                                   ceph::ErasureCodeInterfaceRef *erasure_code,
+                                   std::ostream *ss)
 {
     auto interface = std::make_unique < ErasureCodeClay > (directory);
     if (int r = interface->init(profile, ss); r) {
@@ -43,6 +43,6 @@ const char *__erasure_code_version()
 
 int __erasure_code_init(char *plugin_name, char *directory)
 {
-    auto & instance = ceph::ErasureCodePluginRegistry::instance();
+    auto &instance = ceph::ErasureCodePluginRegistry::instance();
     return instance.add(plugin_name, new ErasureCodePluginClay());
 }

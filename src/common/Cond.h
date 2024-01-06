@@ -25,15 +25,18 @@
  * Generic context to signal a cond and store the return value.  We
  * assume the caller is holding the appropriate lock.
  */
-class C_Cond:public Context {
-    ceph::condition_variable & cond;    ///< Cond to signal
+class C_Cond: public Context
+{
+    ceph::condition_variable &cond;     ///< Cond to signal
     bool *done;                 ///< true if finish() has been called
     int *rval;                  ///< return value
-  public:
-     C_Cond(ceph::condition_variable & c, bool * d, int *r):cond(c), done(d),
-        rval(r) {
+public:
+    C_Cond(ceph::condition_variable &c, bool *d, int *r): cond(c), done(d),
+        rval(r)
+    {
         *done = false;
-    } void finish(int r) override {
+    } void finish(int r) override
+    {
         *done = true;
         *rval = r;
         cond.notify_all();
@@ -47,21 +50,25 @@ class C_Cond:public Context {
  * lock in the finish() callback, so the finish() caller must not
  * already hold it.
  */
-class C_SafeCond:public Context {
-    ceph::mutex & lock;         ///< Mutex to take
-    ceph::condition_variable & cond;    ///< Cond to signal
+class C_SafeCond: public Context
+{
+    ceph::mutex &lock;          ///< Mutex to take
+    ceph::condition_variable &cond;     ///< Cond to signal
     bool *done;                 ///< true after finish() has been called
     int *rval;                  ///< return value (optional)
-  public:
-     C_SafeCond(ceph::mutex & l, ceph::condition_variable & c, bool * d,
-                int *r = 0)
-  :    lock(l), cond(c), done(d), rval(r) {
+public:
+    C_SafeCond(ceph::mutex &l, ceph::condition_variable &c, bool *d,
+               int *r = 0)
+        :    lock(l), cond(c), done(d), rval(r)
+    {
         *done = false;
-    } void finish(int r) override {
+    } void finish(int r) override
+    {
         std::lock_guard l {
-        lock};
-        if (rval)
+            lock};
+        if (rval) {
             *rval = r;
+        }
         *done = true;
         cond.notify_all();
     }
@@ -73,22 +80,27 @@ class C_SafeCond:public Context {
  * The context will not be deleted as part of complete and must live
  * until wait() returns.
  */
-class C_SaferCond:public Context {
+class C_SaferCond: public Context
+{
     ceph::mutex lock;           ///< Mutex to take
     ceph::condition_variable cond;  ///< Cond to signal
     bool done = false;          ///< true after finish() has been called
     int rval = 0;               ///< return value
-  public:
-     C_SaferCond(): C_SaferCond("C_SaferCond") {
-    } explicit C_SaferCond(const std::string & name)
-    :lock(ceph::make_mutex(name)) {
+public:
+    C_SaferCond(): C_SaferCond("C_SaferCond")
+    {
+    } explicit C_SaferCond(const std::string &name)
+        : lock(ceph::make_mutex(name))
+    {
     }
-    void finish(int r) override {
+    void finish(int r) override
+    {
         complete(r);
     }
 
     /// We overload complete in order to not delete the context
-    void complete(int r) override {
+    void complete(int r) override
+    {
         std::lock_guard l(lock);
         done = true;
         rval = r;
@@ -96,33 +108,36 @@ class C_SaferCond:public Context {
     }
 
     /// Returns rval once the Context is called
-    int wait() {
+    int wait()
+    {
         std::unique_lock l {
-        lock};
-        cond.wait(l,[this] {
-                  return done;
-                  }
-        );
+            lock};
+        cond.wait(l, [this] {
+            return done;
+        }
+                 );
         return rval;
     }
 
     /// Wait until the \c secs expires or \c complete() is called
-    int wait_for(double secs) {
+    int wait_for(double secs)
+    {
         return wait_for(ceph::make_timespan(secs));
     }
 
-    int wait_for(ceph::timespan secs) {
+    int wait_for(ceph::timespan secs)
+    {
         std::unique_lock l {
-        lock};
+            lock};
         if (done) {
             return rval;
         }
-        if (cond.wait_for(l, secs,[this] {
-                          return done;}
-            )) {
+        if (cond.wait_for(l, secs, [this] {
+        return done;
+    }
+                     )) {
             return rval;
-        }
-        else {
+        } else {
             return ETIMEDOUT;
         }
     }

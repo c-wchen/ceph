@@ -18,20 +18,21 @@
 
 using namespace librados;
 
-std::string create_one_pool_pp(const std::string & pool_name, Rados & cluster)
+std::string create_one_pool_pp(const std::string &pool_name, Rados &cluster)
 {
     return create_one_pool_pp(pool_name, cluster, {
-                              }
-    );
+    }
+                             );
 }
 
-std::string create_one_pool_pp(const std::string & pool_name, Rados & cluster,
+std::string create_one_pool_pp(const std::string &pool_name, Rados &cluster,
                                const std::map < std::string,
                                std::string > &config)
 {
     std::string err = connect_cluster_pp(cluster, config);
-    if (err.length())
+    if (err.length()) {
         return err;
+    }
     int ret = cluster.pool_create(pool_name.c_str());
     if (ret) {
         cluster.shutdown();
@@ -54,8 +55,8 @@ std::string create_one_pool_pp(const std::string & pool_name, Rados & cluster,
     return "";
 }
 
-int destroy_rule_pp(Rados & cluster,
-                    const std::string & rule, std::ostream & oss)
+int destroy_rule_pp(Rados &cluster,
+                    const std::string &rule, std::ostream &oss)
 {
     bufferlist inbl;
     int ret =
@@ -67,8 +68,8 @@ int destroy_rule_pp(Rados & cluster,
     return ret;
 }
 
-int destroy_ec_profile_pp(Rados & cluster, const std::string & pool_name,
-                          std::ostream & oss)
+int destroy_ec_profile_pp(Rados &cluster, const std::string &pool_name,
+                          std::ostream &oss)
 {
     bufferlist inbl;
     int ret =
@@ -83,22 +84,24 @@ int destroy_ec_profile_pp(Rados & cluster, const std::string & pool_name,
     return ret;
 }
 
-int destroy_ec_profile_and_rule_pp(Rados & cluster,
-                                   const std::string & rule, std::ostream & oss)
+int destroy_ec_profile_and_rule_pp(Rados &cluster,
+                                   const std::string &rule, std::ostream &oss)
 {
     int ret;
     ret = destroy_ec_profile_pp(cluster, rule, oss);
-    if (ret)
+    if (ret) {
         return ret;
+    }
     return destroy_rule_pp(cluster, rule, oss);
 }
 
-std::string create_one_ec_pool_pp(const std::string & pool_name,
-                                  Rados & cluster)
+std::string create_one_ec_pool_pp(const std::string &pool_name,
+                                  Rados &cluster)
 {
     std::string err = connect_cluster_pp(cluster);
-    if (err.length())
+    if (err.length()) {
         return err;
+    }
 
     std::ostringstream oss;
     int ret = destroy_ec_profile_and_rule_pp(cluster, pool_name, oss);
@@ -140,20 +143,21 @@ std::string create_one_ec_pool_pp(const std::string & pool_name,
     return "";
 }
 
-std::string connect_cluster_pp(librados::Rados & cluster)
+std::string connect_cluster_pp(librados::Rados &cluster)
 {
     return connect_cluster_pp(cluster, {
-                              }
-    );
+    }
+                             );
 }
 
-std::string connect_cluster_pp(librados::Rados & cluster,
+std::string connect_cluster_pp(librados::Rados &cluster,
                                const std::map < std::string,
                                std::string > &config)
 {
     char *id = getenv("CEPH_CLIENT_ID");
-    if (id)
+    if (id) {
         std::cerr << "Client id is: " << id << std::endl;
+    }
 
     int ret;
     ret = cluster.init(id);
@@ -171,7 +175,7 @@ std::string connect_cluster_pp(librados::Rados & cluster,
     }
     cluster.conf_parse_env(NULL);
 
-  for (auto & setting:config) {
+    for (auto &setting : config) {
         ret = cluster.conf_set(setting.first.c_str(), setting.second.c_str());
         if (ret) {
             std::ostringstream oss;
@@ -191,7 +195,7 @@ std::string connect_cluster_pp(librados::Rados & cluster,
     return "";
 }
 
-int destroy_one_pool_pp(const std::string & pool_name, Rados & cluster)
+int destroy_one_pool_pp(const std::string &pool_name, Rados &cluster)
 {
     int ret = cluster.pool_delete(pool_name.c_str());
     if (ret) {
@@ -202,7 +206,7 @@ int destroy_one_pool_pp(const std::string & pool_name, Rados & cluster)
     return 0;
 }
 
-int destroy_one_ec_pool_pp(const std::string & pool_name, Rados & cluster)
+int destroy_one_ec_pool_pp(const std::string &pool_name, Rados &cluster)
 {
     int ret = cluster.pool_delete(pool_name.c_str());
     if (ret) {

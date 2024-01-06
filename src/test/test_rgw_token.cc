@@ -27,33 +27,34 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-namespace {
+namespace
+{
 
-    using namespace rgw;
-    using std::get;
-    using std::string;
+using namespace rgw;
+using std::get;
+using std::string;
 
-    string access_key {
+string access_key {
     "Smonny"};
-    string secret_key {
+string secret_key {
     "Turjan of Miir"};
 
-    std::vector < RGWToken > tokens;
+std::vector < RGWToken > tokens;
 
-    std::string enc_ad {
+std::string enc_ad {
     "ewogICAgIlJHV19UT0tFTiI6IHsKICAgICAgICAidmVyc2lvbiI6IDEsCiAgICAgICAgInR5cGUiOiAiYWQiLAogICAgICAgICJpZCI6ICJTbW9ubnkiLAogICAgICAgICJrZXkiOiAiVHVyamFuIG9mIE1paXIiCiAgICB9Cn0K"};
 
-    std::string enc_ldap {
+std::string enc_ldap {
     "ewogICAgIlJHV19UT0tFTiI6IHsKICAgICAgICAidmVyc2lvbiI6IDEsCiAgICAgICAgInR5cGUiOiAibGRhcCIsCiAgICAgICAgImlkIjogIlNtb25ueSIsCiAgICAgICAgImtleSI6ICJUdXJqYW4gb2YgTWlpciIKICAgIH0KfQo="};
 
-    std::string non_base64 {
+std::string non_base64 {
     "stuff here"};
-    std::string non_base64_sploded {
+std::string non_base64_sploded {
     "90KLscc0Dz4U49HX-7Tx"};
 
-    Formatter *token_formatter {
+Formatter *token_formatter {
     nullptr};
-    bool verbose {
+bool verbose {
     false};
 }
 
@@ -61,7 +62,7 @@ using namespace std;
 
 TEST(TOKEN, INIT)
 {
-    token_formatter = new JSONFormatter(true /* pretty */ );
+    token_formatter = new JSONFormatter(true /* pretty */);
     ASSERT_NE(token_formatter, nullptr);
 }
 
@@ -79,10 +80,11 @@ TEST(TOKEN, ENCODE)
 
 TEST(TOKEN, DECODE)
 {
-  for (const auto & enc_tok:{
-         enc_ad, enc_ldap}) {
+    for (const auto &enc_tok : {
+             enc_ad, enc_ldap
+         }) {
         RGWToken token {
-        from_base64(enc_tok)};  // decode ctor
+            from_base64(enc_tok)};  // decode ctor
         ASSERT_EQ(token.id, access_key);
         ASSERT_EQ(token.key, secret_key);
     }
@@ -91,23 +93,23 @@ TEST(TOKEN, DECODE)
 TEST(TOKEN, EMPTY)
 {
     std::string empty {
-    ""};
+        ""};
     RGWToken token {
-    from_base64(empty)};        // decode ctor
+        from_base64(empty)};        // decode ctor
     ASSERT_FALSE(token.valid());
 }
 
 TEST(TOKEN, BADINPUT)
 {
     RGWToken token {
-    from_base64(non_base64)};   // decode ctor
+        from_base64(non_base64)};   // decode ctor
     ASSERT_FALSE(token.valid());
 }
 
 TEST(TOKEN, BADINPUT2)
 {
     RGWToken token {
-    from_base64(non_base64_sploded)};   // decode ctor
+        from_base64(non_base64_sploded)};   // decode ctor
     ASSERT_FALSE(token.valid());
 }
 
@@ -115,7 +117,7 @@ TEST(TOKEN, BADINPUT3)
 {
     try {
         std::string stuff = from_base64(non_base64_sploded);    // decode
-    } catch( ...) {
+    } catch (...) {
         // do nothing
     }
     ASSERT_EQ(1, 1);
@@ -135,8 +137,7 @@ int main(int argc, char *argv[])
     for (auto arg_iter = args.begin(); arg_iter != args.end();) {
         if (ceph_argparse_flag(args, arg_iter, "--verbose", (char *)nullptr)) {
             verbose = true;
-        }
-        else {
+        } else {
             ++arg_iter;
         }
     }

@@ -12,11 +12,13 @@
 
 template <> struct fmt::formatter < seastar::lowres_system_clock::time_point > {
     // ignore the format string
-    template < typename ParseContext > constexpr auto parse(ParseContext & ctx) {
+    template < typename ParseContext > constexpr auto parse(ParseContext &ctx)
+    {
         return ctx.begin();
     } template < typename FormatContext >
-        auto format(const seastar::lowres_system_clock::time_point & t,
-                    FormatContext & ctx) {
+    auto format(const seastar::lowres_system_clock::time_point &t,
+                FormatContext &ctx)
+    {
         std::time_t tt =
             std::chrono::duration_cast < std::chrono::seconds >
             (t.time_since_epoch()).count();
@@ -27,9 +29,12 @@ template <> struct fmt::formatter < seastar::lowres_system_clock::time_point > {
     }
 };
 
-namespace std {
+namespace std
+{
 
-    ostream & operator<<(ostream & out,
-                         const seastar::lowres_system_clock::time_point & t) {
-        return out << fmt::format("{}", t);
-}}
+ostream &operator<<(ostream &out,
+                    const seastar::lowres_system_clock::time_point &t)
+{
+    return out << fmt::format("{}", t);
+}
+}

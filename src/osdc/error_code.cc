@@ -24,14 +24,16 @@ namespace bs = boost::system;
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-class osdc_error_category:public ceph::converting_category {
-  public:
-    osdc_error_category() {
+class osdc_error_category: public ceph::converting_category
+{
+public:
+    osdc_error_category()
+    {
     } const char *name() const noexcept override;
     const char *message(int ev, char *, std::size_t) const noexcept override;
     std::string message(int ev) const override;
     bs::error_condition default_error_condition(int ev) const noexcept override;
-    bool equivalent(int ev, const bs::error_condition & c) const
+    bool equivalent(int ev, const bs::error_condition &c) const
     noexcept override;
     using ceph::converting_category::equivalent;
     int from_code(int ev) const noexcept override;
@@ -46,76 +48,75 @@ const char *osdc_error_category::name() const const noexcept
 }
 
 const char *osdc_error_category::message(int ev, char *,
-                                         std::size_t) const const noexcept
+        std::size_t) const const noexcept
 {
-    if (ev == 0)
+    if (ev == 0) {
         return "No error";
+    }
 
-    switch (static_cast < osdc_errc > (ev)) {
-    case osdc_errc::pool_dne:
-        return "Pool does not exist";
+    switch (static_cast < osdc_errc >(ev)) {
+        case osdc_errc::pool_dne:
+            return "Pool does not exist";
 
-    case osdc_errc::pool_exists:
-        return "Pool already exists";
+        case osdc_errc::pool_exists:
+            return "Pool already exists";
 
-    case osdc_errc::precondition_violated:
-        return "Precondition for operation not satisfied";
+        case osdc_errc::precondition_violated:
+            return "Precondition for operation not satisfied";
 
-    case osdc_errc::not_supported:
-        return "Operation not supported";
+        case osdc_errc::not_supported:
+            return "Operation not supported";
 
-    case osdc_errc::snapshot_exists:
-        return "Snapshot already exists";
+        case osdc_errc::snapshot_exists:
+            return "Snapshot already exists";
 
-    case osdc_errc::snapshot_dne:
-        return "Snapshot does not exist";
+        case osdc_errc::snapshot_dne:
+            return "Snapshot does not exist";
 
-    case osdc_errc::timed_out:
-        return "Operation timed out";
+        case osdc_errc::timed_out:
+            return "Operation timed out";
 
-    case osdc_errc::pool_eio:
-        return "Pool EIO flag set";
+        case osdc_errc::pool_eio:
+            return "Pool EIO flag set";
     }
 
     return "Unknown error";
 }
 
-std::string osdc_error_category::message(int ev) constconst
-{
+std::string osdc_error_category::message(int ev) constconst {
     return message(ev, nullptr, 0);
 }
 
-bs::error_condition
-    osdc_error_category::default_error_condition(int ev) constconst noexcept
-{
-    switch (static_cast < osdc_errc > (ev)) {
-    case osdc_errc::pool_dne:
-        return ceph::errc::does_not_exist;
-    case osdc_errc::pool_exists:
-        return ceph::errc::exists;
-    case osdc_errc::precondition_violated:
-        return bs::errc::invalid_argument;
-    case osdc_errc::not_supported:
-        return bs::errc::operation_not_supported;
-    case osdc_errc::snapshot_exists:
-        return ceph::errc::exists;
-    case osdc_errc::snapshot_dne:
-        return ceph::errc::does_not_exist;
-    case osdc_errc::timed_out:
-        return bs::errc::timed_out;
-    case osdc_errc::pool_eio:
-        return bs::errc::io_error;
+bs::error_condition osdc_error_category::default_error_condition(int ev) constconst noexcept {
+    switch (static_cast < osdc_errc >(ev))
+    {
+        case osdc_errc::pool_dne:
+            return ceph::errc::does_not_exist;
+        case osdc_errc::pool_exists:
+            return ceph::errc::exists;
+        case osdc_errc::precondition_violated:
+            return bs::errc::invalid_argument;
+        case osdc_errc::not_supported:
+            return bs::errc::operation_not_supported;
+        case osdc_errc::snapshot_exists:
+            return ceph::errc::exists;
+        case osdc_errc::snapshot_dne:
+            return ceph::errc::does_not_exist;
+        case osdc_errc::timed_out:
+            return bs::errc::timed_out;
+        case osdc_errc::pool_eio:
+            return bs::errc::io_error;
     }
 
     return {
-    ev, *this};
+        ev, *this};
 }
 
 bool osdc_error_category::equivalent(int ev,
                                      const bs::
-                                     error_condition & c) constconst noexcept
-{
-    if (static_cast < osdc_errc > (ev) == osdc_errc::pool_dne) {
+                                     error_condition &c) constconst noexcept {
+    if (static_cast < osdc_errc >(ev) == osdc_errc::pool_dne)
+    {
         if (c == bs::errc::no_such_file_or_directory) {
             return true;
         }
@@ -123,17 +124,20 @@ bool osdc_error_category::equivalent(int ev,
             return true;
         }
     }
-    if (static_cast < osdc_errc > (ev) == osdc_errc::pool_exists) {
+    if (static_cast < osdc_errc >(ev) == osdc_errc::pool_exists)
+    {
         if (c == bs::errc::file_exists) {
             return true;
         }
     }
-    if (static_cast < osdc_errc > (ev) == osdc_errc::snapshot_exists) {
+    if (static_cast < osdc_errc >(ev) == osdc_errc::snapshot_exists)
+    {
         if (c == bs::errc::file_exists) {
             return true;
         }
     }
-    if (static_cast < osdc_errc > (ev) == osdc_errc::snapshot_dne) {
+    if (static_cast < osdc_errc >(ev) == osdc_errc::snapshot_dne)
+    {
         if (c == bs::errc::no_such_file_or_directory) {
             return true;
         }
@@ -147,28 +151,28 @@ bool osdc_error_category::equivalent(int ev,
 
 int osdc_error_category::from_code(int ev) const const noexcept
 {
-    switch (static_cast < osdc_errc > (ev)) {
-    case osdc_errc::pool_dne:
-        return -ENOENT;
-    case osdc_errc::pool_exists:
-        return -EEXIST;
-    case osdc_errc::precondition_violated:
-        return -EINVAL;
-    case osdc_errc::not_supported:
-        return -EOPNOTSUPP;
-    case osdc_errc::snapshot_exists:
-        return -EEXIST;
-    case osdc_errc::snapshot_dne:
-        return -ENOENT;
-    case osdc_errc::timed_out:
-        return -ETIMEDOUT;
-    case osdc_errc::pool_eio:
-        return -EIO;
+    switch (static_cast < osdc_errc >(ev)) {
+        case osdc_errc::pool_dne:
+            return -ENOENT;
+        case osdc_errc::pool_exists:
+            return -EEXIST;
+        case osdc_errc::precondition_violated:
+            return -EINVAL;
+        case osdc_errc::not_supported:
+            return -EOPNOTSUPP;
+        case osdc_errc::snapshot_exists:
+            return -EEXIST;
+        case osdc_errc::snapshot_dne:
+            return -ENOENT;
+        case osdc_errc::timed_out:
+            return -ETIMEDOUT;
+        case osdc_errc::pool_eio:
+            return -EIO;
     }
     return -EDOM;
 }
 
-const bs::error_category & osdc_category() noexcept
+const bs::error_category &osdc_category() noexcept
 {
     static const osdc_error_category c;
     return c;

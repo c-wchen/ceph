@@ -17,7 +17,7 @@
 #include "errno.h"
 
 #ifndef _WIN32
-void dump_open_fds(CephContext * cct)
+void dump_open_fds(CephContext *cct)
 {
 #ifdef __APPLE__
     const char *fn = "/dev/fd";
@@ -33,8 +33,9 @@ void dump_open_fds(CephContext * cct)
 
     int n = 0;
     while ((de =::readdir(d))) {
-        if (de->d_name[0] == '.')
+        if (de->d_name[0] == '.') {
             continue;
+        }
         char path[PATH_MAX];
         snprintf(path, sizeof(path), "%s/%s", fn, de->d_name);
         char target[PATH_MAX];
@@ -42,12 +43,12 @@ void dump_open_fds(CephContext * cct)
         if (r < 0) {
             r = -errno;
             lderr(cct) << "dump_open_fds unable to readlink " << path << ": " <<
-                cpp_strerror(r) << dendl;
+                       cpp_strerror(r) << dendl;
             continue;
         }
         target[r] = 0;
         lderr(cct) << "dump_open_fds " << de->
-            d_name << " -> " << target << dendl;
+                   d_name << " -> " << target << dendl;
         n++;
     }
     lderr(cct) << "dump_open_fds dumped " << n << " open files" << dendl;
@@ -55,7 +56,7 @@ void dump_open_fds(CephContext * cct)
     closedir(d);
 }
 #else
-void dump_open_fds(CephContext * cct)
+void dump_open_fds(CephContext *cct)
 {
 }
 #endif

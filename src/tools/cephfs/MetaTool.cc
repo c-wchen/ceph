@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 #include <string.h>
 #include <map>
@@ -38,7 +38,7 @@ using namespace std;
 
 void MetaTool::meta_op::release()
 {
-  for (const auto & i:inodes) {
+    for (const auto &i : inodes) {
         delete i.second;
     }
 
@@ -48,15 +48,16 @@ void MetaTool::meta_op::release()
     }
 }
 
-void MetaTool::inode_meta_t::decode_json(JSONObj * obj)
+void MetaTool::inode_meta_t::decode_json(JSONObj *obj)
 {
     unsigned long long tmp;
     JSONDecoder::decode_json("snapid_t", tmp, obj, true);
     _f.val = tmp;
     JSONDecoder::decode_json("itype", tmp, obj, true);
     _t = tmp;
-    if (NULL == _i)
+    if (NULL == _i) {
         _i = new InodeStore;
+    }
     JSONDecoder::decode_json("store", *_i, obj, true);
 }
 
@@ -65,10 +66,10 @@ void MetaTool::usage()
     generic_client_usage();
 }
 
-int MetaTool::main(string & mode,
-                   string & rank_str,
-                   string & minfo,
-                   string & ino, string & out, string & in, bool confirm)
+int MetaTool::main(string &mode,
+                   string &rank_str,
+                   string &minfo,
+                   string &ino, string &out, string &in, bool confirm)
 {
     int r = 0;
 
@@ -83,15 +84,15 @@ int MetaTool::main(string & mode,
         manual_data_pool = v.size() >= 2 ? v[1] : "";
         manual_rank_num = v.size() >= 3 ? v[2] : "";
         std::cout << "(" << minfo << ")=>"
-            << " mpool: " << manual_meta_pool
-            << " dpool: " << manual_data_pool
-            << " rank: " << manual_rank_num << std::endl;
+                  << " mpool: " << manual_meta_pool
+                  << " dpool: " << manual_data_pool
+                  << " rank: " << manual_rank_num << std::endl;
         if (!manual_meta_pool.empty() && !manual_data_pool.empty()
             && !manual_rank_num.empty()) {
             std::
-                cout << "you specify rank: " << manual_rank_num << " mpool: " <<
-                manual_meta_pool << " dpool: " << manual_data_pool <<
-                "\nstart manual mode!!" << std::endl;
+            cout << "you specify rank: " << manual_rank_num << " mpool: " <<
+                 manual_meta_pool << " dpool: " << manual_data_pool <<
+                 "\nstart manual mode!!" << std::endl;
             manual_mode = true;
         }
     }
@@ -103,8 +104,9 @@ int MetaTool::main(string & mode,
         return r;
     }
 
-    if (_debug)
+    if (_debug) {
         cout << "MetaTool: connecting to RADOS..." << std::endl;
+    }
     r = rados.connect();
     if (r < 0) {
         cerr << "couldn't connect to cluster: " << cpp_strerror(r) << std::endl;
@@ -124,11 +126,11 @@ int MetaTool::main(string & mode,
         // prepare io for meta pool
         int64_t const pool_id = fs->mds_map.get_metadata_pool();
         features = fs->mds_map.get_up_features();
-        if (features == 0)
+        if (features == 0) {
             features = CEPH_FEATURES_SUPPORTED_DEFAULT;
-        else if (features != CEPH_FEATURES_SUPPORTED_DEFAULT) {
+        } else if (features != CEPH_FEATURES_SUPPORTED_DEFAULT) {
             cout << "I think we need to check the feature! : " << features <<
-                std::endl;
+                 std::endl;
             return -1;
         }
 
@@ -136,45 +138,45 @@ int MetaTool::main(string & mode,
         r = rados.pool_reverse_lookup(pool_id, &pool_name);
         if (r < 0) {
             cerr << "Pool " << pool_id <<
-                " named in MDS map not found in RADOS!" << std::endl;
+                 " named in MDS map not found in RADOS!" << std::endl;
             return r;
         }
 
-        if (_debug)
+        if (_debug) {
             cout << "MetaTool: creating IoCtx.." << std::endl;
+        }
         r = rados.ioctx_create(pool_name.c_str(), io_meta);
         assert(r == 0);
         output.dup(io_meta);
 
         // prepare io for data pool
-      for (const auto p:fs->mds_map.get_data_pools()) {
+        for (const auto p : fs->mds_map.get_data_pools()) {
             r = rados.pool_reverse_lookup(p, &pool_name);
             if (r < 0) {
                 cerr << "Pool " << pool_id <<
-                    " named in MDS map not found in RADOS!" << std::endl;
+                     " named in MDS map not found in RADOS!" << std::endl;
                 return r;
             }
-            librados::IoCtx * io_data = new librados::IoCtx;
+            librados::IoCtx *io_data = new librados::IoCtx;
             r = rados.ioctx_create(pool_name.c_str(), *io_data);
             assert(r == 0);
             io_data_v.push_back(io_data);
         }
 
-      for (auto role:role_selector.get_roles()) {
+        for (auto role : role_selector.get_roles()) {
             rank = role.rank;
 
             r = process(mode, ino, out, in, confirm);
             cout << "executing for rank " << rank << " op[" << mode <<
-                "] ret : " << r << std::endl;
+                 "] ret : " << r << std::endl;
         }
 
-    }
-    else {
+    } else {
         features = CEPH_FEATURES_SUPPORTED_DEFAULT;
         r = rados.ioctx_create(manual_meta_pool.c_str(), io_meta);
         assert(r == 0);
 
-        librados::IoCtx * io_data = new librados::IoCtx;
+        librados::IoCtx *io_data = new librados::IoCtx;
         r = rados.ioctx_create(manual_data_pool.c_str(), *io_data);
         assert(r == 0);
         io_data_v.push_back(io_data);
@@ -186,52 +188,46 @@ int MetaTool::main(string & mode,
     return r;
 }
 
-int MetaTool::process(string & mode, string & ino, string out, string in,
+int MetaTool::process(string &mode, string &ino, string out, string in,
                       bool confirm)
 {
     if (mode == "showm") {
         return show_meta_info(ino, out);
-    }
-    else if (mode == "showfn") {
+    } else if (mode == "showfn") {
         return show_fnode(ino, out);
-    }
-    else if (mode == "listc") {
+    } else if (mode == "listc") {
         return list_meta_info(ino, out);
-    }
-    else if (mode == "amend") {
+    } else if (mode == "amend") {
         return amend_meta_info(ino, in, confirm);
-    }
-    else if (mode == "amendfn") {
+    } else if (mode == "amendfn") {
         return amend_fnode(in, confirm);
-    }
-    else {
+    } else {
         cerr << "bad command '" << mode << "'" << std::endl;
         return -EINVAL;
     }
 }
 
-int MetaTool::show_fnode(string & ino, string & out)
+int MetaTool::show_fnode(string &ino, string &out)
 {
     if (ino != "0") {
         inodeno_t i_ino = std::stoull(ino.c_str(), nullptr, 0);
         meta_op op(_debug, out);
-        meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+        meta_op::sub_op *nsop = new meta_op::sub_op(&op);
         nsop->sub_op_t = meta_op::OP_SHOW_FN;
         nsop->sub_ino_t = meta_op::INO_DIR;
         nsop->ino = i_ino;
         op.push_op(nsop);
         return op_process(op);
-    }
-    else {
+    } else {
         cerr << "parameter error? : ino = " << ino << std::endl;
     }
     return 0;
 }
 
-int MetaTool::amend_fnode(string & in, bool confirm)
+int MetaTool::amend_fnode(string &in, bool confirm)
 {
     meta_op op(_debug, "", in, confirm);
-    meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+    meta_op::sub_op *nsop = new meta_op::sub_op(&op);
     nsop->sub_op_t = meta_op::OP_AMEND_FN;
     nsop->sub_ino_t = meta_op::INO_DIR;
     nsop->ino = 0;
@@ -239,133 +235,131 @@ int MetaTool::amend_fnode(string & in, bool confirm)
     return op_process(op);
 }
 
-int MetaTool::amend_meta_info(string & ino, string & in, bool confirm)
+int MetaTool::amend_meta_info(string &ino, string &in, bool confirm)
 {
     if (ino != "0" && in != "") {
         inodeno_t i_ino = std::stoull(ino.c_str(), nullptr, 0);
         meta_op op(_debug, "", in, confirm);
-        meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+        meta_op::sub_op *nsop = new meta_op::sub_op(&op);
         nsop->sub_op_t = meta_op::OP_AMEND;
         nsop->sub_ino_t = meta_op::INO_DIR;
         nsop->ino = i_ino;
         op.push_op(nsop);
         return op_process(op);
-    }
-    else {
+    } else {
         cerr << "parameter error? : ino = " << ino << std::endl;
     }
     return 0;
 }
 
-int MetaTool::list_meta_info(string & ino, string & out)
+int MetaTool::list_meta_info(string &ino, string &out)
 {
     if (ino != "0") {
         inodeno_t i_ino = std::stoull(ino.c_str(), nullptr, 0);
         meta_op op(_debug, out);
-        meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+        meta_op::sub_op *nsop = new meta_op::sub_op(&op);
         nsop->sub_op_t = meta_op::OP_LIST;
         nsop->sub_ino_t = meta_op::INO_DIR;
         nsop->ino = i_ino;
         op.push_op(nsop);
         return op_process(op);
-    }
-    else {
+    } else {
         cerr << "parameter error? : ino = " << ino << std::endl;
     }
     return 0;
 }
 
-int MetaTool::show_meta_info(string & ino, string & out)
+int MetaTool::show_meta_info(string &ino, string &out)
 {
     if (ino != "0") {
         inodeno_t i_ino = std::stoull(ino.c_str(), nullptr, 0);
         meta_op op(_debug, out);
 
-        meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+        meta_op::sub_op *nsop = new meta_op::sub_op(&op);
         nsop->sub_op_t = meta_op::OP_SHOW;
         nsop->sub_ino_t = meta_op::INO_DIR;
         nsop->ino = i_ino;
         op.push_op(nsop);
         return op_process(op);
-    }
-    else {
+    } else {
         cerr << "parameter error? : ino = " << ino << std::endl;
     }
     return 0;
 }
 
-int MetaTool::op_process(meta_op & op)
+int MetaTool::op_process(meta_op &op)
 {
     int r = 0;
     while (!op.no_sops()) {
-        if (_debug)
+        if (_debug) {
             std::cout << "process : " << op.top_op()->detail() << std::endl;
-        switch (op.top_op()->sub_op_t) {
-        case meta_op::OP_LIST:
-            r = list_meta(op);
-            break;
-        case meta_op::OP_LTRACE:
-            r = file_meta(op);
-            break;
-        case meta_op::OP_SHOW:
-            r = show_meta(op);
-            break;
-        case meta_op::OP_AMEND:
-            r = amend_meta(op);
-            break;
-        case meta_op::OP_SHOW_FN:
-            r = show_fn(op);
-            break;
-        case meta_op::OP_AMEND_FN:
-            r = amend_fn(op);
-            break;
-        default:
-            cerr << "unknow op" << std::endl;
         }
-        if (r == 0)
+        switch (op.top_op()->sub_op_t) {
+            case meta_op::OP_LIST:
+                r = list_meta(op);
+                break;
+            case meta_op::OP_LTRACE:
+                r = file_meta(op);
+                break;
+            case meta_op::OP_SHOW:
+                r = show_meta(op);
+                break;
+            case meta_op::OP_AMEND:
+                r = amend_meta(op);
+                break;
+            case meta_op::OP_SHOW_FN:
+                r = show_fn(op);
+                break;
+            case meta_op::OP_AMEND_FN:
+                r = amend_fn(op);
+                break;
+            default:
+                cerr << "unknow op" << std::endl;
+        }
+        if (r == 0) {
             op.pop_op();
-        else if (r < 0)
+        } else if (r < 0) {
             op.clear_sops();
+        }
     }
     op.release();
     return r;
 }
 
-int MetaTool::amend_meta(meta_op & op)
+int MetaTool::amend_meta(meta_op &op)
 {
-    meta_op::sub_op * sop = op.top_op();
+    meta_op::sub_op *sop = op.top_op();
     auto item = op.inodes.find(sop->ino);
     auto item_k = op.okeys.find(sop->ino);
     if (item != op.inodes.end() && item_k != op.okeys.end()) {
-        if (_amend_meta(item_k->second, *(item->second), op.infile(), op) < 0)
+        if (_amend_meta(item_k->second, *(item->second), op.infile(), op) < 0) {
             return -1;
-    }
-    else {
+        }
+    } else {
         if (op.inodes.empty()) {
-            meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+            meta_op::sub_op *nsop = new meta_op::sub_op(&op);
             nsop->sub_op_t = meta_op::OP_LIST;
             nsop->sub_ino_t = meta_op::INO_DIR;
             nsop->trace_level = 0;
             nsop->ino_c = sop->ino;
             op.push_op(nsop);
             return 1;
-        }
-        else {
+        } else {
             return -1;
         }
     }
     return 0;
 }
 
-void MetaTool::inode_meta_t::encode(::ceph::bufferlist & bl, uint64_t features)
+void MetaTool::inode_meta_t::encode(::ceph::bufferlist &bl, uint64_t features)
 {
     ::encode(_f, bl);
     ::encode(_t, bl);
     _i->encode_bare(bl, features);
 }
 
-int MetaTool::_amend_meta(string & k, inode_meta_t & inode_meta,
-                          const string & fn, meta_op & op)
+int MetaTool::_amend_meta(string &k, inode_meta_t &inode_meta,
+                          const string &fn, meta_op &op)
 {
     JSONParser parser;
     if (!parser.parse(fn.c_str())) {
@@ -375,8 +369,7 @@ int MetaTool::_amend_meta(string & k, inode_meta_t & inode_meta,
 
     try {
         inode_meta.decode_json(&parser);
-    }
-    catch(JSONDecoder::err & e) {
+    } catch (JSONDecoder::err &e) {
         cout << "failed to decode JSON input: " << e.what() << std::endl;
         return -1;
     }
@@ -388,11 +381,11 @@ int MetaTool::_amend_meta(string & k, inode_meta_t & inode_meta,
 
     if (!op.confirm_chg()) {
         cout << "warning: this operation is irreversibl!!!\n"
-            <<
-            "         You must confirm that all logs of mds have been flushed!!!\n"
-            <<
-            "         if you want amend it, please add --yes-i-really-really-mean-it!!!"
-            << std::endl;
+             <<
+             "         You must confirm that all logs of mds have been flushed!!!\n"
+             <<
+             "         if you want amend it, please add --yes-i-really-really-mean-it!!!"
+             << std::endl;
         return -1;
     }
 
@@ -401,8 +394,9 @@ int MetaTool::_amend_meta(string & k, inode_meta_t & inode_meta,
     map < string, bufferlist > to_set;
     to_set[k].swap(bl);
     inode_backpointer_t bp;
-    if (!op.top_op()->get_ancestor(bp))
+    if (!op.top_op()->get_ancestor(bp)) {
         return -1;
+    }
     frag_t frag;
     auto item = op.inodes.find(bp.dirino);
     if (item != op.inodes.end()) {
@@ -414,31 +408,31 @@ int MetaTool::_amend_meta(string & k, inode_meta_t & inode_meta,
     return ret;
 }
 
-int MetaTool::show_fn(meta_op & op)
+int MetaTool::show_fn(meta_op &op)
 {
-    meta_op::sub_op * sop = op.top_op();
+    meta_op::sub_op *sop = op.top_op();
     auto item = op.inodes.find(sop->ino);
     if (item != op.inodes.end()) {
-        if (_show_fn(*(item->second), op.outfile()) < 0)
+        if (_show_fn(*(item->second), op.outfile()) < 0) {
             return -1;
-    }
-    else {
+        }
+    } else {
         if (op.inodes.empty()) {
-            meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+            meta_op::sub_op *nsop = new meta_op::sub_op(&op);
             nsop->sub_op_t = meta_op::OP_LIST;
             nsop->sub_ino_t = meta_op::INO_DIR;
             nsop->trace_level = 0;
             nsop->ino_c = sop->ino;
             op.push_op(nsop);
             return 1;
-        }
-        else
+        } else {
             return -1;
+        }
     }
     return 0;
 }
 
-int MetaTool::_show_fn(inode_meta_t & inode_meta, const string & fn)
+int MetaTool::_show_fn(inode_meta_t &inode_meta, const string &fn)
 {
     std::list < frag_t > frags;
     inode_meta.get_meta()->dirfragtree.get_leaves(frags);
@@ -448,13 +442,13 @@ int MetaTool::_show_fn(inode_meta_t & inode_meta, const string & fn)
     Formatter *f = Formatter::create(format);
     f->enable_line_break();
     f->open_object_section("fnodes");
-  for (const auto & frag:frags) {
+    for (const auto &frag : frags) {
         bufferlist hbl;
         string oid = obj_name(inode_meta.get_meta()->inode->ino, frag);
         int ret = io_meta.omap_get_header(oid, &hbl);
         if (ret < 0) {
             std::cerr << __func__ << " : can't find oid(" << oid << ")" << std::
-                endl;
+                      endl;
             return -1;
         }
         {
@@ -462,14 +456,14 @@ int MetaTool::_show_fn(inode_meta_t & inode_meta, const string & fn)
             try {
                 auto p = hbl.cbegin();
                 ::decode(got_fnode, p);
-            }
-            catch(const buffer::error & err) {
+            } catch (const buffer::error &err) {
                 cerr << "corrupt fnode header in " << oid
-                    << ": " << err.what() << std::endl;
+                     << ": " << err.what() << std::endl;
                 return -1;
             }
-            if (!oids.empty())
+            if (!oids.empty()) {
                 oids += ",";
+            }
             oids += oid;
             f->open_object_section(oid.c_str());
             got_fnode.dump(f);
@@ -485,25 +479,25 @@ int MetaTool::_show_fn(inode_meta_t & inode_meta, const string & fn)
         if (o) {
             o << ds.str();
             o.close();
-        }
-        else {
+        } else {
             cout << "out to file (" << fn << ") failed" << std::endl;
             cout << ds.str() << std::endl;
         }
-    }
-    else
+    } else {
         std::cout << ds.str() << std::endl;
+    }
     return 0;
 }
 
-int MetaTool::amend_fn(meta_op & op)
+int MetaTool::amend_fn(meta_op &op)
 {
-    if (_amend_fn(op.infile(), op.confirm_chg()) < 0)
+    if (_amend_fn(op.infile(), op.confirm_chg()) < 0) {
         return -1;
+    }
     return 0;
 }
 
-int MetaTool::_amend_fn(const string & fn, bool confirm)
+int MetaTool::_amend_fn(const string &fn, bool confirm)
 {
     JSONParser parser;
     if (!parser.parse(fn.c_str())) {
@@ -512,11 +506,11 @@ int MetaTool::_amend_fn(const string & fn, bool confirm)
     }
     if (!confirm) {
         cout << "warning: this operation is irreversibl!!!\n"
-            <<
-            "         You must confirm that all logs of mds have been flushed!!!\n"
-            <<
-            "         if you want amend it, please add --yes-i-really-really-mean-it!!!"
-            << std::endl;
+             <<
+             "         You must confirm that all logs of mds have been flushed!!!\n"
+             <<
+             "         if you want amend it, please add --yes-i-really-really-mean-it!!!"
+             << std::endl;
         return -1;
     }
     try {
@@ -532,57 +526,57 @@ int MetaTool::_amend_fn(const string & fn, bool confirm)
             pos1 = pos2 + c.size();
             pos2 = tmp.find(c, pos1);
         }
-        if (pos1 != tmp.length())
+        if (pos1 != tmp.length()) {
             v.push_back(tmp.substr(pos1));
+        }
         int ret = 0;
-      for (auto i:v) {
+        for (auto i : v) {
             cout << "amend frag : " << i << "..." << std::endl;
             fnode_t fnode;
             JSONDecoder::decode_json(i.c_str(), fnode, &parser, true);
             bufferlist bl;
             fnode.encode(bl);
             ret = io_meta.omap_set_header(i, bl);
-            if (ret < 0)
+            if (ret < 0) {
                 return ret;
+            }
         }
-    }
-    catch(JSONDecoder::err & e) {
+    } catch (JSONDecoder::err &e) {
         cout << "failed to decode JSON input: " << e.what() << std::endl;
         return -1;
     }
     return 0;
 }
 
-int MetaTool::show_meta(meta_op & op)
+int MetaTool::show_meta(meta_op &op)
 {
-    meta_op::sub_op * sop = op.top_op();
+    meta_op::sub_op *sop = op.top_op();
     auto item = op.inodes.find(sop->ino);
     if (item != op.inodes.end()) {
-        if (_show_meta(*(item->second), op.outfile()) < 0)
+        if (_show_meta(*(item->second), op.outfile()) < 0) {
             return -1;
-    }
-    else {
+        }
+    } else {
         if (op.inodes.empty()) {
-            meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+            meta_op::sub_op *nsop = new meta_op::sub_op(&op);
             nsop->sub_op_t = meta_op::OP_LIST;
             nsop->sub_ino_t = meta_op::INO_DIR;
             nsop->trace_level = 0;
             nsop->ino_c = sop->ino;
             op.push_op(nsop);
             return 1;
-        }
-        else {
+        } else {
             return -1;
         }
     }
     return 0;
 }
 
-int MetaTool::_show_meta(inode_meta_t & inode_meta, const string & fn)
+int MetaTool::_show_meta(inode_meta_t &inode_meta, const string &fn)
 {
     std::stringstream ds;
     std::string format = "json";
-    InodeStore & inode_data = *inode_meta.get_meta();
+    InodeStore &inode_data = *inode_meta.get_meta();
     Formatter *f = Formatter::create(format);
     f->enable_line_break();
     f->open_object_section("meta");
@@ -599,10 +593,9 @@ int MetaTool::_show_meta(inode_meta_t & inode_meta, const string & fn)
             srnode.dump(f);
             f->close_section();
         }
-    }
-    catch(const buffer::error & err) {
+    } catch (const buffer::error &err) {
         cerr << "corrupt decode in snap_blob"
-            << ": " << err.what() << std::endl;
+             << ": " << err.what() << std::endl;
         return -1;
     }
 
@@ -616,21 +609,20 @@ int MetaTool::_show_meta(inode_meta_t & inode_meta, const string & fn)
         if (o) {
             o << ds.str();
             o.close();
-        }
-        else {
+        } else {
             cout << "out to file (" << fn << ") failed" << std::endl;
             cout << ds.str() << std::endl;
         }
 
-    }
-    else
+    } else {
         std::cout << ds.str() << std::endl;
+    }
     return 0;
 }
 
-int MetaTool::list_meta(meta_op & op)
+int MetaTool::list_meta(meta_op &op)
 {
-    meta_op::sub_op * sop = op.top_op();
+    meta_op::sub_op *sop = op.top_op();
 
     bool list_all = false;
     string oid;
@@ -640,11 +632,10 @@ int MetaTool::list_meta(meta_op & op)
     if (sop->ino_c == 0) {
         list_all = true;
         oid = obj_name(sop->ino, frag);
-    }
-    else {
+    } else {
         if (_debug)
             std::cout << __func__ << " : " << sop->trace_level << " " << op.
-                ancestors.size() << std::endl;
+                      ancestors.size() << std::endl;
         inode_backpointer_t bp;
         if (sop->get_c_ancestor(bp)) {
             auto item = op.inodes.find(bp.dirino);
@@ -652,9 +643,8 @@ int MetaTool::list_meta(meta_op & op)
                 frag = item->second->get_meta()->pick_dirfrag(bp.dname);
             }
             oid = obj_name(bp.dirino, frag);
-        }
-        else {
-            meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+        } else {
+            meta_op::sub_op *nsop = new meta_op::sub_op(&op);
             nsop->ino = sop->ino_c;
             nsop->sub_op_t = meta_op::OP_LTRACE;
             nsop->sub_ino_t = meta_op::INO_DIR;
@@ -664,13 +654,13 @@ int MetaTool::list_meta(meta_op & op)
     }
     if (_debug)
         std::
-            cout << __func__ << " : " << string(list_all ? "listall " : "info ")
-            << oid << " " << ino << std::endl;
+        cout << __func__ << " : " << string(list_all ? "listall " : "info ")
+             << oid << " " << ino << std::endl;
     bufferlist hbl;
     int ret = io_meta.omap_get_header(oid, &hbl);
     if (ret < 0) {
         std::cerr << __func__ << " : can't find it, maybe it (ino:" << sop->
-            ino << ")isn't a normal dir!" << std::endl;
+                  ino << ")isn't a normal dir!" << std::endl;
         return -1;
     }
 
@@ -683,51 +673,46 @@ int MetaTool::list_meta(meta_op & op)
                     op.pop_op();
                     std::list < frag_t > frags;
                     item->second->get_meta()->dirfragtree.get_leaves(frags);
-                  for (const auto & frag:frags) {
-                        meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+                    for (const auto &frag : frags) {
+                        meta_op::sub_op *nsop = new meta_op::sub_op(&op);
                         nsop->ino = tmp;
                         nsop->sub_op_t = meta_op::OP_LIST;
                         nsop->sub_ino_t = meta_op::INO_DIR;
                         nsop->frag = frag;
                         op.push_op(nsop);
                     }
-                }
-                else {
-                    meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+                } else {
+                    meta_op::sub_op *nsop = new meta_op::sub_op(&op);
                     nsop->ino_c = sop->ino;
                     nsop->sub_op_t = meta_op::OP_LIST;
                     nsop->sub_ino_t = meta_op::INO_DIR;
                     op.push_op(nsop);
                 }
                 return 1;
-            }
-            else {
+            } else {
                 cerr << __func__ << " missing some data (" << oid << ")???" <<
-                    std::endl;
+                     std::endl;
                 return -1;
             }
-        }
-        else {
+        } else {
             if (frag == frag_t()) {
                 inode_backpointer_t bp;
                 if (sop->get_c_ancestor(bp)) {
-                    meta_op::sub_op * nsop = new meta_op::sub_op(&op);
+                    meta_op::sub_op *nsop = new meta_op::sub_op(&op);
                     nsop->ino_c = bp.dirino;
                     nsop->sub_op_t = meta_op::OP_LIST;
                     nsop->sub_ino_t = meta_op::INO_DIR;
                     nsop->trace_level = sop->trace_level + 1;
                     op.push_op(nsop);
                     return 1;
-                }
-                else {
+                } else {
                     cerr << __func__ << "can't find obj(" << oid <<
-                        ") ,miss ancestors or miss some objs??? " << std::endl;
+                         ") ,miss ancestors or miss some objs??? " << std::endl;
                     return -1;
                 }
-            }
-            else {
+            } else {
                 cerr << __func__ << "missing some objs(" << oid << ")??? " <<
-                    std::endl;
+                     std::endl;
                 return -1;
             }
         }
@@ -737,10 +722,9 @@ int MetaTool::list_meta(meta_op & op)
     try {
         auto p = hbl.cbegin();
         ::decode(got_fnode, p);
-    }
-    catch(const buffer::error & err) {
+    } catch (const buffer::error &err) {
         cerr << "corrupt fnode header in " << oid
-            << ": " << err.what() << std::endl;
+             << ": " << err.what() << std::endl;
         return -1;
     }
 
@@ -770,25 +754,25 @@ int MetaTool::list_meta(meta_op & op)
         string dname;
         snapid_t last;
         dentry_key_t::decode_helper(p->first, dname, last);
-        if (_debug)
+        if (_debug) {
             last_dname = dname;
+        }
         try {
             if (!list_all) {
                 if (show_child(p->first, dname, last, p->second, pos, snaps,
                                &force_dirty, ino, &op) == 1) {
                     return 0;
                 }
-            }
-            else {
+            } else {
                 cout << "dname : " << dname << " " << last << std::endl;
                 if (show_child(p->first, dname, last, p->second, pos, snaps,
-                               &force_dirty) == 1)
+                               &force_dirty) == 1) {
                     return 0;
+                }
             }
-        }
-        catch(const buffer::error & err) {
+        } catch (const buffer::error &err) {
             derr << "Corrupt dentry '" << dname << "' : "
-                << err.what() << "(" << "" << ")" << dendl;
+                 << err.what() << "(" << "" << ")" << dendl;
             return -1;
         }
     }
@@ -808,17 +792,16 @@ int MetaTool::list_meta(meta_op & op)
                                    &force_dirty, ino, &op) == 1) {
                         return 0;
                     }
-                }
-                else {
+                } else {
                     cout << "dname : " << dname << " " << last << std::endl;
                     if (show_child(p->first, dname, last, p->second, pos, snaps,
-                                   &force_dirty) == 1)
+                                   &force_dirty) == 1) {
                         return 0;
+                    }
                 }
-            }
-            catch(const buffer::error & err) {
+            } catch (const buffer::error &err) {
                 derr << "Corrupt dentry '" << dname << "' : "
-                    << err.what() << "(" << "" << ")" << dendl;
+                     << err.what() << "(" << "" << ")" << dendl;
                 return -1;
             }
         }
@@ -831,41 +814,39 @@ int MetaTool::list_meta(meta_op & op)
     return 0;
 }
 
-int MetaTool::file_meta(meta_op & op)
+int MetaTool::file_meta(meta_op &op)
 {
     int r = 0;
     if (op.top_op()->sub_ino_t == meta_op::INO_DIR) {
         r = _file_meta(op, io_meta);
-    }
-    else if (op.top_op()->sub_ino_t == meta_op::INO_F) {
+    } else if (op.top_op()->sub_ino_t == meta_op::INO_F) {
         for (auto i = io_data_v.begin(); i != io_data_v.end(); ++i)
-            if ((r = _file_meta(op, **i)) == 1)
+            if ((r = _file_meta(op, **i)) == 1) {
                 break;
+            }
     }
     if (r == 1) {
         inode_backpointer_t bp;
         if (op.top_op()->get_ancestor(bp)) {
             return 0;
-        }
-        else {
+        } else {
             std::cerr << "no trace for obj (ino:" << op.top_op()->
-                ino << ")??" << std::endl;
+                      ino << ")??" << std::endl;
             return -1;
         }
-    }
-    else if (op.top_op()->sub_ino_t == meta_op::INO_DIR) {
+    } else if (op.top_op()->sub_ino_t == meta_op::INO_DIR) {
         std::cerr << "\tmaybe it's a file(ino:" << op.top_op()->
-            ino << ")" << std::endl;
+                  ino << ")" << std::endl;
         op.top_op()->sub_ino_t = meta_op::INO_F;
         return 1;
     }
 
     std::cerr << "can't get (ino:" << op.top_op()->
-        ino << ")trace??" << std::endl;
+              ino << ")trace??" << std::endl;
     return -1;
 }
 
-int MetaTool::_file_meta(meta_op & op, librados::IoCtx & io)
+int MetaTool::_file_meta(meta_op &op, librados::IoCtx &io)
 {
     inodeno_t ino = op.top_op()->ino;
     std::string oid = obj_name(ino);
@@ -886,21 +867,20 @@ int MetaTool::_file_meta(meta_op & op, librados::IoCtx & io)
                 i_bt.decode(q);
                 f->open_array_section("info");
                 have_data = true;
-                if (i_bt.ancestors.size() > 0)
+                if (i_bt.ancestors.size() > 0) {
                     op.ancestors[ino] = i_bt.ancestors[0];
+                }
                 f->dump_string("type", "--i_bt--");
                 f->open_object_section("parent");
                 i_bt.dump(f);
                 f->close_section();
-            }
-            catch(buffer::error & e) {
+            } catch (buffer::error &e) {
                 cerr << "failed to decode parent of " << oid << std::endl;
                 return -1;
             }
-        }
-        else {
+        } else {
             cerr << oid << " in " << io.
-                get_pool_name() << " , but no parent" << std::endl;
+                 get_pool_name() << " , but no parent" << std::endl;
             return -1;
         }
 
@@ -915,21 +895,20 @@ int MetaTool::_file_meta(meta_op & op, librados::IoCtx & io)
                 layout.dump(f);
                 f->close_section();
 
-            }
-            catch(buffer::error & e) {
+            } catch (buffer::error &e) {
                 cerr << "failed to decode layout of " << oid << std::endl;
                 return -1;
             }
-        }
-        else {
+        } else {
             cerr << oid << " in " << io.
-                get_pool_name() << " , but no layout" << std::endl;
+                 get_pool_name() << " , but no layout" << std::endl;
         }
         if (have_data) {
             f->close_section();
             f->flush(ds);
-            if (_debug)
+            if (_debug) {
                 cout << ino << " : " << ds.str() << std::endl;
+            }
             return 1;
         }
     }
@@ -937,16 +916,14 @@ int MetaTool::_file_meta(meta_op & op, librados::IoCtx & io)
 }
 
 std::string MetaTool::obj_name(inodeno_t ino, uint64_t offset,
-                               const char *suffix) constconst
-{
+                               const char *suffix) constconst {
     char name[60];
     snprintf(name, sizeof(name), "%llx.%08llx%s", (long long unsigned)ino,
              (long long unsigned)offset, suffix ? suffix : "");
     return std::string(name);
 }
 
-std::string MetaTool::obj_name(inodeno_t ino, frag_t fg, const char *suffix) constconst
-{
+std::string MetaTool::obj_name(inodeno_t ino, frag_t fg, const char *suffix) constconst {
     char name[60];
     snprintf(name, sizeof(name), "%llx.%08llx%s", (long long unsigned)ino,
              (long long unsigned)fg, suffix ? suffix : "");
@@ -954,23 +931,22 @@ std::string MetaTool::obj_name(inodeno_t ino, frag_t fg, const char *suffix) con
 }
 
 std::string MetaTool::obj_name(const char *ino, uint64_t offset,
-                               const char *suffix) constconst
-{
+                               const char *suffix) constconst {
     char name[60];
     snprintf(name, sizeof(name), "%s.%08llx%s", ino, (long long unsigned)offset,
              suffix ? suffix : "");
     std::string out = name;
-    transform(out.begin(), out.end(), out.begin(),::tolower);
+    transform(out.begin(), out.end(), out.begin(), ::tolower);
     return out;
 }
 
 int MetaTool::show_child(std::string_view key,
                          std::string_view dname,
                          const snapid_t last,
-                         bufferlist & bl,
+                         bufferlist &bl,
                          const int pos,
                          const std::set < snapid_t > *snaps,
-                         bool * force_dirty, inodeno_t sp_ino, meta_op * op)
+                         bool *force_dirty, inodeno_t sp_ino, meta_op *op)
 {
     bufferlist::const_iterator q = bl.cbegin();
 
@@ -983,7 +959,7 @@ int MetaTool::show_child(std::string_view key,
 
     if (_debug)
         std::cout << pos << " type '" << type << "' dname '" << dname
-            << " [" << first << "," << last << "]" << std::endl;
+                  << " [" << first << "," << last << "]" << std::endl;
     // bool stale = false;
     if (snaps && last != CEPH_NOSNAP) {
         derr << "!!!! erro !!!!" << dendl;
@@ -1007,28 +983,27 @@ int MetaTool::show_child(std::string_view key,
         if (sp_ino > 0) {
             if (sp_ino == ino) {
                 std::
-                    cout << "find hard link : " << ino << "," << d_type << std::
-                    endl;
+                cout << "find hard link : " << ino << "," << d_type << std::
+                     endl;
                 return 1;
             }
         }
 
         std::cout << "hard link : " << ino << "," << d_type << std::endl;
-    }
-    else if (type == 'I' || type == 'i') {
+    } else if (type == 'I' || type == 'i') {
         // inode
         // load inode data before lookuping up or constructing CInode
-        InodeStore & inode_data = *(new InodeStore);
+        InodeStore &inode_data = *(new InodeStore);
         if (type == 'i') {
             mempool::mds_co::string alternate_name;
 
             DECODE_START(2, q);
-            if (struct_v >= 2)
+            if (struct_v >= 2) {
                 decode(alternate_name, q);
+            }
             inode_data.decode(q);
             DECODE_FINISH(q);
-        }
-        else {
+        } else {
             inode_data.decode_bare(q);
         }
 
@@ -1050,10 +1025,9 @@ int MetaTool::show_child(std::string_view key,
                 srnode.dump(f);
                 f->close_section();
             }
-        }
-        catch(const buffer::error & err) {
+        } catch (const buffer::error &err) {
             cerr << "corrupt decode in snap_blob"
-                << ": " << err.what() << std::endl;
+                 << ": " << err.what() << std::endl;
         }
         f->close_section();
         f->close_section();
@@ -1064,19 +1038,17 @@ int MetaTool::show_child(std::string_view key,
             op->inodes[inode_data.inode->ino] = tmp;
             op->okeys[inode_data.inode->ino] = key.data();
             return 1;
-        }
-        else {
+        } else {
             delete & inode_data;
         }
 
         if (sp_ino == 0) {
             cout << ds.str() << std::endl;
         }
-    }
-    else {
+    } else {
         std::
-            cerr << __func__ << "unknow type : " << dname << "," << type <<
-            std::endl;
+        cerr << __func__ << "unknow type : " << dname << "," << type <<
+             std::endl;
     }
     return 0;
 }

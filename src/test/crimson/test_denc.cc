@@ -17,9 +17,9 @@ template < typename T > void test_denc(T v)
 
     // encode
     temporary_buffer buf {
-    s};
+        s};
     buffer_iterator enc {
-    buf};
+        buf};
     denc(v, enc);
     size_t len = enc.get() - buf.begin();
     ASSERT_LE(len, s);
@@ -29,7 +29,7 @@ template < typename T > void test_denc(T v)
     temporary_buffer encoded = buf.share();
     encoded.trim(len);
     const_buffer_iterator dec {
-    encoded};
+        encoded};
     denc(out, dec);
     ASSERT_EQ(v, out);
     ASSERT_EQ(dec.get(), enc.get());

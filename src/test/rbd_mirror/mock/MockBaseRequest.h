@@ -9,15 +9,18 @@
 
 struct Context;
 
-namespace rbd {
-    namespace mirror {
+namespace rbd
+{
+namespace mirror
+{
 
-        struct MockBaseRequest:public BaseRequest {
-            MockBaseRequest():BaseRequest(nullptr) {
-            } Context *on_finish = nullptr;
+struct MockBaseRequest: public BaseRequest {
+    MockBaseRequest(): BaseRequest(nullptr)
+    {
+    } Context *on_finish = nullptr;
 
-             MOCK_METHOD0(send, void ());
-        };
+    MOCK_METHOD0(send, void ());
+};
 
 } // namespace mirror }         // namepace rbd
 #endif                          // CEPH_MOCK_BASE_REQUEST_H

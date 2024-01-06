@@ -13,19 +13,23 @@
 
 using namespace std;
 
-class CDCTest:public::testing::Test, public::testing::WithParamInterface < const char *> {
-  public:
+class CDCTest: public::testing::Test, public::testing::WithParamInterface < const char *>
+{
+public:
     std::unique_ptr < CDC > cdc;
 
-    CDCTest() {
+    CDCTest()
+    {
         auto plugin = GetParam();
         cdc = CDC::create(plugin, 18);
-}};
+    }
+};
 
 TEST_P(CDCTest, insert_front)
 {
-    if (GetParam() == "fixed" s)
+    if (GetParam() == "fixed" s) {
         return;
+    }
     for (int frontlen = 1; frontlen < 163840; frontlen *= 3) {
         bufferlist bl1, bl2;
         generate_buffer(4 * 1024 * 1024, &bl1);
@@ -54,8 +58,9 @@ TEST_P(CDCTest, insert_front)
 
 TEST_P(CDCTest, insert_middle)
 {
-    if (GetParam() == "fixed" s)
+    if (GetParam() == "fixed" s) {
         return;
+    }
     for (int frontlen = 1; frontlen < 163840; frontlen *= 3) {
         bufferlist bl1, bl2;
         generate_buffer(4 * 1024 * 1024, &bl1);
@@ -100,65 +105,93 @@ TEST_P(CDCTest, specific_result)
     map < string, vector < pair < uint64_t, uint64_t >>> expected = {
         {
             "fixed", { {
-            0, 262144}
-            , {
-            262144, 262144}
-            , {
-            524288, 262144}
-            , {
-            786432, 262144}
-            , {
-            1048576, 262144}
-            , {
-            1310720, 262144}
-            , {
-            1572864, 262144}
-            , {
-            1835008, 262144}
-            , {
-            2097152, 262144}
-            , {
-            2359296, 262144}
-            , {
-            2621440, 262144}
-            , {
-            2883584, 262144}
-            , {
-            3145728, 262144}
-            , {
-            3407872, 262144}
-            , {
-            3670016, 262144}
-            , {
-            3932160, 262144}
+                    0, 262144
+                }
+                , {
+                    262144, 262144
+                }
+                , {
+                    524288, 262144
+                }
+                , {
+                    786432, 262144
+                }
+                , {
+                    1048576, 262144
+                }
+                , {
+                    1310720, 262144
+                }
+                , {
+                    1572864, 262144
+                }
+                , {
+                    1835008, 262144
+                }
+                , {
+                    2097152, 262144
+                }
+                , {
+                    2359296, 262144
+                }
+                , {
+                    2621440, 262144
+                }
+                , {
+                    2883584, 262144
+                }
+                , {
+                    3145728, 262144
+                }
+                , {
+                    3407872, 262144
+                }
+                , {
+                    3670016, 262144
+                }
+                , {
+                    3932160, 262144
+                }
             }
         }
         , {
             "fastcdc", { {
-            0, 151460}
-            , {
-            151460, 441676}
-            , {
-            593136, 407491}
-            , {
-            1000627, 425767}
-            , {
-            1426394, 602875}
-            , {
-            2029269, 327307}
-            , {
-            2356576, 155515}
-            , {
-            2512091, 159392}
-            , {
-            2671483, 829416}
-            , {
-            3500899, 539667}
-            , {
-            4040566, 153738}
+                    0, 151460
+                }
+                , {
+                    151460, 441676
+                }
+                , {
+                    593136, 407491
+                }
+                , {
+                    1000627, 425767
+                }
+                , {
+                    1426394, 602875
+                }
+                , {
+                    2029269, 327307
+                }
+                , {
+                    2356576, 155515
+                }
+                , {
+                    2512091, 159392
+                }
+                , {
+                    2671483, 829416
+                }
+                , {
+                    3500899, 539667
+                }
+                , {
+                    4040566, 153738
+                }
             }
         }
-    ,};
+        ,
+    };
 
     bufferlist bl;
     generate_buffer(4 * 1024 * 1024, &bl);
@@ -167,13 +200,13 @@ TEST_P(CDCTest, specific_result)
     ASSERT_EQ(chunks, expected[GetParam()]);
 }
 
-void do_size_histogram(CDC & cdc, bufferlist & bl, map < int, int >*h)
+void do_size_histogram(CDC &cdc, bufferlist &bl, map < int, int > *h)
 {
     vector < pair < uint64_t, uint64_t >> chunks;
     cdc.calc_chunks(bl, &chunks);
     uint64_t total = 0;
     uint64_t num = 0;
-  for (auto & i:chunks) {
+    for (auto &i : chunks) {
         //unsigned b = i.second & 0xfffff000;
         unsigned b = 1 << (cbits(i.second - 1));
         (*h)[b]++;
@@ -183,14 +216,13 @@ void do_size_histogram(CDC & cdc, bufferlist & bl, map < int, int >*h)
     (*h)[0] = total / num;
 }
 
-void print_histogram(map < int, int >&h)
+void print_histogram(map < int, int > &h)
 {
     cout << "size\tcount" << std::endl;
-  for (auto i:h) {
+    for (auto i : h) {
         if (i.first) {
             cout << i.first << "\t" << i.second << std::endl;
-        }
-        else {
+        } else {
             cout << "avg\t" << i.second << std::endl;
         }
     }
@@ -210,5 +242,6 @@ TEST_P(CDCTest, chunk_random)
     print_histogram(h);
 }
 
-INSTANTIATE_TEST_SUITE_P(CDC, CDCTest,::testing::Values("fixed",    // note: we skip most tests bc this is not content-based
-                                                        "fastcdc"));
+INSTANTIATE_TEST_SUITE_P(CDC, CDCTest,
+                         ::testing::Values("fixed",   // note: we skip most tests bc this is not content-based
+                                 "fastcdc"));

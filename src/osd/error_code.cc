@@ -23,15 +23,17 @@
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-class osd_error_category:public ceph::converting_category {
-  public:
-    osd_error_category() {
+class osd_error_category: public ceph::converting_category
+{
+public:
+    osd_error_category()
+    {
     } const char *name() const noexcept override;
     const char *message(int ev, char *, std::size_t) const noexcept override;
     std::string message(int ev) const override;
     boost::system::
-        error_condition default_error_condition(int ev) const noexcept override;
-    bool equivalent(int ev, const boost::system::error_condition & c) const
+    error_condition default_error_condition(int ev) const noexcept override;
+    bool equivalent(int ev, const boost::system::error_condition &c) const
     noexcept override;
     using ceph::converting_category::equivalent;
     int from_code(int ev) const noexcept override;
@@ -48,14 +50,15 @@ const char *osd_error_category::name() const const noexcept
 const char *osd_error_category::message(int ev, char *buf,
                                         std::size_t len) const const noexcept
 {
-    if (ev == 0)
+    if (ev == 0) {
         return "No error";
+    }
 
-    switch (static_cast < osd_errc > (ev)) {
-    case osd_errc::old_snapc:
-        return "ORDERSNAP flag set; writer has old snapc";
-    case osd_errc::blocklisted:
-        return "Blocklisted";
+    switch (static_cast < osd_errc >(ev)) {
+        case osd_errc::old_snapc:
+            return "ORDERSNAP flag set; writer has old snapc";
+        case osd_errc::blocklisted:
+            return "Blocklisted";
     }
 
     if (len) {
@@ -66,42 +69,43 @@ const char *osd_error_category::message(int ev, char *buf,
     return buf;
 }
 
-std::string osd_error_category::message(int ev) constconst
-{
+std::string osd_error_category::message(int ev) constconst {
     if (ev == 0)
+    {
         return "No error";
+    }
 
-    switch (static_cast < osd_errc > (ev)) {
-    case osd_errc::old_snapc:
-        return "ORDERSNAP flag set; writer has old snapc";
-    case osd_errc::blocklisted:
-        return "Blocklisted";
+    switch (static_cast < osd_errc >(ev))
+    {
+        case osd_errc::old_snapc:
+            return "ORDERSNAP flag set; writer has old snapc";
+        case osd_errc::blocklisted:
+            return "Blocklisted";
     }
 
     return cpp_strerror(ev);
 }
 
 boost::system::error_condition osd_error_category::
-default_error_condition(int ev) constconst noexcept
-{
+default_error_condition(int ev) constconst noexcept {
     if (ev == static_cast < int >(osd_errc::old_snapc) ||
         ev == static_cast < int >(osd_errc::blocklisted))
         return {
         ev, *this};
     else
-    return {
-    ev, boost::system::generic_category()};
+        return {
+        ev, boost::system::generic_category()};
 }
 
 bool osd_error_category::equivalent(int ev,
                                     const boost::system::
-                                    error_condition & c) constconst noexcept
-{
-    switch (static_cast < osd_errc > (ev)) {
-    case osd_errc::old_snapc:
-        return c == boost::system::errc::invalid_argument;
-    case osd_errc::blocklisted:
-        return c == boost::system::errc::operation_not_permitted;
+                                    error_condition &c) constconst noexcept {
+    switch (static_cast < osd_errc >(ev))
+    {
+        case osd_errc::old_snapc:
+            return c == boost::system::errc::invalid_argument;
+        case osd_errc::blocklisted:
+            return c == boost::system::errc::operation_not_permitted;
     }
     return default_error_condition(ev) == c;
 }
@@ -111,7 +115,7 @@ int osd_error_category::from_code(int ev) const const noexcept
     return -ev;
 }
 
-const boost::system::error_category & osd_category() noexcept
+const boost::system::error_category &osd_category() noexcept
 {
     static const osd_error_category c;
     return c;

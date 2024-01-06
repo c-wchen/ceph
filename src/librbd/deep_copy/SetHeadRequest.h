@@ -16,68 +16,72 @@
 
 class Context;
 
-namespace librbd {
-    namespace deep_copy {
+namespace librbd
+{
+namespace deep_copy
+{
 
-        template < typename ImageCtxT = librbd::ImageCtx > class SetHeadRequest {
-          public:
-            static SetHeadRequest *create(ImageCtxT * image_ctx, uint64_t size,
-                                          const cls::rbd::
-                                          ParentImageSpec & parent_spec,
-                                          uint64_t parent_overlap,
-                                          Context * on_finish) {
-                return new SetHeadRequest(image_ctx, size, parent_spec,
-                                          parent_overlap, on_finish);
-            } SetHeadRequest(ImageCtxT * image_ctx, uint64_t size,
-                             const cls::rbd::ParentImageSpec & parent_spec,
-                             uint64_t parent_overlap, Context * on_finish);
+template < typename ImageCtxT = librbd::ImageCtx > class SetHeadRequest
+{
+public:
+    static SetHeadRequest *create(ImageCtxT *image_ctx, uint64_t size,
+                                  const cls::rbd::
+                                  ParentImageSpec &parent_spec,
+                                  uint64_t parent_overlap,
+                                  Context *on_finish)
+    {
+        return new SetHeadRequest(image_ctx, size, parent_spec,
+                                  parent_overlap, on_finish);
+    } SetHeadRequest(ImageCtxT *image_ctx, uint64_t size,
+                     const cls::rbd::ParentImageSpec &parent_spec,
+                     uint64_t parent_overlap, Context *on_finish);
 
-            void send();
+    void send();
 
-          private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v (skip if not needed)
-   * SET_SIZE
-   *    |
-   *    v (skip if not needed)
-   * DETACH_PARENT
-   *    |
-   *    v (skip if not needed)
-   * ATTACH_PARENT
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   */
+private:
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v (skip if not needed)
+     * SET_SIZE
+     *    |
+     *    v (skip if not needed)
+     * DETACH_PARENT
+     *    |
+     *    v (skip if not needed)
+     * ATTACH_PARENT
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     */
 
-             ImageCtxT * m_image_ctx;
-            uint64_t m_size;
-             cls::rbd::ParentImageSpec m_parent_spec;
-            uint64_t m_parent_overlap;
-            Context *m_on_finish;
+    ImageCtxT *m_image_ctx;
+    uint64_t m_size;
+    cls::rbd::ParentImageSpec m_parent_spec;
+    uint64_t m_parent_overlap;
+    Context *m_on_finish;
 
-            CephContext *m_cct;
+    CephContext *m_cct;
 
-            void send_set_size();
-            void handle_set_size(int r);
+    void send_set_size();
+    void handle_set_size(int r);
 
-            void send_detach_parent();
-            void handle_detach_parent(int r);
+    void send_detach_parent();
+    void handle_detach_parent(int r);
 
-            void send_attach_parent();
-            void handle_attach_parent(int r);
+    void send_attach_parent();
+    void handle_attach_parent(int r);
 
-            Context *start_lock_op(int *r);
+    Context *start_lock_op(int *r);
 
-            void finish(int r);
-        };
+    void finish(int r);
+};
 
-    }                           // namespace deep_copy
+}                           // namespace deep_copy
 }                               // namespace librbd
 
 extern template class librbd::deep_copy::SetHeadRequest < librbd::ImageCtx >;

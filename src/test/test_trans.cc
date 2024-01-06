@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <iostream>
@@ -26,13 +26,15 @@
 
 using namespace std;
 
-struct Foo:public Thread {
-    void *entry() override {
+struct Foo: public Thread {
+    void *entry() override
+    {
         dout(0) << "foo started" << dendl;
         sleep(1);
         dout(0) << "foo asserting 0" << dendl;
         ceph_abort();
-}} foo;
+    }
+} foo;
 
 int main(int argc, const char **argv)
 {
@@ -44,8 +46,9 @@ int main(int argc, const char **argv)
     common_init_finish(g_ceph_context);
 
     // args
-    if (args.size() < 2)
+    if (args.size() < 2) {
         return -1;
+    }
     const char *filename = args[0];
     int mb = atoi(args[1]);
 

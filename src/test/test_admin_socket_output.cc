@@ -35,7 +35,7 @@ void usage(po::options_description desc)
 
 void handle_unrecognised(std::vector < std::string > &&unrecognised)
 {
-  for (auto & un:unrecognised) {
+    for (auto &un : unrecognised) {
         std::cout << "Unrecognized Parameter: " << un << std::endl;
     }
 }
@@ -85,8 +85,7 @@ int main(int argc, char **argv)
 
     if (vm.count("all")) {
         asockout->add_target("all");
-    }
-    else {
+    } else {
         if (vm.count("osd")) {
             asockout->add_target("osd");
         }

@@ -13,7 +13,7 @@
 
 #include <vector>
 
-rbd::mirror::Mirror * mirror = nullptr;
+rbd::mirror::Mirror *mirror = nullptr;
 PerfCounters *g_journal_perf_counters = nullptr;
 PerfCounters *g_snapshot_perf_counters = nullptr;
 
@@ -23,19 +23,20 @@ void usage()
     std::cout << "options:\n";
     std::cout << "  -m monaddress[:port]      connect to specified monitor\n";
     std::
-        cout <<
-        "  --keyring=<path>          path to keyring for local cluster\n";
+    cout <<
+         "  --keyring=<path>          path to keyring for local cluster\n";
     std::cout << "  --log-file=<logfile>       file to log debug output\n";
     std::
-        cout <<
-        "  --debug-rbd-mirror=<log-level>/<memory-level>  set rbd-mirror debug level\n";
+    cout <<
+         "  --debug-rbd-mirror=<log-level>/<memory-level>  set rbd-mirror debug level\n";
     generic_server_usage();
 }
 
 static void handle_signal(int signum)
 {
-    if (mirror)
+    if (mirror) {
         mirror->handle_signal(signum);
+    }
 }
 
 int main(int argc, const char **argv)
@@ -104,7 +105,7 @@ int main(int argc, const char **argv)
     }
     g_ceph_context->get_perfcounters_collection()->add(g_journal_perf_counters);
     g_ceph_context->get_perfcounters_collection()->
-        add(g_snapshot_perf_counters);
+    add(g_snapshot_perf_counters);
 
     mirror = new rbd::mirror::Mirror(g_ceph_context, cmd_args);
     int r = mirror->init();
@@ -115,16 +116,16 @@ int main(int argc, const char **argv)
 
     mirror->run();
 
-  cleanup:
+cleanup:
     unregister_async_signal_handler(SIGHUP, handle_signal);
     unregister_async_signal_handler(SIGINT, handle_signal);
     unregister_async_signal_handler(SIGTERM, handle_signal);
     shutdown_async_signal_handler();
 
     g_ceph_context->get_perfcounters_collection()->
-        remove(g_journal_perf_counters);
+    remove(g_journal_perf_counters);
     g_ceph_context->get_perfcounters_collection()->
-        remove(g_snapshot_perf_counters);
+    remove(g_snapshot_perf_counters);
 
     delete mirror;
     delete g_journal_perf_counters;

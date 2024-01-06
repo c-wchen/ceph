@@ -42,17 +42,18 @@
 #include "rgw_rest_s3.h"
 #include "rgw_s3select.h"
 
-class aws_response_handler {
+class aws_response_handler
+{
 
-  private:
+private:
     std::string sql_result;
     req_state *s;
     uint32_t header_size;
     // the parameters are according to CRC-32 algorithm and its aligned with AWS-cli checksum
-     boost::crc_optimal < 32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true,
-        true > crc32;
+    boost::crc_optimal < 32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true,
+          true > crc32;
     RGWOp *m_rgwop;
-     std::string m_buff_header;
+    std::string m_buff_header;
     uint64_t total_bytes_returned;
     uint64_t processed_size;
 
@@ -79,46 +80,49 @@ class aws_response_handler {
 
     const char *PAYLOAD_LINE = "\n<Payload>\n<Records>\n<Payload>\n";
     const char *END_PAYLOAD_LINE = "\n</Payload></Records></Payload>";
-    const char *header_name_str[5] =
-        { ":event-type", ":content-type", ":message-type", ":error-code",
-":error-message" };
-    const char *header_value_str[10] =
-        { "Records", "application/octet-stream", "event", "Cont", "Progress",
-"End", "text/xml", "Stats", "s3select-engine-error", "error" };
+    const char *header_name_str[5] = {
+        ":event-type", ":content-type", ":message-type", ":error-code",
+        ":error-message"
+    };
+    const char *header_value_str[10] = {
+        "Records", "application/octet-stream", "event", "Cont", "Progress",
+        "End", "text/xml", "Stats", "s3select-engine-error", "error"
+    };
     static constexpr size_t header_crc_size = 12;
 
     void push_header(const char *header_name, const char *header_value);
 
     int create_message(u_int32_t header_len);
 
-  public:
-  aws_response_handler(req_state * ps, RGWOp * rgwop):s(ps), m_rgwop(rgwop),
-        total_bytes_returned
-    {
-    0}, processed_size {
-    0}
-    {
-    }
-
-  aws_response_handler():s(nullptr), m_rgwop(nullptr), total_bytes_returned {
-    0}, processed_size {
-    0}
+public:
+    aws_response_handler(req_state *ps, RGWOp *rgwop): s(ps), m_rgwop(rgwop),
+        total_bytes_returned {
+        0}, processed_size {
+        0}
     {
     }
 
-    bool is_set() {
+    aws_response_handler(): s(nullptr), m_rgwop(nullptr), total_bytes_returned {
+        0}, processed_size {
+        0}
+    {
+    }
+
+    bool is_set()
+    {
         if (s == nullptr || m_rgwop == nullptr) {
             return false;
         }
         return true;
     }
 
-    void set(req_state * ps, RGWOp * rgwop) {
+    void set(req_state *ps, RGWOp *rgwop)
+    {
         s = ps;
         m_rgwop = rgwop;
     }
 
-    std::string & get_sql_result();
+    std::string &get_sql_result();
 
     uint64_t get_processed_size();
 
@@ -166,9 +170,10 @@ class aws_response_handler {
 
 };                              //end class aws_response_handler
 
-class RGWSelectObj_ObjStore_S3:public RGWGetObj_ObjStore_S3 {
+class RGWSelectObj_ObjStore_S3: public RGWGetObj_ObjStore_S3
+{
 
-  private:
+private:
     s3selectEngine::s3select s3select_syntax;
     std::string m_s3select_query;
     std::string m_s3select_input;
@@ -184,16 +189,16 @@ class RGWSelectObj_ObjStore_S3:public RGWGetObj_ObjStore_S3 {
     std::string m_compression_type;
     std::string m_escape_char;
     std::unique_ptr < char[] > m_buff_header;
-     std::string m_header_info;
-     std::string m_sql_query;
-     std::string m_enable_progress;
-     std::string output_column_delimiter;
-     std::string output_quot;
-     std::string output_escape_char;
-     std::string output_quote_fields;
-     std::string output_row_delimiter;
-     std::string m_start_scan;
-     std::string m_end_scan;
+    std::string m_header_info;
+    std::string m_sql_query;
+    std::string m_enable_progress;
+    std::string output_column_delimiter;
+    std::string output_quot;
+    std::string output_escape_char;
+    std::string output_quote_fields;
+    std::string output_row_delimiter;
+    std::string m_start_scan;
+    std::string m_end_scan;
     bool m_scan_range_ind;
     int64_t m_start_scan_sz;
     int64_t m_end_scan_sz;
@@ -204,45 +209,45 @@ class RGWSelectObj_ObjStore_S3:public RGWGetObj_ObjStore_S3 {
     //parquet request
     bool m_parquet_type;
     //json request
-     std::string m_json_datatype;
+    std::string m_json_datatype;
     bool m_json_type;
 #ifdef _ARROW_EXIST
-     s3selectEngine::rgw_s3select_api m_rgw_api;
+    s3selectEngine::rgw_s3select_api m_rgw_api;
 #endif
     //a request for range may statisfy by several calls to send_response_date;
     size_t m_request_range;
-     std::string requested_buffer;
-     std::string range_req_str;
-     std::function < int (std::string &) > fp_result_header_format;
-     std::function < int (std::string &) > fp_s3select_result_format;
-     std::function < void (const char *) > fp_debug_mesg;
-     std::function < void (void) > fp_chunked_transfer_encoding;
+    std::string requested_buffer;
+    std::string range_req_str;
+    std::function < int (std::string &) > fp_result_header_format;
+    std::function < int (std::string &) > fp_s3select_result_format;
+    std::function < void (const char *) > fp_debug_mesg;
+    std::function < void (void) > fp_chunked_transfer_encoding;
     int m_header_size;
 
-  public:
+public:
     unsigned int chunk_number;
     size_t m_requested_range;
     size_t m_scan_offset;
     bool m_skip_next_chunk;
     bool m_is_trino_request;
 
-     RGWSelectObj_ObjStore_S3();
-     virtual ~ RGWSelectObj_ObjStore_S3();
+    RGWSelectObj_ObjStore_S3();
+    virtual ~ RGWSelectObj_ObjStore_S3();
 
-    virtual int send_response_data(bufferlist & bl, off_t ofs,
+    virtual int send_response_data(bufferlist &bl, off_t ofs,
                                    off_t len) override;
 
     virtual int get_params(optional_yield y) override;
 
     virtual void execute(optional_yield) override;
 
-  private:
+private:
 
-    int csv_processing(bufferlist & bl, off_t ofs, off_t len);
+    int csv_processing(bufferlist &bl, off_t ofs, off_t len);
 
-    int parquet_processing(bufferlist & bl, off_t ofs, off_t len);
+    int parquet_processing(bufferlist &bl, off_t ofs, off_t len);
 
-    int json_processing(bufferlist & bl, off_t ofs, off_t len);
+    int json_processing(bufferlist &bl, off_t ofs, off_t len);
 
     int run_s3select_on_csv(const char *query, const char *input,
                             size_t input_length);
@@ -253,18 +258,18 @@ class RGWSelectObj_ObjStore_S3:public RGWGetObj_ObjStore_S3 {
                              size_t input_length);
 
     int extract_by_tag(std::string input, std::string tag_name,
-                       std::string & result);
+                       std::string &result);
 
-    void convert_escape_seq(std::string & esc);
+    void convert_escape_seq(std::string &esc);
 
-    int handle_aws_cli_parameters(std::string & sql_query);
+    int handle_aws_cli_parameters(std::string &sql_query);
 
     int range_request(int64_t start, int64_t len, void *, optional_yield);
 
     size_t get_obj_size();
-     std::function < int (int64_t, int64_t, void *,
-                          optional_yield *) > fp_range_req;
-     std::function < size_t(void) > fp_get_obj_size;
+    std::function < int (int64_t, int64_t, void *,
+                         optional_yield *) > fp_range_req;
+    std::function < size_t(void) > fp_get_obj_size;
 
-    void shape_chunk_per_trino_requests(const char *, off_t & ofs, off_t & len);
+    void shape_chunk_per_trino_requests(const char *, off_t &ofs, off_t &len);
 };

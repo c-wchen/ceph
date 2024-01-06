@@ -13,7 +13,7 @@
 
 using namespace std;
 
-RGWSI_MetaBackend_SObj::RGWSI_MetaBackend_SObj(CephContext * cct):RGWSI_MetaBackend
+RGWSI_MetaBackend_SObj::RGWSI_MetaBackend_SObj(CephContext *cct): RGWSI_MetaBackend
     (cct)
 {
 }
@@ -27,16 +27,16 @@ RGWSI_MetaBackend_Handler *RGWSI_MetaBackend_SObj::alloc_be_handler()
     return new RGWSI_MetaBackend_Handler_SObj(this);
 }
 
-RGWSI_MetaBackend::Context * RGWSI_MetaBackend_SObj::alloc_ctx()
+RGWSI_MetaBackend::Context *RGWSI_MetaBackend_SObj::alloc_ctx()
 {
     return new Context_SObj;
 }
 
-int RGWSI_MetaBackend_SObj::pre_modify(const DoutPrefixProvider * dpp,
-                                       RGWSI_MetaBackend::Context * _ctx,
-                                       const string & key,
-                                       RGWMetadataLogData & log_data,
-                                       RGWObjVersionTracker * objv_tracker,
+int RGWSI_MetaBackend_SObj::pre_modify(const DoutPrefixProvider *dpp,
+                                       RGWSI_MetaBackend::Context *_ctx,
+                                       const string &key,
+                                       RGWMetadataLogData &log_data,
+                                       RGWObjVersionTracker *objv_tracker,
                                        RGWMDLogStatus op_type, optional_yield y)
 {
     auto ctx = static_cast < Context_SObj * >(_ctx);
@@ -63,24 +63,26 @@ int RGWSI_MetaBackend_SObj::pre_modify(const DoutPrefixProvider * dpp,
     ret =
         mdlog_svc->add_entry(dpp, ctx->module->get_hash_key(key),
                              ctx->module->get_section(), key, logbl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
     return 0;
 }
 
-int RGWSI_MetaBackend_SObj::post_modify(const DoutPrefixProvider * dpp,
-                                        RGWSI_MetaBackend::Context * _ctx,
-                                        const string & key,
-                                        RGWMetadataLogData & log_data,
-                                        RGWObjVersionTracker * objv_tracker,
+int RGWSI_MetaBackend_SObj::post_modify(const DoutPrefixProvider *dpp,
+                                        RGWSI_MetaBackend::Context *_ctx,
+                                        const string &key,
+                                        RGWMetadataLogData &log_data,
+                                        RGWObjVersionTracker *objv_tracker,
                                         int ret, optional_yield y)
 {
     auto ctx = static_cast < Context_SObj * >(_ctx);
-    if (ret >= 0)
+    if (ret >= 0) {
         log_data.status = MDLOG_STATUS_COMPLETE;
-    else
+    } else {
         log_data.status = MDLOG_STATUS_ABORT;
+    }
 
     bufferlist logbl;
     encode(log_data, logbl);
@@ -88,18 +90,20 @@ int RGWSI_MetaBackend_SObj::post_modify(const DoutPrefixProvider * dpp,
     int r =
         mdlog_svc->add_entry(dpp, ctx->module->get_hash_key(key),
                              ctx->module->get_section(), key, logbl);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
+    }
 
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
 
     return RGWSI_MetaBackend::post_modify(dpp, ctx, key, log_data, objv_tracker,
                                           ret, y);
 }
 
-int RGWSI_MetaBackend_SObj::get_shard_id(RGWSI_MetaBackend::Context * _ctx,
-                                         const std::string & key, int *shard_id)
+int RGWSI_MetaBackend_SObj::get_shard_id(RGWSI_MetaBackend::Context *_ctx,
+        const std::string &key, int *shard_id)
 {
     auto ctx = static_cast < Context_SObj * >(_ctx);
     *shard_id =
@@ -116,17 +120,17 @@ int RGWSI_MetaBackend_SObj::call(std::optional < RGWSI_MetaBackend_CtxParams >
     return f(&ctx);
 }
 
-void RGWSI_MetaBackend_SObj::Context_SObj::init(RGWSI_MetaBackend_Handler * h)
+void RGWSI_MetaBackend_SObj::Context_SObj::init(RGWSI_MetaBackend_Handler *h)
 {
     RGWSI_MetaBackend_Handler_SObj *handler =
         static_cast < RGWSI_MetaBackend_Handler_SObj * >(h);
     module = handler->module;
 }
 
-int RGWSI_MetaBackend_SObj::call_with_get_params(ceph::real_time * pmtime,
-                                                 std::function <
-                                                 int (RGWSI_MetaBackend::
-                                                      GetParams &) > cb)
+int RGWSI_MetaBackend_SObj::call_with_get_params(ceph::real_time *pmtime,
+        std::function <
+        int (RGWSI_MetaBackend::
+             GetParams &) > cb)
 {
     bufferlist bl;
     RGWSI_MBSObj_GetParams params;
@@ -135,17 +139,17 @@ int RGWSI_MetaBackend_SObj::call_with_get_params(ceph::real_time * pmtime,
     return cb(params);
 }
 
-int RGWSI_MetaBackend_SObj::get_entry(RGWSI_MetaBackend::Context * _ctx,
-                                      const string & key,
-                                      GetParams & _params,
-                                      RGWObjVersionTracker * objv_tracker,
+int RGWSI_MetaBackend_SObj::get_entry(RGWSI_MetaBackend::Context *_ctx,
+                                      const string &key,
+                                      GetParams &_params,
+                                      RGWObjVersionTracker *objv_tracker,
                                       optional_yield y,
-                                      const DoutPrefixProvider * dpp,
+                                      const DoutPrefixProvider *dpp,
                                       bool get_raw_attrs)
 {
-    RGWSI_MetaBackend_SObj::Context_SObj * ctx =
+    RGWSI_MetaBackend_SObj::Context_SObj *ctx =
         static_cast < RGWSI_MetaBackend_SObj::Context_SObj * >(_ctx);
-    RGWSI_MBSObj_GetParams & params =
+    RGWSI_MBSObj_GetParams &params =
         static_cast < RGWSI_MBSObj_GetParams & >(_params);
 
     rgw_pool pool;
@@ -162,16 +166,16 @@ int RGWSI_MetaBackend_SObj::get_entry(RGWSI_MetaBackend::Context * _ctx,
     return ret;
 }
 
-int RGWSI_MetaBackend_SObj::put_entry(const DoutPrefixProvider * dpp,
-                                      RGWSI_MetaBackend::Context * _ctx,
-                                      const string & key,
-                                      PutParams & _params,
-                                      RGWObjVersionTracker * objv_tracker,
+int RGWSI_MetaBackend_SObj::put_entry(const DoutPrefixProvider *dpp,
+                                      RGWSI_MetaBackend::Context *_ctx,
+                                      const string &key,
+                                      PutParams &_params,
+                                      RGWObjVersionTracker *objv_tracker,
                                       optional_yield y)
 {
-    RGWSI_MetaBackend_SObj::Context_SObj * ctx =
+    RGWSI_MetaBackend_SObj::Context_SObj *ctx =
         static_cast < RGWSI_MetaBackend_SObj::Context_SObj * >(_ctx);
-    RGWSI_MBSObj_PutParams & params =
+    RGWSI_MBSObj_PutParams &params =
         static_cast < RGWSI_MBSObj_PutParams & >(_params);
 
     rgw_pool pool;
@@ -183,14 +187,14 @@ int RGWSI_MetaBackend_SObj::put_entry(const DoutPrefixProvider * dpp,
                               params.pattrs);
 }
 
-int RGWSI_MetaBackend_SObj::remove_entry(const DoutPrefixProvider * dpp,
-                                         RGWSI_MetaBackend::Context * _ctx,
-                                         const string & key,
-                                         RemoveParams & params,
-                                         RGWObjVersionTracker * objv_tracker,
-                                         optional_yield y)
+int RGWSI_MetaBackend_SObj::remove_entry(const DoutPrefixProvider *dpp,
+        RGWSI_MetaBackend::Context *_ctx,
+        const string &key,
+        RemoveParams &params,
+        RGWObjVersionTracker *objv_tracker,
+        optional_yield y)
 {
-    RGWSI_MetaBackend_SObj::Context_SObj * ctx =
+    RGWSI_MetaBackend_SObj::Context_SObj *ctx =
         static_cast < RGWSI_MetaBackend_SObj::Context_SObj * >(_ctx);
 
     rgw_pool pool;
@@ -200,15 +204,15 @@ int RGWSI_MetaBackend_SObj::remove_entry(const DoutPrefixProvider * dpp,
 
     auto sysobj = sysobj_svc->get_obj(k);
     return sysobj.wop()
-        .set_objv_tracker(objv_tracker)
-        .remove(dpp, y);
+           .set_objv_tracker(objv_tracker)
+           .remove(dpp, y);
 }
 
-int RGWSI_MetaBackend_SObj::list_init(const DoutPrefixProvider * dpp,
-                                      RGWSI_MetaBackend::Context * _ctx,
-                                      const string & marker)
+int RGWSI_MetaBackend_SObj::list_init(const DoutPrefixProvider *dpp,
+                                      RGWSI_MetaBackend::Context *_ctx,
+                                      const string &marker)
 {
-    RGWSI_MetaBackend_SObj::Context_SObj * ctx =
+    RGWSI_MetaBackend_SObj::Context_SObj *ctx =
         static_cast < RGWSI_MetaBackend_SObj::Context_SObj * >(_ctx);
 
     rgw_pool pool;
@@ -225,12 +229,12 @@ int RGWSI_MetaBackend_SObj::list_init(const DoutPrefixProvider * dpp,
     return 0;
 }
 
-int RGWSI_MetaBackend_SObj::list_next(const DoutPrefixProvider * dpp,
-                                      RGWSI_MetaBackend::Context * _ctx,
+int RGWSI_MetaBackend_SObj::list_next(const DoutPrefixProvider *dpp,
+                                      RGWSI_MetaBackend::Context *_ctx,
                                       int max, list < string > *keys,
-                                      bool * truncated)
+                                      bool *truncated)
 {
-    RGWSI_MetaBackend_SObj::Context_SObj * ctx =
+    RGWSI_MetaBackend_SObj::Context_SObj *ctx =
         static_cast < RGWSI_MetaBackend_SObj::Context_SObj * >(_ctx);
 
     vector < string > oids;
@@ -238,17 +242,19 @@ int RGWSI_MetaBackend_SObj::list_next(const DoutPrefixProvider * dpp,
     keys->clear();
 
     int ret = ctx->list.op->get_next(dpp, max, &oids, truncated);
-    if (ret < 0 && ret != -ENOENT)
+    if (ret < 0 && ret != -ENOENT) {
         return ret;
+    }
     if (ret == -ENOENT) {
-        if (truncated)
+        if (truncated) {
             *truncated = false;
+        }
         return 0;
     }
 
     auto module = ctx->module;
 
-  for (auto & o:oids) {
+    for (auto &o : oids) {
         if (!module->is_valid_oid(o)) {
             continue;
         }
@@ -258,10 +264,10 @@ int RGWSI_MetaBackend_SObj::list_next(const DoutPrefixProvider * dpp,
     return 0;
 }
 
-int RGWSI_MetaBackend_SObj::list_get_marker(RGWSI_MetaBackend::Context * _ctx,
-                                            string * marker)
+int RGWSI_MetaBackend_SObj::list_get_marker(RGWSI_MetaBackend::Context *_ctx,
+        string *marker)
 {
-    RGWSI_MetaBackend_SObj::Context_SObj * ctx =
+    RGWSI_MetaBackend_SObj::Context_SObj *ctx =
         static_cast < RGWSI_MetaBackend_SObj::Context_SObj * >(_ctx);
 
     return ctx->list.op->get_marker(marker);

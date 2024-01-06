@@ -47,11 +47,11 @@ RGWServices_Def::~RGWServices_Def()
     shutdown();
 }
 
-int RGWServices_Def::init(CephContext * cct,
+int RGWServices_Def::init(CephContext *cct,
                           bool have_cache,
                           bool raw,
                           bool run_sync,
-                          optional_yield y, const DoutPrefixProvider * dpp)
+                          optional_yield y, const DoutPrefixProvider *dpp)
 {
     finisher = std::make_unique < RGWSI_Finisher > (cct);
     bucket_sobj = std::make_unique < RGWSI_Bucket_SObj > (cct);
@@ -82,7 +82,7 @@ int RGWServices_Def::init(CephContext * cct,
     }
 
     vector < RGWSI_MetaBackend * >meta_bes {
-    meta_be_sobj.get(), meta_be_otp.get()};
+        meta_be_sobj.get(), meta_be_otp.get()};
 
     finisher->init();
     bi_rados->init(zone.get(), rados.get(), bilog_rados.get(),
@@ -111,8 +111,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (have_cache) {
         sysobj_cache->init(rados.get(), zone.get(), notify.get());
         sysobj->init(rados.get(), sysobj_cache.get());
-    }
-    else {
+    } else {
         sysobj->init(rados.get(), sysobj_core.get());
     }
     user_rados->init(rados.get(), zone.get(), sysobj.get(), sysobj_cache.get(),
@@ -125,7 +124,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start finisher service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -134,7 +133,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start notify service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
     }
@@ -143,7 +142,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start rados service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -152,7 +151,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start zone service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -162,7 +161,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start datalog_rados service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -170,7 +169,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start mdlog service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -178,7 +177,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start sync modules service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
     }
@@ -187,7 +186,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start cls service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -195,7 +194,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start config_key service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -203,7 +202,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start zone_utils service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -211,7 +210,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start quota service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -219,7 +218,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start sysobj_core service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -228,7 +227,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start sysobj_cache service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
     }
@@ -237,7 +236,7 @@ int RGWServices_Def::init(CephContext * cct,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start sysobj service (" <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -246,7 +245,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start meta_be_sobj service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -254,7 +253,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start meta service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -262,7 +261,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start bucket service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -270,7 +269,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start bucket_sync service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -278,7 +277,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start user_rados service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -286,7 +285,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldpp_dout(dpp,
                       0) << "ERROR: failed to start otp service (" <<
-                cpp_strerror(-r) << dendl;
+                         cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -294,7 +293,7 @@ int RGWServices_Def::init(CephContext * cct,
         if (r < 0) {
             ldout(cct,
                   0) << "ERROR: failed to start role_rados service (" <<
-                cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
             return r;
         }
 
@@ -348,9 +347,9 @@ void RGWServices_Def::shutdown()
 
 }
 
-int RGWServices::do_init(CephContext * _cct, bool have_cache, bool raw,
+int RGWServices::do_init(CephContext *_cct, bool have_cache, bool raw,
                          bool run_sync, optional_yield y,
-                         const DoutPrefixProvider * dpp)
+                         const DoutPrefixProvider *dpp)
 {
     cct = _cct;
 
@@ -395,7 +394,7 @@ RGWServiceInstance::~RGWServiceInstance()
 {
 }
 
-int RGWServiceInstance::start(optional_yield y, const DoutPrefixProvider * dpp)
+int RGWServiceInstance::start(optional_yield y, const DoutPrefixProvider *dpp)
 {
     if (start_state != StateInit) {
         return 0;
@@ -430,8 +429,8 @@ RGWCtlDef::_meta::~_meta()
 {
 }
 
-int RGWCtlDef::init(RGWServices & svc, rgw::sal::Driver * driver,
-                    const DoutPrefixProvider * dpp)
+int RGWCtlDef::init(RGWServices &svc, rgw::sal::Driver *driver,
+                    const DoutPrefixProvider *dpp)
 {
     meta.mgr.reset(new RGWMetadataManager(svc.meta));
 
@@ -442,26 +441,25 @@ int RGWCtlDef::init(RGWServices & svc, rgw::sal::Driver * driver,
         meta.bucket.reset(sync_module->alloc_bucket_meta_handler());
         meta.bucket_instance.reset(sync_module->
                                    alloc_bucket_instance_meta_handler(driver));
-    }
-    else {
+    } else {
         meta.bucket.reset(RGWBucketMetaHandlerAllocator::alloc());
         meta.bucket_instance.
-            reset(RGWBucketInstanceMetaHandlerAllocator::alloc(driver));
+        reset(RGWBucketInstanceMetaHandlerAllocator::alloc(driver));
     }
 
     meta.otp.reset(RGWOTPMetaHandlerAllocator::alloc());
     meta.role =
         std::make_unique < rgw::sal::RGWRoleMetadataHandler > (driver,
-                                                               svc.role);
+            svc.role);
 
     user.
-        reset(new
-              RGWUserCtl(svc.zone, svc.user,
-                         (RGWUserMetadataHandler *) meta.user.get()));
+    reset(new
+          RGWUserCtl(svc.zone, svc.user,
+                     (RGWUserMetadataHandler *) meta.user.get()));
     bucket.
-        reset(new
-              RGWBucketCtl(svc.zone, svc.bucket, svc.bucket_sync, svc.bi,
-                           svc.user));
+    reset(new
+          RGWBucketCtl(svc.zone, svc.bucket, svc.bucket_sync, svc.bi,
+                       svc.user));
     otp.reset(new RGWOTPCtl(svc.zone, svc.otp));
 
     RGWBucketMetadataHandlerBase *bucket_meta_handler =
@@ -488,8 +486,8 @@ int RGWCtlDef::init(RGWServices & svc, rgw::sal::Driver * driver,
     return 0;
 }
 
-int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
-                 const DoutPrefixProvider * dpp)
+int RGWCtl::init(RGWServices *_svc, rgw::sal::Driver *driver,
+                 const DoutPrefixProvider *dpp)
 {
     svc = _svc;
     cct = svc->cct;
@@ -498,7 +496,7 @@ int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to start init ctls (" << cpp_strerror(-r)
-            << dendl;
+                     << dendl;
         return r;
     }
 
@@ -517,7 +515,7 @@ int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
     if (r < 0) {
         ldout(cct,
               0) << "ERROR: failed to start init meta.user ctl (" <<
-            cpp_strerror(-r) << dendl;
+                 cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -525,7 +523,7 @@ int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
     if (r < 0) {
         ldout(cct,
               0) << "ERROR: failed to start init meta.bucket ctl (" <<
-            cpp_strerror(-r) << dendl;
+                 cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -533,7 +531,7 @@ int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
     if (r < 0) {
         ldout(cct,
               0) << "ERROR: failed to start init meta.bucket_instance ctl (" <<
-            cpp_strerror(-r) << dendl;
+                 cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -541,7 +539,7 @@ int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
     if (r < 0) {
         ldout(cct,
               0) << "ERROR: failed to start init otp ctl (" << cpp_strerror(-r)
-            << dendl;
+                 << dendl;
         return r;
     }
 
@@ -549,7 +547,7 @@ int RGWCtl::init(RGWServices * _svc, rgw::sal::Driver * driver,
     if (r < 0) {
         ldout(cct,
               0) << "ERROR: failed to start init otp ctl (" << cpp_strerror(-r)
-            << dendl;
+                 << dendl;
         return r;
     }
     return 0;

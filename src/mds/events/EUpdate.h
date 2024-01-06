@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MDS_EUPDATE_H
@@ -20,8 +20,9 @@
 #include "../LogEvent.h"
 #include "EMetaBlob.h"
 
-class EUpdate:public LogEvent {
-  public:
+class EUpdate: public LogEvent
+{
+public:
     EMetaBlob metablob;
     std::string type;
     bufferlist client_map;
@@ -29,26 +30,31 @@ class EUpdate:public LogEvent {
     metareqid_t reqid;
     bool had_peers;
 
-     EUpdate():LogEvent(EVENT_UPDATE), cmapv(0), had_peers(false) {
-    } EUpdate(MDLog * mdlog, std::string_view s):
-        LogEvent(EVENT_UPDATE), type(s), cmapv(0), had_peers(false) {
+    EUpdate(): LogEvent(EVENT_UPDATE), cmapv(0), had_peers(false)
+    {
+    } EUpdate(MDLog *mdlog, std::string_view s):
+        LogEvent(EVENT_UPDATE), type(s), cmapv(0), had_peers(false)
+    {
     }
 
-    void print(std::ostream & out) const override {
-        if (type.length())
+    void print(std::ostream &out) const override
+    {
+        if (type.length()) {
             out << "EUpdate " << type << " ";
+        }
         out << metablob;
-    } EMetaBlob *get_metablob() override {
+    } EMetaBlob *get_metablob() override
+    {
         return &metablob;
     }
 
-    void encode(bufferlist & bl, uint64_t features) const override;
-    void decode(bufferlist::const_iterator & bl) override;
-    void dump(Formatter * f) const override;
-    static void generate_test_instances(std::list < EUpdate * >&ls);
+    void encode(bufferlist &bl, uint64_t features) const override;
+    void decode(bufferlist::const_iterator &bl) override;
+    void dump(Formatter *f) const override;
+    static void generate_test_instances(std::list < EUpdate * > &ls);
 
     void update_segment() override;
-    void replay(MDSRank * mds) override;
+    void replay(MDSRank *mds) override;
 };
 
 WRITE_CLASS_ENCODER_FEATURES(EUpdate)

@@ -26,12 +26,11 @@ using ceph::Formatter;
 
 static JSONFormattable default_formattable;
 
-void encode_json(const char *name, const JSONObj::data_val & v, Formatter * f)
+void encode_json(const char *name, const JSONObj::data_val &v, Formatter *f)
 {
     if (v.quoted) {
         encode_json(name, v.str, f);
-    }
-    else {
+    } else {
         f->dump_format_unquoted(name, "%s", v.str.c_str());
     }
 }
@@ -44,8 +43,8 @@ JSONObjIter::~JSONObjIter()
 {
 }
 
-void JSONObjIter::set(const JSONObjIter::map_iter_t & _cur,
-                      const JSONObjIter::map_iter_t & _last)
+void JSONObjIter::set(const JSONObjIter::map_iter_t &_cur,
+                      const JSONObjIter::map_iter_t &_last)
 {
     cur = _cur;
     last = _last;
@@ -53,8 +52,9 @@ void JSONObjIter::set(const JSONObjIter::map_iter_t & _cur,
 
 void JSONObjIter::operator++()
 {
-    if (cur != last)
+    if (cur != last) {
         ++cur;
+    }
 }
 
 JSONObj *JSONObjIter::operator*()
@@ -63,7 +63,7 @@ JSONObj *JSONObjIter::operator*()
 }
 
 // does not work, FIXME
-ostream & operator<<(ostream & out, const JSONObj & obj)
+ostream &operator<<(ostream &out, const JSONObj &obj)
 {
     out << obj.name << ": " << obj.val;
     return out;
@@ -77,21 +77,22 @@ JSONObj::~JSONObj()
     }
 }
 
-void JSONObj::add_child(string el, JSONObj * obj)
+void JSONObj::add_child(string el, JSONObj *obj)
 {
     children.insert(pair < string, JSONObj * >(el, obj));
 }
 
-bool JSONObj::get_attr(string name, data_val & attr)
+bool JSONObj::get_attr(string name, data_val &attr)
 {
     auto iter = attr_map.find(name);
-    if (iter == attr_map.end())
+    if (iter == attr_map.end()) {
         return false;
+    }
     attr = iter->second;
     return true;
 }
 
-JSONObjIter JSONObj::find(const string & name)
+JSONObjIter JSONObj::find(const string &name)
 {
     JSONObjIter iter;
     auto first = children.find(name);
@@ -109,7 +110,7 @@ JSONObjIter JSONObj::find_first()
     return iter;
 }
 
-JSONObjIter JSONObj::find_first(const string & name)
+JSONObjIter JSONObj::find_first(const string &name)
 {
     JSONObjIter iter;
     auto first = children.find(name);
@@ -117,20 +118,22 @@ JSONObjIter JSONObj::find_first(const string & name)
     return iter;
 }
 
-JSONObj *JSONObj::find_obj(const string & name)
+JSONObj *JSONObj::find_obj(const string &name)
 {
     JSONObjIter iter = find(name);
-    if (iter.end())
+    if (iter.end()) {
         return NULL;
+    }
 
     return *iter;
 }
 
-bool JSONObj::get_data(const string & key, data_val * dest)
+bool JSONObj::get_data(const string &key, data_val *dest)
 {
     JSONObj *obj = find_obj(key);
-    if (!obj)
+    if (!obj) {
         return false;
+    }
 
     *dest = obj->get_data_val();
 
@@ -153,8 +156,7 @@ void JSONObj::handle_value(Value v)
             child->init(this, temp_value, temp_name);
             add_child(temp_name, child);
         }
-    }
-    else if (v.type() == array_type) {
+    } else if (v.type() == array_type) {
         Array temp_array = v.get_array();
         Value value;
 
@@ -169,7 +171,7 @@ void JSONObj::handle_value(Value v)
     }
 }
 
-void JSONObj::init(JSONObj * p, Value v, string n)
+void JSONObj::init(JSONObj *p, Value v, string n)
 {
     name = n;
     parent = p;
@@ -178,8 +180,7 @@ void JSONObj::init(JSONObj * p, Value v, string n)
     handle_value(v);
     if (v.type() == str_type) {
         val.set(v.get_str(), true);
-    }
-    else {
+    } else {
         val.set(json_spirit::write_string(v), false);
     }
     attr_map.insert(pair < string, data_val > (name, val));
@@ -205,8 +206,9 @@ vector < string > JSONObj::get_array_elements()
     vector < string > elements;
     Array temp_array;
 
-    if (data.type() == array_type)
+    if (data.type() == array_type) {
         temp_array = data.get_array();
+    }
 
     int array_size = temp_array.size();
     if (array_size > 0)
@@ -220,7 +222,7 @@ vector < string > JSONObj::get_array_elements()
     return elements;
 }
 
-JSONParser::JSONParser():buf_len(0), success(true)
+JSONParser::JSONParser(): buf_len(0), success(true)
 {
 }
 
@@ -249,19 +251,16 @@ bool JSONParser::parse(const char *buf_, int len)
         if (data.type() != obj_type && data.type() != array_type) {
             if (data.type() == str_type) {
                 val.set(data.get_str(), true);
-            }
-            else {
-                const std::string & s = json_spirit::write_string(data);
+            } else {
+                const std::string &s = json_spirit::write_string(data);
                 if (s.size() == (uint64_t) len) {   /* Check if entire string is read */
                     val.set(s, false);
-                }
-                else {
+                } else {
                     set_failure();
                 }
             }
         }
-    }
-    else {
+    } else {
         set_failure();
     }
 
@@ -273,10 +272,11 @@ bool JSONParser::parse(int len)
 {
     string json_string = json_buffer.substr(0, len);
     success = read(json_string, data);
-    if (success)
+    if (success) {
         handle_value(data);
-    else
+    } else {
         set_failure();
+    }
 
     return success;
 }
@@ -285,10 +285,11 @@ bool JSONParser::parse(int len)
 bool JSONParser::parse()
 {
     success = read(json_buffer, data);
-    if (success)
+    if (success) {
         handle_value(data);
-    else
+    } else {
         set_failure();
+    }
 
     return success;
 }
@@ -298,15 +299,16 @@ bool JSONParser::parse(const char *file_name)
 {
     ifstream is(file_name);
     success = read(is, data);
-    if (success)
+    if (success) {
         handle_value(data);
-    else
+    } else {
         set_failure();
+    }
 
     return success;
 }
 
-void decode_json_obj(long &val, JSONObj * obj)
+void decode_json_obj(long &val, JSONObj *obj)
 {
     string s = obj->get_data();
     const char *start = s.c_str();
@@ -334,7 +336,7 @@ void decode_json_obj(long &val, JSONObj * obj)
     }
 }
 
-void decode_json_obj(unsigned long &val, JSONObj * obj)
+void decode_json_obj(unsigned long &val, JSONObj *obj)
 {
     string s = obj->get_data();
     const char *start = s.c_str();
@@ -361,7 +363,7 @@ void decode_json_obj(unsigned long &val, JSONObj * obj)
     }
 }
 
-void decode_json_obj(long long &val, JSONObj * obj)
+void decode_json_obj(long long &val, JSONObj *obj)
 {
     string s = obj->get_data();
     const char *start = s.c_str();
@@ -389,7 +391,7 @@ void decode_json_obj(long long &val, JSONObj * obj)
     }
 }
 
-void decode_json_obj(unsigned long long &val, JSONObj * obj)
+void decode_json_obj(unsigned long long &val, JSONObj *obj)
 {
     string s = obj->get_data();
     const char *start = s.c_str();
@@ -416,7 +418,7 @@ void decode_json_obj(unsigned long long &val, JSONObj * obj)
     }
 }
 
-void decode_json_obj(int &val, JSONObj * obj)
+void decode_json_obj(int &val, JSONObj *obj)
 {
     long l;
     decode_json_obj(l, obj);
@@ -429,7 +431,7 @@ void decode_json_obj(int &val, JSONObj * obj)
     val = (int)l;
 }
 
-void decode_json_obj(unsigned &val, JSONObj * obj)
+void decode_json_obj(unsigned &val, JSONObj *obj)
 {
     unsigned long l;
     decode_json_obj(l, obj);
@@ -442,7 +444,7 @@ void decode_json_obj(unsigned &val, JSONObj * obj)
     val = (unsigned)l;
 }
 
-void decode_json_obj(bool & val, JSONObj * obj)
+void decode_json_obj(bool &val, JSONObj *obj)
 {
     string s = obj->get_data();
     if (strcasecmp(s.c_str(), "true") == 0) {
@@ -458,7 +460,7 @@ void decode_json_obj(bool & val, JSONObj * obj)
     val = (bool) i;
 }
 
-void decode_json_obj(bufferlist & val, JSONObj * obj)
+void decode_json_obj(bufferlist &val, JSONObj *obj)
 {
     string s = obj->get_data();
 
@@ -466,12 +468,12 @@ void decode_json_obj(bufferlist & val, JSONObj * obj)
     bl.append(s.c_str(), s.size());
     try {
         val.decode_base64(bl);
-    } catch(ceph::buffer::error & err) {
+    } catch (ceph::buffer::error &err) {
         throw JSONDecoder::err("failed to decode base64");
     }
 }
 
-void decode_json_obj(utime_t & val, JSONObj * obj)
+void decode_json_obj(utime_t &val, JSONObj *obj)
 {
     string s = obj->get_data();
     uint64_t epoch;
@@ -479,45 +481,42 @@ void decode_json_obj(utime_t & val, JSONObj * obj)
     int r = utime_t::parse_date(s, &epoch, &nsec);
     if (r == 0) {
         val = utime_t(epoch, nsec);
-    }
-    else {
+    } else {
         throw JSONDecoder::err("failed to decode utime_t");
     }
 }
 
-void decode_json_obj(ceph::real_time & val, JSONObj * obj)
+void decode_json_obj(ceph::real_time &val, JSONObj *obj)
 {
-    const std::string & s = obj->get_data();
+    const std::string &s = obj->get_data();
     uint64_t epoch;
     uint64_t nsec;
     int r = utime_t::parse_date(s, &epoch, &nsec);
     if (r == 0) {
         using namespace std::chrono;
         val = real_time {
-        seconds(epoch) + nanoseconds(nsec)};
-    }
-    else {
+            seconds(epoch) + nanoseconds(nsec)};
+    } else {
         throw JSONDecoder::err("failed to decode real_time");
     }
 }
 
-void decode_json_obj(ceph::coarse_real_time & val, JSONObj * obj)
+void decode_json_obj(ceph::coarse_real_time &val, JSONObj *obj)
 {
-    const std::string & s = obj->get_data();
+    const std::string &s = obj->get_data();
     uint64_t epoch;
     uint64_t nsec;
     int r = utime_t::parse_date(s, &epoch, &nsec);
     if (r == 0) {
         using namespace std::chrono;
         val = coarse_real_time {
-        seconds(epoch) + nanoseconds(nsec)};
-    }
-    else {
+            seconds(epoch) + nanoseconds(nsec)};
+    } else {
         throw JSONDecoder::err("failed to decode coarse_real_time");
     }
 }
 
-void decode_json_obj(ceph_dir_layout & i, JSONObj * obj)
+void decode_json_obj(ceph_dir_layout &i, JSONObj *obj)
 {
 
     unsigned tmp;
@@ -531,75 +530,75 @@ void decode_json_obj(ceph_dir_layout & i, JSONObj * obj)
     i.dl_unused3 = tmp;
 }
 
-void encode_json(const char *name, std::string_view val, Formatter * f)
+void encode_json(const char *name, std::string_view val, Formatter *f)
 {
     f->dump_string(name, val);
 }
 
-void encode_json(const char *name, const string & val, Formatter * f)
+void encode_json(const char *name, const string &val, Formatter *f)
 {
     f->dump_string(name, val);
 }
 
-void encode_json(const char *name, const char *val, Formatter * f)
+void encode_json(const char *name, const char *val, Formatter *f)
 {
     f->dump_string(name, val);
 }
 
-void encode_json(const char *name, bool val, Formatter * f)
+void encode_json(const char *name, bool val, Formatter *f)
 {
     f->dump_bool(name, val);
 }
 
-void encode_json(const char *name, int val, Formatter * f)
+void encode_json(const char *name, int val, Formatter *f)
 {
     f->dump_int(name, val);
 }
 
-void encode_json(const char *name, long val, Formatter * f)
+void encode_json(const char *name, long val, Formatter *f)
 {
     f->dump_int(name, val);
 }
 
-void encode_json(const char *name, unsigned val, Formatter * f)
+void encode_json(const char *name, unsigned val, Formatter *f)
 {
     f->dump_unsigned(name, val);
 }
 
-void encode_json(const char *name, unsigned long val, Formatter * f)
+void encode_json(const char *name, unsigned long val, Formatter *f)
 {
     f->dump_unsigned(name, val);
 }
 
-void encode_json(const char *name, unsigned long long val, Formatter * f)
+void encode_json(const char *name, unsigned long long val, Formatter *f)
 {
     f->dump_unsigned(name, val);
 }
 
-void encode_json(const char *name, long long val, Formatter * f)
+void encode_json(const char *name, long long val, Formatter *f)
 {
     f->dump_int(name, val);
 }
 
-void encode_json(const char *name, const utime_t & val, Formatter * f)
+void encode_json(const char *name, const utime_t &val, Formatter *f)
 {
     val.gmtime(f->dump_stream(name));
 }
 
-void encode_json(const char *name, const ceph::real_time & val, Formatter * f)
+void encode_json(const char *name, const ceph::real_time &val, Formatter *f)
 {
     encode_json(name, utime_t {
-                val}, f);
+        val}, f);
 }
 
-void encode_json(const char *name, const ceph::coarse_real_time & val,
-                 Formatter * f)
+void encode_json(const char *name, const ceph::coarse_real_time &val,
+                 Formatter *f)
 {
     encode_json(name, utime_t {
-                val}, f);
+        val}, f);
 }
 
-void encode_json(const char *name, const bufferlist & bl, Formatter * f)
+void encode_json(const char *name, const bufferlist &bl, Formatter *f)
 {
     /* need to copy data from bl, as it is const bufferlist */
     bufferlist src = bl;
@@ -614,24 +613,9 @@ void encode_json(const char *name, const bufferlist & bl, Formatter * f)
 
 /* JSONFormattable */
 
-const JSONFormattable & JSONFormattable::operator[] (const string & name)
-const {
-    auto i = obj.find(name);
-    if (i == obj.end())
+const JSONFormattable &JSONFormattable::operator[](const string &name)
+const
 {
-return default_formattable;
-} return i->second;
-}
-
-const JSONFormattable & JSONFormattable::operator[] (size_t index)
-const {
-    if (index >= arr.size())
-{
-return default_formattable;
-} return arr[index];
-}
-
-JSONFormattable & JSONFormattable::operator[](const string & name) {
     auto i = obj.find(name);
     if (i == obj.end()) {
         return default_formattable;
@@ -639,15 +623,33 @@ JSONFormattable & JSONFormattable::operator[](const string & name) {
     return i->second;
 }
 
-JSONFormattable & JSONFormattable::operator[](size_t index) {
+const JSONFormattable &JSONFormattable::operator[](size_t index)
+const
+{
     if (index >= arr.size()) {
         return default_formattable;
     }
     return arr[index];
 }
 
-bool JSONFormattable::exists(const string & name) constconst
+JSONFormattable &JSONFormattable::operator[](const string &name)
 {
+    auto i = obj.find(name);
+    if (i == obj.end()) {
+        return default_formattable;
+    }
+    return i->second;
+}
+
+JSONFormattable &JSONFormattable::operator[](size_t index)
+{
+    if (index >= arr.size()) {
+        return default_formattable;
+    }
+    return arr[index];
+}
+
+bool JSONFormattable::exists(const string &name) constconst {
     auto i = obj.find(name);
     return (i != obj.end());
 }
@@ -657,10 +659,10 @@ bool JSONFormattable::exists(size_t index) const const
     return (index < arr.size());
 }
 
-bool JSONFormattable::find(const string & name, string * val) constconst
-{
+bool JSONFormattable::find(const string &name, string *val) constconst {
     auto i = obj.find(name);
-    if (i == obj.end()) {
+    if (i == obj.end())
+    {
         return false;
     }
     *val = i->second.val();
@@ -689,9 +691,9 @@ bool JSONFormattable::val_bool() const const
             boost::iequals(value.str, "yes") || boost::iequals(value.str, "1"));
 }
 
-string JSONFormattable::def(const string & def_val) constconst
-{
-    if (type == FMT_NONE) {
+string JSONFormattable::def(const string &def_val) constconst {
+    if (type == FMT_NONE)
+    {
         return def_val;
     }
     return val();
@@ -713,38 +715,39 @@ bool JSONFormattable::def(bool def_val) const const
     return val_bool();
 }
 
-string JSONFormattable::get(const string & name, const string & def_val) constconst
+string JSONFormattable::get(const string &name, const string &def_val) constconst {
+    return (*this)[name].def(def_val);
+}
+
+int JSONFormattable::get_int(const string &name, int def_val) const const
 {
     return (*this)[name].def(def_val);
 }
 
-int JSONFormattable::get_int(const string & name, int def_val) const const
-{
-    return (*this)[name].def(def_val);
-}
-
-bool JSONFormattable::get_bool(const string & name, bool def_val) constconst
-{
+bool JSONFormattable::get_bool(const string &name, bool def_val) constconst {
     return (*this)[name].def(def_val);
 }
 
 struct field_entity {
     bool is_obj {
-    false};                     /* either obj field or array entity */
+        false};                     /* either obj field or array entity */
     string name;                /* if obj */
     int index {
-    0};                         /* if array */
+        0};                         /* if array */
     bool append {
-    false};
+        false};
 
-    field_entity() {
-    } explicit field_entity(const string & n):is_obj(true), name(n) {
+    field_entity()
+    {
+    } explicit field_entity(const string &n): is_obj(true), name(n)
+    {
     }
-    explicit field_entity(int i):is_obj(false), index(i) {
+    explicit field_entity(int i): is_obj(false), index(i)
+    {
     }
 };
 
-static int parse_entity(const string & s, vector < field_entity > *result)
+static int parse_entity(const string &s, vector < field_entity > *result)
 {
     size_t ofs = 0;
 
@@ -773,8 +776,7 @@ static int parse_entity(const string & s, vector < field_entity > *result)
 
         if (!index_str.empty()) {
             result->push_back(field_entity(atoi(index_str.c_str())));
-        }
-        else {
+        } else {
             field_entity f;
             f.append = true;
             result->push_back(f);
@@ -783,17 +785,17 @@ static int parse_entity(const string & s, vector < field_entity > *result)
     return 0;
 }
 
-static bool is_numeric(const string & val)
+static bool is_numeric(const string &val)
 {
     try {
         boost::lexical_cast < double >(val);
-    } catch(const boost::bad_lexical_cast & e) {
+    } catch (const boost::bad_lexical_cast &e) {
         return false;
     }
     return true;
 }
 
-int JSONFormattable::set(const string & name, const string & val)
+int JSONFormattable::set(const string &name, const string &val)
 {
     boost::escaped_list_separator < char >els('\\', '.', '"');
     boost::tokenizer < boost::escaped_list_separator < char >>tok(name, els);
@@ -804,18 +806,17 @@ int JSONFormattable::set(const string & name, const string & val)
 
     bool is_valid_json = jp.parse(val.c_str(), val.size());
 
-  for (const auto & i:tok) {
+    for (const auto &i : tok) {
         vector < field_entity > v;
         int ret = parse_entity(i, &v);
         if (ret < 0) {
             return ret;
         }
-      for (const auto & vi:v) {
+        for (const auto &vi : v) {
             if (f->type == FMT_NONE) {
                 if (vi.is_obj) {
                     f->type = FMT_OBJ;
-                }
-                else {
+                } else {
                     f->type = FMT_ARRAY;
                 }
             }
@@ -825,16 +826,14 @@ int JSONFormattable::set(const string & name, const string & val)
                     return -EINVAL;
                 }
                 f = &f->obj[vi.name];
-            }
-            else if (f->type == FMT_ARRAY) {
+            } else if (f->type == FMT_ARRAY) {
                 if (vi.is_obj) {
                     return -EINVAL;
                 }
                 int index = vi.index;
                 if (vi.append) {
                     index = f->arr.size();
-                }
-                else if (index < 0) {
+                } else if (index < 0) {
                     index = f->arr.size() + index;
                     if (index < 0) {
                         return -EINVAL; /* out of bounds */
@@ -850,8 +849,7 @@ int JSONFormattable::set(const string & name, const string & val)
 
     if (is_valid_json) {
         f->decode_json(&jp);
-    }
-    else {
+    } else {
         f->type = FMT_VALUE;
         f->value.set(val, !is_numeric(val));
     }
@@ -859,7 +857,7 @@ int JSONFormattable::set(const string & name, const string & val)
     return 0;
 }
 
-int JSONFormattable::erase(const string & name)
+int JSONFormattable::erase(const string &name)
 {
     boost::escaped_list_separator < char >els('\\', '.', '"');
     boost::tokenizer < boost::escaped_list_separator < char >>tok(name, els);
@@ -868,18 +866,17 @@ int JSONFormattable::erase(const string & name)
     JSONFormattable *parent = nullptr;
     field_entity last_entity;
 
-  for (auto & i:tok) {
+    for (auto &i : tok) {
         vector < field_entity > v;
         int ret = parse_entity(i, &v);
         if (ret < 0) {
             return ret;
         }
-      for (const auto & vi:v) {
+        for (const auto &vi : v) {
             if (f->type == FMT_NONE || f->type == FMT_VALUE) {
                 if (vi.is_obj) {
                     f->type = FMT_OBJ;
-                }
-                else {
+                } else {
                     f->type = FMT_ARRAY;
                 }
             }
@@ -895,8 +892,7 @@ int JSONFormattable::erase(const string & name)
                     return 0;   /* nothing to erase */
                 }
                 f = &iter->second;
-            }
-            else if (f->type == FMT_ARRAY) {
+            } else if (f->type == FMT_ARRAY) {
                 if (vi.is_obj) {
                     return -EINVAL;
                 }
@@ -918,12 +914,10 @@ int JSONFormattable::erase(const string & name)
 
     if (!parent) {
         *this = JSONFormattable();  /* erase everything */
-    }
-    else {
+    } else {
         if (last_entity.is_obj) {
             parent->obj.erase(last_entity.name);
-        }
-        else {
+        } else {
             int index =
                 (last_entity.index >=
                  0 ? last_entity.index : parent->arr.size() +
@@ -938,38 +932,38 @@ int JSONFormattable::erase(const string & name)
     return 0;
 }
 
-void JSONFormattable::derive_from(const JSONFormattable & parent)
+void JSONFormattable::derive_from(const JSONFormattable &parent)
 {
-  for (auto & o:parent.obj) {
+    for (auto &o : parent.obj) {
         if (obj.find(o.first) == obj.end()) {
             obj[o.first] = o.second;
         }
     }
 }
 
-void encode_json(const char *name, const JSONFormattable & v, Formatter * f)
+void encode_json(const char *name, const JSONFormattable &v, Formatter *f)
 {
     v.encode_json(name, f);
 }
 
-void JSONFormattable::encode_json(const char *name, Formatter * f) const const
+void JSONFormattable::encode_json(const char *name, Formatter *f) const const
 {
     switch (type) {
-    case JSONFormattable::FMT_VALUE:
-        ::encode_json(name, value, f);
-        break;
-    case JSONFormattable::FMT_ARRAY:
-        ::encode_json(name, arr, f);
-        break;
-    case JSONFormattable::FMT_OBJ:
-        f->open_object_section(name);
-      for (auto iter:obj) {
-            ::encode_json(iter.first.c_str(), iter.second, f);
-        }
-        f->close_section();
-        break;
-    case JSONFormattable::FMT_NONE:
-        break;
+        case JSONFormattable::FMT_VALUE:
+            ::encode_json(name, value, f);
+            break;
+        case JSONFormattable::FMT_ARRAY:
+            ::encode_json(name, arr, f);
+            break;
+        case JSONFormattable::FMT_OBJ:
+            f->open_object_section(name);
+            for (auto iter : obj) {
+                ::encode_json(iter.first.c_str(), iter.second, f);
+            }
+            f->close_section();
+            break;
+        case JSONFormattable::FMT_NONE:
+            break;
     }
 }
 
@@ -980,12 +974,11 @@ bool JSONFormattable::handle_value(std::string_view name, std::string_view s,
     if (cur_enc->is_array()) {
         cur_enc->arr.push_back(JSONFormattable());
         new_val = &cur_enc->arr.back();
-    }
-    else {
+    } else {
         cur_enc->set_type(JSONFormattable::FMT_OBJ);
         new_val = &cur_enc->obj[string {
-                                name}
-        ];
+            name}
+                               ];
     }
     new_val->set_type(JSONFormattable::FMT_VALUE);
     new_val->value.set(s, quoted);
@@ -994,26 +987,24 @@ bool JSONFormattable::handle_value(std::string_view name, std::string_view s,
 }
 
 bool JSONFormattable::handle_open_section(std::string_view name,
-                                          const char *ns, bool section_is_array)
+        const char *ns, bool section_is_array)
 {
     if (cur_enc->is_array()) {
         cur_enc->arr.push_back(JSONFormattable());
         cur_enc = &cur_enc->arr.back();
-    }
-    else if (enc_stack.size() > 1) {
+    } else if (enc_stack.size() > 1) {
         /* only open a new section if already nested,
          * otherwise root is the container
          */
         cur_enc = &cur_enc->obj[string {
-                                name}
-        ];
+            name}
+                               ];
     }
     enc_stack.push_back(cur_enc);
 
     if (section_is_array) {
         cur_enc->set_type(JSONFormattable::FMT_ARRAY);
-    }
-    else {
+    } else {
         cur_enc->set_type(JSONFormattable::FMT_OBJ);
     }
 

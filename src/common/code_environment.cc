@@ -29,18 +29,18 @@ code_environment_t g_code_env = CODE_ENVIRONMENT_UTILITY;
 extern "C" const char *code_environment_to_str(enum code_environment_t e)
 {
     switch (e) {
-    case CODE_ENVIRONMENT_UTILITY:
-        return "CODE_ENVIRONMENT_UTILITY";
-    case CODE_ENVIRONMENT_DAEMON:
-        return "CODE_ENVIRONMENT_DAEMON";
-    case CODE_ENVIRONMENT_LIBRARY:
-        return "CODE_ENVIRONMENT_LIBRARY";
-    default:
-        return NULL;
+        case CODE_ENVIRONMENT_UTILITY:
+            return "CODE_ENVIRONMENT_UTILITY";
+        case CODE_ENVIRONMENT_DAEMON:
+            return "CODE_ENVIRONMENT_DAEMON";
+        case CODE_ENVIRONMENT_LIBRARY:
+            return "CODE_ENVIRONMENT_LIBRARY";
+        default:
+            return NULL;
     }
 }
 
-std::ostream & operator<<(std::ostream & oss, const enum code_environment_t e)
+std::ostream &operator<<(std::ostream &oss, const enum code_environment_t e)
 {
     oss << code_environment_to_str(e);
     return oss;
@@ -88,16 +88,19 @@ int get_process_name(char *buf, int len)
 
     char full_path[MAX_PATH];
     int length = GetModuleFileNameA(nullptr, full_path, sizeof(full_path));
-    if (length <= 0)
+    if (length <= 0) {
         return -ENOSYS;
+    }
 
     char *start = strrchr(full_path, '\\');
-    if (!start)
+    if (!start) {
         return -ENOSYS;
+    }
     start++;
     char *end = strstr(start, ".exe");
-    if (!end)
+    if (!end) {
         return -ENOSYS;
+    }
     if (len <= end - start) {
         return -ENAMETOOLONG;
     }

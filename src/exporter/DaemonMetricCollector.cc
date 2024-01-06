@@ -27,17 +27,18 @@ using json_object = boost::json::object;
 using json_value = boost::json::value;
 using json_array = boost::json::array;
 
-void DaemonMetricCollector::request_loop(boost::asio::steady_timer & timer)
+void DaemonMetricCollector::request_loop(boost::asio::steady_timer &timer)
 {
     timer.async_wait([&](const boost::system::error_code & e) {
-                     std::cerr << e << std::endl;
-                     update_sockets();
-                     dump_asok_metrics();
-                     auto stats_period =
-                     g_conf().get_val < int64_t > ("exporter_stats_period");
-                     // time to wait before sending requests again
-                     timer.expires_from_now(std::chrono::seconds(stats_period));
-                     request_loop(timer);});
+        std::cerr << e << std::endl;
+        update_sockets();
+        dump_asok_metrics();
+        auto stats_period =
+            g_conf().get_val < int64_t > ("exporter_stats_period");
+        // time to wait before sending requests again
+        timer.expires_from_now(std::chrono::seconds(stats_period));
+        request_loop(timer);
+    });
 }
 
 void DaemonMetricCollector::main()
@@ -46,7 +47,7 @@ void DaemonMetricCollector::main()
 
     boost::asio::io_service io;
     boost::asio::steady_timer timer {
-    io, std::chrono::seconds(0)};
+        io, std::chrono::seconds(0)};
     request_loop(timer);
     io.run();
 }
@@ -58,9 +59,9 @@ std::string DaemonMetricCollector::get_metrics()
 }
 
 template < class T >
-    void add_metric(std::unique_ptr < MetricsBuilder > &builder, T value,
-                    std::string name, std::string description,
-                    std::string mtype, labels_t labels)
+void add_metric(std::unique_ptr < MetricsBuilder > &builder, T value,
+                std::string name, std::string description,
+                std::string mtype, labels_t labels)
 {
     builder->add(std::to_string(value), name, description, mtype, labels);
 }
@@ -73,8 +74,7 @@ void add_double_or_int_metric(std::unique_ptr < MetricsBuilder > &builder,
     if (value.is_int64()) {
         int64_t v = value.as_int64();
         add_metric(builder, v, name, description, mtype, labels);
-    }
-    else if (value.is_double()) {
+    } else if (value.is_double()) {
         double v = value.as_double();
         add_metric(builder, v, name, description, mtype, labels);
     }
@@ -103,14 +103,13 @@ void DaemonMetricCollector::dump_asok_metrics()
         builder =
             std::unique_ptr < OrderedMetricsBuilder >
             (new OrderedMetricsBuilder());
-    }
-    else {
+    } else {
         builder =
             std::unique_ptr < UnorderedMetricsBuilder >
             (new UnorderedMetricsBuilder());
     }
     auto prio_limit = g_conf().get_val < int64_t > ("exporter_prio_limit");
-  for (auto &[daemon_name, sock_client]:clients) {
+    for (auto &[daemon_name, sock_client] : clients) {
         bool ok;
         sock_client.ping(&ok);
         if (!ok) {
@@ -135,15 +134,16 @@ void DaemonMetricCollector::dump_asok_metrics()
         json_object counter_schema =
             boost::json::parse(counter_schema_response).as_object();
 
-      for (auto & perf_group_item:counter_schema) {
+        for (auto &perf_group_item : counter_schema) {
             std::string perf_group = {
-            perf_group_item.key().begin(), perf_group_item.key().end()};
+                perf_group_item.key().begin(), perf_group_item.key().end()
+            };
             json_array perf_group_schema_array =
                 perf_group_item.value().as_array();
             json_array perf_group_dump_array =
                 counter_dump[perf_group].as_array();
             for (auto schema_itr = perf_group_schema_array.begin(), dump_itr =
-                 perf_group_dump_array.begin();
+                     perf_group_dump_array.begin();
                  schema_itr != perf_group_schema_array.end()
                  && dump_itr != perf_group_dump_array.end();
                  ++schema_itr, ++dump_itr) {
@@ -152,19 +152,21 @@ void DaemonMetricCollector::dump_asok_metrics()
                 auto counters_values = dump_itr->at("counters").as_object();
                 labels_t labels;
 
-              for (auto & label:counters_labels) {
+                for (auto &label : counters_labels) {
                     std::string label_key = {
-                    label.key().begin(), label.key().end()};
+                        label.key().begin(), label.key().end()
+                    };
                     labels[label_key] =
                         quote(label.value().as_string().c_str());
                 }
-              for (auto & counter:counters) {
+                for (auto &counter : counters) {
                     json_object counter_group = counter.value().as_object();
                     if (counter_group["priority"].as_int64() < prio_limit) {
                         continue;
                     }
                     std::string counter_name_init = {
-                    counter.key().begin(), counter.key().end()};
+                        counter.key().begin(), counter.key().end()
+                    };
                     std::string counter_name =
                         perf_group + "_" + counter_name_init;
                     promethize(counter_name);
@@ -184,9 +186,9 @@ void DaemonMetricCollector::dump_asok_metrics()
                                       multisite_labels_and_name.first.end());
                         counter_name = multisite_labels_and_name.second;
                     }
-                    labels.insert( {
-                                  "ceph_daemon", quote(daemon_name)}
-                    );
+                    labels.insert({
+                        "ceph_daemon", quote(daemon_name)}
+                                 );
                     auto perf_values = counters_values.at(counter_name_init);
                     dump_asok_metric(counter_group, perf_values, counter_name,
                                      labels);
@@ -205,23 +207,23 @@ void DaemonMetricCollector::dump_asok_metrics()
         std::string pid_str = read_file_to_string(pid_path);
         if (!pid_path.size()) {
             dout(1) <<
-                "pid path is empty; process metrics won't be fetched for: " <<
-                daemon_name << dendl;
+                    "pid path is empty; process metrics won't be fetched for: " <<
+                    daemon_name << dendl;
         }
         if (!pid_str.empty()) {
-            daemon_pids.push_back( {
-                                  daemon_name, std::stoi(pid_str)}
-            );
+            daemon_pids.push_back({
+                daemon_name, std::stoi(pid_str)}
+                                 );
         }
     }
     dout(10) << "Perf counters retrieved for " << clients.size() -
-        failures << "/" << clients.size() << " daemons." << dendl;
+             failures << "/" << clients.size() << " daemons." << dendl;
     // get time spent on this function
     timer.stop();
     std::
-        string
-        scrap_desc
-        ("Time spent scraping and transforming perf counters to metrics");
+    string
+    scrap_desc
+    ("Time spent scraping and transforming perf counters to metrics");
     labels_t scrap_labels;
     scrap_labels["host"] = quote(ceph_get_hostname());
     scrap_labels["function"] = quote(__FUNCTION__);
@@ -262,11 +264,11 @@ struct pstat read_pid_stat(int pid)
 }
 
 void DaemonMetricCollector::get_process_metrics(std::vector < std::pair <
-                                                std::string, int >>daemon_pids)
+        std::string, int >>daemon_pids)
 {
     std::string path("/proc");
     std::stringstream ss;
-  for (auto &[daemon_name, pid]:daemon_pids) {
+    for (auto &[daemon_name, pid] : daemon_pids) {
         std::vector < std::string > uptimes =
             read_proc_stat_file("/proc/uptime");
         struct pstat stat = read_pid_stat(pid);
@@ -310,24 +312,23 @@ void DaemonMetricCollector::get_process_metrics(std::vector < std::pair <
     }
 }
 
-std::string DaemonMetricCollector::asok_request(AdminSocketClient & asok,
-                                                std::string command,
-                                                std::string daemon_name)
+std::string DaemonMetricCollector::asok_request(AdminSocketClient &asok,
+        std::string command,
+        std::string daemon_name)
 {
     std::string request("{\"prefix\": \"" + command + "\"}");
     std::string response;
     std::string err = asok.do_request(request, &response);
     if (err.length() > 0 || response.substr(0, 5) == "ERROR") {
         dout(1) << "command " << command << "failed for daemon " << daemon_name
-            << "with error: " << err << dendl;
+                << "with error: " << err << dendl;
         return "";
     }
     return response;
 }
 
-std::pair < labels_t, std::string >
-    DaemonMetricCollector::get_labels_and_metric_name(std::string daemon_name,
-                                                      std::string metric_name)
+std::pair < labels_t, std::string > DaemonMetricCollector::get_labels_and_metric_name(std::string daemon_name,
+        std::string metric_name)
 {
     std::string new_metric_name;
     labels_t labels;
@@ -337,13 +338,11 @@ std::pair < labels_t, std::string >
         std::size_t pos = daemon_name.find_last_of('.');
         std::string tmp = daemon_name.substr(pos + 1);
         labels["instance_id"] = quote(tmp);
-    }
-    else if (daemon_name.find("rgw") != std::string::npos) {
+    } else if (daemon_name.find("rgw") != std::string::npos) {
         std::string tmp = daemon_name.substr(16, std::string::npos);
         std::string::size_type pos = tmp.find('.');
         labels["instance_id"] = quote("rgw." + tmp.substr(0, pos));
-    }
-    else if (daemon_name.find("rbd-mirror") != std::string::npos) {
+    } else if (daemon_name.find("rbd-mirror") != std::string::npos) {
         std::regex re("^rbd_mirror_image_([^/]+)/(?:(?:([^/]+)/"
                       ")?)(.*)\\.(replay(?:_bytes|_latency)?)$");
         std::smatch match;
@@ -355,7 +354,7 @@ std::pair < labels_t, std::string >
         }
     }
     return {
-    labels, new_metric_name};
+        labels, new_metric_name};
 }
 
 // Add fixed name metrics from existing ones that have details in their names
@@ -363,8 +362,7 @@ std::pair < labels_t, std::string >
 // a new fixed name metric is created (instead of replacing)and details are put
 // in new labels. Intended for RGW sync perf. counters but extendable as required.
 // See: https://tracker.ceph.com/issues/45311
-std::pair < labels_t, std::string >
-    DaemonMetricCollector::add_fixed_name_metrics(std::string metric_name)
+std::pair < labels_t, std::string > DaemonMetricCollector::add_fixed_name_metrics(std::string metric_name)
 {
     std::string new_metric_name;
     labels_t labels;
@@ -377,7 +375,7 @@ std::pair < labels_t, std::string >
             std::regex_replace(metric_name, re, "from_([^.]*)', 'from_zone");
         labels["source_zone"] = quote(match.str(1));
         return {
-        labels, new_metric_name};
+            labels, new_metric_name};
     }
     return {
     };
@@ -388,8 +386,8 @@ perf_values can be either a int/double or a json_object. Since
    json_value is a wrapper of both we use that class.
  */
 void DaemonMetricCollector::dump_asok_metric(json_object perf_info,
-                                             json_value perf_values,
-                                             std::string name, labels_t labels)
+        json_value perf_values,
+        std::string name, labels_t labels)
 {
     int64_t type = perf_info["type"].as_int64();
     std::string metric_type =
@@ -404,8 +402,7 @@ void DaemonMetricCollector::dump_asok_metric(json_object perf_info,
         json_value sum_value = perf_values.as_object()["sum"];
         add_double_or_int_metric(builder, sum_value, name + "_sum",
                                  description + " Total", metric_type, labels);
-    }
-    else {
+    } else {
         add_double_or_int_metric(builder, perf_values, name, description,
                                  metric_type, labels);
     }
@@ -421,7 +418,7 @@ void DaemonMetricCollector::update_sockets()
         dout(1) << "ERROR: No such directory exist" << sock_dir << dendl;
         return;
     }
-  for (const auto & entry:std::filesystem::directory_iterator(sock_dir)) {
+    for (const auto &entry : std::filesystem::directory_iterator(sock_dir)) {
         if (entry.path().extension() == ".asok") {
             std::string daemon_socket_name = entry.path().filename().string();
             std::string daemon_name =
@@ -430,9 +427,9 @@ void DaemonMetricCollector::update_sockets()
                 !(daemon_name.find("mgr") != std::string::npos) &&
                 !(daemon_name.find("ceph-exporter") != std::string::npos)) {
                 AdminSocketClient sock(entry.path().string());
-                clients.insert( {
-                               daemon_name, std::move(sock)}
-                );
+                clients.insert({
+                    daemon_name, std::move(sock)}
+                              );
             }
         }
     }
@@ -446,13 +443,13 @@ void OrderedMetricsBuilder::add(std::string value, std::string name,
         Metric metric(name, mtype, description);
         metrics[name] = std::move(metric);
     }
-    Metric & metric = metrics[name];
+    Metric &metric = metrics[name];
     metric.add(labels, value);
 }
 
 std::string OrderedMetricsBuilder::dump()
 {
-  for (auto &[name, metric]:metrics) {
+    for (auto &[name, metric] : metrics) {
         out += metric.dump() + "\n";
     }
     return out;
@@ -485,10 +482,10 @@ std::string Metric::dump()
     std::stringstream metric_ss;
     metric_ss << "# HELP " << name << " " << description << "\n";
     metric_ss << "# TYPE " << name << " " << mtype << "\n";
-  for (auto & entry:entries) {
+    for (auto &entry : entries) {
         std::stringstream labels_ss;
         size_t i = 0;
-      for (auto &[label_name, label_value]:entry.labels) {
+        for (auto &[label_name, label_value] : entry.labels) {
             labels_ss << label_name << "=" << label_value;
             if (i < entry.labels.size() - 1) {
                 labels_ss << ",";
@@ -503,7 +500,7 @@ std::string Metric::dump()
     return metric_ss.str();
 }
 
-DaemonMetricCollector & collector_instance()
+DaemonMetricCollector &collector_instance()
 {
     static DaemonMetricCollector instance;
     return instance;

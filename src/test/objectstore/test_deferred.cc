@@ -18,12 +18,15 @@
 #include "common/options.h"     // for the size literals
 #include <semaphore.h>
 
-class C_do_action:public Context {
-  public:
+class C_do_action: public Context
+{
+public:
     std::function < void () > action;
-     C_do_action(std::function < void () > action)
-    :action(action) {
-    } void finish(int r) override {
+    C_do_action(std::function < void () > action)
+        : action(action)
+    {
+    } void finish(int r) override
+    {
         action();
     }
 };
@@ -80,7 +83,7 @@ void create_deferred_and_terminate()
     bl_64K.append(std::string(64 * 1024, '-'));
 
     std::atomic < size_t > prefill_counter {
-    0};
+        0};
     sem_t prefill_mutex;
     sem_init(&prefill_mutex, 0, 0);
 
@@ -91,11 +94,12 @@ void create_deferred_and_terminate()
 
         t.write(cid, hoid, 0, bl_64K.length(), bl_64K);
         t.register_on_commit(new C_do_action([&] {
-                                             if (++prefill_counter ==
-                                                 object_count) {
-                                             sem_post(&prefill_mutex);}
-                                             }
-                             )) ;
+            if (++prefill_counter ==
+                object_count) {
+                sem_post(&prefill_mutex);
+            }
+        }
+                                            )) ;
 
         r = store->queue_transaction(ch, std::move(t));
         ceph_assert(r == 0);
@@ -107,7 +111,7 @@ void create_deferred_and_terminate()
     bufferlist bl_8_bytes;
     bl_8_bytes.append("abcdefgh");
     std::atomic < size_t > deferred_counter {
-    0};
+        0};
     for (size_t o = 0; o < object_count - 1; o++) {
         ObjectStore::Transaction t;
 
@@ -125,11 +129,12 @@ void create_deferred_and_terminate()
         t.write(cid, hoid_m, 0, bl_64K.length(), bl_64K);
 
         t.register_on_commit(new C_do_action([&] {
-                                             if (++deferred_counter ==
-                                                 object_count - 1) {
-                                             exit(0);}
-                                             }
-                             )) ;
+            if (++deferred_counter ==
+                object_count - 1) {
+                exit(0);
+            }
+        }
+                                            )) ;
         r = store->queue_transaction(ch, std::move(t));
         ceph_assert(r == 0);
     }

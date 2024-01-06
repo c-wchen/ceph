@@ -489,13 +489,11 @@ TEST_F(StriperTest, XattrIter)
             && (memcmp(val, attr1_buf, len) == 0)) {
             num_seen++;
             continue;
-        }
-        else if ((strcmp(name, "attr2") == 0) && (val != NULL)
-                 && (memcmp(val, attr2_buf, len) == 0)) {
+        } else if ((strcmp(name, "attr2") == 0) && (val != NULL)
+                   && (memcmp(val, attr2_buf, len) == 0)) {
             num_seen++;
             continue;
-        }
-        else {
+        } else {
             ASSERT_EQ(0, 1) << "Unexpected attribute : " << name;;
         }
     }
@@ -527,12 +525,10 @@ TEST_F(StriperTestPP, XattrListPP)
         if (i->first == string("attr1")) {
             ASSERT_EQ(0,
                       memcmp(i->second.c_str(), attr1_buf, sizeof(attr1_buf)));
-        }
-        else if (i->first == string("attr2")) {
+        } else if (i->first == string("attr2")) {
             ASSERT_EQ(0,
                       memcmp(i->second.c_str(), attr2_buf, sizeof(attr2_buf)));
-        }
-        else {
+        } else {
             ASSERT_EQ(0, 1) << "Unexpected attribute : " << i->first;
         }
     }

@@ -13,7 +13,7 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-static std::ostream & _prefix(std::ostream * _dout)
+static std::ostream &_prefix(std::ostream *_dout)
 {
     return *_dout << "QccCrypto: ";
 }
@@ -71,7 +71,7 @@ bool QccCrypto::init()
 
     if (init_called) {
         dout(10) << "Init sequence already called. Skipping duplicate call" <<
-            dendl;
+                 dendl;
         return true;
     }
 
@@ -200,14 +200,13 @@ bool QccCrypto::init()
             qcc_op_mem[iter].sym_op_data = NULL;
             qcc_op_mem[iter].buff_meta_size = qcc_op_mem[iter].buff_size = 0;
             qcc_op_mem[iter].src_buff_meta = qcc_op_mem[iter].src_buff
-                = qcc_op_mem[iter].iv_buff = NULL;
+                                             = qcc_op_mem[iter].iv_buff = NULL;
             qcc_op_mem[iter].src_buff_list = NULL;
             qcc_op_mem[iter].src_buff_flat = NULL;
             qcc_op_mem[iter].num_buffers = 1;
-        }
-        else {
+        } else {
             derr << "Unable to find address translations of instance " << iter
-                << dendl;
+                 << dendl;
             this->cleanup();
             return false;
         }
@@ -228,8 +227,7 @@ bool QccCrypto::destroy()
     while (retry <= QCC_MAX_RETRIES) {
         if (open_instances.size() == qcc_inst->num_instances) {
             break;
-        }
-        else {
+        } else {
             retry++;
         }
         dout(5) << "QAT is still busy and cannot free resources yet" << dendl;
@@ -241,18 +239,18 @@ bool QccCrypto::destroy()
 
     // Free up op related memory
     for (iter = 0; iter < qcc_inst->num_instances; iter++) {
-        qcc_contig_mem_free((void **)&(qcc_op_mem[iter].src_buff));
-        qcc_contig_mem_free((void **)&(qcc_op_mem[iter].iv_buff));
-        qcc_os_mem_free((void **)&(qcc_op_mem[iter].src_buff_list));
-        qcc_os_mem_free((void **)&(qcc_op_mem[iter].src_buff_flat));
-        qcc_contig_mem_free((void **)&(qcc_op_mem[iter].sym_op_data));
+        qcc_contig_mem_free((void **) & (qcc_op_mem[iter].src_buff));
+        qcc_contig_mem_free((void **) & (qcc_op_mem[iter].iv_buff));
+        qcc_os_mem_free((void **) & (qcc_op_mem[iter].src_buff_list));
+        qcc_os_mem_free((void **) & (qcc_op_mem[iter].src_buff_flat));
+        qcc_contig_mem_free((void **) & (qcc_op_mem[iter].sym_op_data));
     }
 
     // Free up Session memory
     for (iter = 0; iter < qcc_inst->num_instances; iter++) {
         cpaCySymRemoveSession(qcc_inst->cy_inst_handles[iter],
                               qcc_sess[iter].sess_ctx);
-        qcc_contig_mem_free((void **)&(qcc_sess[iter].sess_ctx));
+        qcc_contig_mem_free((void **) & (qcc_sess[iter].sess_ctx));
     }
 
     // Stop QAT Instances
@@ -263,8 +261,8 @@ bool QccCrypto::destroy()
     // Free up the base structures we use
     qcc_os_mem_free((void **)&qcc_op_mem);
     qcc_os_mem_free((void **)&qcc_sess);
-    qcc_os_mem_free((void **)&(qcc_inst->cy_inst_handles));
-    qcc_os_mem_free((void **)&(qcc_inst->is_polled));
+    qcc_os_mem_free((void **) & (qcc_inst->cy_inst_handles));
+    qcc_os_mem_free((void **) & (qcc_inst->is_polled));
     qcc_os_mem_free((void **)&cypollthreads);
     qcc_os_mem_free((void **)&qcc_inst);
 
@@ -276,7 +274,7 @@ bool QccCrypto::destroy()
     return true;
 }
 
-void QccCrypto::do_crypt(qcc_thread_args * thread_args)
+void QccCrypto::do_crypt(qcc_thread_args *thread_args)
 {
     auto entry = thread_args->entry;
     qcc_op_mem[entry].op_result =
@@ -289,7 +287,7 @@ void QccCrypto::do_crypt(qcc_thread_args * thread_args)
 }
 
 bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
-                           size_t size, uint8_t * iv, uint8_t * key,
+                           size_t size, uint8_t *iv, uint8_t *key,
                            CpaCySymCipherDirection op_type)
 {
     if (!init_called) {
@@ -302,8 +300,8 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
 
     if (!is_init) {
         dout(10) <<
-            "QAT not initialized in this instance or init failed with possible error "
-            << (int)init_stat << dendl;
+                 "QAT not initialized in this instance or init failed with possible error "
+                 << (int)init_stat << dendl;
         return is_init;
     }
 
@@ -313,8 +311,7 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
         avail_inst = QccGetFreeInstance();
         if (avail_inst != -1) {
             break;
-        }
-        else {
+        } else {
             retrycount++;
             usleep(qcc_sleep_duration);
         }
@@ -329,13 +326,14 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
     // Start polling threads for this instance
     //QccCyStartPoll(avail_inst);
 
-    auto sg = make_scope_guard([ =] {
-                               //free up the instance irrespective of the op status
-                               dout(15) << "Completed task under " << avail_inst
-                               << dendl;
-                               qcc_op_mem[avail_inst].op_complete = false;
-                               QccCrypto::QccFreeInstance(avail_inst);}
-    );
+    auto sg = make_scope_guard([ = ] {
+        //free up the instance irrespective of the op status
+        dout(15) << "Completed task under " << avail_inst
+                 << dendl;
+        qcc_op_mem[avail_inst].op_complete = false;
+        QccCrypto::QccFreeInstance(avail_inst);
+    }
+                              );
 
     /*
      * Allocate buffers for this version of the instance if not already done.
@@ -362,7 +360,7 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
         // Allocate Buffer List Private metadata
         stat =
             qcc_contig_mem_alloc((void **)
-                                 &(qcc_op_mem[avail_inst].src_buff_meta),
+                                 & (qcc_op_mem[avail_inst].src_buff_meta),
                                  qcc_op_mem[avail_inst].buff_meta_size, 1);
         if (stat != CPA_STATUS_SUCCESS) {
             derr << "Unable to allocate private metadata memory" << dendl;
@@ -370,9 +368,9 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
         }
 
         // Allocate Buffer List Memory
-        qcc_os_mem_alloc((void **)&(qcc_op_mem[avail_inst].src_buff_list),
+        qcc_os_mem_alloc((void **) & (qcc_op_mem[avail_inst].src_buff_list),
                          sizeof(CpaBufferList));
-        qcc_os_mem_alloc((void **)&(qcc_op_mem[avail_inst].src_buff_flat),
+        qcc_os_mem_alloc((void **) & (qcc_op_mem[avail_inst].src_buff_flat),
                          (qcc_op_mem[avail_inst].num_buffers *
                           sizeof(CpaFlatBuffer)));
         if (qcc_op_mem[avail_inst].src_buff_list == NULL
@@ -383,7 +381,7 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
 
         // Allocate IV memory
         stat =
-            qcc_contig_mem_alloc((void **)&(qcc_op_mem[avail_inst].iv_buff),
+            qcc_contig_mem_alloc((void **) & (qcc_op_mem[avail_inst].iv_buff),
                                  AES_256_IV_LEN);
         if (stat != CPA_STATUS_SUCCESS) {
             derr << "Unable to allocate bufferlist memory" << dendl;
@@ -400,7 +398,7 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
 
         //Setup OpData
         stat =
-            qcc_contig_mem_alloc((void **)&(qcc_op_mem[avail_inst].sym_op_data),
+            qcc_contig_mem_alloc((void **) & (qcc_op_mem[avail_inst].sym_op_data),
                                  sizeof(CpaCySymOpData));
         if (stat != CPA_STATUS_SUCCESS) {
             derr << "Unable to allocate opdata memory" << dendl;
@@ -420,7 +418,7 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
             return false;
         }
 
-        stat = qcc_contig_mem_alloc((void **)&(qcc_sess[avail_inst].sess_ctx),
+        stat = qcc_contig_mem_alloc((void **) & (qcc_sess[avail_inst].sess_ctx),
                                     qcc_sess[avail_inst].sess_ctx_sz);
         if (stat != CPA_STATUS_SUCCESS) {
             derr << "Unable to allocate contig memory" << dendl;
@@ -450,9 +448,9 @@ bool QccCrypto::perform_op(unsigned char *out, const unsigned char *in,
 
     // Allocate actual buffers that will hold data
     if (qcc_op_mem[avail_inst].buff_size != (Cpa32U) size) {
-        qcc_contig_mem_free((void **)&(qcc_op_mem[avail_inst].src_buff));
+        qcc_contig_mem_free((void **) & (qcc_op_mem[avail_inst].src_buff));
         qcc_op_mem[avail_inst].buff_size = (Cpa32U) size;
-        stat = qcc_contig_mem_alloc((void **)&(qcc_op_mem[avail_inst].src_buff),
+        stat = qcc_contig_mem_alloc((void **) & (qcc_op_mem[avail_inst].src_buff),
                                     qcc_op_mem[avail_inst].buff_size);
         if (stat != CPA_STATUS_SUCCESS) {
             derr << "Unable to allocate contig memory" << dendl;

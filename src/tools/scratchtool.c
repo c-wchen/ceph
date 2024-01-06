@@ -75,11 +75,13 @@ static int do_rados_getxattrs(rados_ioctx_t io_ctx, const char *oid,
                    "returned error %d\n", oid, r);
             goto out_err;
         }
-        if (!key)
+        if (!key) {
             break;
+        }
         for (i = 0; i < nval; ++i) {
-            if (strcmp(exkeys[i], key))
+            if (strcmp(exkeys[i], key)) {
                 continue;
+            }
             if ((len == strlen(exvals[i]) + 1) && (val != NULL)
                 && (!strcmp(exvals[i], val))) {
                 nfound++;
@@ -98,7 +100,7 @@ static int do_rados_getxattrs(rados_ioctx_t io_ctx, const char *oid,
     ret = 0;
     printf("rados_getxattrs(%s)\n", oid);
 
-  out_err:
+out_err:
     rados_getxattrs_end(iter);
     return ret;
 }
@@ -185,8 +187,9 @@ static int testrados(void)
         const char *b = buf;
         printf("begin pools.\n");
         while (1) {
-            if (b[0] == '\0')
+            if (b[0] == '\0') {
                 break;
+            }
             printf(" pool: '%s'\n", b);
             b += strlen(b) + 1;
         };
@@ -226,24 +229,32 @@ static int testrados(void)
     printf("rados_write = %d\n", r);
     r = rados_read(io_ctx, oid, buf2, sizeof(buf2), 0);
     printf("rados_read = %d\n", r);
-    if (memcmp(buf, buf2, r))
+    if (memcmp(buf, buf2, r)) {
         printf("*** content mismatch ***\n");
+    }
 
     /* attrs */
-    if (do_rados_setxattr(io_ctx, oid, "b", "2"))
+    if (do_rados_setxattr(io_ctx, oid, "b", "2")) {
         goto out_err_cleanup;
-    if (do_rados_setxattr(io_ctx, oid, "a", "1"))
+    }
+    if (do_rados_setxattr(io_ctx, oid, "a", "1")) {
         goto out_err_cleanup;
-    if (do_rados_setxattr(io_ctx, oid, "c", "3"))
+    }
+    if (do_rados_setxattr(io_ctx, oid, "c", "3")) {
         goto out_err_cleanup;
-    if (do_rados_getxattr(io_ctx, oid, "a", "1"))
+    }
+    if (do_rados_getxattr(io_ctx, oid, "a", "1")) {
         goto out_err_cleanup;
-    if (do_rados_getxattr(io_ctx, oid, "b", "2"))
+    }
+    if (do_rados_getxattr(io_ctx, oid, "b", "2")) {
         goto out_err_cleanup;
-    if (do_rados_getxattr(io_ctx, oid, "c", "3"))
+    }
+    if (do_rados_getxattr(io_ctx, oid, "c", "3")) {
         goto out_err_cleanup;
-    if (do_rados_getxattrs(io_ctx, oid, exkeys, exvals))
+    }
+    if (do_rados_getxattrs(io_ctx, oid, exkeys, exvals)) {
         goto out_err_cleanup;
+    }
 
     uint64_t size;
     time_t mtime;
@@ -295,8 +306,9 @@ static int testrados(void)
     printf("rados_nobjects_list_open = %d, h = %p\n", r, h);
     const char *poolname;
     while (rados_nobjects_list_next2(h, &poolname, NULL, NULL, NULL, NULL, NULL)
-           == 0)
+           == 0) {
         printf("rados_nobjects_list_next2 got object '%s'\n", poolname);
+    }
     rados_nobjects_list_close(h);
 
     /* stat */
@@ -306,14 +318,14 @@ static int testrados(void)
 
     ret = 0;
 
-  out_err_cleanup:
+out_err_cleanup:
     /* delete a pool */
     rados_ioctx_destroy(io_ctx);
 
     r = rados_pool_delete(cl, "foo");
     printf("rados_delete_pool = %d\n", r);
 
-  out_err:
+out_err:
     rados_shutdown(cl);
     return ret;
 }

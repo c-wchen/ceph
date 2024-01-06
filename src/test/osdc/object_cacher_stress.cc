@@ -28,8 +28,9 @@ using namespace std;
 
 // XXX: Only tests default namespace
 struct op_data {
-    op_data(const std::string & oid, uint64_t offset, uint64_t len, bool read)
-    :extent(oid, 0, offset, len, 0), is_read(read) {
+    op_data(const std::string &oid, uint64_t offset, uint64_t len, bool read)
+        : extent(oid, 0, offset, len, 0), is_read(read)
+    {
         extent.oloc.pool = 0;
         extent.buffer_extents.push_back(make_pair(0, len));
     } ObjectExtent extent;
@@ -38,13 +39,16 @@ struct op_data {
     std::atomic < unsigned >done = { 0 };
 };
 
-class C_Count:public Context {
+class C_Count: public Context
+{
     op_data *m_op;
-     std::atomic < unsigned >*m_outstanding = nullptr;
-  public:
-     C_Count(op_data * op, std::atomic < unsigned >*outstanding)
-    :m_op(op), m_outstanding(outstanding) {
-    } void finish(int r) override {
+    std::atomic < unsigned > *m_outstanding = nullptr;
+public:
+    C_Count(op_data *op, std::atomic < unsigned > *outstanding)
+        : m_op(op), m_outstanding(outstanding)
+    {
+    } void finish(int r) override
+    {
         m_op->done++;
         ceph_assert(*m_outstanding > 0);
         (*m_outstanding)--;
@@ -78,12 +82,12 @@ int stress_test(uint64_t num_ops, uint64_t num_objs,
 
     // schedule ops
     std::cout << "Test configuration:\n\n"
-        << setw(10) << "ops: " << num_ops << "\n"
-        << setw(10) << "objects: " << num_objs << "\n"
-        << setw(10) << "obj size: " << max_obj_size << "\n"
-        << setw(10) << "delay: " << delay_ns << "\n"
-        << setw(10) << "max op len: " << max_op_len << "\n"
-        << setw(10) << "percent reads: " << percent_reads << "\n\n";
+              << setw(10) << "ops: " << num_ops << "\n"
+              << setw(10) << "objects: " << num_objs << "\n"
+              << setw(10) << "obj size: " << max_obj_size << "\n"
+              << setw(10) << "delay: " << delay_ns << "\n"
+              << setw(10) << "max op len: " << max_op_len << "\n"
+              << setw(10) << "percent reads: " << percent_reads << "\n\n";
 
     for (uint64_t i = 0; i < num_ops; ++i) {
         uint64_t offset = random() % max_obj_size;
@@ -94,12 +98,12 @@ int stress_test(uint64_t num_ops, uint64_t num_objs,
         std::string oid = "test" + stringify(random() % num_objs);
         bool is_read = random() < percent_reads * float (RAND_MAX);
         std::shared_ptr < op_data >
-            op(new op_data(oid, offset, length, is_read));
+        op(new op_data(oid, offset, length, is_read));
         ops.push_back(op);
         std::cout << "op " << i << " " << (is_read ? "read" : "write")
-            << " " << op->extent << "\n";
+                  << " " << op->extent << "\n";
         if (op->is_read) {
-            ObjectCacher::OSDRead * rd =
+            ObjectCacher::OSDRead *rd =
                 obc.prepare_read(CEPH_NOSNAP, &op->result, 0);
             rd->extents.push_back(op->extent);
             outstanding_reads++;
@@ -108,16 +112,16 @@ int stress_test(uint64_t num_ops, uint64_t num_objs,
             int r = obc.readx(rd, &object_set, completion);
             lock.unlock();
             ceph_assert(r >= 0);
-            if ((uint64_t) r == length)
+            if ((uint64_t) r == length) {
                 completion->complete(r);
-            else
+            } else {
                 ceph_assert(r == 0);
-        }
-        else {
-            ObjectCacher::OSDWrite * wr = obc.prepare_write(snapc, bl,
-                                                            ceph::real_time::
-                                                            min(), 0,
-                                                            ++journal_tid);
+            }
+        } else {
+            ObjectCacher::OSDWrite *wr = obc.prepare_write(snapc, bl,
+                                         ceph::real_time::
+                                         min(), 0,
+                                         ++journal_tid);
             wr->extents.push_back(op->extent);
             lock.lock();
             obc.writex(wr, &object_set, NULL);
@@ -127,8 +131,9 @@ int stress_test(uint64_t num_ops, uint64_t num_objs,
 
     // check that all reads completed
     for (uint64_t i = 0; i < num_ops; ++i) {
-        if (!ops[i]->is_read)
+        if (!ops[i]->is_read) {
             continue;
+        }
         std::cout << "waiting for read " << i << ops[i]->extent << std::endl;
         uint64_t done = 0;
         while (done == 0) {
@@ -158,11 +163,11 @@ int stress_test(uint64_t num_ops, uint64_t num_objs,
     lock.unlock();
     {
         std::unique_lock locker {
-        mylock};
-        cond.wait(locker,[&done] {
-                  return done;
-                  }
-        );
+            mylock};
+        cond.wait(locker, [&done] {
+            return done;
+        }
+                 );
     }
     lock.lock();
     bool unclean = obc.release_set(&object_set);
@@ -205,9 +210,9 @@ int correctness_test(uint64_t delay_ns)
     std::cerr << "writing 4x1MB object" << std::endl;
     std::map < int, C_SaferCond > create_finishers;
     for (int i = 0; i < 4; ++i) {
-        ObjectCacher::OSDWrite * wr = obc.prepare_write(snapc, zeroes_bl,
-                                                        ceph::real_time::min(),
-                                                        0, ++journal_tid);
+        ObjectCacher::OSDWrite *wr = obc.prepare_write(snapc, zeroes_bl,
+                                     ceph::real_time::min(),
+                                     0, ++journal_tid);
         ObjectExtent extent(oid, 0, zeroes_bl.length() * i, zeroes_bl.length(),
                             0);
         extent.oloc.pool = 0;
@@ -225,9 +230,9 @@ int correctness_test(uint64_t delay_ns)
     ceph::bufferlist ones_bl;
     ones_bl.append(ones);
     for (int i = 1 << 18; i < 1 << 22; i += 1 << 18) {
-        ObjectCacher::OSDWrite * wr = obc.prepare_write(snapc, ones_bl,
-                                                        ceph::real_time::min(),
-                                                        0, ++journal_tid);
+        ObjectCacher::OSDWrite *wr = obc.prepare_write(snapc, ones_bl,
+                                     ceph::real_time::min(),
+                                     0, ++journal_tid);
         ObjectExtent extent(oid, 0, i, ones_bl.length(), 0);
         extent.oloc.pool = 0;
         extent.buffer_extents.push_back(make_pair(0, 1 << 16));
@@ -257,7 +262,7 @@ int correctness_test(uint64_t delay_ns)
     std::cout << "Reading back half of object (1<<21~1<<21)" << std::endl;
     bufferlist readbl;
     C_SaferCond backreadcond;
-    ObjectCacher::OSDRead * back_half_rd =
+    ObjectCacher::OSDRead *back_half_rd =
         obc.prepare_read(CEPH_NOSNAP, &readbl, 0);
     ObjectExtent back_half_extent(oid, 0, 1 << 21, 1 << 21, 0);
     back_half_extent.oloc.pool = 0;
@@ -282,7 +287,7 @@ int correctness_test(uint64_t delay_ns)
     readbl.clear();
     std::cout << "Reading whole object (0~1<<22)" << std::endl;
     C_SaferCond frontreadcond;
-    ObjectCacher::OSDRead * whole_rd =
+    ObjectCacher::OSDRead *whole_rd =
         obc.prepare_read(CEPH_NOSNAP, &readbl, 0);
     ObjectExtent whole_extent(oid, 0, 0, 1 << 22, 0);
     whole_extent.oloc.pool = 0;
@@ -294,10 +299,10 @@ int correctness_test(uint64_t delay_ns)
     ceph_assert(r == 0);
     std::cout << "Data (correctly) not available without fetching" << std::endl;
 
-    ObjectCacher::OSDWrite * verify_wr = obc.prepare_write(snapc, ones_bl,
-                                                           ceph::real_time::
-                                                           min(), 0,
-                                                           ++journal_tid);
+    ObjectCacher::OSDWrite *verify_wr = obc.prepare_write(snapc, ones_bl,
+                                        ceph::real_time::
+                                        min(), 0,
+                                        ++journal_tid);
     ObjectExtent verify_extent(oid, 0, (1 << 18) + (1 << 16), ones_bl.length(),
                                0);
     verify_extent.oloc.pool = 0;
@@ -358,7 +363,7 @@ int correctness_test(uint64_t delay_ns)
     std::cout << "Testing ObjectCacher correctness complete" << std::endl;
     return EXIT_SUCCESS;
 
-  fail:
+fail:
     return EXIT_FAILURE;
 }
 
@@ -387,57 +392,48 @@ int main(int argc, const char **argv)
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &num_ops, err, "--ops", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &num_ops, err, "--ops", (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &num_objs, err, "--objects", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &num_objs, err, "--objects", (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &obj_bytes, err, "--obj-size", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &obj_bytes, err, "--obj-size", (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &max_len, err, "--max-op-size", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &max_len, err, "--max-op-size", (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &percent_reads, err, "--percent-read",
-                  (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &percent_reads, err, "--percent-read",
+                    (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &seed, err, "--seed", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &seed, err, "--seed", (char *)NULL)) {
             if (!err.str().empty()) {
                 cerr << argv[0] << ": " << err.str() << std::endl;
                 return EXIT_FAILURE;
             }
-        }
-        else if (ceph_argparse_flag(args, i, "--stress-test", NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--stress-test", NULL)) {
             stress = true;
-        }
-        else if (ceph_argparse_flag(args, i, "--correctness-test", NULL)) {
+        } else if (ceph_argparse_flag(args, i, "--correctness-test", NULL)) {
             correctness = true;
-        }
-        else {
+        } else {
             cerr << "unknown option " << *i << std::endl;
             return EXIT_FAILURE;
         }

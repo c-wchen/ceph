@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "MDSRank.h"
@@ -32,18 +32,22 @@
 
 using namespace std;
 
-namespace {
-    class SessionMapIOContext:public MDSIOContextBase {
-      protected:
-        SessionMap * sessionmap;
-        MDSRank *get_mds() override {
-            return sessionmap->mds;
-      } public:
-         explicit SessionMapIOContext(SessionMap *
-                                      sessionmap_):sessionmap(sessionmap_) {
-            ceph_assert(sessionmap != NULL);
-        }
-    };
+namespace
+{
+class SessionMapIOContext: public MDSIOContextBase
+{
+protected:
+    SessionMap *sessionmap;
+    MDSRank *get_mds() override
+    {
+        return sessionmap->mds;
+    } public:
+    explicit SessionMapIOContext(SessionMap *
+                                 sessionmap_): sessionmap(sessionmap_)
+    {
+        ceph_assert(sessionmap != NULL);
+    }
+};
 };
 
 void SessionMap::register_perfcounters()
@@ -75,13 +79,13 @@ void SessionMap::dump()
 {
     dout(10) << "dump" << dendl;
     for (ceph::unordered_map < entity_name_t, Session * >::iterator p =
-         session_map.begin(); p != session_map.end(); ++p)
+             session_map.begin(); p != session_map.end(); ++p)
         dout(10) << p->first << " " << p->second << " state " << p->second->
-            get_state_name()
-            << " completed " << p->second->info.
-            completed_requests << " free_prealloc_inos " << p->second->
-            free_prealloc_inos << " delegated_inos " << p->second->
-            delegated_inos << dendl;
+                 get_state_name()
+                 << " completed " << p->second->info.
+                 completed_requests << " free_prealloc_inos " << p->second->
+                 free_prealloc_inos << " delegated_inos " << p->second->
+                 delegated_inos << dendl;
 }
 
 // ----------------
@@ -94,39 +98,45 @@ object_t SessionMap::get_object_name() const const
     return object_t(s);
 }
 
-namespace {
-    class C_IO_SM_Load:public SessionMapIOContext {
-      public:
-        const bool first;       //< Am I the initial (header) load?
-        int header_r;           //< Return value from OMAP header read
-        int values_r;           //< Return value from OMAP value read
-        bufferlist header_bl;
-        std::map < std::string, bufferlist > session_vals;
-        bool more_session_vals = false;
+namespace
+{
+class C_IO_SM_Load: public SessionMapIOContext
+{
+public:
+    const bool first;       //< Am I the initial (header) load?
+    int header_r;           //< Return value from OMAP header read
+    int values_r;           //< Return value from OMAP value read
+    bufferlist header_bl;
+    std::map < std::string, bufferlist > session_vals;
+    bool more_session_vals = false;
 
-        C_IO_SM_Load(SessionMap * cm, const bool f)
-        :SessionMapIOContext(cm), first(f), header_r(0), values_r(0) {
-        } void finish(int r) override {
-            sessionmap->_load_finish(r, header_r, values_r, first, header_bl,
-                                     session_vals, more_session_vals);
-        }
-        void print(ostream & out) const override {
-            out << "session_load";
-    }};
+    C_IO_SM_Load(SessionMap *cm, const bool f)
+        : SessionMapIOContext(cm), first(f), header_r(0), values_r(0)
+    {
+    } void finish(int r) override
+    {
+        sessionmap->_load_finish(r, header_r, values_r, first, header_bl,
+                                 session_vals, more_session_vals);
+    }
+    void print(ostream &out) const override
+    {
+        out << "session_load";
+    }
+};
 }
 
 /**
  * Decode OMAP header.  Call this once when loading.
  */
-void SessionMapStore::decode_header(bufferlist & header_bl)
+void SessionMapStore::decode_header(bufferlist &header_bl)
 {
     auto q = header_bl.cbegin();
     DECODE_START(1, q)
-        decode(version, q);
+    decode(version, q);
     DECODE_FINISH(q);
 }
 
-void SessionMapStore::encode_header(bufferlist * header_bl)
+void SessionMapStore::encode_header(bufferlist *header_bl)
 {
     ENCODE_START(1, 1, *header_bl);
     encode(version, *header_bl);
@@ -141,14 +151,14 @@ void SessionMapStore::decode_values(std::map < std::string,
                                     bufferlist > &session_vals)
 {
     for (std::map < std::string, bufferlist >::iterator i =
-         session_vals.begin(); i != session_vals.end(); ++i) {
+             session_vals.begin(); i != session_vals.end(); ++i) {
 
         entity_inst_t inst;
 
         bool parsed = inst.name.parse(i->first);
         if (!parsed) {
             derr << "Corrupt entity name '" << i->
-                first << "' in sessionmap" << dendl;
+                 first << "' in sessionmap" << dendl;
             throw buffer::malformed_input("Corrupt entity name in sessionmap");
         }
 
@@ -169,7 +179,7 @@ void SessionMap::_load_finish(int operation_r,
                               int header_r,
                               int values_r,
                               bool first,
-                              bufferlist & header_bl,
+                              bufferlist &header_bl,
                               std::map < std::string,
                               bufferlist > &session_vals,
                               bool more_session_vals)
@@ -177,7 +187,7 @@ void SessionMap::_load_finish(int operation_r,
     if (operation_r < 0) {
         derr << "_load_finish got " << cpp_strerror(operation_r) << dendl;
         mds->clog->error() << "error reading sessionmap '" << get_object_name()
-            << "' " << operation_r << " (" << cpp_strerror(operation_r) << ")";
+                           << "' " << operation_r << " (" << cpp_strerror(operation_r) << ")";
         mds->damaged();
         ceph_abort();           // Should be unreachable because damaged() calls respawn()
     }
@@ -186,25 +196,24 @@ void SessionMap::_load_finish(int operation_r,
     if (first) {
         if (header_r != 0) {
             derr << __func__ << ": header error: " << cpp_strerror(header_r) <<
-                dendl;
+                 dendl;
             mds->clog->
-                error() << "error reading sessionmap header " << header_r <<
-                " (" << cpp_strerror(header_r) << ")";
+            error() << "error reading sessionmap header " << header_r <<
+                    " (" << cpp_strerror(header_r) << ")";
             mds->damaged();
             ceph_abort();       // Should be unreachable because damaged() calls respawn()
         }
 
         if (header_bl.length() == 0) {
             dout(4) << __func__ << ": header missing, loading legacy..." <<
-                dendl;
+                    dendl;
             load_legacy();
             return;
         }
 
         try {
             decode_header(header_bl);
-        }
-        catch(buffer::error & e) {
+        } catch (buffer::error &e) {
             mds->clog->error() << "corrupt sessionmap header: " << e.what();
             mds->damaged();
             ceph_abort();       // Should be unreachable because damaged() calls respawn()
@@ -214,9 +223,9 @@ void SessionMap::_load_finish(int operation_r,
 
     if (values_r != 0) {
         derr << __func__ << ": error reading values: "
-            << cpp_strerror(values_r) << dendl;
+             << cpp_strerror(values_r) << dendl;
         mds->clog->error() << "error reading sessionmap values: "
-            << values_r << " (" << cpp_strerror(values_r) << ")";
+                           << values_r << " (" << cpp_strerror(values_r) << ")";
         mds->damaged();
         ceph_abort();           // Should be unreachable because damaged() calls respawn()
     }
@@ -224,8 +233,7 @@ void SessionMap::_load_finish(int operation_r,
     // Decode session_vals
     try {
         decode_values(session_vals);
-    }
-    catch(buffer::error & e) {
+    } catch (buffer::error &e) {
         mds->clog->error() << "corrupt sessionmap values: " << e.what();
         mds->damaged();
         ceph_abort();           // Should be unreachable because damaged() calls respawn()
@@ -235,7 +243,7 @@ void SessionMap::_load_finish(int operation_r,
         // Issue another read if we're not at the end of the omap
         const std::string last_key = session_vals.rbegin()->first;
         dout(10) << __func__ << ": continue omap load from '"
-            << last_key << "'" << dendl;
+                 << last_key << "'" << dendl;
         object_t oid = get_object_name();
         object_locator_t oloc(mds->get_metadata_pool());
         C_IO_SM_Load *c = new C_IO_SM_Load(this, false);
@@ -244,12 +252,11 @@ void SessionMap::_load_finish(int operation_r,
                          &c->session_vals, &c->more_session_vals, &c->values_r);
         mds->objecter->read(oid, oloc, op, CEPH_NOSNAP, NULL, 0,
                             new C_OnFinisher(c, mds->finisher));
-    }
-    else {
+    } else {
         // I/O is complete.  Update `by_state`
         dout(10) << __func__ << ": omap load complete" << dendl;
         for (ceph::unordered_map < entity_name_t, Session * >::iterator i =
-             session_map.begin(); i != session_map.end(); ++i) {
+                 session_map.begin(); i != session_map.end(); ++i) {
             Session *s = i->second;
             auto by_state_entry = by_state.find(s->get_state());
             if (by_state_entry == by_state.end())
@@ -261,7 +268,7 @@ void SessionMap::_load_finish(int operation_r,
 
         // Population is complete.  Trigger load waiters.
         dout(10) << __func__ << ": v " << version
-            << ", " << session_map.size() << " sessions" << dendl;
+                 << ", " << session_map.size() << " sessions" << dendl;
         projected = committing = committed = version;
         dump();
         finish_contexts(g_ceph_context, waiting_for_load);
@@ -272,12 +279,13 @@ void SessionMap::_load_finish(int operation_r,
  * Populate session state from OMAP records in this
  * rank's sessionmap object.
  */
-void SessionMap::load(MDSContext * onload)
+void SessionMap::load(MDSContext *onload)
 {
     dout(10) << "load" << dendl;
 
-    if (onload)
+    if (onload) {
         waiting_for_load.push_back(onload);
+    }
 
     C_IO_SM_Load *c = new C_IO_SM_Load(this, true);
     object_t oid = get_object_name();
@@ -292,17 +300,23 @@ void SessionMap::load(MDSContext * onload)
                         new C_OnFinisher(c, mds->finisher));
 }
 
-namespace {
-    class C_IO_SM_LoadLegacy:public SessionMapIOContext {
-      public:
-        bufferlist bl;
-        explicit C_IO_SM_LoadLegacy(SessionMap * cm):SessionMapIOContext(cm) {
-        } void finish(int r) override {
-            sessionmap->_load_legacy_finish(r, bl);
-        }
-        void print(ostream & out) const override {
-            out << "session_load_legacy";
-    }};
+namespace
+{
+class C_IO_SM_LoadLegacy: public SessionMapIOContext
+{
+public:
+    bufferlist bl;
+    explicit C_IO_SM_LoadLegacy(SessionMap *cm): SessionMapIOContext(cm)
+    {
+    } void finish(int r) override
+    {
+        sessionmap->_load_legacy_finish(r, bl);
+    }
+    void print(ostream &out) const override
+    {
+        out << "session_load_legacy";
+    }
+};
 }
 
 /**
@@ -323,7 +337,7 @@ void SessionMap::load_legacy()
                              new C_OnFinisher(c, mds->finisher));
 }
 
-void SessionMap::_load_legacy_finish(int r, bufferlist & bl)
+void SessionMap::_load_legacy_finish(int r, bufferlist &bl)
 {
     auto blp = bl.cbegin();
     if (r < 0) {
@@ -333,15 +347,15 @@ void SessionMap::_load_legacy_finish(int r, bufferlist & bl)
     dump();
     decode_legacy(blp);         // note: this sets last_cap_renew = now()
     dout(10) << "_load_finish v " << version
-        << ", " << session_map.size() << " sessions, "
-        << bl.length() << " bytes" << dendl;
+             << ", " << session_map.size() << " sessions, "
+             << bl.length() << " bytes" << dendl;
     projected = committing = committed = version;
     dump();
 
     // Mark all sessions dirty, so that on next save() we will write
     // a complete OMAP version of the data loaded from the legacy format
     for (ceph::unordered_map < entity_name_t, Session * >::iterator i =
-         session_map.begin(); i != session_map.end(); ++i) {
+             session_map.begin(); i != session_map.end(); ++i) {
         // Don't use mark_dirty because on this occasion we want to ignore the
         // keys_per_op limit and do one big write (upgrade must be atomic)
         dirty_sessions.insert(i->first);
@@ -354,26 +368,31 @@ void SessionMap::_load_legacy_finish(int r, bufferlist & bl)
 // ----------------
 // SAVE
 
-namespace {
-    class C_IO_SM_Save:public SessionMapIOContext {
-        version_t version;
-      public:
-        C_IO_SM_Save(SessionMap * cm, version_t v):SessionMapIOContext(cm),
-            version(v) {
-        } void finish(int r) override {
-            if (r != 0) {
-                get_mds()->handle_write_error(r);
-            }
-            else {
-                sessionmap->_save_finish(version);
-            }
+namespace
+{
+class C_IO_SM_Save: public SessionMapIOContext
+{
+    version_t version;
+public:
+    C_IO_SM_Save(SessionMap *cm, version_t v): SessionMapIOContext(cm),
+        version(v)
+    {
+    } void finish(int r) override
+    {
+        if (r != 0) {
+            get_mds()->handle_write_error(r);
+        } else {
+            sessionmap->_save_finish(version);
         }
-        void print(ostream & out) const override {
-            out << "session_save";
-    }};
+    }
+    void print(ostream &out) const override
+    {
+        out << "session_save";
+    }
+};
 }
 
-void SessionMap::save(MDSContext * onsave, version_t needv)
+void SessionMap::save(MDSContext *onsave, version_t needv)
 {
     dout(10) << __func__ << ": needv " << needv << ", v " << version << dendl;
 
@@ -429,8 +448,7 @@ void SessionMap::save(MDSContext * onsave, version_t needv)
             to_set[std::string(css->strv())] = bl;
 
             session->clear_dirty_completed_requests();
-        }
-        else {
+        } else {
             dout(20) << "  " << name << " (ignoring)" << dendl;
         }
     }
@@ -473,14 +491,14 @@ void SessionMap::_save_finish(version_t v)
 /**
  * Deserialize sessions, and update by_state index
  */
-void SessionMap::decode_legacy(bufferlist::const_iterator & p)
+void SessionMap::decode_legacy(bufferlist::const_iterator &p)
 {
     // Populate `sessions`
     SessionMapStore::decode_legacy(p);
 
     // Update `by_state`
     for (ceph::unordered_map < entity_name_t, Session * >::iterator i =
-         session_map.begin(); i != session_map.end(); ++i) {
+             session_map.begin(); i != session_map.end(); ++i) {
         Session *s = i->second;
         auto by_state_entry = by_state.find(s->get_state());
         if (by_state_entry == by_state.end())
@@ -490,13 +508,14 @@ void SessionMap::decode_legacy(bufferlist::const_iterator & p)
     }
 }
 
-uint64_t SessionMap::set_state(Session * session, int s)
+uint64_t SessionMap::set_state(Session *session, int s)
 {
     if (session->state != s) {
         session->set_state(s);
         auto by_state_entry = by_state.find(s);
-        if (by_state_entry == by_state.end())
+        if (by_state_entry == by_state.end()) {
             by_state_entry = by_state.emplace(s, new xlist < Session * >).first;
+        }
         by_state_entry->second->push_back(&session->item_session_list);
 
         if (session->is_open() || session->is_stale()) {
@@ -514,7 +533,7 @@ uint64_t SessionMap::set_state(Session * session, int s)
     return session->get_state_seq();
 }
 
-void SessionMapStore::decode_legacy(bufferlist::const_iterator & p)
+void SessionMapStore::decode_legacy(bufferlist::const_iterator &p)
 {
     auto now = clock::now();
     uint64_t pre;
@@ -537,8 +556,7 @@ void SessionMapStore::decode_legacy(bufferlist::const_iterator & p)
         }
 
         DECODE_FINISH(p);
-    }
-    else {
+    } else {
         // --- old format ----
         version = pre;
 
@@ -551,18 +569,17 @@ void SessionMapStore::decode_legacy(bufferlist::const_iterator & p)
             Session *s = new Session(ConnectionRef());
             s->info.decode(p);
             {
-                auto & name = s->info.inst.name;
+                auto &name = s->info.inst.name;
                 auto it = session_map.find(name);
                 if (it != session_map.end()) {
                     // eager client connected too fast!  aie.
                     dout(10) << " already had session for " << name <<
-                        ", recovering" << dendl;
+                             ", recovering" << dendl;
                     delete s;
                     s = it->second;
                     p = p2;
                     s->info.decode(p);
-                }
-                else {
+                } else {
                     it->second = s;
                 }
             }
@@ -573,7 +590,7 @@ void SessionMapStore::decode_legacy(bufferlist::const_iterator & p)
     }
 }
 
-void Session::dump(Formatter * f, bool cap_dump) const const
+void Session::dump(Formatter *f, bool cap_dump) const const
 {
     f->dump_int("id", info.inst.name.num());
     f->dump_object("entity", info.inst);
@@ -582,7 +599,7 @@ void Session::dump(Formatter * f, bool cap_dump) const const
     f->dump_int("num_caps", caps.size());
     if (cap_dump) {
         f->open_array_section("caps");
-      for (const auto & cap:caps) {
+        for (const auto &cap : caps) {
             f->dump_object("cap", *cap);
         }
         f->close_section();
@@ -603,7 +620,7 @@ void Session::dump(Formatter * f, bool cap_dump) const const
     f->dump_object("cap_acquisition", cap_acquisition);
 
     f->open_array_section("delegated_inos");
-  for (const auto &[start, len]:delegated_inos) {
+    for (const auto &[start, len] : delegated_inos) {
         f->open_object_section("ino_range");
         f->dump_stream("start") << start;
         f->dump_unsigned("length", len);
@@ -614,17 +631,17 @@ void Session::dump(Formatter * f, bool cap_dump) const const
     info.dump(f);
 }
 
-void SessionMapStore::dump(Formatter * f) const const
+void SessionMapStore::dump(Formatter *f) const const
 {
     f->open_array_section("sessions");
-  for (const auto & p:session_map) {
+    for (const auto &p : session_map) {
         f->dump_object("session", *p.second);
     }
     f->close_section();         // Sessions
 }
 
 void SessionMapStore::generate_test_instances(std::list <
-                                              SessionMapStore * >&ls)
+        SessionMapStore * > &ls)
 {
     // pretty boring for now
     ls.push_back(new SessionMapStore());
@@ -647,7 +664,7 @@ void SessionMap::wipe()
 void SessionMap::wipe_ino_prealloc()
 {
     for (ceph::unordered_map < entity_name_t, Session * >::iterator p =
-         session_map.begin(); p != session_map.end(); ++p) {
+             session_map.begin(); p != session_map.end(); ++p) {
         p->second->pending_prealloc_inos.clear();
         p->second->free_prealloc_inos.clear();
         p->second->delegated_inos.clear();
@@ -656,10 +673,10 @@ void SessionMap::wipe_ino_prealloc()
     projected = ++version;
 }
 
-void SessionMap::add_session(Session * s)
+void SessionMap::add_session(Session *s)
 {
     dout(10) << __func__ << " s=" << s << " name=" << s->info.inst.
-        name << dendl;
+             name << dendl;
 
     ceph_assert(session_map.count(s->info.inst.name) == 0);
     session_map[s->info.inst.name] = s;
@@ -676,10 +693,10 @@ void SessionMap::add_session(Session * s)
     logger->inc(l_mdssm_session_add);
 }
 
-void SessionMap::remove_session(Session * s)
+void SessionMap::remove_session(Session *s)
 {
     dout(10) << __func__ << " s=" << s << " name=" << s->info.inst.
-        name << dendl;
+             name << dendl;
 
     update_average_birth_time(*s, false);
 
@@ -694,10 +711,10 @@ void SessionMap::remove_session(Session * s)
     logger->inc(l_mdssm_session_remove);
 }
 
-void SessionMap::touch_session(Session * session)
+void SessionMap::touch_session(Session *session)
 {
     dout(10) << __func__ << " s=" << session << " name=" << session->info.inst.
-        name << dendl;
+             name << dendl;
 
     // Move to the back of the session list for this state (should
     // already be on a list courtesy of add_session and set_state)
@@ -711,10 +728,11 @@ void SessionMap::touch_session(Session * session)
     session->last_cap_renew = clock::now();
 }
 
-void SessionMap::_mark_dirty(Session * s, bool may_save)
+void SessionMap::_mark_dirty(Session *s, bool may_save)
 {
-    if (dirty_sessions.count(s->info.inst.name))
+    if (dirty_sessions.count(s->info.inst.name)) {
         return;
+    }
 
     if (may_save &&
         dirty_sessions.size() >= g_conf()->mds_sessionmap_keys_per_op) {
@@ -728,20 +746,20 @@ void SessionMap::_mark_dirty(Session * s, bool may_save)
     dirty_sessions.insert(s->info.inst.name);
 }
 
-void SessionMap::mark_dirty(Session * s, bool may_save)
+void SessionMap::mark_dirty(Session *s, bool may_save)
 {
     dout(20) << __func__ << " s=" << s << " name=" << s->info.inst.name
-        << " v=" << version << dendl;
+             << " v=" << version << dendl;
 
     _mark_dirty(s, may_save);
     version++;
     s->pop_pv(version);
 }
 
-void SessionMap::replay_dirty_session(Session * s)
+void SessionMap::replay_dirty_session(Session *s)
 {
     dout(20) << __func__ << " s=" << s << " name=" << s->info.inst.name
-        << " v=" << version << dendl;
+             << " v=" << version << dendl;
 
     _mark_dirty(s, false);
 
@@ -762,22 +780,25 @@ void SessionMap::replay_open_sessions(version_t event_cmapv,
 {
     unsigned already_saved;
 
-    if (version + client_map.size() < event_cmapv)
+    if (version + client_map.size() < event_cmapv) {
         goto bad;
+    }
 
     // Server::finish_force_open_sessions() marks sessions dirty one by one.
     // Marking a session dirty may flush all existing dirty sessions. So it's
     // possible that some sessions are already saved in sessionmap.
     already_saved = client_map.size() - (event_cmapv - version);
-  for (const auto & p:client_map) {
+    for (const auto &p : client_map) {
         Session *s = get_or_add_session(p.second);
         auto q = client_metadata_map.find(p.first);
-        if (q != client_metadata_map.end())
+        if (q != client_metadata_map.end()) {
             s->info.client_metadata.merge(q->second);
+        }
 
         if (already_saved > 0) {
-            if (s->is_closed())
+            if (s->is_closed()) {
                 goto bad;
+            }
 
             --already_saved;
             continue;
@@ -788,44 +809,49 @@ void SessionMap::replay_open_sessions(version_t event_cmapv,
     }
     return;
 
-  bad:
+bad:
     mds->clog->error() << "error replaying open sessions(" << client_map.size()
-        << ") sessionmap v " << event_cmapv << " table " << version;
+                       << ") sessionmap v " << event_cmapv << " table " << version;
     ceph_assert(g_conf()->mds_wipe_sessions);
     mds->sessionmap.wipe();
     mds->sessionmap.set_version(event_cmapv);
 }
 
-version_t SessionMap::mark_projected(Session * s)
+version_t SessionMap::mark_projected(Session *s)
 {
     dout(20) << __func__ << " s=" << s << " name=" << s->info.inst.name
-        << " pv=" << projected << " -> " << projected + 1 << dendl;
+             << " pv=" << projected << " -> " << projected + 1 << dendl;
     ++projected;
     s->push_pv(projected);
     return projected;
 }
 
-namespace {
-    class C_IO_SM_Save_One:public SessionMapIOContext {
-        MDSContext *on_safe;
-      public:
-        C_IO_SM_Save_One(SessionMap * cm, MDSContext * on_safe_)
-        :SessionMapIOContext(cm), on_safe(on_safe_) {
-        } void finish(int r) override {
-            if (r != 0) {
-                get_mds()->handle_write_error(r);
-            }
-            else {
-                on_safe->complete(r);
-            }
+namespace
+{
+class C_IO_SM_Save_One: public SessionMapIOContext
+{
+    MDSContext *on_safe;
+public:
+    C_IO_SM_Save_One(SessionMap *cm, MDSContext *on_safe_)
+        : SessionMapIOContext(cm), on_safe(on_safe_)
+    {
+    } void finish(int r) override
+    {
+        if (r != 0) {
+            get_mds()->handle_write_error(r);
+        } else {
+            on_safe->complete(r);
         }
-        void print(ostream & out) const override {
-            out << "session_save_one";
-    }};
+    }
+    void print(ostream &out) const override
+    {
+        out << "session_save_one";
+    }
+};
 }
 
 void SessionMap::save_if_dirty(const std::set < entity_name_t > &tgt_sessions,
-                               MDSGatherBuilder * gather_bld)
+                               MDSGatherBuilder *gather_bld)
 {
     ceph_assert(gather_bld != NULL);
 
@@ -834,7 +860,7 @@ void SessionMap::save_if_dirty(const std::set < entity_name_t > &tgt_sessions,
     // Decide which sessions require a write
     for (std::set < entity_name_t >::iterator i = tgt_sessions.begin();
          i != tgt_sessions.end(); ++i) {
-        const entity_name_t & session_id = *i;
+        const entity_name_t &session_id = *i;
 
         if (session_map.count(session_id) == 0) {
             // Session isn't around any more, never mind.
@@ -869,7 +895,7 @@ void SessionMap::save_if_dirty(const std::set < entity_name_t > &tgt_sessions,
     const uint32_t kpo = g_conf()->mds_sessionmap_keys_per_op;
     map < string, bufferlist > to_set;
     for (uint32_t i = 0; i < write_sessions.size(); ++i) {
-        const entity_name_t & session_id = write_sessions[i];
+        const entity_name_t &session_id = write_sessions[i];
         Session *session = session_map[session_id];
         session->clear_dirty_completed_requests();
 
@@ -888,7 +914,7 @@ void SessionMap::save_if_dirty(const std::set < entity_name_t > &tgt_sessions,
         if (i == write_sessions.size() - 1 || i % kpo == kpo - 1) {
             ObjectOperation op;
             op.omap_set(to_set);
-            to_set.clear();     // clear to start a new transaction      
+            to_set.clear();     // clear to start a new transaction
 
             SnapContext snapc;
             object_t oid = get_object_name();
@@ -898,7 +924,7 @@ void SessionMap::save_if_dirty(const std::set < entity_name_t > &tgt_sessions,
                                   ceph::real_clock::now(), 0,
                                   new C_OnFinisher(new
                                                    C_IO_SM_Save_One(this,
-                                                                    on_safe),
+                                                           on_safe),
                                                    mds->finisher));
         }
     }
@@ -919,8 +945,9 @@ void SessionMap::save_if_dirty(const std::set < entity_name_t > &tgt_sessions,
 size_t Session::get_request_count() const const
 {
     size_t result = 0;
-    for (auto p = requests.begin(); !p.end(); ++p)
+    for (auto p = requests.begin(); !p.end(); ++p) {
         ++result;
+    }
     return result;
 }
 
@@ -950,8 +977,7 @@ uint64_t Session::notify_recall_sent(size_t new_limit)
     uint64_t new_change;
     if (recall_limit != new_limit) {
         new_change = count;
-    }
-    else {
+    } else {
         new_change = 0;         /* no change! */
     }
 
@@ -992,14 +1018,13 @@ void Session::_update_human_name()
                 human_name += std::string(":") + info.auth_name.get_id();
             }
         }
-    }
-    else {
+    } else {
         // Fallback, refer to clients by ID e.g. client.4567
         human_name = stringify(info.inst.name.num());
     }
 }
 
-void Session::decode(bufferlist::const_iterator & p)
+void Session::decode(bufferlist::const_iterator &p)
 {
     info.decode(p);
 
@@ -1008,33 +1033,34 @@ void Session::decode(bufferlist::const_iterator & p)
     _update_human_name();
 }
 
-int Session::check_access(CInode * in, unsigned mask,
+int Session::check_access(CInode *in, unsigned mask,
                           int caller_uid, int caller_gid,
                           const vector < uint64_t > *caller_gid_list,
                           int new_uid, int new_gid)
 {
     string path;
     CInode *diri = NULL;
-    if (!in->is_base())
+    if (!in->is_base()) {
         diri = in->get_projected_parent_dn()->get_dir()->get_inode();
+    }
     if (diri && diri->is_stray()) {
         path = in->get_projected_inode()->stray_prior_path;
         dout(20) << __func__ << " stray_prior_path " << path << dendl;
-    }
-    else {
+    } else {
         in->make_path_string(path, true);
         dout(20) << __func__ << " path " << path << dendl;
     }
-    if (path.length())
-        path = path.substr(1);  // drop leading /
+    if (path.length()) {
+        path = path.substr(1);    // drop leading /
+    }
 
-    const auto & inode = in->get_inode();
+    const auto &inode = in->get_inode();
     if (in->is_dir() &&
         inode->has_layout() &&
         inode->layout.pool_ns.length() &&
         !connection->has_feature(CEPH_FEATURE_FS_FILE_LAYOUT_V2)) {
         dout(10) << __func__ << " client doesn't support FS_FILE_LAYOUT_V2" <<
-            dendl;
+                 dendl;
         return -CEPHFS_EIO;
     }
 
@@ -1047,11 +1073,11 @@ int Session::check_access(CInode * in, unsigned mask,
 }
 
 // track total and per session load
-void SessionMap::hit_session(Session * session)
+void SessionMap::hit_session(Session *session)
 {
     uint64_t sessions = get_session_count_in_state(Session::STATE_OPEN) +
-        get_session_count_in_state(Session::STATE_STALE) +
-        get_session_count_in_state(Session::STATE_CLOSING);
+                        get_session_count_in_state(Session::STATE_STALE) +
+                        get_session_count_in_state(Session::STATE_CLOSING);
     ceph_assert(sessions != 0);
 
     double total_load = total_load_avg.hit();
@@ -1065,14 +1091,14 @@ void SessionMap::hit_session(Session * session)
 
 void SessionMap::handle_conf_change(const std::set < std::string > &changed)
 {
-    auto apply_to_open_sessions =[this] (auto f) {
+    auto apply_to_open_sessions = [this](auto f) {
         if (auto it = by_state.find(Session::STATE_OPEN); it != by_state.end()) {
-          for (const auto & session:*(it->second)) {
+            for (const auto &session : * (it->second)) {
                 f(session);
             }
         }
         if (auto it = by_state.find(Session::STATE_STALE); it != by_state.end()) {
-          for (const auto & session:*(it->second)) {
+            for (const auto &session : * (it->second)) {
                 f(session);
             }
         }
@@ -1085,21 +1111,21 @@ void SessionMap::handle_conf_change(const std::set < std::string > &changed)
         decay_rate = d;
         total_load_avg = DecayCounter(d);
 
-        auto mut =[d] (auto s) {
+        auto mut = [d](auto s) {
             s->set_load_avg_decay_rate(d);
         };
         apply_to_open_sessions(mut);
     }
     if (changed.count("mds_recall_max_decay_rate")) {
         auto d = g_conf().get_val < double >("mds_recall_max_decay_rate");
-        auto mut =[d] (auto s) {
+        auto mut = [d](auto s) {
             s->recall_caps_throttle = DecayCounter(d);
         };
         apply_to_open_sessions(mut);
     }
     if (changed.count("mds_recall_warning_decay_rate")) {
         auto d = g_conf().get_val < double >("mds_recall_warning_decay_rate");
-        auto mut =[d] (auto s) {
+        auto mut = [d](auto s) {
             s->recall_caps = DecayCounter(d);
             s->release_caps = DecayCounter(d);
         };
@@ -1108,8 +1134,8 @@ void SessionMap::handle_conf_change(const std::set < std::string > &changed)
     if (changed.count("mds_session_cache_liveness_decay_rate")) {
         auto d =
             g_conf().get_val <
-            double >("mds_session_cache_liveness_decay_rate");
-        auto mut =[d] (auto s) {
+            double > ("mds_session_cache_liveness_decay_rate");
+        auto mut = [d](auto s) {
             s->session_cache_liveness = DecayCounter(d);
             s->session_cache_liveness.hit(s->caps.size());  /* so the MDS doesn't immediately start trimming a new session */
         };
@@ -1118,8 +1144,8 @@ void SessionMap::handle_conf_change(const std::set < std::string > &changed)
     if (changed.count("mds_session_cap_acquisition_decay_rate")) {
         auto d =
             g_conf().get_val <
-            double >("mds_session_cap_acquisition_decay_rate");
-        auto mut =[d] (auto s) {
+            double > ("mds_session_cap_acquisition_decay_rate");
+        auto mut = [d](auto s) {
             s->cap_acquisition = DecayCounter(d);
         };
         apply_to_open_sessions(mut);
@@ -1138,11 +1164,11 @@ void SessionMap::update_average_session_age()
 }
 
 int SessionFilter::parse(const std::vector < std::string > &args,
-                         std::ostream * ss)
+                         std::ostream *ss)
 {
     ceph_assert(ss != NULL);
 
-  for (const auto & s:args) {
+    for (const auto &s : args) {
         dout(20) << __func__ << " parsing filter '" << s << "'" << dendl;
 
         auto eq = s.find("=");
@@ -1166,7 +1192,7 @@ int SessionFilter::parse(const std::vector < std::string > &args,
         auto v = s.substr(eq + 1);
 
         dout(20) << __func__ << " parsed k='" << k << "', v='" << v << "'" <<
-            dendl;
+                 dendl;
 
         if (k.compare(0, metadata_prefix.size(), metadata_prefix) == 0
             && k.size() > metadata_prefix.size()) {
@@ -1174,40 +1200,35 @@ int SessionFilter::parse(const std::vector < std::string > &args,
             // so anything after the dot is a valid field to filter on)
             auto metadata_key = k.substr(metadata_prefix.size());
             metadata.insert(std::make_pair(metadata_key, v));
-        }
-        else if (k == "auth_name") {
+        } else if (k == "auth_name") {
             // Filter on client entity name
             auth_name = v;
-        }
-        else if (k == "state") {
+        } else if (k == "state") {
             state = v;
-        }
-        else if (k == "id") {
+        } else if (k == "id") {
             std::string err;
             id = strict_strtoll(v.c_str(), 10, &err);
             if (!err.empty()) {
                 *ss << err;
                 return -CEPHFS_EINVAL;
             }
-        }
-        else if (k == "reconnecting") {
+        } else if (k == "reconnecting") {
 
-      /**
-       * Strict boolean parser.  Allow true/false/0/1.
-       * Anything else is -CEPHFS_EINVAL.
-       */
-            auto is_true =[](std::string_view bstr, bool * out)->bool {
+            /**
+             * Strict boolean parser.  Allow true/false/0/1.
+             * Anything else is -CEPHFS_EINVAL.
+             */
+            auto is_true = [](std::string_view bstr, bool * out)->bool {
                 ceph_assert(out != nullptr);
 
                 if (bstr == "true" || bstr == "1") {
                     *out = true;
                     return 0;
-                }
-                else if (bstr == "false" || bstr == "0") {
+                } else if (bstr == "false" || bstr == "0") {
                     *out = false;
                     return 0;
-                }
-                else {
+                } else
+                {
                     return -CEPHFS_EINVAL;
                 }
             };
@@ -1216,13 +1237,11 @@ int SessionFilter::parse(const std::vector < std::string > &args,
             int r = is_true(v, &bval);
             if (r == 0) {
                 set_reconnecting(bval);
-            }
-            else {
+            } else {
                 *ss << "Invalid boolean value '" << v << "'";
                 return -CEPHFS_EINVAL;
             }
-        }
-        else {
+        } else {
             *ss << "Invalid filter key '" << k << "'";
             return -CEPHFS_EINVAL;
         }
@@ -1231,13 +1250,13 @@ int SessionFilter::parse(const std::vector < std::string > &args,
     return 0;
 }
 
-bool SessionFilter::match(const Session & session,
+bool SessionFilter::match(const Session &session,
                           std::function < bool(client_t) >
-                          is_reconnecting) constconst
-{
-  for (const auto & m:metadata) {
-        const auto & k = m.first;
-        const auto & v = m.second;
+                          is_reconnecting) constconst {
+    for (const auto &m : metadata)
+    {
+        const auto &k = m.first;
+        const auto &v = m.second;
         auto it = session.info.client_metadata.find(k);
         if (it == session.info.client_metadata.end()) {
             return false;
@@ -1247,19 +1266,23 @@ bool SessionFilter::match(const Session & session,
         }
     }
 
-    if (!auth_name.empty() && auth_name != session.info.auth_name.get_id()) {
+    if (!auth_name.empty() && auth_name != session.info.auth_name.get_id())
+    {
         return false;
     }
 
-    if (!state.empty() && state != session.get_state_name()) {
+    if (!state.empty() && state != session.get_state_name())
+    {
         return false;
     }
 
-    if (id != 0 && id != session.info.inst.name.num()) {
+    if (id != 0 && id != session.info.inst.name.num())
+    {
         return false;
     }
 
-    if (reconnecting.first) {
+    if (reconnecting.first)
+    {
         const bool am_reconnecting =
             is_reconnecting(session.info.inst.name.num());
         if (reconnecting.second != am_reconnecting) {
@@ -1270,12 +1293,11 @@ bool SessionFilter::match(const Session & session,
     return true;
 }
 
-std::ostream & operator<<(std::ostream & out, const Session & s)
+std::ostream &operator<<(std::ostream &out, const Session &s)
 {
     if (s.get_human_name() == stringify(s.get_client())) {
         out << s.get_human_name();
-    }
-    else {
+    } else {
         out << s.get_human_name() << " (" << std::dec << s.get_client() << ")";
     }
     return out;

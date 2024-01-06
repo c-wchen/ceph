@@ -11,15 +11,16 @@ std::string period_info_oid_prefix = "periods.";
 
 #define FIRST_EPOCH 1
 
-int RGWPeriod::init(const DoutPrefixProvider * dpp,
-                    CephContext * _cct, RGWSI_SysObj * _sysobj_svc,
+int RGWPeriod::init(const DoutPrefixProvider *dpp,
+                    CephContext *_cct, RGWSI_SysObj *_sysobj_svc,
                     optional_yield y, bool setup_obj)
 {
     cct = _cct;
     sysobj_svc = _sysobj_svc;
 
-    if (!setup_obj)
+    if (!setup_obj) {
         return 0;
+    }
 
     if (id.empty()) {
         RGWRealm realm(realm_id, realm_name);
@@ -27,8 +28,8 @@ int RGWPeriod::init(const DoutPrefixProvider * dpp,
         if (ret < 0) {
             ldpp_dout(dpp,
                       4) << "RGWPeriod::init failed to init realm " <<
-                realm_name << " id " << realm_id << " : " << cpp_strerror(-ret)
-                << dendl;
+                         realm_name << " id " << realm_id << " : " << cpp_strerror(-ret)
+                         << dendl;
             return ret;
         }
         id = realm.get_current_period();
@@ -40,8 +41,8 @@ int RGWPeriod::init(const DoutPrefixProvider * dpp,
         if (ret < 0) {
             ldpp_dout(dpp,
                       0) << "failed to use_latest_epoch period id " << id <<
-                " realm " << realm_name << " id " << realm_id << " : " <<
-                cpp_strerror(-ret) << dendl;
+                         " realm " << realm_name << " id " << realm_id << " : " <<
+                         cpp_strerror(-ret) << dendl;
             return ret;
         }
     }
@@ -49,9 +50,9 @@ int RGWPeriod::init(const DoutPrefixProvider * dpp,
     return read_info(dpp, y);
 }
 
-int RGWPeriod::init(const DoutPrefixProvider * dpp, CephContext * _cct,
-                    RGWSI_SysObj * _sysobj_svc, const string & period_realm_id,
-                    optional_yield y, const string & period_realm_name,
+int RGWPeriod::init(const DoutPrefixProvider *dpp, CephContext *_cct,
+                    RGWSI_SysObj *_sysobj_svc, const string &period_realm_id,
+                    optional_yield y, const string &period_realm_name,
                     bool setup_obj)
 {
     cct = _cct;
@@ -60,13 +61,14 @@ int RGWPeriod::init(const DoutPrefixProvider * dpp, CephContext * _cct,
     realm_id = period_realm_id;
     realm_name = period_realm_name;
 
-    if (!setup_obj)
+    if (!setup_obj) {
         return 0;
+    }
 
     return init(dpp, _cct, _sysobj_svc, y, setup_obj);
 }
 
-const string & RGWPeriod::get_latest_epoch_oid() const const
+const string &RGWPeriod::get_latest_epoch_oid() const const
 {
     if (cct->_conf->rgw_period_latest_epoch_info_oid.empty()) {
         return period_latest_epoch_info_oid;
@@ -74,7 +76,7 @@ const string & RGWPeriod::get_latest_epoch_oid() const const
     return cct->_conf->rgw_period_latest_epoch_info_oid;
 }
 
-const string & RGWPeriod::get_info_oid_prefix() const const
+const string &RGWPeriod::get_info_oid_prefix() const const
 {
     return period_info_oid_prefix;
 }
@@ -89,28 +91,29 @@ const string RGWPeriod::get_period_oid() const const
     std::ostringstream oss;
     oss << get_period_oid_prefix();
     // skip the epoch for the staging period
-    if (id != get_staging_id(realm_id))
+    if (id != get_staging_id(realm_id)) {
         oss << "." << epoch;
+    }
     return oss.str();
 }
 
-bool RGWPeriod::find_zone(const DoutPrefixProvider * dpp,
-                          const rgw_zone_id & zid,
-                          RGWZoneGroup * pzonegroup,
-                          optional_yield y) constconst
-{
+bool RGWPeriod::find_zone(const DoutPrefixProvider *dpp,
+                          const rgw_zone_id &zid,
+                          RGWZoneGroup *pzonegroup,
+                          optional_yield y) constconst {
     RGWZoneGroup zg;
     RGWZone zone;
 
     bool found = period_map.find_zone_by_id(zid, &zg, &zone);
-    if (found) {
+    if (found)
+    {
         *pzonegroup = zg;
     }
 
     return found;
 }
 
-rgw_pool RGWPeriod::get_pool(CephContext * cct) const const
+rgw_pool RGWPeriod::get_pool(CephContext *cct) const const
 {
     if (cct->_conf->rgw_period_root_pool.empty()) {
         return rgw_pool(RGW_DEFAULT_PERIOD_ROOT_POOL);
@@ -118,10 +121,10 @@ rgw_pool RGWPeriod::get_pool(CephContext * cct) const const
     return rgw_pool(cct->_conf->rgw_period_root_pool);
 }
 
-int RGWPeriod::set_latest_epoch(const DoutPrefixProvider * dpp,
+int RGWPeriod::set_latest_epoch(const DoutPrefixProvider *dpp,
                                 optional_yield y,
                                 epoch_t epoch, bool exclusive,
-                                RGWObjVersionTracker * objv)
+                                RGWObjVersionTracker *objv)
 {
     string oid = get_period_oid_prefix() + get_latest_epoch_oid();
 
@@ -136,11 +139,11 @@ int RGWPeriod::set_latest_epoch(const DoutPrefixProvider * dpp,
 
     auto sysobj = sysobj_svc->get_obj(rgw_raw_obj(pool, oid));
     return sysobj.wop()
-        .set_exclusive(exclusive)
-        .write(dpp, bl, y);
+           .set_exclusive(exclusive)
+           .write(dpp, bl, y);
 }
 
-int RGWPeriod::read_info(const DoutPrefixProvider * dpp, optional_yield y)
+int RGWPeriod::read_info(const DoutPrefixProvider *dpp, optional_yield y)
 {
     rgw_pool pool(get_pool(cct));
 
@@ -151,7 +154,7 @@ int RGWPeriod::read_info(const DoutPrefixProvider * dpp, optional_yield y)
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "failed reading obj info from " << pool << ":" <<
-            get_period_oid() << ": " << cpp_strerror(-ret) << dendl;
+                     get_period_oid() << ": " << cpp_strerror(-ret) << dendl;
         return ret;
     }
 
@@ -159,18 +162,17 @@ int RGWPeriod::read_info(const DoutPrefixProvider * dpp, optional_yield y)
         using ceph::decode;
         auto iter = bl.cbegin();
         decode(*this, iter);
-    }
-    catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         ldpp_dout(dpp,
                   0) << "ERROR: failed to decode obj from " << pool << ":" <<
-            get_period_oid() << dendl;
+                     get_period_oid() << dendl;
         return -EIO;
     }
 
     return 0;
 }
 
-int RGWPeriod::store_info(const DoutPrefixProvider * dpp, bool exclusive,
+int RGWPeriod::store_info(const DoutPrefixProvider *dpp, bool exclusive,
                           optional_yield y)
 {
     rgw_pool pool(get_pool(cct));
@@ -182,11 +184,11 @@ int RGWPeriod::store_info(const DoutPrefixProvider * dpp, bool exclusive,
 
     auto sysobj = sysobj_svc->get_obj(rgw_raw_obj(pool, oid));
     return sysobj.wop()
-        .set_exclusive(exclusive)
-        .write(dpp, bl, y);
+           .set_exclusive(exclusive)
+           .write(dpp, bl, y);
 }
 
-int RGWPeriod::create(const DoutPrefixProvider * dpp, optional_yield y,
+int RGWPeriod::create(const DoutPrefixProvider *dpp, optional_yield y,
                       bool exclusive)
 {
     int ret;
@@ -206,7 +208,7 @@ int RGWPeriod::create(const DoutPrefixProvider * dpp, optional_yield y,
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR:  storing info for " << id << ": " <<
-            cpp_strerror(-ret) << dendl;
+                     cpp_strerror(-ret) << dendl;
         return ret;
     }
 
@@ -214,23 +216,23 @@ int RGWPeriod::create(const DoutPrefixProvider * dpp, optional_yield y,
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "ERROR: setting latest epoch " << id << ": " <<
-            cpp_strerror(-ret) << dendl;
+                     cpp_strerror(-ret) << dendl;
     }
 
     return ret;
 }
 
-int RGWPeriod::reflect(const DoutPrefixProvider * dpp, optional_yield y)
+int RGWPeriod::reflect(const DoutPrefixProvider *dpp, optional_yield y)
 {
-  for (auto & iter:period_map.zonegroups) {
-        RGWZoneGroup & zg = iter.second;
+    for (auto &iter : period_map.zonegroups) {
+        RGWZoneGroup &zg = iter.second;
         zg.reinit_instance(cct, sysobj_svc);
         int r = zg.write(dpp, false, y);
         if (r < 0) {
             ldpp_dout(dpp,
                       0) <<
-                "ERROR: failed to store zonegroup info for zonegroup=" << iter.
-                first << ": " << cpp_strerror(-r) << dendl;
+                         "ERROR: failed to store zonegroup info for zonegroup=" << iter.
+                         first << ": " << cpp_strerror(-r) << dendl;
             return r;
         }
         if (zg.is_master_zonegroup()) {
@@ -239,8 +241,8 @@ int RGWPeriod::reflect(const DoutPrefixProvider * dpp, optional_yield y)
             if (r == 0) {
                 ldpp_dout(dpp,
                           1) << "Set the period's master zonegroup " << zg.
-                    get_id()
-                    << " as the default" << dendl;
+                             get_id()
+                             << " as the default" << dendl;
             }
         }
     }
@@ -248,13 +250,13 @@ int RGWPeriod::reflect(const DoutPrefixProvider * dpp, optional_yield y)
     int r = period_config.write(dpp, sysobj_svc, realm_id, y);
     if (r < 0) {
         ldpp_dout(dpp, 0) << "ERROR: failed to store period config: "
-            << cpp_strerror(-r) << dendl;
+                          << cpp_strerror(-r) << dendl;
         return r;
     }
     return 0;
 }
 
-void RGWPeriod::dump(Formatter * f) const const
+void RGWPeriod::dump(Formatter *f) const const
 {
     encode_json("id", id, f);
     encode_json("epoch", epoch, f);
@@ -269,7 +271,7 @@ void RGWPeriod::dump(Formatter * f) const const
     encode_json("realm_epoch", realm_epoch, f);
 }
 
-void RGWPeriod::decode_json(JSONObj * obj)
+void RGWPeriod::decode_json(JSONObj *obj)
 {
     JSONDecoder::decode_json("id", id, obj);
     JSONDecoder::decode_json("epoch", epoch, obj);
@@ -284,7 +286,7 @@ void RGWPeriod::decode_json(JSONObj * obj)
     JSONDecoder::decode_json("realm_epoch", realm_epoch, obj);
 }
 
-int RGWPeriod::update_latest_epoch(const DoutPrefixProvider * dpp,
+int RGWPeriod::update_latest_epoch(const DoutPrefixProvider *dpp,
                                    epoch_t epoch, optional_yield y)
 {
     static constexpr int MAX_RETRIES = 20;
@@ -300,29 +302,25 @@ int RGWPeriod::update_latest_epoch(const DoutPrefixProvider * dpp,
             // use an exclusive create to set the epoch atomically
             exclusive = true;
             ldpp_dout(dpp, 20) << "creating initial latest_epoch=" << epoch
-                << " for period=" << id << dendl;
-        }
-        else if (r < 0) {
+                               << " for period=" << id << dendl;
+        } else if (r < 0) {
             ldpp_dout(dpp, 0) << "ERROR: failed to read latest_epoch" << dendl;
             return r;
-        }
-        else if (epoch <= info.epoch) {
+        } else if (epoch <= info.epoch) {
             r = -EEXIST;        // fail with EEXIST if epoch is not newer
             ldpp_dout(dpp, 10) << "found existing latest_epoch " << info.epoch
-                << " >= given epoch " << epoch << ", returning r=" << r <<
-                dendl;
+                               << " >= given epoch " << epoch << ", returning r=" << r <<
+                               dendl;
             return r;
-        }
-        else {
+        } else {
             ldpp_dout(dpp, 20) << "updating latest_epoch from " << info.epoch
-                << " -> " << epoch << " on period=" << id << dendl;
+                               << " -> " << epoch << " on period=" << id << dendl;
         }
 
         r = set_latest_epoch(dpp, y, epoch, exclusive, &objv);
         if (r == -EEXIST) {
             continue;           // exclusive create raced with another update, retry
-        }
-        else if (r == -ECANCELED) {
+        } else if (r == -ECANCELED) {
             continue;           // write raced with a conflicting version, retry
         }
         if (r < 0) {
@@ -335,9 +333,9 @@ int RGWPeriod::update_latest_epoch(const DoutPrefixProvider * dpp,
     return -ECANCELED;          // fail after max retries
 }
 
-int RGWPeriod::read_latest_epoch(const DoutPrefixProvider * dpp,
-                                 RGWPeriodLatestEpochInfo & info,
-                                 optional_yield y, RGWObjVersionTracker * objv)
+int RGWPeriod::read_latest_epoch(const DoutPrefixProvider *dpp,
+                                 RGWPeriodLatestEpochInfo &info,
+                                 optional_yield y, RGWObjVersionTracker *objv)
 {
     string oid = get_period_oid_prefix() + get_latest_epoch_oid();
 
@@ -348,25 +346,24 @@ int RGWPeriod::read_latest_epoch(const DoutPrefixProvider * dpp,
     if (ret < 0) {
         ldpp_dout(dpp,
                   1) << "error read_lastest_epoch " << pool << ":" << oid <<
-            dendl;
+                     dendl;
         return ret;
     }
     try {
         auto iter = bl.cbegin();
         using ceph::decode;
         decode(info, iter);
-    }
-    catch(buffer::error & err) {
+    } catch (buffer::error &err) {
         ldpp_dout(dpp,
                   0) << "error decoding data from " << pool << ":" << oid <<
-            dendl;
+                     dendl;
         return -EIO;
     }
 
     return 0;
 }
 
-int RGWPeriod::use_latest_epoch(const DoutPrefixProvider * dpp,
+int RGWPeriod::use_latest_epoch(const DoutPrefixProvider *dpp,
                                 optional_yield y)
 {
     RGWPeriodLatestEpochInfo info;

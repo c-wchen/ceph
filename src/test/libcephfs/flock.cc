@@ -48,17 +48,17 @@
 #include "ceph_pthread_self.h"
 
 // Startup common: create and mount ceph fs
-#define STARTUP_CEPH() do {				\
-    ASSERT_EQ(0, ceph_create(&cmount, NULL));		\
-    ASSERT_EQ(0, ceph_conf_read_file(cmount, NULL));	\
-    ASSERT_EQ(0, ceph_conf_parse_env(cmount, NULL));	\
-    ASSERT_EQ(0, ceph_mount(cmount, NULL));		\
+#define STARTUP_CEPH() do {             \
+    ASSERT_EQ(0, ceph_create(&cmount, NULL));       \
+    ASSERT_EQ(0, ceph_conf_read_file(cmount, NULL));    \
+    ASSERT_EQ(0, ceph_conf_parse_env(cmount, NULL));    \
+    ASSERT_EQ(0, ceph_mount(cmount, NULL));     \
   } while(0)
 
 // Cleanup common: unmount and release ceph fs
-#define CLEANUP_CEPH() do {			\
-    ASSERT_EQ(0, ceph_unmount(cmount));		\
-    ASSERT_EQ(0, ceph_release(cmount));		\
+#define CLEANUP_CEPH() do {         \
+    ASSERT_EQ(0, ceph_unmount(cmount));     \
+    ASSERT_EQ(0, ceph_release(cmount));     \
   } while(0)
 
 static const mode_t fileMode = S_IRWXU | S_IRWXG | S_IRWXO;
@@ -123,12 +123,12 @@ TEST(LibCephFS, BasicLocking)
               ceph_flock(cmount, fd, LOCK_SH | LOCK_NB, 42));
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_UN, 45));
 
-    // Lock shared with upgrade to exclusive (POSIX) 
+    // Lock shared with upgrade to exclusive (POSIX)
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_SH, 42));
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_EX, 42));
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_UN, 42));
 
-    // Lock exclusive with downgrade to shared (POSIX) 
+    // Lock exclusive with downgrade to shared (POSIX)
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_EX, 42));
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_SH, 42));
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_UN, 42));
@@ -146,16 +146,18 @@ struct str_ConcurrentLocking {
     struct ceph_mount_info *cmount; // !NULL if shared
     sem_t sem[2];
     sem_t semReply[2];
-    void sem_init(int pshared) {
-        ASSERT_EQ(0,::sem_init(&sem[0], pshared, 0));
-        ASSERT_EQ(0,::sem_init(&sem[1], pshared, 0));
-        ASSERT_EQ(0,::sem_init(&semReply[0], pshared, 0));
-        ASSERT_EQ(0,::sem_init(&semReply[1], pshared, 0));
-    } void sem_destroy() {
-        ASSERT_EQ(0,::sem_destroy(&sem[0]));
-        ASSERT_EQ(0,::sem_destroy(&sem[1]));
-        ASSERT_EQ(0,::sem_destroy(&semReply[0]));
-        ASSERT_EQ(0,::sem_destroy(&semReply[1]));
+    void sem_init(int pshared)
+    {
+        ASSERT_EQ(0, ::sem_init(&sem[0], pshared, 0));
+        ASSERT_EQ(0, ::sem_init(&sem[1], pshared, 0));
+        ASSERT_EQ(0, ::sem_init(&semReply[0], pshared, 0));
+        ASSERT_EQ(0, ::sem_init(&semReply[1], pshared, 0));
+    } void sem_destroy()
+    {
+        ASSERT_EQ(0, ::sem_destroy(&sem[0]));
+        ASSERT_EQ(0, ::sem_destroy(&sem[1]));
+        ASSERT_EQ(0, ::sem_destroy(&semReply[0]));
+        ASSERT_EQ(0, ::sem_destroy(&semReply[1]));
     }
 };
 
@@ -175,15 +177,15 @@ struct str_ConcurrentLocking {
   ASSERT_EQ(-1, sem_timedwait(&s.sem[n%2], abstime(ts, waitMs)))
 
 // Do twice an operation
-#define TWICE(EXPR) do {			\
-    EXPR;					\
-    EXPR;					\
+#define TWICE(EXPR) do {            \
+    EXPR;                   \
+    EXPR;                   \
   } while(0)
 
 /* Locking in different threads */
 
 // Used by ConcurrentLocking test
-static void thread_ConcurrentLocking(str_ConcurrentLocking & s)
+static void thread_ConcurrentLocking(str_ConcurrentLocking &s)
 {
     struct ceph_mount_info *const cmount = s.cmount;
     struct timespec ts;
@@ -345,9 +347,9 @@ TEST(LibCephFS, ThreesomeLocking)
 
     // Shall have lock
     TWICE(                      // Synchronization point with thread (failure: thread is dead)
-             WAIT_WORKER(2);    // (2)
-             // Synchronization point with thread (failure: thread is dead)
-             WAIT_WORKER(3));   // (3)
+        WAIT_WORKER(2);    // (2)
+        // Synchronization point with thread (failure: thread is dead)
+        WAIT_WORKER(3));   // (3)
 
     // Wait for thread to share lock
     TWICE(WAIT_WORKER(4));      // (4)
@@ -365,9 +367,9 @@ TEST(LibCephFS, ThreesomeLocking)
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_EX, ceph_pthread_self()));
 
     TWICE(                      // Wake up thread to lock shared lock
-             PING_WORKER(2);    // (R2)
-             // Shall not have lock immediately
-             NOT_WAIT_WORKER(6));   // (6)
+        PING_WORKER(2);    // (R2)
+        // Shall not have lock immediately
+        NOT_WAIT_WORKER(6));   // (6)
 
     // Release lock ; thread will get it
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_UN, ceph_pthread_self()));
@@ -382,7 +384,7 @@ TEST(LibCephFS, ThreesomeLocking)
           // Wake up thread to unlock exclusive lock
           PING_WORKER(3);       // (R3)
           WAIT_WORKER(7);       // (7)
-        );
+         );
 
     // We can lock it again
     ASSERT_EQ(0,
@@ -408,7 +410,7 @@ TEST(LibCephFS, ThreesomeLocking)
   (void) waitMs
 
 // Used by ConcurrentLocking test
-static void process_ConcurrentLocking(str_ConcurrentLocking & s)
+static void process_ConcurrentLocking(str_ConcurrentLocking &s)
 {
     const pid_t mypid = getpid();
     PROCESS_SLOW_MS();
@@ -469,7 +471,7 @@ TEST(LibCephFS, DISABLED_InterProcessLocking)
         (mmap
          (0, sizeof(*shs), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
           -1, 0));
-    str_ConcurrentLocking & s = *shs;
+    str_ConcurrentLocking &s = *shs;
     s.file = c_file;
     s.sem_init(1);
 
@@ -576,7 +578,7 @@ TEST(LibCephFS, DISABLED_ThreesomeInterProcessLocking)
         (mmap
          (0, sizeof(*shs), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
           -1, 0));
-    str_ConcurrentLocking & s = *shs;
+    str_ConcurrentLocking &s = *shs;
     s.file = c_file;
     s.sem_init(1);
 
@@ -617,9 +619,9 @@ TEST(LibCephFS, DISABLED_ThreesomeInterProcessLocking)
 
     // Shall have lock
     TWICE(                      // Synchronization point with process (failure: process is dead)
-             WAIT_WORKER(2);    // (2)
-             // Synchronization point with process (failure: process is dead)
-             WAIT_WORKER(3));   // (3)
+        WAIT_WORKER(2);    // (2)
+        // Synchronization point with process (failure: process is dead)
+        WAIT_WORKER(3));   // (3)
 
     // Wait for process to share lock
     TWICE(WAIT_WORKER(4));      // (4)
@@ -636,9 +638,9 @@ TEST(LibCephFS, DISABLED_ThreesomeInterProcessLocking)
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_EX, mypid));
 
     TWICE(                      // Wake up process to lock shared lock
-             PING_WORKER(3);    // (R3)
-             // Shall not have lock immediately
-             NOT_WAIT_WORKER(6));   // (6)
+        PING_WORKER(3);    // (R3)
+        // Shall not have lock immediately
+        NOT_WAIT_WORKER(6));   // (6)
 
     // Release lock ; process will get it
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_UN, mypid));
@@ -651,7 +653,7 @@ TEST(LibCephFS, DISABLED_ThreesomeInterProcessLocking)
           // Wake up process to unlock exclusive lock
           PING_WORKER(4);       // (R4)
           WAIT_WORKER(7);       // (7)
-        );
+         );
 
     // We can lock it again
     ASSERT_EQ(0, ceph_flock(cmount, fd, LOCK_EX | LOCK_NB, mypid));

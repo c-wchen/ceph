@@ -5,9 +5,10 @@
 #define CEPH_ZFS_H
 
 // Simple wrapper to hide libzfs.h. (it conflicts with standard linux headers)
-class ZFS {
+class ZFS
+{
     void *g_zfs;
-  public:
+public:
 
     static const int TYPE_FILESYSTEM;
     static const int TYPE_SNAPSHOT;
@@ -16,11 +17,12 @@ class ZFS {
     static const int TYPE_DATASET;
 
     typedef void Handle;
-    typedef int (*iter_func) (Handle *, void *);
+    typedef int (*iter_func)(Handle *, void *);
 
     static const char *get_name(Handle *);
 
-     ZFS():g_zfs(NULL) {
+    ZFS(): g_zfs(NULL)
+    {
     } ~ZFS();
     int init();
     Handle *open(const char *, int);

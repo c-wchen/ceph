@@ -63,47 +63,56 @@ struct InjectDelay {
  * An integer Key may be preferable for a code path with many steps, where you
  * just want to check 1, 2, 3, etc. without inventing names for each.
  */
-template < typename Key > class FaultInjector {
-  public:
+template < typename Key > class FaultInjector
+{
+public:
     /// Default-construct with no injected failure.
-  constexpr FaultInjector()noexcept:location() {
+    constexpr FaultInjector()noexcept: location()
+    {
     }
 
     /// Construct with an injected assertion failure at the given location.
     constexpr FaultInjector(Key location, InjectAbort a)
-    :location(std::move(location)), failure(a) {
+        : location(std::move(location)), failure(a)
+    {
     }
 
     /// Construct with an injected error code at the given location.
     constexpr FaultInjector(Key location, InjectError e)
-    :location(std::move(location)), failure(e) {
+        : location(std::move(location)), failure(e)
+    {
     }
 
     /// Construct with an injected delay at the given location.
     constexpr FaultInjector(Key location, InjectDelay d)
-    :location(std::move(location)), failure(d) {
+        : location(std::move(location)), failure(d)
+    {
     }
 
     /// Inject an assertion failure at the given location.
-    void inject(Key location, InjectAbort a) {
+    void inject(Key location, InjectAbort a)
+    {
         this->location = std::move(location);
         this->failure = a;
     }
 
     /// Inject an error at the given location.
-    void inject(Key location, InjectError e) {
+    void inject(Key location, InjectError e)
+    {
         this->location = std::move(location);
         this->failure = e;
     }
 
     /// Injecte a delay at the given location.
-    void inject(Key location, InjectDelay d) {
+    void inject(Key location, InjectDelay d)
+    {
         this->location = std::move(location);
         this->failure = d;
     }
 
     /// Clear any injected failure.
-    void clear() {
+    void clear()
+    {
         this->failure = Empty {
         };
     }
@@ -113,36 +122,44 @@ template < typename Key > class FaultInjector {
     /// failure.
     /// @returns 0 or InjectError::error if the location matches an InjectError
     /// failure
-    [[nodiscard]] constexpr int check(const Key & location) const {
+    [[nodiscard]] constexpr int check(const Key &location) const
+    {
         struct visitor {
-            const Key & check_location;
-            const Key & this_location;
-            constexpr int operator() (const std::monostate &)const {
+            const Key &check_location;
+            const Key &this_location;
+            constexpr int operator()(const std::monostate &)const
+            {
                 return 0;
-            } int operator() (const InjectAbort &)const {
+            } int operator()(const InjectAbort &)const
+            {
                 if (check_location == this_location) {
                     ceph_assert_always(!"FaultInjector");
-                } return 0;
-            } int operator() (const InjectError & e)const {
+                }
+                return 0;
+            } int operator()(const InjectError &e)const
+            {
                 if (check_location == this_location) {
                     ldpp_dout(e.dpp, -1) << "Injecting error=" << e.error
-                        << " at location=" << this_location << dendl;
+                                         << " at location=" << this_location << dendl;
                     return e.error;
-                } return 0;
-            } int operator() (const InjectDelay & e)const {
+                }
+                return 0;
+            } int operator()(const InjectDelay &e)const
+            {
                 if (check_location == this_location) {
                     ldpp_dout(e.dpp, -1) << "Injecting delay=" << e.duration
-                        << " at location=" << this_location << dendl;
+                                         << " at location=" << this_location << dendl;
                     std::this_thread::sleep_for(e.duration);
-                } return 0;
+                }
+                return 0;
             }
         };
         return std::visit(visitor {
-                          location, this->location}
-                          , failure);
+            location, this->location}
+        , failure);
     }
 
-  private:
+private:
     // Key requirements:
     static_assert(std::is_default_constructible_v < Key >,
                   "Key must be default-constrible");

@@ -7,17 +7,18 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "reverse.h"
 
 uint32_t reverse_bits(uint32_t v)
 {
-    if (v == 0)
+    if (v == 0) {
         return v;
+    }
 
     /* reverse bits
      * swap odd and even bits

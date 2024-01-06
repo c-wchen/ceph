@@ -18,14 +18,18 @@
 #include "crypto/crypto_plugin.h"
 #include "crypto/openssl/openssl_crypto_accel.h"
 
-class OpenSSLCryptoPlugin:public CryptoPlugin {
+class OpenSSLCryptoPlugin: public CryptoPlugin
+{
 
     CryptoAccelRef cryptoaccel;
-  public:
-     explicit OpenSSLCryptoPlugin(CephContext * cct):CryptoPlugin(cct) {
-    } int factory(CryptoAccelRef * cs, std::ostream * ss) override {
-        if (cryptoaccel == nullptr)
+public:
+    explicit OpenSSLCryptoPlugin(CephContext *cct): CryptoPlugin(cct)
+    {
+    } int factory(CryptoAccelRef *cs, std::ostream *ss) override
+    {
+        if (cryptoaccel == nullptr) {
             cryptoaccel = CryptoAccelRef(new OpenSSLCryptoAccel);
+        }
 
         *cs = cryptoaccel;
         return 0;

@@ -27,8 +27,8 @@ const char *__ceph_plugin_version()
 
 // -----------------------------------------------------------------------------
 
-int __ceph_plugin_init(CephContext * cct,
-                       const std::string & type, const std::string & name)
+int __ceph_plugin_init(CephContext *cct,
+                       const std::string &type, const std::string &name)
 {
     auto instance = cct->get_plugin_registry();
 

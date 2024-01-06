@@ -13,32 +13,36 @@
 
 using namespace std;
 
-class RGWPolicyCondition {
-  protected:
+class RGWPolicyCondition
+{
+protected:
     string v1;
     string v2;
 
-    virtual bool check(const string & first, const string & second,
-                       string & err_msg) = 0;
+    virtual bool check(const string &first, const string &second,
+                       string &err_msg) = 0;
 
-  public:
-     virtual ~ RGWPolicyCondition() {
-    } void set_vals(const string & _v1, const string & _v2) {
+public:
+    virtual ~ RGWPolicyCondition()
+    {
+    } void set_vals(const string &_v1, const string &_v2)
+    {
         v1 = _v1;
         v2 = _v2;
     }
 
-    bool check(RGWPolicyEnv * env, map < string, bool,
-               ltstr_nocase > &checked_vars, string & err_msg) {
+    bool check(RGWPolicyEnv *env, map < string, bool,
+               ltstr_nocase > &checked_vars, string &err_msg)
+    {
         string first, second;
         env->get_value(v1, first, checked_vars);
         env->get_value(v2, second, checked_vars);
         dout(1) << "policy condition check " << v1 << " ["
-            << rgw::crypt_sanitize::s3_policy {
-        v1, first}
-        <<"] " << v2 << " [" << rgw::crypt_sanitize::s3_policy {
-        v2, second}
-        <<"]" << dendl;
+        << rgw::crypt_sanitize::s3_policy {
+            v1, first}
+        << "] " << v2 << " [" << rgw::crypt_sanitize::s3_policy {
+            v2, second}
+                << "]" << dendl;
         bool ret = check(first, second, err_msg);
         if (!ret) {
             err_msg.append(": ");
@@ -51,45 +55,52 @@ class RGWPolicyCondition {
 
 };
 
-class RGWPolicyCondition_StrEqual:public RGWPolicyCondition {
-  protected:
-    bool check(const string & first, const string & second,
-               string & msg)override {
+class RGWPolicyCondition_StrEqual: public RGWPolicyCondition
+{
+protected:
+    bool check(const string &first, const string &second,
+               string &msg)override
+    {
         bool ret = first.compare(second) == 0;
         if (!ret) {
             msg = "Policy condition failed: eq";
-        } return ret;
+        }
+        return ret;
     }
 };
 
-class RGWPolicyCondition_StrStartsWith:public RGWPolicyCondition {
-  protected:
-    bool check(const string & first, const string & second,
-               string & msg)override {
+class RGWPolicyCondition_StrStartsWith: public RGWPolicyCondition
+{
+protected:
+    bool check(const string &first, const string &second,
+               string &msg)override
+    {
         bool ret = first.compare(0, second.size(), second) == 0;
         if (!ret) {
             msg = "Policy condition failed: starts-with";
-        } return ret;
+        }
+        return ret;
     }
 };
 
-void RGWPolicyEnv::add_var(const string & name, const string & value)
+void RGWPolicyEnv::add_var(const string &name, const string &value)
 {
     vars[name] = value;
 }
 
-bool RGWPolicyEnv::get_var(const string & name, string & val)
+bool RGWPolicyEnv::get_var(const string &name, string &val)
 {
     map < string, string, ltstr_nocase >::iterator iter = vars.find(name);
-    if (iter == vars.end())
+    if (iter == vars.end()) {
         return false;
+    }
 
     val = iter->second;
 
     return true;
 }
 
-bool RGWPolicyEnv::get_value(const string & s, string & val, map < string, bool,
+bool RGWPolicyEnv::get_value(const string &s, string &val, map < string, bool,
                              ltstr_nocase > &checked_vars)
 {
     if (s.empty() || s[0] != '$') {
@@ -97,7 +108,7 @@ bool RGWPolicyEnv::get_value(const string & s, string & val, map < string, bool,
         return true;
     }
 
-    const string & var = s.substr(1);
+    const string &var = s.substr(1);
     checked_vars[var] = true;
 
     return get_var(var, val);
@@ -105,15 +116,16 @@ bool RGWPolicyEnv::get_value(const string & s, string & val, map < string, bool,
 
 bool RGWPolicyEnv::match_policy_vars(map < string, bool,
                                      ltstr_nocase > &policy_vars,
-                                     string & err_msg)
+                                     string &err_msg)
 {
     map < string, string, ltstr_nocase >::iterator iter;
     string ignore_prefix = "x-ignore-";
     for (iter = vars.begin(); iter != vars.end(); ++iter) {
-        const string & var = iter->first;
+        const string &var = iter->first;
         if (strncasecmp
-            (ignore_prefix.c_str(), var.c_str(), ignore_prefix.size()) == 0)
+            (ignore_prefix.c_str(), var.c_str(), ignore_prefix.size()) == 0) {
             continue;
+        }
         if (policy_vars.count(var) == 0) {
             err_msg = "Policy missing condition: ";
             err_msg.append(iter->first);
@@ -133,28 +145,27 @@ RGWPolicy::~RGWPolicy()
     }
 }
 
-int RGWPolicy::set_expires(const string & e)
+int RGWPolicy::set_expires(const string &e)
 {
     struct tm t;
-    if (!parse_iso8601(e.c_str(), &t))
+    if (!parse_iso8601(e.c_str(), &t)) {
         return -EINVAL;
+    }
 
     expires = internal_timegm(&t);
 
     return 0;
 }
 
-int RGWPolicy::add_condition(const string & op, const string & first,
-                             const string & second, string & err_msg)
+int RGWPolicy::add_condition(const string &op, const string &first,
+                             const string &second, string &err_msg)
 {
     RGWPolicyCondition *cond = NULL;
     if (stringcasecmp(op, "eq") == 0) {
         cond = new RGWPolicyCondition_StrEqual;
-    }
-    else if (stringcasecmp(op, "starts-with") == 0) {
+    } else if (stringcasecmp(op, "starts-with") == 0) {
         cond = new RGWPolicyCondition_StrStartsWith;
-    }
-    else if (stringcasecmp(op, "content-length-range") == 0) {
+    } else if (stringcasecmp(op, "content-length-range") == 0) {
         off_t min, max;
         int r = stringtoll(first, &min);
         if (r < 0) {
@@ -170,11 +181,13 @@ int RGWPolicy::add_condition(const string & op, const string & first,
             return r;
         }
 
-        if (min > min_length)
+        if (min > min_length) {
             min_length = min;
+        }
 
-        if (max < max_length)
+        if (max < max_length) {
             max_length = max;
+        }
 
         return 0;
     }
@@ -193,12 +206,12 @@ int RGWPolicy::add_condition(const string & op, const string & first,
     return 0;
 }
 
-int RGWPolicy::check(RGWPolicyEnv * env, string & err_msg)
+int RGWPolicy::check(RGWPolicyEnv *env, string &err_msg)
 {
     uint64_t now = ceph_clock_now().sec();
     if (expires <= now) {
         dout(0) << "NOTICE: policy calculated as expired: " << expiration_str <<
-            dendl;
+                dendl;
         err_msg = "Policy expired";
         return -EACCES;         // change to condition about expired policy following S3
     }
@@ -206,12 +219,12 @@ int RGWPolicy::check(RGWPolicyEnv * env, string & err_msg)
     list < pair < string, string > >::iterator viter;
     for (viter = var_checks.begin(); viter != var_checks.end(); ++viter) {
         pair < string, string > &p = *viter;
-        const string & name = p.first;
-        const string & check_val = p.second;
+        const string &name = p.first;
+        const string &check_val = p.second;
         string val;
         if (!env->get_var(name, val)) {
             dout(20) << " policy check failed, variable not found: '" << name <<
-                "'" << dendl;
+                     "'" << dendl;
             err_msg = "Policy check failed, variable not found: ";
             err_msg.append(name);
             return -EACCES;
@@ -220,12 +233,12 @@ int RGWPolicy::check(RGWPolicyEnv * env, string & err_msg)
         set_var_checked(name);
 
         dout(20) << "comparing " << name << " [" << val << "], " << check_val <<
-            dendl;
+                 dendl;
         if (val.compare(check_val) != 0) {
             err_msg = "Policy check failed, variable not met condition: ";
             err_msg.append(name);
             dout(1) << "policy check failed, val=" << val << " != " << check_val
-                << dendl;
+                    << dendl;
             return -EACCES;
         }
     }
@@ -245,7 +258,7 @@ int RGWPolicy::check(RGWPolicyEnv * env, string & err_msg)
     return 0;
 }
 
-int RGWPolicy::from_json(bufferlist & bl, string & err_msg)
+int RGWPolicy::from_json(bufferlist &bl, string &err_msg)
 {
     JSONParser parser;
 
@@ -300,17 +313,16 @@ int RGWPolicy::from_json(bufferlist & bl, string & err_msg)
             }
 
             int r = add_condition(v[0], v[1], v[2], err_msg);
-            if (r < 0)
+            if (r < 0) {
                 return r;
-        }
-        else if (!citer.end()) {
+            }
+        } else if (!citer.end()) {
             JSONObj *c = *citer;
             dout(20) << "adding simple_check: " << c->get_name() << " : " << c->
-                get_data() << dendl;
+                     get_data() << dendl;
 
             add_simple_check(c->get_name(), c->get_data());
-        }
-        else {
+        } else {
             return -EINVAL;
         }
     }

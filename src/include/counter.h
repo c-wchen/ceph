@@ -17,37 +17,47 @@
 
 #include <atomic>
 
-template < typename T > class Counter {
-  public:
-    Counter() {
+template < typename T > class Counter
+{
+public:
+    Counter()
+    {
         _count()++;
         _increments()++;
     }
-    Counter(const Counter & rhs) {
+    Counter(const Counter &rhs)
+    {
         _count()++;
         _increments()++;
     }
-    Counter(Counter && rhs) {
+    Counter(Counter && rhs)
+    {
     }
-    ~Counter() {
+    ~Counter()
+    {
         _count()--;
     }
-    static uint64_t count() {
+    static uint64_t count()
+    {
         return _count();
     }
-    static uint64_t increments() {
+    static uint64_t increments()
+    {
         return _increments();
     }
-    static uint64_t decrements() {
+    static uint64_t decrements()
+    {
         return increments() - count();
     }
 
-  private:
-    static std::atomic < uint64_t > &_count() {
+private:
+    static std::atomic < uint64_t > &_count()
+    {
         static std::atomic < uint64_t > c;
         return c;
     }
-    static std::atomic < uint64_t > &_increments() {
+    static std::atomic < uint64_t > &_increments()
+    {
         static std::atomic < uint64_t > i;
         return i;
     }

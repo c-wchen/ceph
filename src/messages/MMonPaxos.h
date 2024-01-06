@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MMONPAXOS_H
@@ -19,12 +19,13 @@
 #include "mon/mon_types.h"
 #include "include/ceph_features.h"
 
-class MMonPaxos final:public Message {
-  private:
+class MMonPaxos final: public Message
+{
+private:
     static constexpr int HEAD_VERSION = 4;
     static constexpr int COMPAT_VERSION = 3;
 
-  public:
+public:
     // op types
     static constexpr int OP_COLLECT = 1;    // proposer: propose round
     static constexpr int OP_LAST = 2;   // voter:    accept proposed round
@@ -33,19 +34,28 @@ class MMonPaxos final:public Message {
     static constexpr int OP_COMMIT = 5; // proposer: notify learners of agreed value
     static constexpr int OP_LEASE = 6;  // leader: extend peon lease
     static constexpr int OP_LEASE_ACK = 7;  // peon: lease ack
-    static const char *get_opname(int op) {
+    static const char *get_opname(int op)
+    {
         switch (op) {
-        case OP_COLLECT:
-            return "collect";
-            case OP_LAST:return "last";
-            case OP_BEGIN:return "begin";
-            case OP_ACCEPT:return "accept";
-            case OP_COMMIT:return "commit";
-            case OP_LEASE:return "lease";
-            case OP_LEASE_ACK:return "lease_ack";
-            default:ceph_abort();
-            return 0;
-    }} epoch_t epoch = 0;       // monitor epoch
+            case OP_COLLECT:
+                return "collect";
+            case OP_LAST:
+                return "last";
+            case OP_BEGIN:
+                return "begin";
+            case OP_ACCEPT:
+                return "accept";
+            case OP_COMMIT:
+                return "commit";
+            case OP_LEASE:
+                return "lease";
+            case OP_LEASE_ACK:
+                return "lease_ack";
+            default:
+                ceph_abort();
+                return 0;
+        }
+    } epoch_t epoch = 0;       // monitor epoch
     __s32 op = 0;               // paxos op
 
     version_t first_committed = 0;  // i've committed to
@@ -63,36 +73,41 @@ class MMonPaxos final:public Message {
 
     ceph::buffer::list feature_map;
 
-  MMonPaxos():Message {
-    MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION}
+    MMonPaxos(): Message {
+        MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION}
     {
     }
-  MMonPaxos(epoch_t e, int o, utime_t now):
-    Message {
-    MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION},
-        epoch(e),
-        op(o),
-        first_committed(0), last_committed(0), pn_from(0), pn(0),
-        uncommitted_pn(0), sent_timestamp(now), latest_version(0) {
+    MMonPaxos(epoch_t e, int o, utime_t now):
+        Message {
+        MSG_MON_PAXOS, HEAD_VERSION, COMPAT_VERSION},
+    epoch(e),
+          op(o),
+          first_committed(0), last_committed(0), pn_from(0), pn(0),
+          uncommitted_pn(0), sent_timestamp(now), latest_version(0)
+    {
     }
 
-  private:
-    ~MMonPaxos()final {
+private:
+    ~MMonPaxos()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "paxos";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "paxos(" << get_opname(op)
-        << " lc " << last_committed
+            << " lc " << last_committed
             << " fc " << first_committed
             << " pn " << pn << " opn " << uncommitted_pn;
         if (latest_version)
             out << " latest " << latest_version << " (" << latest_value.
                 length() << " bytes)";
         out << ")";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         header.version = HEAD_VERSION;
         encode(epoch, payload);
@@ -109,7 +124,8 @@ class MMonPaxos final:public Message {
         encode(values, payload);
         encode(feature_map, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(epoch, p);
@@ -128,9 +144,9 @@ class MMonPaxos final:public Message {
             decode(feature_map, p);
         }
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

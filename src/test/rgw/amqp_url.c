@@ -68,25 +68,25 @@ static char find_delim(char **pp, int colon_and_at_sign_are_delims)
         char ch = *from++;
 
         switch (ch) {
-        case ':':
-        case '@':
-            if (!colon_and_at_sign_are_delims) {
-                *to++ = ch;
-                break;
-            }
+            case ':':
+            case '@':
+                if (!colon_and_at_sign_are_delims) {
+                    *to++ = ch;
+                    break;
+                }
 
             /* fall through */
-        case 0:
-        case '/':
-        case '?':
-        case '#':
-        case '[':
-        case ']':
-            *to = 0;
-            *pp = from;
-            return ch;
+            case 0:
+            case '/':
+            case '?':
+            case '#':
+            case '[':
+            case ']':
+                *to = 0;
+                *pp = from;
+                return ch;
 
-        case '%':{
+            case '%': {
                 unsigned int val;
                 int chars;
                 int res = sscanf(from, "%2x%n", &val, &chars);
@@ -103,9 +103,9 @@ static char find_delim(char **pp, int colon_and_at_sign_are_delims)
                 break;
             }
 
-        default:
-            *to++ = ch;
-            break;
+            default:
+                *to++ = ch;
+                break;
         }
     }
 }
@@ -126,12 +126,10 @@ int amqp_parse_url(char *url, struct amqp_connection_info *parsed)
     /* check the prefix */
     if (!strncmp(url, "amqp://", 7)) {
         /* do nothing */
-    }
-    else if (!strncmp(url, "amqps://", 8)) {
+    } else if (!strncmp(url, "amqps://", 8)) {
         parsed->port = 5671;
         parsed->ssl = 1;
-    }
-    else {
+    } else {
         goto out;
     }
 
@@ -182,8 +180,7 @@ int amqp_parse_url(char *url, struct amqp_connection_info *parsed)
         if (*start != 0) {
             goto out;
         }
-    }
-    else {
+    } else {
         /* If we haven't seen the host yet, this is it. */
         if (*host != 0) {
             parsed->host = host;
@@ -216,13 +213,12 @@ int amqp_parse_url(char *url, struct amqp_connection_info *parsed)
 
         parsed->vhost = start;
         res = AMQP_STATUS_OK;
-    }
-    else if (delim == 0) {
+    } else if (delim == 0) {
         res = AMQP_STATUS_OK;
     }
 
-/* Any other delimiter is bad, and we will return AMQP_STATUS_BAD_AMQP_URL. */
+    /* Any other delimiter is bad, and we will return AMQP_STATUS_BAD_AMQP_URL. */
 
-  out:
+out:
     return res;
 }

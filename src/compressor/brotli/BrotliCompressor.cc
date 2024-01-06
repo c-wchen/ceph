@@ -5,18 +5,18 @@
 
 #define MAX_LEN (CEPH_PAGE_SIZE)
 
-int BrotliCompressor::compress(const bufferlist & in, bufferlist & out,
+int BrotliCompressor::compress(const bufferlist &in, bufferlist &out,
                                boost::optional < int32_t > &compressor_message)
 {
     BrotliEncoderState *s = BrotliEncoderCreateInstance(nullptr,
-                                                        nullptr,
-                                                        nullptr);
+                            nullptr,
+                            nullptr);
     if (!s) {
         return -1;
     }
     auto sg = make_scope_guard([&s] { BrotliEncoderDestroyInstance(s);
-                               }
-    );
+                                    }
+                              );
     BrotliEncoderSetParameter(s, BROTLI_PARAM_QUALITY, (uint32_t) 9);
     BrotliEncoderSetParameter(s, BROTLI_PARAM_LGWIN, 22);
     for (auto i = in.buffers().begin(); i != in.buffers().end();) {
@@ -27,8 +27,8 @@ int BrotliCompressor::compress(const bufferlist & in, bufferlist & out,
         uint8_t *next_out = (uint8_t *) ptr.c_str();
         const uint8_t *next_in = (uint8_t *) i->c_str();
         ++i;
-        BrotliEncoderOperation finish = i != in.buffers().end()?
-            BROTLI_OPERATION_PROCESS : BROTLI_OPERATION_FINISH;
+        BrotliEncoderOperation finish = i != in.buffers().end() ?
+                                        BROTLI_OPERATION_PROCESS : BROTLI_OPERATION_FINISH;
         do {
             if (!BrotliEncoderCompressStream(s,
                                              finish,
@@ -48,20 +48,20 @@ int BrotliCompressor::compress(const bufferlist & in, bufferlist & out,
     return 0;
 }
 
-int BrotliCompressor::decompress(bufferlist::const_iterator & p,
+int BrotliCompressor::decompress(bufferlist::const_iterator &p,
                                  size_t compressed_size,
-                                 bufferlist & out,
+                                 bufferlist &out,
                                  boost::optional < int32_t > compressor_message)
 {
     BrotliDecoderState *s = BrotliDecoderCreateInstance(nullptr,
-                                                        nullptr,
-                                                        nullptr);
+                            nullptr,
+                            nullptr);
     if (!s) {
         return -1;
     }
     auto sg = make_scope_guard([&s] { BrotliDecoderDestroyInstance(s);
-                               }
-    );
+                                    }
+                              );
     size_t remaining = std::min < size_t > (p.get_remaining(), compressed_size);
     while (remaining) {
         const uint8_t *next_in;
@@ -91,7 +91,7 @@ int BrotliCompressor::decompress(bufferlist::const_iterator & p,
     return 0;
 }
 
-int BrotliCompressor::decompress(const bufferlist & in, bufferlist & out,
+int BrotliCompressor::decompress(const bufferlist &in, bufferlist &out,
                                  boost::optional < int32_t > compressor_message)
 {
     auto i = std::cbegin(in);

@@ -82,11 +82,12 @@
 
 using namespace std;
 
-namespace {
-    TracepointProvider::Traits rgw_op_tracepoint_traits("librgw_op_tp.so",
-                                                        "rgw_op_tracing");
-    TracepointProvider::Traits rgw_rados_tracepoint_traits("librgw_rados_tp.so",
-                                                           "rgw_rados_tracing");
+namespace
+{
+TracepointProvider::Traits rgw_op_tracepoint_traits("librgw_op_tp.so",
+        "rgw_op_tracing");
+TracepointProvider::Traits rgw_rados_tracepoint_traits("librgw_rados_tp.so",
+        "rgw_rados_tracing");
 }
 
 OpsLogFile *rgw::AppMain::ops_log_file;
@@ -102,20 +103,20 @@ void rgw::AppMain::init_frontends1(bool nfs)
 
     /* default frontends */
     if (nfs) {
-        const auto is_rgw_nfs =[](const auto & s){ return s == "rgw-nfs";
+        const auto is_rgw_nfs = [](const auto & s) {
+            return s == "rgw-nfs";
         };
         if (std::find_if(frontends.begin(), frontends.end(), is_rgw_nfs) ==
             frontends.end()) {
             frontends.push_back("rgw-nfs");
         }
-    }
-    else {
+    } else {
         if (frontends.empty()) {
             frontends.push_back("beast");
         }
     }
 
-  for (auto & f:frontends) {
+    for (auto &f : frontends) {
         if (f.find("beast") != string::npos) {
             have_http_frontend = true;
             if (f.find("port") != string::npos) {
@@ -123,14 +124,13 @@ void rgw::AppMain::init_frontends1(bool nfs)
                 if ((f.find("port=") == string::npos) ||
                     (f.find("port= ") != string::npos)) {
                     derr <<
-                        R "(WARNING: radosgw frontend config found unexpected spacing around 'port'
-    (ensure frontend port parameter has the form 'port=80' with no spaces
-    before or after '='))" <<
-                        dendl;
+                         R "(WARNING: radosgw frontend config found unexpected spacing around 'port'
+                         (ensure frontend port parameter has the form 'port=80' with no spaces
+                          before or after '='))" <<
+                    dendl;
                 }
             }
-        }
-        else {
+        } else {
             if (f.find("civetweb") != string::npos) {
                 have_http_frontend = true;
             }
@@ -187,19 +187,17 @@ void rgw::AppMain::init_numa()
             get_numa_node_cpu_set(numa_node, &numa_cpu_set_size, &numa_cpu_set);
         if (r < 0) {
             dout(1) << __func__ << " unable to determine rgw numa node " <<
-                numa_node << " CPUs" << dendl;
+                    numa_node << " CPUs" << dendl;
             numa_node = -1;
-        }
-        else {
+        } else {
             r = set_cpu_affinity_all_threads(numa_cpu_set_size, &numa_cpu_set);
             if (r < 0) {
                 derr << __func__ << " failed to set numa affinity: " <<
-                    cpp_strerror(r)
-                    << dendl;
+                     cpp_strerror(r)
+                     << dendl;
             }
         }
-    }
-    else {
+    } else {
         dout(1) << __func__ << " not setting numa affinity" << dendl;
     }
 }                               /* init_numa */
@@ -255,7 +253,7 @@ void rgw::AppMain::cond_init_apis()
         get_str_vec(g_conf()->rgw_enable_apis, apis);
 
         std::map < std::string, bool > apis_map;
-      for (auto & api:apis) {
+        for (auto &api : apis) {
             apis_map[api] = true;
         }
 
@@ -263,11 +261,11 @@ void rgw::AppMain::cond_init_apis()
         if (!(g_ceph_context->_conf->rgw_keystone_admin_token.empty() ||
               g_ceph_context->_conf->rgw_keystone_admin_password.empty())) {
             dout(0)
-                << "WARNING: rgw_keystone_admin_token and "
-                "rgw_keystone_admin_password should be avoided as they can "
-                "expose secrets.  Prefer the new rgw_keystone_admin_token_path "
-                "and rgw_keystone_admin_password_path options, which read their "
-                "secrets from files." << dendl;
+                    << "WARNING: rgw_keystone_admin_token and "
+                    "rgw_keystone_admin_password should be avoided as they can "
+                    "expose secrets.  Prefer the new rgw_keystone_admin_token_path "
+                    "and rgw_keystone_admin_password_path options, which read their "
+                    "secrets from files." << dendl;
         }
 
         // S3 website mode is a specialization of S3
@@ -281,18 +279,17 @@ void rgw::AppMain::cond_init_apis()
         if (apis_map.count("s3") > 0 || s3website_enabled) {
             if (!swift_at_root) {
                 rest.
-                    register_default_mgr(set_logging
-                                         (rest_filter
-                                          (env.driver, RGW_REST_S3,
-                                           new RGWRESTMgr_S3(s3website_enabled,
-                                                             sts_enabled,
-                                                             iam_enabled,
-                                                             pubsub_enabled))));
-            }
-            else {
+                register_default_mgr(set_logging
+                                     (rest_filter
+                                      (env.driver, RGW_REST_S3,
+                                       new RGWRESTMgr_S3(s3website_enabled,
+                                               sts_enabled,
+                                               iam_enabled,
+                                               pubsub_enabled))));
+            } else {
                 derr <<
-                    "Cannot have the S3 or S3 Website enabled together with " <<
-                    "Swift API placed in the root of hierarchy" << dendl;
+                     "Cannot have the S3 or S3 Website enabled together with " <<
+                     "Swift API placed in the root of hierarchy" << dendl;
             }
         }
 
@@ -302,31 +299,30 @@ void rgw::AppMain::cond_init_apis()
             if (!g_conf()->rgw_cross_domain_policy.empty()) {
                 swift_resource->register_resource("crossdomain.xml",
                                                   set_logging(new
-                                                              RGWRESTMgr_SWIFT_CrossDomain));
+                                                          RGWRESTMgr_SWIFT_CrossDomain));
             }
 
             swift_resource->register_resource("healthcheck",
                                               set_logging(new
-                                                          RGWRESTMgr_SWIFT_HealthCheck));
+                                                      RGWRESTMgr_SWIFT_HealthCheck));
 
             swift_resource->register_resource("info",
                                               set_logging(new
-                                                          RGWRESTMgr_SWIFT_Info));
+                                                      RGWRESTMgr_SWIFT_Info));
 
             if (!swift_at_root) {
                 rest.register_resource(g_conf()->rgw_swift_url_prefix,
                                        set_logging(rest_filter
                                                    (env.driver, RGW_REST_SWIFT,
                                                     swift_resource)));
-            }
-            else {
+            } else {
                 if (env.driver->get_zone()->get_zonegroup().get_zone_count() >
                     1) {
                     derr <<
-                        "Placing Swift API in the root of URL hierarchy while running"
-                        <<
-                        " multi-site configuration requires another instance of RadosGW"
-                        << " with S3 API enabled!" << dendl;
+                         "Placing Swift API in the root of URL hierarchy while running"
+                         <<
+                         " multi-site configuration requires another instance of RadosGW"
+                         << " with S3 API enabled!" << dendl;
                 }
 
                 rest.register_default_mgr(set_logging(swift_resource));
@@ -352,11 +348,11 @@ void rgw::AppMain::cond_init_apis()
 void rgw::AppMain::init_ldap()
 {
     CephContext *cct = env.driver->ctx();
-    const string & ldap_uri = cct->_conf->rgw_ldap_uri;
-    const string & ldap_binddn = cct->_conf->rgw_ldap_binddn;
-    const string & ldap_searchdn = cct->_conf->rgw_ldap_searchdn;
-    const string & ldap_searchfilter = cct->_conf->rgw_ldap_searchfilter;
-    const string & ldap_dnattr = cct->_conf->rgw_ldap_dnattr;
+    const string &ldap_uri = cct->_conf->rgw_ldap_uri;
+    const string &ldap_binddn = cct->_conf->rgw_ldap_binddn;
+    const string &ldap_searchdn = cct->_conf->rgw_ldap_searchdn;
+    const string &ldap_searchfilter = cct->_conf->rgw_ldap_searchfilter;
+    const string &ldap_dnattr = cct->_conf->rgw_ldap_dnattr;
     std::string ldap_bindpw = parse_rgw_ldap_bindpw(cct);
 
     ldh.reset(new rgw::LDAPHelper(ldap_uri, ldap_binddn,
@@ -389,10 +385,10 @@ void rgw::AppMain::init_opslog()
     olog = olog_manifold;
 }                               /* init_opslog */
 
-int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
+int rgw::AppMain::init_frontends2(RGWLib *rgwlib)
 {
     int r {
-    0};
+        0};
     vector < string > frontends_def;
     std::string frontend_defs_str =
         g_conf().get_val < string > ("rgw_frontend_defaults");
@@ -401,7 +397,7 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
     service_map_meta["pid"] = stringify(getpid());
 
     std::map < std::string, std::unique_ptr < RGWFrontendConfig > >fe_def_map;
-  for (auto & f:frontends_def) {
+    for (auto &f : frontends_def) {
         RGWFrontendConfig *config = new RGWFrontendConfig(f);
         int r = config->init();
         if (r < 0) {
@@ -415,8 +411,8 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
     /* Initialize the registry of auth strategies which will coordinate
      * the dynamic reconfiguration. */
     implicit_tenant_context.reset(new rgw::auth::ImplicitTenants {
-                                  g_conf()}
-    );
+        g_conf()}
+                                 );
     g_conf().add_observer(implicit_tenant_context.get());
 
     /* allocate a mime table (you'd never guess that from the name) */
@@ -426,11 +422,11 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
     rest.register_x_headers(g_conf()->rgw_log_http_headers);
 
     sched_ctx.reset(new rgw::dmclock::SchedulerCtx {
-                    dpp->get_cct()}
-    );
+        dpp->get_cct()}
+                   );
     ratelimiter.reset(new ActiveRateLimiter {
-                      dpp->get_cct()}
-    );
+        dpp->get_cct()}
+                     );
     ratelimiter->start();
 
     // initialize RGWProcessEnv
@@ -444,7 +440,7 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
 
     int fe_count = 0;
     for (multimap < string, RGWFrontendConfig * >::iterator fiter =
-         fe_map.begin(); fiter != fe_map.end(); ++fiter, ++fe_count) {
+             fe_map.begin(); fiter != fe_map.end(); ++fiter, ++fe_count) {
         RGWFrontendConfig *config = fiter->second;
         string framework = config->get_framework();
 
@@ -457,25 +453,22 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
 
         if (framework == "loadgen") {
             fe = new RGWLoadGenFrontend(env, config);
-        }
-        else if (framework == "beast") {
+        } else if (framework == "beast") {
             fe = new RGWAsioFrontend(env, config, *sched_ctx);
-        }
-        else if (framework == "rgw-nfs") {
+        } else if (framework == "rgw-nfs") {
             fe = new RGWLibFrontend(env, config);
             if (rgwlib) {
                 rgwlib->set_fe(static_cast < RGWLibFrontend * >(fe));
             }
-        }
-        else if (framework == "arrow_flight") {
+        } else if (framework == "arrow_flight") {
 #ifdef WITH_ARROW_FLIGHT
             int port;
             config->get_val("port", 8077, &port);
             fe = new rgw::flight::FlightFrontend(env, config, port);
 #else
             derr <<
-                "WARNING: arrow_flight frontend requested, but not included in build; skipping"
-                << dendl;
+                 "WARNING: arrow_flight frontend requested, but not included in build; skipping"
+                 << dendl;
             continue;
 #endif
         }
@@ -486,7 +479,7 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
 
         if (!fe) {
             dout(0) << "WARNING: skipping unknown framework: " << framework <<
-                dendl;
+                    dendl;
             continue;
         }
 
@@ -509,7 +502,7 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
     r = env.driver->register_to_service_map(dpp, daemon_type, service_map_meta);
     if (r < 0) {
         derr << "ERROR: failed to register to service map: " << cpp_strerror(-r)
-            << dendl;
+             << dendl;
         /* ignore error */
     }
 
@@ -525,15 +518,15 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
         }
         reloader =
             std::make_unique < RGWRealmReloader > (env,
-                                                   *implicit_tenant_context,
-                                                   service_map_meta,
-                                                   rgw_pauser.get());
+                *implicit_tenant_context,
+                service_map_meta,
+                rgw_pauser.get());
         realm_watcher =
             std::make_unique < RGWRealmWatcher > (dpp, g_ceph_context,
-                                                  static_cast <
-                                                  rgw::sal::RadosStore *
-                                                  >(env.driver)->svc()->zone->
-                                                  get_realm());
+                static_cast <
+                rgw::sal::RadosStore *
+                >(env.driver)->svc()->zone->
+                get_realm());
         realm_watcher->add_watcher(RGWRealmNotify::Reload, *reloader);
         realm_watcher->add_watcher(RGWRealmNotify::ZonesNeedPeriod,
                                    *pusher.get());
@@ -545,9 +538,9 @@ int rgw::AppMain::init_frontends2(RGWLib * rgwlib)
 void rgw::AppMain::init_tracepoints()
 {
     TracepointProvider::initialize < rgw_rados_tracepoint_traits >
-        (dpp->get_cct());
+    (dpp->get_cct());
     TracepointProvider::initialize < rgw_op_tracepoint_traits >
-        (dpp->get_cct());
+    (dpp->get_cct());
     tracing::rgw::tracer.init("rgw");
 }                               /* init_tracepoints() */
 
@@ -567,9 +560,9 @@ void rgw::AppMain::init_notification_endpoints()
 
 void rgw::AppMain::init_lua()
 {
-    rgw::sal::Driver * driver = env.driver;
+    rgw::sal::Driver *driver = env.driver;
     int r {
-    0};
+        0};
     std::string path =
         g_conf().get_val < std::string > ("rgw_luarocks_location");
     if (!path.empty()) {
@@ -584,15 +577,15 @@ void rgw::AppMain::init_lua()
                                    failed_packages, output);
     if (r < 0) {
         dout(1) << "WARNING: failed to install lua packages from allowlist"
-            << dendl;
+                << dendl;
     }
     if (!output.empty()) {
         dout(10) << "INFO: lua packages installation output: \n" << output <<
-            dendl;
+                 dendl;
     }
-  for (const auto & p:failed_packages) {
+    for (const auto &p : failed_packages) {
         dout(5) << "WARNING: failed to install lua package: " << p
-            << " from allowlist" << dendl;
+                << " from allowlist" << dendl;
     }
 #endif
 
@@ -600,7 +593,7 @@ void rgw::AppMain::init_lua()
 
     if (driver->get_name() == "rados") {    /* Supported for only RadosStore */
         lua_background = std::make_unique <
-            rgw::lua::Background > (driver, dpp->get_cct(), path);
+                         rgw::lua::Background > (driver, dpp->get_cct(), path);
         lua_background->start();
         env.lua.background = lua_background.get();
     }
@@ -613,16 +606,16 @@ void rgw::AppMain::shutdown(std::function < void (void) >
         reloader.reset();       // stop the realm reloader
     }
 
-  for (auto & fe:fes) {
+    for (auto &fe : fes) {
         fe->stop();
     }
 
-  for (auto & fe:fes) {
+    for (auto &fe : fes) {
         fe->join();
         delete fe;
     }
 
-  for (auto & fec:fe_configs) {
+    for (auto &fec : fe_configs) {
         delete fec;
     }
 

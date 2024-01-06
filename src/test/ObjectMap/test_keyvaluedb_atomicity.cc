@@ -26,7 +26,7 @@ string prefix_gen(int i)
     return ss.str();
 }
 
-int verify(KeyValueDB * db)
+int verify(KeyValueDB *db)
 {
     // Verify
     {
@@ -37,7 +37,7 @@ int verify(KeyValueDB * db)
         }
         while (iterators.rbegin()->second->valid()) {
             for (map < int, KeyValueDB::Iterator >::iterator i =
-                 iterators.begin(); i != iterators.end(); ++i) {
+                     iterators.begin(); i != iterators.end(); ++i) {
                 ceph_assert(i->second->valid());
                 ceph_assert(i->second->key() ==
                             iterators.rbegin()->second->key());

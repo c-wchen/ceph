@@ -46,8 +46,9 @@ int get_device_by_path(const char *path, char *partition, char *device,
         return -errno;
     }
     auto close_fd = make_scope_guard([fd] {
-                                     ::close(fd);}
-    );
+        ::close(fd);
+    }
+                                    );
     BlkDev blkdev(fd);
     if (auto ret = blkdev.partition(partition, max); ret) {
         return ret;
@@ -82,23 +83,22 @@ using std::string;
 using ceph::bufferlist;
 
 BlkDev::BlkDev(int f)
-:  fd(f)
+    :  fd(f)
 {
 }
 
-BlkDev::BlkDev(const std::string & devname)
-:devname(devname)
+BlkDev::BlkDev(const std::string &devname)
+    : devname(devname)
 {
 }
 
-int BlkDev::get_devid(dev_t * id) const const
+int BlkDev::get_devid(dev_t *id) const const
 {
     struct stat st;
     int r;
     if (fd >= 0) {
         r = fstat(fd, &st);
-    }
-    else {
+    } else {
         char path[PATH_MAX];
         snprintf(path, sizeof(path), "/dev/%s", devname.c_str());
         r = stat(path, &st);
@@ -117,7 +117,7 @@ const char *BlkDev::sysfsdir() const const
     return "/sys";
 }
 
-int BlkDev::get_size(int64_t * psize) const const
+int BlkDev::get_size(int64_t *psize) const const
 {
 #ifdef BLKGETSIZE64
     int ret =::ioctl(fd, BLKGETSIZE64, psize);
@@ -129,8 +129,9 @@ int BlkDev::get_size(int64_t * psize) const const
 // cppcheck-suppress preprocessorErrorDirective
 #error "Linux configuration error (get_size)"
 #endif
-    if (ret < 0)
+    if (ret < 0) {
         ret = -errno;
+    }
     return ret;
 }
 
@@ -141,40 +142,45 @@ int BlkDev::get_size(int64_t * psize) const const
  * return 0 on success
  * return negative error on error
  */
-int64_t BlkDev::get_string_property(const char *prop, char *val, size_t maxlen) constconst
-{
+int64_t BlkDev::get_string_property(const char *prop, char *val, size_t maxlen) constconst {
     char filename[PATH_MAX], wd[PATH_MAX];
     const char *dev = nullptr;
 
-    if (fd >= 0) {
+    if (fd >= 0)
+    {
         // sysfs isn't fully populated for partitions, so we need to lookup the sysfs
         // entry for the underlying whole disk.
-        if (int r = wholedisk(wd, sizeof(wd)); r < 0)
+        if (int r = wholedisk(wd, sizeof(wd)); r < 0) {
             return r;
+        }
         dev = wd;
-    }
-    else {
+    } else
+    {
         dev = devname.c_str();
     }
     if (snprintf(filename, sizeof(filename), "%s/block/%s/%s", sysfsdir(), dev,
-                 prop) >= static_cast < int >(sizeof(filename))) {
+                 prop) >= static_cast < int >(sizeof(filename)))
+    {
         return -ERANGE;
     }
 
     FILE *fp = fopen(filename, "r");
-    if (fp == NULL) {
+    if (fp == NULL)
+    {
         return -errno;
     }
 
     int r = 0;
-    if (fgets(val, maxlen - 1, fp)) {
+    if (fgets(val, maxlen - 1, fp))
+    {
         // truncate at newline
         char *p = val;
-        while (*p && *p != '\n')
+        while (*p && *p != '\n') {
             ++p;
+        }
         *p = 0;
-    }
-    else {
+    } else
+    {
         r = -EINVAL;
     }
     fclose(fp);
@@ -187,14 +193,16 @@ int64_t BlkDev::get_string_property(const char *prop, char *val, size_t maxlen) 
  * return the value (we assume it is positive)
  * return negative error on error
  */
-int64_t BlkDev::get_int_property(const char *prop) constconst
-{
+int64_t BlkDev::get_int_property(const char *prop) constconst {
     char buff[256] = { 0 };
     int r = get_string_property(prop, buff, sizeof(buff));
     if (r < 0)
+    {
         return r;
+    }
     // take only digits
-    for (char *p = buff; *p; ++p) {
+    for (char *p = buff; *p; ++p)
+    {
         if (!isdigit(*p)) {
             *p = 0;
             break;
@@ -203,7 +211,9 @@ int64_t BlkDev::get_int_property(const char *prop) constconst
     char *endptr = 0;
     r = strtoll(buff, &endptr, 10);
     if (endptr != buff + strlen(buff))
+    {
         r = -EINVAL;
+    }
     return r;
 }
 
@@ -231,8 +241,9 @@ bool BlkDev::is_rotational() const const
 int BlkDev::get_numa_node(int *node) const const
 {
     int numa = get_int_property("device/device/numa_node");
-    if (numa < 0)
+    if (numa < 0) {
         return -1;
+    }
     *node = numa;
     return 0;
 }
@@ -261,8 +272,9 @@ int BlkDev::partition(char *partition, size_t max) const const
 {
     dev_t id;
     int r = get_devid(&id);
-    if (r < 0)
-        return -EINVAL;         // hrm.
+    if (r < 0) {
+        return -EINVAL;    // hrm.
+    }
 
     char *t = blkid_devno_to_devname(id);
     if (!t) {
@@ -277,8 +289,9 @@ int BlkDev::wholedisk(char *device, size_t max) const const
 {
     dev_t id;
     int r = get_devid(&id);
-    if (r < 0)
-        return -EINVAL;         // hrm.
+    if (r < 0) {
+        return -EINVAL;    // hrm.
+    }
 
     r = blkid_devno_to_wholedisk(id, device, max, nullptr);
     if (r < 0) {
@@ -287,7 +300,7 @@ int BlkDev::wholedisk(char *device, size_t max) const const
     return 0;
 }
 
-static int easy_readdir(const std::string & dir, std::set < std::string > *out)
+static int easy_readdir(const std::string &dir, std::set < std::string > *out)
 {
     DIR *h =::opendir(dir.c_str());
     if (!h) {
@@ -304,12 +317,12 @@ static int easy_readdir(const std::string & dir, std::set < std::string > *out)
     return 0;
 }
 
-void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
+void get_dm_parents(const std::string &dev, std::set < std::string > *ls)
 {
     std::string p = std::string("/sys/block/") + dev + "/slaves";
     std::set < std::string > parents;
     easy_readdir(p, &parents);
-  for (auto & d:parents) {
+    for (auto &d : parents) {
         ls->insert(d);
         // recurse in case it is dm-on-dm
         if (d.find("dm-") == 0) {
@@ -318,28 +331,26 @@ void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
     }
 }
 
-void get_raw_devices(const std::string & in, std::set < std::string > *ls)
+void get_raw_devices(const std::string &in, std::set < std::string > *ls)
 {
     if (in.substr(0, 3) == "dm-") {
         std::set < std::string > o;
         get_dm_parents(in, &o);
-      for (auto & d:o) {
+        for (auto &d : o) {
             get_raw_devices(d, ls);
         }
-    }
-    else {
+    } else {
         BlkDev d(in);
         std::string wholedisk;
         if (d.wholedisk(&wholedisk) == 0) {
             ls->insert(wholedisk);
-        }
-        else {
+        } else {
             ls->insert(in);
         }
     }
 }
 
-std::string _decode_model_enc(const std::string & in)
+std::string _decode_model_enc(const std::string &in)
 {
     auto v = boost::replace_all_copy(in, "\\x20", " ");
     if (auto found = v.find_last_not_of(" "); found != v.npos) {
@@ -350,17 +361,18 @@ std::string _decode_model_enc(const std::string & in)
     // remove "__", which seems to come up on by ubuntu box for some reason.
     while (true) {
         auto p = v.find("__");
-        if (p == std::string::npos)
+        if (p == std::string::npos) {
             break;
+        }
         v.replace(p, 2, "_");
     }
 
     return v;
 }
 
-// trying to use udev first, and if it doesn't work, we fall back to 
+// trying to use udev first, and if it doesn't work, we fall back to
 // reading /sys/block/$devname/device/(vendor/model/serial).
-std::string get_device_id(const std::string & devname, std::string * err)
+std::string get_device_id(const std::string &devname, std::string *err)
 {
     struct udev_device *dev;
     static struct udev *udev;
@@ -408,8 +420,7 @@ std::string get_device_id(const std::string & devname, std::string * err)
                 udev_device_get_property_value(dev, "ID_MODEL_ENC");
             if (enc) {
                 id_model = _decode_model_enc(enc);
-            }
-            else {
+            } else {
                 // ignore ID_MODEL then
                 id_model.clear();
             }
@@ -437,11 +448,9 @@ std::string get_device_id(const std::string & devname, std::string * err)
     std::string device_id;
     if (id_vendor.size() && id_model.size() && id_scsi_serial.size()) {
         device_id = id_vendor + '_' + id_model + '_' + id_scsi_serial;
-    }
-    else if (id_model.size() && id_serial_short.size()) {
+    } else if (id_model.size() && id_serial_short.size()) {
         device_id = id_model + '_' + id_serial_short;
-    }
-    else if (id_serial.size()) {
+    } else if (id_serial.size()) {
         device_id = id_serial;
         if (device_id.substr(0, 4) == "MTFD") {
             // Micron NVMes hide the vendor
@@ -470,16 +479,14 @@ std::string get_device_id(const std::string & devname, std::string * err)
             *err = std::string("fallback method has no model nor serial");
             return {
             };
-        }
-        else if (model.empty()) {
+        } else if (model.empty()) {
             *err = std::string("fallback method has serial '") + serial
-                + "' but no model'";
+                   + "' but no model'";
             return {
             };
-        }
-        else if (serial.empty()) {
+        } else if (serial.empty()) {
             *err = std::string("fallback method has model '") + model
-                + "' but no serial'";
+                   + "' but no serial'";
             return {
             };
         }
@@ -490,7 +497,7 @@ std::string get_device_id(const std::string & devname, std::string * err)
     return device_id;
 }
 
-static std::string get_device_vendor(const std::string & devname)
+static std::string get_device_vendor(const std::string &devname)
 {
     struct udev_device *dev;
     static struct udev *udev;
@@ -522,9 +529,9 @@ static std::string get_device_vendor(const std::string & devname)
     udev_unref(udev);
 
     std::transform(id_vendor.begin(), id_vendor.end(),
-                   id_vendor.begin(),::tolower);
+                   id_vendor.begin(), ::tolower);
     std::transform(id_model.begin(), id_model.end(),
-                   id_model.begin(),::tolower);
+                   id_model.begin(), ::tolower);
 
     if (id_vendor.size()) {
         return id_vendor;
@@ -533,8 +540,7 @@ static std::string get_device_vendor(const std::string & devname)
         int pos = id_model.find(" ");
         if (pos > 0) {
             return id_model.substr(0, pos);
-        }
-        else {
+        } else {
             return id_model;
         }
     }
@@ -555,8 +561,7 @@ static std::string get_device_vendor(const std::string & devname)
         int pos = model.find(" ");
         if (pos > 0) {
             return model.substr(0, pos);
-        }
-        else {
+        } else {
             return model;
         }
     }
@@ -565,9 +570,9 @@ static std::string get_device_vendor(const std::string & devname)
     };
 }
 
-static int block_device_run_vendor_nvme(const string & devname,
-                                        const string & vendor, int timeout,
-                                        std::string * result)
+static int block_device_run_vendor_nvme(const string &devname,
+                                        const string &vendor, int timeout,
+                                        std::string *result)
 {
     string device = "/dev/" + devname;
 
@@ -587,8 +592,7 @@ static int block_device_run_vendor_nvme(const string & devname,
         bufferlist err;
         err.read_fd(nvmecli.get_stderr(), 100 * 1024);
         *result = std::string("failed to execute nvme: ") + err.to_str();
-    }
-    else {
+    } else {
         ret = 0;
         *result = output.to_str();
     }
@@ -601,23 +605,24 @@ static int block_device_run_vendor_nvme(const string & devname,
     return ret;
 }
 
-std::string get_device_path(const std::string & devname, std::string * err)
+std::string get_device_path(const std::string &devname, std::string *err)
 {
     std::set < std::string > links;
     int r = easy_readdir("/dev/disk/by-path", &links);
     if (r < 0) {
         *err = "unable to list contents of /dev/disk/by-path: " s +
-            cpp_strerror(r);
+               cpp_strerror(r);
         return {
         };
     }
-  for (auto & i:links) {
+    for (auto &i : links) {
         char fn[PATH_MAX];
         char target[PATH_MAX + 1];
         snprintf(fn, sizeof(fn), "/dev/disk/by-path/%s", i.c_str());
         int r = readlink(fn, target, sizeof(target));
-        if (r < 0 || r >= (int)sizeof(target))
+        if (r < 0 || r >= (int)sizeof(target)) {
             continue;
+        }
         target[r] = 0;
         if ((unsigned)r > devname.size() + 1 &&
             strncmp(target + r - devname.size(), devname.c_str(), r) == 0 &&
@@ -630,12 +635,12 @@ std::string get_device_path(const std::string & devname, std::string * err)
     };
 }
 
-static int block_device_run_smartctl(const string & devname, int timeout,
-                                     std::string * result)
+static int block_device_run_smartctl(const string &devname, int timeout,
+                                     std::string *result)
 {
     string device = "/dev/" + devname;
 
-    // when using --json, smartctl will report its errors in JSON format to stdout 
+    // when using --json, smartctl will report its errors in JSON format to stdout
     SubProcessTimed smartctl("sudo", SubProcess::CLOSE, SubProcess::PIPE,
                              SubProcess::CLOSE, timeout);
     smartctl.add_cmd_args("smartctl",
@@ -654,8 +659,7 @@ static int block_device_run_smartctl(const string & devname, int timeout,
     if (ret < 0) {
         *result =
             std::string("failed read smartctl output: ") + cpp_strerror(-ret);
-    }
-    else {
+    } else {
         ret = 0;
         *result = output.to_str();
     }
@@ -671,14 +675,14 @@ static int block_device_run_smartctl(const string & devname, int timeout,
     // Bit 7: The device self-test log contains records of errors.  [ATA only] Failed self-tests outdated by a newer successful extended self-test are ignored.
     if (joinerr & 3) {
         *result = "smartctl returned an error (" s + stringify(joinerr) +
-            "): stderr:\n" s + smartctl.err() + "\nstdout:\n" s + *result;
+                  "): stderr:\n" s + smartctl.err() + "\nstdout:\n" s + *result;
         return -EINVAL;
     }
 
     return ret;
 }
 
-static std::string escape_quotes(const std::string & s)
+static std::string escape_quotes(const std::string &s)
 {
     std::string r = s;
     auto pos = r.find("\"");
@@ -689,8 +693,8 @@ static std::string escape_quotes(const std::string & s)
     return r;
 }
 
-int block_device_get_metrics(const string & devname, int timeout,
-                             json_spirit::mValue * result)
+int block_device_get_metrics(const string &devname, int timeout,
+                             json_spirit::mValue *result)
 {
     std::string s;
 
@@ -702,8 +706,7 @@ int block_device_get_metrics(const string & devname, int timeout,
         s += "\", \"smartctl_error_code\": " + stringify(r);
         s += ", \"smartctl_output\": \"" + escape_quotes(orig);
         s += +"\"}";
-    }
-    else if (!json_spirit::read(s, *result)) {
+    } else if (!json_spirit::read(s, *result)) {
         string orig = s;
         s = "{\"error\": \"smartctl returned invalid JSON\", \"dev\": \"/dev/";
         s += devname;
@@ -715,7 +718,7 @@ int block_device_get_metrics(const string & devname, int timeout,
         return -EINVAL;
     }
 
-    json_spirit::mObject & base = result->get_obj();
+    json_spirit::mObject &base = result->get_obj();
     string vendor = get_device_vendor(devname);
     if (vendor.size()) {
         base["nvme_vendor"] = vendor;
@@ -725,18 +728,15 @@ int block_device_get_metrics(const string & devname, int timeout,
             r == 0) {
             if (json_spirit::read(s, nvme_json) != 0) {
                 base["nvme_smart_health_information_add_log"] = nvme_json;
-            }
-            else {
+            } else {
                 base["nvme_smart_health_information_add_log_error"] =
                     "bad json output: " + s;
             }
-        }
-        else {
+        } else {
             base["nvme_smart_health_information_add_log_error_code"] = r;
             base["nvme_smart_health_information_add_log_error"] = s;
         }
-    }
-    else {
+    } else {
         base["nvme_vendor"] = "unknown";
     }
 
@@ -756,31 +756,33 @@ int BlkDev::dev(char *dev, size_t max) const const
 {
     struct stat sb;
 
-    if (fstat(fd, &sb) < 0)
+    if (fstat(fd, &sb) < 0) {
         return -errno;
+    }
 
     snprintf(dev, max, "%" PRIu64, (uint64_t) sb.st_rdev);
 
     return 0;
 }
 
-int BlkDev::get_size(int64_t * psize) const const
+int BlkDev::get_size(int64_t *psize) const const
 {
     unsigned long blocksize = 0;
     int ret =::ioctl(fd, DKIOCGETBLOCKSIZE, &blocksize);
     if (!ret) {
         unsigned long nblocks;
         ret =::ioctl(fd, DKIOCGETBLOCKCOUNT, &nblocks);
-        if (!ret)
-            *psize = (int64_t) nblocks *blocksize;
+        if (!ret) {
+            *psize = (int64_t) nblocks * blocksize;
+        }
     }
-    if (ret < 0)
+    if (ret < 0) {
         ret = -errno;
+    }
     return ret;
 }
 
-int64_t BlkDev::get_int_property(const char *prop) constconst
-{
+int64_t BlkDev::get_int_property(const char *prop) constconst {
     return 0;
 }
 
@@ -828,15 +830,15 @@ int BlkDev::wholedisk(char *device, size_t max) const const
 {
 }
 
-void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
+void get_dm_parents(const std::string &dev, std::set < std::string > *ls)
 {
 }
 
-void get_raw_devices(const std::string & in, std::set < std::string > *ls)
+void get_raw_devices(const std::string &in, std::set < std::string > *ls)
 {
 }
 
-std::string get_device_id(const std::string & devname, std::string * err)
+std::string get_device_id(const std::string &devname, std::string *err)
 {
     // FIXME: implement me
     if (err) {
@@ -845,7 +847,7 @@ std::string get_device_id(const std::string & devname, std::string * err)
     return std::string();
 }
 
-std::string get_device_path(const std::string & devname, std::string * err)
+std::string get_device_path(const std::string &devname, std::string *err)
 {
     // FIXME: implement me
     if (err) {
@@ -866,24 +868,25 @@ int BlkDev::dev(char *dev, size_t max) const const
 {
     struct stat sb;
 
-    if (fstat(fd, &sb) < 0)
+    if (fstat(fd, &sb) < 0) {
         return -errno;
+    }
 
     snprintf(dev, max, "%" PRIu64, (uint64_t) sb.st_rdev);
 
     return 0;
 }
 
-int BlkDev::get_size(int64_t * psize) const const
+int BlkDev::get_size(int64_t *psize) const const
 {
     int ret =::ioctl(fd, DIOCGMEDIASIZE, psize);
-    if (ret < 0)
+    if (ret < 0) {
         ret = -errno;
+    }
     return ret;
 }
 
-int64_t BlkDev::get_int_property(const char *prop) constconst
-{
+int64_t BlkDev::get_int_property(const char *prop) constconst {
     return 0;
 }
 
@@ -898,8 +901,7 @@ bool BlkDev::support_discard() const const
     arg.len = sizeof(arg.value.i);
     if (ioctl(fd, DIOCGATTR, &arg) == 0) {
         return (arg.value.i != 0);
-    }
-    else {
+    } else {
         return false;
     }
 #endif
@@ -928,13 +930,15 @@ bool BlkDev::is_rotational() const const
     bool ret;
     if (ioctl_ret < 0 || arg.value.u16 == DISK_RR_UNKNOWN)
         // DISK_RR_UNKNOWN usually indicates an old drive, which is usually spinny
+    {
         ret = true;
-    else if (arg.value.u16 == DISK_RR_NON_ROTATING)
+    } else if (arg.value.u16 == DISK_RR_NON_ROTATING) {
         ret = false;
-    else if (arg.value.u16 >= DISK_RR_MIN && arg.value.u16 <= DISK_RR_MAX)
+    } else if (arg.value.u16 >= DISK_RR_MIN && arg.value.u16 <= DISK_RR_MAX) {
         ret = true;
-    else
-        ret = true;             // Invalid value.  Probably spinny?
+    } else {
+        ret = true;    // Invalid value.  Probably spinny?
+    }
 
     return ret;
 #else
@@ -945,8 +949,9 @@ bool BlkDev::is_rotational() const const
 int BlkDev::get_numa_node(int *node) const const
 {
     int numa = get_int_property("device/device/numa_node");
-    if (numa < 0)
+    if (numa < 0) {
         return -1;
+    }
     *node = numa;
     return 0;
 }
@@ -967,8 +972,7 @@ int BlkDev::model(char *model, size_t max) const const
     char *p = arg.value.str;
     if (p == NULL || *p == '\0') {
         *model = '\0';
-    }
-    else {
+    } else {
         (void)strsep(&p, " ");
         snprintf(model, max, "%s", p);
     }
@@ -980,23 +984,24 @@ int BlkDev::serial(char *serial, size_t max) const const
 {
     char ident[DISK_IDENT_SIZE];
 
-    if (ioctl(fd, DIOCGIDENT, ident) < 0)
+    if (ioctl(fd, DIOCGIDENT, ident) < 0) {
         return -errno;
+    }
 
     snprintf(serial, max, "%s", ident);
 
     return 0;
 }
 
-void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
+void get_dm_parents(const std::string &dev, std::set < std::string > *ls)
 {
 }
 
-void get_raw_devices(const std::string & in, std::set < std::string > *ls)
+void get_raw_devices(const std::string &in, std::set < std::string > *ls)
 {
 }
 
-std::string get_device_id(const std::string & devname, std::string * err)
+std::string get_device_id(const std::string &devname, std::string *err)
 {
     // FIXME: implement me for freebsd
     if (err) {
@@ -1005,7 +1010,7 @@ std::string get_device_id(const std::string & devname, std::string * err)
     return std::string();
 }
 
-std::string get_device_path(const std::string & devname, std::string * err)
+std::string get_device_path(const std::string &devname, std::string *err)
 {
     // FIXME: implement me for freebsd
     if (err) {
@@ -1015,21 +1020,21 @@ std::string get_device_path(const std::string & devname, std::string * err)
 }
 
 int block_device_run_smartctl(const char *device, int timeout,
-                              std::string * result)
+                              std::string *result)
 {
     // FIXME: implement me for freebsd
     return -EOPNOTSUPP;
 }
 
-int block_device_get_metrics(const string & devname, int timeout,
-                             json_spirit::mValue * result)
+int block_device_get_metrics(const string &devname, int timeout,
+                             json_spirit::mValue *result)
 {
     // FIXME: implement me for freebsd
     return -EOPNOTSUPP;
 }
 
 int block_device_run_nvme(const char *device, const char *vendor, int timeout,
-                          std::string * result)
+                          std::string *result)
 {
     return -EOPNOTSUPP;
 }
@@ -1040,8 +1045,9 @@ static int block_device_devname(int fd, char *devname, size_t max)
 
     arg.buf = devname;
     arg.len = max;
-    if (ioctl(fd, FIODGNAME, &arg) < 0)
+    if (ioctl(fd, FIODGNAME, &arg) < 0) {
         return -errno;
+    }
     return 0;
 }
 
@@ -1049,8 +1055,9 @@ int BlkDev::partition(char *partition, size_t max) const const
 {
     char devname[PATH_MAX];
 
-    if (block_device_devname(fd, devname, sizeof(devname)) < 0)
+    if (block_device_devname(fd, devname, sizeof(devname)) < 0) {
         return -errno;
+    }
     snprintf(partition, max, "/dev/%s", devname);
     return 0;
 }
@@ -1059,8 +1066,9 @@ int BlkDev::wholedisk(char *wd, size_t max) const const
 {
     char devname[PATH_MAX];
 
-    if (block_device_devname(fd, devname, sizeof(devname)) < 0)
+    if (block_device_devname(fd, devname, sizeof(devname)) < 0) {
         return -errno;
+    }
 
     size_t first_digit = strcspn(devname, "0123456789");
     // first_digit now indexes the first digit or null character of devname
@@ -1085,7 +1093,7 @@ int BlkDev::dev(char *dev, size_t max) const const
     return -EOPNOTSUPP;
 }
 
-int BlkDev::get_size(int64_t * psize) const const
+int BlkDev::get_size(int64_t *psize) const const
 {
     return -EOPNOTSUPP;
 }
@@ -1100,8 +1108,7 @@ int BlkDev::discard(int fd, int64_t offset, int64_t len) const const
     return -EOPNOTSUPP;
 }
 
-bool BlkDev::is_rotational(const char *devname) constconst
-{
+bool BlkDev::is_rotational(const char *devname) constconst {
     return false;
 }
 
@@ -1125,15 +1132,15 @@ int BlkDev::wholedisk(char *wd, size_t max) const const
     return -EOPNOTSUPP;
 }
 
-void get_dm_parents(const std::string & dev, std::set < std::string > *ls)
+void get_dm_parents(const std::string &dev, std::set < std::string > *ls)
 {
 }
 
-void get_raw_devices(const std::string & in, std::set < std::string > *ls)
+void get_raw_devices(const std::string &in, std::set < std::string > *ls)
 {
 }
 
-std::string get_device_id(const std::string & devname, std::string * err)
+std::string get_device_id(const std::string &devname, std::string *err)
 {
     // not implemented
     if (err) {
@@ -1142,7 +1149,7 @@ std::string get_device_id(const std::string & devname, std::string * err)
     return std::string();
 }
 
-std::string get_device_path(const std::string & devname, std::string * err)
+std::string get_device_path(const std::string &devname, std::string *err)
 {
     // not implemented
     if (err) {
@@ -1152,19 +1159,19 @@ std::string get_device_path(const std::string & devname, std::string * err)
 }
 
 int block_device_run_smartctl(const char *device, int timeout,
-                              std::string * result)
+                              std::string *result)
 {
     return -EOPNOTSUPP;
 }
 
-int block_device_get_metrics(const string & devname, int timeout,
-                             json_spirit::mValue * result)
+int block_device_get_metrics(const string &devname, int timeout,
+                             json_spirit::mValue *result)
 {
     return -EOPNOTSUPP;
 }
 
 int block_device_run_nvme(const char *device, const char *vendor, int timeout,
-                          std::string * result)
+                          std::string *result)
 {
     return -EOPNOTSUPP;
 }
@@ -1176,9 +1183,9 @@ void get_device_metadata(const std::set < std::string > &devnames,
                          std::map < std::string, std::string > *errs)
 {
     (*pm)["devices"] = stringify(devnames);
-    string & devids = (*pm)["device_ids"];
-    string & devpaths = (*pm)["device_paths"];
-  for (auto & dev:devnames) {
+    string &devids = (*pm)["device_ids"];
+    string &devpaths = (*pm)["device_paths"];
+    for (auto &dev : devnames) {
         string err;
         string id = get_device_id(dev, &err);
         if (id.size()) {
@@ -1186,8 +1193,7 @@ void get_device_metadata(const std::set < std::string > &devnames,
                 devids += ",";
             }
             devids += dev + "=" + id;
-        }
-        else {
+        } else {
             (*errs)[dev] = " no unique device id for " s + dev + ": " + err;
         }
         string path = get_device_path(dev, &err);
@@ -1196,8 +1202,7 @@ void get_device_metadata(const std::set < std::string > &devnames,
                 devpaths += ",";
             }
             devpaths += dev + "=" + path;
-        }
-        else {
+        } else {
             (*errs)[dev] + " no unique device path for " s + dev + ": " + err;
         }
     }

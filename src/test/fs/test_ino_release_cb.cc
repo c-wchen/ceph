@@ -4,8 +4,8 @@
 #include <mds/mdstypes.h>
 #include <include/cephfs/libcephfs.h>
 
-#define MAX_CEPH_FILES	1000
-#define DIRNAME		"ino_release_cb"
+#define MAX_CEPH_FILES  1000
+#define DIRNAME     "ino_release_cb"
 
 using namespace std;
 
@@ -69,8 +69,9 @@ int main(int argc, char *argv[])
 
     for (i = 0; i < MAX_CEPH_FILES; ++i) {
         /* We can stop if we got a callback */
-        if (cb_done)
+        if (cb_done) {
             break;
+        }
 
         ret = ceph_ll_lookup_inode(cmount, inos[i], &inodes[i]);
         assert(ret >= 0);

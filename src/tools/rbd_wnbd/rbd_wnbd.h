@@ -118,53 +118,59 @@ int restart_registered_mappings(int worker_count, int total_timeout,
                                 int image_map_timeout);
 int map_device_using_suprocess(std::string command_line);
 
-int construct_devpath_if_missing(Config * cfg);
-int save_config_to_registry(Config * cfg);
-int remove_config_from_registry(Config * cfg);
-int load_mapping_config_from_registry(std::string devpath, Config * cfg);
+int construct_devpath_if_missing(Config *cfg);
+int save_config_to_registry(Config *cfg);
+int remove_config_from_registry(Config *cfg);
+int load_mapping_config_from_registry(std::string devpath, Config *cfg);
 
 BOOL WINAPI console_handler_routine(DWORD dwCtrlType);
 
-static int parse_args(std::vector < const char *>&args,
-                      std::ostream * err_msg, Command * command, Config * cfg);
-static int do_unmap(Config * cfg, bool unregister);
+static int parse_args(std::vector < const char *> &args,
+                      std::ostream *err_msg, Command *command, Config *cfg);
+static int do_unmap(Config *cfg, bool unregister);
 
-class BaseIterator {
-  public:
-    virtual ~ BaseIterator() {
+class BaseIterator
+{
+public:
+    virtual ~ BaseIterator()
+    {
     };
-    virtual bool get(Config * cfg) = 0;
+    virtual bool get(Config *cfg) = 0;
 
-    int get_error() {
+    int get_error()
+    {
         return error;
     }
-  protected:
+protected:
     int error = 0;
     int index = -1;
 };
 
 // Iterate over mapped devices, retrieving info from the driver.
-class WNBDActiveDiskIterator:public BaseIterator {
-  public:
+class WNBDActiveDiskIterator: public BaseIterator
+{
+public:
     WNBDActiveDiskIterator();
     ~WNBDActiveDiskIterator();
 
-    bool get(Config * cfg);
+    bool get(Config *cfg);
 
-  private:
+private:
     PWNBD_CONNECTION_LIST conn_list = NULL;
 
-    static DWORD fetch_list(PWNBD_CONNECTION_LIST * conn_list);
+    static DWORD fetch_list(PWNBD_CONNECTION_LIST *conn_list);
 };
 
 // Iterate over the Windows registry key, retrieving registered mappings.
-class RegistryDiskIterator:public BaseIterator {
-  public:
+class RegistryDiskIterator: public BaseIterator
+{
+public:
     RegistryDiskIterator();
-    ~RegistryDiskIterator() {
+    ~RegistryDiskIterator()
+    {
         delete reg_key;
-    } bool get(Config * cfg);
-  private:
+    } bool get(Config *cfg);
+private:
     DWORD subkey_count = 0;
     char subkey_name[MAX_PATH];
 
@@ -172,11 +178,12 @@ class RegistryDiskIterator:public BaseIterator {
 };
 
 // Iterate over all RBD mappings, getting info from the registry and driver.
-class WNBDDiskIterator:public BaseIterator {
-  public:
-    bool get(Config * cfg);
+class WNBDDiskIterator: public BaseIterator
+{
+public:
+    bool get(Config *cfg);
 
-  private:
+private:
     // We'll keep track of the active devices.
     std::set < std::string > active_devices;
 

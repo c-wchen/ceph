@@ -57,35 +57,41 @@ do {\
 
 static boost::intrusive_ptr < CephContext > cct;
 
-class CephSQLiteTest:public::testing::Test {
-  public:
+class CephSQLiteTest: public::testing::Test
+{
+public:
     inline static const std::string pool = "cephsqlite";
 
-    static void SetUpTestSuite() {
+    static void SetUpTestSuite()
+    {
         librados::Rados cluster;
         ASSERT_LE(0, cluster.init_with_context(cct.get()));
         ASSERT_LE(0, cluster.connect());
         if (int rc = cluster.pool_create(pool.c_str()); rc < 0 && rc != -EEXIST) {
             ASSERT_EQ(0, rc);
-        } cluster.shutdown();
+        }
+        cluster.shutdown();
         sleep(5);
     }
-    void SetUp() override {
+    void SetUp() override
+    {
         uuid.generate_random();
         ASSERT_LE(0, cluster.init_with_context(cct.get()));
         ASSERT_LE(0, cluster.connect());
         ASSERT_LE(0, cluster.wait_for_latest_osdmap());
         ASSERT_EQ(0, db_open());
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         ASSERT_EQ(SQLITE_OK, sqlite3_close(db));
         db = nullptr;
         cluster.shutdown();
         /* Leave database behind for inspection. */
     }
 
-  protected:
-    int db_open() {
+protected:
+    int db_open()
+    {
         static const char SQL[] =
             "PRAGMA journal_mode = PERSIST;"
             "PRAGMA page_size = 65536;"
@@ -112,15 +118,17 @@ class CephSQLiteTest:public::testing::Test {
         sqlcatch(sqlite3_exec(db, current, NULL, NULL, NULL));
 
         rc = 0;
-      out:
+out:
         sqlite3_finalize(stmt);
         return rc;
     }
 
-    virtual std::string get_uri() const {
+    virtual std::string get_uri() const
+    {
         auto uri = fmt::format("file:{}:/{}?vfs=ceph", pool, get_name());
         return uri;
-    } virtual std::string get_name() const {
+    } virtual std::string get_name() const
+    {
         auto name = fmt::format("{}.db", uuid.to_string());
         return name;
     } sqlite3 *db = nullptr;
@@ -144,7 +152,7 @@ TEST_F(CephSQLiteTest, Create)
 
     rc = 0;
 
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -191,7 +199,7 @@ TEST_F(CephSQLiteTest, InsertBulk4096)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -216,7 +224,7 @@ TEST_F(CephSQLiteTest, InsertBulk)
     std::cout << SQL << std::endl;
     sqlcatch(sqlite3_exec(db, current, NULL, NULL, NULL));
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -274,7 +282,7 @@ TEST_F(CephSQLiteTest, UpdateBulk)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -311,11 +319,11 @@ TEST_F(CephSQLiteTest, InsertRate)
     {
         auto diff = std::chrono::duration < double >(t2 - t1);
         std::cout << "transactions per second: " << count /
-            diff.count() << std::endl;
+                  diff.count() << std::endl;
     }
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -377,7 +385,7 @@ TEST_F(CephSQLiteTest, DatabaseShrink)
     ASSERT_LT(size2, size1 / 2);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -421,11 +429,11 @@ TEST_F(CephSQLiteTest, InsertExclusiveRate)
     {
         auto diff = std::chrono::duration < double >(t2 - t1);
         std::cout << "transactions per second: " << count /
-            diff.count() << std::endl;
+                  diff.count() << std::endl;
     }
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -475,31 +483,32 @@ TEST_F(CephSQLiteTest, InsertExclusiveWALRate)
     {
         auto diff = std::chrono::duration < double >(t2 - t1);
         std::cout << "transactions per second: " << count /
-            diff.count() << std::endl;
+                  diff.count() << std::endl;
     }
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
 
 TEST_F(CephSQLiteTest, WALTransactionSync)
 {
-    static const char SQL[] = "PRAGMA locking_mode=EXCLUSIVE;" "PRAGMA journal_mode=WAL;" "CREATE TABLE foo (a INT);"   /* sets up the -wal journal */
-        "INSERT INTO perf (v)"
-        "    VALUES (ceph_perf());"
-        "BEGIN TRANSACTION;"
-        "INSERT INTO foo (a) VALUES (RANDOM());"
-        "END TRANSACTION;"
-        "INSERT INTO perf (v)"
-        "    VALUES (ceph_perf());"
-        "SELECT a.atom-b.atom"
-        "    FROM p AS a, p AS b"
-        "    WHERE a.i = ? AND"
-        "          b.i = ? AND"
-        "          a.fullkey = '$.libcephsqlite_vfs.opf_sync.avgcount' AND"
-        "          b.fullkey = '$.libcephsqlite_vfs.opf_sync.avgcount';";
+    static const char SQL[] = "PRAGMA locking_mode=EXCLUSIVE;" "PRAGMA journal_mode=WAL;"
+                              "CREATE TABLE foo (a INT);"   /* sets up the -wal journal */
+                              "INSERT INTO perf (v)"
+                              "    VALUES (ceph_perf());"
+                              "BEGIN TRANSACTION;"
+                              "INSERT INTO foo (a) VALUES (RANDOM());"
+                              "END TRANSACTION;"
+                              "INSERT INTO perf (v)"
+                              "    VALUES (ceph_perf());"
+                              "SELECT a.atom-b.atom"
+                              "    FROM p AS a, p AS b"
+                              "    WHERE a.i = ? AND"
+                              "          b.i = ? AND"
+                              "          a.fullkey = '$.libcephsqlite_vfs.opf_sync.avgcount' AND"
+                              "          b.fullkey = '$.libcephsqlite_vfs.opf_sync.avgcount';";
 
     int rc;
     const char *current = SQL;
@@ -560,7 +569,7 @@ TEST_F(CephSQLiteTest, WALTransactionSync)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -623,7 +632,7 @@ TEST_F(CephSQLiteTest, PersistTransactionSync)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -698,7 +707,7 @@ TEST_F(CephSQLiteTest, InsertExclusiveLock)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -758,12 +767,13 @@ TEST_F(CephSQLiteTest, TransactionSizeUpdate)
     sqlcatchcode(sqlite3_step(stmt), SQLITE_ROW);
     ASSERT_GT(sqlite3_column_int64(stmt, 0), 0);
     ASSERT_GT(sqlite3_column_int64(stmt, 1), 0);
-    ASSERT_EQ(sqlite3_column_int64(stmt, 2), 2);    /* once for journal write and db write (but not journal header clear!) */
+    ASSERT_EQ(sqlite3_column_int64(stmt, 2),
+              2);    /* once for journal write and db write (but not journal header clear!) */
     sqlcatch(sqlite3_finalize(stmt);
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -825,7 +835,7 @@ TEST_F(CephSQLiteTest, AllocatedGrowth)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -867,7 +877,7 @@ TEST_F(CephSQLiteTest, DeleteBulk)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -953,7 +963,7 @@ TEST_F(CephSQLiteTest, DropMassive)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -1035,7 +1045,7 @@ TEST_F(CephSQLiteTest, InsertMassiveVerify)
     ASSERT_EQ(hashes1, hashes2);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -1056,7 +1066,7 @@ TEST_F(CephSQLiteTest, PerfValid)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -1077,7 +1087,7 @@ TEST_F(CephSQLiteTest, StatusValid)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -1102,7 +1112,7 @@ TEST_F(CephSQLiteTest, CurrentTime)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -1138,7 +1148,7 @@ TEST_F(CephSQLiteTest, StatusFields)
              stmt = NULL);
 
     rc = 0;
-  out:
+out:
     sqlite3_finalize(stmt);
     ASSERT_EQ(0, rc);
 }
@@ -1156,7 +1166,7 @@ int main(int argc, char **argv)
         boost::intrusive_ptr < CephContext >
         (common_preinit(iparams, CODE_ENVIRONMENT_UTILITY, 0), false);
     cct->_conf.parse_config_files(conf_file_list.
-                                  empty()? nullptr : conf_file_list.c_str(),
+                                  empty() ? nullptr : conf_file_list.c_str(),
                                   &std::cerr, 0);
     cct->_conf.parse_env(cct->get_module_type());   // environment variables override
     cct->_conf.parse_argv(args);
@@ -1172,11 +1182,10 @@ int main(int argc, char **argv)
     sqlite3_auto_extension((void (*)())sqlite3_cephsqlite_init);
     sqlite3 *db = nullptr;
     if (int rc =
-        sqlite3_open_v2(":memory:", &db, SQLITE_OPEN_READWRITE, nullptr);
+            sqlite3_open_v2(":memory:", &db, SQLITE_OPEN_READWRITE, nullptr);
         rc == SQLITE_OK) {
         sqlite3_close(db);
-    }
-    else {
+    } else {
         lderr(cct) << "could not open sqlite3: " << rc << dendl;
         exit(EXIT_FAILURE);
     }

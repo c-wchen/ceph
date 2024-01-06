@@ -16,7 +16,7 @@ using Executor = boost::asio::io_context::executor_type;
 std::uniform_int_distribution < unsigned int >dist(0, 1);
 std::random_device rd;
 std::default_random_engine rng {
-rd()};
+    rd()};
 
 std::uniform_int_distribution < unsigned long long >disttenant(2, 100000000);
 struct client_info {
@@ -25,7 +25,7 @@ struct client_info {
     uint64_t ops = 0;
     uint64_t bytes = 0;
     uint64_t num_retries = 0;
-     std::string tenant;
+    std::string tenant;
 };
 
 struct parameters {
@@ -35,16 +35,17 @@ struct parameters {
     int num_clients = 1;
 };
 std::shared_ptr < std::vector < client_info >> ds =
-    std::make_shared < std::vector < client_info >> (std::vector < client_info >
-                                                     ());
+            std::make_shared < std::vector < client_info >> (std::vector < client_info >
+                ());
 
 std::string method[2] = {
-"PUT", "GET"};
+    "PUT", "GET"
+};
 
-void simulate_transfer(client_info & it, const RGWRateLimitInfo * info,
+void simulate_transfer(client_info &it, const RGWRateLimitInfo *info,
                        std::shared_ptr < RateLimiter > ratelimit,
-                       const parameters & params, spawn::yield_context & yield,
-                       boost::asio::io_context & ioctx)
+                       const parameters &params, spawn::yield_context &yield,
+                       boost::asio::io_context &ioctx)
 {
     auto dout = DoutPrefix(g_ceph_context, ceph_subsys_rgw, "rate limiter: ");
     boost::asio::steady_timer timer(ioctx);
@@ -61,15 +62,13 @@ void simulate_transfer(client_info & it, const RGWRateLimitInfo * info,
                                               4 * 1024 * 1024, info);
                     it.bytes += 4 * 1024 * 1024;
                     req_size = req_size - 4 * 1024 * 1024;
-                }
-                else {
+                } else {
                     ratelimit->decrease_bytes(methodop.c_str(), it.tenant,
                                               req_size, info);
                     req_size = 0;
                 }
             }
-        }
-        else {
+        } else {
             int64_t total_bytes = 0;
             while (req_size > 0) {
                 if (req_size >= 4 * 1024 * 1024) {
@@ -83,8 +82,7 @@ void simulate_transfer(client_info & it, const RGWRateLimitInfo * info,
                     it.bytes += 4 * 1024 * 1024;
                     req_size = req_size - 4 * 1024 * 1024;
                     total_bytes += 4 * 1024 * 1024;
-                }
-                else {
+                } else {
                     ratelimit->decrease_bytes(methodop.c_str(), it.tenant,
                                               req_size, info);
                     it.bytes += req_size;
@@ -96,7 +94,7 @@ void simulate_transfer(client_info & it, const RGWRateLimitInfo * info,
     }
 }
 
-bool simulate_request(client_info & it, const RGWRateLimitInfo & info,
+bool simulate_request(client_info &it, const RGWRateLimitInfo &info,
                       std::shared_ptr < RateLimiter > ratelimit)
 {
     boost::asio::io_context context;
@@ -115,10 +113,10 @@ bool simulate_request(client_info & it, const RGWRateLimitInfo & info,
     return false;
 }
 
-void simulate_client(client_info & it, const RGWRateLimitInfo & info,
+void simulate_client(client_info &it, const RGWRateLimitInfo &info,
                      std::shared_ptr < RateLimiter > ratelimit,
-                     const parameters & params, spawn::yield_context & ctx,
-                     bool & to_run, boost::asio::io_context & ioctx)
+                     const parameters &params, spawn::yield_context &ctx,
+                     bool &to_run, boost::asio::io_context &ioctx)
 {
     for (;;) {
         bool to_retry = simulate_request(it, info, ratelimit);
@@ -126,8 +124,8 @@ void simulate_client(client_info & it, const RGWRateLimitInfo & info,
             if (params.wait_between_retries_ms) {
                 boost::asio::steady_timer timer(ioctx);
                 timer.
-                    expires_after(std::chrono::
-                                  milliseconds(params.wait_between_retries_ms));
+                expires_after(std::chrono::
+                              milliseconds(params.wait_between_retries_ms));
                 timer.async_wait(ctx);
             }
             to_retry = simulate_request(it, info, ratelimit);
@@ -139,21 +137,22 @@ void simulate_client(client_info & it, const RGWRateLimitInfo & info,
     }
 }
 
-void simulate_clients(boost::asio::io_context & context, std::string tenant,
-                      const RGWRateLimitInfo & info,
+void simulate_clients(boost::asio::io_context &context, std::string tenant,
+                      const RGWRateLimitInfo &info,
                       std::shared_ptr < RateLimiter > ratelimit,
-                      const parameters & params, bool & to_run)
+                      const parameters &params, bool &to_run)
 {
     for (int i = 0; i < params.num_clients; i++) {
-        auto & it = ds->emplace_back(client_info());
+        auto &it = ds->emplace_back(client_info());
         it.tenant = tenant;
         int x = ds->size() - 1;
         spawn::spawn(context,
                      [&to_run, x, ratelimit, info, params,
-                      &context] (spawn::yield_context ctx) {
-                     auto & it = ds.get()->operator[](x);
-                     simulate_client(it, info, ratelimit, params, ctx, to_run,
-                                     context);});
+        &context](spawn::yield_context ctx) {
+            auto &it = ds.get()->operator[](x);
+            simulate_client(it, info, ratelimit, params, ctx, to_run,
+                            context);
+        });
     }
 }
 
@@ -168,7 +167,7 @@ int main(int argc, char **argv)
     try {
         using namespace boost::program_options;
         options_description desc {
-        "Options"};
+            "Options"};
         desc.add_options()
             ("help,h", "Help screen")
             ("num_ratelimit_classes", value < int >()->default_value(1),
@@ -205,8 +204,7 @@ int main(int argc, char **argv)
         bw_limit = vm["bw_limit"].as < int64_t > ();
         thread_count = vm["threads"].as < int >();
         runtime = vm["runtime"].as < int >();
-    }
-    catch(const boost::program_options::error & ex) {
+    } catch (const boost::program_options::error &ex) {
         std::cerr << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
@@ -222,7 +220,7 @@ int main(int argc, char **argv)
         g_ceph_context = cct.get();
     }
     std::shared_ptr < ActiveRateLimiter >
-        ratelimit(new ActiveRateLimiter(g_ceph_context));
+    ratelimit(new ActiveRateLimiter(g_ceph_context));
     ratelimit->start();
     std::vector < std::thread > threads;
     using Executor = boost::asio::io_context::executor_type;
@@ -234,7 +232,8 @@ int main(int argc, char **argv)
     // server execution
     for (int i = 0; i < thread_count; i++) {
         threads.emplace_back([&]()noexcept {
-                             context.run();});
+            context.run();
+        });
     }
     //client execution
     bool to_run = true;
@@ -252,23 +251,23 @@ int main(int argc, char **argv)
     context.stop();
     to_run = false;
 
-  for (auto & i:threads) {
+    for (auto &i : threads) {
         i.join();
     }
     std::unordered_map < std::string, client_info > metrics_by_tenant;
-  for (auto & i:*ds.get()) {
+    for (auto &i : *ds.get()) {
         auto it = metrics_by_tenant.emplace(i.tenant, client_info()).first;
         std::cout << i.accepted << std::endl;
         it->second.accepted += i.accepted;
         it->second.rejected += i.rejected;
     }
     // TODO sum the results by tenant
-  for (auto & i:metrics_by_tenant) {
+    for (auto &i : metrics_by_tenant) {
         std::cout << "Tenant is: " << i.first << std::endl;
         std::cout << "Simulator finished accepted  sum : " << i.second.
-            accepted << std::endl;
+                  accepted << std::endl;
         std::cout << "Simulator finished rejected  sum : " << i.second.
-            rejected << std::endl;
+                  rejected << std::endl;
     }
 
     return 0;

@@ -14,7 +14,7 @@
 
 using namespace std;
 
-void RGWEnv::init(CephContext * cct)
+void RGWEnv::init(CephContext *cct)
 {
     conf.init(cct);
 }
@@ -24,7 +24,7 @@ void RGWEnv::set(std::string name, std::string val)
     env_map[std::move(name)] = std::move(val);
 }
 
-void RGWEnv::init(CephContext * cct, char **envp)
+void RGWEnv::init(CephContext *cct, char **envp)
 {
     const char *p;
 
@@ -33,8 +33,9 @@ void RGWEnv::init(CephContext * cct, char **envp)
     for (int i = 0; (p = envp[i]); ++i) {
         string s(p);
         int pos = s.find('=');
-        if (pos <= 0)           // should never be 0
+        if (pos <= 0) {         // should never be 0
             continue;
+        }
         string name = s.substr(0, pos);
         string val = s.substr(pos + 1);
         env_map[name] = val;
@@ -47,8 +48,9 @@ const char *rgw_conf_get(const map < string, string, ltstr_nocase > &conf_map,
                          const char *name, const char *def_val)
 {
     auto iter = conf_map.find(name);
-    if (iter == conf_map.end())
+    if (iter == conf_map.end()) {
         return def_val;
+    }
 
     return iter->second.c_str();
 }
@@ -62,8 +64,9 @@ int rgw_conf_get_int(const map < string, string, ltstr_nocase > &conf_map,
                      const char *name, int def_val)
 {
     auto iter = conf_map.find(name);
-    if (iter == conf_map.end())
+    if (iter == conf_map.end()) {
         return def_val;
+    }
 
     const char *s = iter->second.c_str();
     return atoi(s);
@@ -78,8 +81,9 @@ bool rgw_conf_get_bool(const map < string, string, ltstr_nocase > &conf_map,
                        const char *name, bool def_val)
 {
     auto iter = conf_map.find(name);
-    if (iter == conf_map.end())
+    if (iter == conf_map.end()) {
         return def_val;
+    }
 
     const char *s = iter->second.c_str();
     return rgw_str_to_bool(s, def_val);
@@ -90,17 +94,19 @@ bool RGWEnv::get_bool(const char *name, bool def_val)
     return rgw_conf_get_bool(env_map, name, def_val);
 }
 
-size_t RGWEnv::get_size(const char *name, size_t def_val) constconst
-{
+size_t RGWEnv::get_size(const char *name, size_t def_val) constconst {
     const auto iter = env_map.find(name);
     if (iter == env_map.end())
+    {
         return def_val;
+    }
 
     size_t sz;
-    try {
+    try
+    {
         sz = stoull(iter->second);
-    }
-    catch( ...) {
+    } catch (...)
+    {
         /* it is very unlikely that we'll ever encounter out_of_range, but let's
            return the default eitherway */
         sz = def_val;
@@ -109,19 +115,21 @@ size_t RGWEnv::get_size(const char *name, size_t def_val) constconst
     return sz;
 }
 
-bool RGWEnv::exists(const char *name) constconst
-{
+bool RGWEnv::exists(const char *name) constconst {
     return env_map.find(name) != env_map.end();
 }
 
-bool RGWEnv::exists_prefix(const char *prefix) constconst
-{
+bool RGWEnv::exists_prefix(const char *prefix) constconst {
     if (env_map.empty() || prefix == NULL)
+    {
         return false;
+    }
 
     const auto iter = env_map.lower_bound(prefix);
     if (iter == env_map.end())
+    {
         return false;
+    }
 
     return (strncmp(iter->first.c_str(), prefix, strlen(prefix)) == 0);
 }
@@ -129,11 +137,12 @@ bool RGWEnv::exists_prefix(const char *prefix) constconst
 void RGWEnv::remove(const char *name)
 {
     map < string, string, ltstr_nocase >::iterator iter = env_map.find(name);
-    if (iter != env_map.end())
+    if (iter != env_map.end()) {
         env_map.erase(iter);
+    }
 }
 
-void RGWConf::init(CephContext * cct)
+void RGWConf::init(CephContext *cct)
 {
     enable_ops_log = cct->_conf->rgw_enable_ops_log;
     enable_usage_log = cct->_conf->rgw_enable_usage_log;
@@ -141,8 +150,7 @@ void RGWConf::init(CephContext * cct)
     defer_to_bucket_acls = 0;   // default
     if (cct->_conf->rgw_defer_to_bucket_acls == "recurse") {
         defer_to_bucket_acls = RGW_DEFER_TO_BUCKET_ACLS_RECURSE;
-    }
-    else if (cct->_conf->rgw_defer_to_bucket_acls == "full_control") {
+    } else if (cct->_conf->rgw_defer_to_bucket_acls == "full_control") {
         defer_to_bucket_acls = RGW_DEFER_TO_BUCKET_ACLS_FULL_CONTROL;
     }
 }

@@ -6,38 +6,48 @@
 
 #include "os/bluestore/fastbmap_allocator_impl.h"
 
-class TestAllocatorLevel01:public AllocatorLevel01Loose {
-  public:
-    void init(uint64_t capacity, uint64_t alloc_unit) {
+class TestAllocatorLevel01: public AllocatorLevel01Loose
+{
+public:
+    void init(uint64_t capacity, uint64_t alloc_unit)
+    {
         _init(capacity, alloc_unit);
     } interval_t allocate_l1_cont(uint64_t length, uint64_t min_length,
-                                  uint64_t pos_start, uint64_t pos_end) {
+                                  uint64_t pos_start, uint64_t pos_end)
+    {
         return _allocate_l1_contiguous(length, min_length, 0, pos_start,
                                        pos_end);
     }
-    void free_l1(const interval_t & r) {
+    void free_l1(const interval_t &r)
+    {
         _free_l1(r.offset, r.length);
     }
 };
 
-class TestAllocatorLevel02:public AllocatorLevel02 < AllocatorLevel01Loose > {
-  public:
-    void init(uint64_t capacity, uint64_t alloc_unit) {
+class TestAllocatorLevel02: public AllocatorLevel02 < AllocatorLevel01Loose >
+{
+public:
+    void init(uint64_t capacity, uint64_t alloc_unit)
+    {
         _init(capacity, alloc_unit);
     } void allocate_l2(uint64_t length, uint64_t min_length,
-                       uint64_t * allocated0, interval_vector_t * res) {
+                       uint64_t *allocated0, interval_vector_t *res)
+    {
         uint64_t allocated = 0;
         uint64_t hint = 0;      // trigger internal l2 hint support
         _allocate_l2(length, min_length, 0, hint, &allocated, res);
         *allocated0 += allocated;
     }
-    void free_l2(const interval_vector_t & r) {
+    void free_l2(const interval_vector_t &r)
+    {
         _free_l2(r);
     }
-    void mark_free(uint64_t o, uint64_t len) {
+    void mark_free(uint64_t o, uint64_t len)
+    {
         _mark_free(o, len);
     }
-    void mark_allocated(uint64_t o, uint64_t len) {
+    void mark_allocated(uint64_t o, uint64_t len)
+    {
         _mark_allocated(o, len);
     }
 };
@@ -322,7 +332,7 @@ TEST(TestAllocatorLevel01, test_l2)
         ASSERT_EQ(a4[0].length, 0x1000u);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc1 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
 #else
@@ -335,7 +345,7 @@ TEST(TestAllocatorLevel01, test_l2)
         ASSERT_EQ(a4[0].length, _2m);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc1 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
 #endif
@@ -347,7 +357,7 @@ TEST(TestAllocatorLevel01, test_l2)
         al2.free_l2(r);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "free1 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     ASSERT_EQ(capacity, al2.debug_get_free());
@@ -362,7 +372,7 @@ TEST(TestAllocatorLevel01, test_l2)
         ASSERT_EQ(a4[0].length, _1m);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc2 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     ASSERT_EQ(0u, al2.debug_get_free());
@@ -379,7 +389,7 @@ TEST(TestAllocatorLevel01, test_l2)
         al2.free_l2(r);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "free2 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     ASSERT_EQ(capacity / 2, al2.debug_get_free());
@@ -398,7 +408,7 @@ TEST(TestAllocatorLevel01, test_l2)
         ASSERT_EQ(a4[0].length, 0x1000u);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "alloc3 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     ASSERT_EQ(0u, al2.debug_get_free());
@@ -432,7 +442,7 @@ TEST(TestAllocatorLevel01, test_l2_huge)
         ASSERT_EQ(a4[0].length, _1m - 0x1000);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "allocH " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     for (uint64_t i = 0; i < capacity; i += _1m) {
@@ -441,7 +451,7 @@ TEST(TestAllocatorLevel01, test_l2_huge)
         al2.free_l2(a4);
         if (0 == (i % (1 * 1024 * _1m))) {
             std::cout << "freeH1 " << i / 1024 / 1024 << " mb of "
-                << capacity / 1024 / 1024 << std::endl;
+                      << capacity / 1024 / 1024 << std::endl;
         }
     }
     {
@@ -491,7 +501,7 @@ TEST(TestAllocatorLevel01, test_l2_unaligned)
             ASSERT_EQ(a4[0].length, _1m / 2);
             if (0 == (i % (1 * 1024 * _1m))) {
                 std::cout << "allocU " << i / 1024 / 1024 << " mb of "
-                    << capacity / 1024 / 1024 << std::endl;
+                          << capacity / 1024 / 1024 << std::endl;
             }
         }
         ASSERT_EQ(0u, al2.debug_get_free());
@@ -518,7 +528,7 @@ TEST(TestAllocatorLevel01, test_l2_unaligned)
             ASSERT_EQ(a4[0].length, _1m / 2);
             if (0 == (i % (1 * 1024 * _1m))) {
                 std::cout << "allocU2 " << i / 1024 / 1024 << " mb of "
-                    << capacity / 1024 / 1024 << std::endl;
+                          << capacity / 1024 / 1024 << std::endl;
             }
         }
         ASSERT_EQ(0u, al2.debug_get_free());

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #include <cstdint>
@@ -19,8 +19,8 @@
 #include "rgw/rgw_iam_policy.h"
 
 // Returns true on success
-bool parse(CephContext * cct, const std::string & tenant,
-           const std::string & fname, std::istream & in)noexcept
+bool parse(CephContext *cct, const std::string &tenant,
+           const std::string &fname, std::istream &in)noexcept
 {
     bufferlist bl;
     bl.append(in);
@@ -28,11 +28,10 @@ bool parse(CephContext * cct, const std::string & tenant,
         auto p = rgw::IAM::Policy(cct, tenant, bl,
                                   cct->_conf.get_val < bool >
                                   ("rgw_policy_reject_invalid_principals"));
-    } catch(const rgw::IAM::PolicyParseException & e) {
+    } catch (const rgw::IAM::PolicyParseException &e) {
         std::cerr << fname << ": " << e.what() << std::endl;
         return false;
-    }
-    catch(const std::exception & e) {
+    } catch (const std::exception &e) {
         std::cerr << fname << ": caught exception: " << e.what() << std::endl;;
         return false;
     }
@@ -71,12 +70,10 @@ int main(int argc, const char **argv)
          i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg(args, i, &val, "--tenant", "-t",
-                                       (char *)nullptr)) {
+        } else if (ceph_argparse_witharg(args, i, &val, "--tenant", "-t",
+                                         (char *)nullptr)) {
             tenant = std::move(val);
-        }
-        else {
+        } else {
             ++i;
         }
     }
@@ -90,9 +87,8 @@ int main(int argc, const char **argv)
 
     if (args.empty()) {
         success = parse(cct.get(), tenant, "(stdin)", std::cin);
-    }
-    else {
-      for (const auto & file:args) {
+    } else {
+        for (const auto &file : args) {
             std::ifstream in;
             in.open(file, std::ifstream::in);
             if (!in.is_open()) {

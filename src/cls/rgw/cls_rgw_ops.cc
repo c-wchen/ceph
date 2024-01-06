@@ -12,21 +12,21 @@ using std::map;
 
 using ceph::Formatter;
 
-void rgw_cls_tag_timeout_op::dump(Formatter * f) const const
+void rgw_cls_tag_timeout_op::dump(Formatter *f) const const
 {
     f->dump_int("tag_timeout", tag_timeout);
 }
 
 void rgw_cls_tag_timeout_op::generate_test_instances(list <
-                                                     rgw_cls_tag_timeout_op *
-                                                     >&ls)
+        rgw_cls_tag_timeout_op *
+        > &ls)
 {
     ls.push_back(new rgw_cls_tag_timeout_op);
     ls.push_back(new rgw_cls_tag_timeout_op);
     ls.back()->tag_timeout = 23323;
 }
 
-void cls_rgw_gc_set_entry_op::dump(Formatter * f) const const
+void cls_rgw_gc_set_entry_op::dump(Formatter *f) const const
 {
     f->dump_unsigned("expiration_secs", expiration_secs);
     f->open_object_section("obj_info");
@@ -35,23 +35,23 @@ void cls_rgw_gc_set_entry_op::dump(Formatter * f) const const
 }
 
 void cls_rgw_gc_set_entry_op::generate_test_instances(list <
-                                                      cls_rgw_gc_set_entry_op *
-                                                      >&ls)
+        cls_rgw_gc_set_entry_op *
+        > &ls)
 {
     ls.push_back(new cls_rgw_gc_set_entry_op);
     ls.push_back(new cls_rgw_gc_set_entry_op);
     ls.back()->expiration_secs = 123;
 }
 
-void cls_rgw_gc_defer_entry_op::dump(Formatter * f) const const
+void cls_rgw_gc_defer_entry_op::dump(Formatter *f) const const
 {
     f->dump_unsigned("expiration_secs", expiration_secs);
     f->dump_string("tag", tag);
 }
 
 void cls_rgw_gc_defer_entry_op::generate_test_instances(list <
-                                                        cls_rgw_gc_defer_entry_op
-                                                        * >&ls)
+        cls_rgw_gc_defer_entry_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_gc_defer_entry_op);
     ls.push_back(new cls_rgw_gc_defer_entry_op);
@@ -59,7 +59,7 @@ void cls_rgw_gc_defer_entry_op::generate_test_instances(list <
     ls.back()->tag = "footag";
 }
 
-void cls_rgw_gc_list_op::dump(Formatter * f) const const
+void cls_rgw_gc_list_op::dump(Formatter *f) const const
 {
     f->dump_string("marker", marker);
     f->dump_unsigned("max", max);
@@ -67,7 +67,7 @@ void cls_rgw_gc_list_op::dump(Formatter * f) const const
 }
 
 void cls_rgw_gc_list_op::generate_test_instances(list <
-                                                 cls_rgw_gc_list_op * >&ls)
+        cls_rgw_gc_list_op * > &ls)
 {
     ls.push_back(new cls_rgw_gc_list_op);
     ls.push_back(new cls_rgw_gc_list_op);
@@ -75,7 +75,7 @@ void cls_rgw_gc_list_op::generate_test_instances(list <
     ls.back()->max = 2312;
 }
 
-void cls_rgw_gc_list_ret::dump(Formatter * f) const const
+void cls_rgw_gc_list_ret::dump(Formatter *f) const const
 {
     encode_json("entries", entries, f);
     f->dump_string("next_marker", next_marker);
@@ -83,7 +83,7 @@ void cls_rgw_gc_list_ret::dump(Formatter * f) const const
 }
 
 void cls_rgw_gc_list_ret::generate_test_instances(list <
-                                                  cls_rgw_gc_list_ret * >&ls)
+        cls_rgw_gc_list_ret * > &ls)
 {
     ls.push_back(new cls_rgw_gc_list_ret);
     ls.push_back(new cls_rgw_gc_list_ret);
@@ -91,13 +91,13 @@ void cls_rgw_gc_list_ret::generate_test_instances(list <
     ls.back()->truncated = true;
 }
 
-void cls_rgw_gc_remove_op::dump(Formatter * f) const const
+void cls_rgw_gc_remove_op::dump(Formatter *f) const const
 {
     encode_json("tags", tags, f);
 }
 
 void cls_rgw_gc_remove_op::generate_test_instances(list <
-                                                   cls_rgw_gc_remove_op * >&ls)
+        cls_rgw_gc_remove_op * > &ls)
 {
     ls.push_back(new cls_rgw_gc_remove_op);
     ls.push_back(new cls_rgw_gc_remove_op);
@@ -105,14 +105,14 @@ void cls_rgw_gc_remove_op::generate_test_instances(list <
     ls.back()->tags.push_back("tag2");
 }
 
-void cls_rgw_lc_get_entry_ret::dump(Formatter * f) const const
+void cls_rgw_lc_get_entry_ret::dump(Formatter *f) const const
 {
     encode_json("entry", entry, f);
 }
 
 void cls_rgw_lc_get_entry_ret::generate_test_instances(list <
-                                                       cls_rgw_lc_get_entry_ret
-                                                       * >&ls)
+        cls_rgw_lc_get_entry_ret
+        * > &ls)
 {
     cls_rgw_lc_entry entry("bucket1", 6000, 0);
     ls.push_back(new cls_rgw_lc_get_entry_ret);
@@ -120,8 +120,8 @@ void cls_rgw_lc_get_entry_ret::generate_test_instances(list <
 }
 
 void rgw_cls_obj_prepare_op::generate_test_instances(list <
-                                                     rgw_cls_obj_prepare_op *
-                                                     >&o)
+        rgw_cls_obj_prepare_op *
+        > &o)
 {
     rgw_cls_obj_prepare_op *op = new rgw_cls_obj_prepare_op;
     op->op = CLS_RGW_OP_ADD;
@@ -132,7 +132,7 @@ void rgw_cls_obj_prepare_op::generate_test_instances(list <
     o.push_back(new rgw_cls_obj_prepare_op);
 }
 
-void rgw_cls_obj_prepare_op::dump(Formatter * f) const const
+void rgw_cls_obj_prepare_op::dump(Formatter *f) const const
 {
     f->dump_int("op", op);
     f->dump_string("name", key.name);
@@ -144,8 +144,8 @@ void rgw_cls_obj_prepare_op::dump(Formatter * f) const const
 }
 
 void rgw_cls_obj_complete_op::generate_test_instances(list <
-                                                      rgw_cls_obj_complete_op *
-                                                      >&o)
+        rgw_cls_obj_complete_op *
+        > &o)
 {
     rgw_cls_obj_complete_op *op = new rgw_cls_obj_complete_op;
     op->op = CLS_RGW_OP_DEL;
@@ -165,7 +165,7 @@ void rgw_cls_obj_complete_op::generate_test_instances(list <
     o.push_back(new rgw_cls_obj_complete_op);
 }
 
-void rgw_cls_obj_complete_op::dump(Formatter * f) const const
+void rgw_cls_obj_complete_op::dump(Formatter *f) const const
 {
     f->dump_int("op", (int)op);
     f->dump_string("name", key.name);
@@ -184,7 +184,7 @@ void rgw_cls_obj_complete_op::dump(Formatter * f) const const
 }
 
 void rgw_cls_link_olh_op::generate_test_instances(list <
-                                                  rgw_cls_link_olh_op * >&o)
+        rgw_cls_link_olh_op * > &o)
 {
     rgw_cls_link_olh_op *op = new rgw_cls_link_olh_op;
     op->key.name = "name";
@@ -203,7 +203,7 @@ void rgw_cls_link_olh_op::generate_test_instances(list <
     o.push_back(new rgw_cls_link_olh_op);
 }
 
-void rgw_cls_link_olh_op::dump(Formatter * f) const const
+void rgw_cls_link_olh_op::dump(Formatter *f) const const
 {
     encode_json("key", key, f);
     encode_json("olh_tag", olh_tag, f);
@@ -220,8 +220,8 @@ void rgw_cls_link_olh_op::dump(Formatter * f) const const
 }
 
 void rgw_cls_unlink_instance_op::generate_test_instances(list <
-                                                         rgw_cls_unlink_instance_op
-                                                         * >&o)
+        rgw_cls_unlink_instance_op
+        * > &o)
 {
     rgw_cls_unlink_instance_op *op = new rgw_cls_unlink_instance_op;
     op->key.name = "name";
@@ -234,7 +234,7 @@ void rgw_cls_unlink_instance_op::generate_test_instances(list <
     o.push_back(new rgw_cls_unlink_instance_op);
 }
 
-void rgw_cls_unlink_instance_op::dump(Formatter * f) const const
+void rgw_cls_unlink_instance_op::dump(Formatter *f) const const
 {
     encode_json("key", key, f);
     encode_json("op_tag", op_tag, f);
@@ -245,8 +245,8 @@ void rgw_cls_unlink_instance_op::dump(Formatter * f) const const
 }
 
 void rgw_cls_read_olh_log_op::generate_test_instances(list <
-                                                      rgw_cls_read_olh_log_op *
-                                                      >&o)
+        rgw_cls_read_olh_log_op *
+        > &o)
 {
     rgw_cls_read_olh_log_op *op = new rgw_cls_read_olh_log_op;
     op->olh.name = "name";
@@ -258,7 +258,7 @@ void rgw_cls_read_olh_log_op::generate_test_instances(list <
     o.push_back(new rgw_cls_read_olh_log_op);
 }
 
-void rgw_cls_read_olh_log_op::dump(Formatter * f) const const
+void rgw_cls_read_olh_log_op::dump(Formatter *f) const const
 {
     encode_json("olh", olh, f);
     encode_json("ver_marker", ver_marker, f);
@@ -266,8 +266,8 @@ void rgw_cls_read_olh_log_op::dump(Formatter * f) const const
 }
 
 void rgw_cls_read_olh_log_ret::generate_test_instances(list <
-                                                       rgw_cls_read_olh_log_ret
-                                                       * >&o)
+        rgw_cls_read_olh_log_ret
+        * > &o)
 {
     rgw_cls_read_olh_log_ret *r = new rgw_cls_read_olh_log_ret;
     r->is_truncated = true;
@@ -281,15 +281,15 @@ void rgw_cls_read_olh_log_ret::generate_test_instances(list <
     o.push_back(new rgw_cls_read_olh_log_ret);
 }
 
-void rgw_cls_read_olh_log_ret::dump(Formatter * f) const const
+void rgw_cls_read_olh_log_ret::dump(Formatter *f) const const
 {
     encode_json("log", log, f);
     encode_json("is_truncated", is_truncated, f);
 }
 
 void rgw_cls_trim_olh_log_op::generate_test_instances(list <
-                                                      rgw_cls_trim_olh_log_op *
-                                                      >&o)
+        rgw_cls_trim_olh_log_op *
+        > &o)
 {
     rgw_cls_trim_olh_log_op *op = new rgw_cls_trim_olh_log_op;
     op->olh.name = "olh.name";
@@ -301,7 +301,7 @@ void rgw_cls_trim_olh_log_op::generate_test_instances(list <
     o.push_back(new rgw_cls_trim_olh_log_op);
 }
 
-void rgw_cls_trim_olh_log_op::dump(Formatter * f) const const
+void rgw_cls_trim_olh_log_op::dump(Formatter *f) const const
 {
     encode_json("olh", olh, f);
     encode_json("ver", ver, f);
@@ -309,8 +309,8 @@ void rgw_cls_trim_olh_log_op::dump(Formatter * f) const const
 }
 
 void rgw_cls_bucket_clear_olh_op::generate_test_instances(list <
-                                                          rgw_cls_bucket_clear_olh_op
-                                                          * >&o)
+        rgw_cls_bucket_clear_olh_op
+        * > &o)
 {
 
     rgw_cls_bucket_clear_olh_op *op = new rgw_cls_bucket_clear_olh_op;
@@ -321,13 +321,13 @@ void rgw_cls_bucket_clear_olh_op::generate_test_instances(list <
     o.push_back(new rgw_cls_bucket_clear_olh_op);
 }
 
-void rgw_cls_bucket_clear_olh_op::dump(Formatter * f) const const
+void rgw_cls_bucket_clear_olh_op::dump(Formatter *f) const const
 {
     encode_json("key", key, f);
     encode_json("olh_tag", olh_tag, f);
 }
 
-void rgw_cls_list_op::generate_test_instances(list < rgw_cls_list_op * >&o)
+void rgw_cls_list_op::generate_test_instances(list < rgw_cls_list_op * > &o)
 {
     rgw_cls_list_op *op = new rgw_cls_list_op;
     op->start_obj.name = "start_obj";
@@ -337,13 +337,13 @@ void rgw_cls_list_op::generate_test_instances(list < rgw_cls_list_op * >&o)
     o.push_back(new rgw_cls_list_op);
 }
 
-void rgw_cls_list_op::dump(Formatter * f) const const
+void rgw_cls_list_op::dump(Formatter *f) const const
 {
     f->dump_string("start_obj", start_obj.name);
     f->dump_unsigned("num_entries", num_entries);
 }
 
-void rgw_cls_list_ret::generate_test_instances(list < rgw_cls_list_ret * >&o)
+void rgw_cls_list_ret::generate_test_instances(list < rgw_cls_list_ret * > &o)
 {
     list < rgw_bucket_dir * >l;
     rgw_bucket_dir::generate_test_instances(l);
@@ -362,7 +362,7 @@ void rgw_cls_list_ret::generate_test_instances(list < rgw_cls_list_ret * >&o)
     o.push_back(new rgw_cls_list_ret);
 }
 
-void rgw_cls_list_ret::dump(Formatter * f) const const
+void rgw_cls_list_ret::dump(Formatter *f) const const
 {
     f->open_object_section("dir");
     dir.dump(f);
@@ -371,8 +371,8 @@ void rgw_cls_list_ret::dump(Formatter * f) const const
 }
 
 void rgw_cls_check_index_ret::generate_test_instances(list <
-                                                      rgw_cls_check_index_ret *
-                                                      >&o)
+        rgw_cls_check_index_ret *
+        > &o)
 {
     list < rgw_bucket_dir_header * >h;
     rgw_bucket_dir_header::generate_test_instances(h);
@@ -387,19 +387,19 @@ void rgw_cls_check_index_ret::generate_test_instances(list <
     o.push_back(new rgw_cls_check_index_ret);
 }
 
-void rgw_cls_check_index_ret::dump(Formatter * f) const const
+void rgw_cls_check_index_ret::dump(Formatter *f) const const
 {
     encode_json("existing_header", existing_header, f);
     encode_json("calculated_header", calculated_header, f);
 }
 
 void rgw_cls_bucket_update_stats_op::generate_test_instances(list <
-                                                             rgw_cls_bucket_update_stats_op
-                                                             * >&o)
+        rgw_cls_bucket_update_stats_op
+        * > &o)
 {
     rgw_cls_bucket_update_stats_op *r = new rgw_cls_bucket_update_stats_op;
     r->absolute = true;
-    rgw_bucket_category_stats & s = r->stats[RGWObjCategory::None];
+    rgw_bucket_category_stats &s = r->stats[RGWObjCategory::None];
     s.total_size = 1;
     s.total_size_rounded = 4096;
     s.num_entries = 1;
@@ -408,25 +408,25 @@ void rgw_cls_bucket_update_stats_op::generate_test_instances(list <
     o.push_back(new rgw_cls_bucket_update_stats_op);
 }
 
-void rgw_cls_bucket_update_stats_op::dump(Formatter * f) const const
+void rgw_cls_bucket_update_stats_op::dump(Formatter *f) const const
 {
     encode_json("absolute", absolute, f);
     map < int, rgw_bucket_category_stats > s;
-  for (auto & entry:stats) {
+    for (auto &entry : stats) {
         s[(int)entry.first] = entry.second;
     }
     encode_json("stats", s, f);
 }
 
-void cls_rgw_bi_log_list_op::dump(Formatter * f) const const
+void cls_rgw_bi_log_list_op::dump(Formatter *f) const const
 {
     f->dump_string("marker", marker);
     f->dump_unsigned("max", max);
 }
 
 void cls_rgw_bi_log_list_op::generate_test_instances(list <
-                                                     cls_rgw_bi_log_list_op *
-                                                     >&ls)
+        cls_rgw_bi_log_list_op *
+        > &ls)
 {
     ls.push_back(new cls_rgw_bi_log_list_op);
     ls.push_back(new cls_rgw_bi_log_list_op);
@@ -434,15 +434,15 @@ void cls_rgw_bi_log_list_op::generate_test_instances(list <
     ls.back()->max = 123;
 }
 
-void cls_rgw_bi_log_trim_op::dump(Formatter * f) const const
+void cls_rgw_bi_log_trim_op::dump(Formatter *f) const const
 {
     f->dump_string("start_marker", start_marker);
     f->dump_string("end_marker", end_marker);
 }
 
 void cls_rgw_bi_log_trim_op::generate_test_instances(list <
-                                                     cls_rgw_bi_log_trim_op *
-                                                     >&ls)
+        cls_rgw_bi_log_trim_op *
+        > &ls)
 {
     ls.push_back(new cls_rgw_bi_log_trim_op);
     ls.push_back(new cls_rgw_bi_log_trim_op);
@@ -450,15 +450,15 @@ void cls_rgw_bi_log_trim_op::generate_test_instances(list <
     ls.back()->end_marker = "bar";
 }
 
-void cls_rgw_bi_log_list_ret::dump(Formatter * f) const const
+void cls_rgw_bi_log_list_ret::dump(Formatter *f) const const
 {
     encode_json("entries", entries, f);
     f->dump_unsigned("truncated", (int)truncated);
 }
 
 void cls_rgw_bi_log_list_ret::generate_test_instances(list <
-                                                      cls_rgw_bi_log_list_ret *
-                                                      >&ls)
+        cls_rgw_bi_log_list_ret *
+        > &ls)
 {
     ls.push_back(new cls_rgw_bi_log_list_ret);
     ls.push_back(new cls_rgw_bi_log_list_ret);
@@ -467,8 +467,8 @@ void cls_rgw_bi_log_list_ret::generate_test_instances(list <
 }
 
 void cls_rgw_mp_upload_part_info_update_op::generate_test_instances(std::list <
-                                                                    cls_rgw_mp_upload_part_info_update_op
-                                                                    * >&ls)
+        cls_rgw_mp_upload_part_info_update_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_mp_upload_part_info_update_op);
     ls.back()->part_key = "part1";
@@ -476,7 +476,7 @@ void cls_rgw_mp_upload_part_info_update_op::generate_test_instances(std::list <
     ls.back()->part_key = "part2";
 }
 
-void cls_rgw_mp_upload_part_info_update_op::dump(Formatter * f) const const
+void cls_rgw_mp_upload_part_info_update_op::dump(Formatter *f) const const
 {
     encode_json("part_key", part_key, f);
     encode_json("part_num", info.num, f);
@@ -484,8 +484,8 @@ void cls_rgw_mp_upload_part_info_update_op::dump(Formatter * f) const const
 }
 
 void cls_rgw_reshard_add_op::generate_test_instances(list <
-                                                     cls_rgw_reshard_add_op *
-                                                     >&ls)
+        cls_rgw_reshard_add_op *
+        > &ls)
 {
     ls.push_back(new cls_rgw_reshard_add_op);
     ls.push_back(new cls_rgw_reshard_add_op);
@@ -495,14 +495,14 @@ void cls_rgw_reshard_add_op::generate_test_instances(list <
     ls.back()->entry = *(*iter);
 }
 
-void cls_rgw_reshard_add_op::dump(Formatter * f) const const
+void cls_rgw_reshard_add_op::dump(Formatter *f) const const
 {
     encode_json("entry", entry, f);
 }
 
 void cls_rgw_reshard_list_op::generate_test_instances(list <
-                                                      cls_rgw_reshard_list_op *
-                                                      >&ls)
+        cls_rgw_reshard_list_op *
+        > &ls)
 {
     ls.push_back(new cls_rgw_reshard_list_op);
     ls.push_back(new cls_rgw_reshard_list_op);
@@ -510,15 +510,15 @@ void cls_rgw_reshard_list_op::generate_test_instances(list <
     ls.back()->marker = "foo";
 }
 
-void cls_rgw_reshard_list_op::dump(Formatter * f) const const
+void cls_rgw_reshard_list_op::dump(Formatter *f) const const
 {
     encode_json("max", max, f);
     encode_json("marker", marker, f);
 }
 
 void cls_rgw_reshard_list_ret::generate_test_instances(list <
-                                                       cls_rgw_reshard_list_ret
-                                                       * >&ls)
+        cls_rgw_reshard_list_ret
+        * > &ls)
 {
     ls.push_back(new cls_rgw_reshard_list_ret);
     ls.push_back(new cls_rgw_reshard_list_ret);
@@ -526,41 +526,41 @@ void cls_rgw_reshard_list_ret::generate_test_instances(list <
     ls.back()->is_truncated = true;
 }
 
-void cls_rgw_reshard_list_ret::dump(Formatter * f) const const
+void cls_rgw_reshard_list_ret::dump(Formatter *f) const const
 {
     encode_json("entries", entries, f);
     encode_json("is_truncated", is_truncated, f);
 }
 
 void cls_rgw_reshard_get_op::generate_test_instances(list <
-                                                     cls_rgw_reshard_get_op *
-                                                     >&ls)
+        cls_rgw_reshard_get_op *
+        > &ls)
 {
     ls.push_back(new cls_rgw_reshard_get_op);
     ls.push_back(new cls_rgw_reshard_get_op);
 }
 
-void cls_rgw_reshard_get_op::dump(Formatter * f) const const
+void cls_rgw_reshard_get_op::dump(Formatter *f) const const
 {
     encode_json("entry", entry, f);
 }
 
 void cls_rgw_reshard_get_ret::generate_test_instances(list <
-                                                      cls_rgw_reshard_get_ret *
-                                                      >&ls)
+        cls_rgw_reshard_get_ret *
+        > &ls)
 {
     ls.push_back(new cls_rgw_reshard_get_ret);
     ls.push_back(new cls_rgw_reshard_get_ret);
 }
 
-void cls_rgw_reshard_get_ret::dump(Formatter * f) const const
+void cls_rgw_reshard_get_ret::dump(Formatter *f) const const
 {
     encode_json("entry", entry, f);
 }
 
 void cls_rgw_reshard_remove_op::generate_test_instances(list <
-                                                        cls_rgw_reshard_remove_op
-                                                        * >&ls)
+        cls_rgw_reshard_remove_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_reshard_remove_op);
     ls.push_back(new cls_rgw_reshard_remove_op);
@@ -568,58 +568,58 @@ void cls_rgw_reshard_remove_op::generate_test_instances(list <
     ls.back()->bucket_id = "bucket_id";
 }
 
-void cls_rgw_reshard_remove_op::dump(Formatter * f) const const
+void cls_rgw_reshard_remove_op::dump(Formatter *f) const const
 {
     encode_json("bucket_name", bucket_name, f);
     encode_json("bucket_id", bucket_name, f);
 }
 
 void cls_rgw_set_bucket_resharding_op::generate_test_instances(list <
-                                                               cls_rgw_set_bucket_resharding_op
-                                                               * >&ls)
+        cls_rgw_set_bucket_resharding_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_set_bucket_resharding_op);
     ls.push_back(new cls_rgw_set_bucket_resharding_op);
 }
 
-void cls_rgw_set_bucket_resharding_op::dump(Formatter * f) const const
+void cls_rgw_set_bucket_resharding_op::dump(Formatter *f) const const
 {
     encode_json("entry", entry, f);
 }
 
 void cls_rgw_clear_bucket_resharding_op::generate_test_instances(list <
-                                                                 cls_rgw_clear_bucket_resharding_op
-                                                                 * >&ls)
+        cls_rgw_clear_bucket_resharding_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_clear_bucket_resharding_op);
     ls.push_back(new cls_rgw_clear_bucket_resharding_op);
 }
 
-void cls_rgw_clear_bucket_resharding_op::dump(Formatter * f) const const
+void cls_rgw_clear_bucket_resharding_op::dump(Formatter *f) const const
 {
 }
 
 void cls_rgw_guard_bucket_resharding_op::generate_test_instances(list <
-                                                                 cls_rgw_guard_bucket_resharding_op
-                                                                 * >&ls)
+        cls_rgw_guard_bucket_resharding_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_guard_bucket_resharding_op);
     ls.push_back(new cls_rgw_guard_bucket_resharding_op);
 }
 
-void cls_rgw_guard_bucket_resharding_op::dump(Formatter * f) const const
+void cls_rgw_guard_bucket_resharding_op::dump(Formatter *f) const const
 {
     encode_json("ret_err", ret_err, f);
 }
 
 void cls_rgw_get_bucket_resharding_op::generate_test_instances(list <
-                                                               cls_rgw_get_bucket_resharding_op
-                                                               * >&ls)
+        cls_rgw_get_bucket_resharding_op
+        * > &ls)
 {
     ls.push_back(new cls_rgw_get_bucket_resharding_op);
     ls.push_back(new cls_rgw_get_bucket_resharding_op);
 }
 
-void cls_rgw_get_bucket_resharding_op::dump(Formatter * f) const const
+void cls_rgw_get_bucket_resharding_op::dump(Formatter *f) const const
 {
 }

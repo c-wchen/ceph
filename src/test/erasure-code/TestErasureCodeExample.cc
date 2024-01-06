@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -38,7 +38,7 @@ TEST(ErasureCodeExample, minimum_to_decode)
     {
         set < int >minimum;
         EXPECT_EQ(-EIO, example._minimum_to_decode(want_to_read,
-                                                   available_chunks, &minimum));
+                  available_chunks, &minimum));
     }
     available_chunks.insert(0);
     available_chunks.insert(2);
@@ -70,15 +70,15 @@ TEST(ErasureCodeExample, minimum_to_decode_with_cost)
     {
         set < int >minimum;
         EXPECT_EQ(-EIO, example.minimum_to_decode_with_cost(want_to_read,
-                                                            available,
-                                                            &minimum));
+                  available,
+                  &minimum));
     }
     available[0] = 1;
     available[2] = 1;
     {
         set < int >minimum;
         EXPECT_EQ(0, example.minimum_to_decode_with_cost(want_to_read,
-                                                         available, &minimum));
+                  available, &minimum));
         EXPECT_EQ(2u, minimum.size());
         EXPECT_EQ(1u, minimum.count(0));
         EXPECT_EQ(1u, minimum.count(2));
@@ -87,7 +87,7 @@ TEST(ErasureCodeExample, minimum_to_decode_with_cost)
         set < int >minimum;
         available[1] = 1;
         EXPECT_EQ(0, example.minimum_to_decode_with_cost(want_to_read,
-                                                         available, &minimum));
+                  available, &minimum));
         EXPECT_EQ(1u, minimum.size());
         EXPECT_EQ(1u, minimum.count(1));
     }
@@ -95,7 +95,7 @@ TEST(ErasureCodeExample, minimum_to_decode_with_cost)
         set < int >minimum;
         available[1] = 2;
         EXPECT_EQ(0, example.minimum_to_decode_with_cost(want_to_read,
-                                                         available, &minimum));
+                  available, &minimum));
         EXPECT_EQ(2u, minimum.size());
         EXPECT_EQ(1u, minimum.count(0));
         EXPECT_EQ(1u, minimum.count(2));
@@ -109,8 +109,9 @@ TEST(ErasureCodeExample, encode_decode)
     bufferlist in;
     in.append("ABCDE");
     set < int >want_to_encode;
-    for (unsigned int i = 0; i < example.get_chunk_count(); i++)
+    for (unsigned int i = 0; i < example.get_chunk_count(); i++) {
         want_to_encode.insert(i);
+    }
     map < int, bufferlist > encoded;
     EXPECT_EQ(0, example.encode(want_to_encode, in, &encoded));
     EXPECT_EQ(example.get_chunk_count(), encoded.size());
@@ -130,7 +131,7 @@ TEST(ErasureCodeExample, encode_decode)
         map < int, bufferlist > decoded;
         EXPECT_EQ(0,
                   example._decode(set <
-                                  int >(want_to_decode, want_to_decode + 2),
+                                  int > (want_to_decode, want_to_decode + 2),
                                   encoded, &decoded));
         EXPECT_EQ(2u, decoded.size());
         EXPECT_EQ(3u, decoded[0].length());
@@ -141,7 +142,7 @@ TEST(ErasureCodeExample, encode_decode)
         EXPECT_EQ('E', decoded[1][1]);
     }
 
-    // one chunk is missing 
+    // one chunk is missing
     {
         map < int, bufferlist > degraded = encoded;
         degraded.erase(0);
@@ -150,7 +151,7 @@ TEST(ErasureCodeExample, encode_decode)
         map < int, bufferlist > decoded;
         EXPECT_EQ(0,
                   example._decode(set <
-                                  int >(want_to_decode, want_to_decode + 2),
+                                  int > (want_to_decode, want_to_decode + 2),
                                   degraded, &decoded));
         EXPECT_EQ(2u, decoded.size());
         EXPECT_EQ(3u, decoded[0].length());
@@ -232,9 +233,9 @@ TEST(ErasureCodeExample, create_rule)
 
 /*
  * Local Variables:
- * compile-command: "cd ../.. ; 
- *   make -j4 && 
- *   make unittest_erasure_code_example && 
+ * compile-command: "cd ../.. ;
+ *   make -j4 &&
+ *   make unittest_erasure_code_example &&
  *   valgrind  --leak-check=full --tool=memcheck \
  *      ./unittest_erasure_code_example --gtest_filter=*.* \
  *      --log-to-stderr=true --debug-osd=20

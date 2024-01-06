@@ -13,60 +13,70 @@
 #define dout_prefix *_dout << "rbd::mirror::MirrorStatusWatcher: " \
                            << this << " " << __func__ << ": "
 
-namespace rbd {
-    namespace mirror {
+namespace rbd
+{
+namespace mirror
+{
 
-        using librbd::util::create_rados_callback;
+using librbd::util::create_rados_callback;
 
-         template < typename I >
-            MirrorStatusWatcher <
-            I >::MirrorStatusWatcher(librados::IoCtx & io_ctx,
-                                     librbd::asio::ContextWQ * work_queue)
-        :Watcher(io_ctx, work_queue, RBD_MIRRORING) {
-        } template < typename I >
-            MirrorStatusWatcher < I >::~MirrorStatusWatcher() {
-        } template < typename I >
-            void MirrorStatusWatcher < I >::init(Context * on_finish) {
-            dout(20) << dendl;
+template < typename I >
+MirrorStatusWatcher <
+I >::MirrorStatusWatcher(librados::IoCtx &io_ctx,
+                         librbd::asio::ContextWQ *work_queue)
+    : Watcher(io_ctx, work_queue, RBD_MIRRORING)
+{
+} template < typename I >
+MirrorStatusWatcher < I >::~MirrorStatusWatcher()
+{
+} template < typename I >
+void MirrorStatusWatcher < I >::init(Context *on_finish)
+{
+    dout(20) << dendl;
 
-            on_finish = new LambdaContext([this, on_finish] (int r) {
-                                          if (r < 0) {
-                                          derr <<
-                                          "error removing down statuses: " <<
-                                          cpp_strerror(r) << dendl;
-                                          on_finish->complete(r); return;}
-                                          register_watch(on_finish);}
-            ) ;
-
-            librados::ObjectWriteOperation op;
-            librbd::cls_client::mirror_image_status_remove_down(&op);
-            librados::AioCompletion * aio_comp =
-                create_rados_callback(on_finish);
-
-            int r = m_ioctx.aio_operate(RBD_MIRRORING, aio_comp, &op);
-            ceph_assert(r == 0);
-            aio_comp->release();
+    on_finish = new LambdaContext([this, on_finish](int r) {
+        if (r < 0) {
+            derr <<
+                 "error removing down statuses: " <<
+                 cpp_strerror(r) << dendl;
+            on_finish->complete(r);
+            return;
         }
+        register_watch(on_finish);
+    }
+                                 ) ;
 
-        template < typename I >
-            void MirrorStatusWatcher < I >::shut_down(Context * on_finish) {
-            dout(20) << dendl;
+    librados::ObjectWriteOperation op;
+    librbd::cls_client::mirror_image_status_remove_down(&op);
+    librados::AioCompletion *aio_comp =
+        create_rados_callback(on_finish);
 
-            unregister_watch(on_finish);
-        }
+    int r = m_ioctx.aio_operate(RBD_MIRRORING, aio_comp, &op);
+    ceph_assert(r == 0);
+    aio_comp->release();
+}
 
-        template < typename I >
-            void MirrorStatusWatcher < I >::handle_notify(uint64_t notify_id,
-                                                          uint64_t handle,
-                                                          uint64_t notifier_id,
-                                                          bufferlist & bl) {
-            dout(20) << dendl;
+template < typename I >
+void MirrorStatusWatcher < I >::shut_down(Context *on_finish)
+{
+    dout(20) << dendl;
 
-            bufferlist out;
-            acknowledge_notify(notify_id, handle, out);
-        }
+    unregister_watch(on_finish);
+}
 
-    }                           // namespace mirror
+template < typename I >
+void MirrorStatusWatcher < I >::handle_notify(uint64_t notify_id,
+        uint64_t handle,
+        uint64_t notifier_id,
+        bufferlist &bl)
+{
+    dout(20) << dendl;
+
+    bufferlist out;
+    acknowledge_notify(notify_id, handle, out);
+}
+
+}                           // namespace mirror
 }                               // namespace rbd
 
 template class rbd::mirror::MirrorStatusWatcher < librbd::ImageCtx >;

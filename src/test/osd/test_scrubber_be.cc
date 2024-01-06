@@ -33,10 +33,13 @@ int main(int argc, char **argv)
     std::map < std::string, std::string > defaults = {
         // make sure we have 3 copies, or some tests won't work
         {
-        "osd_pool_default_size", "3"},
-            // our map is flat, so just try and split across OSDs, not hosts or whatever
+            "osd_pool_default_size", "3"
+        },
+        // our map is flat, so just try and split across OSDs, not hosts or whatever
         {
-    "osd_crush_chooseleaf_type", "0"},};
+            "osd_crush_chooseleaf_type", "0"
+        },
+    };
     std::vector < const char *>args(argv, argv + argc);
     auto cct = global_init(&defaults,
                            args,
@@ -48,61 +51,74 @@ int main(int argc, char **argv)
     return RUN_ALL_TESTS();
 }
 
-class TestScrubBackend:public ScrubBackend {
-  public:
-    TestScrubBackend(ScrubBeListener & scrubber,
-                     PgScrubBeListener & pg,
+class TestScrubBackend: public ScrubBackend
+{
+public:
+    TestScrubBackend(ScrubBeListener &scrubber,
+                     PgScrubBeListener &pg,
                      pg_shard_t i_am,
                      bool repair,
                      scrub_level_t shallow_or_deep,
                      const std::set < pg_shard_t > &acting)
-    :ScrubBackend(scrubber, pg, i_am, repair, shallow_or_deep, acting) {
-    } bool get_m_repair() const {
+        : ScrubBackend(scrubber, pg, i_am, repair, shallow_or_deep, acting)
+    {
+    } bool get_m_repair() const
+    {
         return m_repair;
-    } bool get_is_replicated() const {
+    } bool get_is_replicated() const
+    {
         return m_is_replicated;
-    } auto get_omap_stats() const {
+    } auto get_omap_stats() const
+    {
         return m_omap_stats;
-    } const std::vector < pg_shard_t > &all_but_me() const {
+    } const std::vector < pg_shard_t > &all_but_me() const
+    {
         return m_acting_but_me;
     }
     /// populate the scrub-maps set for the 'chunk' being scrubbed
-        void insert_faked_smap(pg_shard_t shard, const ScrubMap & smap);
+    void insert_faked_smap(pg_shard_t shard, const ScrubMap &smap);
 };
 
 // mocking the PG
-class TestPg:public PgScrubBeListener {
-  public:
+class TestPg: public PgScrubBeListener
+{
+public:
     ~TestPg() = default;
 
-    TestPg(std::shared_ptr < PGPool > pool, pg_info_t & pginfo,
+    TestPg(std::shared_ptr < PGPool > pool, pg_info_t &pginfo,
            pg_shard_t my_osd)
-    :m_pool {
-    pool}, m_info {
-    pginfo}
+        : m_pool {
+        pool}, m_info {
+        pginfo}
     , m_pshard {
-    my_osd}
+        my_osd}
     {
     }
 
-    const PGPool & get_pgpool() const final {
+    const PGPool &get_pgpool() const final
+    {
         return *(m_pool.get());
-    } pg_shard_t get_primary() const final {
+    } pg_shard_t get_primary() const final
+    {
         return m_pshard;
     } void force_object_missing(ScrubberPasskey,
                                 const std::set < pg_shard_t > &peer,
-                                const hobject_t & oid,
-                                eversion_t version) final {
+                                const hobject_t &oid,
+                                eversion_t version) final
+    {
     }
 
-    const pg_info_t & get_pg_info(ScrubberPasskey) const final {
+    const pg_info_t &get_pg_info(ScrubberPasskey) const final
+    {
         return m_info;
-    } uint64_t logical_to_ondisk_size(uint64_t logical_size) const final {
+    } uint64_t logical_to_ondisk_size(uint64_t logical_size) const final
+    {
         return logical_size;
-    } bool is_waiting_for_unreadable_object() const final {
+    } bool is_waiting_for_unreadable_object() const final
+    {
         return false;
     } std::shared_ptr < PGPool > m_pool;
-    pg_info_t & m_info;
+    pg_info_t &m_info;
     pg_shard_t m_pshard;
 };
 
@@ -110,79 +126,90 @@ class TestPg:public PgScrubBeListener {
 // ///////////////////////////////////////////////////////////////////////////
 
 // and the scrubber
-class TestScrubber:public ScrubBeListener, public Scrub::SnapMapReaderI {
+class TestScrubber: public ScrubBeListener, public Scrub::SnapMapReaderI
+{
     using result_t = Scrub::SnapMapReaderI::result_t;
-  public:
+public:
     ~TestScrubber() = default;
 
-    TestScrubber(spg_t spg, OSDMapRef osdmap, LoggerSinkSet & logger)
-    :m_spg {
-    spg}, m_logger {
-    logger}
+    TestScrubber(spg_t spg, OSDMapRef osdmap, LoggerSinkSet &logger)
+        : m_spg {
+        spg}, m_logger {
+        logger}
     , m_osdmap {
-    osdmap}
+        osdmap}
     {
     }
 
-    std::ostream & gen_prefix(std::ostream & out) const final {
+    std::ostream &gen_prefix(std::ostream &out) const final
+    {
         return out;
-    } CephContext *get_pg_cct() const final {
+    } CephContext *get_pg_cct() const final
+    {
         return g_ceph_context;
-    } LoggerSinkSet & get_logger() const final {
+    } LoggerSinkSet &get_logger() const final
+    {
         return m_logger;
-    } bool is_primary() const final {
+    } bool is_primary() const final
+    {
         return m_primary;
-    } spg_t get_pgid() const final {
+    } spg_t get_pgid() const final
+    {
         return m_info.pgid;
-    } const OSDMapRef & get_osdmap() const final {
+    } const OSDMapRef &get_osdmap() const final
+    {
         return m_osdmap;
-    } void add_to_stats(const object_stat_sum_t & stat) final {
+    } void add_to_stats(const object_stat_sum_t &stat) final
+    {
         m_stats.add(stat);
     }
 
     // submit_digest_fixes() mock can be set to expect a specific set of
     // fixes to perform.
     /// \todo implement the mock.
-    void submit_digest_fixes(const digests_fixes_t & fixes) final {
+    void submit_digest_fixes(const digests_fixes_t &fixes) final
+    {
         std::cout << fmt::format("{} submit_digest_fixes({})",
                                  __func__, fmt::join(fixes, ","))
-            << std::endl;
+                  << std::endl;
     }
 
-    int get_snaps(const hobject_t & hoid,
+    int get_snaps(const hobject_t &hoid,
                   std::set < snapid_t > *snaps_set) const;
 
     tl::expected < std::set < snapid_t >,
-        result_t > get_snaps(const hobject_t & oid) const final;
+    result_t > get_snaps(const hobject_t &oid) const final;
 
     tl::expected < std::set < snapid_t >,
-        result_t >
-        get_snaps_check_consistency(const hobject_t & oid) const final {
+    result_t > get_snaps_check_consistency(const hobject_t &oid) const final
+    {
         /// \todo for now
         return get_snaps(oid);
-    } void set_snaps(const hobject_t & hoid,
-                     const std::vector < snapid_t > &snaps) {
+    } void set_snaps(const hobject_t &hoid,
+                     const std::vector < snapid_t > &snaps)
+    {
         std::cout << fmt::format("{}: ({}) -> #{} {}", __func__, hoid,
                                  snaps.size(), snaps)
-            << std::endl;
+                  << std::endl;
         std::set < snapid_t > snaps_set(snaps.begin(), snaps.end());
         m_snaps[hoid] = snaps_set;
     }
 
-    void set_snaps(const ScrubGenerator::all_clones_snaps_t & clones_snaps) {
-      for (const auto &[clone, snaps]:clones_snaps) {
+    void set_snaps(const ScrubGenerator::all_clones_snaps_t &clones_snaps)
+    {
+        for (const auto &[clone, snaps] : clones_snaps) {
             std::cout << fmt::format("{}: ({}) -> #{} {}",
                                      __func__, clone, snaps.size(), snaps)
-                << std::endl;
+                      << std::endl;
             std::set < snapid_t > snaps_set(snaps.begin(), snaps.end());
             m_snaps[clone] = snaps_set;
         }
     }
 
     bool m_primary {
-    true};
+        true};
     spg_t m_spg;
-    LoggerSinkSet & m_logger;
+    LoggerSinkSet &m_logger;
     OSDMapRef m_osdmap;
     pg_info_t m_info;
     object_stat_sum_t m_stats;
@@ -191,7 +218,7 @@ class TestScrubber:public ScrubBeListener, public Scrub::SnapMapReaderI {
     std::map < hobject_t, std::set < snapid_t >> m_snaps;
 };
 
-int TestScrubber::get_snaps(const hobject_t & hoid,
+int TestScrubber::get_snaps(const hobject_t &hoid,
                             std::set < snapid_t > *snaps_set) const const
 {
     auto it = m_snaps.find(hoid);
@@ -204,22 +231,22 @@ int TestScrubber::get_snaps(const hobject_t & hoid,
     *snaps_set = it->second;
     std::cout << fmt::format("{}: ({}) -> #{} {}",
                              __func__, hoid, snaps_set->size(), *snaps_set)
-        << std::endl;
+              << std::endl;
     return 0;
 }
 
-tl::expected < std::set < snapid_t >, Scrub::SnapMapReaderI::result_t >
-    TestScrubber::get_snaps(const hobject_t & oid) constconst
-{
+tl::expected < std::set < snapid_t >, Scrub::SnapMapReaderI::result_t > TestScrubber::get_snaps(
+    const hobject_t &oid) constconst {
     std::set < snapid_t > snapset;
     auto r = get_snaps(oid, &snapset);
-    if (r >= 0) {
+    if (r >= 0)
+    {
         return snapset;
     }
     return tl::make_unexpected(Scrub::SnapMapReaderI::result_t {
-                               Scrub::SnapMapReaderI::result_t::code_t::
-                               not_found, r}
-    );
+        Scrub::SnapMapReaderI::result_t::code_t::
+        not_found, r}
+                              );
 }
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -237,8 +264,9 @@ struct TestTScrubberBeParams {
 
 // the actual owner of the OSD "objects" that are used by
 // the mockers
-class TestTScrubberBe:public::testing::Test {
-  public:
+class TestTScrubberBe: public::testing::Test
+{
+public:
     // the test data source
     virtual TestTScrubberBeParams inject_params() = 0;
 
@@ -247,7 +275,7 @@ class TestTScrubberBe:public::testing::Test {
     ScrubGenerator::pool_conf_t pool_conf;
     ScrubGenerator::RealObjsConf real_objs;
     int num_osds {
-    0};
+        0};
 
     // ctor & initialization
 
@@ -256,12 +284,12 @@ class TestTScrubberBe:public::testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-  /**
-   * Create the set of scrub-maps supposedly sent by the replica (or
-   * generated by the Primary). Then - create the snap-sets for all
-   * the objects in the set.
-   */
-    void fake_a_scrub_set(ScrubGenerator::RealObjsConfList & all_sets);
+    /**
+     * Create the set of scrub-maps supposedly sent by the replica (or
+     * generated by the Primary). Then - create the snap-sets for all
+     * the objects in the set.
+     */
+    void fake_a_scrub_set(ScrubGenerator::RealObjsConfList &all_sets);
 
     std::unique_ptr < TestScrubBackend > sbe;
 
@@ -286,21 +314,21 @@ class TestTScrubberBe:public::testing::Test {
     // generated sets of "objects" for the active OSDs
     ScrubGenerator::RealObjsConfList real_objs_list;
 
-  protected:
-  /**
-   * Create the OSDmap and populate it with one pool, based on
-   * the pool configuration.
-   * For now - only replicated pools are supported.
-   */
+protected:
+    /**
+     * Create the OSDmap and populate it with one pool, based on
+     * the pool configuration.
+     * For now - only replicated pools are supported.
+     */
     OSDMapRef setup_map(int num_osds,
-                        const ScrubGenerator::pool_conf_t & pconf);
+                        const ScrubGenerator::pool_conf_t &pconf);
 
-  /**
-   * Create a PG in the one pool we have. Fake the PG info.
-   * Use the primary of the PG to determine "who we are".
-   *
-   * \returns the PG info
-   */
+    /**
+     * Create a PG in the one pool we have. Fake the PG info.
+     * Use the primary of the PG to determine "who we are".
+     *
+     * \returns the PG info
+     */
     pg_info_t setup_pg_in_map();
 };
 
@@ -349,15 +377,15 @@ void TestTScrubberBe::SetUp()
     // the "PG" (and its backend)
     test_pg = std::make_unique < TestPg > (pool, info, i_am);
     std::cout << fmt::format("{}: acting: {}", __func__, acting_shards)
-        << std::endl;
+              << std::endl;
     sbe = std::make_unique < TestScrubBackend > (*test_scrubber, *test_pg, i_am,
-                                                 /* repair? */ false,
-                                                 scrub_level_t::deep,
-                                                 acting_shards);
+          /* repair? */ false,
+          scrub_level_t::deep,
+          acting_shards);
 
     // create a osd-num only copy of the relevant OSDs
     acting_osds.reserve(acting_shards.size());
-  for (const auto & shard:acting_shards) {
+    for (const auto &shard : acting_shards) {
         acting_osds.push_back(shard.osd);
     }
 
@@ -367,7 +395,7 @@ void TestTScrubberBe::SetUp()
 
 // Note: based on TestOSDMap.cc.
 OSDMapRef TestTScrubberBe::setup_map(int num_osds,
-                                     const ScrubGenerator::pool_conf_t & pconf)
+                                     const ScrubGenerator::pool_conf_t &pconf)
 {
     auto osdmap = std::make_shared < OSDMap > ();
     uuid_d fsid;
@@ -420,24 +448,25 @@ pg_info_t TestTScrubberBe::setup_pg_in_map()
                                  &up_primary, &acting_osds, &acting_primary);
 
     std::cout << fmt::
-        format("{}: pg: {} up_osds: {} up_primary: {} acting_osds: {} "
-               "acting_primary: " "{}", __func__, pgid, up_osds, up_primary,
-               acting_osds, acting_primary)
-        << std::endl;
+              format("{}: pg: {} up_osds: {} up_primary: {} acting_osds: {} "
+                     "acting_primary: " "{}", __func__, pgid, up_osds, up_primary,
+                     acting_osds, acting_primary)
+              << std::endl;
 
     spg = spg_t {
-    pgid};
+        pgid};
     i_am = pg_shard_t {
-    up_primary};
+        up_primary};
     std::cout << fmt::format("{}: spg: {} and I am {}", __func__, spg, i_am)
-        << std::endl;
+              << std::endl;
 
     // the 'acting shards' set - the one actually used by the scrubber
-    std::for_each(acting_osds.begin(), acting_osds.end(),[&](int osd) {
-                  acting_shards.insert(pg_shard_t {
-                                       osd});});
+    std::for_each(acting_osds.begin(), acting_osds.end(), [&](int osd) {
+        acting_shards.insert(pg_shard_t {
+            osd});
+    });
     std::cout << fmt::format("{}: acting_shards: {}", __func__, acting_shards)
-        << std::endl;
+              << std::endl;
 
     pg_info_t info;
     info.pgid = spg;
@@ -463,37 +492,37 @@ void TestTScrubberBe::TearDown()
 }
 
 void TestTScrubberBe::fake_a_scrub_set(ScrubGenerator::
-                                       RealObjsConfList & all_sets)
+                                       RealObjsConfList &all_sets)
 {
     for (int osd_num = 0; osd_num < pool_conf.size; ++osd_num) {
         ScrubMap smap;
         smap.valid_through = eversion_t {
-        1, 1};
+            1, 1};
         smap.incr_since = eversion_t {
-        1, 1};
+            1, 1};
         smap.has_omap_keys = true;  // to force omap checks
 
         // fill the map with the objects relevant to this OSD
-      for (auto & obj:all_sets[osd_num]->objs) {
+        for (auto &obj : all_sets[osd_num]->objs) {
             std::cout << fmt::format("{}: object: {}", __func__, obj.ghobj.hobj)
-                << std::endl;
+                      << std::endl;
             ScrubGenerator::add_object(smap, obj, osd_num);
         }
 
         std::cout << fmt::format("{}: {} inserting smap {:D}",
                                  __func__, osd_num, smap)
-            << std::endl;
+                  << std::endl;
         sbe->insert_faked_smap(pg_shard_t {
-                               osd_num}
-                               , smap);
+            osd_num}
+        , smap);
     }
 
     // create the snap_mapper state
 
-  for (const auto & robj:all_sets[i_am.osd]->objs) {
+    for (const auto &robj : all_sets[i_am.osd]->objs) {
 
         std::cout << fmt::format("{}: object: {}", __func__, robj.ghobj.hobj)
-            << std::endl;
+                  << std::endl;
 
         if (robj.ghobj.hobj.snap == CEPH_NOSNAP) {
             // head object
@@ -504,12 +533,12 @@ void TestTScrubberBe::fake_a_scrub_set(ScrubGenerator::
 }
 
 void TestScrubBackend::insert_faked_smap(pg_shard_t shard,
-                                         const ScrubMap & smap)
+        const ScrubMap &smap)
 {
     ASSERT_TRUE(this_chunk.has_value());
     std::cout << fmt::format("{}: inserting faked smap for osd {}",
                              __func__, shard.osd)
-        << std::endl;
+              << std::endl;
     this_chunk->received_maps[shard] = smap;
 }
 
@@ -518,22 +547,26 @@ void TestScrubBackend::insert_faked_smap(pg_shard_t shard,
 
 using namespace ScrubGenerator;
 
-class TestTScrubberBe_data_1:public TestTScrubberBe {
-  public:
-    TestTScrubberBe_data_1():TestTScrubberBe() {
+class TestTScrubberBe_data_1: public TestTScrubberBe
+{
+public:
+    TestTScrubberBe_data_1(): TestTScrubberBe()
+    {
     }
     // test configuration pool_conf_t pl {
-    3, 3, 3, 3, "rep_pool"};
+    3, 3, 3, 3, "rep_pool"
+};
 
-    TestTScrubberBeParams inject_params() override {
-        std::cout << fmt::format("{}: injecting params (minimal snaps conf.)",
-                                 __func__)
-            << std::endl;
-        return TestTScrubberBeParams {
-            /* pool_conf */ pl,
-                /* real_objs_conf */ ScrubDatasets::minimal_snaps_configuration,
-                /*num_osds */ 3};
-    }
+TestTScrubberBeParams inject_params() override
+{
+    std::cout << fmt::format("{}: injecting params (minimal snaps conf.)",
+                             __func__)
+              << std::endl;
+    return TestTScrubberBeParams {
+        /* pool_conf */ pl,
+        /* real_objs_conf */ ScrubDatasets::minimal_snaps_configuration,
+        /*num_osds */ 3};
+}
 };
 
 // some basic sanity checks
@@ -589,7 +622,8 @@ TEST_F(TestTScrubberBe_data_1, snapmapper_1)
     hobj_ms1_snp30_inpool.pool = pool_id;
     all_clones_snaps_t bogus_30;
     bogus_30[hobj_ms1_snp30_inpool] = {
-    0x333, 0x666};
+        0x333, 0x666
+    };
 
     test_scrubber->set_snaps(bogus_30);
     auto[incons, fix_list] = sbe->scrub_compare_maps(true, *test_scrubber);
@@ -597,17 +631,18 @@ TEST_F(TestTScrubberBe_data_1, snapmapper_1)
     EXPECT_EQ(fix_list.size(), 1);
 
     // debug - print the fix-list:
-  for (const auto & fix:fix_list) {
+    for (const auto &fix : fix_list) {
         std::cout << fmt::format("snapmapper_1: fix {}: {} {}->{}",
                                  fix.hoid,
                                  (fix.op ==
                                   snap_mapper_op_t::add ? "add" : "upd"),
                                  fix.wrong_snaps, fix.snaps)
-            << std::endl;
+                  << std::endl;
     }
     EXPECT_EQ(fix_list[0].hoid, hobj_ms1_snp30_inpool);
     EXPECT_EQ(fix_list[0].snaps, std::set < snapid_t > {
-              0x30});
+        0x30
+    });
 
     EXPECT_EQ(incons.size(), 0);    // no inconsistency
 }
@@ -615,23 +650,26 @@ TEST_F(TestTScrubberBe_data_1, snapmapper_1)
 // a dataset similar to 'minimal_snaps_configuration',
 // but with the hobj_ms1_snp30 clone being modified by a corruption
 // function
-class TestTScrubberBe_data_2:public TestTScrubberBe {
-  public:
-    TestTScrubberBe_data_2():TestTScrubberBe() {
+class TestTScrubberBe_data_2: public TestTScrubberBe
+{
+public:
+    TestTScrubberBe_data_2(): TestTScrubberBe()
+    {
     }
     // basic test configuration - 3 OSDs, all involved in the pool
-        pool_conf_t pl {
-    3, 3, 3, 3, "rep_pool"};
+    pool_conf_t pl {
+        3, 3, 3, 3, "rep_pool"};
 
-    TestTScrubberBeParams inject_params() override {
+    TestTScrubberBeParams inject_params() override
+    {
         std::cout << fmt::
-            format("{}: injecting params (minimal-snaps + size change)",
-                   __func__)
-            << std::endl;
+                  format("{}: injecting params (minimal-snaps + size change)",
+                         __func__)
+                  << std::endl;
         TestTScrubberBeParams params {
             /* pool_conf */ pl,
-                /* real_objs_conf */ ScrubDatasets::minimal_snaps_configuration,
-                /*num_osds */ 3};
+            /* real_objs_conf */ ScrubDatasets::minimal_snaps_configuration,
+            /*num_osds */ 3};
 
         // inject a corruption function that will modify osd.0's version of
         // the object

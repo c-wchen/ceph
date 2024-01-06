@@ -56,8 +56,8 @@ int main(int argc, char **argv)
         po::notify(vm);
 
         ceph_option_strings = po::collect_unrecognized(parsed.options,
-                                                       po::include_positional);
-    } catch(po::error & e) {
+                              po::include_positional);
+    } catch (po::error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }
@@ -69,8 +69,9 @@ int main(int argc, char **argv)
         ceph_options.push_back(i->c_str());
     }
 
-    if (vm.count("debug"))
+    if (vm.count("debug")) {
         debug = true;
+    }
 
     if (vm.count("help")) {
         std::cerr << desc << std::endl;
@@ -104,7 +105,7 @@ int main(int argc, char **argv)
     KeyValueDB *store(KeyValueDB::create(g_ceph_context, backend, store_path));
     if (store == NULL) {
         std::cerr << "Invalid backend '" << backend << "' specified" << std::
-            endl;
+                  endl;
         return 1;
     }
     /*if (vm.count("paranoid")) {
@@ -135,16 +136,14 @@ int main(int argc, char **argv)
             std::cout << i->raw_key() << std::endl;
         }
         return 0;
-    }
-    else if (cmd == "dump-raw-key-vals") {
+    } else if (cmd == "dump-raw-key-vals") {
         KeyValueDB::WholeSpaceIterator i = store->get_wholespace_iterator();
         for (i->seek_to_first(); i->valid(); i->next()) {
             std::cout << i->raw_key() << std::endl;
             i->value().hexdump(std::cout);
         }
         return 0;
-    }
-    else if (cmd == "dump-objects") {
+    } else if (cmd == "dump-objects") {
         vector < ghobject_t > objects;
         r = omap.list_objects(&objects);
         if (r < 0) {
@@ -153,13 +152,13 @@ int main(int argc, char **argv)
         }
         for (vector < ghobject_t >::iterator i = objects.begin();
              i != objects.end(); ++i) {
-            if (vm.count("oid") != 0 && i->hobj.oid.name != oid)
+            if (vm.count("oid") != 0 && i->hobj.oid.name != oid) {
                 continue;
+            }
             std::cout << *i << std::endl;
         }
         return 0;
-    }
-    else if (cmd == "dump-objects-with-keys") {
+    } else if (cmd == "dump-objects-with-keys") {
         vector < ghobject_t > objects;
         r = omap.list_objects(&objects);
         if (r < 0) {
@@ -168,8 +167,9 @@ int main(int argc, char **argv)
         }
         for (vector < ghobject_t >::iterator i = objects.begin();
              i != objects.end(); ++i) {
-            if (vm.count("oid") != 0 && i->hobj.oid.name != oid)
+            if (vm.count("oid") != 0 && i->hobj.oid.name != oid) {
                 continue;
+            }
             std::cout << "Object: " << *i << std::endl;
             ObjectMap::ObjectMapIterator j =
                 omap.get_iterator(ghobject_t(i->hobj));
@@ -179,8 +179,7 @@ int main(int argc, char **argv)
             }
         }
         return 0;
-    }
-    else if (cmd == "check" || cmd == "repair") {
+    } else if (cmd == "check" || cmd == "repair") {
         ostringstream ss;
         bool repair = (cmd == "repair");
         r = omap.check(ss, repair, true);
@@ -193,29 +192,26 @@ int main(int argc, char **argv)
         }
         std::cout << (repair ? "repair" : "check") << " succeeded" << std::endl;
         return 0;
-    }
-    else if (cmd == "dump-headers") {
+    } else if (cmd == "dump-headers") {
         vector < DBObjectMap::_Header > headers;
         r = omap.list_object_headers(&headers);
         if (r < 0) {
             std::cerr << "list_object_headers got: " << cpp_strerror(r) << std::
-                endl;
+                      endl;
             return 1;
         }
-      for (auto i:headers)
+        for (auto i : headers) {
             std::cout << i << std::endl;
+        }
         return 0;
-    }
-    else if (cmd == "resetv2") {
+    } else if (cmd == "resetv2") {
         omap.state.v = 2;
         omap.state.legacy = false;
         omap.set_state();
-    }
-    else if (cmd == "compact") {
+    } else if (cmd == "compact") {
         omap.compact();
         return 0;
-    }
-    else {
+    } else {
         std::cerr << "Did not recognize command " << cmd << std::endl;
         return 1;
     }

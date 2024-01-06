@@ -1,14 +1,18 @@
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab ft=cpp
 #include "rgw_rest_ratelimit.h"
-class RGWOp_Ratelimit_Info:public RGWRESTOp {
-    int check_caps(const RGWUserCaps & caps) override {
+class RGWOp_Ratelimit_Info: public RGWRESTOp
+{
+    int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("ratelimit", RGW_CAP_READ);
     } void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "get_ratelimit_info";
-}};
+    }
+};
 void RGWOp_Ratelimit_Info::execute(optional_yield y)
 {
     ldpp_dout(this, 20) << "" << dendl;
@@ -49,14 +53,13 @@ void RGWOp_Ratelimit_Info::execute(optional_yield y)
         auto iter = bucket->get_attrs().find(RGW_ATTR_RATELIMIT);
         if (iter != bucket->get_attrs().end()) {
             try {
-                bufferlist & bl = iter->second;
+                bufferlist &bl = iter->second;
                 auto biter = bl.cbegin();
                 decode(ratelimit_info, biter);
-            }
-            catch(buffer::error & err) {
+            } catch (buffer::error &err) {
                 ldpp_dout(this,
                           0) << "Error on decoding ratelimit info from bucket"
-                    << dendl;
+                             << dendl;
                 op_ret = -EIO;
                 return;
             }
@@ -79,8 +82,7 @@ void RGWOp_Ratelimit_Info::execute(optional_yield y)
                 ldpp_dout(this, 0) << "Cannot load user info" << dendl;
                 return;
             }
-        }
-        else {
+        } else {
             ldpp_dout(this, 0) << "User does not exist" << dendl;
             op_ret = -ENOENT;
             return;
@@ -89,14 +91,13 @@ void RGWOp_Ratelimit_Info::execute(optional_yield y)
         auto iter = user_sal->get_attrs().find(RGW_ATTR_RATELIMIT);
         if (iter != user_sal->get_attrs().end()) {
             try {
-                bufferlist & bl = iter->second;
+                bufferlist &bl = iter->second;
                 auto biter = bl.cbegin();
                 decode(ratelimit_info, biter);
-            }
-            catch(buffer::error & err) {
+            } catch (buffer::error &err) {
                 ldpp_dout(this,
                           0) << "Error on decoding ratelimit info from user" <<
-                    dendl;
+                             dendl;
                 op_ret = -EIO;
                 return;
             }
@@ -135,33 +136,36 @@ void RGWOp_Ratelimit_Info::execute(optional_yield y)
     return;
 }
 
-class RGWOp_Ratelimit_Set:public RGWRESTOp {
-    int check_caps(const RGWUserCaps & caps) override {
+class RGWOp_Ratelimit_Set: public RGWRESTOp
+{
+    int check_caps(const RGWUserCaps &caps) override
+    {
         return caps.check_cap("ratelimit", RGW_CAP_WRITE);
     } void execute(optional_yield y) override;
 
-    const char *name() const override {
+    const char *name() const override
+    {
         return "put_ratelimit_info";
     } void set_ratelimit_info(bool have_max_read_ops, int64_t max_read_ops,
                               bool have_max_write_ops, int64_t max_write_ops,
                               bool have_max_read_bytes, int64_t max_read_bytes,
                               bool have_max_write_bytes,
                               int64_t max_write_bytes, bool have_enabled,
-                              bool enabled, bool & ratelimit_configured,
-                              RGWRateLimitInfo & ratelimit_info);
+                              bool enabled, bool &ratelimit_configured,
+                              RGWRateLimitInfo &ratelimit_info);
 };
 
 void RGWOp_Ratelimit_Set::set_ratelimit_info(bool have_max_read_ops,
-                                             int64_t max_read_ops,
-                                             bool have_max_write_ops,
-                                             int64_t max_write_ops,
-                                             bool have_max_read_bytes,
-                                             int64_t max_read_bytes,
-                                             bool have_max_write_bytes,
-                                             int64_t max_write_bytes,
-                                             bool have_enabled, bool enabled,
-                                             bool & ratelimit_configured,
-                                             RGWRateLimitInfo & ratelimit_info)
+        int64_t max_read_ops,
+        bool have_max_write_ops,
+        int64_t max_write_ops,
+        bool have_max_read_bytes,
+        int64_t max_read_bytes,
+        bool have_max_write_bytes,
+        int64_t max_write_bytes,
+        bool have_enabled, bool enabled,
+        bool &ratelimit_configured,
+        RGWRateLimitInfo &ratelimit_info)
 {
     if (have_max_read_ops) {
         if (max_read_ops >= 0) {
@@ -194,7 +198,7 @@ void RGWOp_Ratelimit_Set::set_ratelimit_info(bool have_max_read_ops,
     if (!ratelimit_configured) {
         ldpp_dout(this,
                   0) << "No rate limit configuration arguments have been sent"
-            << dendl;
+                     << dendl;
         op_ret = -EINVAL;
         return;
     }
@@ -241,7 +245,7 @@ void RGWOp_Ratelimit_Set::execute(optional_yield y)
     if (op_ret) {
         ldpp_dout(this,
                   0) << "one of the maximum arguments could not be parsed" <<
-            dendl;
+                     dendl;
         return;
     }
     // RESTArgs::get_bool default value to true even if enabled or global are empty
@@ -283,8 +287,7 @@ void RGWOp_Ratelimit_Set::execute(optional_yield y)
                 ldpp_dout(this, 0) << "Cannot load user info" << dendl;
                 return;
             }
-        }
-        else {
+        } else {
             ldpp_dout(this, 0) << "User does not exist" << dendl;
             op_ret = -ENOENT;
             return;
@@ -292,14 +295,13 @@ void RGWOp_Ratelimit_Set::execute(optional_yield y)
         auto iter = user_sal->get_attrs().find(RGW_ATTR_RATELIMIT);
         if (iter != user_sal->get_attrs().end()) {
             try {
-                bufferlist & bl = iter->second;
+                bufferlist &bl = iter->second;
                 auto biter = bl.cbegin();
                 decode(ratelimit_info, biter);
-            }
-            catch(buffer::error & err) {
+            } catch (buffer::error &err) {
                 ldpp_dout(this,
                           0) << "Error on decoding ratelimit info from user" <<
-                    dendl;
+                             dendl;
                 op_ret = -EIO;
                 return;
             }
@@ -329,14 +331,13 @@ void RGWOp_Ratelimit_Set::execute(optional_yield y)
         auto iter = bucket->get_attrs().find(RGW_ATTR_RATELIMIT);
         if (iter != bucket->get_attrs().end()) {
             try {
-                bufferlist & bl = iter->second;
+                bufferlist &bl = iter->second;
                 auto biter = bl.cbegin();
                 decode(ratelimit_info, biter);
-            }
-            catch(buffer::error & err) {
+            } catch (buffer::error &err) {
                 ldpp_dout(this,
                           0) << "Error on decoding ratelimit info from bucket"
-                    << dendl;
+                             << dendl;
                 op_ret = -EIO;
                 return;
             }

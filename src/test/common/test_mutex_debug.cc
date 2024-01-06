@@ -20,10 +20,11 @@
 
 #include "gtest/gtest.h"
 
-template < typename Mutex > static bool test_try_lock(Mutex * m)
+template < typename Mutex > static bool test_try_lock(Mutex *m)
 {
-    if (!m->try_lock())
+    if (!m->try_lock()) {
         return false;
+    }
     m->unlock();
     return true;
 }

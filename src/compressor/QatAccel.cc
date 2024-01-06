@@ -26,7 +26,7 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-static std::ostream & _prefix(std::ostream * _dout)
+static std::ostream &_prefix(std::ostream *_dout)
 {
     return *_dout << "QatAccel: ";
 }
@@ -37,44 +37,47 @@ static std::ostream & _prefix(std::ostream * _dout)
 
 /* Estimate data expansion after decompression */
 static const unsigned int expansion_ratio[] =
-    { 5, 20, 50, 100, 200, 1000, 10000 };
+{ 5, 20, 50, 100, 200, 1000, 10000 };
 
-void QzSessionDeleter::operator() (struct QzSession_S * session) {
+void QzSessionDeleter::operator()(struct QzSession_S *session)
+{
     qzTeardownSession(session);
     delete session;
 }
 
-static bool get_qz_params(const std::string & alg, QzSessionParams_T & params)
+static bool get_qz_params(const std::string &alg, QzSessionParams_T &params)
 {
     int rc;
     rc = qzGetDefaults(&params);
-    if (rc != QZ_OK)
+    if (rc != QZ_OK) {
         return false;
+    }
     params.direction = QZ_DIR_BOTH;
     params.is_busy_polling = true;
     if (alg == "zlib") {
         params.comp_algorithm = QZ_DEFLATE;
         params.data_fmt = QZ_DEFLATE_RAW;
         params.comp_lvl = g_ceph_context->_conf->compressor_zlib_level;
-    }
-    else {
+    } else {
         // later, there also has lz4.
         return false;
     }
 
     rc = qzSetDefaults(&params);
-    if (rc != QZ_OK)
+    if (rc != QZ_OK) {
         return false;
+    }
     return true;
 }
 
-static bool setup_session(QatAccel::session_ptr & session,
-                          QzSessionParams_T & params)
+static bool setup_session(QatAccel::session_ptr &session,
+                          QzSessionParams_T &params)
 {
     int rc;
     rc = qzInit(session.get(), QZ_SW_BACKUP_DEFAULT);
-    if (rc != QZ_OK && rc != QZ_DUPLICATE)
+    if (rc != QZ_OK && rc != QZ_DUPLICATE) {
         return false;
+    }
     rc = qzSetupSession(session.get(), &params);
     if (rc != QZ_OK) {
         return false;
@@ -84,15 +87,17 @@ static bool setup_session(QatAccel::session_ptr & session,
 
 // put the session back to the session pool in a RAII manner
 struct cached_session_t {
-    cached_session_t(QatAccel * accel, QatAccel::session_ptr && sess)
-    :accel {
-    accel}, session {
-    std::move(sess)} {
+    cached_session_t(QatAccel *accel, QatAccel::session_ptr && sess)
+        : accel {
+        accel}, session {
+        std::move(sess)}
+    {
     }
 
-    ~cached_session_t() {
+    ~cached_session_t()
+    {
         std::scoped_lock lock {
-        accel->mutex};
+            accel->mutex};
         // if the cache size is still under its upper bound, the current session is put into
         // accel->sessions. otherwise it's released right
         uint64_t sessions_num =
@@ -103,8 +108,9 @@ struct cached_session_t {
         }
     }
 
-    struct QzSession_S *get() {
-        assert(static_cast < bool > (session));
+    struct QzSession_S *get()
+    {
+        assert(static_cast < bool >(session));
         return session.get();
     }
 
@@ -116,7 +122,7 @@ QatAccel::session_ptr QatAccel::get_session()
 {
     {
         std::scoped_lock lock {
-        mutex};
+            mutex};
         if (!sessions.empty()) {
             auto session = std::move(sessions.back());
             sessions.pop_back();
@@ -131,8 +137,7 @@ QatAccel::session_ptr QatAccel::get_session()
     memset(session.get(), 0, sizeof(struct QzSession_S));
     if (get_qz_params(alg_name, params) && setup_session(session, params)) {
         return session;
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
@@ -152,7 +157,7 @@ QatAccel::~QatAccel()
     qzClose((QzSession_T *) 1);
 }
 
-bool QatAccel::init(const std::string & alg)
+bool QatAccel::init(const std::string &alg)
 {
     std::scoped_lock lock(mutex);
     if (!alg_name.empty()) {
@@ -168,7 +173,7 @@ bool QatAccel::init(const std::string & alg)
     return true;
 }
 
-int QatAccel::compress(const bufferlist & in, bufferlist & out,
+int QatAccel::compress(const bufferlist &in, bufferlist &out,
                        std::optional < int32_t > &compressor_message)
 {
     auto s = get_session();     // get a session from the pool
@@ -178,7 +183,7 @@ int QatAccel::compress(const bufferlist & in, bufferlist & out,
     auto session = cached_session_t { this, std::move(s) }; // returns to the session pool on destruction
     compressor_message = ZLIB_DEFAULT_WIN_SIZE;
     int begin = 1;
-  for (auto & i:in.buffers()) {
+    for (auto &i : in.buffers()) {
         const unsigned char *c_in = (unsigned char *)i.c_str();
         unsigned int len = i.length();
         unsigned int out_len =
@@ -187,8 +192,9 @@ int QatAccel::compress(const bufferlist & in, bufferlist & out,
         bufferptr ptr = buffer::create_small_page_aligned(out_len);
         unsigned char *c_out = (unsigned char *)ptr.c_str() + begin;
         int rc = qzCompress(session.get(), c_in, &len, c_out, &out_len, 1);
-        if (rc != QZ_OK)
+        if (rc != QZ_OK) {
             return -1;
+        }
         if (begin) {
             // put a compressor variation mark in front of compressed stream, not used at the moment
             ptr.c_str()[0] = 0;
@@ -202,16 +208,16 @@ int QatAccel::compress(const bufferlist & in, bufferlist & out,
     return 0;
 }
 
-int QatAccel::decompress(const bufferlist & in, bufferlist & out,
+int QatAccel::decompress(const bufferlist &in, bufferlist &out,
                          std::optional < int32_t > compressor_message)
 {
     auto i = in.begin();
     return decompress(i, in.length(), out, compressor_message);
 }
 
-int QatAccel::decompress(bufferlist::const_iterator & p,
+int QatAccel::decompress(bufferlist::const_iterator &p,
                          size_t compressed_len,
-                         bufferlist & dst,
+                         bufferlist &dst,
                          std::optional < int32_t > compressor_message)
 {
     auto s = get_session();     // get a session from the pool
@@ -249,16 +255,13 @@ int QatAccel::decompress(bufferlist::const_iterator & p,
 
         if (rc == QZ_OK) {
             dst.append(ptr, 0, out_len);
-        }
-        else if (rc == QZ_DATA_ERROR) {
+        } else if (rc == QZ_DATA_ERROR) {
             dout(1) << "QAT compressor DATA ERROR" << dendl;
             return -1;
-        }
-        else if (rc == QZ_BUF_ERROR) {
+        } else if (rc == QZ_BUF_ERROR) {
             dout(1) << "QAT compressor BUF ERROR" << dendl;
             return -1;
-        }
-        else if (rc != QZ_OK) {
+        } else if (rc != QZ_OK) {
             dout(1) << "QAT compressor NOT OK" << dendl;
             return -1;
         }

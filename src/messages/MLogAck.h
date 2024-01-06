@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MLOGACK_H
@@ -23,44 +23,53 @@
 
 #include "msg/Message.h"
 
-class MLogAck final:public Message {
-  public:
+class MLogAck final: public Message
+{
+public:
     uuid_d fsid;
     version_t last = 0;
-     std::string channel;
+    std::string channel;
 
-     MLogAck():Message {
-    MSG_LOGACK} {
+    MLogAck(): Message {
+        MSG_LOGACK}
+    {
     }
-  MLogAck(uuid_d & f, version_t l):Message {
-    MSG_LOGACK}, fsid(f), last(l) {
+    MLogAck(uuid_d &f, version_t l): Message {
+        MSG_LOGACK}, fsid(f), last(l)
+    {
     }
-  private:
-    ~MLogAck()final {
+private:
+    ~MLogAck()final
+    {
     }
 
-  public:
-    std::string_view get_type_name()const override {
+public:
+    std::string_view get_type_name()const override
+    {
         return "log_ack";
-    } void print(std::ostream & out) const override {
+    } void print(std::ostream &out) const override
+    {
         out << "log(last " << last << ")";
-    } void encode_payload(uint64_t features) override {
+    } void encode_payload(uint64_t features) override
+    {
         using ceph::encode;
         encode(fsid, payload);
         encode(last, payload);
         encode(channel, payload);
     }
-    void decode_payload() override {
+    void decode_payload() override
+    {
         using ceph::decode;
         auto p = payload.cbegin();
         decode(fsid, p);
         decode(last, p);
-        if (!p.end())
+        if (!p.end()) {
             decode(channel, p);
+        }
     }
-  private:
+private:
     template < class T, typename ... Args >
-        friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
+    friend boost::intrusive_ptr < T > ceph::make_message(Args && ... args);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab ft=cpp
 
 /*
@@ -34,7 +34,7 @@ using namespace std;
 
 void RGWOp_ZoneConfig_Get::send_response()
 {
-    const RGWZoneParams & zone_params =
+    const RGWZoneParams &zone_params =
         static_cast <
         rgw::sal::RadosStore * >(driver)->svc()->zone->get_zone_params();
 
@@ -42,8 +42,9 @@ void RGWOp_ZoneConfig_Get::send_response()
     dump_errno(s);
     end_header(s);
 
-    if (op_ret < 0)
+    if (op_ret < 0) {
         return;
+    }
 
     encode_json("zone_params", zone_params, s->formatter);
     flusher.flush();

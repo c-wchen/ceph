@@ -40,11 +40,12 @@ void RGWLoadGenProcess::run()
     vector < string > buckets(num_buckets);
 
     std::atomic < bool > failed = {
-    false};
+        false
+    };
 
     for (i = 0; i < num_buckets; i++) {
         buckets[i] = "/loadgen";
-        string & bucket = buckets[i];
+        string &bucket = buckets[i];
         append_rand_alpha(cct, bucket, bucket, 16);
 
         /* first create a bucket */
@@ -93,7 +94,7 @@ void RGWLoadGenProcess::run()
         gen_request("DELETE", buckets[i], 0, NULL);
     }
 
-  done:
+done:
     checkpoint();
 
     m_tp.stop();
@@ -103,8 +104,8 @@ void RGWLoadGenProcess::run()
     rgw::signal::signal_shutdown();
 }                               /* RGWLoadGenProcess::run() */
 
-void RGWLoadGenProcess::gen_request(const string & method,
-                                    const string & resource,
+void RGWLoadGenProcess::gen_request(const string &method,
+                                    const string &resource,
                                     int content_length,
                                     std::atomic < bool > *fail_flag)
 {
@@ -116,8 +117,8 @@ void RGWLoadGenProcess::gen_request(const string & method,
     req_wq.queue(req);
 }                               /* RGWLoadGenProcess::gen_request */
 
-void RGWLoadGenProcess::handle_request(const DoutPrefixProvider * dpp,
-                                       RGWRequest * r)
+void RGWLoadGenProcess::handle_request(const DoutPrefixProvider *dpp,
+                                       RGWRequest *r)
 {
     RGWLoadGenRequest *req = static_cast < RGWLoadGenRequest * >(r);
 

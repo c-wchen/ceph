@@ -21,62 +21,68 @@ struct cls_queue_entry {
     ceph::buffer::list data;
     std::string marker;
 
-    void encode(ceph::buffer::list & bl) const {
+    void encode(ceph::buffer::list &bl) const
+    {
         ENCODE_START(1, 1, bl);
         encode(data, bl);
         encode(marker, bl);
         ENCODE_FINISH(bl);
-    } void decode(ceph::buffer::list::const_iterator & bl) {
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
         DECODE_START(1, bl);
         decode(data, bl);
         decode(marker, bl);
         DECODE_FINISH(bl);
-}};
+    }
+};
 WRITE_CLASS_ENCODER(cls_queue_entry)
 
 struct cls_queue_marker {
     uint64_t offset {
-    0};
+        0};
     uint64_t gen {
-    0};
+        0};
 
-    void encode(ceph::buffer::list & bl) const const
-{
-    ENCODE_START(1, 1, bl);
-    encode(gen, bl);
-    encode(offset, bl);
-    ENCODE_FINISH(bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(gen, bl);
-    decode(offset, bl);
-    DECODE_FINISH(bl);
-}
+    void encode(ceph::buffer::list &bl) const const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(gen, bl);
+        encode(offset, bl);
+        ENCODE_FINISH(bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(gen, bl);
+        decode(offset, bl);
+        DECODE_FINISH(bl);
+    }
 
-std::string to_str() {
-    return std::to_string(gen) + '/' + std::to_string(offset);
-}
+    std::string to_str()
+    {
+        return std::to_string(gen) + '/' + std::to_string(offset);
+    }
 
-int from_str(const char *str) {
-    errno = 0;
-    char *end = nullptr;
-    gen =::strtoull(str, &end, 10);
-    if (errno) {
-        return errno;
+    int from_str(const char *str)
+    {
+        errno = 0;
+        char *end = nullptr;
+        gen =::strtoull(str, &end, 10);
+        if (errno) {
+            return errno;
+        }
+        if (str == end || *end != '/') {    // expects delimiter
+            return -EINVAL;
+        }
+        str = end + 1;
+        offset =::strtoull(str, &end, 10);
+        if (errno) {
+            return errno;
+        }
+        if (str == end || *end != 0) {  // expects null terminator
+            return -EINVAL;
+        }
+        return 0;
     }
-    if (str == end || *end != '/') {    // expects delimiter
-        return -EINVAL;
-    }
-    str = end + 1;
-    offset =::strtoull(str, &end, 10);
-    if (errno) {
-        return errno;
-    }
-    if (str == end || *end != 0) {  // expects null terminator
-        return -EINVAL;
-    }
-    return 0;
-}
 
 };
 
@@ -85,35 +91,36 @@ WRITE_CLASS_ENCODER(cls_queue_marker)
 struct cls_queue_head {
     uint64_t max_head_size = QUEUE_HEAD_SIZE_1K;
     cls_queue_marker front {
-    QUEUE_START_OFFSET_1K, 0};
+        QUEUE_START_OFFSET_1K, 0};
     cls_queue_marker tail {
-    QUEUE_START_OFFSET_1K, 0};
+        QUEUE_START_OFFSET_1K, 0};
     uint64_t queue_size {
-    0};                         // size of queue requested by user, with head size added to it
+        0};                         // size of queue requested by user, with head size added to it
     uint64_t max_urgent_data_size {
-    0};
-     ceph::buffer::list bl_urgent_data; // special data known to application using queue
+        0};
+    ceph::buffer::list bl_urgent_data; // special data known to application using queue
 
-    void encode(ceph::buffer::list & bl) const const
-{
-    ENCODE_START(1, 1, bl);
-    encode(max_head_size, bl);
-    encode(front, bl);
-    encode(tail, bl);
-    encode(queue_size, bl);
-    encode(max_urgent_data_size, bl);
-    encode(bl_urgent_data, bl);
-    ENCODE_FINISH(bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(max_head_size, bl);
-    decode(front, bl);
-    decode(tail, bl);
-    decode(queue_size, bl);
-    decode(max_urgent_data_size, bl);
-    decode(bl_urgent_data, bl);
-    DECODE_FINISH(bl);
-}
+    void encode(ceph::buffer::list &bl) const const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(max_head_size, bl);
+        encode(front, bl);
+        encode(tail, bl);
+        encode(queue_size, bl);
+        encode(max_urgent_data_size, bl);
+        encode(bl_urgent_data, bl);
+        ENCODE_FINISH(bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(max_head_size, bl);
+        decode(front, bl);
+        decode(tail, bl);
+        decode(queue_size, bl);
+        decode(max_urgent_data_size, bl);
+        decode(bl_urgent_data, bl);
+        DECODE_FINISH(bl);
+    }
 };
 
 WRITE_CLASS_ENCODER(cls_queue_head)

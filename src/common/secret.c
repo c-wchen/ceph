@@ -41,8 +41,9 @@ int read_secret_from_file(const char *filename, char *secret, size_t max_len)
         return len ? len : -ENODATA;
     }
     end = secret;
-    while (end < secret + len && *end && *end != '\n' && *end != '\r')
+    while (end < secret + len && *end && *end != '\n' && *end != '\r') {
         end++;
+    }
     *end = '\0';
     close(fd);
 

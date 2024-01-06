@@ -28,10 +28,10 @@ struct Config {
 
     int operation_timeout = CEPH_DOKAN_IO_DEFAULT_TIMEOUT;
 
-     std::wstring mountpoint = L"";
-     std::string root_path = "/";
+    std::wstring mountpoint = L"";
+    std::string root_path = "/";
 
-     std::wstring win_vol_name = L"";
+    std::wstring win_vol_name = L"";
     unsigned long win_vol_serial = 0;
     unsigned long max_path_len = 256;
     mode_t file_mode = 0755;
@@ -50,6 +50,6 @@ enum class Command {
 };
 
 void print_usage();
-int parse_args(std::vector < const char *>&args,
-               std::ostream * err_msg, Command * command, Config * cfg);
-int set_dokan_options(Config * cfg, PDOKAN_OPTIONS dokan_options);
+int parse_args(std::vector < const char *> &args,
+               std::ostream *err_msg, Command *command, Config *cfg);
+int set_dokan_options(Config *cfg, PDOKAN_OPTIONS dokan_options);

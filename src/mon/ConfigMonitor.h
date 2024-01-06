@@ -10,25 +10,26 @@
 
 class MonSession;
 
-class ConfigMonitor:public PaxosService {
+class ConfigMonitor: public PaxosService
+{
     version_t version = 0;
     ConfigMap config_map;
-     std::map < std::string, std::optional < ceph::buffer::list >> pending;
-     std::string pending_description;
-     std::map < std::string,
+    std::map < std::string, std::optional < ceph::buffer::list >> pending;
+    std::string pending_description;
+    std::map < std::string,
         std::optional < ceph::buffer::list >> pending_cleanup;
 
-     std::map < std::string, ceph::buffer::list > current;
+    std::map < std::string, ceph::buffer::list > current;
 
     void encode_pending_to_kvmon();
 
-  public:
-     ConfigMonitor(Monitor & m, Paxos & p, const std::string & service_name);
+public:
+    ConfigMonitor(Monitor &m, Paxos &p, const std::string &service_name);
 
     void init() override;
 
     void load_config();
-    void load_changeset(version_t v, ConfigChangeSet * ch);
+    void load_changeset(version_t v, ConfigChangeSet *ch);
 
     bool preprocess_query(MonOpRequestRef op) override;
     bool prepare_update(MonOpRequestRef op) override;
@@ -39,19 +40,20 @@ class ConfigMonitor:public PaxosService {
     void handle_get_config(MonOpRequestRef op);
 
     void create_initial() override;
-    void update_from_paxos(bool * need_bootstrap) override;
+    void update_from_paxos(bool *need_bootstrap) override;
     void create_pending() override;
     void encode_pending(MonitorDBStore::TransactionRef t) override;
     version_t get_trim_to() const override;
 
-    void encode_full(MonitorDBStore::TransactionRef t) override {
+    void encode_full(MonitorDBStore::TransactionRef t) override
+    {
     } void on_active() override;
     void tick() override;
 
-    bool refresh_config(MonSession * s);
-    bool maybe_send_config(MonSession * s);
-    void send_config(MonSession * s);
-    void check_sub(MonSession * s);
-    void check_sub(Subscription * sub);
+    bool refresh_config(MonSession *s);
+    bool maybe_send_config(MonSession *s);
+    void send_config(MonSession *s);
+    void check_sub(MonSession *s);
+    void check_sub(Subscription *sub);
     void check_all_subs();
 };

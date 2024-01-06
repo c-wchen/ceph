@@ -13,53 +13,57 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    struct ImageCtx;
+struct ImageCtx;
 
-    namespace mirror {
+namespace mirror
+{
 
-        template < typename ImageCtxT = librbd::ImageCtx > class GetUuidRequest {
-          public:
-            static GetUuidRequest *create(librados::IoCtx & io_ctx,
-                                          std::string * mirror_uuid,
-                                          Context * on_finish) {
-                return new GetUuidRequest(io_ctx, mirror_uuid, on_finish);
-            } GetUuidRequest(librados::IoCtx & io_ctx,
-                             std::string * mirror_uuid, Context * on_finish);
+template < typename ImageCtxT = librbd::ImageCtx > class GetUuidRequest
+{
+public:
+    static GetUuidRequest *create(librados::IoCtx &io_ctx,
+                                  std::string *mirror_uuid,
+                                  Context *on_finish)
+    {
+        return new GetUuidRequest(io_ctx, mirror_uuid, on_finish);
+    } GetUuidRequest(librados::IoCtx &io_ctx,
+                     std::string *mirror_uuid, Context *on_finish);
 
-            void send();
+    void send();
 
-          private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v
-   * GET_MIRROR_UUID
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   */
+private:
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v
+     * GET_MIRROR_UUID
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     */
 
-             librados::IoCtx m_io_ctx;
-             std::string * m_mirror_uuid;
-            Context *m_on_finish;
+    librados::IoCtx m_io_ctx;
+    std::string *m_mirror_uuid;
+    Context *m_on_finish;
 
-            CephContext *m_cct;
+    CephContext *m_cct;
 
-            bufferlist m_out_bl;
+    bufferlist m_out_bl;
 
-            void get_mirror_uuid();
-            void handle_get_mirror_uuid(int r);
+    void get_mirror_uuid();
+    void handle_get_mirror_uuid(int r);
 
-            void finish(int r);
-        };
+    void finish(int r);
+};
 
-    }                           // namespace mirror
+}                           // namespace mirror
 }                               // namespace librbd
 
 extern template class librbd::mirror::GetUuidRequest < librbd::ImageCtx >;

@@ -12,17 +12,19 @@
 
 using namespace librados;
 
-namespace {
+namespace
+{
 
-    void init_rand() {
-        static bool seeded = false;
-        if (!seeded) {
-            seeded = true;
-            int seed = getpid();
-            std::cout << "seed " << seed << std::endl;
-            srand(seed);
-        }
+void init_rand()
+{
+    static bool seeded = false;
+    if (!seeded) {
+        seeded = true;
+        int seed = getpid();
+        std::cout << "seed " << seed << std::endl;
+        srand(seed);
     }
+}
 
 }                               // anonymous namespace
 
@@ -32,7 +34,7 @@ Rados RadosTestPPNS::s_cluster;
 void RadosTestPPNS::SetUpTestCase()
 {
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_pool_pp(pool_name, s_cluster));
@@ -53,8 +55,9 @@ void RadosTestPPNS::SetUp()
 
 void RadosTestPPNS::TearDown()
 {
-    if (cleanup)
+    if (cleanup) {
         cleanup_all_objects(ioctx);
+    }
     ioctx.close();
 }
 
@@ -78,7 +81,7 @@ Rados RadosTestParamPPNS::s_cluster;
 void RadosTestParamPPNS::SetUpTestCase()
 {
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_pool_pp(pool_name, s_cluster));
@@ -116,7 +119,7 @@ void RadosTestParamPPNS::SetUp()
     if (!is_crimson_cluster() && strcmp(GetParam(), "cache") == 0 &&
         cache_pool_name.empty()) {
         auto pool_prefix =
-            fmt::format("{}_",::testing::UnitTest::GetInstance()->
+            fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                         current_test_case()->name());
         cache_pool_name = get_temp_pool_name();
         bufferlist inbl;
@@ -155,8 +158,9 @@ void RadosTestParamPPNS::SetUp()
 
 void RadosTestParamPPNS::TearDown()
 {
-    if (cleanup)
+    if (cleanup) {
         cleanup_all_objects(ioctx);
+    }
     ioctx.close();
 }
 
@@ -179,7 +183,7 @@ Rados RadosTestECPPNS::s_cluster;
 void RadosTestECPPNS::SetUpTestCase()
 {
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_ec_pool_pp(pool_name, s_cluster));
@@ -202,8 +206,9 @@ void RadosTestECPPNS::SetUp()
 
 void RadosTestECPPNS::TearDown()
 {
-    if (cleanup)
+    if (cleanup) {
         cleanup_all_objects(ioctx);
+    }
     ioctx.close();
 }
 
@@ -215,7 +220,7 @@ void RadosTestPP::SetUpTestCase()
     init_rand();
 
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_pool_pp(pool_name, s_cluster));
@@ -264,20 +269,19 @@ void RadosTestPP::cleanup_namespace(librados::IoCtx ioctx, std::string ns)
             ioctx.locator_set_key(it->get_locator());
             ObjectWriteOperation op;
             op.remove();
-            librados::AioCompletion * completion =
+            librados::AioCompletion *completion =
                 s_cluster.aio_create_completion();
-            auto sg = make_scope_guard([&]{ completion->release();
-                                       }
-            );
+            auto sg = make_scope_guard([&] { completion->release();
+                                           }
+                                      );
             ASSERT_EQ(0, ioctx.aio_operate(it->get_oid(), completion, &op,
                                            librados::OPERATION_IGNORE_CACHE));
             completion->wait_for_complete();
             if (completion->get_return_value() == -ENOENT) {
                 ++got_enoent;
                 std::cout << " got ENOENT removing " << it->get_oid()
-                    << " in ns " << ns << std::endl;
-            }
-            else {
+                          << " in ns " << ns << std::endl;
+            } else {
                 ASSERT_EQ(0, completion->get_return_value());
             }
         }
@@ -285,14 +289,14 @@ void RadosTestPP::cleanup_namespace(librados::IoCtx ioctx, std::string ns)
             break;
         }
         std::cout << " got ENOENT on " << got_enoent
-            << " objects, waiting a bit for snap"
-            << " trimming before retrying " << tries << " more times..."
-            << std::endl;
+                  << " objects, waiting a bit for snap"
+                  << " trimming before retrying " << tries << " more times..."
+                  << std::endl;
         sleep(1);
     }
     if (tries == 0) {
         std::cout << "failed to clean up; probably need to scrub purged_snaps."
-            << std::endl;
+                  << std::endl;
     }
 }
 
@@ -303,7 +307,7 @@ Rados RadosTestParamPP::s_cluster;
 void RadosTestParamPP::SetUpTestCase()
 {
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_pool_pp(pool_name, s_cluster));
@@ -341,7 +345,7 @@ void RadosTestParamPP::SetUp()
     if (!is_crimson_cluster() && strcmp(GetParam(), "cache") == 0 &&
         cache_pool_name.empty()) {
         auto pool_prefix =
-            fmt::format("{}_",::testing::UnitTest::GetInstance()->
+            fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                         current_test_case()->name());
         cache_pool_name = get_temp_pool_name();
         bufferlist inbl;
@@ -414,7 +418,7 @@ void RadosTestECPP::SetUpTestCase()
 {
     SKIP_IF_CRIMSON();
     auto pool_prefix =
-        fmt::format("{}_",::testing::UnitTest::GetInstance()->
+        fmt::format("{}_", ::testing::UnitTest::GetInstance()->
                     current_test_case()->name());
     pool_name = get_temp_pool_name(pool_prefix);
     ASSERT_EQ("", create_one_ec_pool_pp(pool_name, s_cluster));

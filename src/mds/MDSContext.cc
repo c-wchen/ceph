@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "MDSRank.h"
@@ -38,8 +38,10 @@ void MDSInternalContextWrapper::finish(int r)
 struct MDSIOContextList {
     elist < MDSIOContextBase * >list;
     ceph::spinlock lock;
-    MDSIOContextList():list(member_offset(MDSIOContextBase, list_item)) {
-    } ~MDSIOContextList() {
+    MDSIOContextList(): list(member_offset(MDSIOContextBase, list_item))
+    {
+    } ~MDSIOContextList()
+    {
         list.clear();           // avoid assertion in elist's destructor
     }
 } ioctx_list;
@@ -62,8 +64,8 @@ MDSIOContextBase::~MDSIOContextBase()
 }
 
 bool MDSIOContextBase::check_ios_in_flight(ceph::coarse_mono_time cutoff,
-                                           std::string & slow_count,
-                                           ceph::coarse_mono_time & oldest)
+        std::string &slow_count,
+        ceph::coarse_mono_time &oldest)
 {
     static const unsigned MAX_COUNT = 100;
     unsigned slow = 0;
@@ -72,24 +74,27 @@ bool MDSIOContextBase::check_ios_in_flight(ceph::coarse_mono_time cutoff,
     for (elist < MDSIOContextBase * >::iterator p = ioctx_list.list.begin();
          !p.end(); ++p) {
         MDSIOContextBase *c = *p;
-        if (c->created_at >= cutoff)
+        if (c->created_at >= cutoff) {
             break;
+        }
         ++slow;
-        if (slow > MAX_COUNT)
+        if (slow > MAX_COUNT) {
             break;
-        if (slow == 1)
+        }
+        if (slow == 1) {
             oldest = c->created_at;
+        }
     }
     ioctx_list.lock.unlock();
 
     if (slow > 0) {
-        if (slow > MAX_COUNT)
+        if (slow > MAX_COUNT) {
             slow_count = std::to_string(MAX_COUNT) + "+";
-        else
+        } else {
             slow_count = std::to_string(slow);
+        }
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -107,7 +112,7 @@ void MDSIOContextBase::complete(int r)
 
     if (mds->is_daemon_stopping()) {
         dout(4) << "MDSIOContextBase::complete: dropping for stopping "
-            << typeid(*this).name() << dendl;
+                << typeid(*this).name() << dendl;
         return;
     }
 
@@ -116,10 +121,9 @@ void MDSIOContextBase::complete(int r)
     // respawn it.
     if (r == -CEPHFS_EBLOCKLISTED || r == -CEPHFS_ETIMEDOUT) {
         derr << "MDSIOContextBase: failed with " << r << ", restarting..." <<
-            dendl;
+             dendl;
         mds->respawn();
-    }
-    else {
+    } else {
         MDSContext::complete(r);
     }
 }
@@ -145,8 +149,7 @@ void C_IO_Wrapper::complete(int r)
     if (async) {
         async = false;
         get_mds()->finisher->queue(this, r);
-    }
-    else {
+    } else {
         MDSIOContext::complete(r);
     }
 }

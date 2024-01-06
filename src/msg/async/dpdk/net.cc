@@ -39,60 +39,66 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "net "
 
-interface::interface(CephContext * cct, std::shared_ptr < DPDKDevice > dev,
-                     EventCenter * center)
-:  cct(cct), _dev(dev),
-    _rx(_dev->receive(center->get_id(),[center, this] (Packet p)
-                      {
-                      return dispatch_packet(center, std::move(p));}
+interface::interface(CephContext *cct, std::shared_ptr < DPDKDevice > dev,
+                     EventCenter *center)
+    :  cct(cct), _dev(dev),
+       _rx(_dev->receive(center->get_id(), [center, this](Packet p)
+{
+    return dispatch_packet(center, std::move(p));
+}
 
-        )),
+                    )),
 _hw_address(_dev->hw_address()), _hw_features(_dev->get_hw_features())
 {
     auto idx = 0u;
     unsigned qid = center->get_id();
     dev->queue_for_cpu(center->get_id()).
-        register_packet_provider([this, idx, qid] ()mutable {
-                                 std::optional < Packet > p; for (size_t i = 0;
-                                                                  i <
-                                                                  _pkt_providers.
-                                                                  size(); i++) {
-                                 auto l3p = _pkt_providers[idx++] ();
-                                 if (idx == _pkt_providers.size())
-                                 idx = 0; if (l3p) {
-                                 auto l3pv = std::move(*l3p);
-                                 auto eh = l3pv.p.prepend_header < eth_hdr > ();
-                                 eh->dst_mac = l3pv.to;
-                                 eh->src_mac = _hw_address;
-                                 eh->eth_proto = uint16_t(l3pv.proto_num);
-                                 *eh = eh->hton();
-                                 ldout(this->cct,
-                                       10) << "=== tx === proto " << std::
-                                 hex << uint16_t(l3pv.proto_num)
-                                 << " " << _hw_address << " -> " << l3pv.
-                                 to << " length " << std::dec << l3pv.p.
-                                 len() << dendl; p = std::move(l3pv.p);
-                                 return p;}
-                                 }
-                                 return p;}
-    ) ;
+    register_packet_provider([this, idx, qid]()mutable {
+        std::optional < Packet > p;
+        for (size_t i = 0;
+             i <
+             _pkt_providers.
+             size(); i++) {
+            auto l3p = _pkt_providers[idx++]();
+            if (idx == _pkt_providers.size()) {
+                idx = 0;
+            }
+            if (l3p) {
+                auto l3pv = std::move(*l3p);
+                auto eh = l3pv.p.prepend_header < eth_hdr > ();
+                eh->dst_mac = l3pv.to;
+                eh->src_mac = _hw_address;
+                eh->eth_proto = uint16_t(l3pv.proto_num);
+                *eh = eh->hton();
+                ldout(this->cct,
+                      10) << "=== tx === proto " << std::
+                          hex << uint16_t(l3pv.proto_num)
+                          << " " << _hw_address << " -> " << l3pv.
+                          to << " length " << std::dec << l3pv.p.
+                          len() << dendl;
+                p = std::move(l3pv.p);
+                return p;
+            }
+        }
+        return p;}
+                            ) ;
 }
 
 subscription < Packet,
-    ethernet_address > interface::register_l3(eth_protocol_num proto_num,
-                                              std::function < int (Packet p,
-                                                                   ethernet_address
-                                                                   from) > next,
-                                              std::function <
-                                              bool(forward_hash &, Packet & p,
-                                                   size_t) > forward)
+ethernet_address > interface::register_l3(eth_protocol_num proto_num,
+        std::function < int (Packet p,
+                             ethernet_address
+                             from) > next,
+        std::function <
+        bool(forward_hash &, Packet &p,
+             size_t) > forward)
 {
     auto i =
         _proto_map.emplace(std::piecewise_construct,
                            std::make_tuple(uint16_t(proto_num)),
                            std::forward_as_tuple(std::move(forward)));
     ceph_assert(i.second);
-    l3_rx_stream & l3_rx = i.first->second;
+    l3_rx_stream &l3_rx = i.first->second;
     return l3_rx.packet_stream.listen(std::move(next));
 }
 
@@ -101,7 +107,7 @@ unsigned interface::hash2cpu(uint32_t hash)
     return _dev->hash2cpu(hash);
 }
 
-const rss_key_type & interface::rss_key() const const
+const rss_key_type &interface::rss_key() const const
 {
     return _dev->rss_key();
 }
@@ -111,24 +117,27 @@ uint16_t interface::hw_queues_count() const const
     return _dev->hw_queues_count();
 }
 
-class C_handle_l2forward:public EventCallback {
+class C_handle_l2forward: public EventCallback
+{
     std::shared_ptr < DPDKDevice > sdev;
     unsigned &queue_depth;
     Packet p;
     unsigned dst;
 
-  public:
+public:
     C_handle_l2forward(std::shared_ptr < DPDKDevice > &p, unsigned &qd,
                        Packet pkt, unsigned target)
-    :sdev(p), queue_depth(qd), p(std::move(pkt)), dst(target) {
-    } void do_request(uint64_t fd) {
+        : sdev(p), queue_depth(qd), p(std::move(pkt)), dst(target)
+    {
+    } void do_request(uint64_t fd)
+    {
         sdev->l2receive(dst, std::move(p));
         queue_depth--;
         delete this;
     }
 };
 
-void interface::forward(EventCenter * source, unsigned target, Packet p)
+void interface::forward(EventCenter *source, unsigned target, Packet p)
 {
     static __thread unsigned queue_depth;
 
@@ -136,16 +145,16 @@ void interface::forward(EventCenter * source, unsigned target, Packet p)
         queue_depth++;
         // FIXME: need ensure this event not be called after EventCenter destruct
         _dev->workers[target]->center.
-            dispatch_event_external(new
-                                    C_handle_l2forward(_dev, queue_depth,
-                                                       std::move(p.
-                                                                 free_on_cpu
-                                                                 (source)),
-                                                       target));
+        dispatch_event_external(new
+                                C_handle_l2forward(_dev, queue_depth,
+                                        std::move(p.
+                                                free_on_cpu
+                                                (source)),
+                                        target));
     }
 }
 
-int interface::dispatch_packet(EventCenter * center, Packet p)
+int interface::dispatch_packet(EventCenter *center, Packet p)
 {
     auto eh = p.get_header < eth_hdr > ();
     if (eh) {
@@ -154,36 +163,37 @@ int interface::dispatch_packet(EventCenter * center, Packet p)
         if (hwrss) {
             ldout(cct,
                   10) << __func__ << " === rx === proto " << std::hex <<::
-                ntoh(eh->eth_proto)
-                << " " << eh->src_mac.ntoh() << " -> " << eh->dst_mac.ntoh()
-                << " length " << std::dec << p.len() << " rss_hash " << *p.
-                rss_hash() << dendl;
-        }
-        else {
+                      ntoh(eh->eth_proto)
+                      << " " << eh->src_mac.ntoh() << " -> " << eh->dst_mac.ntoh()
+                      << " length " << std::dec << p.len() << " rss_hash " << *p.
+                      rss_hash() << dendl;
+        } else {
             ldout(cct,
                   10) << __func__ << " === rx === proto " << std::hex <<::
-                ntoh(eh->eth_proto)
-                << " " << eh->src_mac.ntoh() << " -> " << eh->dst_mac.ntoh()
-                << " length " << std::dec << p.len() << dendl;
+                      ntoh(eh->eth_proto)
+                      << " " << eh->src_mac.ntoh() << " -> " << eh->dst_mac.ntoh()
+                      << " length " << std::dec << p.len() << dendl;
         }
         if (i != _proto_map.end()) {
-            l3_rx_stream & l3 = i->second;
-            auto fw = _dev->forward_dst(center->get_id(),[&p, &l3, this] (){
-                                        auto hwrss = p.rss_hash(); if (hwrss) {
-                                        return *hwrss;}
-                                        else {
-                                        forward_hash data;
-                                        if (l3.
-                                            forward(data, p, sizeof(eth_hdr))) {
-                                        return toeplitz_hash(rss_key(), data);}
-                                        return 0u;}
-                                        }
-            ) ;
+            l3_rx_stream &l3 = i->second;
+            auto fw = _dev->forward_dst(center->get_id(), [&p, &l3, this]() {
+                auto hwrss = p.rss_hash();
+                if (hwrss) {
+                    return *hwrss;
+                } else {
+                    forward_hash data;
+                    if (l3.
+                        forward(data, p, sizeof(eth_hdr))) {
+                        return toeplitz_hash(rss_key(), data);
+                    }
+                    return 0u;
+                }
+            }
+                                       ) ;
             if (fw != center->get_id()) {
                 ldout(cct, 1) << __func__ << " forward to " << fw << dendl;
                 forward(center, fw, std::move(p));
-            }
-            else {
+            } else {
                 auto h = eh->ntoh();
                 auto from = h.src_mac;
                 p.trim_front(sizeof(*eh));
@@ -198,15 +208,18 @@ int interface::dispatch_packet(EventCenter * center, Packet p)
     return 0;
 }
 
-class C_arp_learn:public EventCallback {
+class C_arp_learn: public EventCallback
+{
     DPDKWorker *worker;
     ethernet_address l2_addr;
     ipv4_address l3_addr;
 
-  public:
-    C_arp_learn(DPDKWorker * w, ethernet_address l2, ipv4_address l3)
-    :worker(w), l2_addr(l2), l3_addr(l3) {
-    } void do_request(uint64_t id) {
+public:
+    C_arp_learn(DPDKWorker *w, ethernet_address l2, ipv4_address l3)
+        : worker(w), l2_addr(l2), l3_addr(l3)
+    {
+    } void do_request(uint64_t id)
+    {
         worker->arp_learn(l2_addr, l3_addr);
         delete this;
     }
@@ -214,25 +227,25 @@ class C_arp_learn:public EventCallback {
 
 void interface::arp_learn(ethernet_address l2, ipv4_address l3)
 {
-  for (auto && w:_dev->workers) {
+    for (auto && w : _dev->workers) {
         w->center.dispatch_event_external(new C_arp_learn(w, l2, l3));
     }
 }
 
-l3_protocol::l3_protocol(interface * netif, eth_protocol_num proto_num,
+l3_protocol::l3_protocol(interface *netif, eth_protocol_num proto_num,
                          packet_provider_type func)
-:  _netif(netif), _proto_num(proto_num)
+    :  _netif(netif), _proto_num(proto_num)
 {
     _netif->register_packet_provider(std::move(func));
 }
 
 subscription < Packet,
-    ethernet_address > l3_protocol::receive(std::function <
-                                            int (Packet,
-                                                 ethernet_address) > rx_fn,
-                                            std::function <
-                                            bool(forward_hash & h, Packet & p,
-                                                 size_t s) > forward)
+ethernet_address > l3_protocol::receive(std::function <
+                                        int (Packet,
+                                                ethernet_address) > rx_fn,
+                                        std::function <
+                                        bool(forward_hash &h, Packet &p,
+                                                size_t s) > forward)
 {
     return _netif->register_l3(_proto_num, std::move(rx_fn),
                                std::move(forward));

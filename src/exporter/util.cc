@@ -14,7 +14,7 @@
 #define dout_subsys ceph_subsys_ceph_exporter
 
 BlockTimer::BlockTimer(std::string file, std::string function)
-:  file(file), function(function), stopped(false)
+    :  file(file), function(function), stopped(false)
 {
     t1 = std::chrono::high_resolution_clock::now();
 }
@@ -58,14 +58,14 @@ std::string read_file_to_string(std::string path)
 }
 
 // Must be kept in sync with promethize() in src/pybind/mgr/prometheus/module.py
-void promethize(std::string & name)
+void promethize(std::string &name)
 {
     if (name[name.size() - 1] == '-') {
         name[name.size() - 1] = '_';
         name += "minus";
     }
 
-    auto should_be_underscore =[](char ch){
+    auto should_be_underscore = [](char ch) {
         return ch == '.' || ch == '/' || ch == ' ' || ch == '-';
     };
     std::replace_if(name.begin(), name.end(), should_be_underscore, '_');

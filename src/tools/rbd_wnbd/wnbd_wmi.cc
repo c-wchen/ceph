@@ -65,7 +65,7 @@ static void co_uninitialize()
 HRESULT COMBootstrapper::initialize()
 {
     std::unique_lock l {
-    init_lock};
+        init_lock};
 
     HRESULT hres = co_initialize_basic();
     if (!FAILED(hres)) {
@@ -85,7 +85,7 @@ void COMBootstrapper::cleanup()
 void WmiConnection::close()
 {
     dout(20) << "closing wmi conn: " << this
-        << ", svc: " << wbem_svc << ", loc: " << wbem_loc << dendl;
+             << ", svc: " << wbem_svc << ", loc: " << wbem_loc << dendl;
     if (wbem_svc != NULL) {
         wbem_svc->Release();
         wbem_svc = NULL;
@@ -118,7 +118,7 @@ HRESULT WmiConnection::initialize()
         hres = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32,
                             ERROR_INVALID_HANDLE);
         derr << "WMI connection failed, no WMI service object received." <<
-            dendl;
+             dendl;
         return hres;
     }
 
@@ -133,8 +133,8 @@ HRESULT WmiConnection::initialize()
     return hres;
 }
 
-HRESULT get_property_str(IWbemClassObject * cls_obj,
-                         const std::wstring & property, std::wstring & value)
+HRESULT get_property_str(IWbemClassObject *cls_obj,
+                         const std::wstring &property, std::wstring &value)
 {
     VARIANT vt_prop;
     VariantInit(&vt_prop);
@@ -152,13 +152,13 @@ HRESULT get_property_str(IWbemClassObject * cls_obj,
 
     if (FAILED(hres)) {
         derr << "Could not get WMI property: " << to_string(property)
-            << ". HRESULT: " << hres << dendl;
+             << ". HRESULT: " << hres << dendl;
     }
     return hres;
 }
 
-HRESULT get_property_int(IWbemClassObject * cls_obj,
-                         const std::wstring & property, uint32_t & value)
+HRESULT get_property_int(IWbemClassObject *cls_obj,
+                         const std::wstring &property, uint32_t &value)
 {
     VARIANT vt_prop;
     VariantInit(&vt_prop);
@@ -176,7 +176,7 @@ HRESULT get_property_int(IWbemClassObject * cls_obj,
 
     if (FAILED(hres)) {
         derr << "Could not get WMI property: " << to_string(property)
-            << ". HRESULT: " << hres << dendl;
+             << ". HRESULT: " << hres << dendl;
     }
     return hres;
 }
@@ -190,20 +190,19 @@ HRESULT WmiSubscription::initialize()
     }
 
     hres = conn.wbem_svc->ExecNotificationQuery(_bstr_t(L"WQL").GetBSTR(),
-                                                _bstr_t(query.c_str()).
-                                                GetBSTR(),
-                                                WBEM_FLAG_FORWARD_ONLY |
-                                                WBEM_FLAG_RETURN_IMMEDIATELY,
-                                                NULL, &event_enum);
+           _bstr_t(query.c_str()).
+           GetBSTR(),
+           WBEM_FLAG_FORWARD_ONLY |
+           WBEM_FLAG_RETURN_IMMEDIATELY,
+           NULL, &event_enum);
 
     if (FAILED(hres)) {
         derr << "Notification query failed, unable to subscribe to "
-            << "WMI events. HRESULT: " << hres << dendl;
-    }
-    else {
+             << "WMI events. HRESULT: " << hres << dendl;
+    } else {
         dout(20) << "wmi subscription initialized: " << this
-            << ", event enum: " << event_enum
-            << ", conn: " << &conn << ", conn svc: " << conn.wbem_svc << dendl;
+                 << ", event enum: " << event_enum
+                 << ", conn: " << &conn << ", conn svc: " << conn.wbem_svc << dendl;
     }
 
     return hres;
@@ -212,7 +211,7 @@ HRESULT WmiSubscription::initialize()
 void WmiSubscription::close()
 {
     dout(20) << "closing wmi subscription: " << this
-        << ", event enum: " << event_enum << dendl;
+             << ", event enum: " << event_enum << dendl;
     if (event_enum != NULL) {
         event_enum->Release();
         event_enum = NULL;
@@ -221,7 +220,7 @@ void WmiSubscription::close()
 
 HRESULT WmiSubscription::next(long timeout,
                               ULONG count,
-                              IWbemClassObject ** objects, ULONG * returned)
+                              IWbemClassObject **objects, ULONG *returned)
 {
     if (!event_enum) {
         HRESULT hres = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32,
@@ -241,10 +240,10 @@ WmiSubscription subscribe_wnbd_adapter_events(uint32_t interval)
 {
     std::wostringstream query_stream;
     query_stream
-        << L"SELECT * FROM __InstanceOperationEvent "
-        << L"WITHIN " << interval
-        << L"WHERE TargetInstance ISA 'Win32_ScsiController' "
-        << L"AND TargetInstance.Description=" << L"'WNBD SCSI Virtual Adapter'";
+            << L"SELECT * FROM __InstanceOperationEvent "
+            << L"WITHIN " << interval
+            << L"WHERE TargetInstance ISA 'Win32_ScsiController' "
+            << L"AND TargetInstance.Description=" << L"'WNBD SCSI Virtual Adapter'";
 
     return WmiSubscription(L"root\\cimv2", query_stream.str());
 }

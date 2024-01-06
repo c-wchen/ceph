@@ -36,7 +36,7 @@
 
 // -----------------------------------------------------------------------------
 
-static std::ostream & _tc_prefix(std::ostream * _dout)
+static std::ostream &_tc_prefix(std::ostream *_dout)
 {
     return *_dout << "ErasureCodeIsaTableCache: ";
 }
@@ -46,7 +46,7 @@ static std::ostream & _tc_prefix(std::ostream * _dout)
 ErasureCodeIsaTableCache::~ErasureCodeIsaTableCache()
 {
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
 
     codec_technique_tables_t::const_iterator ttables_it;
     codec_tables_t::const_iterator tables_it;
@@ -105,21 +105,20 @@ ErasureCodeIsaTableCache::~ErasureCodeIsaTableCache()
 
 // -----------------------------------------------------------------------------
 
-int
- ErasureCodeIsaTableCache::getDecodingTableCacheSize(int matrixtype)
+int ErasureCodeIsaTableCache::getDecodingTableCacheSize(int matrixtype)
 {
     std::lock_guard lock {
-    codec_tables_guard};
-    if (decoding_tables[matrixtype])
+        codec_tables_guard};
+    if (decoding_tables[matrixtype]) {
         return decoding_tables[matrixtype]->size();
-    else
+    } else {
         return -1;
+    }
 }
 
 // -----------------------------------------------------------------------------
 
-ErasureCodeIsaTableCache::lru_map_t *
-    ErasureCodeIsaTableCache::getDecodingTables(int matrix_type)
+ErasureCodeIsaTableCache::lru_map_t *ErasureCodeIsaTableCache::getDecodingTables(int matrix_type)
 {
     // the caller must hold the guard mutex:
     // => std::lock_guard lock{codec_tables_guard};
@@ -133,8 +132,7 @@ ErasureCodeIsaTableCache::lru_map_t *
 
 // -----------------------------------------------------------------------------
 
-ErasureCodeIsaTableCache::lru_list_t *
-    ErasureCodeIsaTableCache::getDecodingTablesLru(int matrix_type)
+ErasureCodeIsaTableCache::lru_list_t *ErasureCodeIsaTableCache::getDecodingTablesLru(int matrix_type)
 {
     // the caller must hold the guard mutex:
     // => std::lock_guard lock{codec_tables_guard};
@@ -149,21 +147,21 @@ ErasureCodeIsaTableCache::lru_list_t *
 // -----------------------------------------------------------------------------
 
 unsigned char **ErasureCodeIsaTableCache::getEncodingTable(int matrix, int k,
-                                                           int m)
+        int m)
 {
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
     return getEncodingTableNoLock(matrix, k, m);
 }
 
 // -----------------------------------------------------------------------------
 
 unsigned char **ErasureCodeIsaTableCache::getEncodingTableNoLock(int matrix,
-                                                                 int k, int m)
+        int k, int m)
 {
     // create a pointer to store an encoding table address
     if (!encoding_table[matrix][k][m]) {
-        encoding_table[matrix][k][m] = new(unsigned char *);
+        encoding_table[matrix][k][m] = new (unsigned char *);
         *encoding_table[matrix][k][m] = 0;
     }
     return encoding_table[matrix][k][m];
@@ -172,10 +170,10 @@ unsigned char **ErasureCodeIsaTableCache::getEncodingTableNoLock(int matrix,
 // -----------------------------------------------------------------------------
 
 unsigned char **ErasureCodeIsaTableCache::getEncodingCoefficient(int matrix,
-                                                                 int k, int m)
+        int k, int m)
 {
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
     return getEncodingCoefficientNoLock(matrix, k, m);
 }
 
@@ -186,7 +184,7 @@ getEncodingCoefficientNoLock(int matrix, int k, int m)
 {
     // create a pointer to store an encoding coefficients address
     if (!encoding_coefficient[matrix][k][m]) {
-        encoding_coefficient[matrix][k][m] = new(unsigned char *);
+        encoding_coefficient[matrix][k][m] = new (unsigned char *);
         *encoding_coefficient[matrix][k][m] = 0;
     }
     return encoding_coefficient[matrix][k][m];
@@ -195,20 +193,19 @@ getEncodingCoefficientNoLock(int matrix, int k, int m)
 // -----------------------------------------------------------------------------
 
 unsigned char *ErasureCodeIsaTableCache::setEncodingTable(int matrix, int k,
-                                                          int m,
-                                                          unsigned char
-                                                          *ec_in_table)
+        int m,
+        unsigned char
+        *ec_in_table)
 {
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
     unsigned char **ec_out_table = getEncodingTableNoLock(matrix, k, m);
     if (*ec_out_table) {
         // somebody might have deposited this table in the meanwhile, so clean
         // the input table and return the stored one
         free(ec_in_table);
         return *ec_out_table;
-    }
-    else {
+    } else {
         // we store the provided input table and return this one
         *encoding_table[matrix][k][m] = ec_in_table;
         return ec_in_table;
@@ -218,20 +215,19 @@ unsigned char *ErasureCodeIsaTableCache::setEncodingTable(int matrix, int k,
 // -----------------------------------------------------------------------------
 
 unsigned char *ErasureCodeIsaTableCache::setEncodingCoefficient(int matrix,
-                                                                int k, int m,
-                                                                unsigned char
-                                                                *ec_in_coeff)
+        int k, int m,
+        unsigned char
+        *ec_in_coeff)
 {
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
     unsigned char **ec_out_coeff = getEncodingCoefficientNoLock(matrix, k, m);
     if (*ec_out_coeff) {
         // somebody might have deposited these coefficients in the meanwhile, so clean
         // the input coefficients and return the stored ones
         free(ec_in_coeff);
         return *ec_out_coeff;
-    }
-    else {
+    } else {
         // we store the provided input coefficients and return these
         *encoding_coefficient[matrix][k][m] = ec_in_coeff;
         return ec_in_coeff;
@@ -240,7 +236,7 @@ unsigned char *ErasureCodeIsaTableCache::setEncodingCoefficient(int matrix,
 
 // -----------------------------------------------------------------------------
 
-ceph::mutex * ErasureCodeIsaTableCache::getLock()
+ceph::mutex *ErasureCodeIsaTableCache::getLock()
 {
     return &codec_tables_guard;
 }
@@ -248,10 +244,10 @@ ceph::mutex * ErasureCodeIsaTableCache::getLock()
 // -----------------------------------------------------------------------------
 
 bool ErasureCodeIsaTableCache::getDecodingTableFromCache(std::
-                                                         string & signature,
-                                                         unsigned char *&table,
-                                                         int matrixtype, int k,
-                                                         int m)
+        string &signature,
+        unsigned char *&table,
+        int matrixtype, int k,
+        int m)
 {
     // --------------------------------------------------------------------------
     // LRU decoding matrix cache
@@ -263,7 +259,7 @@ bool ErasureCodeIsaTableCache::getDecodingTableFromCache(std::
     bool found = false;
 
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
 
     lru_map_t *decode_tbls_map = getDecodingTables(matrixtype);
 
@@ -286,10 +282,10 @@ bool ErasureCodeIsaTableCache::getDecodingTableFromCache(std::
 
 // -----------------------------------------------------------------------------
 
-void ErasureCodeIsaTableCache::putDecodingTableToCache(std::string & signature,
-                                                       unsigned char *&table,
-                                                       int matrixtype,
-                                                       int k, int m)
+void ErasureCodeIsaTableCache::putDecodingTableToCache(std::string &signature,
+        unsigned char *&table,
+        int matrixtype,
+        int k, int m)
 {
     // --------------------------------------------------------------------------
     // LRU decoding matrix cache
@@ -302,7 +298,7 @@ void ErasureCodeIsaTableCache::putDecodingTableToCache(std::string & signature,
     ceph::buffer::ptr cachetable;
 
     std::lock_guard lock {
-    codec_tables_guard};
+        codec_tables_guard};
 
     lru_map_t *decode_tbls_map = getDecodingTables(matrixtype);
 
@@ -329,8 +325,7 @@ void ErasureCodeIsaTableCache::putDecodingTableToCache(std::string & signature,
         // add the new to the map
         (*decode_tbls_map)[signature] =
             std::make_pair(decode_tbls_lru->begin(), cachetable);
-    }
-    else {
+    } else {
         dout(12) << "[ store table  ] = " << signature << dendl;
         // allocate a new buffer
         cachetable = ceph::buffer::create(k * (m + k) * 32);

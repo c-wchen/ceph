@@ -6,32 +6,37 @@
 
 namespace fs = std::filesystem;
 
-class DencoderPlugin {
+class DencoderPlugin
+{
     using dencoders_t = std::vector < std::pair < std::string, Dencoder * >>;
-  public:
-    DencoderPlugin(const fs::path & path) {
+public:
+    DencoderPlugin(const fs::path &path)
+    {
         mod = dlopen(path.c_str(), RTLD_NOW);
         if (mod == nullptr) {
             std::
-                cerr << "failed to dlopen(" << path << "): " << dlerror() <<
-                std::endl;
-    }} DencoderPlugin(DencoderPlugin && other)
-    :mod {
-    other.mod}
+            cerr << "failed to dlopen(" << path << "): " << dlerror() <<
+                 std::endl;
+        }
+    } DencoderPlugin(DencoderPlugin && other)
+        : mod {
+        other.mod}
     , dencoders {
-    std::move(other.dencoders)}
+        std::move(other.dencoders)}
     {
         other.mod = nullptr;
         other.dencoders.clear();
     }
-    ~DencoderPlugin() {
+    ~DencoderPlugin()
+    {
 #if !defined(__FreeBSD__)
         if (mod) {
             dlclose(mod);
         }
 #endif
     }
-    const dencoders_t & register_dencoders() {
+    const dencoders_t &register_dencoders()
+    {
         static constexpr std::string_view REGISTER_DENCODERS_FUNCTION =
             "register_dencoders\0";
 
@@ -42,29 +47,32 @@ class DencoderPlugin {
             (dlsym(mod, REGISTER_DENCODERS_FUNCTION.data()));
         if (do_register == nullptr) {
             std::
-                cerr << "failed to dlsym(" << REGISTER_DENCODERS_FUNCTION <<
-                "): " << dlerror() << std::endl;
+            cerr << "failed to dlsym(" << REGISTER_DENCODERS_FUNCTION <<
+                 "): " << dlerror() << std::endl;
             return dencoders;
         }
         do_register(this);
         return dencoders;
     }
 
-    bool good() const {
+    bool good() const
+    {
         return mod != nullptr;
-    } void unregister_dencoders() {
+    } void unregister_dencoders()
+    {
         while (!dencoders.empty()) {
             delete dencoders.back().second;
             dencoders.pop_back();
         }
     }
     template < typename DencoderT, typename ... Args >
-        void emplace(const char *name, Args && ... args) {
+    void emplace(const char *name, Args && ... args)
+    {
         dencoders.emplace_back(name,
                                new DencoderT(std::forward < Args > (args) ...));
     }
 
-  private:
+private:
     void *mod = nullptr;
     dencoders_t dencoders;
 };

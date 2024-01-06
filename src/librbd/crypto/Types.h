@@ -4,13 +4,15 @@
 #ifndef CEPH_LIBRBD_CRYPTO_TYPES_H
 #define CEPH_LIBRBD_CRYPTO_TYPES_H
 
-namespace librbd {
-    namespace crypto {
+namespace librbd
+{
+namespace crypto
+{
 
-        enum CipherMode {
-            CIPHER_MODE_ENC,
-            CIPHER_MODE_DEC,
-        };
+enum CipherMode {
+    CIPHER_MODE_ENC,
+    CIPHER_MODE_DEC,
+};
 
 } // namespace crypto }         // namespace librbd
 #endif                          // CEPH_LIBRBD_CRYPTO_DATA_CRYPTOR_H

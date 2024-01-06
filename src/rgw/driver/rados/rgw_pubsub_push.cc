@@ -27,7 +27,7 @@
 using namespace rgw;
 
 template < typename EventType >
-    std::string json_format_pubsub_event(const EventType & event)
+std::string json_format_pubsub_event(const EventType &event)
 {
     std::stringstream ss;
     JSONFormatter f(false);
@@ -42,14 +42,14 @@ template < typename EventType >
     return ss.str();
 }
 
-bool get_bool(const RGWHTTPArgs & args, const std::string & name,
+bool get_bool(const RGWHTTPArgs &args, const std::string &name,
               bool default_value)
 {
     bool value;
     bool exists;
     if (args.get_bool(name.c_str(), &value, &exists) == -EINVAL) {
         throw RGWPubSubEndpoint::
-            configuration_error("invalid boolean value for " + name);
+        configuration_error("invalid boolean value for " + name);
     }
     if (!exists) {
         return default_value;
@@ -57,8 +57,9 @@ bool get_bool(const RGWHTTPArgs & args, const std::string & name,
     return value;
 }
 
-class RGWPubSubHTTPEndpoint:public RGWPubSubEndpoint {
-  private:
+class RGWPubSubHTTPEndpoint: public RGWPubSubEndpoint
+{
+private:
     const std::string endpoint;
     typedef unsigned ack_level_t;
     ack_level_t ack_level;      // TODO: not used for now
@@ -67,21 +68,20 @@ class RGWPubSubHTTPEndpoint:public RGWPubSubEndpoint {
     static const ack_level_t ACK_LEVEL_ANY = 0;
     static const ack_level_t ACK_LEVEL_NON_ERROR = 1;
 
-  public:
-     RGWPubSubHTTPEndpoint(const std::string & _endpoint,
-                           const RGWHTTPArgs & args):endpoint(_endpoint),
+public:
+    RGWPubSubHTTPEndpoint(const std::string &_endpoint,
+                          const RGWHTTPArgs &args): endpoint(_endpoint),
         verify_ssl(get_bool(args, "verify-ssl", true)),
-        cloudevents(get_bool(args, "cloudevents", false)) {
+        cloudevents(get_bool(args, "cloudevents", false))
+    {
         bool exists;
-        const auto & str_ack_level = args.get("http-ack-level", &exists);
+        const auto &str_ack_level = args.get("http-ack-level", &exists);
         if (!exists || str_ack_level == "any") {
             // "any" is default
             ack_level = ACK_LEVEL_ANY;
-        }
-        else if (str_ack_level == "non-error") {
+        } else if (str_ack_level == "non-error") {
             ack_level = ACK_LEVEL_NON_ERROR;
-        }
-        else {
+        } else {
             ack_level = std::atoi(str_ack_level.c_str());
             if (ack_level < 100 || ack_level >= 600) {
                 throw configuration_error("HTTP/S: invalid http-ack-level: " +
@@ -90,9 +90,10 @@ class RGWPubSubHTTPEndpoint:public RGWPubSubEndpoint {
         }
     }
 
-    int send_to_completion_async(CephContext * cct,
-                                 const rgw_pubsub_s3_event & event,
-                                 optional_yield y) override {
+    int send_to_completion_async(CephContext *cct,
+                                 const rgw_pubsub_s3_event &event,
+                                 optional_yield y) override
+    {
         bufferlist read_bl;
         RGWPostHTTPData request(cct, "POST", endpoint, &read_bl, verify_ssl);
         const auto post_data = json_format_pubsub_event(event);
@@ -115,25 +116,30 @@ class RGWPubSubHTTPEndpoint:public RGWPubSubEndpoint {
         request.set_post_data(post_data);
         request.set_send_length(post_data.length());
         request.append_header("Content-Type", "application/json");
-        if (perfcounter)
+        if (perfcounter) {
             perfcounter->inc(l_rgw_pubsub_push_pending);
+        }
         const auto rc = RGWHTTP::process(&request, y);
-        if (perfcounter)
+        if (perfcounter) {
             perfcounter->dec(l_rgw_pubsub_push_pending);
+        }
         // TODO: use read_bl to process return code and handle according to ack level
         return rc;
     }
 
-    std::string to_str()const override {
+    std::string to_str()const override
+    {
         std::string str("HTTP/S Endpoint");
         str += "\nURI: " + endpoint;
         str += (verify_ssl ? "\nverify SSL" : "\ndon't verify SSL");
         return str;
-}};
+    }
+};
 
 #ifdef WITH_RADOSGW_AMQP_ENDPOINT
-class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
-  private:
+class RGWPubSubAMQPEndpoint: public RGWPubSubEndpoint
+{
+private:
     enum class ack_level_t {
         None,
         Broker,
@@ -144,15 +150,17 @@ class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
     const std::string topic;
     const std::string exchange;
     ack_level_t ack_level;
-     amqp::connection_ptr_t conn;
+    amqp::connection_ptr_t conn;
 
-    bool get_verify_ssl(const RGWHTTPArgs & args) {
+    bool get_verify_ssl(const RGWHTTPArgs &args)
+    {
         bool exists;
         auto str_verify_ssl = args.get("verify-ssl", &exists);
         if (!exists) {
             // verify server certificate by default
             return true;
-        } boost::algorithm::to_lower(str_verify_ssl);
+        }
+        boost::algorithm::to_lower(str_verify_ssl);
         if (str_verify_ssl == "true") {
             return true;
         }
@@ -163,7 +171,8 @@ class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
                                   str_verify_ssl);
     }
 
-    std::string get_exchange(const RGWHTTPArgs & args) {
+    std::string get_exchange(const RGWHTTPArgs &args)
+    {
         bool exists;
         const auto exchange = args.get("amqp-exchange", &exists);
         if (!exists) {
@@ -172,9 +181,10 @@ class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
         return exchange;
     }
 
-    ack_level_t get_ack_level(const RGWHTTPArgs & args) {
+    ack_level_t get_ack_level(const RGWHTTPArgs &args)
+    {
         bool exists;
-        const auto & str_ack_level = args.get("amqp-ack-level", &exists);
+        const auto &str_ack_level = args.get("amqp-ack-level", &exists);
         if (!exists || str_ack_level == "broker") {
             // "broker" is default
             return ack_level_t::Broker;
@@ -189,16 +199,18 @@ class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
                                   str_ack_level);
     }
 
-  public:
-  RGWPubSubAMQPEndpoint(const std::string & _endpoint, const std::string & _topic, const RGWHTTPArgs & args, CephContext * _cct):
-    cct(_cct),
+public:
+    RGWPubSubAMQPEndpoint(const std::string &_endpoint, const std::string &_topic, const RGWHTTPArgs &args,
+                          CephContext *_cct):
+        cct(_cct),
         endpoint(_endpoint),
         topic(_topic),
         exchange(get_exchange(args)),
         ack_level(get_ack_level(args)),
         conn(amqp::
              connect(endpoint, exchange, (ack_level == ack_level_t::Broker),
-                     get_verify_ssl(args), args.get_optional("ca-location"))) {
+                     get_verify_ssl(args), args.get_optional("ca-location")))
+    {
         if (!conn) {
             throw configuration_error("AMQP: failed to create connection to: " +
                                       endpoint);
@@ -208,87 +220,90 @@ class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
     // this allows waiting untill "finish()" is called from a different thread
     // waiting could be blocking the waiting thread or yielding, depending
     // with compilation flag support and whether the optional_yield is set
-    class Waiter {
+    class Waiter
+    {
         using Signature = void (boost::system::error_code);
         using Completion = ceph::async::Completion < Signature >;
-         std::unique_ptr < Completion > completion = nullptr;
+        std::unique_ptr < Completion > completion = nullptr;
         int ret;
 
         mutable std::atomic < bool > done = false;
         mutable std::mutex lock;
         mutable std::condition_variable cond;
 
-         template < typename ExecutionContext, typename CompletionToken >
-            auto async_wait(ExecutionContext & ctx, CompletionToken && token) {
+        template < typename ExecutionContext, typename CompletionToken >
+        auto async_wait(ExecutionContext &ctx, CompletionToken && token)
+        {
             boost::asio::async_completion < CompletionToken,
-                Signature > init(token);
-            auto & handler = init.completion_handler;
+                  Signature > init(token);
+            auto &handler = init.completion_handler;
             {
                 std::unique_lock l {
-                lock};
+                    lock};
                 completion =
                     Completion::create(ctx.get_executor(), std::move(handler));
             }
             return init.result.get();
         }
 
-      public:
-        int wait(optional_yield y) {
+    public:
+        int wait(optional_yield y)
+        {
             if (done) {
                 return ret;
             }
             if (y) {
-                auto & io_ctx = y.get_io_context();
-                auto & yield_ctx = y.get_yield_context();
+                auto &io_ctx = y.get_io_context();
+                auto &yield_ctx = y.get_yield_context();
                 boost::system::error_code ec;
                 async_wait(io_ctx, yield_ctx[ec]);
                 return -ec.value();
             }
             std::unique_lock l(lock);
-            cond.wait(l,[this] {
-                      return (done == true);
-                      }
-            );
+            cond.wait(l, [this] {
+                return (done == true);
+            }
+                     );
             return ret;
         }
 
-        void finish(int r) {
+        void finish(int r)
+        {
             std::unique_lock l {
-            lock};
+                lock};
             ret = r;
             done = true;
             if (completion) {
                 boost::system::error_code ec(-ret,
                                              boost::system::system_category());
                 Completion::post(std::move(completion), ec);
-            }
-            else {
+            } else {
                 cond.notify_all();
             }
         }
     };
 
-    int send_to_completion_async(CephContext * cct,
-                                 const rgw_pubsub_s3_event & event,
-                                 optional_yield y) override {
+    int send_to_completion_async(CephContext *cct,
+                                 const rgw_pubsub_s3_event &event,
+                                 optional_yield y) override
+    {
         ceph_assert(conn);
         if (ack_level == ack_level_t::None) {
             return amqp::publish(conn, topic, json_format_pubsub_event(event));
-        }
-        else {
+        } else {
             // TODO: currently broker and routable are the same - this will require different flags but the same mechanism
             // note: dynamic allocation of Waiter is needed when this is invoked from a beast coroutine
             auto w = std::unique_ptr < Waiter > (new Waiter);
             const auto rc = amqp::publish_with_confirm(conn,
-                                                       topic,
-                                                       json_format_pubsub_event
-                                                       (event),
-                                                       std::bind(&Waiter::
-                                                                 finish,
-                                                                 w.get(),
-                                                                 std::
-                                                                 placeholders::
-                                                                 _1));
+                            topic,
+                            json_format_pubsub_event
+                            (event),
+                            std::bind(&Waiter::
+                                      finish,
+                                      w.get(),
+                                      std::
+                                      placeholders::
+                                      _1));
             if (rc < 0) {
                 // failed to publish, does not wait for reply
                 return rc;
@@ -297,13 +312,15 @@ class RGWPubSubAMQPEndpoint:public RGWPubSubEndpoint {
         }
     }
 
-    std::string to_str()const override {
+    std::string to_str()const override
+    {
         std::string str("AMQP(0.9.1) Endpoint");
         str += "\nURI: " + endpoint;
         str += "\nTopic: " + topic;
         str += "\nExchange: " + exchange;
         return str;
-}};
+    }
+};
 
 static const std::string AMQP_0_9_1("0-9-1");
 static const std::string AMQP_1_0("1-0");
@@ -311,8 +328,9 @@ static const std::string AMQP_SCHEMA("amqp");
 #endif // ifdef WITH_RADOSGW_AMQP_ENDPOINT
 
 #ifdef WITH_RADOSGW_KAFKA_ENDPOINT
-class RGWPubSubKafkaEndpoint:public RGWPubSubEndpoint {
-  private:
+class RGWPubSubKafkaEndpoint: public RGWPubSubEndpoint
+{
+private:
     enum class ack_level_t {
         None,
         Broker,
@@ -322,23 +340,27 @@ class RGWPubSubKafkaEndpoint:public RGWPubSubEndpoint {
     const ack_level_t ack_level;
     std::string conn_name;
 
-    ack_level_t get_ack_level(const RGWHTTPArgs & args) {
+    ack_level_t get_ack_level(const RGWHTTPArgs &args)
+    {
         bool exists;
-        const auto & str_ack_level = args.get("kafka-ack-level", &exists);
+        const auto &str_ack_level = args.get("kafka-ack-level", &exists);
         if (!exists || str_ack_level == "broker") {
             // "broker" is default
             return ack_level_t::Broker;
-        } if (str_ack_level == "none") {
+        }
+        if (str_ack_level == "none") {
             return ack_level_t::None;
         }
         throw configuration_error("Kafka: invalid kafka-ack-level: " +
                                   str_ack_level);
     }
 
-  public:
-  RGWPubSubKafkaEndpoint(const std::string & _endpoint, const std::string & _topic, const RGWHTTPArgs & args, CephContext * _cct):
-    cct(_cct),
-        topic(_topic), ack_level(get_ack_level(args)) {
+public:
+    RGWPubSubKafkaEndpoint(const std::string &_endpoint, const std::string &_topic, const RGWHTTPArgs &args,
+                           CephContext *_cct):
+        cct(_cct),
+        topic(_topic), ack_level(get_ack_level(args))
+    {
         if (!kafka::
             connect(conn_name, _endpoint, get_bool(args, "use-ssl", false),
                     get_bool(args, "verify-ssl", true),
@@ -352,7 +374,8 @@ class RGWPubSubKafkaEndpoint:public RGWPubSubEndpoint {
     // this allows waiting untill "finish()" is called from a different thread
     // waiting could be blocking the waiting thread or yielding, depending
     // with compilation flag support and whether the optional_yield is set
-    class Waiter {
+    class Waiter
+    {
         using Signature = void (boost::system::error_code);
         using Completion = ceph::async::Completion < Signature >;
         std::unique_ptr < Completion > completion = nullptr;
@@ -363,75 +386,77 @@ class RGWPubSubKafkaEndpoint:public RGWPubSubEndpoint {
         mutable std::condition_variable cond;
 
         template < typename ExecutionContext, typename CompletionToken >
-            auto async_wait(ExecutionContext & ctx, CompletionToken && token) {
+        auto async_wait(ExecutionContext &ctx, CompletionToken && token)
+        {
             boost::asio::async_completion < CompletionToken,
-                Signature > init(token);
-            auto & handler = init.completion_handler;
+                  Signature > init(token);
+            auto &handler = init.completion_handler;
             {
                 std::unique_lock l {
-                lock};
+                    lock};
                 completion =
                     Completion::create(ctx.get_executor(), std::move(handler));
             }
             return init.result.get();
         }
 
-      public:
-        int wait(optional_yield y) {
+    public:
+        int wait(optional_yield y)
+        {
             if (done) {
                 return ret;
             }
             if (y) {
-                auto & io_ctx = y.get_io_context();
-                auto & yield_ctx = y.get_yield_context();
+                auto &io_ctx = y.get_io_context();
+                auto &yield_ctx = y.get_yield_context();
                 boost::system::error_code ec;
                 async_wait(io_ctx, yield_ctx[ec]);
                 return -ec.value();
             }
             std::unique_lock l(lock);
-            cond.wait(l,[this] {
-                      return (done == true);
-                      }
-            );
+            cond.wait(l, [this] {
+                return (done == true);
+            }
+                     );
             return ret;
         }
 
-        void finish(int r) {
+        void finish(int r)
+        {
             std::unique_lock l {
-            lock};
+                lock};
             ret = r;
             done = true;
             if (completion) {
                 boost::system::error_code ec(-ret,
                                              boost::system::system_category());
                 Completion::post(std::move(completion), ec);
-            }
-            else {
+            } else {
                 cond.notify_all();
             }
         }
     };
 
-    int send_to_completion_async(CephContext * cct,
-                                 const rgw_pubsub_s3_event & event,
-                                 optional_yield y) override {
+    int send_to_completion_async(CephContext *cct,
+                                 const rgw_pubsub_s3_event &event,
+                                 optional_yield y) override
+    {
         if (ack_level == ack_level_t::None) {
             return kafka::publish(conn_name, topic,
                                   json_format_pubsub_event(event));
-        }
-        else {
+        } else {
             // note: dynamic allocation of Waiter is needed when this is invoked from a beast coroutine
             auto w = std::unique_ptr < Waiter > (new Waiter);
             const auto rc = kafka::publish_with_confirm(conn_name,
-                                                        topic,
-                                                        json_format_pubsub_event
-                                                        (event),
-                                                        std::bind(&Waiter::
-                                                                  finish,
-                                                                  w.get(),
-                                                                  std::
-                                                                  placeholders::
-                                                                  _1));
+                            topic,
+                            json_format_pubsub_event
+                            (event),
+                            std::bind(&Waiter::
+                                      finish,
+                                      w.get(),
+                                      std::
+                                      placeholders::
+                                      _1));
             if (rc < 0) {
                 // failed to publish, does not wait for reply
                 return rc;
@@ -440,12 +465,14 @@ class RGWPubSubKafkaEndpoint:public RGWPubSubEndpoint {
         }
     }
 
-    std::string to_str()const override {
+    std::string to_str()const override
+    {
         std::string str("Kafka Endpoint");
         str += "\nBroker: " + conn_name;
         str += "\nTopic: " + topic;
         return str;
-}};
+    }
+};
 
 static const std::string KAFKA_SCHEMA("kafka");
 #endif // ifdef WITH_RADOSGW_KAFKA_ENDPOINT
@@ -454,7 +481,7 @@ static const std::string WEBHOOK_SCHEMA("webhook");
 static const std::string UNKNOWN_SCHEMA("unknown");
 static const std::string NO_SCHEMA("");
 
-const std::string & get_schema(const std::string & endpoint)
+const std::string &get_schema(const std::string &endpoint)
 {
     if (endpoint.empty()) {
         return NO_SCHEMA;
@@ -463,34 +490,31 @@ const std::string & get_schema(const std::string & endpoint)
     if (pos == std::string::npos) {
         return UNKNOWN_SCHEMA;
     }
-    const auto & schema = endpoint.substr(0, pos);
+    const auto &schema = endpoint.substr(0, pos);
     if (schema == "http" || schema == "https") {
         return WEBHOOK_SCHEMA;
 #ifdef WITH_RADOSGW_AMQP_ENDPOINT
-    }
-    else if (schema == "amqp" || schema == "amqps") {
+    } else if (schema == "amqp" || schema == "amqps") {
         return AMQP_SCHEMA;
 #endif
 #ifdef WITH_RADOSGW_KAFKA_ENDPOINT
-    }
-    else if (schema == "kafka") {
+    } else if (schema == "kafka") {
         return KAFKA_SCHEMA;
 #endif
     }
     return UNKNOWN_SCHEMA;
 }
 
-RGWPubSubEndpoint::Ptr RGWPubSubEndpoint::create(const std::string & endpoint,
-                                                 const std::string & topic,
-                                                 const RGWHTTPArgs & args,
-                                                 CephContext * cct)
+RGWPubSubEndpoint::Ptr RGWPubSubEndpoint::create(const std::string &endpoint,
+        const std::string &topic,
+        const RGWHTTPArgs &args,
+        CephContext *cct)
 {
-    const auto & schema = get_schema(endpoint);
+    const auto &schema = get_schema(endpoint);
     if (schema == WEBHOOK_SCHEMA) {
         return Ptr(new RGWPubSubHTTPEndpoint(endpoint, args));
 #ifdef WITH_RADOSGW_AMQP_ENDPOINT
-    }
-    else if (schema == AMQP_SCHEMA) {
+    } else if (schema == AMQP_SCHEMA) {
         bool exists;
         std::string version = args.get("amqp-version", &exists);
         if (!exists) {
@@ -498,19 +522,16 @@ RGWPubSubEndpoint::Ptr RGWPubSubEndpoint::create(const std::string & endpoint,
         }
         if (version == AMQP_0_9_1) {
             return Ptr(new RGWPubSubAMQPEndpoint(endpoint, topic, args, cct));
-        }
-        else if (version == AMQP_1_0) {
+        } else if (version == AMQP_1_0) {
             throw configuration_error("AMQP: v1.0 not supported");
             return nullptr;
-        }
-        else {
+        } else {
             throw configuration_error("AMQP: unknown version: " + version);
             return nullptr;
         }
 #endif
 #ifdef WITH_RADOSGW_KAFKA_ENDPOINT
-    }
-    else if (schema == KAFKA_SCHEMA) {
+    } else if (schema == KAFKA_SCHEMA) {
         return Ptr(new RGWPubSubKafkaEndpoint(endpoint, topic, args, cct));
 #endif
     }

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 #include "include/interval_set.h"
 #include "include/buffer.h"
 #include <list>
@@ -8,7 +8,7 @@
 
 #include "Object.h"
 
-void ContDesc::encode(bufferlist & bl) const const
+void ContDesc::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(objnum, bl);
@@ -19,7 +19,7 @@ void ContDesc::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void ContDesc::decode(bufferlist::const_iterator & bl)
+void ContDesc::decode(bufferlist::const_iterator &bl)
 {
     DECODE_START(1, bl);
     decode(objnum, bl);
@@ -30,13 +30,13 @@ void ContDesc::decode(bufferlist::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-std::ostream & operator<<(std::ostream & out, const ContDesc & rhs)
+std::ostream &operator<<(std::ostream &out, const ContDesc &rhs)
 {
     return out << "(ObjNum " << rhs.objnum
-        << " snap " << rhs.cursnap << " seq_num " << rhs.seqnum << ")";
+           << " snap " << rhs.cursnap << " seq_num " << rhs.seqnum << ")";
 }
 
-void AppendGenerator::get_ranges_map(const ContDesc & cont, std::map < uint64_t,
+void AppendGenerator::get_ranges_map(const ContDesc &cont, std::map < uint64_t,
                                      uint64_t > &out)
 {
     RandWrap rand(cont.seqnum);
@@ -50,14 +50,15 @@ void AppendGenerator::get_ranges_map(const ContDesc & cont, std::map < uint64_t,
         if (segment_length + pos > limit) {
             segment_length = limit - pos;
         }
-        if (alignment)
+        if (alignment) {
             ceph_assert(segment_length % alignment == 0);
+        }
         out.insert(std::pair < uint64_t, uint64_t > (pos, segment_length));
         pos += segment_length;
     }
 }
 
-void VarLenGenerator::get_ranges_map(const ContDesc & cont, std::map < uint64_t,
+void VarLenGenerator::get_ranges_map(const ContDesc &cont, std::map < uint64_t,
                                      uint64_t > &out)
 {
     RandWrap rand(cont.seqnum);
@@ -75,8 +76,7 @@ void VarLenGenerator::get_ranges_map(const ContDesc & cont, std::map < uint64_t,
         if (include) {
             out.insert(std::pair < uint64_t, uint64_t > (pos, segment_length));
             include = false;
-        }
-        else {
+        } else {
             include = true;
         }
         pos += segment_length;
@@ -94,8 +94,7 @@ void ObjectDesc::iterator::adjust_stack()
 
     if (stack.empty()) {
         cur_valid_till = std::numeric_limits < uint64_t >::max();
-    }
-    else {
+    } else {
         cur_valid_till = stack.top().second.next;
     }
 
@@ -103,8 +102,8 @@ void ObjectDesc::iterator::adjust_stack()
         uint64_t next = current->next(pos);
         if (next < cur_valid_till) {
             stack.emplace(current, StackState {
-                          next, size}
-            );
+                next, size}
+                         );
             cur_valid_till = next;
         }
 
@@ -113,20 +112,19 @@ void ObjectDesc::iterator::adjust_stack()
 
     if (current == layers.end()) {
         size = 0;
-    }
-    else {
+    } else {
         current->iter.seek(pos);
         size = std::min(size, current->get_size());
         cur_valid_till = std::min(current->valid_till(pos), cur_valid_till);
     }
 }
 
-const ContDesc & ObjectDesc::most_recent()
+const ContDesc &ObjectDesc::most_recent()
 {
     return layers.begin()->second;
 }
 
-void ObjectDesc::update(ContentsGenerator * gen, const ContDesc & next)
+void ObjectDesc::update(ContentsGenerator *gen, const ContDesc &next)
 {
     layers.push_front(std::pair < std::shared_ptr < ContentsGenerator >,
                       ContDesc > (std::shared_ptr < ContentsGenerator > (gen),
@@ -134,7 +132,7 @@ void ObjectDesc::update(ContentsGenerator * gen, const ContDesc & next)
     return;
 }
 
-bool ObjectDesc::check(bufferlist & to_check)
+bool ObjectDesc::check(bufferlist &to_check)
 {
     iterator objiter = begin();
     uint64_t error_at = 0;
@@ -146,19 +144,19 @@ bool ObjectDesc::check(bufferlist & to_check)
     uint64_t size = layers.begin()->first->get_length(layers.begin()->second);
     if (to_check.length() < size) {
         std::cout << "only read " << to_check.length()
-            << " out of size " << size << std::endl;
+                  << " out of size " << size << std::endl;
         return false;
     }
     return true;
 }
 
 bool ObjectDesc::check_sparse(const std::map < uint64_t, uint64_t > &extents,
-                              bufferlist & to_check)
+                              bufferlist &to_check)
 {
     uint64_t off = 0;
     uint64_t pos = 0;
     auto objiter = begin();
-  for (auto && extiter:extents) {
+    for (auto && extiter : extents) {
         // verify hole
         {
             bufferlist bl;
@@ -166,7 +164,7 @@ bool ObjectDesc::check_sparse(const std::map < uint64_t, uint64_t > &extents,
             uint64_t error_at = 0;
             if (!objiter.check_bl_advance(bl, &error_at)) {
                 std::cout << "sparse read omitted non-zero data at "
-                    << error_at << std::endl;
+                          << error_at << std::endl;
                 return false;
             }
         }
@@ -183,7 +181,7 @@ bool ObjectDesc::check_sparse(const std::map < uint64_t, uint64_t > &extents,
             uint64_t error_at = 0;
             if (!objiter.check_bl_advance(bl, &error_at)) {
                 std::cout << "incorrect buffer at pos " << error_at << std::
-                    endl;
+                          endl;
                 return false;
             }
             off += extiter.second;
@@ -203,7 +201,7 @@ bool ObjectDesc::check_sparse(const std::map < uint64_t, uint64_t > &extents,
     uint64_t error_at;
     if (!objiter.check_bl_advance(bl, &error_at)) {
         std::cout << "sparse read omitted non-zero data at "
-            << error_at << std::endl;
+                  << error_at << std::endl;
         return false;
     }
     return true;

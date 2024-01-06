@@ -1,18 +1,19 @@
 #include "FSMapUser.h"
 
-void FSMapUser::encode(ceph::buffer::list & bl, uint64_t features) const const
+void FSMapUser::encode(ceph::buffer::list &bl, uint64_t features) const const
 {
     ENCODE_START(1, 1, bl);
     encode(epoch, bl);
     encode(legacy_client_fscid, bl);
     std::vector < fs_info_t > fs_list;
-    for (auto p = filesystems.begin(); p != filesystems.end(); ++p)
+    for (auto p = filesystems.begin(); p != filesystems.end(); ++p) {
         fs_list.push_back(p->second);
+    }
     encode(fs_list, bl, features);
     ENCODE_FINISH(bl);
 }
 
-void FSMapUser::decode(ceph::buffer::list::const_iterator & p)
+void FSMapUser::decode(ceph::buffer::list::const_iterator &p)
 {
     DECODE_START(1, p);
     decode(epoch, p);
@@ -20,12 +21,13 @@ void FSMapUser::decode(ceph::buffer::list::const_iterator & p)
     std::vector < fs_info_t > fs_list;
     decode(fs_list, p);
     filesystems.clear();
-    for (auto p = fs_list.begin(); p != fs_list.end(); ++p)
+    for (auto p = fs_list.begin(); p != fs_list.end(); ++p) {
         filesystems[p->cid] = *p;
+    }
     DECODE_FINISH(p);
 }
 
-void FSMapUser::fs_info_t::encode(ceph::buffer::list & bl, uint64_t features) const const
+void FSMapUser::fs_info_t::encode(ceph::buffer::list &bl, uint64_t features) const const
 {
     ENCODE_START(1, 1, bl);
     encode(cid, bl);
@@ -33,7 +35,7 @@ void FSMapUser::fs_info_t::encode(ceph::buffer::list & bl, uint64_t features) co
     ENCODE_FINISH(bl);
 }
 
-void FSMapUser::fs_info_t::decode(ceph::buffer::list::const_iterator & p)
+void FSMapUser::fs_info_t::decode(ceph::buffer::list::const_iterator &p)
 {
     DECODE_START(1, p);
     decode(cid, p);
@@ -41,7 +43,7 @@ void FSMapUser::fs_info_t::decode(ceph::buffer::list::const_iterator & p)
     DECODE_FINISH(p);
 }
 
-void FSMapUser::generate_test_instances(std::list < FSMapUser * >&ls)
+void FSMapUser::generate_test_instances(std::list < FSMapUser * > &ls)
 {
     FSMapUser *m = new FSMapUser();
     m->epoch = 2;
@@ -53,29 +55,30 @@ void FSMapUser::generate_test_instances(std::list < FSMapUser * >&ls)
     ls.push_back(m);
 }
 
-void FSMapUser::print(std::ostream & out) const const
+void FSMapUser::print(std::ostream &out) const const
 {
     out << "e" << epoch << std::endl;
     out << "legacy_client_fscid: " << legacy_client_fscid << std::endl;
-  for (auto & p:filesystems)
+    for (auto &p : filesystems) {
         out << " id " << p.second.cid << " name " << p.second.name << std::endl;
+    }
 }
 
-void FSMapUser::print_summary(ceph::Formatter * f, std::ostream * out)
+void FSMapUser::print_summary(ceph::Formatter *f, std::ostream *out)
 {
     std::map < mds_role_t, std::string > by_rank;
     std::map < std::string, int >by_state;
 
     if (f) {
         f->dump_unsigned("epoch", get_epoch());
-      for (auto & p:filesystems) {
+        for (auto &p : filesystems) {
             f->dump_unsigned("id", p.second.cid);
             f->dump_string("name", p.second.name);
         }
-    }
-    else {
+    } else {
         *out << "e" << get_epoch() << ":";
-      for (auto & p:filesystems)
+        for (auto &p : filesystems) {
             *out << " " << p.second.name << "(" << p.second.cid << ")";
+        }
     }
 }

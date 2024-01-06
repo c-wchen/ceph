@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 /*
  * This file is open source software, licensed to you under the terms
  * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
@@ -28,26 +28,30 @@
 
 #include "Packet.h"
 
-template < typename Offset, typename Tag > class packet_merger {
-  private:
-    static uint64_t & linearizations_ref() {
+template < typename Offset, typename Tag > class packet_merger
+{
+private:
+    static uint64_t &linearizations_ref()
+    {
         static thread_local uint64_t linearization_count;
         return linearization_count;
     }
-  public:
+public:
     std::map < Offset, Packet > map;
 
-    static uint64_t linearizations() {
+    static uint64_t linearizations()
+    {
         return linearizations_ref();
     }
 
-    void merge(Offset offset, Packet p) {
+    void merge(Offset offset, Packet p)
+    {
         bool insert = true;
         auto beg = offset;
         auto end = beg + p.len();
         // First, try to merge the packet with existing segment
         for (auto it = map.begin(); it != map.end();) {
-            auto & seg_pkt = it->second;
+            auto &seg_pkt = it->second;
             auto seg_beg = it->first;
             auto seg_end = seg_beg + seg_pkt.len();
             // There are 6 cases:
@@ -55,16 +59,14 @@ template < typename Offset, typename Tag > class packet_merger {
                 // 1) seg_beg beg end seg_end
                 // We already have data in this packet
                 return;
-            }
-            else if (beg <= seg_beg && seg_end <= end) {
+            } else if (beg <= seg_beg && seg_end <= end) {
                 // 2) beg seg_beg seg_end end
                 // The new segment contains more data than this old segment
                 // Delete the old one, insert the new one
                 it = map.erase(it);
                 insert = true;
                 break;
-            }
-            else if (beg < seg_beg && seg_beg <= end && end <= seg_end) {
+            } else if (beg < seg_beg && seg_beg <= end && end <= seg_end) {
                 // 3) beg seg_beg end seg_end
                 // Merge two segments, trim front of old segment
                 auto trim = end - seg_beg;
@@ -74,8 +76,7 @@ template < typename Offset, typename Tag > class packet_merger {
                 it = map.erase(it);
                 insert = true;
                 break;
-            }
-            else if (seg_beg <= beg && beg <= seg_end && seg_end < end) {
+            } else if (seg_beg <= beg && beg <= seg_end && seg_end < end) {
                 // 4) seg_beg beg seg_end end
                 // Merge two segments, trim front of new segment
                 auto trim = seg_end - beg;
@@ -86,8 +87,7 @@ template < typename Offset, typename Tag > class packet_merger {
                 ++linearizations_ref();
                 insert = false;
                 break;
-            }
-            else {
+            } else {
                 // 5) beg end < seg_beg seg_end
                 //   or
                 // 6) seg_beg seg_end < beg end
@@ -108,7 +108,7 @@ template < typename Offset, typename Tag > class packet_merger {
         // segments mergable
         for (auto it = map.begin(); it != map.end();) {
             // The first segment
-            auto & seg_pkt = it->second;
+            auto &seg_pkt = it->second;
             auto seg_beg = it->first;
             auto seg_end = seg_beg + seg_pkt.len();
 
@@ -118,7 +118,7 @@ template < typename Offset, typename Tag > class packet_merger {
             if (it_next == map.end()) {
                 break;
             }
-            auto & p = it_next->second;
+            auto &p = it_next->second;
             auto beg = it_next->first;
             auto end = beg + p.len();
 
@@ -136,19 +136,16 @@ template < typename Offset, typename Tag > class packet_merger {
                 // Keep merging this first segment with its new next packet
                 // So we do not update the iterator: it
                 continue;
-            }
-            else if (end <= seg_end) {
+            } else if (end <= seg_end) {
                 // The first segment has all the data in the second segment
                 // Delete the second segment
                 map.erase(it_next);
                 continue;
-            }
-            else if (seg_end < beg) {
+            } else if (seg_end < beg) {
                 // Can not merge first segment with second segment
                 it = it_next;
                 continue;
-            }
-            else {
+            } else {
                 // If we reach here, we have a bug with merge.
                 std::cout << "packet_merger: merge error\n";
                 abort();

@@ -41,18 +41,18 @@ using std::string;
 static pid_t do_gettid(void)
 {
 #if defined(__linux__)
-    return static_cast < pid_t > (syscall(SYS_gettid));
+    return static_cast < pid_t >(syscall(SYS_gettid));
 #elif defined(_WIN32)
-    return static_cast < pid_t > (GetCurrentThreadId());
+    return static_cast < pid_t >(GetCurrentThreadId());
 #else
-    return static_cast < pid_t > (pthread_getthreadid_np());
+    return static_cast < pid_t >(pthread_getthreadid_np());
 #endif
 }
 
 std::atomic < unsigned >m_highest_id = { 0 };
 
 SysTestRunnable::SysTestRunnable(int argc, const char **argv)
-:m_argc(0), m_argv(NULL), m_argv_orig(NULL)
+    : m_argc(0), m_argv(NULL), m_argv_orig(NULL)
 {
     m_started = false;
     m_id = ++m_highest_id;
@@ -81,11 +81,11 @@ int SysTestRunnable:: start()
     if (use_threads) {
         ret = pthread_create(&m_pthread, NULL, systest_runnable_pthread_helper,
                              static_cast < void *>(this));
-        if (ret)
+        if (ret) {
             return ret;
+        }
         m_started = true;
-    }
-    else {
+    } else {
 #ifdef _WIN32
         printf("Using separate processes is not supported on Windows.\n");
         return -1;
@@ -102,8 +102,7 @@ int SysTestRunnable:: start()
             void *retptr =
                 systest_runnable_pthread_helper(static_cast < void *>(this));
             preforker.exit((int)(uintptr_t) retptr);
-        }
-        else {
+        } else {
             m_started = true;
         }
 #endif
@@ -133,8 +132,7 @@ std::string SysTestRunnable::join()
             return oss.str();
         }
         return "";
-    }
-    else {
+    } else {
 #ifdef _WIN32
         return "Using separate processes is not supported on Windows.\n";
 #else
@@ -146,11 +144,11 @@ std::string SysTestRunnable::join()
 }
 
 std::string SysTestRunnable::run_until_finished(std::vector <
-                                                SysTestRunnable * >&runnables)
+        SysTestRunnable * > &runnables)
 {
     int index = 0;
     for (std::vector < SysTestRunnable * >::const_iterator r =
-         runnables.begin(); r != runnables.end(); ++r) {
+             runnables.begin(); r != runnables.end(); ++r) {
         int ret = (*r)->start();
         if (ret) {
             ostringstream oss;
@@ -162,7 +160,7 @@ std::string SysTestRunnable::run_until_finished(std::vector <
     }
 
     for (std::vector < SysTestRunnable * >::const_iterator r =
-         runnables.begin(); r != runnables.end(); ++r) {
+             runnables.begin(); r != runnables.end(); ++r) {
         std::string rstr = (*r)->join();
         if (!rstr.empty()) {
             ostringstream oss;
@@ -192,10 +190,11 @@ void SysTestRunnable:: update_id_str(bool started)
     extra[0] = '\0';
 
     if (started) {
-        if (use_threads)
+        if (use_threads) {
             snprintf(extra, sizeof(extra), "_[%d]", do_gettid());
-        else
+        } else {
             snprintf(extra, sizeof(extra), "_[%d]", getpid());
+        }
     }
     if (use_threads)
         snprintf(m_id_str, SysTestRunnable::ID_STR_SZ, "thread_%d%s", m_id,
@@ -209,22 +208,26 @@ void SysTestRunnable:: update_id_str(bool started)
 void SysTestRunnable:: set_argv(int argc, const char **argv)
 {
     if (m_argv_orig != NULL) {
-        for (int i = 0; i < m_argc; ++i)
+        for (int i = 0; i < m_argc; ++i) {
             free((void *)(m_argv_orig[i]));
+        }
         delete[]m_argv_orig;
         m_argv_orig = NULL;
         delete[]m_argv;
         m_argv = NULL;
         m_argc = 0;
     }
-    if (argv == NULL)
+    if (argv == NULL) {
         return;
+    }
     m_argc = argc;
     m_argv_orig = new const char *[m_argc + 1];
-    for (int i = 0; i < m_argc; ++i)
+    for (int i = 0; i < m_argc; ++i) {
         m_argv_orig[i] = strdup(argv[i]);
+    }
     m_argv_orig[argc] = NULL;
     m_argv = new const char *[m_argc + 1];
-    for (int i = 0; i <= m_argc; ++i)
+    for (int i = 0; i <= m_argc; ++i) {
         m_argv[i] = m_argv_orig[i];
+    }
 }

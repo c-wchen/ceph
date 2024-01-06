@@ -19,32 +19,35 @@
 #include "rgw_role.h"
 #include "svc_meta_be.h"
 
-class RGWSI_Role_RADOS:public RGWServiceInstance {
-  public:
+class RGWSI_Role_RADOS: public RGWServiceInstance
+{
+public:
     struct Svc {
         RGWSI_Zone *zone {
-        nullptr};
+            nullptr};
         RGWSI_Meta *meta {
-        nullptr};
+            nullptr};
         RGWSI_MetaBackend *meta_be {
-        nullptr};
+            nullptr};
         RGWSI_SysObj *sysobj {
-        nullptr};
+            nullptr};
     } svc;
 
-     RGWSI_Role_RADOS(CephContext * cct):RGWServiceInstance(cct) {
-    } ~RGWSI_Role_RADOS() {
+    RGWSI_Role_RADOS(CephContext *cct): RGWServiceInstance(cct)
+    {
+    } ~RGWSI_Role_RADOS()
+    {
     }
 
-    void init(RGWSI_Zone * _zone_svc,
-              RGWSI_Meta * _meta_svc,
-              RGWSI_MetaBackend * _meta_be_svc, RGWSI_SysObj * _sysobj_svc);
+    void init(RGWSI_Zone *_zone_svc,
+              RGWSI_Meta *_meta_svc,
+              RGWSI_MetaBackend *_meta_be_svc, RGWSI_SysObj *_sysobj_svc);
 
     RGWSI_MetaBackend_Handler *get_be_handler();
-    int do_start(optional_yield y, const DoutPrefixProvider * dpp) override;
+    int do_start(optional_yield y, const DoutPrefixProvider *dpp) override;
 
-  private:
-    RGWSI_MetaBackend_Handler * be_handler;
+private:
+    RGWSI_MetaBackend_Handler *be_handler;
     std::unique_ptr < RGWSI_MetaBackend::Module > be_module;
 };
 

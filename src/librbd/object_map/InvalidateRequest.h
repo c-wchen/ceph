@@ -9,34 +9,37 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    class ImageCtx;
+class ImageCtx;
 
-    namespace object_map {
+namespace object_map
+{
 
-      template < typename ImageCtxT = ImageCtx > class InvalidateRequest:public AsyncRequest < ImageCtxT >
-        {
-          public:
-            static InvalidateRequest *create(ImageCtxT & image_ctx,
-                                             uint64_t snap_id, bool force,
-                                             Context * on_finish);
+template < typename ImageCtxT = ImageCtx > class InvalidateRequest: public AsyncRequest < ImageCtxT >
+{
+public:
+    static InvalidateRequest *create(ImageCtxT &image_ctx,
+                                     uint64_t snap_id, bool force,
+                                     Context *on_finish);
 
-             InvalidateRequest(ImageCtxT & image_ctx, uint64_t snap_id,
-                               bool force, Context * on_finish)
-            :AsyncRequest < ImageCtxT > (image_ctx, on_finish),
-                m_snap_id(snap_id), m_force(force) {
-            } void send() override;
+    InvalidateRequest(ImageCtxT &image_ctx, uint64_t snap_id,
+                      bool force, Context *on_finish)
+        : AsyncRequest < ImageCtxT > (image_ctx, on_finish),
+          m_snap_id(snap_id), m_force(force)
+    {
+    } void send() override;
 
-          protected:
-             bool should_complete(int r) override;
+protected:
+    bool should_complete(int r) override;
 
-          private:
-             uint64_t m_snap_id;
-            bool m_force;
-        };
+private:
+    uint64_t m_snap_id;
+    bool m_force;
+};
 
-    }                           // namespace object_map
+}                           // namespace object_map
 }                               // namespace librbd
 
 extern template class librbd::object_map::InvalidateRequest <

@@ -35,50 +35,59 @@
 #include <thread>
 #include <atomic>
 
-#define	CEPHFS_RECLAIM_TIMEOUT		60
+#define CEPHFS_RECLAIM_TIMEOUT      60
 
 static int dying_client(int argc, char **argv)
 {
     struct ceph_mount_info *cmount;
 
     /* Caller must pass in the uuid */
-    if (argc < 2)
+    if (argc < 2) {
         return 1;
+    }
 
-    if (ceph_create(&cmount, nullptr) != 0)
+    if (ceph_create(&cmount, nullptr) != 0) {
         return 1;
+    }
 
-    if (ceph_conf_read_file(cmount, nullptr) != 0)
+    if (ceph_conf_read_file(cmount, nullptr) != 0) {
         return 1;
+    }
 
-    if (ceph_conf_parse_env(cmount, nullptr) != 0)
+    if (ceph_conf_parse_env(cmount, nullptr) != 0) {
         return 1;
+    }
 
-    if (ceph_init(cmount) != 0)
+    if (ceph_init(cmount) != 0) {
         return 1;
+    }
 
     ceph_set_session_timeout(cmount, CEPHFS_RECLAIM_TIMEOUT);
 
     if (ceph_start_reclaim(cmount, argv[1], CEPH_RECLAIM_RESET) !=
-        -CEPHFS_ENOENT)
+        -CEPHFS_ENOENT) {
         return 1;
+    }
 
     ceph_set_uuid(cmount, argv[1]);
 
-    if (ceph_mount(cmount, "/") != 0)
+    if (ceph_mount(cmount, "/") != 0) {
         return 1;
+    }
 
     Inode *root, *file;
-    if (ceph_ll_lookup_root(cmount, &root) != 0)
+    if (ceph_ll_lookup_root(cmount, &root) != 0) {
         return 1;
+    }
 
     Fh *fh;
     struct ceph_statx stx;
     UserPerm *perms = ceph_mount_perms(cmount);
 
     if (ceph_ll_create(cmount, root, argv[1], 0666, O_RDWR | O_CREAT | O_EXCL,
-                       &file, &fh, &stx, 0, 0, perms) != 0)
+                       &file, &fh, &stx, 0, 0, perms) != 0) {
         return 1;
+    }
 
     return 0;
 }
@@ -133,16 +142,18 @@ static int update_root_mode()
 {
     struct ceph_mount_info *admin;
     int r = ceph_create(&admin, nullptr);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     ceph_conf_read_file(admin, nullptr);
     ceph_conf_parse_env(admin, nullptr);
     ceph_conf_set(admin, "client_permissions", "false");
     r = ceph_mount(admin, "/");
-    if (r < 0)
+    if (r < 0) {
         goto out;
+    }
     r = ceph_chmod(admin, "/", 01777);
-  out:
+out:
     ceph_shutdown(admin);
     return r;
 }
@@ -150,13 +161,15 @@ static int update_root_mode()
 int main(int argc, char **argv)
 {
     int r = update_root_mode();
-    if (r < 0)
+    if (r < 0) {
         exit(1);
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    if (argc > 1)
+    if (argc > 1) {
         return dying_client(argc, argv);
+    }
 
     srand(getpid());
 

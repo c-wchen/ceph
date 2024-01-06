@@ -4,7 +4,7 @@ using std::map;
 
 using namespace librados;
 
-void object_id_wrapper::encode(bufferlist & bl) const const
+void object_id_wrapper::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(name, bl);
@@ -14,7 +14,7 @@ void object_id_wrapper::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void object_id_wrapper::decode(bufferlist::const_iterator & bp)
+void object_id_wrapper::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(1, bp);
     decode(name, bp);
@@ -24,10 +24,13 @@ void object_id_wrapper::decode(bufferlist::const_iterator & bp)
     DECODE_FINISH(bp);
 }
 
-namespace librados {
-    static void encode(const object_id_t & obj, bufferlist & bl) {
-        reinterpret_cast < const object_id_wrapper & >(obj).encode(bl);
-}} void osd_shard_wrapper::encode(bufferlist & bl) const const
+namespace librados
+{
+static void encode(const object_id_t &obj, bufferlist &bl)
+{
+    reinterpret_cast < const object_id_wrapper & >(obj).encode(bl);
+}
+} void osd_shard_wrapper::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(osd, bl);
@@ -35,7 +38,7 @@ namespace librados {
     ENCODE_FINISH(bl);
 }
 
-void osd_shard_wrapper::decode(bufferlist::const_iterator & bp)
+void osd_shard_wrapper::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(1, bp);
     decode(osd, bp);
@@ -43,12 +46,15 @@ void osd_shard_wrapper::decode(bufferlist::const_iterator & bp)
     DECODE_FINISH(bp);
 }
 
-namespace librados {
-    static void encode(const osd_shard_t & shard, bufferlist & bl) {
-        reinterpret_cast < const osd_shard_wrapper & >(shard).encode(bl);
-}} void shard_info_wrapper::set_object(const ScrubMap::object & object)
+namespace librados
 {
-  for (auto attr:object.attrs) {
+static void encode(const osd_shard_t &shard, bufferlist &bl)
+{
+    reinterpret_cast < const osd_shard_wrapper & >(shard).encode(bl);
+}
+} void shard_info_wrapper::set_object(const ScrubMap::object &object)
+{
+    for (auto attr : object.attrs) {
         bufferlist bl;
         bl.push_back(attr.second);
         attrs.insert(std::make_pair(attr.first, std::move(bl)));
@@ -64,7 +70,7 @@ namespace librados {
     }
 }
 
-void shard_info_wrapper::encode(bufferlist & bl) const const
+void shard_info_wrapper::encode(bufferlist &bl) const const
 {
     ENCODE_START(3, 3, bl);
     encode(errors, bl);
@@ -81,7 +87,7 @@ void shard_info_wrapper::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void shard_info_wrapper::decode(bufferlist::const_iterator & bp)
+void shard_info_wrapper::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(3, bp);
     decode(errors, bp);
@@ -98,54 +104,58 @@ void shard_info_wrapper::decode(bufferlist::const_iterator & bp)
     DECODE_FINISH(bp);
 }
 
-inconsistent_obj_wrapper::inconsistent_obj_wrapper(const hobject_t & hoid)
-:inconsistent_obj_t
-{
+inconsistent_obj_wrapper::inconsistent_obj_wrapper(const hobject_t &hoid)
+    : inconsistent_obj_t {
     librados::object_id_t {
-hoid.oid.name, hoid.nspace, hoid.get_key(), hoid.snap}}
+        hoid.oid.name, hoid.nspace, hoid.get_key(), hoid.snap}}
 
 {
 }
 
-void inconsistent_obj_wrapper::add_shard(const pg_shard_t & pgs,
-                                         const shard_info_wrapper & shard)
+void inconsistent_obj_wrapper::add_shard(const pg_shard_t &pgs,
+        const shard_info_wrapper &shard)
 {
     union_shards.errors |= shard.errors;
     shards.emplace(osd_shard_t {
-                   pgs.osd, int8_t(pgs.shard)}, shard);
+        pgs.osd, int8_t(pgs.shard)}, shard);
 }
 
-void inconsistent_obj_wrapper::set_auth_missing(const hobject_t & hoid,
-                                                const map < pg_shard_t,
-                                                ScrubMap > &maps,
-                                                map < pg_shard_t,
-                                                shard_info_wrapper > &shard_map,
-                                                int &shallow_errors,
-                                                int &deep_errors,
-                                                const pg_shard_t & primary)
+void inconsistent_obj_wrapper::set_auth_missing(const hobject_t &hoid,
+        const map < pg_shard_t,
+        ScrubMap > &maps,
+        map < pg_shard_t,
+        shard_info_wrapper > &shard_map,
+        int &shallow_errors,
+        int &deep_errors,
+        const pg_shard_t &primary)
 {
-  for (auto pg_map:maps) {
+    for (auto pg_map : maps) {
         auto oid_object = pg_map.second.objects.find(hoid);
         shard_map[pg_map.first].primary = (pg_map.first == primary);
-        if (oid_object == pg_map.second.objects.end())
+        if (oid_object == pg_map.second.objects.end()) {
             shard_map[pg_map.first].set_missing();
-        else
+        } else {
             shard_map[pg_map.first].set_object(oid_object->second);
-        if (shard_map[pg_map.first].has_deep_errors())
+        }
+        if (shard_map[pg_map.first].has_deep_errors()) {
             ++deep_errors;
-        else if (shard_map[pg_map.first].has_shallow_errors())
+        } else if (shard_map[pg_map.first].has_shallow_errors()) {
             ++shallow_errors;
+        }
         union_shards.errors |= shard_map[pg_map.first].errors;
         shards.emplace(osd_shard_t {
-                       pg_map.first.osd, pg_map.first.shard}
-                       , shard_map[pg_map.first]);
+            pg_map.first.osd, pg_map.first.shard}
+        , shard_map[pg_map.first]);
     }
 }
 
-namespace librados {
-    static void encode(const shard_info_t & shard, bufferlist & bl) {
-        reinterpret_cast < const shard_info_wrapper & >(shard).encode(bl);
-}} void inconsistent_obj_wrapper::encode(bufferlist & bl) const const
+namespace librados
+{
+static void encode(const shard_info_t &shard, bufferlist &bl)
+{
+    reinterpret_cast < const shard_info_wrapper & >(shard).encode(bl);
+}
+} void inconsistent_obj_wrapper::encode(bufferlist &bl) const const
 {
     ENCODE_START(2, 2, bl);
     encode(errors, bl);
@@ -156,7 +166,7 @@ namespace librados {
     ENCODE_FINISH(bl);
 }
 
-void inconsistent_obj_wrapper::decode(bufferlist::const_iterator & bp)
+void inconsistent_obj_wrapper::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(2, bp);
     DECODE_OLDEST(2);
@@ -169,11 +179,10 @@ void inconsistent_obj_wrapper::decode(bufferlist::const_iterator & bp)
 }
 
 inconsistent_snapset_wrapper::
-inconsistent_snapset_wrapper(const hobject_t & hoid)
-:inconsistent_snapset_t
-{
+inconsistent_snapset_wrapper(const hobject_t &hoid)
+    : inconsistent_snapset_t {
     object_id_t {
-hoid.oid.name, hoid.nspace, hoid.get_key(), hoid.snap}}
+        hoid.oid.name, hoid.nspace, hoid.get_key(), hoid.snap}}
 
 {
 }
@@ -227,7 +236,7 @@ void inconsistent_snapset_wrapper::set_size_mismatch()
     errors |= inc_snapset_t::SIZE_MISMATCH;
 }
 
-void inconsistent_snapset_wrapper::encode(bufferlist & bl) const const
+void inconsistent_snapset_wrapper::encode(bufferlist &bl) const const
 {
     ENCODE_START(2, 1, bl);
     encode(errors, bl);
@@ -238,7 +247,7 @@ void inconsistent_snapset_wrapper::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void inconsistent_snapset_wrapper::decode(bufferlist::const_iterator & bp)
+void inconsistent_snapset_wrapper::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(2, bp);
     decode(errors, bp);
@@ -251,7 +260,7 @@ void inconsistent_snapset_wrapper::decode(bufferlist::const_iterator & bp)
     DECODE_FINISH(bp);
 }
 
-void scrub_ls_arg_t::encode(bufferlist & bl) const const
+void scrub_ls_arg_t::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(interval, bl);
@@ -263,7 +272,7 @@ void scrub_ls_arg_t::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void scrub_ls_arg_t::decode(bufferlist::const_iterator & bp)
+void scrub_ls_arg_t::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(1, bp);
     decode(interval, bp);
@@ -275,7 +284,7 @@ void scrub_ls_arg_t::decode(bufferlist::const_iterator & bp)
     DECODE_FINISH(bp);
 }
 
-void scrub_ls_result_t::encode(bufferlist & bl) const const
+void scrub_ls_result_t::encode(bufferlist &bl) const const
 {
     ENCODE_START(1, 1, bl);
     encode(interval, bl);
@@ -283,7 +292,7 @@ void scrub_ls_result_t::encode(bufferlist & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void scrub_ls_result_t::decode(bufferlist::const_iterator & bp)
+void scrub_ls_result_t::decode(bufferlist::const_iterator &bp)
 {
     DECODE_START(1, bp);
     decode(interval, bp);

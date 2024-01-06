@@ -7,25 +7,28 @@
 #include "gtest/gtest.h"
 
 // creates a rados client and temporary pool
-struct RadosEnv:public::testing::Environment {
+struct RadosEnv: public::testing::Environment {
     static std::optional < std::string > pool_name;
-  public:
+public:
     static std::optional < librados::Rados > rados;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         rados.emplace();
         // create pool
         std::string name = get_temp_pool_name();
         ASSERT_EQ("", create_one_pool_pp(name, *rados));
         pool_name = name;
-    } void TearDown() override {
+    } void TearDown() override
+    {
         if (pool_name) {
             ASSERT_EQ(0, destroy_one_pool_pp(*pool_name, *rados));
         }
         rados.reset();
     }
 
-    static int ioctx_create(librados::IoCtx & ioctx) {
+    static int ioctx_create(librados::IoCtx &ioctx)
+    {
         return rados->ioctx_create(pool_name->c_str(), ioctx);
     }
 };
@@ -35,20 +38,25 @@ std::optional < librados::Rados > RadosEnv::rados;
 
 auto *const rados_env =::testing::AddGlobalTestEnvironment(new RadosEnv);
 
-class rgw_gc_log:public::testing::Test {
-  protected:
+class rgw_gc_log: public::testing::Test
+{
+protected:
     static librados::IoCtx ioctx;
 
-    static void SetUpTestSuite() {
+    static void SetUpTestSuite()
+    {
         ASSERT_EQ(0, RadosEnv::ioctx_create(ioctx));
-    } static void TearDownTestSuite() {
+    } static void TearDownTestSuite()
+    {
         ioctx.close();
     }
 
     // use the test's name as the oid so different tests don't conflict
-    std::string get_test_oid()const {
+    std::string get_test_oid()const
+    {
         return::testing::UnitTest::GetInstance()->current_test_info()->name();
-}};
+    }
+};
 librados::IoCtx rgw_gc_log::ioctx;
 
 TEST_F(rgw_gc_log, init_existing_queue)
@@ -109,7 +117,7 @@ TEST_F(rgw_gc_log, enqueue2_before_init)
         // version check fails on cls_rgw_gc enqueue
         librados::ObjectWriteOperation op;
         gc_log_enqueue2(op, 5, {
-                        });
+        });
         ASSERT_EQ(-ECANCELED, ioctx.operate(oid, &op));
     }
 }
@@ -126,7 +134,7 @@ TEST_F(rgw_gc_log, defer1_after_init)
         // version check fails on omap defer
         librados::ObjectWriteOperation op;
         gc_log_defer1(op, 5, {
-                      });
+        });
         ASSERT_EQ(-ECANCELED, ioctx.operate(oid, &op));
     }
 }
@@ -138,7 +146,7 @@ TEST_F(rgw_gc_log, defer2_before_init)
         // version check fails on cls_rgw_gc defer
         librados::ObjectWriteOperation op;
         gc_log_defer2(op, 5, {
-                      });
+        });
         ASSERT_EQ(-ECANCELED, ioctx.operate(oid, &op));
     }
 }

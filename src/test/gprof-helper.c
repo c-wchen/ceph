@@ -24,12 +24,12 @@
 static void *wrapper_routine(void *);
 
 /* Original pthread function */
-static int (*pthread_create_orig) (pthread_t * __restrict,
-                                   __const pthread_attr_t * __restrict,
-                                   void *(*)(void *), void *__restrict) = NULL;
+static int (*pthread_create_orig)(pthread_t *__restrict,
+                                  __const pthread_attr_t *__restrict,
+                                  void *(*)(void *), void *__restrict) = NULL;
 
 /* Library initialization function */
-void wooinit(void) __attribute__ ((constructor));
+void wooinit(void) __attribute__((constructor));
 
 void wooinit(void)
 {
@@ -47,7 +47,7 @@ void wooinit(void)
 
 /* Our data structure passed to the wrapper */
 typedef struct wrapper_s {
-    void *(*start_routine) (void *);
+    void *(*start_routine)(void *);
     void *arg;
 
     pthread_mutex_t lock;
@@ -61,7 +61,7 @@ typedef struct wrapper_s {
 static void *wrapper_routine(void *data)
 {
     /* Put user data in thread-local variables */
-    void *(*start_routine) (void *) = ((wrapper_t *) data)->start_routine;
+    void *(*start_routine)(void *) = ((wrapper_t *) data)->start_routine;
     void *arg = ((wrapper_t *) data)->arg;
 
     /* Set the profile timer value */
@@ -77,9 +77,9 @@ static void *wrapper_routine(void *data)
 }
 
 /* Our wrapper function for the real pthread_create() */
-int pthread_create(pthread_t * __restrict thread,
-                   __const pthread_attr_t * __restrict attr,
-                   void *(*start_routine) (void *), void *__restrict arg)
+int pthread_create(pthread_t *__restrict thread,
+                   __const pthread_attr_t *__restrict attr,
+                   void *(*start_routine)(void *), void *__restrict arg)
 {
     wrapper_t wrapper_data;
     int i_return;

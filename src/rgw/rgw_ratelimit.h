@@ -4,8 +4,9 @@
 #include <condition_variable>
 #include "rgw_common.h"
 
-class RateLimiterEntry {
-    /* 
+class RateLimiterEntry
+{
+    /*
        fixed_point_rgw_ratelimit is important to preserve the precision of the token calculation
        for example: a user have a limit of single op per minute, the user will consume its single token and then will send another request, 1s after it.
        in that case, without this method, the user will get 0 tokens although it should get 0.016 tokens.
@@ -19,29 +20,35 @@ class RateLimiterEntry {
     };
     counters read;
     counters write;
-     ceph::timespan ts;
+    ceph::timespan ts;
     bool first_run = true;
-     std::mutex ts_lock;
-    // Those functions are returning the integer value of the tokens 
-    int64_t read_ops() const {
+    std::mutex ts_lock;
+    // Those functions are returning the integer value of the tokens
+    int64_t read_ops() const
+    {
         return read.ops / fixed_point_rgw_ratelimit;
-    } int64_t write_ops() const {
+    } int64_t write_ops() const
+    {
         return write.ops / fixed_point_rgw_ratelimit;
-    } int64_t read_bytes() const {
+    } int64_t read_bytes() const
+    {
         return read.bytes / fixed_point_rgw_ratelimit;
-    } int64_t write_bytes() const {
+    } int64_t write_bytes() const
+    {
         return write.bytes / fixed_point_rgw_ratelimit;
-    } bool should_rate_limit_read(int64_t ops_limit, int64_t bw_limit) {
+    } bool should_rate_limit_read(int64_t ops_limit, int64_t bw_limit)
+    {
         //check if tenants did not reach their bw or ops limits and that the limits are not 0 (which is unlimited)
         if (((read_ops() - 1 < 0) && (ops_limit > 0)) ||
             (read_bytes() < 0 && bw_limit > 0)) {
             return true;
         }
         // we don't want to reduce ops' tokens if we've rejected it.
-            read.ops -= fixed_point_rgw_ratelimit;
+        read.ops -= fixed_point_rgw_ratelimit;
         return false;
     }
-    bool should_rate_limit_write(int64_t ops_limit, int64_t bw_limit) {
+    bool should_rate_limit_write(int64_t ops_limit, int64_t bw_limit)
+    {
         //check if tenants did not reach their bw or ops limits and that the limits are not 0 (which is unlimited)
         if (((write_ops() - 1 < 0) && (ops_limit > 0)) ||
             (write_bytes() < 0 && bw_limit > 0)) {
@@ -56,7 +63,8 @@ class RateLimiterEntry {
        This function is necessary to force the increase tokens add at least 1 token when it updates the last stored timestamp.
        That way the user/bucket will not lose tokens because of rounding
      */
-    bool minimum_time_reached(ceph::timespan curr_timestamp) const {
+    bool minimum_time_reached(ceph::timespan curr_timestamp) const
+    {
         using namespace std::chrono;
         constexpr auto min_duration =
             duration_cast < ceph::timespan >
@@ -64,11 +72,13 @@ class RateLimiterEntry {
         const auto delta = curr_timestamp - ts;
         if (delta < min_duration) {
             return false;
-        } return true;
+        }
+        return true;
     }
 
     void increase_tokens(ceph::timespan curr_timestamp,
-                         const RGWRateLimitInfo * info) {
+                         const RGWRateLimitInfo *info)
+    {
         constexpr int fixed_point = fixed_point_rgw_ratelimit;
         if (first_run) {
             write.ops = info->max_write_ops * fixed_point;
@@ -78,9 +88,9 @@ class RateLimiterEntry {
             ts = curr_timestamp;
             first_run = false;
             return;
-        }
-        else if (curr_timestamp > ts && minimum_time_reached(curr_timestamp)) {
-            const int64_t time_in_ms = std::chrono::duration_cast < std::chrono::milliseconds > (curr_timestamp - ts).count() / 60.0 / std::milli::den * fixed_point;   // / 60 to make it work with 1 min token bucket
+        } else if (curr_timestamp > ts && minimum_time_reached(curr_timestamp)) {
+            const int64_t time_in_ms = std::chrono::duration_cast < std::chrono::milliseconds >
+                                       (curr_timestamp - ts).count() / 60.0 / std::milli::den * fixed_point;   // / 60 to make it work with 1 min token bucket
             ts = curr_timestamp;
             const int64_t write_ops = info->max_write_ops * time_in_ms;
             const int64_t write_bw = info->max_write_bytes * time_in_ms;
@@ -100,10 +110,11 @@ class RateLimiterEntry {
         }
     }
 
-  public:
+public:
     bool should_rate_limit(bool is_read,
-                           const RGWRateLimitInfo * ratelimit_info,
-                           ceph::timespan curr_timestamp) {
+                           const RGWRateLimitInfo *ratelimit_info,
+                           ceph::timespan curr_timestamp)
+    {
         std::unique_lock lock(ts_lock);
         increase_tokens(curr_timestamp, ratelimit_info);
         if (is_read) {
@@ -114,49 +125,53 @@ class RateLimiterEntry {
                                        ratelimit_info->max_write_bytes);
     }
     void decrease_bytes(bool is_read, int64_t amount,
-                        const RGWRateLimitInfo * info) {
+                        const RGWRateLimitInfo *info)
+    {
         std::unique_lock lock(ts_lock);
         // we don't want the tenant to be with higher debt than 120 seconds(2 min) of its limit
         if (is_read) {
             read.bytes =
                 std::max(read.bytes - amount * fixed_point_rgw_ratelimit,
                          info->max_read_bytes * fixed_point_rgw_ratelimit * -2);
-        }
-        else {
+        } else {
             write.bytes =
                 std::max(write.bytes - amount * fixed_point_rgw_ratelimit,
                          info->max_write_bytes * fixed_point_rgw_ratelimit *
                          -2);
         }
     }
-    void giveback_tokens(bool is_read) {
+    void giveback_tokens(bool is_read)
+    {
         std::unique_lock lock(ts_lock);
         if (is_read) {
             read.ops += fixed_point_rgw_ratelimit;
-        }
-        else {
+        } else {
             write.ops += fixed_point_rgw_ratelimit;
         }
     }
 };
 
-class RateLimiter {
+class RateLimiter
+{
 
     static constexpr size_t map_size = 2000000; // will create it with the closest upper prime number
-     std::shared_mutex insert_lock;
-     std::atomic_bool & replacing;
-     std::condition_variable & cv;
+    std::shared_mutex insert_lock;
+    std::atomic_bool &replacing;
+    std::condition_variable &cv;
     typedef std::unordered_map < std::string, RateLimiterEntry > hash_map;
     hash_map ratelimit_entries {
-    map_size};
-    static bool is_read_op(const std::string_view method) {
+        map_size};
+    static bool is_read_op(const std::string_view method)
+    {
         if (method == "GET" || method == "HEAD") {
             return true;
-        } return false;
+        }
+        return false;
     }
 
     // find or create an entry, and return its iterator
-    auto & find_or_create(const std::string & key) {
+    auto &find_or_create(const std::string &key)
+    {
         std::shared_lock rlock(insert_lock);
         if (ratelimit_entries.size() > 0.9 * map_size && replacing == false) {
             replacing = true;
@@ -173,36 +188,40 @@ class RateLimiter {
         return ret->second;
     }
 
-  public:
+public:
     RateLimiter(const RateLimiter &) = delete;
-    RateLimiter & operator =(const RateLimiter &) = delete;
+    RateLimiter &operator =(const RateLimiter &) = delete;
     RateLimiter(RateLimiter &&) = delete;
-    RateLimiter & operator =(RateLimiter &&) = delete;
+    RateLimiter &operator =(RateLimiter &&) = delete;
     RateLimiter() = delete;
-    RateLimiter(std::atomic_bool & replacing, std::condition_variable & cv)
-  :    replacing(replacing), cv(cv) {
+    RateLimiter(std::atomic_bool &replacing, std::condition_variable &cv)
+        :    replacing(replacing), cv(cv)
+    {
         // prevents rehash, so no iterators invalidation
         ratelimit_entries.max_load_factor(1000);
     };
 
-    bool should_rate_limit(const char *method, const std::string & key,
+    bool should_rate_limit(const char *method, const std::string &key,
                            ceph::coarse_real_time curr_timestamp,
-                           const RGWRateLimitInfo * ratelimit_info) {
+                           const RGWRateLimitInfo *ratelimit_info)
+    {
         if (key.empty() || key.length() == 1 || !ratelimit_info->enabled) {
             return false;
         }
         bool is_read = is_read_op(method);
-        auto & it = find_or_create(key);
+        auto &it = find_or_create(key);
         auto curr_ts = curr_timestamp.time_since_epoch();
         return it.should_rate_limit(is_read, ratelimit_info, curr_ts);
     }
-    void giveback_tokens(const char *method, const std::string & key) {
+    void giveback_tokens(const char *method, const std::string &key)
+    {
         bool is_read = is_read_op(method);
-        auto & it = find_or_create(key);
+        auto &it = find_or_create(key);
         it.giveback_tokens(is_read);
     }
-    void decrease_bytes(const char *method, const std::string & key,
-                        const int64_t amount, const RGWRateLimitInfo * info) {
+    void decrease_bytes(const char *method, const std::string &key,
+                        const int64_t amount, const RGWRateLimitInfo *info)
+    {
         if (key.empty() || key.length() == 1 || !info->enabled) {
             return;
         }
@@ -211,10 +230,11 @@ class RateLimiter {
             || (!is_read && !info->max_write_bytes)) {
             return;
         }
-        auto & it = find_or_create(key);
+        auto &it = find_or_create(key);
         it.decrease_bytes(is_read, amount, info);
     }
-    void clear() {
+    void clear()
+    {
         ratelimit_entries.clear();
     }
 };
@@ -223,16 +243,19 @@ class RateLimiter {
 // once the active has reached the watermark for clearing it will call the replace_active() thread using cv
 // The replace_active will clear the previous RateLimiter after all requests to it has been done (use_count() > 1)
 // In the meanwhile new requests will come into the newer active
-class ActiveRateLimiter:public DoutPrefix {
+class ActiveRateLimiter: public DoutPrefix
+{
     std::atomic_uint8_t stopped = {
-    false};
+        false
+    };
     std::condition_variable cv;
     std::mutex cv_m;
     std::thread runner;
     std::atomic_bool replacing = false;
     std::atomic_uint8_t current_active = 0;
     std::shared_ptr < RateLimiter > ratelimit[2];
-    void replace_active() {
+    void replace_active()
+    {
         using namespace std::chrono_literals;
         std::unique_lock < std::mutex > lk(cv_m);
         while (!stopped) {
@@ -240,7 +263,7 @@ class ActiveRateLimiter:public DoutPrefix {
             current_active = current_active ^ 1;
             ldpp_dout(this,
                       20) << "replacing active ratelimit data structure" <<
-                dendl;
+                          dendl;
             while (!stopped && ratelimit[(current_active ^ 1)].use_count() > 1) {
                 if (cv.wait_for(lk, 1 min) != std::cv_status::timeout
                     && stopped) {
@@ -252,23 +275,25 @@ class ActiveRateLimiter:public DoutPrefix {
             }
             ldpp_dout(this,
                       20) << "clearing passive ratelimit data structure" <<
-                dendl;
+                          dendl;
             ratelimit[(current_active ^ 1)]->clear();
             replacing = false;
         }
     }
-  public:
+public:
     ActiveRateLimiter(const ActiveRateLimiter &) = delete;
-    ActiveRateLimiter & operator =(const ActiveRateLimiter &) = delete;
+    ActiveRateLimiter &operator =(const ActiveRateLimiter &) = delete;
     ActiveRateLimiter(ActiveRateLimiter &&) = delete;
-    ActiveRateLimiter & operator =(ActiveRateLimiter &&) = delete;
+    ActiveRateLimiter &operator =(ActiveRateLimiter &&) = delete;
     ActiveRateLimiter() = delete;
-  ActiveRateLimiter(CephContext * cct):
-    DoutPrefix(cct, ceph_subsys_rgw, "rate limiter: ") {
+    ActiveRateLimiter(CephContext *cct):
+        DoutPrefix(cct, ceph_subsys_rgw, "rate limiter: ")
+    {
         ratelimit[0] = std::make_shared < RateLimiter > (replacing, cv);
         ratelimit[1] = std::make_shared < RateLimiter > (replacing, cv);
     }
-    ~ActiveRateLimiter() {
+    ~ActiveRateLimiter()
+    {
         ldpp_dout(this, 20) << "stopping ratelimit_gc thread" << dendl;
         cv_m.lock();
         stopped = true;
@@ -276,10 +301,12 @@ class ActiveRateLimiter:public DoutPrefix {
         cv.notify_all();
         runner.join();
     }
-    std::shared_ptr < RateLimiter > get_active() {
+    std::shared_ptr < RateLimiter > get_active()
+    {
         return ratelimit[current_active];
     }
-    void start() {
+    void start()
+    {
         ldpp_dout(this, 20) << "starting ratelimit_gc thread" << dendl;
         runner = std::thread(&ActiveRateLimiter::replace_active, this);
         const auto rc =

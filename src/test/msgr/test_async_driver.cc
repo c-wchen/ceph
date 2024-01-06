@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -60,26 +60,33 @@
 
 using namespace std;
 
-class EventDriverTest:public::testing::TestWithParam < const char *> {
-  public:
-    EventDriver * driver;
+class EventDriverTest: public::testing::TestWithParam < const char *>
+{
+public:
+    EventDriver *driver;
 
-    EventDriverTest():driver(0) {
-    } void SetUp() override {
+    EventDriverTest(): driver(0)
+    {
+    } void SetUp() override
+    {
         cerr << __func__ << " start set up " << GetParam() << std::endl;
 #ifdef HAVE_EPOLL
-        if (strcmp(GetParam(), "epoll"))
+        if (strcmp(GetParam(), "epoll")) {
             driver = new EpollDriver(g_ceph_context);
+        }
 #endif
 #ifdef HAVE_KQUEUE
-        if (strcmp(GetParam(), "kqueue"))
+        if (strcmp(GetParam(), "kqueue")) {
             driver = new KqueueDriver(g_ceph_context);
+        }
 #endif
-        if (strcmp(GetParam(), "select"))
+        if (strcmp(GetParam(), "select")) {
             driver = new SelectDriver(g_ceph_context);
+        }
         driver->init(NULL, 100);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         delete driver;
     }
 };
@@ -160,10 +167,12 @@ void *echoclient(void *arg)
             r = write(connect_sd, c, sizeof(c));
             char d[100];
             r = read(connect_sd, d, sizeof(d));
-            if (r == 0)
+            if (r == 0) {
                 break;
-            if (t++ == 30)
+            }
+            if (t++ == 30) {
                 break;
+            }
         } while (1);
         ::close(connect_sd);
     }
@@ -232,8 +241,9 @@ TEST_P(EventDriverTest, NetworkSocketTest)
         fired_events.clear();
         char data[100];
         r =::read(client_sd, data, sizeof(data));
-        if (r == 0)
+        if (r == 0) {
             break;
+        }
         ASSERT_GT(r, 0);
         r = driver->add_event(client_sd, EVENT_READABLE, EVENT_WRITABLE);
         ASSERT_EQ(0, r);
@@ -250,11 +260,14 @@ TEST_P(EventDriverTest, NetworkSocketTest)
     ::close(listen_sd);
 }
 
-class FakeEvent:public EventCallback {
+class FakeEvent: public EventCallback
+{
 
-  public:
-    void do_request(uint64_t fd_or_id) override {
-}};
+public:
+    void do_request(uint64_t fd_or_id) override
+    {
+    }
+};
 
 TEST(EventCenterTest, FileEventExpansion)
 {
@@ -269,42 +282,51 @@ TEST(EventCenterTest, FileEventExpansion)
         sds.push_back(sd);
     }
 
-    for (vector < int >::iterator it = sds.begin(); it != sds.end(); ++it)
+    for (vector < int >::iterator it = sds.begin(); it != sds.end(); ++it) {
         center.delete_file_event(*it, EVENT_READABLE);
+    }
 }
 
-class Worker:public Thread {
+class Worker: public Thread
+{
     CephContext *cct;
     bool done;
 
-  public:
+public:
     EventCenter center;
-    explicit Worker(CephContext * c, int idx):cct(c), done(false), center(c) {
+    explicit Worker(CephContext *c, int idx): cct(c), done(false), center(c)
+    {
         center.init(100, idx, "posix");
-    } void stop() {
+    } void stop()
+    {
         done = true;
         center.wakeup();
     }
-    void *entry() override {
+    void *entry() override
+    {
         center.set_owner();
-        while (!done)
+        while (!done) {
             center.process_events(1000000);
+        }
         return 0;
     }
 };
 
-class CountEvent:public EventCallback {
-    std::atomic < unsigned >*count;
-    ceph::mutex * lock;
-    ceph::condition_variable * cond;
+class CountEvent: public EventCallback
+{
+    std::atomic < unsigned > *count;
+    ceph::mutex *lock;
+    ceph::condition_variable *cond;
 
-  public:
-    CountEvent(std::atomic < unsigned >*atomic,
-               ceph::mutex * l, ceph::condition_variable * c)
-    :count(atomic), lock(l), cond(c) {
-    } void do_request(uint64_t id) override {
+public:
+    CountEvent(std::atomic < unsigned > *atomic,
+               ceph::mutex *l, ceph::condition_variable *c)
+        : count(atomic), lock(l), cond(c)
+    {
+    } void do_request(uint64_t id) override
+    {
         std::scoped_lock l {
-        *lock};
+            *lock};
         (*count)--;
         cond->notify_all();
     }
@@ -321,18 +343,18 @@ TEST(EventCenterTest, DispatchTest)
     for (int i = 0; i < 10000; ++i) {
         count++;
         worker1.center.
-            dispatch_event_external(EventCallbackRef
-                                    (new CountEvent(&count, &lock, &cond)));
+        dispatch_event_external(EventCallbackRef
+                                (new CountEvent(&count, &lock, &cond)));
         count++;
         worker2.center.
-            dispatch_event_external(EventCallbackRef
-                                    (new CountEvent(&count, &lock, &cond)));
+        dispatch_event_external(EventCallbackRef
+                                (new CountEvent(&count, &lock, &cond)));
         std::unique_lock l {
-        lock};
-        cond.wait(l,[&] {
-                  return count == 0;
-                  }
-        );
+            lock};
+        cond.wait(l, [&] {
+            return count == 0;
+        }
+                 );
     }
     worker1.stop();
     worker2.stop();
@@ -340,19 +362,19 @@ TEST(EventCenterTest, DispatchTest)
     worker2.join();
 }
 
-INSTANTIATE_TEST_SUITE_P(AsyncMessenger, EventDriverTest,::testing::Values(
+INSTANTIATE_TEST_SUITE_P(AsyncMessenger, EventDriverTest, ::testing::Values(
 #ifdef HAVE_EPOLL
-                                                                              "epoll",
+                             "epoll",
 #endif
 #ifdef HAVE_KQUEUE
-                                                                              "kqueue",
+                             "kqueue",
 #endif
-                                                                              "select")
-    );
+                             "select")
+                        );
 
 /*
  * Local Variables:
- * compile-command: "cd ../.. ; make ceph_test_async_driver && 
+ * compile-command: "cd ../.. ; make ceph_test_async_driver &&
  *    ./ceph_test_async_driver
  *
  * End:

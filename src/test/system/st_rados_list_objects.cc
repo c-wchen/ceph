@@ -28,19 +28,19 @@
 using std::ostringstream;
 
 StRadosListObjects::StRadosListObjects(int argc, const char **argv,
-                                       const std::string & pool_name,
+                                       const std::string &pool_name,
                                        bool accept_list_errors,
                                        int midway_cnt,
-                                       CrossProcessSem * pool_setup_sem,
-                                       CrossProcessSem * midway_sem_wait,
-                                       CrossProcessSem * midway_sem_post)
-:  
-SysTestRunnable(argc, argv),
-m_pool_name(pool_name),
-m_accept_list_errors(accept_list_errors),
-m_midway_cnt(midway_cnt),
-m_pool_setup_sem(pool_setup_sem),
-m_midway_sem_wait(midway_sem_wait), m_midway_sem_post(midway_sem_post)
+                                       CrossProcessSem *pool_setup_sem,
+                                       CrossProcessSem *midway_sem_wait,
+                                       CrossProcessSem *midway_sem_post)
+    :
+    SysTestRunnable(argc, argv),
+    m_pool_name(pool_name),
+    m_accept_list_errors(accept_list_errors),
+    m_midway_cnt(midway_cnt),
+    m_pool_setup_sem(pool_setup_sem),
+    m_midway_sem_wait(midway_sem_wait), m_midway_sem_post(midway_sem_post)
 {
 }
 
@@ -73,11 +73,11 @@ int StRadosListObjects:: run()
         int ret = rados_nobjects_list_next(h, &obj_name, NULL, NULL);
         if (ret == -ENOENT) {
             break;
-        }
-        else if (ret != 0) {
+        } else if (ret != 0) {
             if (m_accept_list_errors
-                && (!m_midway_sem_post || saw > m_midway_cnt))
+                && (!m_midway_sem_post || saw > m_midway_cnt)) {
                 break;
+            }
             printf("%s: rados_objects_list_next error: %d\n", get_id_str(),
                    ret);
             retval = ret;
@@ -88,16 +88,18 @@ int StRadosListObjects:: run()
         }
         ++saw;
         if (saw == m_midway_cnt) {
-            if (m_midway_sem_wait)
+            if (m_midway_sem_wait) {
                 m_midway_sem_wait->wait();
-            if (m_midway_sem_post)
+            }
+            if (m_midway_sem_post) {
                 m_midway_sem_post->post();
+            }
         }
     }
 
     printf("%s: saw %d objects\n", get_id_str(), saw);
 
-  out:
+out:
     rados_nobjects_list_close(h);
     rados_ioctx_destroy(io_ctx);
     rados_shutdown(cl);

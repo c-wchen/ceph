@@ -13,13 +13,13 @@
 using std::string;
 using read_errorator = crimson::os::FuturizedStore::Shard::read_errorator;
 
-void OSDMeta::create(ceph::os::Transaction & t)
+void OSDMeta::create(ceph::os::Transaction &t)
 {
     t.create_collection(coll->get_cid(), 0);
 }
 
-void OSDMeta::store_map(ceph::os::Transaction & t,
-                        epoch_t e, const bufferlist & m)
+void OSDMeta::store_map(ceph::os::Transaction &t,
+                        epoch_t e, const bufferlist &m)
 {
     t.write(coll->get_cid(), osdmap_oid(e), 0, m.length(), m);
 }
@@ -29,17 +29,18 @@ seastar::future < bufferlist > OSDMeta::load_map(epoch_t e)
     return store.read(coll,
                       osdmap_oid(e), 0, 0,
                       CEPH_OSD_OP_FLAG_FADVISE_WILLNEED).
-        handle_error(read_errorator::all_same_way([e] {
-                                                  throw std::runtime_error(fmt::
-                                                                           format
-                                                                           ("read gave enoent on {}",
-                                                                            osdmap_oid
-                                                                            (e)));}
-                     ));
+    handle_error(read_errorator::all_same_way([e] {
+        throw std::runtime_error(fmt::
+                                 format
+                                 ("read gave enoent on {}",
+                                  osdmap_oid
+                                  (e)));
+    }
+                                                    ));
 }
 
-void OSDMeta::store_superblock(ceph::os::Transaction & t,
-                               const OSDSuperblock & superblock)
+void OSDMeta::store_superblock(ceph::os::Transaction &t,
+                               const OSDSuperblock &superblock)
 {
     bufferlist bl;
     encode(superblock, bl);
@@ -49,46 +50,49 @@ void OSDMeta::store_superblock(ceph::os::Transaction & t,
 OSDMeta::load_superblock_ret OSDMeta::load_superblock()
 {
     return store.read(coll, superblock_oid(), 0,
-                      0).safe_then([](bufferlist && bl) {
-                                   auto p = bl.cbegin();
-                                   OSDSuperblock superblock;
-                                   decode(superblock, p);
-                                   return seastar::make_ready_future <
-                                   OSDSuperblock > (std::move(superblock));}
-    );
+    0).safe_then([](bufferlist && bl) {
+        auto p = bl.cbegin();
+        OSDSuperblock superblock;
+        decode(superblock, p);
+        return seastar::make_ready_future <
+               OSDSuperblock > (std::move(superblock));
+    }
+                                  );
 }
 
 seastar::future < std::tuple < pg_pool_t,
-    std::string,
-    OSDMeta::ec_profile_t >> OSDMeta::load_final_pool_info(int64_t pool)
+        std::string,
+        OSDMeta::ec_profile_t >> OSDMeta::load_final_pool_info(int64_t pool)
 {
     return store.read(coll, final_pool_info_oid(pool),
-                      0, 0).safe_then([](bufferlist && bl) {
-                                      auto p = bl.cbegin();
-                                      pg_pool_t pi;
-                                      string name;
-                                      ec_profile_t ec_profile;
-                                      decode(pi, p);
-                                      decode(name, p);
-                                      decode(ec_profile, p);
-                                      return seastar::make_ready_future <
-                                      std::tuple < pg_pool_t, string,
-                                      ec_profile_t >> (std::
-                                                       make_tuple(std::move(pi),
-                                                                  std::
-                                                                  move(name),
-                                                                  std::
-                                                                  move
-                                                                  (ec_profile)));}
-                                      , read_errorator::all_same_way([pool] {
-                                                                     throw std::
-                                                                     runtime_error
-                                                                     (fmt::
-                                                                      format
-                                                                      ("read gave enoent on {}",
-                                                                       final_pool_info_oid
-                                                                       (pool)));}
-                                      ));
+    0, 0).safe_then([](bufferlist && bl) {
+        auto p = bl.cbegin();
+        pg_pool_t pi;
+        string name;
+        ec_profile_t ec_profile;
+        decode(pi, p);
+        decode(name, p);
+        decode(ec_profile, p);
+        return seastar::make_ready_future <
+               std::tuple < pg_pool_t, string,
+               ec_profile_t >> (std::
+                                make_tuple(std::move(pi),
+                                           std::
+                                           move(name),
+                                           std::
+                                           move
+                                           (ec_profile)));
+    }
+    , read_errorator::all_same_way([pool] {
+        throw std::
+        runtime_error
+        (fmt::
+         format
+         ("read gave enoent on {}",
+          final_pool_info_oid
+          (pool)));
+    }
+                                  ));
 }
 
 ghobject_t OSDMeta::osdmap_oid(epoch_t epoch)

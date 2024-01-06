@@ -4,7 +4,8 @@
 #include "journal/Entry.h"
 #include "gtest/gtest.h"
 
-class TestEntry:public::testing::Test {
+class TestEntry: public::testing::Test
+{
 };
 
 TEST_F(TestEntry, DefaultConstructor)
@@ -51,7 +52,7 @@ TEST_F(TestEntry, IsReadable)
             partial_bl.substr_of(full_bl, 0, i);
         }
         ASSERT_FALSE(journal::Entry::is_readable(partial_bl.begin(),
-                                                 &bytes_needed));
+                     &bytes_needed));
         ASSERT_GT(bytes_needed, 0U);
     }
     ASSERT_TRUE(journal::Entry::is_readable(full_bl.begin(), &bytes_needed));

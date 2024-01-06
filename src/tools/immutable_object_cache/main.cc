@@ -11,7 +11,7 @@
 
 #include <vector>
 
-ceph::immutable_obj_cache::CacheController * cachectl = nullptr;
+ceph::immutable_obj_cache::CacheController *cachectl = nullptr;
 
 void usage()
 {
@@ -19,17 +19,18 @@ void usage()
     std::cout << "options:\n";
     std::cout << "  -m monaddress[:port]      connect to specified monitor\n";
     std::cout << "  --keyring=<path>          path to keyring for local "
-        << "cluster\n";
+              << "cluster\n";
     std::cout << "  --log-file=<logfile>       file to log debug output\n";
     std::cout << "  --debug-immutable-obj-cache=<log-level>/<memory-level>  "
-        << "set debug level\n";
+              << "set debug level\n";
     generic_server_usage();
 }
 
 static void handle_signal(int signum)
 {
-    if (cachectl)
+    if (cachectl) {
         cachectl->handle_signal(signum);
+    }
 }
 
 int main(int argc, const char **argv)
@@ -61,7 +62,7 @@ int main(int argc, const char **argv)
     auto cmd_args = argv_to_vec(argc, argv);
 
     cachectl = new ceph::immutable_obj_cache::CacheController(g_ceph_context,
-                                                              cmd_args);
+        cmd_args);
     int r = cachectl->init();
     if (r < 0) {
         std::cerr << "failed to initialize: " << cpp_strerror(r) << std::endl;
@@ -73,7 +74,7 @@ int main(int argc, const char **argv)
         goto cleanup;
     }
 
-  cleanup:
+cleanup:
     unregister_async_signal_handler(SIGHUP, sighup_handler);
     unregister_async_signal_handler(SIGINT, handle_signal);
     unregister_async_signal_handler(SIGTERM, handle_signal);

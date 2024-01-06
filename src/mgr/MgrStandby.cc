@@ -42,28 +42,27 @@ using std::string;
 using std::vector;
 
 MgrStandby::MgrStandby(int argc, const char **argv):
-Dispatcher(g_ceph_context), monc
-{
-g_ceph_context, poolctx},
+    Dispatcher(g_ceph_context), monc {
+    g_ceph_context, poolctx},
 client_messenger(Messenger::create(g_ceph_context,
                                    cct->_conf.get_val < std::string >
-                                   ("ms_public_type").empty()? cct->_conf.
+                                   ("ms_public_type").empty() ? cct->_conf.
                                    get_val < std::string >
                                    ("ms_type") : cct->_conf.get_val <
                                    std::string > ("ms_public_type"),
                                    entity_name_t::MGR(), "mgr",
                                    Messenger::get_pid_nonce())), objecter {
-g_ceph_context, client_messenger.get(), &monc, poolctx}, client {
-client_messenger.get(), &monc, &objecter},
+    g_ceph_context, client_messenger.get(), &monc, poolctx}, client {
+    client_messenger.get(), &monc, &objecter},
 mgrc(g_ceph_context, client_messenger.get(), &monc.monmap),
-log_client(g_ceph_context, client_messenger.get(), &monc.monmap,
-           LogClient::NO_FLAGS),
-clog(log_client.create_channel(CLOG_CHANNEL_CLUSTER)),
-audit_clog(log_client.create_channel(CLOG_CHANNEL_AUDIT)),
-finisher(g_ceph_context, "MgrStandby", "mgrsb-fin"), timer(g_ceph_context,
-                                                           lock),
-py_module_registry(clog), active_mgr(nullptr), orig_argc(argc), orig_argv(argv),
-available_in_map(false)
+     log_client(g_ceph_context, client_messenger.get(), &monc.monmap,
+                LogClient::NO_FLAGS),
+     clog(log_client.create_channel(CLOG_CHANNEL_CLUSTER)),
+     audit_clog(log_client.create_channel(CLOG_CHANNEL_AUDIT)),
+     finisher(g_ceph_context, "MgrStandby", "mgrsb-fin"), timer(g_ceph_context,
+             lock),
+     py_module_registry(clog), active_mgr(nullptr), orig_argc(argc), orig_argv(argv),
+     available_in_map(false)
 {
 }
 
@@ -88,7 +87,7 @@ const char **MgrStandby::get_tracked_conf_keys() const const
     return KEYS;
 }
 
-void MgrStandby::handle_conf_change(const ConfigProxy & conf,
+void MgrStandby::handle_conf_change(const ConfigProxy &conf,
                                     const std::set < std::string > &changed)
 {
     if (changed.count("clog_to_monitors") ||
@@ -105,11 +104,11 @@ void MgrStandby::handle_conf_change(const ConfigProxy & conf,
         if (g_conf().get_val < bool > ("mgr_standby_modules") !=
             py_module_registry.have_standby_modules()) {
             dout(1) << "mgr_standby_modules now " << (int)g_conf().get_val <
-                bool > ("mgr_standby_modules")
-                << ", standby modules are " << (py_module_registry.
-                                                have_standby_modules()? "" :
-                                                "not ")
-                << "active, respawning" << dendl;
+                    bool > ("mgr_standby_modules")
+                    << ", standby modules are " << (py_module_registry.
+                                                    have_standby_modules() ? "" :
+                                                    "not ")
+                    << "active, respawning" << dendl;
             respawn();
         }
     }
@@ -151,22 +150,26 @@ int MgrStandby::init()
     // We must register our config callback before calling init(), so
     // that we see the initial configuration message
     monc.
-        register_config_callback([this]
-                                 (const std::string & k,
-                                  const std::string & v) {
-                                 // removing value to hide sensitive data going into mgr logs
-                                 // leaving this for debugging purposes
-                                 // dout(10) << "config_callback: " << k << " : " << v << dendl;
-                                 dout(10) << "config_callback: " << k << " : "
-                                 << dendl; if (k.substr(0, 4) == "mgr/") {
-                                 py_module_registry.handle_config(k, v);
-                                 return true;}
-                                 return false;}
-    ) ;
-    monc.register_config_notify_callback([this] () {
-                                         py_module_registry.
-                                         handle_config_notify();}
-    );
+    register_config_callback([this]
+                             (const std::string & k,
+    const std::string & v) {
+        // removing value to hide sensitive data going into mgr logs
+        // leaving this for debugging purposes
+        // dout(10) << "config_callback: " << k << " : " << v << dendl;
+        dout(10) << "config_callback: " << k << " : "
+                 << dendl;
+        if (k.substr(0, 4) == "mgr/") {
+            py_module_registry.handle_config(k, v);
+            return true;
+        }
+        return false;
+    }
+                            ) ;
+    monc.register_config_notify_callback([this]() {
+        py_module_registry.
+        handle_config_notify();
+    }
+                                        );
     dout(4) << "Registered monc callback" << dendl;
 
     int r = monc.init();
@@ -182,8 +185,8 @@ int MgrStandby::init()
     r = monc.authenticate();
     if (r < 0) {
         derr <<
-            "Authentication failed, did you specify a mgr ID with a valid keyring?"
-            << dendl;
+             "Authentication failed, did you specify a mgr ID with a valid keyring?"
+             << dendl;
         monc.shutdown();
         client_messenger->shutdown();
         client_messenger->wait();
@@ -224,7 +227,7 @@ void MgrStandby::send_beacon()
     // Construct a list of the info about each loaded module
     // which we will transmit to the monitor.
     std::vector < MgrMap::ModuleInfo > module_info;
-  for (const auto & module:modules) {
+    for (const auto &module : modules) {
         MgrMap::ModuleInfo info;
         info.name = module->get_name();
         info.error_string = module->get_error_string();
@@ -234,7 +237,7 @@ void MgrStandby::send_beacon()
     }
 
     auto clients = py_module_registry.get_clients();
-  for (const auto & client:clients) {
+    for (const auto &client : clients) {
         dout(15) << "noting RADOS client for blocklist: " << client << dendl;
     }
 
@@ -252,14 +255,14 @@ void MgrStandby::send_beacon()
     collect_sys_info(&metadata, g_ceph_context);
 
     auto m = ceph::make_message < MMgrBeacon > (monc.get_fsid(),
-                                                monc.get_global_id(),
-                                                g_conf()->name.get_id(),
-                                                addrs,
-                                                available,
-                                                std::move(module_info),
-                                                std::move(metadata),
-                                                std::move(clients),
-                                                CEPH_FEATURES_ALL);
+             monc.get_global_id(),
+             g_conf()->name.get_id(),
+             addrs,
+             available,
+             std::move(module_info),
+             std::move(metadata),
+             std::move(clients),
+             CEPH_FEATURES_ALL);
 
     if (available) {
         if (!available_in_map) {
@@ -273,15 +276,15 @@ void MgrStandby::send_beacon()
                             py_commands.end());
             if (monc.monmap.min_mon_release < ceph_release_t::quincy) {
                 dout(10) << " stripping out positional=false quincy-ism" <<
-                    dendl;
-              for (auto & i:commands) {
+                         dendl;
+                for (auto &i : commands) {
                     boost::replace_all(i.cmdstring, ",positional=false", "");
                 }
             }
             m->set_command_descs(commands);
             dout(4) << "going active, including " << m->get_command_descs().
-                size()
-                << " commands in beacon" << dendl;
+                    size()
+                    << " commands in beacon" << dendl;
         }
 
         m->set_services(active_mgr->get_services());
@@ -297,33 +300,38 @@ void MgrStandby::tick()
 
     timer.add_event_after(g_conf().get_val < std::chrono::seconds >
                           ("mgr_tick_period").count(),
-                          new LambdaContext([this] (int r) {
-                                            tick();}
-                          ));
+    new LambdaContext([this](int r) {
+        tick();
+    }
+                                           ));
 }
 
 void MgrStandby::shutdown()
 {
     finisher.queue(new LambdaContext([&](int) {
-                                     std::lock_guard l(lock);
-                                     dout(4) << "Shutting down" << dendl;
-                                     py_module_registry.shutdown();
-                                     // stop sending beacon first, I use monc to talk with monitors
-                                     timer.shutdown();
-                                     // client uses monc and objecter
-                                     client.shutdown(); mgrc.shutdown();
-                                     // Stop asio threads, so leftover events won't call into shut down
-                                     // monclient/objecter.
-                                     poolctx.finish();
-                                     // stop monc, so mon won't be able to instruct me to shutdown/activate after
-                                     // the active_mgr is stopped
-                                     monc.shutdown(); if (active_mgr) {
-                                     active_mgr->shutdown();}
-                                     // objecter is used by monc and active_mgr
-                                     objecter.shutdown();
-                                     // client_messenger is used by all of them, so stop it in the end
-                                     client_messenger->shutdown();}
-                   )) ;
+        std::lock_guard l(lock);
+        dout(4) << "Shutting down" << dendl;
+        py_module_registry.shutdown();
+        // stop sending beacon first, I use monc to talk with monitors
+        timer.shutdown();
+        // client uses monc and objecter
+        client.shutdown();
+        mgrc.shutdown();
+        // Stop asio threads, so leftover events won't call into shut down
+        // monclient/objecter.
+        poolctx.finish();
+        // stop monc, so mon won't be able to instruct me to shutdown/activate after
+        // the active_mgr is stopped
+        monc.shutdown();
+        if (active_mgr) {
+            active_mgr->shutdown();
+        }
+        // objecter is used by monc and active_mgr
+        objecter.shutdown();
+        // client_messenger is used by all of them, so stop it in the end
+        client_messenger->shutdown();
+    }
+                                    )) ;
 
     // Then stop the finisher to ensure its enqueued contexts aren't going
     // to touch references to the things we're about to tear down
@@ -364,8 +372,7 @@ void MgrStandby::respawn()
 
         /* Fall back to a best-effort: just running in our CWD */
         strncpy(exe_path, orig_argv[0], PATH_MAX - 1);
-    }
-    else {
+    } else {
         dout(1) << "respawning with exe " << exe_path << dendl;
         strcpy(exe_path, PROCPREFIX "/proc/self/exe");
     }
@@ -376,7 +383,7 @@ void MgrStandby::respawn()
     execv(exe_path, new_argv);
 
     derr << "respawn execv " << orig_argv[0]
-        << " failed with " << cpp_strerror(errno) << dendl;
+         << " failed with " << cpp_strerror(errno) << dendl;
     ceph_abort();
 }
 
@@ -388,18 +395,18 @@ void MgrStandby::_update_log_config()
 
 void MgrStandby::handle_mgr_map(ref_t < MMgrMap > mmap)
 {
-    auto & map = mmap->get_map();
+    auto &map = mmap->get_map();
     dout(4) << "received map epoch " << map.get_epoch() << dendl;
     const bool active_in_map = map.active_gid == monc.get_global_id();
     dout(4) << "active in map: " << active_in_map
-        << " active is " << map.active_gid << dendl;
+            << " active is " << map.active_gid << dendl;
 
     // PyModuleRegistry may ask us to respawn if it sees that
     // this MgrMap is changing its set of enabled modules
     bool need_respawn = py_module_registry.handle_mgr_map(map);
     if (need_respawn) {
         dout(1) << "respawning because set of enabled modules changed!" <<
-            dendl;
+                dendl;
         respawn();
     }
 
@@ -409,15 +416,15 @@ void MgrStandby::handle_mgr_map(ref_t < MMgrMap > mmap)
             active_mgr.reset(new Mgr(&monc, map, &py_module_registry,
                                      client_messenger.get(), &objecter,
                                      &client, clog, audit_clog));
-            active_mgr->background_init(new LambdaContext([this] (int r) {
-                                                          // Advertise our active-ness ASAP instead of waiting for
-                                                          // next tick.
-                                                          std::
-                                                          lock_guard l(lock);
-                                                          send_beacon();}));
+            active_mgr->background_init(new LambdaContext([this](int r) {
+                // Advertise our active-ness ASAP instead of waiting for
+                // next tick.
+                std::
+                lock_guard l(lock);
+                send_beacon();
+            }));
             dout(1) << "I am now activating" << dendl;
-        }
-        else {
+        } else {
             dout(10) << "I was already active" << dendl;
             bool need_respawn = active_mgr->got_mgr_map(map);
             if (need_respawn) {
@@ -429,12 +436,10 @@ void MgrStandby::handle_mgr_map(ref_t < MMgrMap > mmap)
             dout(4) << "Map now says I am available" << dendl;
             available_in_map = true;
         }
-    }
-    else if (active_mgr != nullptr) {
+    } else if (active_mgr != nullptr) {
         derr << "I was active but no longer am" << dendl;
         respawn();
-    }
-    else {
+    } else {
         if (map.active_gid != 0 && map.active_name != g_conf()->name.get_id()) {
             // I am the standby and someone else is active, start modules
             // in standby mode to do redirects if needed
@@ -468,7 +473,7 @@ bool MgrStandby::ms_dispatch2(const ref_t < Message > &m)
     return handled;
 }
 
-bool MgrStandby::ms_handle_refused(Connection * con)
+bool MgrStandby::ms_handle_refused(Connection *con)
 {
     // do nothing for now
     return false;
@@ -489,11 +494,9 @@ std::string MgrStandby::state_str()
 {
     if (active_mgr == nullptr) {
         return "standby";
-    }
-    else if (active_mgr->is_initialized()) {
+    } else if (active_mgr->is_initialized()) {
         return "active";
-    }
-    else {
+    } else {
         return "active (starting)";
     }
 }

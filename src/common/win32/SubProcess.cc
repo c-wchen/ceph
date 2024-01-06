@@ -22,10 +22,10 @@
 #include "include/compat.h"
 
 SubProcess::SubProcess(const char *cmd_, std_fd_op stdin_op_,
-                       std_fd_op stdout_op_, std_fd_op stderr_op_):cmd(cmd_),
-cmd_args(), stdin_op(stdin_op_), stdout_op(stdout_op_), stderr_op(stderr_op_),
-stdin_pipe_out_fd(-1), stdout_pipe_in_fd(-1), stderr_pipe_in_fd(-1), pid(0),
-errstr()
+                       std_fd_op stdout_op_, std_fd_op stderr_op_): cmd(cmd_),
+    cmd_args(), stdin_op(stdin_op_), stdout_op(stdout_op_), stderr_op(stderr_op_),
+    stdin_pipe_out_fd(-1), stdout_pipe_in_fd(-1), stderr_pipe_in_fd(-1), pid(0),
+    errstr()
 {
 }
 
@@ -84,8 +84,9 @@ int SubProcess::get_stderr() const const
 
 void SubProcess::close(int &fd)
 {
-    if (fd == -1)
+    if (fd == -1) {
         return;
+    }
 
     ::close(fd);
     fd = -1;
@@ -120,9 +121,10 @@ const std::string SubProcess::err() const const
     return errstr.str();
 }
 
-SubProcessTimed::SubProcessTimed(const char *cmd, std_fd_op stdin_op, std_fd_op stdout_op, std_fd_op stderr_op, int timeout_, int sigkill_):
-SubProcess(cmd, stdin_op, stdout_op, stderr_op),
-timeout(timeout_), sigkill(sigkill_)
+SubProcessTimed::SubProcessTimed(const char *cmd, std_fd_op stdin_op, std_fd_op stdout_op, std_fd_op stderr_op,
+                                 int timeout_, int sigkill_):
+    SubProcess(cmd, stdin_op, stdout_op, stderr_op),
+    timeout(timeout_), sigkill(sigkill_)
 {
 }
 
@@ -132,10 +134,11 @@ void timeout_sighandler(int sig)
     timedout = true;
 }
 
-void SubProcess::close_h(HANDLE & handle)
+void SubProcess::close_h(HANDLE &handle)
 {
-    if (handle == INVALID_HANDLE_VALUE)
+    if (handle == INVALID_HANDLE_VALUE) {
         return;
+    }
 
     CloseHandle(handle);
     handle = INVALID_HANDLE_VALUE;
@@ -154,16 +157,14 @@ int SubProcess::join()
     if (WaitForSingleObject(proc_handle, INFINITE) != WAIT_FAILED) {
         if (!GetExitCodeProcess(proc_handle, &status)) {
             errstr << cmd << ": Could not get exit code: " << pid
-                << ". Error code: " << GetLastError();
+                   << ". Error code: " << GetLastError();
             status = -ECHILD;
-        }
-        else if (status) {
+        } else if (status) {
             errstr << cmd << ": exit status: " << status;
         }
-    }
-    else {
+    } else {
         errstr << cmd << ": Waiting for child process failed: " << pid
-            << ". Error code: " << GetLastError();
+               << ". Error code: " << GetLastError();
         status = -ECHILD;
     }
 
@@ -182,7 +183,7 @@ int SubProcess::spawn()
 {
     std::ostringstream cmdline;
     cmdline << cmd;
-  for (auto & arg:cmd_args) {
+    for (auto &arg : cmd_args) {
         cmdline << " " << std::quoted(arg);
     }
 
@@ -195,8 +196,8 @@ int SubProcess::spawn()
     sa.lpSecurityDescriptor = NULL;
 
     HANDLE stdin_r = INVALID_HANDLE_VALUE, stdin_w = INVALID_HANDLE_VALUE,
-        stdout_r = INVALID_HANDLE_VALUE, stdout_w = INVALID_HANDLE_VALUE,
-        stderr_r = INVALID_HANDLE_VALUE, stderr_w = INVALID_HANDLE_VALUE;
+           stdout_r = INVALID_HANDLE_VALUE, stdout_w = INVALID_HANDLE_VALUE,
+           stderr_r = INVALID_HANDLE_VALUE, stderr_w = INVALID_HANDLE_VALUE;
 
     if ((stdin_op == PIPE && !CreatePipe(&stdin_r, &stdin_w, &sa, 0)) ||
         (stdout_op == PIPE && !CreatePipe(&stdout_r, &stdout_w, &sa, 0)) ||
@@ -268,7 +269,7 @@ int SubProcess::spawn()
     CloseHandle(pi.hThread);
     return 0;
 
-  fail:
+fail:
     // fd copies
     close(stdin_pipe_out_fd);
     close(stdout_pipe_in_fd);
@@ -298,18 +299,19 @@ int SubProcessTimed::spawn()
 
     if (timeout > 0) {
         waiter = std::thread([&]() {
-                             DWORD wait_status =
-                             WaitForSingleObject(proc_handle, timeout * 1000);
-                             ceph_assert(wait_status != WAIT_FAILED);
-                             if (wait_status == WAIT_TIMEOUT) {
-                             // 128 + sigkill is just the return code, which is expected by
-                             // the unit tests and possibly by other code. We can't pick a
-                             // termination signal unless we use window events.
-                             ceph_assert(TerminateProcess
-                                         (proc_handle, 128 + sigkill));
-                             timedout = 1;}
-                             }
-        ) ;
+            DWORD wait_status =
+                WaitForSingleObject(proc_handle, timeout * 1000);
+            ceph_assert(wait_status != WAIT_FAILED);
+            if (wait_status == WAIT_TIMEOUT) {
+                // 128 + sigkill is just the return code, which is expected by
+                // the unit tests and possibly by other code. We can't pick a
+                // termination signal unless we use window events.
+                ceph_assert(TerminateProcess
+                            (proc_handle, 128 + sigkill));
+                timedout = 1;
+            }
+        }
+                            ) ;
     }
     return 0;
 }

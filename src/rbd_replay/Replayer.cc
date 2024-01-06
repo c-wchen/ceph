@@ -31,32 +31,34 @@ using std::cerr;
 using std::cout;
 using namespace rbd_replay;
 
-namespace {
+namespace
+{
 
-    bool is_versioned_replay(BufferReader & buffer_reader) {
-        bufferlist::const_iterator * it;
-        int r = buffer_reader.fetch(&it);
-        if (r < 0) {
-            return false;
-        }
-
-        if (it->get_remaining() < action::BANNER.size()) {
-            return false;
-        }
-
-        std::string banner;
-        it->copy(action::BANNER.size(), banner);
-        bool versioned = (banner == action::BANNER);
-        if (!versioned) {
-            it->seek(0);
-        }
-        return versioned;
+bool is_versioned_replay(BufferReader &buffer_reader)
+{
+    bufferlist::const_iterator *it;
+    int r = buffer_reader.fetch(&it);
+    if (r < 0) {
+        return false;
     }
+
+    if (it->get_remaining() < action::BANNER.size()) {
+        return false;
+    }
+
+    std::string banner;
+    it->copy(action::BANNER.size(), banner);
+    bool versioned = (banner == action::BANNER);
+    if (!versioned) {
+        it->seek(0);
+    }
+    return versioned;
+}
 
 }                               // anonymous namespace
 
-Worker::Worker(Replayer & replayer)
-:  m_replayer(replayer), m_buffer(100), m_done(false)
+Worker::Worker(Replayer &replayer)
+    :  m_replayer(replayer), m_buffer(100), m_done(false)
 {
 }
 
@@ -86,7 +88,7 @@ void Worker::add_pending(PendingIO::ptr io)
 {
     ceph_assert(io);
     std::scoped_lock lock {
-    m_pending_ios_mutex};
+        m_pending_ios_mutex};
     assertf(m_pending_ios.count(io->id()) == 0, "id = %d", io->id());
     m_pending_ios[io->id()] = io;
 }
@@ -103,14 +105,14 @@ void Worker::run()
     }
     {
         std::unique_lock lock {
-        m_pending_ios_mutex};
+            m_pending_ios_mutex};
         bool first_time = true;
         while (!m_pending_ios.empty()) {
             if (!first_time) {
                 dout(THREAD_LEVEL) <<
-                    "Worker thread trying to stop, still waiting for " <<
-                    m_pending_ios.
-                    size() << " pending IOs to complete:" << dendl;
+                                   "Worker thread trying to stop, still waiting for " <<
+                                   m_pending_ios.
+                                   size() << " pending IOs to complete:" << dendl;
                 std::pair < action_id_t, PendingIO::ptr > p;
                 BOOST_FOREACH(p, m_pending_ios) {
                     dout(THREAD_LEVEL) << "> " << p.first << dendl;
@@ -128,7 +130,7 @@ void Worker::remove_pending(PendingIO::ptr io)
     ceph_assert(io);
     m_replayer.set_action_complete(io->id());
     std::scoped_lock lock {
-    m_pending_ios_mutex};
+        m_pending_ios_mutex};
     size_t num_erased = m_pending_ios.erase(io->id());
     assertf(num_erased == 1, "id = %d", io->id());
     if (m_pending_ios.empty()) {
@@ -136,12 +138,12 @@ void Worker::remove_pending(PendingIO::ptr io)
     }
 }
 
-librbd::Image * Worker::get_image(imagectx_id_t imagectx_id)
+librbd::Image *Worker::get_image(imagectx_id_t imagectx_id)
 {
     return m_replayer.get_image(imagectx_id);
 }
 
-void Worker::put_image(imagectx_id_t imagectx_id, librbd::Image * image)
+void Worker::put_image(imagectx_id_t imagectx_id, librbd::Image *image)
 {
     ceph_assert(image);
     m_replayer.put_image(imagectx_id, image);
@@ -152,12 +154,12 @@ void Worker::erase_image(imagectx_id_t imagectx_id)
     m_replayer.erase_image(imagectx_id);
 }
 
-librbd::RBD * Worker::rbd()
+librbd::RBD *Worker::rbd()
 {
     return m_replayer.get_rbd();
 }
 
-librados::IoCtx * Worker::ioctx()
+librados::IoCtx *Worker::ioctx()
 {
     return m_replayer.get_ioctx();
 }
@@ -178,12 +180,12 @@ rbd_loc Worker::map_image_name(std::string image_name, std::string snap_name) co
 }
 
 Replayer::Replayer(int num_action_trackers)
-:  
-m_rbd(NULL), m_ioctx(0),
-m_latency_multiplier(1.0),
-m_readonly(false), m_dump_perf_counters(false),
-m_num_action_trackers(num_action_trackers),
-m_action_trackers(new action_tracker_d[m_num_action_trackers])
+    :
+    m_rbd(NULL), m_ioctx(0),
+    m_latency_multiplier(1.0),
+    m_readonly(false), m_dump_perf_counters(false),
+    m_num_action_trackers(num_action_trackers),
+    m_action_trackers(new action_tracker_d[m_num_action_trackers])
 {
     assertf(num_action_trackers > 0, "num_action_trackers = %d",
             num_action_trackers);
@@ -194,12 +196,12 @@ Replayer::~Replayer()
     delete[]m_action_trackers;
 }
 
-Replayer::action_tracker_d & Replayer::tracker_for(action_id_t id)
+Replayer::action_tracker_d &Replayer::tracker_for(action_id_t id)
 {
     return m_action_trackers[id % m_num_action_trackers];
 }
 
-void Replayer::run(const std::string & replay_file)
+void Replayer::run(const std::string &replay_file)
 {
     {
         librados::Rados rados;
@@ -207,13 +209,13 @@ void Replayer::run(const std::string & replay_file)
         int r = rados.init_with_context(g_ceph_context);
         if (r) {
             cerr << "Failed to initialize RADOS: " << cpp_strerror(r) << std::
-                endl;
+                 endl;
             goto out;
         }
         r = rados.connect();
         if (r) {
             cerr << "Failed to connect to cluster: " << cpp_strerror(r) << std::
-                endl;
+                 endl;
             goto out;
         }
 
@@ -221,7 +223,7 @@ void Replayer::run(const std::string & replay_file)
             r = rados.conf_get("rbd_default_pool", m_pool_name);
             if (r < 0) {
                 cerr << "Failed to retrieve default pool: " << cpp_strerror(r)
-                    << std::endl;
+                     << std::endl;
                 goto out;
             }
         }
@@ -231,7 +233,7 @@ void Replayer::run(const std::string & replay_file)
             r = rados.ioctx_create(m_pool_name.c_str(), *m_ioctx);
             if (r) {
                 cerr << "Failed to open pool " << m_pool_name << ": "
-                    << cpp_strerror(r) << std::endl;
+                     << cpp_strerror(r) << std::endl;
                 goto out2;
             }
             m_rbd = new librbd::RBD();
@@ -240,25 +242,25 @@ void Replayer::run(const std::string & replay_file)
             int fd = open(replay_file.c_str(), O_RDONLY | O_BINARY);
             if (fd < 0) {
                 std::cerr << "Failed to open " << replay_file << ": "
-                    << cpp_strerror(errno) << std::endl;
+                          << cpp_strerror(errno) << std::endl;
                 exit(1);
             }
             auto close_fd = make_scope_guard([fd] { close(fd);
-                                             }
-            );
+                                                  }
+                                            );
 
             BufferReader buffer_reader(fd);
             bool versioned = is_versioned_replay(buffer_reader);
             while (true) {
                 action::ActionEntry action_entry;
                 try {
-                    bufferlist::const_iterator * it;
+                    bufferlist::const_iterator *it;
                     int r = buffer_reader.fetch(&it);
                     if (r < 0) {
                         std::
-                            cerr << "Failed to read from trace file: " <<
-                            cpp_strerror(r)
-                            << std::endl;
+                        cerr << "Failed to read from trace file: " <<
+                             cpp_strerror(r)
+                             << std::endl;
                         exit(-r);
                     }
                     if (it->get_remaining() == 0) {
@@ -267,14 +269,12 @@ void Replayer::run(const std::string & replay_file)
 
                     if (versioned) {
                         action_entry.decode(*it);
-                    }
-                    else {
+                    } else {
                         action_entry.decode_unversioned(*it);
                     }
-                }
-                catch(const buffer::error & err) {
+                } catch (const buffer::error &err) {
                     std::cerr << "Failed to decode trace action: " << err.
-                        what() << std::endl;
+                              what() << std::endl;
                     exit(1);
                 }
 
@@ -288,8 +288,7 @@ void Replayer::run(const std::string & replay_file)
                     Worker *worker = new Worker(*this);
                     workers[action->thread_id()] = worker;
                     worker->start();
-                }
-                else {
+                } else {
                     workers[action->thread_id()]->send(action);
                 }
             }
@@ -304,26 +303,26 @@ void Replayer::run(const std::string & replay_file)
             delete m_rbd;
             m_rbd = NULL;
         }
-      out2:
+out2:
         delete m_ioctx;
         m_ioctx = NULL;
     }
-  out:
+out:
     ;
 }
 
-librbd::Image * Replayer::get_image(imagectx_id_t imagectx_id)
+librbd::Image *Replayer::get_image(imagectx_id_t imagectx_id)
 {
     std::scoped_lock lock {
-    m_images_mutex};
+        m_images_mutex};
     return m_images[imagectx_id];
 }
 
-void Replayer::put_image(imagectx_id_t imagectx_id, librbd::Image * image)
+void Replayer::put_image(imagectx_id_t imagectx_id, librbd::Image *image)
 {
     ceph_assert(image);
     std::unique_lock lock {
-    m_images_mutex};
+        m_images_mutex};
     ceph_assert(m_images.count(imagectx_id) == 0);
     m_images[imagectx_id] = image;
 }
@@ -331,8 +330,8 @@ void Replayer::put_image(imagectx_id_t imagectx_id, librbd::Image * image)
 void Replayer::erase_image(imagectx_id_t imagectx_id)
 {
     std::unique_lock lock {
-    m_images_mutex};
-    librbd::Image * image = m_images[imagectx_id];
+        m_images_mutex};
+    librbd::Image *image = m_images[imagectx_id];
     if (m_dump_perf_counters) {
         std::string command = "perf dump";
         cmdmap_t cmdmap;
@@ -351,11 +350,11 @@ void Replayer::erase_image(imagectx_id_t imagectx_id)
 void Replayer::set_action_complete(action_id_t id)
 {
     dout(DEPGRAPH_LEVEL) << "ActionTracker::set_complete(" << id << ")" <<
-        dendl;
+                         dendl;
     auto now = std::chrono::system_clock::now();
-    action_tracker_d & tracker = tracker_for(id);
+    action_tracker_d &tracker = tracker_for(id);
     std::unique_lock lock {
-    tracker.mutex};
+        tracker.mutex};
     ceph_assert(tracker.actions.count(id) == 0);
     tracker.actions[id] = now;
     tracker.condition.notify_all();
@@ -363,22 +362,22 @@ void Replayer::set_action_complete(action_id_t id)
 
 bool Replayer::is_action_complete(action_id_t id)
 {
-    action_tracker_d & tracker = tracker_for(id);
+    action_tracker_d &tracker = tracker_for(id);
     std::shared_lock lock {
-    tracker.mutex};
+        tracker.mutex};
     return tracker.actions.count(id) > 0;
 }
 
-void Replayer::wait_for_actions(const action::Dependencies & deps)
+void Replayer::wait_for_actions(const action::Dependencies &deps)
 {
     auto release_time =
         std::chrono::time_point < std::chrono::system_clock >::min();
-  for (auto & dep:deps) {
+    for (auto &dep : deps) {
         dout(DEPGRAPH_LEVEL) << "Waiting for " << dep.id << dendl;
         auto start_time = std::chrono::system_clock::now();
-        action_tracker_d & tracker = tracker_for(dep.id);
+        action_tracker_d &tracker = tracker_for(dep.id);
         std::unique_lock lock {
-        tracker.mutex};
+            tracker.mutex};
         bool first_time = true;
         while (tracker.actions.count(dep.id) == 0) {
             if (!first_time) {
@@ -394,13 +393,13 @@ void Replayer::wait_for_actions(const action::Dependencies & deps)
             std::chrono::duration_cast < std::chrono::microseconds >
             (end_time - start_time).count();
         dout(DEPGRAPH_LEVEL) << "Finished waiting for " << dep.
-            id << " after " << micros << " microseconds" << dendl;
+                             id << " after " << micros << " microseconds" << dendl;
         // Apparently the nanoseconds constructor is optional:
         // http://www.boost.org/doc/libs/1_46_0/doc/html/date_time/details.html#compile_options
         auto sub_release_time {
             action_completed_time + std::chrono::microseconds {
-        static_cast <
-                    long long >(dep.time_delta * m_latency_multiplier / 1000)}};
+                static_cast <
+                long long >(dep.time_delta *m_latency_multiplier / 1000)}};
         if (sub_release_time > release_time) {
             release_time = sub_release_time;
         }
@@ -408,9 +407,9 @@ void Replayer::wait_for_actions(const action::Dependencies & deps)
     if (release_time > std::chrono::system_clock::now()) {
         auto sleep_for = release_time - std::chrono::system_clock::now();
         dout(SLEEP_LEVEL) << "Sleeping for "
-            << std::chrono::duration_cast < std::chrono::microseconds >
-            (sleep_for).count()
-            << " microseconds" << dendl;
+                          << std::chrono::duration_cast < std::chrono::microseconds >
+                          (sleep_for).count()
+                          << " microseconds" << dendl;
         std::this_thread::sleep_until(release_time);
     }
 }
@@ -418,7 +417,7 @@ void Replayer::wait_for_actions(const action::Dependencies & deps)
 void Replayer::clear_images()
 {
     std::shared_lock lock {
-    m_images_mutex};
+        m_images_mutex};
     if (m_dump_perf_counters && !m_images.empty()) {
         std::string command = "perf dump";
         cmdmap_t cmdmap;
@@ -430,7 +429,7 @@ void Replayer::clear_images()
         cout << std::endl;
         cout.flush();
     }
-  for (auto & p:m_images) {
+    for (auto &p : m_images) {
         delete p.second;
     }
     m_images.clear();
@@ -452,8 +451,7 @@ void Replayer::set_readonly(bool readonly)
     m_readonly = readonly;
 }
 
-std::string Replayer::pool_name() constconst
-{
+std::string Replayer::pool_name() constconst {
     return m_pool_name;
 }
 

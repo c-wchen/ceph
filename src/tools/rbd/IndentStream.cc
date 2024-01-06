@@ -3,13 +3,16 @@
 
 #include "tools/rbd/IndentStream.h"
 
-namespace rbd {
+namespace rbd
+{
 
-    int IndentBuffer::overflow(int c) {
-        if (traits_type::eq_int_type(traits_type::eof(), c)) {
-            return traits_type::not_eof(c);
-        } int r;
-        switch (c) {
+int IndentBuffer::overflow(int c)
+{
+    if (traits_type::eq_int_type(traits_type::eof(), c)) {
+        return traits_type::not_eof(c);
+    }
+    int r;
+    switch (c) {
         case '\n':
             m_buffer += c;
             flush_line();
@@ -32,8 +35,7 @@ namespace rbd {
                     m_streambuf->sputn(m_buffer.c_str(), word_offset);
                     m_buffer = std::string(m_buffer,
                                            word_offset + (space_delim ? 1 : 0));
-                }
-                else {
+                } else {
                     flush_line();
                     m_streambuf->sputn(m_buffer.c_str(), m_buffer.size());
                     m_buffer.clear();
@@ -42,18 +44,19 @@ namespace rbd {
             }
             m_buffer += c;
             return c;
-        }
     }
+}
 
-    void IndentBuffer::flush_line() {
-        if (m_initial_offset >= m_indent) {
-            m_initial_offset = 0;
-            m_streambuf->sputc('\n');
-        }
-
-        m_streambuf->sputn(m_indent_prefix.c_str(),
-                           m_indent - m_initial_offset);
+void IndentBuffer::flush_line()
+{
+    if (m_initial_offset >= m_indent) {
         m_initial_offset = 0;
+        m_streambuf->sputc('\n');
     }
+
+    m_streambuf->sputn(m_indent_prefix.c_str(),
+                       m_indent - m_initial_offset);
+    m_initial_offset = 0;
+}
 
 }                               // namespace rbd

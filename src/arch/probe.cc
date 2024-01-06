@@ -9,8 +9,9 @@
 
 int ceph_arch_probe(void)
 {
-    if (ceph_arch_probed)
+    if (ceph_arch_probed) {
         return 1;
+    }
 #if defined(__i386__) || defined(__x86_64__)
     ceph_arch_intel_probe();
 #elif defined(__arm__) || defined(__aarch64__)

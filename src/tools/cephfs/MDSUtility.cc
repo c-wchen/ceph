@@ -18,10 +18,10 @@
 #define dout_subsys ceph_subsys_mds
 
 MDSUtility::MDSUtility():
-Dispatcher(g_ceph_context),
-objecter(NULL),
-finisher(g_ceph_context, "MDSUtility", "fn_mds_utility"),
-waiting_for_mds_map(NULL), inited(false)
+    Dispatcher(g_ceph_context),
+    objecter(NULL),
+    finisher(g_ceph_context, "MDSUtility", "fn_mds_utility"),
+    waiting_for_mds_map(NULL), inited(false)
 {
     monc = new MonClient(g_ceph_context, poolctx);
     messenger = Messenger::create_client_messenger(g_ceph_context, "mds");
@@ -63,15 +63,15 @@ int MDSUtility::init()
     }
 
     monc->
-        set_want_keys(CEPH_ENTITY_TYPE_MON | CEPH_ENTITY_TYPE_OSD |
-                      CEPH_ENTITY_TYPE_MDS);
+    set_want_keys(CEPH_ENTITY_TYPE_MON | CEPH_ENTITY_TYPE_OSD |
+                  CEPH_ENTITY_TYPE_MDS);
     monc->set_messenger(messenger);
     monc->init();
     int r = monc->authenticate();
     if (r < 0) {
         derr <<
-            "Authentication failed, did you specify an MDS ID with a valid keyring?"
-            << dendl;
+             "Authentication failed, did you specify an MDS ID with a valid keyring?"
+             << dendl;
         monc->shutdown();
         objecter->shutdown();
         messenger->shutdown();
@@ -101,11 +101,11 @@ int MDSUtility::init()
     dout(4) << "waiting for MDS map..." << dendl;
     {
         std::unique_lock locker {
-        init_lock};
-        cond.wait(locker,[&done] {
-                  return done;
-                  }
-        );
+            init_lock};
+        cond.wait(locker, [&done] {
+            return done;
+        }
+                 );
     }
     dout(4) << "Got MDS map " << fsmap->get_epoch() << dendl;
 
@@ -128,24 +128,24 @@ void MDSUtility::shutdown()
     poolctx.finish();
 }
 
-bool MDSUtility::ms_dispatch(Message * m)
+bool MDSUtility::ms_dispatch(Message *m)
 {
     std::lock_guard locker {
-    lock};
+        lock};
     switch (m->get_type()) {
-    case CEPH_MSG_FS_MAP:
-        handle_fs_map((MFSMap *) m);
-        break;
-    case CEPH_MSG_OSD_MAP:
-        break;
-    default:
-        return false;
+        case CEPH_MSG_FS_MAP:
+            handle_fs_map((MFSMap *) m);
+            break;
+        case CEPH_MSG_OSD_MAP:
+            break;
+        default:
+            return false;
     }
     m->put();
     return true;
 }
 
-void MDSUtility::handle_fs_map(MFSMap * m)
+void MDSUtility::handle_fs_map(MFSMap *m)
 {
     *fsmap = m->get_fsmap();
     if (waiting_for_mds_map) {

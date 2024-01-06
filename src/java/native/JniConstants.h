@@ -38,7 +38,7 @@
  * TODO: similar arguments hold for field and method IDs; we should cache them centrally too.
  */
 struct JniConstants {
-    static void init(JNIEnv * env);
+    static void init(JNIEnv *env);
 
     static jclass inet6AddressClass;
     static jclass inetAddressClass;

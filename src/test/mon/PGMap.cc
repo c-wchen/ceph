@@ -18,33 +18,41 @@
 
 using namespace std;
 
-namespace {
-    class CheckTextTable:public TextTable {
-      public:
-        explicit CheckTextTable(bool verbose) {
-            for (int i = 0; i < 5; i++) {
+namespace
+{
+class CheckTextTable: public TextTable
+{
+public:
+    explicit CheckTextTable(bool verbose)
+    {
+        for (int i = 0; i < 5; i++) {
+            define_column("", TextTable::LEFT, TextTable::LEFT);
+        }
+        if (verbose) {
+            for (int i = 0; i < 9; i++) {
                 define_column("", TextTable::LEFT, TextTable::LEFT);
-            } if (verbose) {
-                for (int i = 0; i < 9; i++) {
-                    define_column("", TextTable::LEFT, TextTable::LEFT);
-                }
             }
         }
-        const string & get(unsigned r, unsigned c) const {
-            ceph_assert(r < row.size());
-            ceph_assert(c < row[r].size());
-            return row[r][c];
-    }};
-
-    // copied from PGMap.cc
-    string percentify(float a) {
-        stringstream ss;
-        if (a < 0.01)
-            ss << "0";
-        else
-            ss << std::fixed << std::setprecision(2) << a;
-        return ss.str();
     }
+    const string &get(unsigned r, unsigned c) const
+    {
+        ceph_assert(r < row.size());
+        ceph_assert(c < row[r].size());
+        return row[r][c];
+    }
+};
+
+// copied from PGMap.cc
+string percentify(float a)
+{
+    stringstream ss;
+    if (a < 0.01) {
+        ss << "0";
+    } else {
+        ss << std::fixed << std::setprecision(2) << a;
+    }
+    return ss.str();
+}
 }
 
 // dump_object_stat_sum() is called by "ceph df" command
@@ -54,7 +62,7 @@ TEST(pgmap, dump_object_stat_sum_0)
     bool verbose = true;
     CheckTextTable tbl(verbose);
     pool_stat_t pool_stat;
-    object_stat_sum_t & sum = pool_stat.stats.sum;
+    object_stat_sum_t &sum = pool_stat.stats.sum;
     sum.num_bytes = 42 * 1024 * 1024;
     sum.num_objects = 42;
     sum.num_objects_degraded = 13;  // there are 13 missings + not_yet_backfilled
@@ -64,7 +72,7 @@ TEST(pgmap, dump_object_stat_sum_0)
     sum.num_wr = 101;
     sum.num_wr_kb = 321;
     pool_stat.num_store_stats = 3;
-    store_statfs_t & statfs = pool_stat.store_stats;
+    store_statfs_t &statfs = pool_stat.store_stats;
     statfs.data_stored = 40 * 1024 * 1024;
     statfs.allocated = 41 * 1024 * 1024 * 2;
     statfs.data_compressed_allocated = 4334;
@@ -85,7 +93,7 @@ TEST(pgmap, dump_object_stat_sum_0)
         (static_cast <
          float >(sum.num_object_copies -
                  sum.num_objects_degraded) /
-         sum.num_object_copies)*pool.get_size();
+         sum.num_object_copies) * pool.get_size();
     float used_percent =
         (float)statfs.allocated / (statfs.allocated + avail) * 100;
     uint64_t stored = statfs.data_stored / copies_rate;
@@ -115,7 +123,7 @@ TEST(pgmap, dump_object_stat_sum_1)
     bool verbose = true;
     CheckTextTable tbl(verbose);
     pool_stat_t pool_stat;
-    object_stat_sum_t & sum = pool_stat.stats.sum;  // zero by default
+    object_stat_sum_t &sum = pool_stat.stats.sum;   // zero by default
     ASSERT_TRUE(sum.is_zero());
     // nominal amount of space available for new objects in this pool
     uint64_t avail = 2016 * 1024 * 1024;
@@ -150,7 +158,7 @@ TEST(pgmap, dump_object_stat_sum_2)
     bool verbose = false;
     CheckTextTable tbl(verbose);
     pool_stat_t pool_stat;
-    object_stat_sum_t & sum = pool_stat.stats.sum;  // zero by default
+    object_stat_sum_t &sum = pool_stat.stats.sum;   // zero by default
     ASSERT_TRUE(sum.is_zero());
     // nominal amount of space available for new objects in this pool
     uint64_t avail = 0;

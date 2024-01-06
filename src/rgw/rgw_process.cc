@@ -46,30 +46,30 @@ void RGWProcess::RGWWQ::_dump_queue()
     }
 }                               /* RGWProcess::RGWWQ::_dump_queue */
 
-auto schedule_request(Scheduler * scheduler, req_state * s, RGWOp * op)
+auto schedule_request(Scheduler *scheduler, req_state *s, RGWOp *op)
 {
     using rgw::dmclock::SchedulerCompleter;
     if (!scheduler)
         return std::make_pair(0, SchedulerCompleter {
-                              }
-    );
+    }
+                         );
 
     const auto client = op->dmclock_client();
     const auto cost = op->dmclock_cost();
     if (s->cct->_conf->subsys.should_gather(ceph_subsys_rgw, 10)) {
         ldpp_dout(op, 10) << "scheduling with "
-            << s->cct->_conf.get_val < std::string > ("rgw_scheduler_type")
-        << " client=" << static_cast < int >(client)
-        << " cost=" << cost << dendl;
+                          << s->cct->_conf.get_val < std::string > ("rgw_scheduler_type")
+                          << " client=" << static_cast < int >(client)
+                          << " cost=" << cost << dendl;
     }
     return scheduler->schedule_request(client, {
-                                       }
-                                       ,
-                                       req_state::Clock::to_double(s->time),
-                                       cost, s->yield);
+    }
+    ,
+    req_state::Clock::to_double(s->time),
+    cost, s->yield);
 }
 
-bool RGWProcess::RGWWQ::_enqueue(RGWRequest * req)
+bool RGWProcess::RGWWQ::_enqueue(RGWRequest *req)
 {
     process->m_req_queue.push_back(req);
     perfcounter->inc(l_rgw_qlen);
@@ -80,8 +80,9 @@ bool RGWProcess::RGWWQ::_enqueue(RGWRequest * req)
 
 RGWRequest *RGWProcess::RGWWQ::_dequeue()
 {
-    if (process->m_req_queue.empty())
+    if (process->m_req_queue.empty()) {
         return NULL;
+    }
     RGWRequest *req = process->m_req_queue.front();
     process->m_req_queue.pop_front();
     dout(20) << "dequeued request req=" << hex << req << dec << dendl;
@@ -90,7 +91,7 @@ RGWRequest *RGWProcess::RGWWQ::_dequeue()
     return req;
 }
 
-void RGWProcess::RGWWQ::_process(RGWRequest * req, ThreadPool::TPHandle &)
+void RGWProcess::RGWWQ::_process(RGWRequest *req, ThreadPool::TPHandle &)
 {
     perfcounter->inc(l_rgw_qactive);
     process->handle_request(this, req);
@@ -98,13 +99,14 @@ void RGWProcess::RGWWQ::_process(RGWRequest * req, ThreadPool::TPHandle &)
     perfcounter->inc(l_rgw_qactive, -1);
 }
 
-bool rate_limit(rgw::sal::Driver * driver, req_state * s)
+bool rate_limit(rgw::sal::Driver *driver, req_state *s)
 {
     // we dont want to limit health check or system or admin requests
-    const auto & is_admin_or_system = s->user->get_info();
+    const auto &is_admin_or_system = s->user->get_info();
     if ((s->op_type == RGW_OP_GET_HEALTH_CHECK) || is_admin_or_system.admin
-        || is_admin_or_system.system)
+        || is_admin_or_system.system) {
         return false;
+    }
     std::string userfind;
     RGWRateLimitInfo global_user;
     RGWRateLimitInfo global_bucket;
@@ -118,7 +120,7 @@ bool rate_limit(rgw::sal::Driver * driver, req_state * s)
     userfind = "u" + userfind;
     s->ratelimit_user_name = userfind;
     std::string bucketfind =
-        !rgw::sal::Bucket::empty(s->bucket.get())? "b" +
+        !rgw::sal::Bucket::empty(s->bucket.get()) ? "b" +
         s->bucket->get_marker() : "";
     s->ratelimit_bucket_marker = bucketfind;
     const char *method = s->info.method;
@@ -127,14 +129,14 @@ bool rate_limit(rgw::sal::Driver * driver, req_state * s)
     if (iter != s->user->get_attrs().end()) {
         try {
             RGWRateLimitInfo user_ratelimit_temp;
-            bufferlist & bl = iter->second;
+            bufferlist &bl = iter->second;
             auto biter = bl.cbegin();
             decode(user_ratelimit_temp, biter);
             // override global rate limiting only if local rate limiting is enabled
-            if (user_ratelimit_temp.enabled)
+            if (user_ratelimit_temp.enabled) {
                 *user_ratelimit = user_ratelimit_temp;
-        }
-        catch(buffer::error & err) {
+            }
+        } catch (buffer::error &err) {
             ldpp_dout(s, 0) << "ERROR: failed to decode rate limit" << dendl;
             return -EIO;
         }
@@ -145,21 +147,21 @@ bool rate_limit(rgw::sal::Driver * driver, req_state * s)
     bool limit_bucket = false;
     bool limit_user =
         s->ratelimit_data->should_rate_limit(method, s->ratelimit_user_name,
-                                             s->time, user_ratelimit);
+            s->time, user_ratelimit);
 
     if (!rgw::sal::Bucket::empty(s->bucket.get())) {
         iter = s->bucket->get_attrs().find(RGW_ATTR_RATELIMIT);
         if (iter != s->bucket->get_attrs().end()) {
             try {
                 RGWRateLimitInfo bucket_ratelimit_temp;
-                bufferlist & bl = iter->second;
+                bufferlist &bl = iter->second;
                 auto biter = bl.cbegin();
                 decode(bucket_ratelimit_temp, biter);
                 // override global rate limiting only if local rate limiting is enabled
-                if (bucket_ratelimit_temp.enabled)
+                if (bucket_ratelimit_temp.enabled) {
                     *bucket_ratelimit = bucket_ratelimit_temp;
-            }
-            catch(buffer::error & err) {
+                }
+            } catch (buffer::error &err) {
                 ldpp_dout(s,
                           0) << "ERROR: failed to decode rate limit" << dendl;
                 return -EIO;
@@ -168,8 +170,8 @@ bool rate_limit(rgw::sal::Driver * driver, req_state * s)
         if (!limit_user) {
             limit_bucket =
                 s->ratelimit_data->should_rate_limit(method,
-                                                     s->ratelimit_bucket_marker,
-                                                     s->time, bucket_ratelimit);
+                    s->ratelimit_bucket_marker,
+                    s->time, bucket_ratelimit);
         }
     }
     if (limit_bucket && !limit_user) {
@@ -180,12 +182,12 @@ bool rate_limit(rgw::sal::Driver * driver, req_state * s)
     return (limit_user || limit_bucket);
 }
 
-int rgw_process_authenticated(RGWHandler_REST * const handler,
-                              RGWOp * &op,
-                              RGWRequest * const req,
-                              req_state * const s,
+int rgw_process_authenticated(RGWHandler_REST *const handler,
+                              RGWOp*&op,
+                              RGWRequest *const req,
+                              req_state *const s,
                               optional_yield y,
-                              rgw::sal::Driver * driver,
+                              rgw::sal::Driver *driver,
                               const bool skip_retarget)
 {
     ldpp_dout(op, 2) << "init permissions" << dendl;
@@ -194,10 +196,10 @@ int rgw_process_authenticated(RGWHandler_REST * const handler,
         return ret;
     }
 
-  /**
-   * Only some accesses support website mode, and website mode does NOT apply
-   * if you are using the REST endpoint either (ergo, no authenticated access)
-   */
+    /**
+     * Only some accesses support website mode, and website mode does NOT apply
+     * if you are using the REST endpoint either (ergo, no authenticated access)
+     */
     if (!skip_retarget) {
         ldpp_dout(op, 2) << "recalculating target" << dendl;
         ret = handler->retarget(op, &op, y);
@@ -205,8 +207,7 @@ int rgw_process_authenticated(RGWHandler_REST * const handler,
             return ret;
         }
         req->op = op;
-    }
-    else {
+    } else {
         ldpp_dout(op,
                   2) << "retargeting skipped because of SubOp mode" << dendl;
     }
@@ -249,12 +250,10 @@ int rgw_process_authenticated(RGWHandler_REST * const handler,
     if (ret < 0) {
         if (s->system_request) {
             dout(2) << "overriding permissions due to system operation" <<
-                dendl;
-        }
-        else if (s->auth.identity->is_admin_of(s->user->get_id())) {
+                    dendl;
+        } else if (s->auth.identity->is_admin_of(s->user->get_id())) {
             dout(2) << "overriding permissions due to admin operation" << dendl;
-        }
-        else {
+        } else {
             return ret;
         }
     }
@@ -286,28 +285,28 @@ int rgw_process_authenticated(RGWHandler_REST * const handler,
     return 0;
 }
 
-int process_request(const RGWProcessEnv & penv,
-                    RGWRequest * const req,
-                    const std::string & frontend_prefix,
-                    RGWRestfulIO * const client_io,
+int process_request(const RGWProcessEnv &penv,
+                    RGWRequest *const req,
+                    const std::string &frontend_prefix,
+                    RGWRestfulIO *const client_io,
                     optional_yield yield,
-                    rgw::dmclock::Scheduler * scheduler,
-                    string * user,
-                    ceph::coarse_real_clock::duration * latency, int *http_ret)
+                    rgw::dmclock::Scheduler *scheduler,
+                    string *user,
+                    ceph::coarse_real_clock::duration *latency, int *http_ret)
 {
     int ret = client_io->init(g_ceph_context);
     dout(1) << "====== starting new request req=" << hex << req << dec
-        << " =====" << dendl;
+            << " =====" << dendl;
     perfcounter->inc(l_rgw_req);
 
-    RGWEnv & rgw_env = client_io->get_env();
+    RGWEnv &rgw_env = client_io->get_env();
 
     req_state rstate(g_ceph_context, penv, &rgw_env, req->id);
     req_state *s = &rstate;
 
     s->ratelimit_data = penv.ratelimiting->get_active();
 
-    rgw::sal::Driver * driver = penv.driver;
+    rgw::sal::Driver *driver = penv.driver;
     std::unique_ptr < rgw::sal::User > u = driver->get_user(rgw_user());
     s->set_user(u);
 
@@ -330,9 +329,9 @@ int process_request(const RGWProcessEnv & penv,
     RGWREST *rest = penv.rest;
     RGWRESTMgr *mgr;
     RGWHandler_REST *handler = rest->get_handler(driver, s,
-                                                 *penv.auth_registry,
-                                                 frontend_prefix,
-                                                 client_io, &mgr, &init_error);
+                               *penv.auth_registry,
+                               frontend_prefix,
+                               client_io, &mgr, &init_error);
     rgw::dmclock::SchedulerCompleter c;
 
     if (init_error != 0) {
@@ -358,21 +357,19 @@ int process_request(const RGWProcessEnv & penv,
                                   script);
         if (rc == -ENOENT) {
             // no script, nothing to do
-        }
-        else if (rc < 0) {
+        } else if (rc < 0) {
             ldpp_dout(op,
                       5) <<
-                "WARNING: failed to read pre request script. error: " << rc <<
-                dendl;
-        }
-        else {
+                         "WARNING: failed to read pre request script. error: " << rc <<
+                         dendl;
+        } else {
             rc = rgw::lua::request::execute(driver, rest, penv.olog, s, op,
                                             script);
             if (rc < 0) {
                 ldpp_dout(op,
                           5) <<
-                    "WARNING: failed to execute pre request script. error: " <<
-                    rc << dendl;
+                             "WARNING: failed to execute pre request script. error: " <<
+                             rc << dendl;
             }
         }
     }
@@ -429,13 +426,12 @@ int process_request(const RGWProcessEnv & penv,
             abort_early(s, op, ret, handler, yield);
             goto done;
         }
-    }
-    catch(const ceph::crypto::DigestException & e) {
+    } catch (const ceph::crypto::DigestException &e) {
         dout(0) << "authentication failed" << e.what() << dendl;
         abort_early(s, op, -ERR_INVALID_SECRET_KEY, handler, yield);
     }
 
-  done:
+done:
     if (op) {
         if (s->trace) {
             s->trace->SetAttribute(tracing::rgw::RETURN, op->get_ret());
@@ -459,31 +455,28 @@ int process_request(const RGWProcessEnv & penv,
                                   script);
         if (rc == -ENOENT) {
             // no script, nothing to do
-        }
-        else if (rc < 0) {
+        } else if (rc < 0) {
             ldpp_dout(op,
                       5) <<
-                "WARNING: failed to read post request script. error: " << rc <<
-                dendl;
-        }
-        else {
+                         "WARNING: failed to read post request script. error: " << rc <<
+                         dendl;
+        } else {
             rc = rgw::lua::request::execute(driver, rest, penv.olog, s, op,
                                             script);
             if (rc < 0) {
                 ldpp_dout(op,
                           5) <<
-                    "WARNING: failed to execute post request script. error: " <<
-                    rc << dendl;
+                             "WARNING: failed to execute post request script. error: " <<
+                             rc << dendl;
             }
         }
     }
 
     try {
         client_io->complete_request();
-    }
-    catch(rgw::io::Exception & e) {
+    } catch (rgw::io::Exception &e) {
         dout(0) << "ERROR: client_io->complete_request() returned "
-            << e.what() << dendl;
+                << e.what() << dendl;
     }
     if (should_log) {
         rgw_log_op(rest, s, op, penv.olog);
@@ -502,12 +495,12 @@ int process_request(const RGWProcessEnv & penv,
         op_ret = op->get_ret();
         ldpp_dout(op, 2) << "op status=" << op_ret << dendl;
         ldpp_dout(op, 2) << "http status=" << s->err.http_ret << dendl;
-    }
-    else {
+    } else {
         ldpp_dout(s, 2) << "http status=" << s->err.http_ret << dendl;
     }
-    if (handler)
+    if (handler) {
         handler->put_op(op);
+    }
     rest->put_handler(handler);
 
     const auto lat = s->time_elapsed();
@@ -515,9 +508,9 @@ int process_request(const RGWProcessEnv & penv,
         *latency = lat;
     }
     dout(1) << "====== req done req=" << hex << req << dec
-        << " op status=" << op_ret
-        << " http_status=" << s->err.http_ret
-        << " latency=" << lat << " ======" << dendl;
+            << " op status=" << op_ret
+            << " http_status=" << s->err.http_ret
+            << " latency=" << lat << " ======" << dendl;
 
     return (ret < 0 ? ret : s->err.ret);
 }                               /* process_request */

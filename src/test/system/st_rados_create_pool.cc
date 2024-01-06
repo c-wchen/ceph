@@ -40,18 +40,18 @@ std::string StRadosCreatePool::get_random_buf(int sz)
 }
 
 StRadosCreatePool::StRadosCreatePool(int argc, const char **argv,
-                                     CrossProcessSem * setup_sem,
-                                     CrossProcessSem * pool_setup_sem,
-                                     CrossProcessSem * close_create_pool,
-                                     const std::string & pool_name,
+                                     CrossProcessSem *setup_sem,
+                                     CrossProcessSem *pool_setup_sem,
+                                     CrossProcessSem *close_create_pool,
+                                     const std::string &pool_name,
                                      int num_objects,
-                                     const std::string & suffix)
-:  
-SysTestRunnable(argc, argv),
-m_setup_sem(setup_sem),
-m_pool_setup_sem(pool_setup_sem),
-m_close_create_pool(close_create_pool),
-m_pool_name(pool_name), m_num_objects(num_objects), m_suffix(suffix)
+                                     const std::string &suffix)
+    :
+    SysTestRunnable(argc, argv),
+    m_setup_sem(setup_sem),
+    m_pool_setup_sem(pool_setup_sem),
+    m_close_create_pool(close_create_pool),
+    m_pool_name(pool_name), m_num_objects(num_objects), m_suffix(suffix)
 {
 }
 
@@ -68,8 +68,9 @@ int StRadosCreatePool:: run()
     rados_conf_parse_argv(cl, m_argc, m_argv);
     RETURN1_IF_NONZERO(rados_conf_read_file(cl, NULL));
     std::string log_name = SysTestSettings::inst().get_log_name(get_id_str());
-    if (!log_name.empty())
+    if (!log_name.empty()) {
         rados_conf_set(cl, "log_file", log_name.c_str());
+    }
     rados_conf_parse_env(cl, NULL);
 
     if (m_setup_sem) {
@@ -100,12 +101,14 @@ int StRadosCreatePool:: run()
         }
     }
 
-  out:
+out:
     printf("%s: finishing.\n", get_id_str());
-    if (m_pool_setup_sem)
+    if (m_pool_setup_sem) {
         m_pool_setup_sem->post();
-    if (m_close_create_pool)
+    }
+    if (m_close_create_pool) {
         m_close_create_pool->wait();
+    }
     rados_ioctx_destroy(io_ctx);
     rados_shutdown(cl);
     return ret_val;

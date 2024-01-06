@@ -9,12 +9,15 @@
 struct cls_version_set_op {
     obj_version objv;
 
-     cls_version_set_op() {
-    } void encode(ceph::buffer::list & bl) const {
+    cls_version_set_op()
+    {
+    } void encode(ceph::buffer::list &bl) const
+    {
         ENCODE_START(1, 1, bl);
         encode(objv, bl);
         ENCODE_FINISH(bl);
-    } void decode(ceph::buffer::list::const_iterator & bl) {
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
         DECODE_START(1, bl);
         decode(objv, bl);
         DECODE_FINISH(bl);
@@ -25,42 +28,46 @@ WRITE_CLASS_ENCODER(cls_version_set_op)
 
 struct cls_version_inc_op {
     obj_version objv;
-     std::list < obj_version_cond > conds;
+    std::list < obj_version_cond > conds;
 
-     cls_version_inc_op()
-{
-} void encode(ceph::buffer::list & bl) const {
-    ENCODE_START(1, 1, bl);
-    encode(objv, bl);
-    encode(conds, bl);
-    ENCODE_FINISH(bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(objv, bl);
-    decode(conds, bl);
-    DECODE_FINISH(bl);
-}
+    cls_version_inc_op()
+    {
+    } void encode(ceph::buffer::list &bl) const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(objv, bl);
+        encode(conds, bl);
+        ENCODE_FINISH(bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(objv, bl);
+        decode(conds, bl);
+        DECODE_FINISH(bl);
+    }
 };
 
 WRITE_CLASS_ENCODER(cls_version_inc_op)
 
 struct cls_version_check_op {
     obj_version objv;
-     std::list < obj_version_cond > conds;
+    std::list < obj_version_cond > conds;
 
-     cls_version_check_op()
-{
-} void encode(ceph::buffer::list & bl) const {
-    ENCODE_START(1, 1, bl);
-    encode(objv, bl);
-    encode(conds, bl);
-    ENCODE_FINISH(bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(objv, bl);
-    decode(conds, bl);
-    DECODE_FINISH(bl);
-}
+    cls_version_check_op()
+    {
+    } void encode(ceph::buffer::list &bl) const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(objv, bl);
+        encode(conds, bl);
+        ENCODE_FINISH(bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(objv, bl);
+        decode(conds, bl);
+        DECODE_FINISH(bl);
+    }
 };
 
 WRITE_CLASS_ENCODER(cls_version_check_op)
@@ -68,17 +75,19 @@ WRITE_CLASS_ENCODER(cls_version_check_op)
 struct cls_version_read_ret {
     obj_version objv;
 
-     cls_version_read_ret()
-{
-} void encode(ceph::buffer::list & bl) const {
-    ENCODE_START(1, 1, bl);
-    encode(objv, bl);
-    ENCODE_FINISH(bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    DECODE_START(1, bl);
-    decode(objv, bl);
-    DECODE_FINISH(bl);
-}
+    cls_version_read_ret()
+    {
+    } void encode(ceph::buffer::list &bl) const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(objv, bl);
+        ENCODE_FINISH(bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(objv, bl);
+        DECODE_FINISH(bl);
+    }
 };
 
 WRITE_CLASS_ENCODER(cls_version_read_ret)

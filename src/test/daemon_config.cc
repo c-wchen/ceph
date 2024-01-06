@@ -138,8 +138,8 @@ TEST(DaemonConfig, ArgV)
 
     int ret;
     const char *argv[] = { "foo", "--log-graylog-port", "22",
-        "--key", "my-key", NULL
-    };
+                           "--key", "my-key", NULL
+                         };
     size_t argc = (sizeof(argv) / sizeof(argv[0])) - 1;
     auto args = argv_to_vec(argc, argv);
     g_ceph_context->_conf.parse_argv(args);
@@ -199,8 +199,8 @@ TEST(DaemonConfig, InjectArgsReject)
 
     // We should complain about the garbage in the input
     std::
-        string
-        injection("--random-garbage-in-injectargs 26 --log-graylog-port 28");
+    string
+    injection("--random-garbage-in-injectargs 26 --log-graylog-port 28");
     ret = g_ceph_context->_conf.injectargs(injection, &cout);
     ASSERT_EQ(-EINVAL, ret);
 
@@ -218,8 +218,8 @@ TEST(DaemonConfig, InjectArgsReject)
     // Injectargs shouldn't let us change this, since it is a string-valued
     // variable and there isn't an observer for it.
     std::
-        string
-        injection2("--osd_data /tmp/some-other-directory --log-graylog-port 4");
+    string
+    injection2("--osd_data /tmp/some-other-directory --log-graylog-port 4");
     ret = g_ceph_context->_conf.injectargs(injection2, &cout);
     ASSERT_EQ(-EPERM, ret);
 
@@ -301,8 +301,9 @@ TEST(DaemonConfig, InjectArgsLogfile)
     int ret;
     char tmpfile[PATH_MAX];
     const char *tmpdir = getenv("TMPDIR");
-    if (!tmpdir)
+    if (!tmpdir) {
         tmpdir = "/tmp";
+    }
     snprintf(tmpfile, sizeof(tmpfile), "%s/daemon_config_test.%d",
              tmpdir, getpid());
     std::string injection("--log_file ");

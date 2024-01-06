@@ -6,14 +6,18 @@
 #include "crimson/os/futurized_collection.h"
 #include "crimson/os/futurized_store.h"
 
-class FSDriver final:public BlockDriver {
-  public:
+class FSDriver final: public BlockDriver
+{
+public:
     FSDriver(config_t config)
-    :config(config) {
-    } ~FSDriver() final {
+        : config(config)
+    {
+    } ~FSDriver() final
+    {
     }
 
-    bufferptr get_buffer(size_t size) final {
+    bufferptr get_buffer(size_t size) final
+    {
         return ceph::buffer::create_page_aligned(size);
     }
 
@@ -21,17 +25,18 @@ class FSDriver final:public BlockDriver {
 
     seastar::future < bufferlist > read(off_t offset, size_t size) final;
 
-    size_t get_size() const {
+    size_t get_size() const
+    {
         return size;
     } seastar::future <> mount() final;
 
     seastar::future <> close()final;
 
-  private:
+private:
     size_t size = 0;
     const config_t config;
     std::unique_ptr < crimson::os::FuturizedStore > fs;
-    crimson::os::FuturizedStore::Shard * sharded_fs;
+    crimson::os::FuturizedStore::Shard *sharded_fs;
 
     struct pg_analogue_t {
         crimson::os::CollectionRef collection;
@@ -43,7 +48,7 @@ class FSDriver final:public BlockDriver {
     std::map < unsigned, pg_analogue_t > collections;
 
     struct offset_mapping_t {
-        pg_analogue_t & pg;
+        pg_analogue_t &pg;
         ghobject_t object;
         off_t offset;
     };

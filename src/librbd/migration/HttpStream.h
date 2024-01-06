@@ -14,52 +14,56 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
-    struct AsioEngine;
-    struct ImageCtx;
+struct AsioEngine;
+struct ImageCtx;
 
-    namespace migration {
+namespace migration
+{
 
-        template < typename > class HttpClient;
+template < typename > class HttpClient;
 
-        template < typename ImageCtxT > class HttpStream:public StreamInterface {
-          public:
-            static HttpStream *create(ImageCtxT * image_ctx,
-                                      const json_spirit::
-                                      mObject & json_object) {
-                return new HttpStream(image_ctx, json_object);
-            } HttpStream(ImageCtxT * image_ctx,
-                         const json_spirit::mObject & json_object);
-            ~HttpStream() override;
+template < typename ImageCtxT > class HttpStream: public StreamInterface
+{
+public:
+    static HttpStream *create(ImageCtxT *image_ctx,
+                              const json_spirit::
+                              mObject &json_object)
+    {
+        return new HttpStream(image_ctx, json_object);
+    } HttpStream(ImageCtxT *image_ctx,
+                 const json_spirit::mObject &json_object);
+    ~HttpStream() override;
 
-             HttpStream(const HttpStream &) = delete;
-             HttpStream & operator=(const HttpStream &) = delete;
+    HttpStream(const HttpStream &) = delete;
+    HttpStream &operator=(const HttpStream &) = delete;
 
-            void open(Context * on_finish) override;
-            void close(Context * on_finish) override;
+    void open(Context *on_finish) override;
+    void close(Context *on_finish) override;
 
-            void get_size(uint64_t * size, Context * on_finish) override;
+    void get_size(uint64_t *size, Context *on_finish) override;
 
-            void read(io::Extents && byte_extents, bufferlist * data,
-                      Context * on_finish) override;
+    void read(io::Extents && byte_extents, bufferlist *data,
+              Context *on_finish) override;
 
-          private:
-             using HttpResponse = boost::beast::http::response <
-                boost::beast::http::string_body >;
+private:
+    using HttpResponse = boost::beast::http::response <
+                         boost::beast::http::string_body >;
 
-            ImageCtxT *m_image_ctx;
-            CephContext *m_cct;
-             std::shared_ptr < AsioEngine > m_asio_engine;
-             json_spirit::mObject m_json_object;
+    ImageCtxT *m_image_ctx;
+    CephContext *m_cct;
+    std::shared_ptr < AsioEngine > m_asio_engine;
+    json_spirit::mObject m_json_object;
 
-             std::string m_url;
+    std::string m_url;
 
-             std::unique_ptr < HttpClient < ImageCtxT >> m_http_client;
+    std::unique_ptr < HttpClient < ImageCtxT >> m_http_client;
 
-        };
+};
 
-    }                           // namespace migration
+}                           // namespace migration
 }                               // namespace librbd
 
 extern template class librbd::migration::HttpStream < librbd::ImageCtx >;

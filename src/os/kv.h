@@ -8,7 +8,7 @@
 #include "include/byteorder.h"
 
 // some key encoding helpers
-template < typename T > inline static void _key_encode_u32(uint32_t u, T * key)
+template < typename T > inline static void _key_encode_u32(uint32_t u, T *key)
 {
     uint32_t bu;
 #ifdef CEPH_BIG_ENDIAN
@@ -22,7 +22,7 @@ template < typename T > inline static void _key_encode_u32(uint32_t u, T * key)
 }
 
 template < typename T >
-    inline static void _key_encode_u32(uint32_t u, size_t pos, T * key)
+inline static void _key_encode_u32(uint32_t u, size_t pos, T *key)
 {
     uint32_t bu;
 #ifdef CEPH_BIG_ENDIAN
@@ -35,7 +35,7 @@ template < typename T >
     key->replace(pos, sizeof(bu), (char *)&bu, sizeof(bu));
 }
 
-inline static const char *_key_decode_u32(const char *key, uint32_t * pu)
+inline static const char *_key_decode_u32(const char *key, uint32_t *pu)
 {
     uint32_t bu;
     memcpy(&bu, key, 4);
@@ -49,7 +49,7 @@ inline static const char *_key_decode_u32(const char *key, uint32_t * pu)
     return key + 4;
 }
 
-template < typename T > inline static void _key_encode_u64(uint64_t u, T * key)
+template < typename T > inline static void _key_encode_u64(uint64_t u, T *key)
 {
     uint64_t bu;
 #ifdef CEPH_BIG_ENDIAN
@@ -62,7 +62,7 @@ template < typename T > inline static void _key_encode_u64(uint64_t u, T * key)
     key->append((char *)&bu, 8);
 }
 
-inline static const char *_key_decode_u64(const char *key, uint64_t * pu)
+inline static const char *_key_decode_u64(const char *key, uint64_t *pu)
 {
     uint64_t bu;
     memcpy(&bu, key, 8);

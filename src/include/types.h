@@ -78,232 +78,268 @@ typedef off_t loff_t;
 // the case of containers of containers. I'm tempted to abstract this
 // stuff using template templates like I did for denc.
 
-namespace std {
-    template < class A, class B >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::pair < A, B > &v);
-     template < class A,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::vector < A,
-                                                       Alloc > &v);
-     template < class A, std::size_t N,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const boost::container::
-                                                       small_vector < A, N,
-                                                       Alloc > &v);
-     template < class A, class Comp,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::deque < A,
-                                                       Alloc > &v);
-     template < typename ... Ts >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::tuple < Ts ... >&t);
-     template < typename T >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::optional < T > &t);
-     template < class A,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::list < A,
-                                                       Alloc > &ilist);
-     template < class A, class Comp,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::set < A, Comp,
-                                                       Alloc > &iset);
-     template < class A, class Comp,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::multiset < A,
-                                                       Comp, Alloc > &iset);
-     template < class A, class B, class Comp,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::map < A, B,
-                                                       Comp, Alloc > &m);
-     template < class A, class B, class Comp,
-        class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                       const std::multimap < A,
-                                                       B, Comp, Alloc > &m);
-} namespace boost {
-    template < typename ... Ts >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const boost::tuple < Ts ... >&t);
+namespace std
+{
+template < class A, class B >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::pair < A, B > &v);
+template < class A,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::vector < A,
+                   Alloc > &v);
+template < class A, std::size_t N,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const boost::container::
+                   small_vector < A, N,
+                   Alloc > &v);
+template < class A, class Comp,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::deque < A,
+                   Alloc > &v);
+template < typename ... Ts >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::tuple < Ts ... > &t);
+template < typename T >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::optional < T > &t);
+template < class A,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::list < A,
+                   Alloc > &ilist);
+template < class A, class Comp,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::set < A, Comp,
+                   Alloc > &iset);
+template < class A, class Comp,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::multiset < A,
+                   Comp, Alloc > &iset);
+template < class A, class B, class Comp,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::map < A, B,
+                   Comp, Alloc > &m);
+template < class A, class B, class Comp,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const std::multimap < A,
+                   B, Comp, Alloc > &m);
+} namespace boost
+{
+template < typename ... Ts >
+inline std::ostream &operator<<(std::ostream &out,
+                                const boost::tuple < Ts ... > &t);
 
-    namespace container {
-        template < class A, class Comp, class Alloc >
-            inline std::ostream & operator<<(std::ostream & out,
-                                             const boost::container::flat_set <
-                                             A, Comp, Alloc > &iset);
-         template < class A, class B, class Comp,
-            class Alloc > inline std::ostream & operator<<(std::ostream & out,
-                                                           const boost::
-                                                           container::flat_map <
-                                                           A, B, Comp,
-                                                           Alloc > &iset);
-}} namespace std {
-    template < class A, class B >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::pair < A, B > &v) {
-        return out << v.first << "," << v.second;
-    } template < class A, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::vector < A, Alloc > &v) {
-        bool first = true;
-        out << "[";
-      for (const auto & p:v) {
-            if (!first)
-                out << ",";
-            out << p;
-            first = false;
+namespace container
+{
+template < class A, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const boost::container::flat_set <
+                                A, Comp, Alloc > &iset);
+template < class A, class B, class Comp,
+           class Alloc > inline std::ostream &operator<<(std::ostream &out,
+                   const boost::
+                   container::flat_map <
+                   A, B, Comp,
+                   Alloc > &iset);
+}
+} namespace std
+{
+template < class A, class B >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::pair < A, B > &v)
+{
+    return out << v.first << "," << v.second;
+} template < class A, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::vector < A, Alloc > &v)
+{
+    bool first = true;
+    out << "[";
+    for (const auto &p : v) {
+        if (!first) {
+            out << ",";
         }
-        out << "]";
-        return out;
+        out << p;
+        first = false;
     }
+    out << "]";
+    return out;
+}
 
-    template < class A, std::size_t N, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const boost::container::small_vector <
-                                         A, N, Alloc > &v) {
-        bool first = true;
-        out << "[";
-      for (const auto & p:v) {
-            if (!first)
-                out << ",";
-            out << p;
-            first = false;
+template < class A, std::size_t N, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const boost::container::small_vector <
+                                A, N, Alloc > &v)
+{
+    bool first = true;
+    out << "[";
+    for (const auto &p : v) {
+        if (!first) {
+            out << ",";
         }
-        out << "]";
-        return out;
+        out << p;
+        first = false;
     }
+    out << "]";
+    return out;
+}
 
-    template < class A, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::deque < A, Alloc > &v) {
-        out << "<";
-        for (auto p = v.begin(); p != v.end(); ++p) {
-            if (p != v.begin())
-                out << ",";
-            out << *p;
+template < class A, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::deque < A, Alloc > &v)
+{
+    out << "<";
+    for (auto p = v.begin(); p != v.end(); ++p) {
+        if (p != v.begin()) {
+            out << ",";
         }
-        out << ">";
-        return out;
+        out << *p;
     }
+    out << ">";
+    return out;
+}
 
-    template < typename ... Ts >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::tuple < Ts ... >&t) {
-        auto f =[n = sizeof ... (Ts), i = 0U, &out] (const auto & e)mutable {
-            out << e;
-            if (++i != n)
-                out << ",";
-        };
-        ceph::for_each(t, f);
-        return out;
-    }
+template < typename ... Ts >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::tuple < Ts ... > &t)
+{
+    auto f = [n = sizeof ...(Ts), i = 0U, &out](const auto & e)mutable {
+        out << e;
+        if (++i != n) {
+            out << ",";
+        }
+    };
+    ceph::for_each(t, f);
+    return out;
+}
 
 // Mimics boost::optional
-    template < typename T >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::optional < T > &t) {
-        if (!t)
-            out << "--";
-        else
-            out << ' ' << *t;
-        return out;
+template < typename T >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::optional < T > &t)
+{
+    if (!t) {
+        out << "--";
+    } else {
+        out << ' ' << *t;
     }
+    return out;
+}
 
-    template < class A, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::list < A, Alloc > &ilist) {
-        for (auto it = ilist.begin(); it != ilist.end(); ++it) {
-            if (it != ilist.begin())
-                out << ",";
-            out << *it;
+template < class A, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::list < A, Alloc > &ilist)
+{
+    for (auto it = ilist.begin(); it != ilist.end(); ++it) {
+        if (it != ilist.begin()) {
+            out << ",";
         }
-        return out;
+        out << *it;
     }
+    return out;
+}
 
-    template < class A, class Comp, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out, const std::set < A,
-                                         Comp, Alloc > &iset) {
-        for (auto it = iset.begin(); it != iset.end(); ++it) {
-            if (it != iset.begin())
-                out << ",";
-            out << *it;
+template < class A, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out, const std::set < A,
+                                Comp, Alloc > &iset)
+{
+    for (auto it = iset.begin(); it != iset.end(); ++it) {
+        if (it != iset.begin()) {
+            out << ",";
         }
-        return out;
+        out << *it;
     }
+    return out;
+}
 
-    template < class A, class Comp, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::multiset < A, Comp,
-                                         Alloc > &iset) {
-        for (auto it = iset.begin(); it != iset.end(); ++it) {
-            if (it != iset.begin())
-                out << ",";
-            out << *it;
+template < class A, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::multiset < A, Comp,
+                                Alloc > &iset)
+{
+    for (auto it = iset.begin(); it != iset.end(); ++it) {
+        if (it != iset.begin()) {
+            out << ",";
         }
-        return out;
+        out << *it;
     }
+    return out;
+}
 
-    template < class A, class B, class Comp, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out, const std::map < A,
-                                         B, Comp, Alloc > &m) {
-        out << "{";
-        for (auto it = m.begin(); it != m.end(); ++it) {
-            if (it != m.begin())
-                out << ",";
-            out << it->first << "=" << it->second;
+template < class A, class B, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out, const std::map < A,
+                                B, Comp, Alloc > &m)
+{
+    out << "{";
+    for (auto it = m.begin(); it != m.end(); ++it) {
+        if (it != m.begin()) {
+            out << ",";
         }
-        out << "}";
-        return out;
+        out << it->first << "=" << it->second;
     }
+    out << "}";
+    return out;
+}
 
-    template < class A, class B, class Comp, class Alloc >
-        inline std::ostream & operator<<(std::ostream & out,
-                                         const std::multimap < A, B, Comp,
-                                         Alloc > &m) {
-        out << "{{";
-        for (auto it = m.begin(); it != m.end(); ++it) {
-            if (it != m.begin())
-                out << ",";
-            out << it->first << "=" << it->second;
+template < class A, class B, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::multimap < A, B, Comp,
+                                Alloc > &m)
+{
+    out << "{{";
+    for (auto it = m.begin(); it != m.end(); ++it) {
+        if (it != m.begin()) {
+            out << ",";
         }
-        out << "}}";
-        return out;
+        out << it->first << "=" << it->second;
     }
+    out << "}}";
+    return out;
+}
 
 }                               // namespace std
 
-namespace boost {
-    namespace tuples {
-        template < typename A, typename B, typename C >
-            inline std::ostream & operator<<(std::ostream & out,
-                                             const boost::tuples::tuple < A, B,
-                                             C > &t) {
-            return out << boost::get < 0 > (t) << "," << boost::get < 1 >
-                (t) << "," << boost::get < 2 > (t);
-    }} namespace container {
-        template < class A, class Comp, class Alloc >
-            inline std::ostream & operator<<(std::ostream & out,
-                                             const boost::container::flat_set <
-                                             A, Comp, Alloc > &iset) {
-            for (auto it = iset.begin(); it != iset.end(); ++it) {
-                if (it != iset.begin())
-                    out << ",";
-                out << *it;
-            } return out;
+namespace boost
+{
+namespace tuples
+{
+template < typename A, typename B, typename C >
+inline std::ostream &operator<<(std::ostream &out,
+                                const boost::tuples::tuple < A, B,
+                                C > &t)
+{
+    return out << boost::get < 0 > (t) << "," << boost::get < 1 >
+           (t) << "," << boost::get < 2 > (t);
+}
+} namespace container
+{
+template < class A, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const boost::container::flat_set <
+                                A, Comp, Alloc > &iset)
+{
+    for (auto it = iset.begin(); it != iset.end(); ++it) {
+        if (it != iset.begin()) {
+            out << ",";
         }
-
-        template < class A, class B, class Comp, class Alloc >
-            inline std::ostream & operator<<(std::ostream & out,
-                                             const boost::container::flat_map <
-                                             A, B, Comp, Alloc > &m) {
-            for (auto it = m.begin(); it != m.end(); ++it) {
-                if (it != m.begin())
-                    out << ",";
-                out << it->first << "=" << it->second;
-            }
-            return out;
-        }
+        out << *it;
     }
+    return out;
+}
+
+template < class A, class B, class Comp, class Alloc >
+inline std::ostream &operator<<(std::ostream &out,
+                                const boost::container::flat_map <
+                                A, B, Comp, Alloc > &m)
+{
+    for (auto it = m.begin(); it != m.end(); ++it) {
+        if (it != m.begin()) {
+            out << ",";
+        }
+        out << it->first << "=" << it->second;
+    }
+    return out;
+}
+}
 }                               // namespace boost
 
 /*
@@ -312,18 +348,23 @@ namespace boost {
 // for ceph::unordered_map:
 //   ceph::unordered_map<const char*, long, hash<const char*>, eqstr> vals;
 struct eqstr {
-    bool operator() (const char *s1, const char *s2)const {
+    bool operator()(const char *s1, const char *s2)const
+    {
         return strcmp(s1, s2) == 0;
-}};
+    }
+};
 
 // for set, map
 struct ltstr {
-    bool operator() (const char *s1, const char *s2)const {
+    bool operator()(const char *s1, const char *s2)const
+    {
         return strcmp(s1, s2) < 0;
-}};
+    }
+};
 
-namespace ceph {
-    class Formatter;
+namespace ceph
+{
+class Formatter;
 }
 #include "encoding.h"
 WRITE_RAW_ENCODER(ceph_fsid)
@@ -353,7 +394,7 @@ WRITE_RAW_ENCODER(ceph_msg_header)
 WRITE_RAW_ENCODER(ceph_msg_footer)
 WRITE_RAW_ENCODER(ceph_msg_footer_old)
 WRITE_RAW_ENCODER(ceph_mon_subscribe_item)
- WRITE_RAW_ENCODER(ceph_mon_statfs) WRITE_RAW_ENCODER(ceph_mon_statfs_reply)
+WRITE_RAW_ENCODER(ceph_mon_statfs) WRITE_RAW_ENCODER(ceph_mon_statfs_reply)
 // ----------------------
 // some basic types
 // NOTE: these must match ceph_fs.h typedefs
@@ -368,98 +409,101 @@ struct client_t {
     int64_t v;
 
     // cppcheck-suppress noExplicitConstructor
-  client_t(int64_t _v = -2):v(_v)
-{
-} void encode(ceph::buffer::list & bl) const {
-    using ceph::encode;
-     encode(v, bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    using ceph::decode;
-    decode(v, bl);
-}
+    client_t(int64_t _v = -2): v(_v)
+    {
+    } void encode(ceph::buffer::list &bl) const
+    {
+        using ceph::encode;
+        encode(v, bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        using ceph::decode;
+        decode(v, bl);
+    }
 };
 
 WRITE_CLASS_ENCODER(client_t)
 
-static inline bool operator==(const client_t & l, const client_t & r)
+static inline bool operator==(const client_t &l, const client_t &r)
 {
     return l.v == r.v;
 }
 
-static inline bool operator!=(const client_t & l, const client_t & r)
+static inline bool operator!=(const client_t &l, const client_t &r)
 {
     return l.v != r.v;
 }
 
-static inline bool operator<(const client_t & l, const client_t & r)
+static inline bool operator<(const client_t &l, const client_t &r)
 {
     return l.v < r.v;
 }
 
-static inline bool operator<=(const client_t & l, const client_t & r)
+static inline bool operator<=(const client_t &l, const client_t &r)
 {
     return l.v <= r.v;
 }
 
-static inline bool operator>(const client_t & l, const client_t & r)
+static inline bool operator>(const client_t &l, const client_t &r)
 {
     return l.v > r.v;
 }
 
-static inline bool operator>=(const client_t & l, const client_t & r)
+static inline bool operator>=(const client_t &l, const client_t &r)
 {
     return l.v >= r.v;
 }
 
-static inline bool operator>=(const client_t & l, int64_t o)
+static inline bool operator>=(const client_t &l, int64_t o)
 {
     return l.v >= o;
 }
 
-static inline bool operator<(const client_t & l, int64_t o)
+static inline bool operator<(const client_t &l, int64_t o)
 {
     return l.v < o;
 }
 
-inline std::ostream & operator<<(std::ostream & out, const client_t & c)
+inline std::ostream &operator<<(std::ostream &out, const client_t &c)
 {
     return out << c.v;
 }
 
 // --
 
-namespace {
-    inline std::ostream & format_u(std::ostream & out, const uint64_t v,
-                                   const uint64_t n, const int index,
-                                   const uint64_t mult, const char *u) {
-        char buffer[32];
+namespace
+{
+inline std::ostream &format_u(std::ostream &out, const uint64_t v,
+                              const uint64_t n, const int index,
+                              const uint64_t mult, const char *u)
+{
+    char buffer[32];
 
-        if (index == 0) {
-            (void)snprintf(buffer, sizeof(buffer), "%" PRId64 "%s", n, u);
-        }
-        else if ((v % mult) == 0) {
-            // If this is an even multiple of the base, always display
-            // without any decimal fraction.
-            (void)snprintf(buffer, sizeof(buffer), "%" PRId64 "%s", n, u);
-        }
-        else {
-            // We want to choose a precision that reflects the best choice
-            // for fitting in 5 characters.  This can get rather tricky when
-            // we have numbers that are very close to an order of magnitude.
-            // For example, when displaying 10239 (which is really 9.999K),
-            // we want only a single place of precision for 10.0K.  We could
-            // develop some complex heuristics for this, but it's much
-            // easier just to try each combination in turn.
-            int i;
-            for (i = 2; i >= 0; i--) {
-                if (snprintf(buffer, sizeof(buffer), "%.*f%s", i,
-                             static_cast < double >(v) / mult, u) <= 7)
-                     break;
+    if (index == 0) {
+        (void)snprintf(buffer, sizeof(buffer), "%" PRId64 "%s", n, u);
+    } else if ((v % mult) == 0) {
+        // If this is an even multiple of the base, always display
+        // without any decimal fraction.
+        (void)snprintf(buffer, sizeof(buffer), "%" PRId64 "%s", n, u);
+    } else {
+        // We want to choose a precision that reflects the best choice
+        // for fitting in 5 characters.  This can get rather tricky when
+        // we have numbers that are very close to an order of magnitude.
+        // For example, when displaying 10239 (which is really 9.999K),
+        // we want only a single place of precision for 10.0K.  We could
+        // develop some complex heuristics for this, but it's much
+        // easier just to try each combination in turn.
+        int i;
+        for (i = 2; i >= 0; i--) {
+            if (snprintf(buffer, sizeof(buffer), "%.*f%s", i,
+                         static_cast < double >(v) / mult, u) <= 7) {
+                break;
             }
         }
-
-        return out << buffer;
     }
+
+    return out << buffer;
+}
 }
 
 /*
@@ -468,11 +512,12 @@ namespace {
  */
 struct si_u_t {
     uint64_t v;
-    explicit si_u_t(uint64_t _v):v(_v) {
+    explicit si_u_t(uint64_t _v): v(_v)
+    {
     };
 };
 
-inline std::ostream & operator<<(std::ostream & out, const si_u_t & b)
+inline std::ostream &operator<<(std::ostream &out, const si_u_t &b)
 {
     uint64_t n = b.v;
     int index = 0;
@@ -497,11 +542,12 @@ inline std::ostream & operator<<(std::ostream & out, const si_u_t & b)
  */
 struct byte_u_t {
     uint64_t v;
-    explicit byte_u_t(uint64_t _v):v(_v) {
+    explicit byte_u_t(uint64_t _v): v(_v)
+    {
     };
 };
 
-inline std::ostream & operator<<(std::ostream & out, const byte_u_t & b)
+inline std::ostream &operator<<(std::ostream &out, const byte_u_t &b)
 {
     uint64_t n = b.v;
     int index = 0;
@@ -515,49 +561,54 @@ inline std::ostream & operator<<(std::ostream & out, const byte_u_t & b)
     return format_u(out, b.v, n, index, 1ULL << (10 * index), u[index]);
 }
 
-inline std::ostream & operator<<(std::ostream & out,
-                                 const ceph_mon_subscribe_item & i)
+inline std::ostream &operator<<(std::ostream &out,
+                                const ceph_mon_subscribe_item &i)
 {
     return out << (long)i.start
-        << ((i.flags & CEPH_SUBSCRIBE_ONETIME) ? "" : "+");
+           << ((i.flags & CEPH_SUBSCRIBE_ONETIME) ? "" : "+");
 }
 
 struct weightf_t {
     float v;
     // cppcheck-suppress noExplicitConstructor
-    weightf_t(float _v):v(_v) {
-}};
+    weightf_t(float _v): v(_v)
+    {
+    }
+};
 
-inline std::ostream & operator<<(std::ostream & out, const weightf_t & w)
+inline std::ostream &operator<<(std::ostream &out, const weightf_t &w)
 {
     if (w.v < -0.01F) {
         return out << "-";
-    }
-    else if (w.v < 0.000001F) {
+    } else if (w.v < 0.000001F) {
         return out << "0";
-    }
-    else {
+    } else {
         std::streamsize p = out.precision();
         return out << std::fixed << std::setprecision(5) << w.
-            v << std::setprecision(p);
+               v << std::setprecision(p);
     }
 }
 
 struct shard_id_t {
     int8_t id;
 
-    shard_id_t():id(0) {
-    } explicit shard_id_t(int8_t _id):id(_id) {
+    shard_id_t(): id(0)
+    {
+    } explicit shard_id_t(int8_t _id): id(_id)
+    {
     }
 
-    operator  int8_t() const {
+    operator  int8_t() const
+    {
         return id;
     } const static shard_id_t NO_SHARD;
 
-    void encode(ceph::buffer::list & bl) const {
+    void encode(ceph::buffer::list &bl) const
+    {
         using ceph::encode;
         encode(id, bl);
-    } void decode(ceph::buffer::list::const_iterator & bl) {
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
         using ceph::decode;
         decode(id, bl);
     }
@@ -567,7 +618,7 @@ struct shard_id_t {
 };
 
 WRITE_CLASS_ENCODER(shard_id_t)
-    std::ostream & operator<<(std::ostream & lhs, const shard_id_t & rhs);
+std::ostream &operator<<(std::ostream &lhs, const shard_id_t &rhs);
 
 #if defined(__sun) || defined(_AIX) || defined(__APPLE__) || \
     defined(__FreeBSD__) || defined(_WIN32)
@@ -583,34 +634,40 @@ extern "C" {
 struct errorcode32_t {
     int32_t code;
 
-     errorcode32_t():code(0)
-{
-}
-  // cppcheck-suppress noExplicitConstructor
-    explicit errorcode32_t(int32_t i):code(i) {
-}
+    errorcode32_t(): code(0)
+    {
+    }
+    // cppcheck-suppress noExplicitConstructor
+    explicit errorcode32_t(int32_t i): code(i)
+    {
+    }
 
-operator  int () const {
-    return code;
-} int *operator&() {
-    return &code;
-}
-errorcode32_t & operator=(int32_t i) {
-    code = i;
-    return *this;
-}
-bool operator==(const errorcode32_t &)const = default;
-auto operator<=>(const errorcode32_t &) const = default;
+    operator  int () const
+    {
+        return code;
+    } int *operator&()
+    {
+        return &code;
+    }
+    errorcode32_t &operator=(int32_t i)
+    {
+        code = i;
+        return *this;
+    }
+    bool operator==(const errorcode32_t &)const = default;
+    auto operator<=>(const errorcode32_t &) const = default;
 
-void encode(ceph::buffer::list & bl) const {
-    using ceph::encode;
-    __s32 newcode = hostos_to_ceph_errno(code);
-     encode(newcode, bl);
-} void decode(ceph::buffer::list::const_iterator & bl) {
-    using ceph::decode;
-    decode(code, bl);
-    code = ceph_to_hostos_errno(code);
-}
+    void encode(ceph::buffer::list &bl) const
+    {
+        using ceph::encode;
+        __s32 newcode = hostos_to_ceph_errno(code);
+        encode(newcode, bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        using ceph::decode;
+        decode(code, bl);
+        code = ceph_to_hostos_errno(code);
+    }
 };
 
 WRITE_CLASS_ENCODER(errorcode32_t)
@@ -621,7 +678,8 @@ template < uint8_t S > struct sha_digest_t {
     // as sha_digest_t is a part of our public API.
     unsigned char v[S] = { 0 };
 
-    std::string to_str()const {
+    std::string to_str()const
+    {
         char str[S * 2 + 1] = { 0 };
         str[0] = '\0';
         for (size_t i = 0; i < S; i++) {
@@ -629,23 +687,29 @@ template < uint8_t S > struct sha_digest_t {
         }
         return std::string(str);
     }
-    sha_digest_t(const unsigned char *_v) {
+    sha_digest_t(const unsigned char *_v)
+    {
         memcpy(v, _v, SIZE);
     };
-    sha_digest_t() {
+    sha_digest_t()
+    {
     }
 
-    bool operator==(const sha_digest_t & r) const {
+    bool operator==(const sha_digest_t &r) const
+    {
         return::memcmp(v, r.v, SIZE) == 0;
-    } bool operator!=(const sha_digest_t & r)const {
+    } bool operator!=(const sha_digest_t &r)const
+    {
         return::memcmp(v, r.v, SIZE) != 0;
-    } void encode(ceph::buffer::list & bl) const {
+    } void encode(ceph::buffer::list &bl) const
+    {
         // copy to avoid reinterpret_cast, is_pod and other nasty things
         using ceph::encode;
-         std::array < unsigned char, SIZE > tmparr;
-         memcpy(tmparr.data(), v, SIZE);
-         encode(tmparr, bl);
-    } void decode(ceph::buffer::list::const_iterator & bl) {
+        std::array < unsigned char, SIZE > tmparr;
+        memcpy(tmparr.data(), v, SIZE);
+        encode(tmparr, bl);
+    } void decode(ceph::buffer::list::const_iterator &bl)
+    {
         using ceph::decode;
         std::array < unsigned char, SIZE > tmparr;
         decode(tmparr, bl);
@@ -654,8 +718,8 @@ template < uint8_t S > struct sha_digest_t {
 };
 
 template < uint8_t S >
-    inline std::ostream & operator<<(std::ostream & out,
-                                     const sha_digest_t < S > &b)
+inline std::ostream &operator<<(std::ostream &out,
+                                const sha_digest_t < S > &b)
 {
     std::string str = b.to_str();
     return out << str;
@@ -663,7 +727,7 @@ template < uint8_t S >
 
 #if FMT_VERSION >= 90000
 template < uint8_t S > struct fmt::formatter < sha_digest_t <
-    S >>:fmt::ostream_formatter {
+    S >>: fmt::ostream_formatter {
 };
 #endif
 

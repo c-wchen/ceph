@@ -102,8 +102,7 @@ TEST(FuzzEncoding, BadDecode2)
         bufferlist cl;
         cl.decode_base64(bl);
         cl.hexdump(std::cerr);
-    }
-    catch(const buffer::error & err) {
+    } catch (const buffer::error &err) {
         failed = true;
     }
     ASSERT_EQ(failed, true);

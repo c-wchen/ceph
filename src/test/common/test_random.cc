@@ -31,7 +31,7 @@ template < typename X > void swallow_values(const X x)
 }
 
 template < typename X, typename ... XS >
-    void swallow_values(const X x, const XS ... xs)
+void swallow_values(const X x, const XS ... xs)
 {
     swallow_values(x), swallow_values(xs ...);
 }
@@ -62,13 +62,13 @@ TEST(util, test_random_canonical)
     auto z = gen_fn();
     gen_fn.seed(42);            // re-seed
 
-    // Placate the compiler: 
+    // Placate the compiler:
     swallow_values(a, b, c, d, e, z);
 }
 
 TEST(util, test_random)
 {
-    /* The intent of this test is not to formally test random number generation, 
+    /* The intent of this test is not to formally test random number generation,
        but rather to casually check that "it works" and catch regressions: */
 
     // The default overload should compile:
@@ -78,7 +78,7 @@ TEST(util, test_random)
         int a = ceph::util::generate_random_number();
         int b = ceph::util::generate_random_number();
 
-        /* Technically, this can still collide and cause a false negative, but let's 
+        /* Technically, this can still collide and cause a false negative, but let's
            be optimistic: */
         if (std::numeric_limits < int >::max() > 32767) {
             ASSERT_NE(a, b);

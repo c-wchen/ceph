@@ -30,12 +30,12 @@ static std::string gen_random_uuid()
     return uuid.to_string();
 }
 
-void RGWDefaultZoneGroupInfo::dump(Formatter * f) const const
+void RGWDefaultZoneGroupInfo::dump(Formatter *f) const const
 {
     encode_json("default_zonegroup", default_zonegroup, f);
 }
 
-void RGWDefaultZoneGroupInfo::decode_json(JSONObj * obj)
+void RGWDefaultZoneGroupInfo::decode_json(JSONObj *obj)
 {
 
     JSONDecoder::decode_json("default_zonegroup", default_zonegroup, obj);
@@ -45,7 +45,7 @@ void RGWDefaultZoneGroupInfo::decode_json(JSONObj * obj)
     }
 }
 
-int RGWZoneGroup::create_default(const DoutPrefixProvider * dpp,
+int RGWZoneGroup::create_default(const DoutPrefixProvider *dpp,
                                  optional_yield y, bool old_format)
 {
     name = default_zonegroup_name;
@@ -63,7 +63,7 @@ int RGWZoneGroup::create_default(const DoutPrefixProvider * dpp,
     if (r < 0) {
         ldpp_dout(dpp,
                   0) << "create_default: error initializing zone params: " <<
-            cpp_strerror(-r) << dendl;
+                     cpp_strerror(-r) << dendl;
         return r;
     }
 
@@ -71,30 +71,29 @@ int RGWZoneGroup::create_default(const DoutPrefixProvider * dpp,
     if (r < 0 && r != -EEXIST) {
         ldpp_dout(dpp,
                   0) << "create_default: error in create_default  zone params: "
-            << cpp_strerror(-r) << dendl;
+                     << cpp_strerror(-r) << dendl;
         return r;
-    }
-    else if (r == -EEXIST) {
+    } else if (r == -EEXIST) {
         ldpp_dout(dpp,
                   10) <<
-            "zone_params::create_default() returned -EEXIST, we raced with another default zone_params creation"
-            << dendl;
+                      "zone_params::create_default() returned -EEXIST, we raced with another default zone_params creation"
+                      << dendl;
         zone_params.clear_id();
         r = zone_params.init(dpp, cct, sysobj_svc, y);
         if (r < 0) {
             ldpp_dout(dpp,
                       0) <<
-                "create_default: error in init existing zone params: " <<
-                cpp_strerror(-r) << dendl;
+                         "create_default: error in init existing zone params: " <<
+                         cpp_strerror(-r) << dendl;
             return r;
         }
         ldpp_dout(dpp,
                   20) << "zone_params::create_default() " << zone_params.
-            get_name() << " id " << zone_params.get_id()
-            << dendl;
+                      get_name() << " id " << zone_params.get_id()
+                      << dendl;
     }
 
-    RGWZone & default_zone = zones[zone_params.get_id()];
+    RGWZone &default_zone = zones[zone_params.get_id()];
     default_zone.name = zone_params.get_name();
     default_zone.id = zone_params.get_id();
     master_zone = default_zone.id;
@@ -111,15 +110,15 @@ int RGWZoneGroup::create_default(const DoutPrefixProvider * dpp,
     if (r < 0 && r != -EEXIST) {
         ldpp_dout(dpp,
                   0) << "error storing zone group info: " << cpp_strerror(-r) <<
-            dendl;
+                     dendl;
         return r;
     }
 
     if (r == -EEXIST) {
         ldpp_dout(dpp,
                   10) <<
-            "create_default() returned -EEXIST, we raced with another zonegroup creation"
-            << dendl;
+                      "create_default() returned -EEXIST, we raced with another zonegroup creation"
+                      << dendl;
         id.clear();
         r = init(dpp, cct, sysobj_svc, y);
         if (r < 0) {
@@ -136,38 +135,39 @@ int RGWZoneGroup::create_default(const DoutPrefixProvider * dpp,
     return 0;
 }
 
-int RGWZoneGroup::equals(const string & other_zonegroup) const const
+int RGWZoneGroup::equals(const string &other_zonegroup) const const
 {
-    if (is_master && other_zonegroup.empty())
+    if (is_master && other_zonegroup.empty()) {
         return true;
+    }
 
     return (id == other_zonegroup);
 }
 
-int RGWZoneGroup::add_zone(const DoutPrefixProvider * dpp,
-                           const RGWZoneParams & zone_params, bool * is_master,
-                           bool * read_only, const list < string > &endpoints,
-                           const string * ptier_type, bool * psync_from_all,
+int RGWZoneGroup::add_zone(const DoutPrefixProvider *dpp,
+                           const RGWZoneParams &zone_params, bool *is_master,
+                           bool *read_only, const list < string > &endpoints,
+                           const string *ptier_type, bool *psync_from_all,
                            list < string > &sync_from,
                            list < string > &sync_from_rm,
-                           string * predirect_zone,
+                           string *predirect_zone,
                            std::optional < int >bucket_index_max_shards,
-                           RGWSyncModulesManager * sync_mgr,
-                           const rgw::zone_features::set & enable_features,
-                           const rgw::zone_features::set & disable_features,
+                           RGWSyncModulesManager *sync_mgr,
+                           const rgw::zone_features::set &enable_features,
+                           const rgw::zone_features::set &disable_features,
                            optional_yield y)
 {
-    auto & zone_id = zone_params.get_id();
-    auto & zone_name = zone_params.get_name();
+    auto &zone_id = zone_params.get_id();
+    auto &zone_name = zone_params.get_name();
 
     // check for duplicate zone name on insert
     if (!zones.count(zone_id)) {
-      for (const auto & zone:zones) {
+        for (const auto &zone : zones) {
             if (zone.second.name == zone_name) {
                 ldpp_dout(dpp,
                           0) << "ERROR: found existing zone name " << zone_name
-                    << " (" << zone.
-                    first << ") in zonegroup " << get_name() << dendl;
+                             << " (" << zone.
+                             first << ") in zonegroup " << get_name() << dendl;
                 return -EEXIST;
             }
         }
@@ -178,16 +178,15 @@ int RGWZoneGroup::add_zone(const DoutPrefixProvider * dpp,
             if (!master_zone.empty() && master_zone != zone_id) {
                 ldpp_dout(dpp,
                           0) << "NOTICE: overriding master zone: " <<
-                    master_zone << dendl;
+                             master_zone << dendl;
             }
             master_zone = zone_id;
-        }
-        else if (master_zone == zone_id) {
+        } else if (master_zone == zone_id) {
             master_zone.clear();
         }
     }
 
-    RGWZone & zone = zones[zone_id];
+    RGWZone &zone = zones[zone_id];
     zone.name = zone_name;
     zone.id = zone_id;
     if (!endpoints.empty()) {
@@ -201,9 +200,9 @@ int RGWZoneGroup::add_zone(const DoutPrefixProvider * dpp,
         if (!sync_mgr->get_module(*ptier_type, nullptr)) {
             ldpp_dout(dpp,
                       0) << "ERROR: could not found sync module: " <<
-                *ptier_type << ",  valid sync modules: " << sync_mgr->
-                get_registered_module_names()
-                << dendl;
+                         *ptier_type << ",  valid sync modules: " << sync_mgr->
+                         get_registered_module_names()
+                         << dendl;
             return -ENOENT;
         }
     }
@@ -220,27 +219,27 @@ int RGWZoneGroup::add_zone(const DoutPrefixProvider * dpp,
         zone.bucket_index_max_shards = *bucket_index_max_shards;
     }
 
-  for (auto add:sync_from) {
+    for (auto add : sync_from) {
         zone.sync_from.insert(add);
     }
 
-  for (auto rm:sync_from_rm) {
+    for (auto rm : sync_from_rm) {
         zone.sync_from.erase(rm);
     }
 
     zone.supported_features.insert(enable_features.begin(),
                                    enable_features.end());
 
-  for (const auto & feature:disable_features) {
+    for (const auto &feature : disable_features) {
         if (enabled_features.contains(feature)) {
             lderr(cct) << "ERROR: Cannot disable zone feature \"" << feature
-                << "\" until it's been disabled in zonegroup " << name << dendl;
+                       << "\" until it's been disabled in zonegroup " << name << dendl;
             return -EINVAL;
         }
         auto i = zone.supported_features.find(feature);
         if (i == zone.supported_features.end()) {
             ldout(cct, 1) << "WARNING: zone feature \"" << feature
-                << "\" was not enabled in zone " << zone.name << dendl;
+                          << "\" was not enabled in zone " << zone.name << dendl;
             continue;
         }
         zone.supported_features.erase(i);
@@ -251,17 +250,17 @@ int RGWZoneGroup::add_zone(const DoutPrefixProvider * dpp,
     return update(dpp, y);
 }
 
-int RGWZoneGroup::rename_zone(const DoutPrefixProvider * dpp,
-                              const RGWZoneParams & zone_params,
+int RGWZoneGroup::rename_zone(const DoutPrefixProvider *dpp,
+                              const RGWZoneParams &zone_params,
                               optional_yield y)
 {
-    RGWZone & zone = zones[zone_params.get_id()];
+    RGWZone &zone = zones[zone_params.get_id()];
     zone.name = zone_params.get_name();
 
     return update(dpp, y);
 }
 
-void RGWZoneGroup::post_process_params(const DoutPrefixProvider * dpp,
+void RGWZoneGroup::post_process_params(const DoutPrefixProvider *dpp,
                                        optional_yield y)
 {
     bool log_data = zones.size() > 1;
@@ -273,8 +272,8 @@ void RGWZoneGroup::post_process_params(const DoutPrefixProvider * dpp,
         }
     }
 
-  for (auto & item:zones) {
-        RGWZone & zone = item.second;
+    for (auto &item : zones) {
+        RGWZone &zone = item.second;
         zone.log_data = log_data;
 
         RGWZoneParams zone_params(zone.id, zone.name);
@@ -282,12 +281,12 @@ void RGWZoneGroup::post_process_params(const DoutPrefixProvider * dpp,
         if (ret < 0) {
             ldpp_dout(dpp,
                       0) << "WARNING: could not read zone params for zone id="
-                << zone.id << " name=" << zone.name << dendl;
+                         << zone.id << " name=" << zone.name << dendl;
             continue;
         }
 
-      for (auto & pitem:zone_params.placement_pools) {
-            const string & placement_name = pitem.first;
+        for (auto &pitem : zone_params.placement_pools) {
+            const string &placement_name = pitem.first;
             if (placement_targets.find(placement_name) ==
                 placement_targets.end()) {
                 RGWZoneGroupPlacementTarget placement_target;
@@ -303,14 +302,14 @@ void RGWZoneGroup::post_process_params(const DoutPrefixProvider * dpp,
     }
 }
 
-int RGWZoneGroup::remove_zone(const DoutPrefixProvider * dpp,
-                              const std::string & zone_id, optional_yield y)
+int RGWZoneGroup::remove_zone(const DoutPrefixProvider *dpp,
+                              const std::string &zone_id, optional_yield y)
 {
     auto iter = zones.find(zone_id);
     if (iter == zones.end()) {
         ldpp_dout(dpp,
                   0) << "zone id " << zone_id << " is not a part of zonegroup "
-            << name << dendl;
+                     << name << dendl;
         return -ENOENT;
     }
 
@@ -321,18 +320,18 @@ int RGWZoneGroup::remove_zone(const DoutPrefixProvider * dpp,
     return update(dpp, y);
 }
 
-void RGWDefaultSystemMetaObjInfo::dump(Formatter * f) const const
+void RGWDefaultSystemMetaObjInfo::dump(Formatter *f) const const
 {
     encode_json("default_id", default_id, f);
 }
 
-void RGWDefaultSystemMetaObjInfo::decode_json(JSONObj * obj)
+void RGWDefaultSystemMetaObjInfo::decode_json(JSONObj *obj)
 {
     JSONDecoder::decode_json("default_id", default_id, obj);
 }
 
-int RGWSystemMetaObj::rename(const DoutPrefixProvider * dpp,
-                             const string & new_name, optional_yield y)
+int RGWSystemMetaObj::rename(const DoutPrefixProvider *dpp,
+                             const string &new_name, optional_yield y)
 {
     string new_id;
     int ret = read_id(dpp, new_name, new_id, y);
@@ -342,7 +341,7 @@ int RGWSystemMetaObj::rename(const DoutPrefixProvider * dpp,
     if (ret < 0 && ret != -ENOENT) {
         ldpp_dout(dpp,
                   0) << "Error read_id " << new_name << ": " <<
-            cpp_strerror(-ret) << dendl;
+                     cpp_strerror(-ret) << dendl;
         return ret;
     }
     string old_name = name;
@@ -351,14 +350,14 @@ int RGWSystemMetaObj::rename(const DoutPrefixProvider * dpp,
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "Error storing new obj info " << new_name << ": " <<
-            cpp_strerror(-ret) << dendl;
+                     cpp_strerror(-ret) << dendl;
         return ret;
     }
     ret = store_name(dpp, true, y);
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "Error storing new name " << new_name << ": " <<
-            cpp_strerror(-ret) << dendl;
+                     cpp_strerror(-ret) << dendl;
         return ret;
     }
     /* delete old name */
@@ -370,14 +369,14 @@ int RGWSystemMetaObj::rename(const DoutPrefixProvider * dpp,
     if (ret < 0) {
         ldpp_dout(dpp,
                   0) << "Error delete old obj name  " << old_name << ": " <<
-            cpp_strerror(-ret) << dendl;
+                     cpp_strerror(-ret) << dendl;
         return ret;
     }
 
     return ret;
 }
 
-int RGWSystemMetaObj::read(const DoutPrefixProvider * dpp, optional_yield y)
+int RGWSystemMetaObj::read(const DoutPrefixProvider *dpp, optional_yield y)
 {
     int ret = read_id(dpp, name, id, y);
     if (ret < 0) {
@@ -387,7 +386,7 @@ int RGWSystemMetaObj::read(const DoutPrefixProvider * dpp, optional_yield y)
     return read_info(dpp, id, y);
 }
 
-int RGWZoneParams::create_default(const DoutPrefixProvider * dpp,
+int RGWZoneParams::create_default(const DoutPrefixProvider *dpp,
                                   optional_yield y, bool old_format)
 {
     name = default_zone_name;
@@ -404,18 +403,18 @@ int RGWZoneParams::create_default(const DoutPrefixProvider * dpp,
     return r;
 }
 
-const string & RGWZoneParams::
-get_compression_type(const rgw_placement_rule & placement_rule) const const
+const string &RGWZoneParams::
+get_compression_type(const rgw_placement_rule &placement_rule) const const
 {
     static const std::string NONE {
-    "none"};
+        "none"};
     auto p = placement_pools.find(placement_rule.name);
     if (p == placement_pools.end()) {
         return NONE;
     }
-    const auto & type =
+    const auto &type =
         p->second.get_compression_type(placement_rule.get_storage_class());
-    return !type.empty()? type : NONE;
+    return !type.empty() ? type : NONE;
 }
 
 // run an MD5 hash on the zone_id and return the first 32 bits
@@ -433,24 +432,24 @@ static uint32_t gen_short_zone_id(const std::string zone_id)
     return std::max(short_id, 1u);
 }
 
-int RGWPeriodMap::update(const RGWZoneGroup & zonegroup, CephContext * cct)
+int RGWPeriodMap::update(const RGWZoneGroup &zonegroup, CephContext *cct)
 {
     if (zonegroup.is_master_zonegroup()
         && (!master_zonegroup.empty()
             && zonegroup.get_id() != master_zonegroup)) {
         ldout(cct,
               0) <<
-            "Error updating periodmap, multiple master zonegroups configured "
-            << dendl;
+                 "Error updating periodmap, multiple master zonegroups configured "
+                 << dendl;
         ldout(cct,
               0) << "master zonegroup: " << master_zonegroup << " and  " <<
-            zonegroup.get_id() << dendl;
+                 zonegroup.get_id() << dendl;
         return -EINVAL;
     }
     map < string, RGWZoneGroup >::iterator iter =
         zonegroups.find(zonegroup.get_id());
     if (iter != zonegroups.end()) {
-        RGWZoneGroup & old_zonegroup = iter->second;
+        RGWZoneGroup &old_zonegroup = iter->second;
         if (!old_zonegroup.api_name.empty()) {
             zonegroups_by_api.erase(old_zonegroup.api_name);
         }
@@ -463,13 +462,12 @@ int RGWPeriodMap::update(const RGWZoneGroup & zonegroup, CephContext * cct)
 
     if (zonegroup.is_master_zonegroup()) {
         master_zonegroup = zonegroup.get_id();
-    }
-    else if (master_zonegroup == zonegroup.get_id()) {
+    } else if (master_zonegroup == zonegroup.get_id()) {
         master_zonegroup = "";
     }
 
-  for (auto & i:zonegroup.zones) {
-        auto & zone = i.second;
+    for (auto &i : zonegroup.zones) {
+        auto &zone = i.second;
         if (short_zone_ids.find(zone.id) != short_zone_ids.end()) {
             continue;
         }
@@ -477,11 +475,11 @@ int RGWPeriodMap::update(const RGWZoneGroup & zonegroup, CephContext * cct)
         uint32_t short_id = gen_short_zone_id(zone.id);
 
         // search for an existing zone with the same short id
-      for (auto & s:short_zone_ids) {
+        for (auto &s : short_zone_ids) {
             if (s.second == short_id) {
                 ldout(cct, 0) << "New zone '" << zone.name << "' (" << zone.id
-                    << ") generates the same short_zone_id " << short_id
-                    << " as existing zone id " << s.first << dendl;
+                              << ") generates the same short_zone_id " << short_id
+                              << " as existing zone id " << s.first << dendl;
                 return -EEXIST;
             }
         }
@@ -492,23 +490,23 @@ int RGWPeriodMap::update(const RGWZoneGroup & zonegroup, CephContext * cct)
     return 0;
 }
 
-uint32_t RGWPeriodMap::get_zone_short_id(const string & zone_id) constconst
-{
+uint32_t RGWPeriodMap::get_zone_short_id(const string &zone_id) constconst {
     auto i = short_zone_ids.find(zone_id);
-    if (i == short_zone_ids.end()) {
+    if (i == short_zone_ids.end())
+    {
         return 0;
     }
     return i->second;
 }
 
-bool RGWPeriodMap::find_zone_by_name(const string & zone_name,
-                                     RGWZoneGroup * zonegroup,
-                                     RGWZone * zone) constconst
-{
-  for (auto & iter:zonegroups) {
-        auto & zg = iter.second;
-      for (auto & ziter:zg.zones) {
-            auto & z = ziter.second;
+bool RGWPeriodMap::find_zone_by_name(const string &zone_name,
+                                     RGWZoneGroup *zonegroup,
+                                     RGWZone *zone) constconst {
+    for (auto &iter : zonegroups)
+    {
+        auto &zg = iter.second;
+        for (auto &ziter : zg.zones) {
+            auto &z = ziter.second;
 
             if (z.name == zone_name) {
                 *zonegroup = zg;
@@ -521,637 +519,656 @@ bool RGWPeriodMap::find_zone_by_name(const string & zone_name,
     return false;
 }
 
-namespace rgw {
+namespace rgw
+{
 
-    int read_realm(const DoutPrefixProvider * dpp, optional_yield y,
-                   sal::ConfigStore * cfgstore,
-                   std::string_view realm_id,
-                   std::string_view realm_name,
-                   RGWRealm & info,
-                   std::unique_ptr < sal::RealmWriter > *writer) {
-        if (!realm_id.empty()) {
-            return cfgstore->read_realm_by_id(dpp, y, realm_id, info, writer);
-        } if (!realm_name.empty()) {
-            return cfgstore->read_realm_by_name(dpp, y, realm_name, info,
-                                                writer);
-        }
-        return cfgstore->read_default_realm(dpp, y, info, writer);
+int read_realm(const DoutPrefixProvider *dpp, optional_yield y,
+               sal::ConfigStore *cfgstore,
+               std::string_view realm_id,
+               std::string_view realm_name,
+               RGWRealm &info,
+               std::unique_ptr < sal::RealmWriter > *writer)
+{
+    if (!realm_id.empty()) {
+        return cfgstore->read_realm_by_id(dpp, y, realm_id, info, writer);
+    }
+    if (!realm_name.empty()) {
+        return cfgstore->read_realm_by_name(dpp, y, realm_name, info,
+                                            writer);
+    }
+    return cfgstore->read_default_realm(dpp, y, info, writer);
+}
+
+int create_realm(const DoutPrefixProvider *dpp, optional_yield y,
+                 sal::ConfigStore *cfgstore, bool exclusive,
+                 RGWRealm &info,
+                 std::unique_ptr < sal::RealmWriter > *writer_out)
+{
+    if (info.name.empty()) {
+        ldpp_dout(dpp, -1) << __func__ << " requires a realm name" << dendl;
+        return -EINVAL;
+    }
+    if (info.id.empty()) {
+        info.id = gen_random_uuid();
     }
 
-    int create_realm(const DoutPrefixProvider * dpp, optional_yield y,
-                     sal::ConfigStore * cfgstore, bool exclusive,
-                     RGWRealm & info,
-                     std::unique_ptr < sal::RealmWriter > *writer_out) {
-        if (info.name.empty()) {
-            ldpp_dout(dpp, -1) << __func__ << " requires a realm name" << dendl;
-            return -EINVAL;
-        }
-        if (info.id.empty()) {
-            info.id = gen_random_uuid();
-        }
-
-        // if the realm already has a current_period, just make sure it exists
-        std::optional < RGWPeriod > period;
-        if (!info.current_period.empty()) {
-            period.emplace();
-            int r = cfgstore->read_period(dpp, y, info.current_period,
-                                          std::nullopt, *period);
-            if (r < 0) {
-                ldpp_dout(dpp,
-                          -1) << __func__ <<
-                    " failed to read realm's current_period=" << info.
-                    current_period << " with " << cpp_strerror(r) << dendl;
-                return r;
-            }
-        }
-
-        // create the realm
-        std::unique_ptr < sal::RealmWriter > writer;
-        int r = cfgstore->create_realm(dpp, y, exclusive, info, &writer);
-        if (r < 0) {
-            return r;
-        }
-
-        if (!period) {
-            // initialize and exclusive-create the initial period
-            period.emplace();
-            period->id = gen_random_uuid();
-            period->period_map.id = period->id;
-            period->epoch = FIRST_EPOCH;
-            period->realm_id = info.id;
-            period->realm_name = info.name;
-
-            r = cfgstore->create_period(dpp, y, true, *period);
-            if (r < 0) {
-                ldpp_dout(dpp,
-                          -1) << __func__ <<
-                    " failed to create the initial period id=" << period->
-                    id << " for realm " << info.
-                    name << " with " << cpp_strerror(r) << dendl;
-                return r;
-            }
-        }
-
-        // update the realm's current_period
-        r = realm_set_current_period(dpp, y, cfgstore, *writer, info, *period);
-        if (r < 0) {
-            return r;
-        }
-
-        // try to set as default. may race with another create, so pass exclusive=true
-        // so we don't override an existing default
-        r = set_default_realm(dpp, y, cfgstore, info, true);
-        if (r < 0 && r != -EEXIST) {
-            ldpp_dout(dpp, 0) << "WARNING: failed to set realm as default: "
-                << cpp_strerror(r) << dendl;
-        }
-
-        if (writer_out) {
-            *writer_out = std::move(writer);
-        }
-        return 0;
-    }
-
-    int set_default_realm(const DoutPrefixProvider * dpp, optional_yield y,
-                          sal::ConfigStore * cfgstore, const RGWRealm & info,
-                          bool exclusive) {
-        return cfgstore->write_default_realm_id(dpp, y, exclusive, info.id);
-    }
-
-    int realm_set_current_period(const DoutPrefixProvider * dpp,
-                                 optional_yield y, sal::ConfigStore * cfgstore,
-                                 sal::RealmWriter & writer, RGWRealm & realm,
-                                 const RGWPeriod & period) {
-        // update realm epoch to match the period's
-        if (realm.epoch > period.realm_epoch) {
-            ldpp_dout(dpp, -1) << __func__ << " with old realm epoch "
-                << period.realm_epoch << ", current epoch=" << realm.
-                epoch << dendl;
-            return -EINVAL;
-        }
-        if (realm.epoch == period.realm_epoch
-            && realm.current_period != period.id) {
-            ldpp_dout(dpp,
-                      -1) << __func__ << " with same realm epoch " << period.
-                realm_epoch << ", but different period id " << period.
-                id << " != " << realm.current_period << dendl;
-            return -EINVAL;
-        }
-
-        realm.epoch = period.realm_epoch;
-        realm.current_period = period.id;
-
-        // update the realm object
-        int r = writer.write(dpp, y, realm);
-        if (r < 0) {
-            ldpp_dout(dpp, -1) << __func__ << " failed to overwrite realm "
-                << realm.name << " with " << cpp_strerror(r) << dendl;
-            return r;
-        }
-
-        // reflect the zonegroup and period config
-        (void)reflect_period(dpp, y, cfgstore, period);
-        return 0;
-    }
-
-    int reflect_period(const DoutPrefixProvider * dpp, optional_yield y,
-                       sal::ConfigStore * cfgstore, const RGWPeriod & info) {
-        // overwrite the local period config and zonegroup objects
-        constexpr bool exclusive = false;
-
-        int r = cfgstore->write_period_config(dpp, y, exclusive, info.realm_id,
-                                              info.period_config);
+    // if the realm already has a current_period, just make sure it exists
+    std::optional < RGWPeriod > period;
+    if (!info.current_period.empty()) {
+        period.emplace();
+        int r = cfgstore->read_period(dpp, y, info.current_period,
+                                      std::nullopt, *period);
         if (r < 0) {
             ldpp_dout(dpp,
                       -1) << __func__ <<
-                " failed to store period config for realm id=" << info.
-                realm_id << " with " << cpp_strerror(r) << dendl;
+                          " failed to read realm's current_period=" << info.
+                          current_period << " with " << cpp_strerror(r) << dendl;
             return r;
         }
-
-      for (auto &[zonegroup_id, zonegroup]:info.period_map.zonegroups) {
-            r = cfgstore->create_zonegroup(dpp, y, exclusive, zonegroup,
-                                           nullptr);
-            if (r < 0) {
-                ldpp_dout(dpp,
-                          -1) << __func__ << " failed to store zonegroup id=" <<
-                    zonegroup_id << " with " << cpp_strerror(r) << dendl;
-                return r;
-            }
-            if (zonegroup.is_master) {
-                // set master as default if no default exists
-                constexpr bool exclusive = true;
-                r = set_default_zonegroup(dpp, y, cfgstore, zonegroup,
-                                          exclusive);
-                if (r == 0) {
-                    ldpp_dout(dpp, 1) << "Set the period's master zonegroup "
-                        << zonegroup.name << " as the default" << dendl;
-                }
-            }
-        }
-        return 0;
     }
 
-    std::string get_staging_period_id(std::string_view realm_id) {
-        return string_cat_reserve(realm_id, ":staging");
+    // create the realm
+    std::unique_ptr < sal::RealmWriter > writer;
+    int r = cfgstore->create_realm(dpp, y, exclusive, info, &writer);
+    if (r < 0) {
+        return r;
     }
 
-    void fork_period(const DoutPrefixProvider * dpp, RGWPeriod & info) {
-        ldpp_dout(dpp, 20) << __func__ << " realm id=" << info.realm_id
-            << " period id=" << info.id << dendl;
+    if (!period) {
+        // initialize and exclusive-create the initial period
+        period.emplace();
+        period->id = gen_random_uuid();
+        period->period_map.id = period->id;
+        period->epoch = FIRST_EPOCH;
+        period->realm_id = info.id;
+        period->realm_name = info.name;
 
-        info.predecessor_uuid = std::move(info.id);
-        info.id = get_staging_period_id(info.realm_id);
-        info.period_map.reset();
-        info.realm_epoch++;
+        r = cfgstore->create_period(dpp, y, true, *period);
+        if (r < 0) {
+            ldpp_dout(dpp,
+                      -1) << __func__ <<
+                          " failed to create the initial period id=" << period->
+                          id << " for realm " << info.
+                          name << " with " << cpp_strerror(r) << dendl;
+            return r;
+        }
     }
 
-    int update_period(const DoutPrefixProvider * dpp, optional_yield y,
-                      sal::ConfigStore * cfgstore, RGWPeriod & info) {
-        // clear zone short ids of removed zones. period_map.update() will add the
-        // remaining zones back
-        info.period_map.short_zone_ids.clear();
-
-        // list all zonegroups in the realm
-        rgw::sal::ListResult < std::string > listing;
-        std::array < std::string, 1000 > zonegroup_names;   // list in pages of 1000
-        do {
-            int ret = cfgstore->list_zonegroup_names(dpp, y, listing.next,
-                                                     zonegroup_names, listing);
-            if (ret < 0) {
-                std::
-                    cerr << "failed to list zonegroups: " << cpp_strerror(-ret)
-                    << std::endl;
-                return -ret;
-            }
-          for (const auto & name:listing.entries) {
-                RGWZoneGroup zg;
-                ret =
-                    cfgstore->read_zonegroup_by_name(dpp, y, name, zg, nullptr);
-                if (ret < 0) {
-                    ldpp_dout(dpp, 0) << "WARNING: failed to read zonegroup "
-                        << name << ": " << cpp_strerror(-ret) << dendl;
-                    continue;
-                }
-
-                if (zg.realm_id != info.realm_id) {
-                    ldpp_dout(dpp, 20) << "skipping zonegroup " << zg.get_name()
-                        << " with realm id " << zg.realm_id
-                        << ", not on our realm " << info.realm_id << dendl;
-                    continue;
-                }
-
-                if (zg.master_zone.empty()) {
-                    ldpp_dout(dpp,
-                              0) << "ERROR: zonegroup " << zg.
-                        get_name() << " should have a master zone " << dendl;
-                    return -EINVAL;
-                }
-
-                if (zg.zones.find(zg.master_zone) == zg.zones.end()) {
-                    ldpp_dout(dpp, 0) << "ERROR: zonegroup " << zg.get_name()
-                        << " has a non existent master zone " << dendl;
-                    return -EINVAL;
-                }
-
-                if (zg.is_master_zonegroup()) {
-                    info.master_zonegroup = zg.get_id();
-                    info.master_zone = zg.master_zone;
-                }
-
-                ret = info.period_map.update(zg, dpp->get_cct());
-                if (ret < 0) {
-                    return ret;
-                }
-            }                   // foreach name in listing.entries
-        } while (!listing.next.empty());
-
-        // read the realm's current period config
-        int ret = cfgstore->read_period_config(dpp, y, info.realm_id,
-                                               info.period_config);
-        if (ret < 0 && ret != -ENOENT) {
-            ldpp_dout(dpp, 0) << "ERROR: failed to read period config: "
-                << cpp_strerror(ret) << dendl;
-            return ret;
-        }
-
-        return 0;
+    // update the realm's current_period
+    r = realm_set_current_period(dpp, y, cfgstore, *writer, info, *period);
+    if (r < 0) {
+        return r;
     }
 
-    int commit_period(const DoutPrefixProvider * dpp, optional_yield y,
-                      sal::ConfigStore * cfgstore, sal::Driver * driver,
-                      RGWRealm & realm, sal::RealmWriter & realm_writer,
-                      const RGWPeriod & current_period,
-                      RGWPeriod & info, std::ostream & error_stream,
-                      bool force_if_stale) {
-        auto zone_svc = static_cast < rgw::sal::RadosStore * >(driver)->svc()->zone;    // XXX
+    // try to set as default. may race with another create, so pass exclusive=true
+    // so we don't override an existing default
+    r = set_default_realm(dpp, y, cfgstore, info, true);
+    if (r < 0 && r != -EEXIST) {
+        ldpp_dout(dpp, 0) << "WARNING: failed to set realm as default: "
+                          << cpp_strerror(r) << dendl;
+    }
 
-        ldpp_dout(dpp, 20) << __func__ << " realm " << realm.id
-            << " period " << current_period.id << dendl;
-        // gateway must be in the master zone to commit
-        if (info.master_zone != zone_svc->get_zone_params().id) {
-            error_stream << "Cannot commit period on zone "
-                << zone_svc->get_zone_params().id << ", it must be sent to "
-                "the period's master zone " << info.
-                master_zone << '.' << std::endl;
-            return -EINVAL;
-        }
-        // period predecessor must match current period
-        if (info.predecessor_uuid != current_period.id) {
-            error_stream << "Period predecessor " << info.predecessor_uuid
-                << " does not match current period " << current_period.id
-                <<
-                ". Use 'period pull' to get the latest period from the master, "
-                "reapply your changes, and try again." << std::endl;
-            return -EINVAL;
-        }
-        // realm epoch must be 1 greater than current period
-        if (info.realm_epoch != current_period.realm_epoch + 1) {
-            error_stream << "Period's realm epoch " << info.realm_epoch
-                << " does not come directly after current realm epoch "
-                << current_period.
-                realm_epoch << ". Use 'realm pull' to get the "
-                "latest realm and period from the master zone, reapply your changes, "
-                "and try again." << std::endl;
-            return -EINVAL;
-        }
-        // did the master zone change?
-        if (info.master_zone != current_period.master_zone) {
-            // store the current metadata sync status in the period
-            int r = info.update_sync_status(dpp, driver, current_period,
-                                            error_stream, force_if_stale);
-            if (r < 0) {
-                ldpp_dout(dpp, 0) << "failed to update metadata sync status: "
-                    << cpp_strerror(-r) << dendl;
-                return r;
-            }
-            // create an object with a new period id
-            info.period_map.id = info.id = gen_random_uuid();
-            info.epoch = FIRST_EPOCH;
+    if (writer_out) {
+        *writer_out = std::move(writer);
+    }
+    return 0;
+}
 
+int set_default_realm(const DoutPrefixProvider *dpp, optional_yield y,
+                      sal::ConfigStore *cfgstore, const RGWRealm &info,
+                      bool exclusive)
+{
+    return cfgstore->write_default_realm_id(dpp, y, exclusive, info.id);
+}
+
+int realm_set_current_period(const DoutPrefixProvider *dpp,
+                             optional_yield y, sal::ConfigStore *cfgstore,
+                             sal::RealmWriter &writer, RGWRealm &realm,
+                             const RGWPeriod &period)
+{
+    // update realm epoch to match the period's
+    if (realm.epoch > period.realm_epoch) {
+        ldpp_dout(dpp, -1) << __func__ << " with old realm epoch "
+                           << period.realm_epoch << ", current epoch=" << realm.
+                           epoch << dendl;
+        return -EINVAL;
+    }
+    if (realm.epoch == period.realm_epoch
+        && realm.current_period != period.id) {
+        ldpp_dout(dpp,
+                  -1) << __func__ << " with same realm epoch " << period.
+                      realm_epoch << ", but different period id " << period.
+                      id << " != " << realm.current_period << dendl;
+        return -EINVAL;
+    }
+
+    realm.epoch = period.realm_epoch;
+    realm.current_period = period.id;
+
+    // update the realm object
+    int r = writer.write(dpp, y, realm);
+    if (r < 0) {
+        ldpp_dout(dpp, -1) << __func__ << " failed to overwrite realm "
+                           << realm.name << " with " << cpp_strerror(r) << dendl;
+        return r;
+    }
+
+    // reflect the zonegroup and period config
+    (void)reflect_period(dpp, y, cfgstore, period);
+    return 0;
+}
+
+int reflect_period(const DoutPrefixProvider *dpp, optional_yield y,
+                   sal::ConfigStore *cfgstore, const RGWPeriod &info)
+{
+    // overwrite the local period config and zonegroup objects
+    constexpr bool exclusive = false;
+
+    int r = cfgstore->write_period_config(dpp, y, exclusive, info.realm_id,
+                                          info.period_config);
+    if (r < 0) {
+        ldpp_dout(dpp,
+                  -1) << __func__ <<
+                      " failed to store period config for realm id=" << info.
+                      realm_id << " with " << cpp_strerror(r) << dendl;
+        return r;
+    }
+
+    for (auto &[zonegroup_id, zonegroup] : info.period_map.zonegroups) {
+        r = cfgstore->create_zonegroup(dpp, y, exclusive, zonegroup,
+                                       nullptr);
+        if (r < 0) {
+            ldpp_dout(dpp,
+                      -1) << __func__ << " failed to store zonegroup id=" <<
+                          zonegroup_id << " with " << cpp_strerror(r) << dendl;
+            return r;
+        }
+        if (zonegroup.is_master) {
+            // set master as default if no default exists
             constexpr bool exclusive = true;
-            r = cfgstore->create_period(dpp, y, exclusive, info);
-            if (r < 0) {
+            r = set_default_zonegroup(dpp, y, cfgstore, zonegroup,
+                                      exclusive);
+            if (r == 0) {
+                ldpp_dout(dpp, 1) << "Set the period's master zonegroup "
+                                  << zonegroup.name << " as the default" << dendl;
+            }
+        }
+    }
+    return 0;
+}
+
+std::string get_staging_period_id(std::string_view realm_id)
+{
+    return string_cat_reserve(realm_id, ":staging");
+}
+
+void fork_period(const DoutPrefixProvider *dpp, RGWPeriod &info)
+{
+    ldpp_dout(dpp, 20) << __func__ << " realm id=" << info.realm_id
+                       << " period id=" << info.id << dendl;
+
+    info.predecessor_uuid = std::move(info.id);
+    info.id = get_staging_period_id(info.realm_id);
+    info.period_map.reset();
+    info.realm_epoch++;
+}
+
+int update_period(const DoutPrefixProvider *dpp, optional_yield y,
+                  sal::ConfigStore *cfgstore, RGWPeriod &info)
+{
+    // clear zone short ids of removed zones. period_map.update() will add the
+    // remaining zones back
+    info.period_map.short_zone_ids.clear();
+
+    // list all zonegroups in the realm
+    rgw::sal::ListResult < std::string > listing;
+    std::array < std::string, 1000 > zonegroup_names;   // list in pages of 1000
+    do {
+        int ret = cfgstore->list_zonegroup_names(dpp, y, listing.next,
+                  zonegroup_names, listing);
+        if (ret < 0) {
+            std::
+            cerr << "failed to list zonegroups: " << cpp_strerror(-ret)
+                 << std::endl;
+            return -ret;
+        }
+        for (const auto &name : listing.entries) {
+            RGWZoneGroup zg;
+            ret =
+                cfgstore->read_zonegroup_by_name(dpp, y, name, zg, nullptr);
+            if (ret < 0) {
+                ldpp_dout(dpp, 0) << "WARNING: failed to read zonegroup "
+                                  << name << ": " << cpp_strerror(-ret) << dendl;
+                continue;
+            }
+
+            if (zg.realm_id != info.realm_id) {
+                ldpp_dout(dpp, 20) << "skipping zonegroup " << zg.get_name()
+                                   << " with realm id " << zg.realm_id
+                                   << ", not on our realm " << info.realm_id << dendl;
+                continue;
+            }
+
+            if (zg.master_zone.empty()) {
                 ldpp_dout(dpp,
-                          0) << "failed to create new period: " <<
-                    cpp_strerror(-r) << dendl;
-                return r;
+                          0) << "ERROR: zonegroup " << zg.
+                             get_name() << " should have a master zone " << dendl;
+                return -EINVAL;
             }
-            // set as current period
-            r = realm_set_current_period(dpp, y, cfgstore, realm_writer, realm,
-                                         info);
-            if (r < 0) {
-                ldpp_dout(dpp, 0) << "failed to update realm's current period: "
-                    << cpp_strerror(-r) << dendl;
-                return r;
+
+            if (zg.zones.find(zg.master_zone) == zg.zones.end()) {
+                ldpp_dout(dpp, 0) << "ERROR: zonegroup " << zg.get_name()
+                                  << " has a non existent master zone " << dendl;
+                return -EINVAL;
             }
-            ldpp_dout(dpp,
-                      4) << "Promoted to master zone and committed new period "
-                << info.id << dendl;
-            (void)cfgstore->realm_notify_new_period(dpp, y, info);
-            return 0;
+
+            if (zg.is_master_zonegroup()) {
+                info.master_zonegroup = zg.get_id();
+                info.master_zone = zg.master_zone;
+            }
+
+            ret = info.period_map.update(zg, dpp->get_cct());
+            if (ret < 0) {
+                return ret;
+            }
+        }                   // foreach name in listing.entries
+    } while (!listing.next.empty());
+
+    // read the realm's current period config
+    int ret = cfgstore->read_period_config(dpp, y, info.realm_id,
+                                           info.period_config);
+    if (ret < 0 && ret != -ENOENT) {
+        ldpp_dout(dpp, 0) << "ERROR: failed to read period config: "
+                          << cpp_strerror(ret) << dendl;
+        return ret;
+    }
+
+    return 0;
+}
+
+int commit_period(const DoutPrefixProvider *dpp, optional_yield y,
+                  sal::ConfigStore *cfgstore, sal::Driver *driver,
+                  RGWRealm &realm, sal::RealmWriter &realm_writer,
+                  const RGWPeriod &current_period,
+                  RGWPeriod &info, std::ostream &error_stream,
+                  bool force_if_stale)
+{
+    auto zone_svc = static_cast < rgw::sal::RadosStore * >(driver)->svc()->zone;    // XXX
+
+    ldpp_dout(dpp, 20) << __func__ << " realm " << realm.id
+                       << " period " << current_period.id << dendl;
+    // gateway must be in the master zone to commit
+    if (info.master_zone != zone_svc->get_zone_params().id) {
+        error_stream << "Cannot commit period on zone "
+                     << zone_svc->get_zone_params().id << ", it must be sent to "
+                     "the period's master zone " << info.
+                     master_zone << '.' << std::endl;
+        return -EINVAL;
+    }
+    // period predecessor must match current period
+    if (info.predecessor_uuid != current_period.id) {
+        error_stream << "Period predecessor " << info.predecessor_uuid
+                     << " does not match current period " << current_period.id
+                     <<
+                     ". Use 'period pull' to get the latest period from the master, "
+                     "reapply your changes, and try again." << std::endl;
+        return -EINVAL;
+    }
+    // realm epoch must be 1 greater than current period
+    if (info.realm_epoch != current_period.realm_epoch + 1) {
+        error_stream << "Period's realm epoch " << info.realm_epoch
+                     << " does not come directly after current realm epoch "
+                     << current_period.
+                     realm_epoch << ". Use 'realm pull' to get the "
+                     "latest realm and period from the master zone, reapply your changes, "
+                     "and try again." << std::endl;
+        return -EINVAL;
+    }
+    // did the master zone change?
+    if (info.master_zone != current_period.master_zone) {
+        // store the current metadata sync status in the period
+        int r = info.update_sync_status(dpp, driver, current_period,
+                                        error_stream, force_if_stale);
+        if (r < 0) {
+            ldpp_dout(dpp, 0) << "failed to update metadata sync status: "
+                              << cpp_strerror(-r) << dendl;
+            return r;
         }
-        // period must be based on current epoch
-        if (info.epoch != current_period.epoch) {
-            error_stream << "Period epoch " << info.epoch << " does not match "
-                "predecessor epoch " << current_period.epoch << ". Use "
-                "'period pull' to get the latest epoch from the master zone, "
-                "reapply your changes, and try again." << std::endl;
-            return -EINVAL;
-        }
-        // set period as next epoch
-        info.id = current_period.id;
-        info.epoch = current_period.epoch + 1;
-        info.predecessor_uuid = current_period.predecessor_uuid;
-        info.realm_epoch = current_period.realm_epoch;
-        // write the period
+        // create an object with a new period id
+        info.period_map.id = info.id = gen_random_uuid();
+        info.epoch = FIRST_EPOCH;
+
         constexpr bool exclusive = true;
-        int r = cfgstore->create_period(dpp, y, exclusive, info);
-        if (r == -EEXIST) {
-            // already have this epoch (or a more recent one)
-            return 0;
-        }
+        r = cfgstore->create_period(dpp, y, exclusive, info);
         if (r < 0) {
             ldpp_dout(dpp,
-                      0) << "failed to store period: " << cpp_strerror(r) <<
-                dendl;
+                      0) << "failed to create new period: " <<
+                         cpp_strerror(-r) << dendl;
             return r;
         }
-        r = reflect_period(dpp, y, cfgstore, info);
+        // set as current period
+        r = realm_set_current_period(dpp, y, cfgstore, realm_writer, realm,
+                                     info);
         if (r < 0) {
-            ldpp_dout(dpp,
-                      0) << "failed to update local objects: " <<
-                cpp_strerror(r) << dendl;
+            ldpp_dout(dpp, 0) << "failed to update realm's current period: "
+                              << cpp_strerror(-r) << dendl;
             return r;
         }
-        ldpp_dout(dpp, 4) << "Committed new epoch " << info.epoch
-            << " for period " << info.id << dendl;
+        ldpp_dout(dpp,
+                  4) << "Promoted to master zone and committed new period "
+                     << info.id << dendl;
         (void)cfgstore->realm_notify_new_period(dpp, y, info);
         return 0;
     }
-
-    int read_zonegroup(const DoutPrefixProvider * dpp, optional_yield y,
-                       sal::ConfigStore * cfgstore,
-                       std::string_view zonegroup_id,
-                       std::string_view zonegroup_name,
-                       RGWZoneGroup & info,
-                       std::unique_ptr < sal::ZoneGroupWriter > *writer) {
-        if (!zonegroup_id.empty()) {
-            return cfgstore->read_zonegroup_by_id(dpp, y, zonegroup_id, info,
-                                                  writer);
-        }
-        if (!zonegroup_name.empty()) {
-            return cfgstore->read_zonegroup_by_name(dpp, y, zonegroup_name,
-                                                    info, writer);
-        }
-
-        std::string realm_id;
-        int r = cfgstore->read_default_realm_id(dpp, y, realm_id);
-        if (r == -ENOENT) {
-            return cfgstore->read_zonegroup_by_name(dpp, y,
-                                                    default_zonegroup_name,
-                                                    info, writer);
-        }
-        if (r < 0) {
-            return r;
-        }
-        return cfgstore->read_default_zonegroup(dpp, y, realm_id, info, writer);
+    // period must be based on current epoch
+    if (info.epoch != current_period.epoch) {
+        error_stream << "Period epoch " << info.epoch << " does not match "
+                     "predecessor epoch " << current_period.epoch << ". Use "
+                     "'period pull' to get the latest epoch from the master zone, "
+                     "reapply your changes, and try again." << std::endl;
+        return -EINVAL;
     }
-
-    int create_zonegroup(const DoutPrefixProvider * dpp, optional_yield y,
-                         sal::ConfigStore * cfgstore, bool exclusive,
-                         RGWZoneGroup & info) {
-        if (info.name.empty()) {
-            ldpp_dout(dpp,
-                      -1) << __func__ << " requires a zonegroup name" << dendl;
-            return -EINVAL;
-        }
-        if (info.id.empty()) {
-            info.id = gen_random_uuid();
-        }
-
-        // insert the default placement target if it doesn't exist
-        constexpr std::string_view default_placement_name = "default-placement";
-
-        RGWZoneGroupPlacementTarget placement_target;
-        placement_target.name = default_placement_name;
-
-        info.placement_targets.emplace(default_placement_name,
-                                       placement_target);
-        if (info.default_placement.name.empty()) {
-            info.default_placement.name = default_placement_name;
-        }
-
-        int r = cfgstore->create_zonegroup(dpp, y, exclusive, info, nullptr);
-        if (r < 0) {
-            ldpp_dout(dpp, 0) << "failed to create zonegroup with "
-                << cpp_strerror(r) << dendl;
-            return r;
-        }
-
-        // try to set as default. may race with another create, so pass exclusive=true
-        // so we don't override an existing default
-        r = set_default_zonegroup(dpp, y, cfgstore, info, true);
-        if (r < 0 && r != -EEXIST) {
-            ldpp_dout(dpp, 0) << "WARNING: failed to set zonegroup as default: "
-                << cpp_strerror(r) << dendl;
-        }
-
+    // set period as next epoch
+    info.id = current_period.id;
+    info.epoch = current_period.epoch + 1;
+    info.predecessor_uuid = current_period.predecessor_uuid;
+    info.realm_epoch = current_period.realm_epoch;
+    // write the period
+    constexpr bool exclusive = true;
+    int r = cfgstore->create_period(dpp, y, exclusive, info);
+    if (r == -EEXIST) {
+        // already have this epoch (or a more recent one)
         return 0;
     }
+    if (r < 0) {
+        ldpp_dout(dpp,
+                  0) << "failed to store period: " << cpp_strerror(r) <<
+                     dendl;
+        return r;
+    }
+    r = reflect_period(dpp, y, cfgstore, info);
+    if (r < 0) {
+        ldpp_dout(dpp,
+                  0) << "failed to update local objects: " <<
+                     cpp_strerror(r) << dendl;
+        return r;
+    }
+    ldpp_dout(dpp, 4) << "Committed new epoch " << info.epoch
+                      << " for period " << info.id << dendl;
+    (void)cfgstore->realm_notify_new_period(dpp, y, info);
+    return 0;
+}
 
-    int set_default_zonegroup(const DoutPrefixProvider * dpp, optional_yield y,
-                              sal::ConfigStore * cfgstore,
-                              const RGWZoneGroup & info, bool exclusive) {
-        return cfgstore->write_default_zonegroup_id(dpp, y, exclusive,
-                                                    info.realm_id, info.id);
+int read_zonegroup(const DoutPrefixProvider *dpp, optional_yield y,
+                   sal::ConfigStore *cfgstore,
+                   std::string_view zonegroup_id,
+                   std::string_view zonegroup_name,
+                   RGWZoneGroup &info,
+                   std::unique_ptr < sal::ZoneGroupWriter > *writer)
+{
+    if (!zonegroup_id.empty()) {
+        return cfgstore->read_zonegroup_by_id(dpp, y, zonegroup_id, info,
+                                              writer);
+    }
+    if (!zonegroup_name.empty()) {
+        return cfgstore->read_zonegroup_by_name(dpp, y, zonegroup_name,
+                                                info, writer);
     }
 
-    int remove_zone_from_group(const DoutPrefixProvider * dpp,
-                               RGWZoneGroup & zonegroup,
-                               const rgw_zone_id & zone_id) {
-        auto z = zonegroup.zones.find(zone_id);
-        if (z == zonegroup.zones.end()) {
-            return -ENOENT;
-        }
-        zonegroup.zones.erase(z);
-
-        if (zonegroup.master_zone == zone_id) {
-            // choose a new master zone
-            auto m = zonegroup.zones.begin();
-            if (m != zonegroup.zones.end()) {
-                zonegroup.master_zone = m->first;
-                ldpp_dout(dpp, 0) << "NOTICE: promoted " << m->second.name
-                    << " as new master_zone of zonegroup " << zonegroup.
-                    name << dendl;
-            }
-            else {
-                ldpp_dout(dpp, 0) << "NOTICE: removed master_zone of zonegroup "
-                    << zonegroup.name << dendl;
-            }
-        }
-
-        const bool log_data = zonegroup.zones.size() > 1;
-      for (auto &[id, zone]:zonegroup.zones) {
-            zone.log_data = log_data;
-        }
-
-        return 0;
+    std::string realm_id;
+    int r = cfgstore->read_default_realm_id(dpp, y, realm_id);
+    if (r == -ENOENT) {
+        return cfgstore->read_zonegroup_by_name(dpp, y,
+                                                default_zonegroup_name,
+                                                info, writer);
     }
+    if (r < 0) {
+        return r;
+    }
+    return cfgstore->read_default_zonegroup(dpp, y, realm_id, info, writer);
+}
+
+int create_zonegroup(const DoutPrefixProvider *dpp, optional_yield y,
+                     sal::ConfigStore *cfgstore, bool exclusive,
+                     RGWZoneGroup &info)
+{
+    if (info.name.empty()) {
+        ldpp_dout(dpp,
+                  -1) << __func__ << " requires a zonegroup name" << dendl;
+        return -EINVAL;
+    }
+    if (info.id.empty()) {
+        info.id = gen_random_uuid();
+    }
+
+    // insert the default placement target if it doesn't exist
+    constexpr std::string_view default_placement_name = "default-placement";
+
+    RGWZoneGroupPlacementTarget placement_target;
+    placement_target.name = default_placement_name;
+
+    info.placement_targets.emplace(default_placement_name,
+                                   placement_target);
+    if (info.default_placement.name.empty()) {
+        info.default_placement.name = default_placement_name;
+    }
+
+    int r = cfgstore->create_zonegroup(dpp, y, exclusive, info, nullptr);
+    if (r < 0) {
+        ldpp_dout(dpp, 0) << "failed to create zonegroup with "
+                          << cpp_strerror(r) << dendl;
+        return r;
+    }
+
+    // try to set as default. may race with another create, so pass exclusive=true
+    // so we don't override an existing default
+    r = set_default_zonegroup(dpp, y, cfgstore, info, true);
+    if (r < 0 && r != -EEXIST) {
+        ldpp_dout(dpp, 0) << "WARNING: failed to set zonegroup as default: "
+                          << cpp_strerror(r) << dendl;
+    }
+
+    return 0;
+}
+
+int set_default_zonegroup(const DoutPrefixProvider *dpp, optional_yield y,
+                          sal::ConfigStore *cfgstore,
+                          const RGWZoneGroup &info, bool exclusive)
+{
+    return cfgstore->write_default_zonegroup_id(dpp, y, exclusive,
+            info.realm_id, info.id);
+}
+
+int remove_zone_from_group(const DoutPrefixProvider *dpp,
+                           RGWZoneGroup &zonegroup,
+                           const rgw_zone_id &zone_id)
+{
+    auto z = zonegroup.zones.find(zone_id);
+    if (z == zonegroup.zones.end()) {
+        return -ENOENT;
+    }
+    zonegroup.zones.erase(z);
+
+    if (zonegroup.master_zone == zone_id) {
+        // choose a new master zone
+        auto m = zonegroup.zones.begin();
+        if (m != zonegroup.zones.end()) {
+            zonegroup.master_zone = m->first;
+            ldpp_dout(dpp, 0) << "NOTICE: promoted " << m->second.name
+                              << " as new master_zone of zonegroup " << zonegroup.
+                              name << dendl;
+        } else {
+            ldpp_dout(dpp, 0) << "NOTICE: removed master_zone of zonegroup "
+                              << zonegroup.name << dendl;
+        }
+    }
+
+    const bool log_data = zonegroup.zones.size() > 1;
+    for (auto &[id, zone] : zonegroup.zones) {
+        zone.log_data = log_data;
+    }
+
+    return 0;
+}
 
 // try to remove the given zone id from every zonegroup in the cluster
-    static int remove_zone_from_groups(const DoutPrefixProvider * dpp,
-                                       optional_yield y,
-                                       sal::ConfigStore * cfgstore,
-                                       const rgw_zone_id & zone_id) {
-        std::array < std::string, 128 > zonegroup_names;
-        sal::ListResult < std::string > listing;
-        do {
-            int r = cfgstore->list_zonegroup_names(dpp, y, listing.next,
-                                                   zonegroup_names, listing);
+static int remove_zone_from_groups(const DoutPrefixProvider *dpp,
+                                   optional_yield y,
+                                   sal::ConfigStore *cfgstore,
+                                   const rgw_zone_id &zone_id)
+{
+    std::array < std::string, 128 > zonegroup_names;
+    sal::ListResult < std::string > listing;
+    do {
+        int r = cfgstore->list_zonegroup_names(dpp, y, listing.next,
+                                               zonegroup_names, listing);
+        if (r < 0) {
+            ldpp_dout(dpp, 0) << "failed to list zonegroups with "
+                              << cpp_strerror(r) << dendl;
+            return r;
+        }
+
+        for (const auto &name : listing.entries) {
+            RGWZoneGroup zonegroup;
+            std::unique_ptr < sal::ZoneGroupWriter > writer;
+            r = cfgstore->read_zonegroup_by_name(dpp, y, name, zonegroup,
+                                                 &writer);
             if (r < 0) {
-                ldpp_dout(dpp, 0) << "failed to list zonegroups with "
-                    << cpp_strerror(r) << dendl;
-                return r;
-            }
-
-          for (const auto & name:listing.entries) {
-                RGWZoneGroup zonegroup;
-                std::unique_ptr < sal::ZoneGroupWriter > writer;
-                r = cfgstore->read_zonegroup_by_name(dpp, y, name, zonegroup,
-                                                     &writer);
-                if (r < 0) {
-                    ldpp_dout(dpp,
-                              0) << "WARNING: failed to load zonegroup " << name
-                        << " with " << cpp_strerror(r) << dendl;
-                    continue;
-                }
-
-                r = remove_zone_from_group(dpp, zonegroup, zone_id);
-                if (r < 0) {
-                    continue;
-                }
-
-                // write the updated zonegroup
-                r = writer->write(dpp, y, zonegroup);
-                if (r < 0) {
-                    ldpp_dout(dpp,
-                              0) << "WARNING: failed to write zonegroup " <<
-                        name << " with " << cpp_strerror(r) << dendl;
-                    continue;
-                }
                 ldpp_dout(dpp,
-                          0) << "Removed zone from zonegroup " << name << dendl;
+                          0) << "WARNING: failed to load zonegroup " << name
+                             << " with " << cpp_strerror(r) << dendl;
+                continue;
             }
-        } while (!listing.next.empty());
 
-        return 0;
+            r = remove_zone_from_group(dpp, zonegroup, zone_id);
+            if (r < 0) {
+                continue;
+            }
+
+            // write the updated zonegroup
+            r = writer->write(dpp, y, zonegroup);
+            if (r < 0) {
+                ldpp_dout(dpp,
+                          0) << "WARNING: failed to write zonegroup " <<
+                             name << " with " << cpp_strerror(r) << dendl;
+                continue;
+            }
+            ldpp_dout(dpp,
+                      0) << "Removed zone from zonegroup " << name << dendl;
+        }
+    } while (!listing.next.empty());
+
+    return 0;
+}
+
+int read_zone(const DoutPrefixProvider *dpp, optional_yield y,
+              sal::ConfigStore *cfgstore,
+              std::string_view zone_id,
+              std::string_view zone_name,
+              RGWZoneParams &info,
+              std::unique_ptr < sal::ZoneWriter > *writer)
+{
+    if (!zone_id.empty()) {
+        return cfgstore->read_zone_by_id(dpp, y, zone_id, info, writer);
+    }
+    if (!zone_name.empty()) {
+        return cfgstore->read_zone_by_name(dpp, y, zone_name, info, writer);
     }
 
-    int read_zone(const DoutPrefixProvider * dpp, optional_yield y,
-                  sal::ConfigStore * cfgstore,
-                  std::string_view zone_id,
-                  std::string_view zone_name,
-                  RGWZoneParams & info,
-                  std::unique_ptr < sal::ZoneWriter > *writer) {
-        if (!zone_id.empty()) {
-            return cfgstore->read_zone_by_id(dpp, y, zone_id, info, writer);
-        }
-        if (!zone_name.empty()) {
-            return cfgstore->read_zone_by_name(dpp, y, zone_name, info, writer);
-        }
+    std::string realm_id;
+    int r = cfgstore->read_default_realm_id(dpp, y, realm_id);
+    if (r == -ENOENT) {
+        return cfgstore->read_zone_by_name(dpp, y, default_zone_name, info,
+                                           writer);
+    }
+    if (r < 0) {
+        return r;
+    }
+    return cfgstore->read_default_zone(dpp, y, realm_id, info, writer);
+}
 
-        std::string realm_id;
-        int r = cfgstore->read_default_realm_id(dpp, y, realm_id);
-        if (r == -ENOENT) {
-            return cfgstore->read_zone_by_name(dpp, y, default_zone_name, info,
-                                               writer);
-        }
-        if (r < 0) {
-            return r;
-        }
-        return cfgstore->read_default_zone(dpp, y, realm_id, info, writer);
+extern int get_zones_pool_set(const DoutPrefixProvider *dpp,
+                              optional_yield y,
+                              rgw::sal::ConfigStore *cfgstore,
+                              std::string_view my_zone_id,
+                              std::set < rgw_pool > &pools);
+
+int create_zone(const DoutPrefixProvider *dpp, optional_yield y,
+                sal::ConfigStore *cfgstore, bool exclusive,
+                RGWZoneParams &info,
+                std::unique_ptr < sal::ZoneWriter > *writer)
+{
+    if (info.name.empty()) {
+        ldpp_dout(dpp, -1) << __func__ << " requires a zone name" << dendl;
+        return -EINVAL;
+    }
+    if (info.id.empty()) {
+        info.id = gen_random_uuid();
     }
 
-    extern int get_zones_pool_set(const DoutPrefixProvider * dpp,
-                                  optional_yield y,
-                                  rgw::sal::ConfigStore * cfgstore,
-                                  std::string_view my_zone_id,
-                                  std::set < rgw_pool > &pools);
+    // add default placement with empty pool name
+    rgw_pool pool;
+    auto &placement = info.placement_pools["default-placement"];
+    placement.storage_classes.set_storage_class(RGW_STORAGE_CLASS_STANDARD,
+             &pool, nullptr);
 
-    int create_zone(const DoutPrefixProvider * dpp, optional_yield y,
-                    sal::ConfigStore * cfgstore, bool exclusive,
-                    RGWZoneParams & info,
-                    std::unique_ptr < sal::ZoneWriter > *writer) {
-        if (info.name.empty()) {
-            ldpp_dout(dpp, -1) << __func__ << " requires a zone name" << dendl;
-            return -EINVAL;
-        }
-        if (info.id.empty()) {
-            info.id = gen_random_uuid();
-        }
-
-        // add default placement with empty pool name
-        rgw_pool pool;
-        auto & placement = info.placement_pools["default-placement"];
-        placement.storage_classes.set_storage_class(RGW_STORAGE_CLASS_STANDARD,
-                                                    &pool, nullptr);
-
-        // build a set of all pool names used by other zones
-        std::set < rgw_pool > pools;
-        int r = get_zones_pool_set(dpp, y, cfgstore, info.id, pools);
-        if (r < 0) {
-            return r;
-        }
-
-        // initialize pool names with the zone name prefix
-        r = init_zone_pool_names(dpp, y, pools, info);
-        if (r < 0) {
-            return r;
-        }
-
-        r = cfgstore->create_zone(dpp, y, exclusive, info, nullptr);
-        if (r < 0) {
-            ldpp_dout(dpp, 0) << "failed to create zone with "
-                << cpp_strerror(r) << dendl;
-            return r;
-        }
-
-        // try to set as default. may race with another create, so pass exclusive=true
-        // so we don't override an existing default
-        r = set_default_zone(dpp, y, cfgstore, info, true);
-        if (r < 0 && r != -EEXIST) {
-            ldpp_dout(dpp, 0) << "WARNING: failed to set zone as default: "
-                << cpp_strerror(r) << dendl;
-        }
-
-        return 0;
-
+    // build a set of all pool names used by other zones
+    std::set < rgw_pool > pools;
+    int r = get_zones_pool_set(dpp, y, cfgstore, info.id, pools);
+    if (r < 0) {
+        return r;
     }
 
-    int set_default_zone(const DoutPrefixProvider * dpp, optional_yield y,
-                         sal::ConfigStore * cfgstore,
-                         const RGWZoneParams & info, bool exclusive) {
-        return cfgstore->write_default_zone_id(dpp, y, exclusive, info.realm_id,
-                                               info.id);
+    // initialize pool names with the zone name prefix
+    r = init_zone_pool_names(dpp, y, pools, info);
+    if (r < 0) {
+        return r;
     }
 
-    int delete_zone(const DoutPrefixProvider * dpp, optional_yield y,
-                    sal::ConfigStore * cfgstore, const RGWZoneParams & info,
-                    sal::ZoneWriter & writer) {
-        // remove this zone from any zonegroups that contain it
-        int r = remove_zone_from_groups(dpp, y, cfgstore, info.id);
-        if (r < 0) {
-            return r;
-        }
-
-        return writer.remove(dpp, y);
+    r = cfgstore->create_zone(dpp, y, exclusive, info, nullptr);
+    if (r < 0) {
+        ldpp_dout(dpp, 0) << "failed to create zone with "
+                          << cpp_strerror(r) << dendl;
+        return r;
     }
+
+    // try to set as default. may race with another create, so pass exclusive=true
+    // so we don't override an existing default
+    r = set_default_zone(dpp, y, cfgstore, info, true);
+    if (r < 0 && r != -EEXIST) {
+        ldpp_dout(dpp, 0) << "WARNING: failed to set zone as default: "
+                          << cpp_strerror(r) << dendl;
+    }
+
+    return 0;
+
+}
+
+int set_default_zone(const DoutPrefixProvider *dpp, optional_yield y,
+                     sal::ConfigStore *cfgstore,
+                     const RGWZoneParams &info, bool exclusive)
+{
+    return cfgstore->write_default_zone_id(dpp, y, exclusive, info.realm_id,
+                                           info.id);
+}
+
+int delete_zone(const DoutPrefixProvider *dpp, optional_yield y,
+                sal::ConfigStore *cfgstore, const RGWZoneParams &info,
+                sal::ZoneWriter &writer)
+{
+    // remove this zone from any zonegroups that contain it
+    int r = remove_zone_from_groups(dpp, y, cfgstore, info.id);
+    if (r < 0) {
+        return r;
+    }
+
+    return writer.remove(dpp, y);
+}
 
 }                               // namespace rgw
 
-static inline int conf_to_uint64(const JSONFormattable & config,
-                                 const string & key, uint64_t * pval)
+static inline int conf_to_uint64(const JSONFormattable &config,
+                                 const string &key, uint64_t *pval)
 {
     string sval;
     if (config.find(key, &sval)) {
@@ -1165,7 +1182,7 @@ static inline int conf_to_uint64(const JSONFormattable & config,
     return 0;
 }
 
-int RGWZoneGroupPlacementTier::update_params(const JSONFormattable & config)
+int RGWZoneGroupPlacementTier::update_params(const JSONFormattable &config)
 {
     int r = -1;
 
@@ -1173,8 +1190,7 @@ int RGWZoneGroupPlacementTier::update_params(const JSONFormattable & config)
         string s = config["retain_head_object"];
         if (s == "true") {
             retain_head_object = true;
-        }
-        else {
+        } else {
             retain_head_object = false;
         }
     }
@@ -1186,7 +1202,7 @@ int RGWZoneGroupPlacementTier::update_params(const JSONFormattable & config)
     return r;
 }
 
-int RGWZoneGroupPlacementTier::clear_params(const JSONFormattable & config)
+int RGWZoneGroupPlacementTier::clear_params(const JSONFormattable &config)
 {
     if (config.exists("retain_head_object")) {
         retain_head_object = false;
@@ -1199,7 +1215,7 @@ int RGWZoneGroupPlacementTier::clear_params(const JSONFormattable & config)
     return 0;
 }
 
-int RGWZoneGroupPlacementTierS3::update_params(const JSONFormattable & config)
+int RGWZoneGroupPlacementTierS3::update_params(const JSONFormattable &config)
 {
     int r = -1;
 
@@ -1217,8 +1233,7 @@ int RGWZoneGroupPlacementTierS3::update_params(const JSONFormattable & config)
         s = config["host_style"];
         if (s != "virtual") {
             host_style = PathStyle;
-        }
-        else {
+        } else {
             host_style = VirtualStyle;
         }
     }
@@ -1248,17 +1263,16 @@ int RGWZoneGroupPlacementTierS3::update_params(const JSONFormattable & config)
     }
 
     if (config.exists("acls")) {
-        const JSONFormattable & cc = config["acls"];
+        const JSONFormattable &cc = config["acls"];
         if (cc.is_array()) {
-          for (auto & c:cc.array()) {
+            for (auto &c : cc.array()) {
                 RGWTierACLMapping m;
                 m.init(c);
                 if (!m.source_id.empty()) {
                     acl_mappings[m.source_id] = m;
                 }
             }
-        }
-        else {
+        } else {
             RGWTierACLMapping m;
             m.init(cc);
             if (!m.source_id.empty()) {
@@ -1269,7 +1283,7 @@ int RGWZoneGroupPlacementTierS3::update_params(const JSONFormattable & config)
     return 0;
 }
 
-int RGWZoneGroupPlacementTierS3::clear_params(const JSONFormattable & config)
+int RGWZoneGroupPlacementTierS3::clear_params(const JSONFormattable &config)
 {
     if (config.exists("endpoint")) {
         endpoint.clear();
@@ -1300,15 +1314,14 @@ int RGWZoneGroupPlacementTierS3::clear_params(const JSONFormattable & config)
         multipart_min_part_size = DEFAULT_MULTIPART_SYNC_PART_SIZE;
     }
     if (config.exists("acls")) {
-        const JSONFormattable & cc = config["acls"];
+        const JSONFormattable &cc = config["acls"];
         if (cc.is_array()) {
-          for (auto & c:cc.array()) {
+            for (auto &c : cc.array()) {
                 RGWTierACLMapping m;
                 m.init(c);
                 acl_mappings.erase(m.source_id);
             }
-        }
-        else {
+        } else {
             RGWTierACLMapping m;
             m.init(cc);
             acl_mappings.erase(m.source_id);
@@ -1318,7 +1331,7 @@ int RGWZoneGroupPlacementTierS3::clear_params(const JSONFormattable & config)
 }
 
 void rgw_meta_sync_info::generate_test_instances(list <
-                                                 rgw_meta_sync_info * >&o)
+        rgw_meta_sync_info * > &o)
 {
     auto info = new rgw_meta_sync_info;
     info->state = rgw_meta_sync_info::StateBuildingFullSyncMaps;
@@ -1329,7 +1342,7 @@ void rgw_meta_sync_info::generate_test_instances(list <
 }
 
 void rgw_meta_sync_marker::generate_test_instances(list <
-                                                   rgw_meta_sync_marker * >&o)
+        rgw_meta_sync_marker * > &o)
 {
     auto marker = new rgw_meta_sync_marker;
     marker->state = rgw_meta_sync_marker::IncrementalSync;
@@ -1340,49 +1353,49 @@ void rgw_meta_sync_marker::generate_test_instances(list <
 }
 
 void rgw_meta_sync_status::generate_test_instances(list <
-                                                   rgw_meta_sync_status * >&o)
+        rgw_meta_sync_status * > &o)
 {
     o.push_back(new rgw_meta_sync_status);
 }
 
-void RGWZoneParams::generate_test_instances(list < RGWZoneParams * >&o)
+void RGWZoneParams::generate_test_instances(list < RGWZoneParams * > &o)
 {
     o.push_back(new RGWZoneParams);
     o.push_back(new RGWZoneParams);
 }
 
 void RGWPeriodLatestEpochInfo::generate_test_instances(list <
-                                                       RGWPeriodLatestEpochInfo
-                                                       * >&o)
+        RGWPeriodLatestEpochInfo
+        * > &o)
 {
     RGWPeriodLatestEpochInfo *z = new RGWPeriodLatestEpochInfo;
     o.push_back(z);
     o.push_back(new RGWPeriodLatestEpochInfo);
 }
 
-void RGWZoneGroup::generate_test_instances(list < RGWZoneGroup * >&o)
+void RGWZoneGroup::generate_test_instances(list < RGWZoneGroup * > &o)
 {
     RGWZoneGroup *r = new RGWZoneGroup;
     o.push_back(r);
     o.push_back(new RGWZoneGroup);
 }
 
-void RGWPeriodLatestEpochInfo::dump(Formatter * f) const const
+void RGWPeriodLatestEpochInfo::dump(Formatter *f) const const
 {
     encode_json("latest_epoch", epoch, f);
 }
 
-void RGWPeriodLatestEpochInfo::decode_json(JSONObj * obj)
+void RGWPeriodLatestEpochInfo::decode_json(JSONObj *obj)
 {
     JSONDecoder::decode_json("latest_epoch", epoch, obj);
 }
 
-void RGWNameToId::dump(Formatter * f) const const
+void RGWNameToId::dump(Formatter *f) const const
 {
     encode_json("obj_id", obj_id, f);
 }
 
-void RGWNameToId::decode_json(JSONObj * obj)
+void RGWNameToId::decode_json(JSONObj *obj)
 {
     JSONDecoder::decode_json("obj_id", obj_id, obj);
 }

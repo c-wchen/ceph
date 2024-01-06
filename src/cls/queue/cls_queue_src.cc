@@ -17,7 +17,7 @@ using ceph::encode;
 const uint64_t page_size = 4096;
 const uint64_t large_chunk_size = 1ul << 22;
 
-int queue_write_head(cls_method_context_t hctx, cls_queue_head & head)
+int queue_write_head(cls_method_context_t hctx, cls_queue_head &head)
 {
     bufferlist bl;
     uint16_t entry_start = QUEUE_HEAD_START;
@@ -48,7 +48,7 @@ int queue_write_head(cls_method_context_t hctx, cls_queue_head & head)
     return 0;
 }
 
-int queue_read_head(cls_method_context_t hctx, cls_queue_head & head)
+int queue_read_head(cls_method_context_t hctx, cls_queue_head &head)
 {
     uint64_t chunk_size = page_size, start_offset = 0;
 
@@ -69,8 +69,7 @@ int queue_read_head(cls_method_context_t hctx, cls_queue_head & head)
     uint16_t queue_head_start;
     try {
         decode(queue_head_start, it);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: queue_read_head: failed to decode queue start: %s",
                 err.what());
         return -EINVAL;
@@ -83,8 +82,7 @@ int queue_read_head(cls_method_context_t hctx, cls_queue_head & head)
     uint64_t encoded_len;
     try {
         decode(encoded_len, it);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_LOG(0,
                 "ERROR: queue_read_head: failed to decode encoded head size: %s",
                 err.what());
@@ -108,8 +106,7 @@ int queue_read_head(cls_method_context_t hctx, cls_queue_head & head)
 
     try {
         decode(head, it);
-    }
-    catch(const ceph::buffer::error & err) {
+    } catch (const ceph::buffer::error &err) {
         CLS_LOG(0, "ERROR: queue_read_head: failed to decode head: %s",
                 err.what());
         return -EINVAL;
@@ -118,7 +115,7 @@ int queue_read_head(cls_method_context_t hctx, cls_queue_head & head)
     return 0;
 }
 
-int queue_init(cls_method_context_t hctx, const cls_queue_init_op & op)
+int queue_init(cls_method_context_t hctx, const cls_queue_init_op &op)
 {
     //get head and its size
     cls_queue_head head;
@@ -154,7 +151,7 @@ int queue_init(cls_method_context_t hctx, const cls_queue_init_op & op)
 }
 
 int queue_get_capacity(cls_method_context_t hctx,
-                       cls_queue_get_capacity_ret & op_ret)
+                       cls_queue_get_capacity_ret &op_ret)
 {
     //get head
     cls_queue_head head;
@@ -196,8 +193,8 @@ one of two states:
     +----------------------------------------------------+
 */
 
-int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op & op,
-                  cls_queue_head & head)
+int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op &op,
+                  cls_queue_head &head)
 {
     if ((head.front.offset == head.tail.offset)
         && (head.tail.gen == head.front.gen + 1)) {
@@ -205,7 +202,7 @@ int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op & op,
         return -ENOSPC;
     }
 
-  for (auto & bl_data:op.bl_data_vec) {
+    for (auto &bl_data : op.bl_data_vec) {
         bufferlist bl;
         uint16_t entry_start = QUEUE_ENTRY_START;
         encode(entry_start, bl);
@@ -231,11 +228,10 @@ int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op & op,
                     return ret;
                 }
                 head.tail.offset += bl.length();
-            }
-            else {
+            } else {
                 uint64_t free_space_available =
                     (head.queue_size - head.tail.offset) + (head.front.offset -
-                                                            head.max_head_size);
+                        head.max_head_size);
                 //Split data if there is free space available
                 if (bl.length() <= free_space_available) {
                     uint64_t size_before_wrap =
@@ -268,15 +264,13 @@ int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op & op,
                         return ret;
                     }
                     head.tail.offset += bl.length();
-                }
-                else {
+                } else {
                     CLS_LOG(0, "ERROR: No space left in queue\n");
                     // return queue full error
                     return -ENOSPC;
                 }
             }
-        }
-        else if (head.front.offset > head.tail.offset) {
+        } else if (head.front.offset > head.tail.offset) {
             if ((head.tail.offset + bl.length()) <= head.front.offset) {
                 CLS_LOG(5,
                         "INFO: queue_enqueue: Writing data size and data: offset: %s, size: %u",
@@ -289,8 +283,7 @@ int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op & op,
                     return ret;
                 }
                 head.tail.offset += bl.length();
-            }
-            else {
+            } else {
                 CLS_LOG(0, "ERROR: No space left in queue");
                 // return queue full error
                 return -ENOSPC;
@@ -308,8 +301,8 @@ int queue_enqueue(cls_method_context_t hctx, cls_queue_enqueue_op & op,
     return 0;
 }
 
-int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
-                       cls_queue_list_ret & op_ret, cls_queue_head & head)
+int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op &op,
+                       cls_queue_list_ret &op_ret, cls_queue_head &head)
 {
     // If queue is empty, return from here
     if ((head.front.offset == head.tail.offset)
@@ -329,8 +322,7 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
     if (start_marker.offset == 0) {
         start_offset = head.front.offset;
         gen = head.front.gen;
-    }
-    else {
+    } else {
         start_offset = start_marker.offset;
         gen = start_marker.gen;
     }
@@ -342,13 +334,11 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
     //Calculate length of contiguous data to be read depending on front, tail and start offset
     if (head.tail.offset > head.front.offset) {
         contiguous_data_size = head.tail.offset - start_offset;
-    }
-    else if (head.front.offset >= head.tail.offset) {
+    } else if (head.front.offset >= head.tail.offset) {
         if (start_offset >= head.front.offset) {
             contiguous_data_size = head.queue_size - start_offset;
             wrap_around = true;
-        }
-        else if (start_offset <= head.tail.offset) {
+        } else if (start_offset <= head.tail.offset) {
             contiguous_data_size = head.tail.offset - start_offset;
         }
     }
@@ -421,8 +411,7 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
                     // Decode magic number at start
                     try {
                         decode(entry_start, it);
-                    }
-                    catch(const ceph::buffer::error & err) {
+                    } catch (const ceph::buffer::error &err) {
                         CLS_LOG(10,
                                 "ERROR: queue_list_entries: failed to decode entry start: %s",
                                 err.what());
@@ -439,15 +428,13 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
                     // Decode data size
                     try {
                         decode(data_size, it);
-                    }
-                    catch(const ceph::buffer::error & err) {
+                    } catch (const ceph::buffer::error &err) {
                         CLS_LOG(10,
                                 "ERROR: queue_list_entries: failed to decode data size: %s",
                                 err.what());
                         return -EINVAL;
                     }
-                }
-                else {
+                } else {
                     // Copy unprocessed data to bl
                     bl_chunk.splice(index, size_to_process, &bl);
                     offset_populated = true;
@@ -466,8 +453,7 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
                 it.copy(data_size, entry.data);
                 index += entry.data.length();
                 size_to_process -= entry.data.length();
-            }
-            else {
+            } else {
                 it.copy(size_to_process, bl);
                 offset_populated = true;
                 entry_start_processed = true;
@@ -495,7 +481,7 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
 
         if (num_ops == op.max) {
             next_marker = cls_queue_marker {
-            (entry_start_offset + index), gen};
+                (entry_start_offset + index), gen};
             CLS_LOG(10,
                     "INFO: queue_list_entries(): num_ops is same as op.max, hence breaking out from outer loop with next offset: %lu",
                     next_marker.offset);
@@ -511,8 +497,7 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
                 contiguous_data_size = head.tail.offset - head.max_head_size;
                 gen += 1;
                 wrap_around = false;
-            }
-            else {
+            } else {
                 CLS_LOG(10,
                         "INFO: queue_list_entries(): end of queue data is reached, hence breaking out from outer loop!");
                 next_marker = head.tail;
@@ -541,7 +526,7 @@ int queue_list_entries(cls_method_context_t hctx, const cls_queue_list_op & op,
 }
 
 int queue_remove_entries(cls_method_context_t hctx,
-                         const cls_queue_remove_op & op, cls_queue_head & head)
+                         const cls_queue_remove_op &op, cls_queue_head &head)
 {
     //Queue is empty
     if ((head.front.offset == head.tail.offset)
@@ -569,8 +554,8 @@ int queue_remove_entries(cls_method_context_t hctx,
                 return ret;
             }
         }
-    }
-    else if ((head.front.offset >= end_marker.offset) && (end_marker.gen == head.front.gen + 1)) {  //start offset > end offset
+    } else if ((head.front.offset >= end_marker.offset) &&
+               (end_marker.gen == head.front.gen + 1)) { //start offset > end offset
         uint64_t len = head.queue_size - head.front.offset;
         if (len > 0) {
             auto ret = cls_cxx_write_zero(hctx, head.front.offset, len);
@@ -593,12 +578,10 @@ int queue_remove_entries(cls_method_context_t hctx,
                 return ret;
             }
         }
-    }
-    else if ((head.front.offset == end_marker.offset)
-             && (head.front.gen == end_marker.gen)) {
+    } else if ((head.front.offset == end_marker.offset)
+               && (head.front.gen == end_marker.gen)) {
         //no-op
-    }
-    else {
+    } else {
         CLS_LOG(0,
                 "INFO: queue_remove_entries: Invalid end marker: offset = %s, gen = %lu",
                 end_marker.to_str().c_str(), end_marker.gen);

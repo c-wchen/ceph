@@ -21,19 +21,22 @@ using DB = rgw::store::DB;
 /* XXX: Should be a dbstore config option */
 const static std::string default_tenant = "default_ns";
 
-class DBStoreManager {
-  private:
+class DBStoreManager
+{
+private:
     std::map < std::string, DB * >DBStoreHandles;
     DB *default_db = nullptr;
     CephContext *cct;
 
-  public:
-    DBStoreManager(CephContext * _cct):DBStoreHandles() {
+public:
+    DBStoreManager(CephContext *_cct): DBStoreHandles()
+    {
         cct = _cct;
         default_db = createDB(default_tenant);
     };
-    DBStoreManager(CephContext * _cct, std::string logfile,
-                   int loglevel):DBStoreHandles() {
+    DBStoreManager(CephContext *_cct, std::string logfile,
+                   int loglevel): DBStoreHandles()
+    {
         /* No ceph context. Create one with log args provided */
         cct = _cct;
         cct->_log->set_log_file(logfile);
@@ -41,7 +44,8 @@ class DBStoreManager {
         cct->_conf->subsys.set_log_level(ceph_subsys_rgw, loglevel);
         default_db = createDB(default_tenant);
     };
-    ~DBStoreManager() {
+    ~DBStoreManager()
+    {
         destroyAllHandles();
     };
 
@@ -50,12 +54,13 @@ class DBStoreManager {
      * 2) Refcount of each DBStore to protect from
      * being deleted while using it.
      */
-    DB *getDB() {
+    DB *getDB()
+    {
         return default_db;
     };
     DB *getDB(std::string tenant, bool create);
     DB *createDB(std::string tenant);
     void deleteDB(std::string tenant);
-    void deleteDB(DB * db);
+    void deleteDB(DB *db);
     void destroyAllHandles();
 };

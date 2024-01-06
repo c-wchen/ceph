@@ -19,7 +19,7 @@ int main(int argc, const char **argv)
     if (fd < 1) {
         int err = errno;
         cerr << "failed to open " << fn << " with " << cpp_strerror(err) <<
-            std::endl;
+             std::endl;
         return -1;
     }
 
@@ -30,16 +30,18 @@ int main(int argc, const char **argv)
         utime_t lat = ceph_clock_now();
         lat -= now;
         utime_t oldmin;
-        if (!latency.empty())
+        if (!latency.empty()) {
             oldmin = latency.begin()->first;
+        }
         latency.insert(make_pair(lat, now));
         utime_t newmin = latency.begin()->first;
-        while (latency.size() > max)
+        while (latency.size() > max) {
             latency.erase(latency.begin());
+        }
         if (oldmin == newmin) {
             cout << "latency\tat" << std::endl;
             for (multimap < utime_t, utime_t >::reverse_iterator p =
-                 latency.rbegin(); p != latency.rend(); ++p) {
+                     latency.rbegin(); p != latency.rend(); ++p) {
                 cout << p->first << "\t" << p->second << std::endl;
             }
         }

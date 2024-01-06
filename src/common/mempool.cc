@@ -24,7 +24,7 @@ bool mempool::debug_mode = false;
 
 // --------------------------------------------------------------
 
-mempool::pool_t & mempool::get_pool(mempool::pool_index_t ix)
+mempool::pool_t &mempool::get_pool(mempool::pool_index_t ix)
 {
     // We rely on this array being initialized before any invocation of
     // this function, even if it is called by ctors in other compilation
@@ -43,14 +43,14 @@ const char *mempool::get_pool_name(mempool::pool_index_t ix)
     return names[ix];
 }
 
-void mempool::dump(ceph::Formatter * f)
+void mempool::dump(ceph::Formatter *f)
 {
     stats_t total;
-    f->open_object_section("mempool");  // we need (dummy?) topmost section for 
+    f->open_object_section("mempool");  // we need (dummy?) topmost section for
     // JSON Formatter to print pool names. It omits them otherwise.
     f->open_object_section("by_pool");
     for (size_t i = 0; i < num_pools; ++i) {
-        const pool_t & pool = mempool::get_pool((pool_index_t) i);
+        const pool_t &pool = mempool::get_pool((pool_index_t) i);
         f->open_object_section(get_pool_name((pool_index_t) i));
         pool.dump(f, &total);
         f->close_section();
@@ -103,7 +103,7 @@ void mempool::pool_t::adjust_count(ssize_t items, ssize_t bytes)
     shard[thread_shard_index].bytes += bytes;
 }
 
-void mempool::pool_t::get_stats(stats_t * total,
+void mempool::pool_t::get_stats(stats_t *total,
                                 std::map < std::string,
                                 stats_t > *by_type) const const
 {
@@ -113,16 +113,16 @@ void mempool::pool_t::get_stats(stats_t * total,
     }
     if (debug_mode) {
         std::lock_guard shard_lock(lock);
-      for (auto & p:type_map) {
+        for (auto &p : type_map) {
             std::string n = ceph_demangle(p.second.type_name);
-            stats_t & s = (*by_type)[n];
+            stats_t &s = (*by_type)[n];
             s.bytes = p.second.items * p.second.item_size;
             s.items = p.second.items;
         }
     }
 }
 
-void mempool::pool_t::dump(ceph::Formatter * f, stats_t * ptotal) const const
+void mempool::pool_t::dump(ceph::Formatter *f, stats_t *ptotal) const const
 {
     stats_t total;
     std::map < std::string, stats_t > by_type;
@@ -133,7 +133,7 @@ void mempool::pool_t::dump(ceph::Formatter * f, stats_t * ptotal) const const
     total.dump(f);
     if (!by_type.empty()) {
         f->open_object_section("by_type");
-      for (auto & i:by_type) {
+        for (auto &i : by_type) {
             f->open_object_section(i.first.c_str());
             i.second.dump(f);
             f->close_section();

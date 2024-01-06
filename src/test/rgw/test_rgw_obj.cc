@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -22,8 +22,8 @@
 
 using namespace std;
 
-void check_parsed_correctly(rgw_obj & obj, const string & name,
-                            const string & ns, const string & instance)
+void check_parsed_correctly(rgw_obj &obj, const string &name,
+                            const string &ns, const string &instance)
 {
     /* parse_raw_oid() */
     rgw_obj_key parsed_key;
@@ -55,17 +55,17 @@ void check_parsed_correctly(rgw_obj & obj, const string & name,
 
     ASSERT_EQ(true,
               rgw_obj_key::strip_namespace_from_name(strip_name, strip_ns,
-                                                     strip_instance));
+                      strip_instance));
 
     cout << "stripped: " << strip_name << " ns=" << strip_ns << " i=" <<
-        strip_instance << std::endl;
+         strip_instance << std::endl;
 
     ASSERT_EQ(name, strip_name);
     ASSERT_EQ(ns, strip_ns);
     ASSERT_EQ(instance, strip_instance);
 }
 
-void test_obj(const string & name, const string & ns, const string & instance)
+void test_obj(const string &name, const string &ns, const string &instance)
 {
     rgw_bucket b;
     test_rgw_init_bucket(&b, "test");
@@ -146,7 +146,7 @@ TEST(TestRGWObj, no_underscore)
 }
 
 template < class T >
-    void dump(JSONFormatter & f, const string & name, const T & entity)
+void dump(JSONFormatter &f, const string &name, const T &entity)
 {
     f.open_object_section(name.c_str());
     ::encode_json(name.c_str(), entity, &f);
@@ -154,9 +154,9 @@ template < class T >
     f.flush(cout);
 }
 
-static void test_obj_to_raw(test_rgw_env & env, const rgw_bucket & b,
-                            const string & name, const string & instance,
-                            const string & ns, const string & placement_id)
+static void test_obj_to_raw(test_rgw_env &env, const rgw_bucket &b,
+                            const string &name, const string &instance,
+                            const string &ns, const string &placement_id)
 {
     JSONFormatter f(true);
     dump(f, "bucket", b);
@@ -169,8 +169,7 @@ static void test_obj_to_raw(test_rgw_env & env, const rgw_bucket & b,
 
     if (!placement_id.empty()) {
         ASSERT_EQ(raw_obj.pool, env.get_placement(placement_id).data_pool);
-    }
-    else {
+    } else {
         ASSERT_EQ(raw_obj.pool, b.explicit_placement.data_pool);
     }
     ASSERT_EQ(raw_obj.oid, test_rgw_get_obj_oid(obj));
@@ -194,15 +193,18 @@ TEST(TestRGWObj, obj_to_raw)
     rgw_bucket eb;
     test_rgw_init_explicit_placement_bucket(&eb, "ebtest");
 
-  for (auto name:{
-         "myobj", "_myobj", "_myobj_"}
-    ) {
-      for (auto inst:{
-             "", "inst"}
+    for (auto name : {
+             "myobj", "_myobj", "_myobj_"
+         }
         ) {
-          for (auto ns:{
-                 "", "ns"}
+        for (auto inst : {
+                 "", "inst"
+             }
             ) {
+            for (auto ns : {
+                     "", "ns"
+                 }
+                ) {
                 test_obj_to_raw(env, b, name, inst, ns,
                                 env.zonegroup.default_placement.name);
                 test_obj_to_raw(env, eb, name, inst, ns, string());
@@ -219,15 +221,18 @@ TEST(TestRGWObj, old_to_raw)
     old_rgw_bucket eb;
     test_rgw_init_old_bucket(&eb, "ebtest");
 
-  for (auto name:{
-         "myobj", "_myobj", "_myobj_"}
-    ) {
-      for (string inst:{
-             "", "inst"}
+    for (auto name : {
+             "myobj", "_myobj", "_myobj_"
+         }
         ) {
-          for (string ns:{
-                 "", "ns"}
+        for (string inst : {
+                 "", "inst"
+             }
             ) {
+            for (string ns : {
+                     "", "ns"
+                 }
+                ) {
                 old_rgw_obj old(eb, name);
                 if (!inst.empty()) {
                     old.set_instance(inst);
@@ -249,8 +254,7 @@ TEST(TestRGWObj, old_to_raw)
 
                     iter = bl.begin();
                     decode(raw_obj, iter);
-                }
-                catch(buffer::error & err) {
+                } catch (buffer::error &err) {
                     ASSERT_TRUE(false);
                 }
 
@@ -278,8 +282,7 @@ TEST(TestRGWObj, old_to_raw)
                     encode(raw_obj, bl);
                     iter = bl.begin();
                     decode(raw_obj2, iter);
-                }
-                catch(buffer::error & err) {
+                } catch (buffer::error &err) {
                     ASSERT_TRUE(false);
                 }
 

@@ -21,16 +21,18 @@ static int update_root_mode()
 {
     struct ceph_mount_info *admin;
     int r = ceph_create(&admin, NULL);
-    if (r < 0)
+    if (r < 0) {
         return r;
+    }
     ceph_conf_read_file(admin, NULL);
     ceph_conf_parse_env(admin, NULL);
     ceph_conf_set(admin, "client_permissions", "false");
     r = ceph_mount(admin, "/");
-    if (r < 0)
+    if (r < 0) {
         goto out;
+    }
     r = ceph_chmod(admin, "/", 01777);
-  out:
+out:
     ceph_shutdown(admin);
     return r;
 }
@@ -38,8 +40,9 @@ static int update_root_mode()
 int main(int argc, char **argv)
 {
     int r = update_root_mode();
-    if (r < 0)
+    if (r < 0) {
         exit(1);
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
 

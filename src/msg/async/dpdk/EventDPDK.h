@@ -20,23 +20,27 @@
 #include "msg/async/Stack.h"
 #include "UserspaceEvent.h"
 
-class DPDKDriver:public EventDriver {
+class DPDKDriver: public EventDriver
+{
     CephContext *cct;
 
-  public:
-     UserspaceEventManager manager;
+public:
+    UserspaceEventManager manager;
 
-    explicit DPDKDriver(CephContext * c):cct(c), manager(c) {
-    } virtual ~ DPDKDriver() {
+    explicit DPDKDriver(CephContext *c): cct(c), manager(c)
+    {
+    } virtual ~ DPDKDriver()
+    {
     }
 
-    int init(EventCenter * c, int nevent) override;
+    int init(EventCenter *c, int nevent) override;
     int add_event(int fd, int cur_mask, int add_mask) override;
     int del_event(int fd, int cur_mask, int del_mask) override;
     int resize_events(int newsize) override;
     int event_wait(std::vector < FiredFileEvent > &fired_events,
                    struct timeval *tp) override;
-    bool need_wakeup() override {
+    bool need_wakeup() override
+    {
         return false;
     }
 };

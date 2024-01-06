@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     // for the sake of log flooding
     if (!global_log_level_is_set && !std::getenv("FOR_MAKE_CHECK")) {
         std::cout << "WARNING: set default seastar log level to debug" << std::
-            endl;
+                  endl;
         ++argc;
         args.push_back("--default-log-level=debug");
     }
@@ -46,33 +46,37 @@ int main(int argc, char **argv)
     }
 
     seastar_test_suite_t::seastar_env.run([] {
-                                          return crimson::common::
-                                          sharded_conf().start(EntityName {
-                                                               }
-                                                               ,
-                                                               std::
-                                                               string_view {
-                                                               "ceph"}
-                                          ).then([] {
-                                                 return crimson::common::
-                                                 sharded_perf_coll().start();}
-                                          );}
-    );
+        return crimson::common::
+        sharded_conf().start(EntityName {
+        }
+        ,
+        std::
+        string_view {
+            "ceph"}
+        ).then([] {
+            return crimson::common::
+            sharded_perf_coll().start();
+        }
+                                  );
+    }
+                                         );
 
     ret = RUN_ALL_TESTS();
 
     seastar_test_suite_t::seastar_env.run([] {
-                                          return crimson::common::
-                                          sharded_perf_coll().stop().then([] {
-                                                                          return
-                                                                          crimson::
-                                                                          common::
-                                                                          sharded_conf
-                                                                          ().
-                                                                          stop
-                                                                          ();}
-                                          );}
-    );
+        return crimson::common::
+        sharded_perf_coll().stop().then([] {
+            return
+            crimson::
+            common::
+            sharded_conf
+            ().
+            stop
+            ();
+        }
+                                       );
+    }
+                                         );
 
     seastar_test_suite_t::seastar_env.stop();
     return ret;

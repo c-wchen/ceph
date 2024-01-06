@@ -32,97 +32,113 @@
 
 #include "osdc/Objecter.h"
 
-namespace neorados {
+namespace neorados
+{
 
-    class RADOS;
+class RADOS;
 
-    namespace detail {
+namespace detail
+{
 
-        class NeoClient;
+class NeoClient;
 
-        class RADOS:public Dispatcher {
-            friend::neorados::RADOS;
-            friend NeoClient;
+class RADOS: public Dispatcher
+{
+    friend::neorados::RADOS;
+    friend NeoClient;
 
-             boost::asio::io_context & ioctx;
-             boost::intrusive_ptr < CephContext > cct;
+    boost::asio::io_context &ioctx;
+    boost::intrusive_ptr < CephContext > cct;
 
-             ceph::mutex lock =
-                ceph::make_mutex("RADOS_unleashed::_::RADOSImpl");
-            int instance_id = -1;
+    ceph::mutex lock =
+        ceph::make_mutex("RADOS_unleashed::_::RADOSImpl");
+    int instance_id = -1;
 
-             std::unique_ptr < Messenger > messenger;
+    std::unique_ptr < Messenger > messenger;
 
-            MonClient monclient;
-            MgrClient mgrclient;
+    MonClient monclient;
+    MgrClient mgrclient;
 
-             std::unique_ptr < Objecter > objecter;
+    std::unique_ptr < Objecter > objecter;
 
-          public:
+public:
 
-             RADOS(boost::asio::io_context & ioctx,
-                   boost::intrusive_ptr < CephContext > cct);
-            ~RADOS();
-            bool ms_dispatch(Message * m) override;
-            void ms_handle_connect(Connection * con) override;
-            bool ms_handle_reset(Connection * con) override;
-            void ms_handle_remote_reset(Connection * con) override;
-            bool ms_handle_refused(Connection * con) override;
-            mon_feature_t get_required_monitor_features() const {
-                return monclient.
-                    with_monmap(std::mem_fn(&MonMap::get_required_features));
-        }};
+    RADOS(boost::asio::io_context &ioctx,
+          boost::intrusive_ptr < CephContext > cct);
+    ~RADOS();
+    bool ms_dispatch(Message *m) override;
+    void ms_handle_connect(Connection *con) override;
+    bool ms_handle_reset(Connection *con) override;
+    void ms_handle_remote_reset(Connection *con) override;
+    bool ms_handle_refused(Connection *con) override;
+    mon_feature_t get_required_monitor_features() const
+    {
+        return monclient.
+               with_monmap(std::mem_fn(&MonMap::get_required_features));
+    }
+};
 
-        class Client {
-          public:
-            Client(boost::asio::io_context & ioctx,
-                   boost::intrusive_ptr < CephContext > cct,
-                   MonClient & monclient, Objecter * objecter)
-            :ioctx(ioctx), cct(cct), monclient(monclient), objecter(objecter) {
-            } virtual ~ Client() {
-            } Client(const Client &) = delete;
-             Client & operator=(const Client &) = delete;
+class Client
+{
+public:
+    Client(boost::asio::io_context &ioctx,
+           boost::intrusive_ptr < CephContext > cct,
+           MonClient &monclient, Objecter *objecter)
+        : ioctx(ioctx), cct(cct), monclient(monclient), objecter(objecter)
+    {
+    } virtual ~ Client()
+    {
+    } Client(const Client &) = delete;
+    Client &operator=(const Client &) = delete;
 
-             boost::asio::io_context & ioctx;
+    boost::asio::io_context &ioctx;
 
-             boost::intrusive_ptr < CephContext > cct;
-             MonClient & monclient;
-            Objecter *objecter;
+    boost::intrusive_ptr < CephContext > cct;
+    MonClient &monclient;
+    Objecter *objecter;
 
-            mon_feature_t get_required_monitor_features() const {
-                return monclient.
-                    with_monmap(std::mem_fn(&MonMap::get_required_features));
-            } virtual int get_instance_id() const = 0;
-        };
+    mon_feature_t get_required_monitor_features() const
+    {
+        return monclient.
+               with_monmap(std::mem_fn(&MonMap::get_required_features));
+    } virtual int get_instance_id() const = 0;
+};
 
-        class NeoClient:public Client {
-          public:
-            NeoClient(std::unique_ptr < RADOS > &&rados)
-            :Client(rados->ioctx, rados->cct, rados->monclient,
-                    rados->objecter.get()), rados(std::move(rados)) {
-            } int get_instance_id() const override {
-                return rados->instance_id;
-          } private:
-             std::unique_ptr < RADOS > rados;
-        };
+class NeoClient: public Client
+{
+public:
+    NeoClient(std::unique_ptr < RADOS > &&rados)
+        : Client(rados->ioctx, rados->cct, rados->monclient,
+                 rados->objecter.get()), rados(std::move(rados))
+    {
+    } int get_instance_id() const override
+    {
+        return rados->instance_id;
+    } private:
+    std::unique_ptr < RADOS > rados;
+};
 
-        class RadosClient:public Client {
-          public:
-            RadosClient(librados::RadosClient * rados_client)
-            :Client(rados_client->poolctx, {
-                    rados_client->cct}
-                    ,
-                    rados_client->monclient, rados_client->objecter),
-                rados_client(rados_client) {
-            }
+class RadosClient: public Client
+{
+public:
+    RadosClient(librados::RadosClient *rados_client)
+        : Client(rados_client->poolctx,
+    {
+        rados_client->cct
+    }
+    ,
+    rados_client->monclient, rados_client->objecter), rados_client(rados_client)
+    {
+    }
 
-            int get_instance_id() const override {
-                return rados_client->instance_id;
-          } public:
-             librados::RadosClient * rados_client;
-        };
+    int get_instance_id() const override
+    {
+        return rados_client->instance_id;
+    } public:
+    librados::RadosClient *rados_client;
+};
 
-    }                           // namespace detail
+}                           // namespace detail
 }                               // namespace neorados
 
 #endif

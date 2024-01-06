@@ -48,8 +48,7 @@ int PyModuleRunner::serve()
     int r = 0;
     if (pValue != NULL) {
         Py_DECREF(pValue);
-    }
-    else {
+    } else {
         // This is not a very informative log message because it's an
         // unknown/unexpected exception that we can't say much about.
 
@@ -58,8 +57,8 @@ int PyModuleRunner::serve()
         std::string exc_msg = peek_pyerror();
 
         clog->error() << "Unhandled exception from module '" << get_name()
-            << "' while running on mgr." << g_conf()->name.get_id()
-            << ": " << exc_msg;
+                      << "' while running on mgr." << g_conf()->name.get_id()
+                      << ": " << exc_msg;
         derr << get_name() << ".serve:" << dendl;
         derr << handle_pyerror(true, get_name(),
                                "PyModuleRunner::serve") << dendl;
@@ -84,8 +83,7 @@ void PyModuleRunner::shutdown()
 
     if (pValue != NULL) {
         Py_DECREF(pValue);
-    }
-    else {
+    } else {
         derr << "Failed to invoke shutdown() on " << get_name() << dendl;
         derr << handle_pyerror(true, get_name(),
                                "PyModuleRunner::shutdown") << dendl;
@@ -94,7 +92,7 @@ void PyModuleRunner::shutdown()
     dead = true;
 }
 
-void PyModuleRunner::log(const std::string & record)
+void PyModuleRunner::log(const std::string &record)
 {
 #undef dout_prefix
 #define dout_prefix *_dout

@@ -67,29 +67,29 @@ struct EstimateResult {
     map < string, pair < uint64_t, uint64_t > >chunk_statistics;
     uint64_t total_bytes = 0;
     std::atomic < uint64_t > total_objects = {
-    0};
+        0
+    };
 
     EstimateResult(std::string alg, int chunk_size)
-    :cdc(CDC::create(alg, chunk_size)), chunk_size(1ull << chunk_size) {
+        : cdc(CDC::create(alg, chunk_size)), chunk_size(1ull << chunk_size)
+    {
     }
 
-    void add_chunk(bufferlist & chunk, const std::string & fp_algo) {
+    void add_chunk(bufferlist &chunk, const std::string &fp_algo)
+    {
         string fp;
         if (fp_algo == "sha1") {
             sha1_digest_t sha1_val = crypto::digest < crypto::SHA1 > (chunk);
             fp = sha1_val.to_str();
-        }
-        else if (fp_algo == "sha256") {
+        } else if (fp_algo == "sha256") {
             sha256_digest_t sha256_val =
                 crypto::digest < crypto::SHA256 > (chunk);
             fp = sha256_val.to_str();
-        }
-        else if (fp_algo == "sha512") {
+        } else if (fp_algo == "sha512") {
             sha512_digest_t sha512_val =
                 crypto::digest < crypto::SHA512 > (chunk);
             fp = sha512_val.to_str();
-        }
-        else {
+        } else {
             ceph_assert(0 == "no support fingerperint algorithm");
         }
 
@@ -99,33 +99,33 @@ struct EstimateResult {
             p->second.first++;
             if (p->second.second != chunk.length()) {
                 cerr << "warning: hash collision on " << fp
-                    << ": was " << p->second.second
-                    << " now " << chunk.length() << std::endl;
+                     << ": was " << p->second.second
+                     << " now " << chunk.length() << std::endl;
             }
-        }
-        else {
+        } else {
             chunk_statistics[fp] = make_pair(1, chunk.length());
         }
         total_bytes += chunk.length();
     }
 
-    void dump(Formatter * f) const {
+    void dump(Formatter *f) const
+    {
         f->dump_unsigned("target_chunk_size", chunk_size);
 
         uint64_t dedup_bytes = 0;
         uint64_t dedup_objects = chunk_statistics.size();
-        for (auto & j:chunk_statistics) {
+        for (auto &j : chunk_statistics) {
             dedup_bytes += j.second.second;
         }
         //f->dump_unsigned("dedup_bytes", dedup_bytes);//f->dump_unsigned("original_bytes", total_bytes);
-            f->dump_float("dedup_bytes_ratio",
-                          (double)dedup_bytes / (double)total_bytes);
+        f->dump_float("dedup_bytes_ratio",
+                      (double)dedup_bytes / (double)total_bytes);
         f->dump_float("dedup_objects_ratio",
                       (double)dedup_objects / (double)total_objects);
 
         uint64_t avg = total_bytes / dedup_objects;
         uint64_t sqsum = 0;
-      for (auto & j:chunk_statistics) {
+        for (auto &j : chunk_statistics) {
             sqsum += (avg - j.second.second) * (avg - j.second.second);
         }
         uint64_t stddev = sqrt(sqsum / dedup_objects);
@@ -147,80 +147,87 @@ po::options_description make_usage()
     po::options_description desc("Usage");
     desc.add_options()
         ("help,h", ": produce help message")
-        ("op estimate --pool <POOL> --chunk-size <CHUNK_SIZE> --chunk-algorithm <ALGO> --fingerprint-algorithm <FP_ALGO>", ": estimate how many chunks are redundant")
+        ("op estimate --pool <POOL> --chunk-size <CHUNK_SIZE> --chunk-algorithm <ALGO> --fingerprint-algorithm <FP_ALGO>",
+         ": estimate how many chunks are redundant")
         ("op chunk-scrub --chunk-pool <POOL>", ": perform chunk scrub")
-        ("op chunk-get-ref --chunk-pool <POOL> --object <OID> --target-ref <OID> --target-ref-pool-id <POOL_ID>", ": get chunk object's reference")
-        ("op chunk-put-ref --chunk-pool <POOL> --object <OID> --target-ref <OID> --target-ref-pool-id <POOL_ID>", ": put chunk object's reference")
-        ("op chunk-repair --chunk-pool <POOL> --object <OID> --target-ref <OID> --target-ref-pool-id <POOL_ID>", ": fix mismatched references")
+        ("op chunk-get-ref --chunk-pool <POOL> --object <OID> --target-ref <OID> --target-ref-pool-id <POOL_ID>",
+         ": get chunk object's reference")
+        ("op chunk-put-ref --chunk-pool <POOL> --object <OID> --target-ref <OID> --target-ref-pool-id <POOL_ID>",
+         ": put chunk object's reference")
+        ("op chunk-repair --chunk-pool <POOL> --object <OID> --target-ref <OID> --target-ref-pool-id <POOL_ID>",
+         ": fix mismatched references")
         ("op dump-chunk-refs --chunk-pool <POOL> --object <OID>",
          ": dump chunk object's references")
-        ("op chunk-dedup --pool <POOL> --object <OID> --chunk-pool <POOL> --fingerprint-algorithm <FP> --source-off <OFFSET> --source-length <LENGTH>", ": perform a chunk dedup---deduplicate only a chunk, which is a part of object.")
-        ("op object-dedup --pool <POOL> --object <OID> --chunk-pool <POOL> --fingerprint-algorithm <FP> --dedup-cdc-chunk-size <CHUNK_SIZE> [--snap]", ": perform a object dedup---deduplicate the entire object, not a chunk. Related snapshots are also deduplicated if --snap is given")
-        ("op sample-dedup --pool <POOL> --chunk-pool <POOL> --chunk-algorithm <ALGO> --fingerprint-algorithm <FP> --daemon --loop", ": perform a sample dedup---make crawling threads which crawl objects in base pool and deduplicate them based on their deduplication efficiency");
+        ("op chunk-dedup --pool <POOL> --object <OID> --chunk-pool <POOL> --fingerprint-algorithm <FP> --source-off <OFFSET> --source-length <LENGTH>",
+         ": perform a chunk dedup---deduplicate only a chunk, which is a part of object.")
+        ("op object-dedup --pool <POOL> --object <OID> --chunk-pool <POOL> --fingerprint-algorithm <FP> --dedup-cdc-chunk-size <CHUNK_SIZE> [--snap]",
+         ": perform a object dedup---deduplicate the entire object, not a chunk. Related snapshots are also deduplicated if --snap is given")
+        ("op sample-dedup --pool <POOL> --chunk-pool <POOL> --chunk-algorithm <ALGO> --fingerprint-algorithm <FP> --daemon --loop",
+         ": perform a sample dedup---make crawling threads which crawl objects in base pool and deduplicate them based on their deduplication efficiency");
     po::options_description op_desc("Opational arguments");
     op_desc.add_options()
-        ("op", po::value < std::string > (),
-         ": estimate|chunk-scrub|chunk-get-ref|chunk-put-ref|chunk-repair|dump-chunk-refs|chunk-dedup|object-dedup")
-        ("target-ref", po::value < std::string > (), ": set target object")
-        ("target-ref-pool-id", po::value < uint64_t > (),
-         ": set target pool id")
-        ("object", po::value < std::string > (), ": set object name")
-        ("chunk-size", po::value < int >(), ": chunk size (byte)")
-        ("chunk-algorithm", po::value < std::string > (),
-         ": <fixed|fastcdc>, set chunk-algorithm")
-        ("fingerprint-algorithm", po::value < std::string > (),
-         ": <sha1|sha256|sha512>, set fingerprint-algorithm")
-        ("chunk-pool", po::value < std::string > (), ": set chunk pool name")
-        ("max-thread", po::value < int >(), ": set max thread")
-        ("report-period", po::value < int >(), ": set report-period")
-        ("max-seconds", po::value < int >(), ": set max runtime")
-        ("max-read-size", po::value < int >(), ": set max read size")
-        ("pool", po::value < std::string > (), ": set pool name")
-        ("min-chunk-size", po::value < int >(), ": min chunk size (byte)")
-        ("max-chunk-size", po::value < int >(), ": max chunk size (byte)")
-        ("source-off", po::value < uint64_t > (), ": set source offset")
-        ("source-length", po::value < uint64_t > (), ": set source length")
-        ("dedup-cdc-chunk-size", po::value < unsigned int >(),
-         ": set dedup chunk size for cdc")
-        ("snap", ": deduplciate snapshotted object")
-        ("debug", ": enable debug")
-        ("pgid", ": set pgid")
-        ("chunk-dedup-threshold", po::value < uint32_t > (),
-         ": set the threshold for chunk dedup (number of duplication) ")
-        ("sampling-ratio", po::value < int >(),
-         ": set the sampling ratio (percentile)")
-        ("daemon", ": execute sample dedup in daemon mode")
-        ("loop",
-         ": execute sample dedup in a loop until terminated. Sleeps 'wakeup-period' seconds between iterations")
-        ("wakeup-period", po::value < int >(),
-         ": set the wakeup period of crawler thread (sec)");
+           ("op", po::value < std::string > (),
+            ": estimate|chunk-scrub|chunk-get-ref|chunk-put-ref|chunk-repair|dump-chunk-refs|chunk-dedup|object-dedup")
+           ("target-ref", po::value < std::string > (), ": set target object")
+           ("target-ref-pool-id", po::value < uint64_t > (),
+            ": set target pool id")
+           ("object", po::value < std::string > (), ": set object name")
+           ("chunk-size", po::value < int >(), ": chunk size (byte)")
+           ("chunk-algorithm", po::value < std::string > (),
+            ": <fixed|fastcdc>, set chunk-algorithm")
+           ("fingerprint-algorithm", po::value < std::string > (),
+            ": <sha1|sha256|sha512>, set fingerprint-algorithm")
+           ("chunk-pool", po::value < std::string > (), ": set chunk pool name")
+           ("max-thread", po::value < int >(), ": set max thread")
+           ("report-period", po::value < int >(), ": set report-period")
+           ("max-seconds", po::value < int >(), ": set max runtime")
+           ("max-read-size", po::value < int >(), ": set max read size")
+           ("pool", po::value < std::string > (), ": set pool name")
+           ("min-chunk-size", po::value < int >(), ": min chunk size (byte)")
+           ("max-chunk-size", po::value < int >(), ": max chunk size (byte)")
+           ("source-off", po::value < uint64_t > (), ": set source offset")
+           ("source-length", po::value < uint64_t > (), ": set source length")
+           ("dedup-cdc-chunk-size", po::value < unsigned int >(),
+            ": set dedup chunk size for cdc")
+           ("snap", ": deduplciate snapshotted object")
+           ("debug", ": enable debug")
+           ("pgid", ": set pgid")
+           ("chunk-dedup-threshold", po::value < uint32_t > (),
+            ": set the threshold for chunk dedup (number of duplication) ")
+           ("sampling-ratio", po::value < int >(),
+            ": set the sampling ratio (percentile)")
+           ("daemon", ": execute sample dedup in daemon mode")
+           ("loop",
+            ": execute sample dedup in a loop until terminated. Sleeps 'wakeup-period' seconds between iterations")
+           ("wakeup-period", po::value < int >(),
+            ": set the wakeup period of crawler thread (sec)");
     desc.add(op_desc);
     return desc;
 }
 
-template < typename I, typename T > static int rados_sistrtoll(I & i, T * val)
+template < typename I, typename T > static int rados_sistrtoll(I &i, T *val)
 {
     std::string err;
     *val = strict_iecstrtoll(i->second, &err);
     if (err != "") {
         cerr << "Invalid value for " << i->first << ": " << err << std::endl;
         return -EINVAL;
-    }
-    else {
+    } else {
         return 0;
     }
 }
 
 class EstimateDedupRatio;
 class ChunkScrub;
-class CrawlerThread:public Thread {
+class CrawlerThread: public Thread
+{
     IoCtx io_ctx;
     int n;
     int m;
     ObjectCursor begin;
     ObjectCursor end;
-     ceph::mutex m_lock = ceph::make_mutex("CrawlerThread::Locker");
-     ceph::condition_variable m_cond;
+    ceph::mutex m_lock = ceph::make_mutex("CrawlerThread::Locker");
+    ceph::condition_variable m_cond;
     int32_t report_period;
     bool m_stop = false;
     uint64_t total_bytes = 0;
@@ -231,86 +238,102 @@ class CrawlerThread:public Thread {
     bool debug = false;
 #define COND_WAIT_INTERVAL 10
 
-  public:
-   CrawlerThread(IoCtx & io_ctx, int n, int m, ObjectCursor begin, ObjectCursor end, int32_t report_period, uint64_t num_objects, uint64_t max_read_size = default_op_size):
-    io_ctx(io_ctx), n(n), m(m), begin(begin), end(end),
+public:
+    CrawlerThread(IoCtx &io_ctx, int n, int m, ObjectCursor begin, ObjectCursor end, int32_t report_period,
+                  uint64_t num_objects, uint64_t max_read_size = default_op_size):
+        io_ctx(io_ctx), n(n), m(m), begin(begin), end(end),
         report_period(report_period), total_objects(num_objects),
-        max_read_size(max_read_size) {
-    } void signal(int signum) {
+        max_read_size(max_read_size)
+    {
+    } void signal(int signum)
+    {
         std::lock_guard l {
-        m_lock};
+            m_lock};
         m_stop = true;
         m_cond.notify_all();
     }
-    virtual void print_status(Formatter * f, ostream & out) {
+    virtual void print_status(Formatter *f, ostream &out)
+    {
     }
-    uint64_t get_examined_objects() {
+    uint64_t get_examined_objects()
+    {
         return examined_objects;
     }
-    uint64_t get_examined_bytes() {
+    uint64_t get_examined_bytes()
+    {
         return examined_bytes;
     }
-    uint64_t get_total_bytes() {
+    uint64_t get_total_bytes()
+    {
         return total_bytes;
     }
-    uint64_t get_total_objects() {
+    uint64_t get_total_objects()
+    {
         return total_objects;
     }
-    void set_debug(const bool debug_) {
+    void set_debug(const bool debug_)
+    {
         debug = debug_;
     }
     friend class EstimateDedupRatio;
     friend class ChunkScrub;
 };
 
-class EstimateDedupRatio:public CrawlerThread {
+class EstimateDedupRatio: public CrawlerThread
+{
     string chunk_algo;
     string fp_algo;
     uint64_t chunk_size;
     uint64_t max_seconds;
 
-  public:
-     EstimateDedupRatio(IoCtx & io_ctx, int n, int m, ObjectCursor begin,
-                        ObjectCursor end, string chunk_algo, string fp_algo,
-                        uint64_t chunk_size, int32_t report_period,
-                        uint64_t num_objects, uint64_t max_read_size,
-                        uint64_t max_seconds):CrawlerThread(io_ctx, n, m, begin,
-                                                            end, report_period,
-                                                            num_objects,
-                                                            max_read_size),
+public:
+    EstimateDedupRatio(IoCtx &io_ctx, int n, int m, ObjectCursor begin,
+                       ObjectCursor end, string chunk_algo, string fp_algo,
+                       uint64_t chunk_size, int32_t report_period,
+                       uint64_t num_objects, uint64_t max_read_size,
+                       uint64_t max_seconds): CrawlerThread(io_ctx, n, m, begin,
+                                   end, report_period,
+                                   num_objects,
+                                   max_read_size),
         chunk_algo(chunk_algo), fp_algo(fp_algo), chunk_size(chunk_size),
-        max_seconds(max_seconds) {
-    } void *entry() {
+        max_seconds(max_seconds)
+    {
+    } void *entry()
+    {
         estimate_dedup_ratio();
         return NULL;
     }
     void estimate_dedup_ratio();
 };
 
-class ChunkScrub:public CrawlerThread {
+class ChunkScrub: public CrawlerThread
+{
     IoCtx chunk_io_ctx;
     int damaged_objects = 0;
 
-  public:
-     ChunkScrub(IoCtx & io_ctx, int n, int m, ObjectCursor begin,
-                ObjectCursor end, IoCtx & chunk_io_ctx, int32_t report_period,
-                uint64_t num_objects):CrawlerThread(io_ctx, n, m, begin, end,
-                                                    report_period, num_objects),
-        chunk_io_ctx(chunk_io_ctx) {
-    } void *entry() {
+public:
+    ChunkScrub(IoCtx &io_ctx, int n, int m, ObjectCursor begin,
+               ObjectCursor end, IoCtx &chunk_io_ctx, int32_t report_period,
+               uint64_t num_objects): CrawlerThread(io_ctx, n, m, begin, end,
+                           report_period, num_objects),
+        chunk_io_ctx(chunk_io_ctx)
+    {
+    } void *entry()
+    {
         chunk_scrub_common();
         return NULL;
     }
     void chunk_scrub_common();
-    int get_damaged_objects() {
+    int get_damaged_objects()
+    {
         return damaged_objects;
     }
-    void print_status(Formatter * f, ostream & out);
+    void print_status(Formatter *f, ostream &out);
 };
 
 vector < std::unique_ptr < CrawlerThread >> estimate_threads;
 
-static void print_dedup_estimate(std::ostream & out, std::string chunk_algo)
+static void print_dedup_estimate(std::ostream &out, std::string chunk_algo)
 {
     /*
        uint64_t total_bytes = 0;
@@ -319,7 +342,7 @@ static void print_dedup_estimate(std::ostream & out, std::string chunk_algo)
     uint64_t examined_objects = 0;
     uint64_t examined_bytes = 0;
 
-  for (auto & et:estimate_threads) {
+    for (auto &et : estimate_threads) {
         examined_objects += et->get_examined_objects();
         examined_bytes += et->get_examined_bytes();
     }
@@ -328,7 +351,7 @@ static void print_dedup_estimate(std::ostream & out, std::string chunk_algo)
     f->open_object_section("results");
     f->dump_string("chunk_algo", chunk_algo);
     f->open_array_section("chunk_sizes");
-  for (auto & i:dedup_estimates) {
+    for (auto &i : dedup_estimates) {
         f->dump_object("chunker", i.second);
     }
     f->close_section();
@@ -349,8 +372,8 @@ static void print_dedup_estimate(std::ostream & out, std::string chunk_algo)
 static void handle_signal(int signum)
 {
     std::lock_guard l {
-    glock};
-  for (auto & p:estimate_threads) {
+        glock};
+    for (auto &p : estimate_threads) {
         p->signal(signum);
     }
 }
@@ -386,8 +409,8 @@ void EstimateDedupRatio::estimate_dedup_ratio()
 
         unsigned op_size = max_read_size;
 
-      for (const auto & i:result) {
-            const auto & oid = i.oid;
+        for (const auto &i : result) {
+            const auto &oid = i.oid;
 
             utime_t now = ceph_clock_now();
             if (max_seconds && now > end) {
@@ -400,8 +423,8 @@ void EstimateDedupRatio::estimate_dedup_ratio()
             if (n == 0 &&       // first thread only
                 next_report != utime_t() && now > next_report) {
                 cerr << (int)(now - start) << "s : read "
-                    << dedup_estimates.begin()->second.
-                    total_bytes << " bytes so far..." << std::endl;
+                     << dedup_estimates.begin()->second.
+                     total_bytes << " bytes so far..." << std::endl;
                 print_dedup_estimate(cerr, chunk_algo);
                 next_report = now;
                 next_report += report_period;
@@ -423,16 +446,16 @@ void EstimateDedupRatio::estimate_dedup_ratio()
             examined_bytes += bl.length();
 
             // do the chunking
-          for (auto & i:dedup_estimates) {
+            for (auto &i : dedup_estimates) {
                 vector < pair < uint64_t, uint64_t >> chunks;
                 i.second.cdc->calc_chunks(bl, &chunks);
-              for (auto & p:chunks) {
+                for (auto &p : chunks) {
                     bufferlist chunk;
                     chunk.substr_of(bl, p.first, p.second);
                     i.second.add_chunk(chunk, fp_algo);
                     if (debug) {
                         cout << " " << oid << " " << p.first << "~" << p.
-                            second << std::endl;
+                             second << std::endl;
                     }
                 }
                 ++i.second.total_objects;
@@ -456,7 +479,7 @@ void ChunkScrub::chunk_scrub_common()
     ret = rados.connect();
     if (ret) {
         cerr << "couldn't connect to cluster: " << cpp_strerror(ret) << std::
-            endl;
+             endl;
         return;
     }
 
@@ -471,9 +494,9 @@ void ChunkScrub::chunk_scrub_common()
             return;
         }
 
-      for (const auto & i:result) {
+        for (const auto &i : result) {
             std::unique_lock l {
-            m_lock};
+                m_lock};
             if (m_stop) {
                 Formatter *formatter = Formatter::create("json-pretty");
                 print_status(formatter, cout);
@@ -507,12 +530,12 @@ void ChunkScrub::chunk_scrub_common()
             uint64_t pool_missing = 0;
             uint64_t object_missing = 0;
             uint64_t does_not_ref = 0;
-          for (auto & pp:byo->by_object) {
+            for (auto &pp : byo->by_object) {
                 IoCtx target_io_ctx;
                 ret = rados.ioctx_create2(pp.pool, target_io_ctx);
                 if (ret < 0) {
                     cerr << oid << " ref " << pp
-                        << ": referencing pool does not exist" << std::endl;
+                         << ": referencing pool does not exist" << std::endl;
                     ++pool_missing;
                     continue;
                 }
@@ -520,13 +543,12 @@ void ChunkScrub::chunk_scrub_common()
                 ret = cls_cas_references_chunk(target_io_ctx, pp.oid.name, oid);
                 if (ret == -ENOENT) {
                     cerr << oid << " ref " << pp
-                        << ": referencing object missing" << std::endl;
+                         << ": referencing object missing" << std::endl;
                     ++object_missing;
-                }
-                else if (ret == -ENOLINK) {
+                } else if (ret == -ENOLINK) {
                     cerr << oid << " ref " << pp
-                        << ": referencing object does not reference chunk"
-                        << std::endl;
+                         << ": referencing object does not reference chunk"
+                         << std::endl;
                     ++does_not_ref;
                 }
             }
@@ -540,8 +562,9 @@ void ChunkScrub::chunk_scrub_common()
 
 using AioCompRef = unique_ptr < AioCompletion >;
 
-class SampleDedupWorkerThread:public Thread {
-  public:
+class SampleDedupWorkerThread: public Thread
+{
+public:
     struct chunk_t {
         string oid = "";
         size_t start = 0;
@@ -550,97 +573,108 @@ class SampleDedupWorkerThread:public Thread {
         bufferlist data;
     };
 
-    class FpStore {
-      public:
+    class FpStore
+    {
+    public:
         using dup_count_t = ssize_t;
 
-        bool find(string & fp) {
+        bool find(string &fp)
+        {
             std::shared_lock lock(fingerprint_lock);
             auto found_item = fp_map.find(fp);
             return found_item != fp_map.end();
         }
         // return true if the chunk is duplicate bool add(chunk_t & chunk) {
-            std::unique_lock lock(fingerprint_lock);
-            auto found_iter = fp_map.find(chunk.fingerprint);
-            ssize_t cur_reference = 1;
-            if (found_iter == fp_map.end()) {
-                fp_map.insert( {
-                              chunk.fingerprint, 1}
-                );
-            }
-            else {
-                cur_reference = ++found_iter->second;
-            }
-            return cur_reference >= dedup_threshold && dedup_threshold != -1;
+        std::unique_lock lock(fingerprint_lock);
+        auto found_iter = fp_map.find(chunk.fingerprint);
+        ssize_t cur_reference = 1;
+        if (found_iter == fp_map.end())
+        {
+            fp_map.insert({
+                chunk.fingerprint, 1}
+                         );
+        } else
+        {
+            cur_reference = ++found_iter->second;
         }
+        return cur_reference >= dedup_threshold && dedup_threshold != -1;
+    }
 
-        void init(size_t dedup_threshold_) {
-            std::unique_lock lock(fingerprint_lock);
-            fp_map.clear();
-            dedup_threshold = dedup_threshold_;
-        }
-      FpStore(size_t chunk_threshold):dedup_threshold(chunk_threshold) {
-        }
+    void init(size_t dedup_threshold_)
+    {
+        std::unique_lock lock(fingerprint_lock);
+        fp_map.clear();
+        dedup_threshold = dedup_threshold_;
+    }
+    FpStore(size_t chunk_threshold): dedup_threshold(chunk_threshold)
+    {
+    }
 
-      private:
-        ssize_t dedup_threshold = -1;
-        std::unordered_map < std::string, dup_count_t > fp_map;
-        std::shared_mutex fingerprint_lock;
-    };
+private:
+    ssize_t dedup_threshold = -1;
+    std::unordered_map < std::string, dup_count_t > fp_map;
+    std::shared_mutex fingerprint_lock;
+};
 
-    struct SampleDedupGlobal {
-        FpStore fp_store;
-        const double sampling_ratio = -1;
-        SampleDedupGlobal(int chunk_threshold,
-                          int sampling_ratio):fp_store(chunk_threshold),
-            sampling_ratio(static_cast < double >(sampling_ratio) / 100) {
-    }};
+struct SampleDedupGlobal {
+    FpStore fp_store;
+    const double sampling_ratio = -1;
+    SampleDedupGlobal(int chunk_threshold,
+                      int sampling_ratio): fp_store(chunk_threshold),
+        sampling_ratio(static_cast < double >(sampling_ratio) / 100)
+    {
+    }
+};
 
-  SampleDedupWorkerThread(IoCtx & io_ctx, IoCtx & chunk_io_ctx, ObjectCursor begin, ObjectCursor end, size_t chunk_size, std::string & fp_algo, std::string & chunk_algo, SampleDedupGlobal & sample_dedup_global):
+SampleDedupWorkerThread(IoCtx &io_ctx, IoCtx &chunk_io_ctx, ObjectCursor begin, ObjectCursor end, size_t chunk_size,
+                        std::string &fp_algo, std::string &chunk_algo, SampleDedupGlobal &sample_dedup_global):
     io_ctx(io_ctx),
-        chunk_io_ctx(chunk_io_ctx),
-        chunk_size(chunk_size),
-        fp_type(pg_pool_t::get_fingerprint_from_str(fp_algo)),
-        chunk_algo(chunk_algo),
-        sample_dedup_global(sample_dedup_global), begin(begin), end(end) {
-    }
+    chunk_io_ctx(chunk_io_ctx),
+    chunk_size(chunk_size),
+    fp_type(pg_pool_t::get_fingerprint_from_str(fp_algo)),
+    chunk_algo(chunk_algo),
+    sample_dedup_global(sample_dedup_global), begin(begin), end(end)
+{
+}
 
-    ~SampleDedupWorkerThread() {
-    };
+~SampleDedupWorkerThread()
+{
+};
 
-  protected:
-    void *entry() override {
-        crawl();
-        return nullptr;
-    }
+protected:
+void *entry() override
+{
+    crawl();
+    return nullptr;
+}
 
-  private:
-    void crawl();
-    std::tuple < std::vector < ObjectItem >,
-        ObjectCursor > get_objects(ObjectCursor current, ObjectCursor end,
-                                   size_t max_object_count);
-    std::vector < size_t > sample_object(size_t count);
-    void try_dedup_and_accumulate_result(ObjectItem & object);
-    bool ok_to_dedup_all();
-    int do_chunk_dedup(chunk_t & chunk);
-    bufferlist read_object(ObjectItem & object);
-    std::vector < std::tuple < bufferlist, pair < uint64_t,
-        uint64_t >>> do_cdc(ObjectItem & object, bufferlist & data);
-    std::string generate_fingerprint(bufferlist chunk_data);
-    AioCompRef do_async_evict(string oid);
+private:
+void crawl();
+std::tuple < std::vector < ObjectItem >,
+    ObjectCursor > get_objects(ObjectCursor current, ObjectCursor end,
+                               size_t max_object_count);
+std::vector < size_t > sample_object(size_t count);
+void try_dedup_and_accumulate_result(ObjectItem &object);
+bool ok_to_dedup_all();
+int do_chunk_dedup(chunk_t &chunk);
+bufferlist read_object(ObjectItem &object);
+std::vector < std::tuple < bufferlist, pair < uint64_t,
+    uint64_t >>> do_cdc(ObjectItem &object, bufferlist &data);
+std::string generate_fingerprint(bufferlist chunk_data);
+AioCompRef do_async_evict(string oid);
 
-    IoCtx io_ctx;
-    IoCtx chunk_io_ctx;
-    size_t total_duplicated_size = 0;
-    size_t total_object_size = 0;
+IoCtx io_ctx;
+IoCtx chunk_io_ctx;
+size_t total_duplicated_size = 0;
+size_t total_object_size = 0;
 
-    std::set < std::string > oid_for_evict;
-    const size_t chunk_size = 0;
-    pg_pool_t::fingerprint_t fp_type = pg_pool_t::TYPE_FINGERPRINT_NONE;
-    std::string chunk_algo;
-    SampleDedupGlobal & sample_dedup_global;
-    ObjectCursor begin;
-    ObjectCursor end;
+std::set < std::string > oid_for_evict;
+const size_t chunk_size = 0;
+pg_pool_t::fingerprint_t fp_type = pg_pool_t::TYPE_FINGERPRINT_NONE;
+std::string chunk_algo;
+SampleDedupGlobal &sample_dedup_global;
+ObjectCursor begin;
+ObjectCursor end;
 };
 
 void SampleDedupWorkerThread::crawl()
@@ -658,7 +692,7 @@ void SampleDedupWorkerThread::crawl()
         // objects to pick. Lower sampling ratio makes crawler have lower crawling
         // overhead but find less duplication.
         auto sampled_indexes = sample_object(objects.size());
-      for (size_t index:sampled_indexes) {
+        for (size_t index : sampled_indexes) {
             ObjectItem target = objects[index];
             try_dedup_and_accumulate_result(target);
         }
@@ -666,11 +700,11 @@ void SampleDedupWorkerThread::crawl()
 
     vector < AioCompRef > evict_completions(oid_for_evict.size());
     int i = 0;
-  for (auto & oid:oid_for_evict) {
+    for (auto &oid : oid_for_evict) {
         evict_completions[i] = do_async_evict(oid);
         i++;
     }
-  for (auto & completion:evict_completions) {
+    for (auto &completion : evict_completions) {
         completion->wait_for_complete();
     }
     cout << "done iteration" << std::endl;
@@ -688,8 +722,8 @@ AioCompRef SampleDedupWorkerThread::do_async_evict(string oid)
 
 std::tuple < std::vector < ObjectItem >,
     ObjectCursor > SampleDedupWorkerThread::get_objects(ObjectCursor current,
-                                                        ObjectCursor end,
-                                                        size_t max_object_count)
+            ObjectCursor end,
+            size_t max_object_count)
 {
     std::vector < ObjectItem > objects;
     ObjectCursor next;
@@ -716,40 +750,40 @@ std::vector < size_t > SampleDedupWorkerThread::sample_object(size_t count)
     default_random_engine generator;
     shuffle(indexes.begin(), indexes.end(), generator);
     size_t sampling_count = static_cast < double >(count) *
-        sample_dedup_global.sampling_ratio;
+                            sample_dedup_global.sampling_ratio;
     indexes.resize(sampling_count);
 
     return indexes;
 }
 
 void SampleDedupWorkerThread::
-try_dedup_and_accumulate_result(ObjectItem & object)
+try_dedup_and_accumulate_result(ObjectItem &object)
 {
     bufferlist data = read_object(object);
     if (data.length() == 0) {
         cerr << __func__ << " skip object " << object.oid
-            << " read returned size 0" << std::endl;
+             << " read returned size 0" << std::endl;
         return;
     }
     auto chunks = do_cdc(object, data);
     size_t chunk_total_amount = 0;
 
     // First, check total size of created chunks
-  for (auto & chunk:chunks) {
-        auto & chunk_data = std::get < 0 > (chunk);
+    for (auto &chunk : chunks) {
+        auto &chunk_data = std::get < 0 > (chunk);
         chunk_total_amount += chunk_data.length();
     }
     if (chunk_total_amount != data.length()) {
         cerr << __func__ << " sum of chunked length(" << chunk_total_amount
-            << ") is different from object data length(" << data.length() << ")"
-            << std::endl;
+             << ") is different from object data length(" << data.length() << ")"
+             << std::endl;
         return;
     }
 
     size_t duplicated_size = 0;
     list < chunk_t > redundant_chunks;
-  for (auto & chunk:chunks) {
-        auto & chunk_data = std::get < 0 > (chunk);
+    for (auto &chunk : chunks) {
+        auto &chunk_data = std::get < 0 > (chunk);
         std::string fingerprint = generate_fingerprint(chunk_data);
         std::pair < uint64_t, uint64_t > chunk_boundary =
             std::get < 1 > (chunk);
@@ -772,14 +806,14 @@ try_dedup_and_accumulate_result(ObjectItem & object)
     size_t object_size = data.length();
 
     // perform chunk-dedup
-  for (auto & p:redundant_chunks) {
+    for (auto &p : redundant_chunks) {
         do_chunk_dedup(p);
     }
     total_duplicated_size += duplicated_size;
     total_object_size += object_size;
 }
 
-bufferlist SampleDedupWorkerThread::read_object(ObjectItem & object)
+bufferlist SampleDedupWorkerThread::read_object(ObjectItem &object)
 {
     bufferlist whole_data;
     size_t offset = 0;
@@ -789,8 +823,8 @@ bufferlist SampleDedupWorkerThread::read_object(ObjectItem & object)
         ret = io_ctx.read(object.oid, partial_data, default_op_size, offset);
         if (ret < 0) {
             cerr << "read object error " << object.oid << " offset " << offset
-                << " size " << default_op_size << " error(" << cpp_strerror(ret)
-                << std::endl;
+                 << " size " << default_op_size << " error(" << cpp_strerror(ret)
+                 << std::endl;
             bufferlist empty_buf;
             return empty_buf;
         }
@@ -801,15 +835,15 @@ bufferlist SampleDedupWorkerThread::read_object(ObjectItem & object)
 }
 
 std::vector < std::tuple < bufferlist, pair < uint64_t,
-    uint64_t >>> SampleDedupWorkerThread::do_cdc(ObjectItem & object,
-                                                 bufferlist & data)
+uint64_t >>> SampleDedupWorkerThread::do_cdc(ObjectItem &object,
+        bufferlist &data)
 {
     std::vector < std::tuple < bufferlist, pair < uint64_t, uint64_t >>> ret;
 
     unique_ptr < CDC > cdc = CDC::create(chunk_algo, cbits(chunk_size) - 1);
     vector < pair < uint64_t, uint64_t >> chunks;
     cdc->calc_chunks(data, &chunks);
-  for (auto & p:chunks) {
+    for (auto &p : chunks) {
         bufferlist chunk;
         chunk.substr_of(data, p.first, p.second);
         ret.push_back(make_tuple(chunk, p));
@@ -823,25 +857,25 @@ std::string SampleDedupWorkerThread::generate_fingerprint(bufferlist chunk_data)
     string ret;
 
     switch (fp_type) {
-    case pg_pool_t::TYPE_FINGERPRINT_SHA1:
-        ret = crypto::digest < crypto::SHA1 > (chunk_data).to_str();
-        break;
+        case pg_pool_t::TYPE_FINGERPRINT_SHA1:
+            ret = crypto::digest < crypto::SHA1 > (chunk_data).to_str();
+            break;
 
-    case pg_pool_t::TYPE_FINGERPRINT_SHA256:
-        ret = crypto::digest < crypto::SHA256 > (chunk_data).to_str();
-        break;
+        case pg_pool_t::TYPE_FINGERPRINT_SHA256:
+            ret = crypto::digest < crypto::SHA256 > (chunk_data).to_str();
+            break;
 
-    case pg_pool_t::TYPE_FINGERPRINT_SHA512:
-        ret = crypto::digest < crypto::SHA512 > (chunk_data).to_str();
-        break;
-    default:
-        ceph_assert(0 == "Invalid fp type");
-        break;
+        case pg_pool_t::TYPE_FINGERPRINT_SHA512:
+            ret = crypto::digest < crypto::SHA512 > (chunk_data).to_str();
+            break;
+        default:
+            ceph_assert(0 == "Invalid fp type");
+            break;
     }
     return ret;
 }
 
-int SampleDedupWorkerThread::do_chunk_dedup(chunk_t & chunk)
+int SampleDedupWorkerThread::do_chunk_dedup(chunk_t &chunk)
 {
     uint64_t size;
     time_t mtime;
@@ -854,8 +888,7 @@ int SampleDedupWorkerThread::do_chunk_dedup(chunk_t & chunk)
         ObjectWriteOperation wop;
         wop.write_full(bl);
         chunk_io_ctx.operate(chunk.fingerprint, &wop);
-    }
-    else {
+    } else {
         ceph_assert(ret == 0);
     }
 
@@ -869,7 +902,7 @@ int SampleDedupWorkerThread::do_chunk_dedup(chunk_t & chunk)
     return ret;
 }
 
-void ChunkScrub::print_status(Formatter * f, ostream & out)
+void ChunkScrub::print_status(Formatter *f, ostream &out)
 {
     if (f) {
         f->open_array_section("chunk_scrub");
@@ -884,7 +917,7 @@ void ChunkScrub::print_status(Formatter * f, ostream & out)
     }
 }
 
-string get_opts_pool_name(const po::variables_map & opts)
+string get_opts_pool_name(const po::variables_map &opts)
 {
     if (opts.count("pool")) {
         return opts["pool"].as < string > ();
@@ -893,7 +926,7 @@ string get_opts_pool_name(const po::variables_map & opts)
     exit(1);
 }
 
-string get_opts_chunk_algo(const po::variables_map & opts)
+string get_opts_chunk_algo(const po::variables_map &opts)
 {
     if (opts.count("chunk-algorithm")) {
         string chunk_algo = opts["chunk-algorithm"].as < string > ();
@@ -907,13 +940,13 @@ string get_opts_chunk_algo(const po::variables_map & opts)
     exit(1);
 }
 
-string get_opts_fp_algo(const po::variables_map & opts)
+string get_opts_fp_algo(const po::variables_map &opts)
 {
     if (opts.count("fingerprint-algorithm")) {
         string fp_algo = opts["fingerprint-algorithm"].as < string > ();
         if (fp_algo != "sha1" && fp_algo != "sha256" && fp_algo != "sha512") {
             cerr << "unrecognized fingerprint-algorithm " << fp_algo << std::
-                endl;
+                 endl;
             exit(1);
         }
         return fp_algo;
@@ -922,62 +955,57 @@ string get_opts_fp_algo(const po::variables_map & opts)
     return string("sha1");
 }
 
-string get_opts_op_name(const po::variables_map & opts)
+string get_opts_op_name(const po::variables_map &opts)
 {
     if (opts.count("op")) {
         return opts["op"].as < string > ();
-    }
-    else {
+    } else {
         cerr << "must specify op" << std::endl;
         exit(1);
     }
 }
 
-string get_opts_chunk_pool(const po::variables_map & opts)
+string get_opts_chunk_pool(const po::variables_map &opts)
 {
     if (opts.count("chunk-pool")) {
         return opts["chunk-pool"].as < string > ();
-    }
-    else {
+    } else {
         cerr << "must specify --chunk-pool" << std::endl;
         exit(1);
     }
 }
 
-string get_opts_object_name(const po::variables_map & opts)
+string get_opts_object_name(const po::variables_map &opts)
 {
     if (opts.count("object")) {
         return opts["object"].as < string > ();
-    }
-    else {
+    } else {
         cerr << "must specify object" << std::endl;
         exit(1);
     }
 }
 
-int get_opts_max_thread(const po::variables_map & opts)
+int get_opts_max_thread(const po::variables_map &opts)
 {
     if (opts.count("max-thread")) {
         return opts["max-thread"].as < int >();
-    }
-    else {
+    } else {
         cout << "2 is set as the number of threads by default" << std::endl;
         return 2;
     }
 }
 
-int get_opts_report_period(const po::variables_map & opts)
+int get_opts_report_period(const po::variables_map &opts)
 {
     if (opts.count("report-period")) {
         return opts["report-period"].as < int >();
-    }
-    else {
+    } else {
         cout << "10 seconds is set as report period by default" << std::endl;
         return 10;
     }
 }
 
-int estimate_dedup_ratio(const po::variables_map & opts)
+int estimate_dedup_ratio(const po::variables_map &opts)
 {
     Rados rados;
     IoCtx io_ctx;
@@ -1007,44 +1035,38 @@ int estimate_dedup_ratio(const po::variables_map & opts)
             cerr << "unrecognized chunk-algorithm " << chunk_algo << std::endl;
             exit(1);
         }
-    }
-    else {
+    } else {
         cerr << "must specify chunk-algorithm" << std::endl;
         exit(1);
     }
     fp_algo = get_opts_fp_algo(opts);
     if (opts.count("chunk-size")) {
         chunk_size = opts["chunk-size"].as < int >();
-    }
-    else {
+    } else {
         cout << "8192 is set as chunk size by default" << std::endl;
     }
     if (opts.count("min-chunk-size")) {
         chunk_size = opts["min-chunk-size"].as < int >();
-    }
-    else {
+    } else {
         cout << "8192 is set as min chunk size by default" << std::endl;
     }
     if (opts.count("max-chunk-size")) {
         chunk_size = opts["max-chunk-size"].as < int >();
-    }
-    else {
+    } else {
         cout << "4MB is set as max chunk size by default" << std::endl;
     }
     max_thread = get_opts_max_thread(opts);
     report_period = get_opts_report_period(opts);
     if (opts.count("max-seconds")) {
         max_seconds = opts["max-seconds"].as < int >();
-    }
-    else {
+    } else {
         cout << "max seconds is not set" << std::endl;
     }
     if (opts.count("max-read-size")) {
         max_read_size = opts["max-read-size"].as < int >();
-    }
-    else {
+    } else {
         cout << default_op_size << " is set as max-read-size by default" <<
-            std::endl;
+             std::endl;
     }
     if (opts.count("debug")) {
         debug = true;
@@ -1059,19 +1081,19 @@ int estimate_dedup_ratio(const po::variables_map & opts)
     ret = rados.connect();
     if (ret) {
         cerr << "couldn't connect to cluster: " << cpp_strerror(ret) << std::
-            endl;
+             endl;
         ret = -1;
         goto out;
     }
     if (pool_name.empty()) {
         cerr << "--create-pool requested but pool_name was not specified!" <<
-            std::endl;
+             std::endl;
         exit(1);
     }
     ret = rados.ioctx_create(pool_name.c_str(), io_ctx);
     if (ret < 0) {
         cerr << "error opening pool "
-            << pool_name << ": " << cpp_strerror(ret) << std::endl;
+             << pool_name << ": " << cpp_strerror(ret) << std::endl;
         goto out;
     }
 
@@ -1080,14 +1102,13 @@ int estimate_dedup_ratio(const po::variables_map & opts)
         dedup_estimates.emplace(std::piecewise_construct,
                                 std::forward_as_tuple(chunk_size),
                                 std::forward_as_tuple(chunk_algo,
-                                                      cbits(chunk_size) - 1));
-    }
-    else {
+                                        cbits(chunk_size) - 1));
+    } else {
         for (size_t cs = min_chunk_size; cs <= max_chunk_size; cs *= 2) {
             dedup_estimates.emplace(std::piecewise_construct,
                                     std::forward_as_tuple(cs),
                                     std::forward_as_tuple(chunk_algo,
-                                                          cbits(cs) - 1));
+                                        cbits(cs) - 1));
         }
     }
 
@@ -1110,24 +1131,24 @@ int estimate_dedup_ratio(const po::variables_map & opts)
 
     for (unsigned i = 0; i < max_thread; i++) {
         std::unique_ptr < CrawlerThread >
-            ptr(new
-                EstimateDedupRatio(io_ctx, i, max_thread, begin, end,
-                                   chunk_algo, fp_algo, chunk_size,
-                                   report_period, s.num_objects, max_read_size,
-                                   max_seconds));
+        ptr(new
+            EstimateDedupRatio(io_ctx, i, max_thread, begin, end,
+                               chunk_algo, fp_algo, chunk_size,
+                               report_period, s.num_objects, max_read_size,
+                               max_seconds));
         ptr->create("estimate_thread");
         ptr->set_debug(debug);
         estimate_threads.push_back(move(ptr));
     }
     glock.unlock();
 
-  for (auto & p:estimate_threads) {
+    for (auto &p : estimate_threads) {
         p->join();
     }
 
     print_dedup_estimate(cout, chunk_algo);
 
-  out:
+out:
     return (ret < 0) ? 1 : 0;
 }
 
@@ -1137,7 +1158,7 @@ static void print_chunk_scrub()
     uint64_t examined_objects = 0;
     int damaged_objects = 0;
 
-  for (auto & et:estimate_threads) {
+    for (auto &et : estimate_threads) {
         if (!total_objects) {
             total_objects = et->get_total_objects();
         }
@@ -1151,7 +1172,7 @@ static void print_chunk_scrub()
     cout << " Damaged object : " << damaged_objects << std::endl;
 }
 
-int chunk_scrub_common(const po::variables_map & opts)
+int chunk_scrub_common(const po::variables_map &opts)
 {
     Rados rados;
     IoCtx io_ctx, chunk_io_ctx;
@@ -1179,14 +1200,14 @@ int chunk_scrub_common(const po::variables_map & opts)
     ret = rados.connect();
     if (ret) {
         cerr << "couldn't connect to cluster: " << cpp_strerror(ret) << std::
-            endl;
+             endl;
         ret = -1;
         goto out;
     }
     ret = rados.ioctx_create(chunk_pool_name.c_str(), chunk_io_ctx);
     if (ret < 0) {
         cerr << "error opening pool "
-            << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
+             << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
         goto out;
     }
 
@@ -1197,15 +1218,13 @@ int chunk_scrub_common(const po::variables_map & opts)
         object_name = get_opts_object_name(opts);
         if (opts.count("target-ref")) {
             target_object_name = opts["target-ref"].as < string > ();
-        }
-        else {
+        } else {
             cerr << "must specify target ref" << std::endl;
             exit(1);
         }
         if (opts.count("target-ref-pool-id")) {
             pool_id = opts["target-ref-pool-id"].as < uint64_t > ();
-        }
-        else {
+        } else {
             cerr << "must specify target-ref-pool-id" << std::endl;
             exit(1);
         }
@@ -1218,28 +1237,27 @@ int chunk_scrub_common(const po::variables_map & opts)
         hobject_t oid(sobject_t(target_object_name, CEPH_NOSNAP), "", hash,
                       pool_id, "");
 
-        auto run_op =[](ObjectWriteOperation & op, hobject_t & oid,
-                        string & object_name, IoCtx & chunk_io_ctx)->int {
+        auto run_op = [](ObjectWriteOperation & op, hobject_t &oid,
+        string & object_name, IoCtx & chunk_io_ctx)->int {
             int ret = chunk_io_ctx.operate(object_name, &op);
             if (ret < 0) {
                 cerr << " operate fail : " << cpp_strerror(ret) << std::endl;
-            } return ret;
+            }
+            return ret;
         };
 
         ObjectWriteOperation op;
         if (op_name == "chunk-get-ref") {
             cls_cas_chunk_get_ref(op, oid);
             ret = run_op(op, oid, object_name, chunk_io_ctx);
-        }
-        else if (op_name == "chunk-put-ref") {
+        } else if (op_name == "chunk-put-ref") {
             cls_cas_chunk_put_ref(op, oid);
             ret = run_op(op, oid, object_name, chunk_io_ctx);
-        }
-        else if (op_name == "chunk-repair") {
+        } else if (op_name == "chunk-repair") {
             ret = rados.ioctx_create2(pool_id, io_ctx);
             if (ret < 0) {
                 cerr << oid << " ref " << pool_id
-                    << ": referencing pool does not exist" << std::endl;
+                     << ": referencing pool does not exist" << std::endl;
                 return ret;
             }
             int chunk_ref = -1, base_ref = -1;
@@ -1261,11 +1279,11 @@ int chunk_scrub_common(const po::variables_map & opts)
                 chunk_refs_by_object_t * >(refs.r.get())->by_object.count(oid);
             if (chunk_ref < 0) {
                 cerr << object_name << " has no reference of " <<
-                    target_object_name << std::endl;
+                     target_object_name << std::endl;
                 return chunk_ref;
             }
             cout << object_name << " has " << chunk_ref << " references for "
-                << target_object_name << std::endl;
+                 << target_object_name << std::endl;
 
             // read object on base pool to know the number of chunk object's references
             base_ref =
@@ -1274,21 +1292,20 @@ int chunk_scrub_common(const po::variables_map & opts)
             if (base_ref < 0) {
                 if (base_ref == -ENOENT || base_ref == -ENOLINK) {
                     base_ref = 0;
-                }
-                else {
+                } else {
                     return base_ref;
                 }
             }
             cout << target_object_name << " has " << base_ref <<
-                " references for " << object_name << std::endl;
+                 " references for " << object_name << std::endl;
             if (chunk_ref != base_ref) {
                 if (base_ref > chunk_ref) {
                     cerr << "error : " << target_object_name << "'s ref. < " <<
-                        object_name << "' ref. " << std::endl;
+                         object_name << "' ref. " << std::endl;
                     return -EINVAL;
                 }
                 cout << " fix dangling reference from " << chunk_ref << " to "
-                    << base_ref << std::endl;
+                     << base_ref << std::endl;
                 while (base_ref != chunk_ref) {
                     ObjectWriteOperation op;
                     cls_cas_chunk_put_ref(op, oid);
@@ -1302,8 +1319,7 @@ int chunk_scrub_common(const po::variables_map & opts)
         }
         return ret;
 
-    }
-    else if (op_name == "dump-chunk-refs") {
+    } else if (op_name == "dump-chunk-refs") {
         object_name = get_opts_object_name(opts);
         bufferlist t;
         ret = chunk_io_ctx.getxattr(object_name, CHUNK_REFCOUNT_ATTR, t);
@@ -1333,7 +1349,7 @@ int chunk_scrub_common(const po::variables_map & opts)
     }
     if (stats.find(chunk_pool_name) == stats.end()) {
         cerr << "stats can not find pool name: " << chunk_pool_name << std::
-            endl;
+             endl;
         glock.unlock();
         return ret;
     }
@@ -1341,15 +1357,15 @@ int chunk_scrub_common(const po::variables_map & opts)
 
     for (unsigned i = 0; i < max_thread; i++) {
         std::unique_ptr < CrawlerThread >
-            ptr(new
-                ChunkScrub(io_ctx, i, max_thread, begin, end, chunk_io_ctx,
-                           report_period, s.num_objects));
+        ptr(new
+            ChunkScrub(io_ctx, i, max_thread, begin, end, chunk_io_ctx,
+                       report_period, s.num_objects));
         ptr->create("estimate_thread");
         estimate_threads.push_back(move(ptr));
     }
     glock.unlock();
 
-  for (auto & p:estimate_threads) {
+    for (auto &p : estimate_threads) {
         cout << "join " << std::endl;
         p->join();
         cout << "joined " << std::endl;
@@ -1357,15 +1373,15 @@ int chunk_scrub_common(const po::variables_map & opts)
 
     print_chunk_scrub();
 
-  out:
+out:
     return (ret < 0) ? 1 : 0;
 }
 
 string make_pool_str(string pool, string var, string val)
 {
     return string("{\"prefix\": \"osd pool set\",\"pool\":\"") + pool
-        + string("\",\"var\": \"") + var + string("\",\"val\": \"")
-        + val + string("\"}");
+           + string("\",\"var\": \"") + var + string("\",\"val\": \"")
+           + val + string("\"}");
 }
 
 string make_pool_str(string pool, string var, int val)
@@ -1373,7 +1389,7 @@ string make_pool_str(string pool, string var, int val)
     return make_pool_str(pool, var, stringify(val));
 }
 
-int make_dedup_object(const po::variables_map & opts)
+int make_dedup_object(const po::variables_map &opts)
 {
     Rados rados;
     IoCtx io_ctx, chunk_io_ctx;
@@ -1395,20 +1411,20 @@ int make_dedup_object(const po::variables_map & opts)
     ret = rados.connect();
     if (ret) {
         cerr << "couldn't connect to cluster: " << cpp_strerror(ret) << std::
-            endl;
+             endl;
         ret = -1;
         goto out;
     }
     ret = rados.ioctx_create(pool_name.c_str(), io_ctx);
     if (ret < 0) {
         cerr << "error opening pool "
-            << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
+             << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
         goto out;
     }
     ret = rados.ioctx_create(chunk_pool_name.c_str(), chunk_io_ctx);
     if (ret < 0) {
         cerr << "error opening pool "
-            << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
+             << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
         goto out;
     }
     fp_algo = get_opts_fp_algo(opts);
@@ -1418,15 +1434,13 @@ int make_dedup_object(const po::variables_map & opts)
         string chunk_object;
         if (opts.count("source-off")) {
             offset = opts["source-off"].as < uint64_t > ();
-        }
-        else {
+        } else {
             cerr << "must specify --source-off" << std::endl;
             exit(1);
         }
         if (opts.count("source-length")) {
             length = opts["source-length"].as < uint64_t > ();
-        }
-        else {
+        } else {
             cerr << "must specify --source-length" << std::endl;
             exit(1);
         }
@@ -1435,23 +1449,22 @@ int make_dedup_object(const po::variables_map & opts)
         ret = io_ctx.read(object_name, bl, length, offset);
         if (ret < 0) {
             cerr << " reading object in base pool fails : " << cpp_strerror(ret)
-                << std::endl;
+                 << std::endl;
             goto out;
         }
-        chunk_object =[&fp_algo, &bl] ()->string {
+        chunk_object = [&fp_algo, &bl]()->string {
             if (fp_algo == "sha1") {
                 return ceph::crypto::digest < ceph::crypto::SHA1 >
-                    (bl).to_str();
-            }
-            else if (fp_algo == "sha256") {
+                (bl).to_str();
+            } else if (fp_algo == "sha256") {
                 return ceph::crypto::digest < ceph::crypto::SHA256 >
-                    (bl).to_str();
-            }
-            else if (fp_algo == "sha512") {
+                (bl).to_str();
+            } else if (fp_algo == "sha512")
+            {
                 return ceph::crypto::digest < ceph::crypto::SHA512 >
-                    (bl).to_str();
-            }
-            else {
+                (bl).to_str();
+            } else
+            {
                 assert(0 == "unrecognized fingerprint type");
                 return {
                 };
@@ -1461,7 +1474,7 @@ int make_dedup_object(const po::variables_map & opts)
         ret = chunk_io_ctx.write(chunk_object, bl, length, offset);
         if (ret < 0) {
             cerr << " writing object in chunk pool fails : " <<
-                cpp_strerror(ret) << std::endl;
+                 cpp_strerror(ret) << std::endl;
             goto out;
         }
         // 2. call set_chunk
@@ -1473,14 +1486,12 @@ int make_dedup_object(const po::variables_map & opts)
             cerr << " operate fail : " << cpp_strerror(ret) << std::endl;
             goto out;
         }
-    }
-    else if (op_name == "object-dedup") {
+    } else if (op_name == "object-dedup") {
         unsigned chunk_size = 0;
         bool snap = false;
         if (opts.count("dedup-cdc-chunk-size")) {
             chunk_size = opts["dedup-cdc-chunk-size"].as < unsigned int >();
-        }
-        else {
+        } else {
             cerr << "must specify --dedup-cdc-chunk-size" << std::endl;
             exit(1);
         }
@@ -1525,7 +1536,7 @@ int make_dedup_object(const po::variables_map & opts)
             return ret;
         }
 
-        auto create_new_deduped_object =[&io_ctx] (string object_name)->int {
+        auto create_new_deduped_object = [&io_ctx](string object_name)->int {
 
             // tier-flush to perform deduplication
             ObjectReadOperation flush_op;
@@ -1538,7 +1549,8 @@ int make_dedup_object(const po::variables_map & opts)
             // tier-evict ObjectReadOperation evict_op;
             evict_op.tier_evict();
             ret = io_ctx.operate(object_name, &evict_op, NULL);
-            if (ret < 0) {
+            if (ret < 0)
+            {
                 cerr << " tier_evict fail : " << cpp_strerror(ret) << std::endl;
                 return ret;
             }
@@ -1554,24 +1566,23 @@ int make_dedup_object(const po::variables_map & opts)
             io_ctx.operate(object_name, &op, NULL);
 
             for (vector < librados::clone_info_t >::const_iterator r =
-                 snap_set.clones.begin(); r != snap_set.clones.end(); ++r) {
+                     snap_set.clones.begin(); r != snap_set.clones.end(); ++r) {
                 io_ctx.snap_set_read(r->cloneid);
                 ret = create_new_deduped_object(object_name);
                 if (ret < 0) {
                     goto out;
                 }
             }
-        }
-        else {
+        } else {
             ret = create_new_deduped_object(object_name);
         }
     }
 
-  out:
+out:
     return (ret < 0) ? 1 : 0;
 }
 
-int make_crawling_daemon(const po::variables_map & opts)
+int make_crawling_daemon(const po::variables_map &opts)
 {
     string base_pool_name = get_opts_pool_name(opts);
     string chunk_pool_name = get_opts_chunk_pool(opts);
@@ -1589,8 +1600,7 @@ int make_crawling_daemon(const po::variables_map & opts)
     size_t chunk_size = 8192;
     if (opts.count("chunk-size")) {
         chunk_size = opts["chunk-size"].as < int >();
-    }
-    else {
+    } else {
         cout << "8192 is set as chunk size by default" << std::endl;
     }
 
@@ -1611,14 +1621,13 @@ int make_crawling_daemon(const po::variables_map & opts)
     ret = rados.connect();
     if (ret) {
         cerr << "couldn't connect to cluster: " << cpp_strerror(ret) << std::
-            endl;
+             endl;
         return -EINVAL;
     }
     int wakeup_period = 100;
     if (opts.count("wakeup-period")) {
         wakeup_period = opts["wakeup-period"].as < int >();
-    }
-    else {
+    } else {
         cout << "100 second is set as wakeup period by default" << std::endl;
     }
 
@@ -1630,14 +1639,14 @@ int make_crawling_daemon(const po::variables_map & opts)
     ret = rados.ioctx_create(base_pool_name.c_str(), io_ctx);
     if (ret < 0) {
         cerr << "error opening base pool "
-            << base_pool_name << ": " << cpp_strerror(ret) << std::endl;
+             << base_pool_name << ": " << cpp_strerror(ret) << std::endl;
         return -EINVAL;
     }
 
     ret = rados.ioctx_create(chunk_pool_name.c_str(), chunk_io_ctx);
     if (ret < 0) {
         cerr << "error opening chunk pool "
-            << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
+             << chunk_pool_name << ": " << cpp_strerror(ret) << std::endl;
         return -EINVAL;
     }
     bufferlist inbl;
@@ -1679,8 +1688,8 @@ int make_crawling_daemon(const po::variables_map & opts)
     }
 
     cout << "SampleRatio : " << sampling_ratio << std::endl
-        << "Chunk Dedup Threshold : " << chunk_dedup_threshold << std::endl
-        << "Chunk Size : " << chunk_size << std::endl << std::endl;
+         << "Chunk Dedup Threshold : " << chunk_dedup_threshold << std::endl
+         << "Chunk Size : " << chunk_size << std::endl << std::endl;
 
     while (true) {
         lock_guard lock(glock);
@@ -1690,18 +1699,18 @@ int make_crawling_daemon(const po::variables_map & opts)
         ret = rados.get_pool_stats(pool_names, stats);
         if (ret < 0) {
             cerr << "error fetching pool stats: " << cpp_strerror(ret) << std::
-                endl;
+                 endl;
             return -EINVAL;
         }
         if (stats.find(base_pool_name) == stats.end()) {
             cerr << "stats can not find pool name: " << base_pool_name << std::
-                endl;
+                 endl;
             return -EINVAL;
         }
 
         SampleDedupWorkerThread::
-            SampleDedupGlobal sample_dedup_global(chunk_dedup_threshold,
-                                                  sampling_ratio);
+        SampleDedupGlobal sample_dedup_global(chunk_dedup_threshold,
+                                              sampling_ratio);
 
         std::list < SampleDedupWorkerThread > threads;
         for (unsigned i = 0; i < max_thread; i++) {
@@ -1721,13 +1730,12 @@ int make_crawling_daemon(const po::variables_map & opts)
             threads.back().create("sample_dedup");
         }
 
-      for (auto & p:threads) {
+        for (auto &p : threads) {
             p.join();
         }
         if (loop) {
             sleep(wakeup_period);
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -1754,8 +1762,7 @@ int main(int argc, const char **argv)
             allow_unregistered().run();
         po::store(parsed, opts);
         po::notify(opts);
-    }
-    catch(po::error & e) {
+    } catch (po::error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }
@@ -1798,30 +1805,26 @@ int main(int argc, const char **argv)
     int ret = 0;
     if (op_name == "estimate") {
         ret = estimate_dedup_ratio(opts);
-    }
-    else if (op_name == "chunk-scrub" ||
-             op_name == "chunk-get-ref" ||
-             op_name == "chunk-put-ref" ||
-             op_name == "chunk-repair" || op_name == "dump-chunk-refs") {
+    } else if (op_name == "chunk-scrub" ||
+               op_name == "chunk-get-ref" ||
+               op_name == "chunk-put-ref" ||
+               op_name == "chunk-repair" || op_name == "dump-chunk-refs") {
         ret = chunk_scrub_common(opts);
-    }
-    else if (op_name == "chunk-dedup" || op_name == "object-dedup") {
+    } else if (op_name == "chunk-dedup" || op_name == "object-dedup") {
         /*
          * chunk-dedup:
          * using a chunk generated by given source,
-         * create a new object in the chunk pool or increase the reference 
+         * create a new object in the chunk pool or increase the reference
          * if the object exists
-         * 
+         *
          * object-dedup:
          * perform deduplication on the entire object, not a chunk.
          *
          */
         ret = make_dedup_object(opts);
-    }
-    else if (op_name == "sample-dedup") {
+    } else if (op_name == "sample-dedup") {
         ret = make_crawling_daemon(opts);
-    }
-    else {
+    } else {
         cerr << "unrecognized op " << op_name << std::endl;
         exit(1);
     }

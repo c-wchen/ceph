@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <sys/stat.h>
@@ -54,21 +54,22 @@ int main(int argc, const char **argv, char *envp[])
     // get monmap
     ceph::async::io_context_pool poolctx(1);
     MonClient mc(g_ceph_context, poolctx);
-    if (mc.build_initial_monmap() < 0)
+    if (mc.build_initial_monmap() < 0) {
         return -1;
+    }
 
     list < Client * >clients;
     list < SyntheticClient * >synclients;
     vector < Messenger * >messengers {
-    static_cast < unsigned >(num_client), nullptr};
+        static_cast < unsigned >(num_client), nullptr};
     vector < MonClient * >mclients {
-    static_cast < unsigned >(num_client), nullptr};
+        static_cast < unsigned >(num_client), nullptr};
 
     cout << "ceph-syn: starting " << num_client << " syn client(s)" << std::
-        endl;
+         endl;
     for (int i = 0; i < num_client; i++) {
         messengers[i] = Messenger::create_client_messenger(g_ceph_context,
-                                                           "synclient");
+                        "synclient");
         mclients[i] = new MonClient(g_ceph_context, poolctx);
         mclients[i]->build_initial_monmap();
         auto client = new StandaloneClient(messengers[i], mclients[i], poolctx);
@@ -80,8 +81,9 @@ int main(int argc, const char **argv, char *envp[])
     }
 
     for (list < SyntheticClient * >::iterator p = synclients.begin();
-         p != synclients.end(); ++p)
+         p != synclients.end(); ++p) {
         (*p)->start_thread();
+    }
 
     poolctx.stop();
 

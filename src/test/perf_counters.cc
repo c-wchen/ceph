@@ -13,7 +13,7 @@
  */
 #include "include/int_types.h"
 #include "include/types.h"      // FIXME: ordering shouldn't be important, but right
-                           // now, this include has to come before the others.
+// now, this include has to come before the others.
 
 #include "common/perf_counters_key.h"
 #include "common/perf_counters_collection.h"
@@ -52,7 +52,8 @@ int main(int argc, char **argv)
 {
     map < string, string > defaults = {
         {
-        "admin_socket", get_rand_socket_path()}
+            "admin_socket", get_rand_socket_path()
+        }
     };
     std::vector < const char *>args;
     auto cct = global_init(&defaults, args, CEPH_ENTITY_TYPE_CLIENT,
@@ -95,7 +96,7 @@ std::string sd(const char *c)
     return ret;
 }
 
-static PerfCounters *setup_test_perfcounters1(CephContext * cct)
+static PerfCounters *setup_test_perfcounters1(CephContext *cct)
 {
     PerfCountersBuilder bld(cct, "test_perfcounter_1",
                             TEST_PERFCOUNTERS1_ELEMENT_FIRST,
@@ -164,7 +165,7 @@ enum {
     TEST_PERFCOUNTERS2_ELEMENT_LAST,
 };
 
-static PerfCounters *setup_test_perfcounter2(CephContext * cct)
+static PerfCounters *setup_test_perfcounter2(CephContext *cct)
 {
     PerfCountersBuilder bld(cct, "test_perfcounter_2",
                             TEST_PERFCOUNTERS2_ELEMENT_FIRST,
@@ -302,8 +303,7 @@ enum {
     TEST_PERFCOUNTERS3_ELEMENT_LAST,
 };
 
-static std::shared_ptr < PerfCounters >
-setup_test_perfcounter3(CephContext * cct)
+static std::shared_ptr < PerfCounters > setup_test_perfcounter3(CephContext *cct)
 {
     PerfCountersBuilder bld(cct, "test_percounter_3",
                             TEST_PERFCOUNTERS3_ELEMENT_FIRST,
@@ -350,7 +350,7 @@ TEST(PerfCounters, read_avg)
 }
 
 static PerfCounters *setup_test_perfcounter4(std::string name,
-                                             CephContext * cct)
+        CephContext *cct)
 {
     PerfCountersBuilder bld(cct, name,
                             TEST_PERFCOUNTERS2_ELEMENT_FIRST,
@@ -366,19 +366,22 @@ static PerfCounters *setup_test_perfcounter4(std::string name,
 TEST(PerfCounters, TestLabeledCountersOnly)
 {
     constexpr std::string_view empty_dump_format_raw = R "({}
-)";
+        )";
     std::string counter_key1 = ceph::perf_counters::key_create("name1", { {
-                                                               "label1", "val1"}
-                                                               }
-    );
+            "label1", "val1"
+        }
+    }
+                                                              );
     std::string counter_key2 = ceph::perf_counters::key_create("name2", { {
-                                                               "label2", "val2"}
-                                                               }
-    );
+            "label2", "val2"
+        }
+    }
+                                                              );
     std::string counter_key3 = ceph::perf_counters::key_create("name1", { {
-                                                               "label1", "val3"}
-                                                               }
-    );
+            "label1", "val3"
+        }
+    }
+                                                              );
 
     PerfCounters *counters1 =
         setup_test_perfcounter4(counter_key1, g_ceph_context);
@@ -399,142 +402,136 @@ TEST(PerfCounters, TestLabeledCountersOnly)
               do_request(R "({ " prefix ": " counter dump ", " format ": " raw
                          " })", &message));
     ASSERT_EQ(R "({
-    " name1 ": [
-        {
-            " labels ": {
-                " label1 ": " val1 "
-            },
-            " counters ": {
-                " foo ": 2,
-                " bar ": 0.000000000
-            }
+" name1 ": [ {
+" labels ": {
+" label1 ": " val1 "
         },
-        {
-            " labels ": {
-                " label1 ": " val3 "
-            },
-            " counters ": {
-                " foo ": 3,
-                " bar ": 0.000000000
-            }
+" counters ": {
+            " foo ": 2,
+            " bar ": 0.000000000
         }
-    ],
-    " name2 ": [
-        {
-            " labels ": {
-                " label2 ": " val2 "
-            },
-            " counters ": {
-                " foo ": 4,
-                " bar ": 0.000000000
-            }
-        }
-    ]
-}
-)", message);
-
-    // make sure labeled counters are not in normal perf dump
-    ASSERT_EQ("",
-              client.
-              do_request(R "({ " prefix ": " perf dump ", " format ": " raw
-                         " })", &message));
-    ASSERT_EQ(empty_dump_format_raw, message);
-
-    ASSERT_EQ("",
-              client.
-              do_request(R "({ " prefix ": " counter schema ", " format ": " raw
-                         " })", &message));
-    ASSERT_EQ(R "({
-    " name1 ": [
-        {
-            " labels ": {
-                " label1 ": " val1 "
-            },
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
+    }, {
+" labels ": {
+" label1 ": " val3 "
         },
-        {
-            " labels ": {
-                " label1 ": " val3 "
-            },
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
+" counters ": {
+            " foo ": 3,
+            " bar ": 0.000000000
         }
-    ],
-    " name2 ": [
-        {
-            " labels ": {
-                " label2 ": " val2 "
-            },
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
+    }
+                         ],
+" name2 ": [ {
+" labels ": {
+" label2 ": " val2 "
+        },
+" counters ": {
+            " foo ": 4,
+            " bar ": 0.000000000
         }
-    ]
+    }
+               ]
 }
-)", message);
+         )", message);
 
-    // make sure labeled counters are not in normal perf schema
-    ASSERT_EQ("",
-              client.
-              do_request(R "({ " prefix ": " perf schema ", " format ": " raw
-                         " })", &message));
-    ASSERT_EQ(empty_dump_format_raw, message);
+// make sure labeled counters are not in normal perf dump
+ASSERT_EQ("",
+          client.
+          do_request(R "({ " prefix ": " perf dump ", " format ": " raw
+                     " })", &message));
+ASSERT_EQ(empty_dump_format_raw, message);
 
-    g_ceph_context->get_perfcounters_collection()->clear();
+ASSERT_EQ("",
+          client.
+          do_request(R "({ " prefix ": " counter schema ", " format ": " raw
+                     " })", &message));
+ASSERT_EQ(R "({
+" name1 ": [ {
+" labels ": {
+" label1 ": " val1 "
+    },
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}, {
+" labels ": {
+" label1 ": " val3 "
+    },
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}
+                     ],
+" name2 ": [ {
+" labels ": {
+" label2 ": " val2 "
+    },
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}
+           ]
+}
+         )", message);
+
+// make sure labeled counters are not in normal perf schema
+ASSERT_EQ("",
+          client.
+          do_request(R "({ " prefix ": " perf schema ", " format ": " raw
+                     " })", &message));
+ASSERT_EQ(empty_dump_format_raw, message);
+
+g_ceph_context->get_perfcounters_collection()->clear();
 }
 
 TEST(PerfCounters, TestLabelStrings)
@@ -544,20 +541,24 @@ TEST(PerfCounters, TestLabelStrings)
 
     // test empty val in a label pair will get the label pair added but empty key will not
     std::string counter_key1 = ceph::perf_counters::key_create("good_ctrs", { {
-                                                               "label3", "val4"}
-                                                               , {
-                                                               "label1", ""}
-                                                               }
-    );
+            "label3", "val4"
+        }
+        , {
+            "label1", ""
+        }
+    }
+                                                              );
     PerfCounters *counters1 =
         setup_test_perfcounter4(counter_key1, g_ceph_context);
 
     std::string counter_key2 = ceph::perf_counters::key_create("bad_ctrs", { {
-                                                               "", "val4"}
-                                                               , {
-                                                               "label1", "val1"}
-                                                               }
-    );
+            "", "val4"
+        }
+        , {
+            "label1", "val1"
+        }
+    }
+                                                              );
     PerfCounters *counters2 =
         setup_test_perfcounter4(counter_key2, g_ceph_context);
 
@@ -566,11 +567,13 @@ TEST(PerfCounters, TestLabelStrings)
 
     // test empty keys in each of the label pairs will get only the labels section added
     std::string counter_key3 = ceph::perf_counters::key_create("bad_ctrs2", { {
-                                                               "", "val2"}
-                                                               , {
-                                                               "", "val33"}
-                                                               }
-    );
+            "", "val2"
+        }
+        , {
+            "", "val33"
+        }
+    }
+                                                              );
     PerfCounters *counters3 =
         setup_test_perfcounter4(counter_key3, g_ceph_context);
     counters3->set(TEST_PERFCOUNTERS2_ELEMENT_FOO, 6);
@@ -599,243 +602,243 @@ TEST(PerfCounters, TestLabelStrings)
               do_request(R "({ " prefix ": " counter dump ", " format ": " raw
                          " })", &message));
     ASSERT_EQ(R "({
-    " bad_ctrs ": [
-        {
-            " labels ": {
-                " label1 ": " val1 "
-            },
-            " counters ": {
-                " foo ": 4,
-                " bar ": 0.000000000
-            }
-        }
-    ],
-    " bad_ctrs2 ": [
-        {
-            " labels ": {},
-            " counters ": {
-                " foo ": 6,
-                " bar ": 0.000000000
-            }
-        }
-    ],
-    " good_ctrs ": [
-        {
-            " labels ": {
-                " label1 ": " ",
-                " label3 ": " val4 "
-            },
-            " counters ": {
-                " foo ": 2,
-                " bar ": 0.000000000
-            }
-        }
-    ],
-    " only_key ": [
-        {
-            " labels ": {},
-            " counters ": {
-                " foo ": 4,
-                " bar ": 0.000000000
-            }
-        }
-    ],
-    " too_many_delimiters ": [
-        {
-            " labels ": {
-                " label1 ": " val1 "
-            },
-            " counters ": {
-                " foo ": 8,
-                " bar ": 0.000000000
-            }
-        }
-    ]
-}
-)", message);
-
-    // test unlabeled perf counters are in the schema dump with labels and counters sections
-    ASSERT_EQ("",
-              client.
-              do_request(R "({ " prefix ": " counter schema ", " format ": " raw
-                         " })", &message));
-    ASSERT_EQ(R "({
-    " bad_ctrs ": [
-        {
-            " labels ": {
-                " label1 ": " val1 "
-            },
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
-        }
-    ],
-    " bad_ctrs2 ": [
-        {
-            " labels ": {},
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
-        }
-    ],
-    " good_ctrs ": [
-        {
-            " labels ": {
-                " label1 ": " ",
-                " label3 ": " val4 "
-            },
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
-        }
-    ],
-    " only_key ": [
-        {
-            " labels ": {},
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
-        }
-    ],
-    " too_many_delimiters ": [
-        {
-            " labels ": {
-                " label1 ": " val1 "
-            },
-            " counters ": {
-                " foo ": {
-                    " type ": 2,
-                    " metric_type ": " gauge ",
-                    " value_type ": " integer ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                },
-                " bar ": {
-                    " type ": 1,
-                    " metric_type ": " gauge ",
-                    " value_type ": " real ",
-                    " description ": " ",
-                    " nick ": " ",
-                    " priority ": 0,
-                    " units ": " none "
-                }
-            }
-        }
-    ]
-}
-)", message);
-
-    // test unlabeled perf counters are in the perf dump without the labels and counters section
-    ASSERT_EQ("",
-              client.
-              do_request(R "({ " prefix ": " perf dump ", " format ": " raw
-                         " })", &message));
-    ASSERT_EQ(R "({
-    " only_key ": {
-        " foo ": 4,
-        " bar ": 0.000000000
-    }
-}
-)", message);
-
-    // test unlabeled perf counters are in the perf schema without the labels and counters section
-    ASSERT_EQ("",
-              client.
-              do_request(R "({ " prefix ": " perf schema ", " format ": " raw
-                         " })", &message));
-    ASSERT_EQ(R "({
-    " only_key ": {
-        " foo ": {
-            " type ": 2,
-            " metric_type ": " gauge ",
-            " value_type ": " integer ",
-            " description ": " ",
-            " nick ": " ",
-            " priority ": 0,
-            " units ": " none "
+    " bad_ctrs ": [ {
+" labels ": {
+" label1 ": " val1 "
         },
-        " bar ": {
-            " type ": 1,
-            " metric_type ": " gauge ",
-            " value_type ": " real ",
-            " description ": " ",
-            " nick ": " ",
+" counters ": {
+            " foo ": 4,
+            " bar ": 0.000000000
+        }
+    }
+                            ],
+    " bad_ctrs2 ": [ {
+" labels ": {},
+" counters ": {
+            " foo ": 6,
+            " bar ": 0.000000000
+        }
+    }
+                   ],
+    " good_ctrs ": [ {
+" labels ": {
+" label1 ": " ",
+" label3 ": " val4 "
+        },
+" counters ": {
+            " foo ": 2,
+            " bar ": 0.000000000
+        }
+    }
+                   ],
+    " only_key ": [ {
+" labels ": {},
+" counters ": {
+            " foo ": 4,
+            " bar ": 0.000000000
+        }
+    }
+                  ],
+    " too_many_delimiters ": [ {
+" labels ": {
+" label1 ": " val1 "
+        },
+" counters ": {
+            " foo ": 8,
+            " bar ": 0.000000000
+        }
+    }
+                             ]
+}
+         )", message);
+
+// test unlabeled perf counters are in the schema dump with labels and counters sections
+ASSERT_EQ("",
+          client.
+          do_request(R "({ " prefix ": " counter schema ", " format ": " raw
+                     " })", &message));
+ASSERT_EQ(R "({
+" bad_ctrs ": [ {
+" labels ": {
+" label1 ": " val1 "
+    },
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
             " priority ": 0,
-            " units ": " none "
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
         }
     }
 }
-)", message);
+                        ],
+" bad_ctrs2 ": [ {
+" labels ": {},
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}
+               ],
+" good_ctrs ": [ {
+" labels ": {
+" label1 ": " ",
+" label3 ": " val4 "
+    },
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}
+               ],
+" only_key ": [ {
+" labels ": {},
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}
+              ],
+" too_many_delimiters ": [ {
+" labels ": {
+" label1 ": " val1 "
+    },
+" counters ": {
+" foo ": {
+            " type ": 2,
+" metric_type ": " gauge ",
+" value_type ": " integer ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        },
+" bar ": {
+            " type ": 1,
+" metric_type ": " gauge ",
+" value_type ": " real ",
+" description ": " ",
+" nick ": " ",
+            " priority ": 0,
+" units ": " none "
+        }
+    }
+}
+                         ]
+}
+         )", message);
 
-    g_ceph_context->get_perfcounters_collection()->clear();
+// test unlabeled perf counters are in the perf dump without the labels and counters section
+ASSERT_EQ("",
+          client.
+          do_request(R "({ " prefix ": " perf dump ", " format ": " raw
+                     " })", &message));
+ASSERT_EQ(R "({
+          " only_key ":
+{
+    " foo ": 4,
+    " bar ": 0.000000000
+}
+}
+         )", message);
+
+// test unlabeled perf counters are in the perf schema without the labels and counters section
+ASSERT_EQ("",
+          client.
+          do_request(R "({ " prefix ": " perf schema ", " format ": " raw
+                     " })", &message));
+ASSERT_EQ(R "({
+          " only_key ":
+{
+" foo ": {
+        " type ": 2,
+" metric_type ": " gauge "
+        ,
+" value_type ": " integer "
+        ,
+" description ": " "
+        ,
+" nick ": " "
+        ,
+        " priority ": 0,
+" units ": " none "
+    },
+" bar ": {
+        " type ": 1,
+" metric_type ": " gauge "
+        ,
+" value_type ": " real "
+        ,
+" description ": " "
+        ,
+" nick ": " "
+        ,
+        " priority ": 0,
+" units ": " none "
+    }
+}
+}
+         )", message);
+
+g_ceph_context->get_perfcounters_collection()->clear();
 }

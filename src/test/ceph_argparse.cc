@@ -27,25 +27,30 @@ using namespace std;
  * they find them.  So we keep a parallel vector, orig, to make sure that we
  * never forget to delete a string.
  */
-class VectorContainer {
-  public:
-    explicit VectorContainer(const char **arr_) {
+class VectorContainer
+{
+public:
+    explicit VectorContainer(const char **arr_)
+    {
         for (const char **a = arr_; *a; ++a) {
             const char *str = (const char *)strdup(*a);
-             arr.push_back(str);
-             orig.push_back(str);
-    }} ~VectorContainer() {
+            arr.push_back(str);
+            orig.push_back(str);
+        }
+    } ~VectorContainer()
+    {
         for (std::vector < const char *>::iterator i = orig.begin();
              i != orig.end(); ++i) {
             free((void *)*i);
         }
     }
-    void refresh() {
+    void refresh()
+    {
         arr.assign(orig.begin(), orig.end());
     }
     std::vector < const char *>arr;
 
-  private:
+private:
     std::vector < const char *>orig;
 };
 
@@ -62,12 +67,11 @@ TEST(CephArgParse, SimpleArgParse)
          i != bar5.arr.end();) {
         if (ceph_argparse_flag(bar5.arr, i, "--foo", (char *)NULL)) {
             found_foo = true;
-        }
-        else if (ceph_argparse_witharg
-                 (bar5.arr, i, &found_bar, "--bar", (char *)NULL)) {
-        }
-        else
+        } else if (ceph_argparse_witharg
+                   (bar5.arr, i, &found_bar, "--bar", (char *)NULL)) {
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_foo, false);
     ASSERT_EQ(found_bar, "5");
@@ -82,17 +86,15 @@ TEST(CephArgParse, SimpleArgParse)
          i != foo.arr.end();) {
         if (ceph_argparse_flag(foo.arr, i, "--foo", (char *)NULL)) {
             found_foo = true;
-        }
-        else if (ceph_argparse_witharg
-                 (foo.arr, i, &found_bar, "--bar", (char *)NULL)) {
-        }
-        else if (ceph_argparse_witharg
-                 (foo.arr, i, &found_baz, err, "--baz", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (foo.arr, i, &found_bar, "--bar", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (foo.arr, i, &found_baz, err, "--baz", (char *)NULL)) {
             ASSERT_NE(string(""), err.str());
             baz_found = true;
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_foo, true);
     ASSERT_EQ(found_bar, "");
@@ -106,12 +108,11 @@ TEST(CephArgParse, SimpleArgParse)
          i != none.arr.end();) {
         if (ceph_argparse_flag(none.arr, i, "--foo", (char *)NULL)) {
             found_foo = true;
-        }
-        else if (ceph_argparse_witharg
-                 (none.arr, i, &found_bar, "--bar", (char *)NULL)) {
-        }
-        else
+        } else if (ceph_argparse_witharg
+                   (none.arr, i, &found_bar, "--bar", (char *)NULL)) {
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_foo, false);
     ASSERT_EQ(found_bar, "");
@@ -128,17 +129,15 @@ TEST(CephArgParse, DoubleDash)
         std::string myarg;
         if (ceph_argparse_double_dash(args.arr, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (args.arr, i, &myarg, "--foo", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args.arr, i, &myarg, "--foo", (char *)NULL)) {
             foo = atoi(myarg.c_str());
-        }
-        else if (ceph_argparse_witharg
-                 (args.arr, i, &myarg, "--bar", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args.arr, i, &myarg, "--bar", (char *)NULL)) {
             bar = atoi(myarg.c_str());
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(foo, 5);
     ASSERT_EQ(bar, -1);
@@ -147,13 +146,13 @@ TEST(CephArgParse, DoubleDash)
 TEST(CephArgParse, WithDashesAndUnderscores)
 {
     const char *BAZSTUFF1[] =
-        { "./myprog", "--goo", "--baz-stuff", "50", "--end", NULL };
+    { "./myprog", "--goo", "--baz-stuff", "50", "--end", NULL };
     const char *BAZSTUFF2[] =
-        { "./myprog", "--goo2", "--baz_stuff", "50", NULL };
+    { "./myprog", "--goo2", "--baz_stuff", "50", NULL };
     const char *BAZSTUFF3[] =
-        { "./myprog", "--goo2", "--baz-stuff=50", "50", NULL };
+    { "./myprog", "--goo2", "--baz-stuff=50", "50", NULL };
     const char *BAZSTUFF4[] =
-        { "./myprog", "--goo2", "--baz_stuff=50", "50", NULL };
+    { "./myprog", "--goo2", "--baz_stuff=50", "50", NULL };
     const char *NONE1[] = { "./myprog", NULL };
     const char *NONE2[] = { "./myprog", "--goo2", "--baz_stuff2", "50", NULL };
     const char *NONE3[] = { "./myprog", "--goo2", "__baz_stuff", "50", NULL };
@@ -165,9 +164,9 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != bazstuff1.arr.end();) {
         if (ceph_argparse_flag(bazstuff1.arr, i, "--baz-stuff", (char *)NULL)) {
             found_baz = "true";
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "true");
 
@@ -178,9 +177,9 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != bazstuff2.arr.end();) {
         if (ceph_argparse_flag(bazstuff2.arr, i, "--baz-stuff", (char *)NULL)) {
             found_baz = "true";
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "true");
 
@@ -191,9 +190,9 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != bazstuff1.arr.end();) {
         if (ceph_argparse_witharg
             (bazstuff1.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "50");
 
@@ -204,9 +203,9 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != bazstuff2.arr.end();) {
         if (ceph_argparse_witharg
             (bazstuff2.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "50");
 
@@ -217,9 +216,9 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != bazstuff3.arr.end();) {
         if (ceph_argparse_witharg
             (bazstuff3.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "50");
 
@@ -230,9 +229,9 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != bazstuff4.arr.end();) {
         if (ceph_argparse_witharg
             (bazstuff4.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "50");
 
@@ -243,12 +242,11 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != none1.arr.end();) {
         if (ceph_argparse_flag(none1.arr, i, "--baz-stuff", (char *)NULL)) {
             found_baz = "true";
-        }
-        else if (ceph_argparse_witharg
-                 (none1.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else if (ceph_argparse_witharg
+                   (none1.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "");
 
@@ -259,12 +257,11 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != none2.arr.end();) {
         if (ceph_argparse_flag(none2.arr, i, "--baz-stuff", (char *)NULL)) {
             found_baz = "true";
-        }
-        else if (ceph_argparse_witharg
-                 (none2.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else if (ceph_argparse_witharg
+                   (none2.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "");
 
@@ -275,12 +272,11 @@ TEST(CephArgParse, WithDashesAndUnderscores)
          i != none3.arr.end();) {
         if (ceph_argparse_flag(none3.arr, i, "--baz-stuff", (char *)NULL)) {
             found_baz = "true";
-        }
-        else if (ceph_argparse_witharg
-                 (none3.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
-        }
-        else
+        } else if (ceph_argparse_witharg
+                   (none3.arr, i, &found_baz, "--baz-stuff", (char *)NULL)) {
+        } else {
             ++i;
+        }
     }
     ASSERT_EQ(found_baz, "");
 }
@@ -288,7 +284,7 @@ TEST(CephArgParse, WithDashesAndUnderscores)
 TEST(CephArgParse, WithFloat)
 {
     const char *BAZSTUFF1[] =
-        { "./myprog", "--foo", "50.5", "--bar", "52", NULL };
+    { "./myprog", "--foo", "50.5", "--bar", "52", NULL };
 
     VectorContainer bazstuff1(BAZSTUFF1);
     ostringstream err;
@@ -298,16 +294,13 @@ TEST(CephArgParse, WithFloat)
          i != bazstuff1.arr.end();) {
         if (ceph_argparse_double_dash(bazstuff1.arr, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff1.arr, i, &foo, err, "--foo", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff1.arr, i, &foo, err, "--foo", (char *)NULL)) {
             ASSERT_EQ(string(""), err.str());
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff1.arr, i, &bar, err, "--bar", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff1.arr, i, &bar, err, "--bar", (char *)NULL)) {
             ASSERT_EQ(string(""), err.str());
-        }
-        else {
+        } else {
             ++i;
         }
     }
@@ -318,10 +311,10 @@ TEST(CephArgParse, WithFloat)
 TEST(CephArgParse, WithInt)
 {
     const char *BAZSTUFF1[] =
-        { "./myprog", "--foo", "50", "--bar", "52", NULL };
+    { "./myprog", "--foo", "50", "--bar", "52", NULL };
     const char *BAZSTUFF2[] = { "./myprog", "--foo", "--bar", "52", NULL };
     const char *BAZSTUFF3[] =
-        { "./myprog", "--foo", "40", "--", "--bar", "42", NULL };
+    { "./myprog", "--foo", "40", "--", "--bar", "42", NULL };
 
     // normal test
     VectorContainer bazstuff1(BAZSTUFF1);
@@ -331,16 +324,13 @@ TEST(CephArgParse, WithInt)
          i != bazstuff1.arr.end();) {
         if (ceph_argparse_double_dash(bazstuff1.arr, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff1.arr, i, &foo, err, "--foo", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff1.arr, i, &foo, err, "--foo", (char *)NULL)) {
             ASSERT_EQ(string(""), err.str());
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff1.arr, i, &bar, err, "--bar", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff1.arr, i, &bar, err, "--bar", (char *)NULL)) {
             ASSERT_EQ(string(""), err.str());
-        }
-        else {
+        } else {
             ++i;
         }
     }
@@ -354,12 +344,10 @@ TEST(CephArgParse, WithInt)
          i != bazstuff2.arr.end();) {
         if (ceph_argparse_double_dash(bazstuff2.arr, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff2.arr, i, &foo, err2, "--foo", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff2.arr, i, &foo, err2, "--foo", (char *)NULL)) {
             ASSERT_NE(string(""), err2.str());
-        }
-        else {
+        } else {
             ++i;
         }
     }
@@ -371,16 +359,13 @@ TEST(CephArgParse, WithInt)
          i != bazstuff3.arr.end();) {
         if (ceph_argparse_double_dash(bazstuff3.arr, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff3.arr, i, &foo, err, "--foo", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff3.arr, i, &foo, err, "--foo", (char *)NULL)) {
             ASSERT_EQ(string(""), err.str());
-        }
-        else if (ceph_argparse_witharg
-                 (bazstuff3.arr, i, &bar, err, "--bar", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (bazstuff3.arr, i, &bar, err, "--bar", (char *)NULL)) {
             ASSERT_EQ(string(""), err.str());
-        }
-        else {
+        } else {
             ++i;
         }
     }
@@ -512,32 +497,42 @@ TEST(CephArgParse, parse_ip_port_vec)
         const char *to;
     } tests[] = {
         {
-        "1.2.3.4", entity_addr_t::TYPE_MSGR2, "v2:1.2.3.4:0/0\n"}, {
-        "v1:1.2.3.4", entity_addr_t::TYPE_MSGR2, "v1:1.2.3.4:0/0\n"}, {
-        "1.2.3.4", entity_addr_t::TYPE_LEGACY, "v1:1.2.3.4:0/0\n"}, {
-        "[::],1.2.3.4", entity_addr_t::TYPE_LEGACY,
-                "v1:[::]:0/0\nv1:1.2.3.4:0/0\n"}, {
-        "v2:1.2.3.4:111,v1:5.6.7.8:222", entity_addr_t::TYPE_LEGACY,
-                "v2:1.2.3.4:111/0\nv1:5.6.7.8:222/0\n"}, {
-        "v2:1.2.3.4:111 v1:5.6.7.8:222", entity_addr_t::TYPE_LEGACY,
-                "v2:1.2.3.4:111/0\nv1:5.6.7.8:222/0\n"}, {
-        "[v2:1.2.3.4:111,v1:5.6.7.8:222] [v2:[::]:3300,v1:[::]:6789]",
-                entity_addr_t::TYPE_LEGACY,
-                "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]\n[v2:[::]:3300/0,v1:[::]:6789/0]\n"},
+            "1.2.3.4", entity_addr_t::TYPE_MSGR2, "v2:1.2.3.4:0/0\n"
+        }, {
+            "v1:1.2.3.4", entity_addr_t::TYPE_MSGR2, "v1:1.2.3.4:0/0\n"
+        }, {
+            "1.2.3.4", entity_addr_t::TYPE_LEGACY, "v1:1.2.3.4:0/0\n"
+        }, {
+            "[::],1.2.3.4", entity_addr_t::TYPE_LEGACY,
+            "v1:[::]:0/0\nv1:1.2.3.4:0/0\n"
+        }, {
+            "v2:1.2.3.4:111,v1:5.6.7.8:222", entity_addr_t::TYPE_LEGACY,
+            "v2:1.2.3.4:111/0\nv1:5.6.7.8:222/0\n"
+        }, {
+            "v2:1.2.3.4:111 v1:5.6.7.8:222", entity_addr_t::TYPE_LEGACY,
+            "v2:1.2.3.4:111/0\nv1:5.6.7.8:222/0\n"
+        }, {
+            "[v2:1.2.3.4:111,v1:5.6.7.8:222] [v2:[::]:3300,v1:[::]:6789]",
+            entity_addr_t::TYPE_LEGACY,
+            "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]\n[v2:[::]:3300/0,v1:[::]:6789/0]\n"
+        },
         {
-        "[v2:1.2.3.4:111,v1:5.6.7.8:222],[v2:[::]:3300,v1:[::]:6789]",
-                entity_addr_t::TYPE_LEGACY,
-                "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]\n[v2:[::]:3300/0,v1:[::]:6789/0]\n"},
+            "[v2:1.2.3.4:111,v1:5.6.7.8:222],[v2:[::]:3300,v1:[::]:6789]",
+            entity_addr_t::TYPE_LEGACY,
+            "[v2:1.2.3.4:111/0,v1:5.6.7.8:222/0]\n[v2:[::]:3300/0,v1:[::]:6789/0]\n"
+        },
         {
-    0, 0, 0},};
+            0, 0, 0
+        },
+    };
 
     for (unsigned i = 0; tests[i].from; ++i) {
         vector < entity_addrvec_t > v;
         cout << "-- " << tests[i].from << " type " << tests[i].type
-            << " ->\n" << tests[i].to;
+             << " ->\n" << tests[i].to;
         ASSERT_TRUE(parse_ip_port_vec(tests[i].from, v, tests[i].type));
         string actual;
-      for (auto s:v) {
+        for (auto s : v) {
             actual += stringify(s) + "\n";
         }
         ASSERT_EQ(actual, tests[i].to);

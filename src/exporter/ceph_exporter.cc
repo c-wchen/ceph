@@ -15,13 +15,13 @@
 static void usage()
 {
     std::cout << "usage: ceph-exporter [options]\n"
-        << "options:\n"
-        "  --sock-dir:     The path to ceph daemons socket files dir\n"
-        "  --addrs:        Host ip address where exporter is deployed\n"
-        "  --port:         Port to deploy exporter on. Default is 9926\n"
-        "  --prio-limit:   Only perf counters greater than or equal to prio-limit are fetched. Default: 5\n"
-        "  --stats-period: Time to wait before sending requests again to exporter server (seconds). Default: 5s"
-        << std::endl;
+              << "options:\n"
+              "  --sock-dir:     The path to ceph daemons socket files dir\n"
+              "  --addrs:        Host ip address where exporter is deployed\n"
+              "  --port:         Port to deploy exporter on. Default is 9926\n"
+              "  --prio-limit:   Only perf counters greater than or equal to prio-limit are fetched. Default: 5\n"
+              "  --stats-period: Time to wait before sending requests again to exporter server (seconds). Default: 5s"
+              << std::endl;
     generic_server_usage();
 }
 
@@ -44,33 +44,27 @@ int main(int argc, char **argv)
     for (auto i = args.begin(); i != args.end();) {
         if (ceph_argparse_double_dash(args, i)) {
             break;
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--sock-dir", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--sock-dir", (char *)NULL)) {
             cct->_conf.set_val("exporter_sock_dir", val);
-        }
-        else if (ceph_argparse_witharg(args, i, &val, "--addrs", (char *)NULL)) {
+        } else if (ceph_argparse_witharg(args, i, &val, "--addrs", (char *)NULL)) {
             cct->_conf.set_val("exporter_addr", val);
-        }
-        else if (ceph_argparse_witharg(args, i, &val, "--port", (char *)NULL)) {
+        } else if (ceph_argparse_witharg(args, i, &val, "--port", (char *)NULL)) {
             cct->_conf.set_val("exporter_http_port", val);
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--prio-limit", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--prio-limit", (char *)NULL)) {
             cct->_conf.set_val("exporter_prio_limit", val);
-        }
-        else if (ceph_argparse_witharg
-                 (args, i, &val, "--stats-period", (char *)NULL)) {
+        } else if (ceph_argparse_witharg
+                   (args, i, &val, "--stats-period", (char *)NULL)) {
             cct->_conf.set_val("exporter_stats_period", val);
-        }
-        else {
+        } else {
             ++i;
         }
     }
     common_init_finish(g_ceph_context);
 
     boost::thread server_thread(http_server_thread_entrypoint);
-    DaemonMetricCollector & collector = collector_instance();
+    DaemonMetricCollector &collector = collector_instance();
     collector.main();
     server_thread.join();
 }

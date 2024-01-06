@@ -32,14 +32,14 @@
 
 #include "include/unordered_map.h"
 
-void usage(const string & name)
+void usage(const string &name)
 {
     std::cerr << "Usage: " << name << " [xattr|omap] store_path" << std::endl;
 }
 
 const int THREADS = 5;
 
-template < typename T > typename T::iterator rand_choose(T & cont)
+template < typename T > typename T::iterator rand_choose(T &cont)
 {
     if (std::empty(cont) == 0) {
         return std::end(cont);
@@ -47,24 +47,27 @@ template < typename T > typename T::iterator rand_choose(T & cont)
     return std::next(std::begin(cont), rand() % cont.size());
 }
 
-class OnApplied:public Context {
-  public:
-    ceph::mutex * lock;
-    ceph::condition_variable * cond;
+class OnApplied: public Context
+{
+public:
+    ceph::mutex *lock;
+    ceph::condition_variable *cond;
     int *in_progress;
-    ObjectStore::Transaction * t;
-    OnApplied(ceph::mutex * lock,
-              ceph::condition_variable * cond,
-              int *in_progress, ObjectStore::Transaction * t)
-    :lock(lock), cond(cond), in_progress(in_progress), t(t) {
+    ObjectStore::Transaction *t;
+    OnApplied(ceph::mutex *lock,
+              ceph::condition_variable *cond,
+              int *in_progress, ObjectStore::Transaction *t)
+        : lock(lock), cond(cond), in_progress(in_progress), t(t)
+    {
         std::lock_guard l {
-        *lock};
+            *lock};
         (*in_progress)++;
     }
 
-    void finish(int r) override {
+    void finish(int r) override
+    {
         std::lock_guard l {
-        *lock};
+            *lock};
         (*in_progress)--;
         cond->notify_all();
     }
@@ -82,8 +85,8 @@ double print_time(uint64_t ms)
     return ((double)ms) / 1000;
 }
 
-uint64_t do_run(ObjectStore * store, int attrsize, int numattrs,
-                int run, int transsize, int ops, ostream & out)
+uint64_t do_run(ObjectStore *store, int attrsize, int numattrs,
+                int run, int transsize, int ops, ostream &out)
 {
     ceph::mutex lock = ceph::make_mutex("lock");
     ceph::condition_variable cond;
@@ -118,15 +121,15 @@ uint64_t do_run(ObjectStore * store, int attrsize, int numattrs,
     for (int i = 0; i < ops; ++i) {
         {
             std::unique_lock l {
-            lock};
-            cond.wait(l,[&] {
-                      in_flight < THREADS;
-                      });
+                lock};
+            cond.wait(l, [&] {
+                in_flight < THREADS;
+            });
         }
-        ObjectStore::Transaction * t = new ObjectStore::Transaction;
+        ObjectStore::Transaction *t = new ObjectStore::Transaction;
         map < coll_t, pair < set < string >,
             ObjectStore::Sequencer * > >::iterator iter =
-            rand_choose(collections);
+                rand_choose(collections);
         for (set < string >::iterator obj = iter->second.first.begin();
              obj != iter->second.first.end(); ++obj) {
             for (int j = 0; j < numattrs; ++j) {
@@ -143,11 +146,11 @@ uint64_t do_run(ObjectStore * store, int attrsize, int numattrs,
     }
     {
         std::unique_lock l {
-        lock};
-        cond.wait(l,[&] {
-                  return in_flight == 0;
-                  }
-        );
+            lock};
+        cond.wait(l, [&] {
+            return in_flight == 0;
+        }
+                 );
     }
     return get_time() - start;
 }
@@ -178,7 +181,7 @@ int main(int argc, char **argv)
     string store_path(args[1]);
 
     boost::scoped_ptr < ObjectStore >
-        store(new BlueStore(cct.get(), store_path));
+    store(new BlueStore(cct.get(), store_path));
 
     std::cerr << "mkfs starting" << std::endl;
     ceph_assert(!store->mkfs());
@@ -196,8 +199,8 @@ int main(int argc, char **argv)
                                    10,
                                    1000, std::cout);
             std::cout << (1 << i) << "\t"
-                << (1 << j) << "\t"
-                << 10 << "\t" << 1000 << "\t" << print_time(time) << std::endl;
+                      << (1 << j) << "\t"
+                      << 10 << "\t" << 1000 << "\t" << print_time(time) << std::endl;
         }
     }
     store->umount();

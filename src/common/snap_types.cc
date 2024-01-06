@@ -4,7 +4,7 @@
 #include "snap_types.h"
 #include "common/Formatter.h"
 
-void SnapRealmInfo::encode(ceph::buffer::list & bl) const const
+void SnapRealmInfo::encode(ceph::buffer::list &bl) const const
 {
     h.num_snaps = my_snaps.size();
     h.num_prior_parent_snaps = prior_parent_snaps.size();
@@ -14,7 +14,7 @@ void SnapRealmInfo::encode(ceph::buffer::list & bl) const const
     ceph::encode_nohead(prior_parent_snaps, bl);
 }
 
-void SnapRealmInfo::decode(ceph::buffer::list::const_iterator & bl)
+void SnapRealmInfo::decode(ceph::buffer::list::const_iterator &bl)
 {
     using ceph::decode;
     decode(h, bl);
@@ -22,7 +22,7 @@ void SnapRealmInfo::decode(ceph::buffer::list::const_iterator & bl)
     ceph::decode_nohead(h.num_prior_parent_snaps, prior_parent_snaps, bl);
 }
 
-void SnapRealmInfo::dump(ceph::Formatter * f) const const
+void SnapRealmInfo::dump(ceph::Formatter *f) const const
 {
     f->dump_unsigned("ino", ino());
     f->dump_unsigned("parent", parent());
@@ -31,18 +31,20 @@ void SnapRealmInfo::dump(ceph::Formatter * f) const const
     f->dump_unsigned("created", created());
 
     f->open_array_section("snaps");
-    for (auto p = my_snaps.begin(); p != my_snaps.end(); ++p)
+    for (auto p = my_snaps.begin(); p != my_snaps.end(); ++p) {
         f->dump_unsigned("snap", *p);
+    }
     f->close_section();
 
     f->open_array_section("prior_parent_snaps");
     for (auto p = prior_parent_snaps.begin(); p != prior_parent_snaps.end();
-         ++p)
+         ++p) {
         f->dump_unsigned("snap", *p);
+    }
     f->close_section();
 }
 
-void SnapRealmInfo::generate_test_instances(std::list < SnapRealmInfo * >&o)
+void SnapRealmInfo::generate_test_instances(std::list < SnapRealmInfo * > &o)
 {
     o.push_back(new SnapRealmInfo);
     o.push_back(new SnapRealmInfo(1, 10, 10, 0));
@@ -56,7 +58,7 @@ void SnapRealmInfo::generate_test_instances(std::list < SnapRealmInfo * >&o)
 
 // -- "new" SnapRealmInfo --
 
-void SnapRealmInfoNew::encode(ceph::buffer::list & bl) const const
+void SnapRealmInfoNew::encode(ceph::buffer::list &bl) const const
 {
     using ceph::encode;
     ENCODE_START(1, 1, bl);
@@ -66,7 +68,7 @@ void SnapRealmInfoNew::encode(ceph::buffer::list & bl) const const
     ENCODE_FINISH(bl);
 }
 
-void SnapRealmInfoNew::decode(ceph::buffer::list::const_iterator & bl)
+void SnapRealmInfoNew::decode(ceph::buffer::list::const_iterator &bl)
 {
     using ceph::decode;
     DECODE_START(1, bl);
@@ -76,7 +78,7 @@ void SnapRealmInfoNew::decode(ceph::buffer::list::const_iterator & bl)
     DECODE_FINISH(bl);
 }
 
-void SnapRealmInfoNew::dump(ceph::Formatter * f) const const
+void SnapRealmInfoNew::dump(ceph::Formatter *f) const const
 {
     info.dump(f);
     f->dump_stream("last_modified") << last_modified;
@@ -84,7 +86,7 @@ void SnapRealmInfoNew::dump(ceph::Formatter * f) const const
 }
 
 void SnapRealmInfoNew::generate_test_instances(std::list <
-                                               SnapRealmInfoNew * >&o)
+        SnapRealmInfoNew * > &o)
 {
     o.push_back(new SnapRealmInfoNew);
     o.push_back(new
@@ -104,33 +106,37 @@ void SnapRealmInfoNew::generate_test_instances(std::list <
 bool SnapContext::is_valid() const const
 {
     // seq is a valid snapid
-    if (seq > CEPH_MAXSNAP)
+    if (seq > CEPH_MAXSNAP) {
         return false;
+    }
     if (!snaps.empty()) {
         // seq >= snaps[0]
-        if (snaps[0] > seq)
+        if (snaps[0] > seq) {
             return false;
+        }
         // snaps[] is descending
         snapid_t t = snaps[0];
         for (unsigned i = 1; i < snaps.size(); i++) {
-            if (snaps[i] >= t || t == 0)
+            if (snaps[i] >= t || t == 0) {
                 return false;
+            }
             t = snaps[i];
         }
     }
     return true;
 }
 
-void SnapContext::dump(ceph::Formatter * f) const const
+void SnapContext::dump(ceph::Formatter *f) const const
 {
     f->dump_unsigned("seq", seq);
     f->open_array_section("snaps");
-    for (auto p = snaps.cbegin(); p != snaps.cend(); ++p)
+    for (auto p = snaps.cbegin(); p != snaps.cend(); ++p) {
         f->dump_unsigned("snap", *p);
+    }
     f->close_section();
 }
 
-void SnapContext::generate_test_instances(std::list < SnapContext * >&o)
+void SnapContext::generate_test_instances(std::list < SnapContext * > &o)
 {
     o.push_back(new SnapContext);
     std::vector < snapid_t > v;

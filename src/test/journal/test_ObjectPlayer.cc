@@ -9,22 +9,25 @@
 #include "test/librados/test.h"
 #include "test/journal/RadosTestFixture.h"
 
-template < typename T > class TestObjectPlayer:public RadosTestFixture, public T {
-  public:
-    auto create_object(const std::string & oid, uint8_t order) {
+template < typename T > class TestObjectPlayer: public RadosTestFixture, public T
+{
+public:
+    auto create_object(const std::string &oid, uint8_t order)
+    {
         auto object =
             ceph::make_ref < journal::ObjectPlayer > (m_ioctx, oid + ".", 0,
-                                                      *m_timer, m_timer_lock,
-                                                      order,
-                                                      T::max_fetch_bytes);
+                *m_timer, m_timer_lock,
+                order,
+                T::max_fetch_bytes);
         return object;
     }
 
-    int fetch(const ceph::ref_t < journal::ObjectPlayer > &object_player) {
+    int fetch(const ceph::ref_t < journal::ObjectPlayer > &object_player)
+    {
         while (true) {
             C_SaferCond ctx;
             object_player->
-                set_refetch_state(journal::ObjectPlayer::REFETCH_STATE_NONE);
+            set_refetch_state(journal::ObjectPlayer::REFETCH_STATE_NONE);
             object_player->fetch(&ctx);
             int r = ctx.wait();
             if (r < 0 || !object_player->refetch_required()) {
@@ -36,8 +39,9 @@ template < typename T > class TestObjectPlayer:public RadosTestFixture, public T
 
     int watch_and_wait_for_entries(const ceph::ref_t < journal::ObjectPlayer >
                                    &object_player,
-                                   journal::ObjectPlayer::Entries * entries,
-                                   size_t count) {
+                                   journal::ObjectPlayer::Entries *entries,
+                                   size_t count)
+    {
         for (size_t i = 0; i < 50; ++i) {
             object_player->get_entries(entries);
             if (entries->size() == count) {
@@ -55,7 +59,8 @@ template < typename T > class TestObjectPlayer:public RadosTestFixture, public T
         return 0;
     }
 
-    std::string get_object_name(const std::string & oid) {
+    std::string get_object_name(const std::string &oid)
+    {
         return oid + ".0";
     }
 };
@@ -65,7 +70,7 @@ template < uint32_t _max_fetch_bytes > struct TestObjectPlayerParams {
 };
 
 typedef::testing::Types < TestObjectPlayerParams < 0 >,
-    TestObjectPlayerParams < 10 > >TestObjectPlayerTypes;
+        TestObjectPlayerParams < 10 > >TestObjectPlayerTypes;
 TYPED_TEST_SUITE(TestObjectPlayer, TestObjectPlayerTypes);
 
 TYPED_TEST(TestObjectPlayer, Fetch)
@@ -88,7 +93,8 @@ TYPED_TEST(TestObjectPlayer, Fetch)
     ASSERT_EQ(2U, entries.size());
 
     journal::ObjectPlayer::Entries expected_entries = {
-    entry1, entry2};
+        entry1, entry2
+    };
     ASSERT_EQ(expected_entries, entries);
 }
 
@@ -113,7 +119,8 @@ TYPED_TEST(TestObjectPlayer, FetchLarge)
     ASSERT_EQ(2U, entries.size());
 
     journal::ObjectPlayer::Entries expected_entries = {
-    entry1, entry2};
+        entry1, entry2
+    };
     ASSERT_EQ(expected_entries, entries);
 }
 
@@ -137,7 +144,8 @@ TYPED_TEST(TestObjectPlayer, FetchDeDup)
     ASSERT_EQ(1U, entries.size());
 
     journal::ObjectPlayer::Entries expected_entries = {
-    entry2};
+        entry2
+    };
     ASSERT_EQ(expected_entries, entries);
 }
 
@@ -175,7 +183,8 @@ TYPED_TEST(TestObjectPlayer, FetchCorrupt)
     ASSERT_EQ(1U, entries.size());
 
     journal::ObjectPlayer::Entries expected_entries = {
-    entry1};
+        entry1
+    };
     ASSERT_EQ(expected_entries, entries);
 }
 
@@ -198,7 +207,8 @@ TYPED_TEST(TestObjectPlayer, FetchAppend)
     ASSERT_EQ(1U, entries.size());
 
     journal::ObjectPlayer::Entries expected_entries = {
-    entry1};
+        entry1
+    };
     ASSERT_EQ(expected_entries, entries);
 
     bl.clear();
@@ -210,7 +220,8 @@ TYPED_TEST(TestObjectPlayer, FetchAppend)
     ASSERT_EQ(2U, entries.size());
 
     expected_entries = {
-    entry1, entry2};
+        entry1, entry2
+    };
     ASSERT_EQ(expected_entries, entries);
 }
 
@@ -265,7 +276,8 @@ TYPED_TEST(TestObjectPlayer, Watch)
 
     journal::ObjectPlayer::Entries expected_entries;
     expected_entries = {
-    entry1};
+        entry1
+    };
     ASSERT_EQ(expected_entries, entries);
 
     C_SaferCond cond2;
@@ -280,7 +292,8 @@ TYPED_TEST(TestObjectPlayer, Watch)
     ASSERT_EQ(2U, entries.size());
 
     expected_entries = {
-    entry1, entry2};
+        entry1, entry2
+    };
     ASSERT_EQ(expected_entries, entries);
 }
 

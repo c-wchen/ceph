@@ -14,12 +14,15 @@
 #include "osd/HitSet.h"
 #include <iostream>
 
-class HitSetTestStrap {
-  public:
-    HitSet * hitset;
+class HitSetTestStrap
+{
+public:
+    HitSet *hitset;
 
-    explicit HitSetTestStrap(HitSet * h):hitset(h) {
-    } void fill(unsigned count) {
+    explicit HitSetTestStrap(HitSet *h): hitset(h)
+    {
+    } void fill(unsigned count)
+    {
         char buf[50];
         for (unsigned i = 0; i < count; ++i) {
             sprintf(buf, "hitsettest_%u", i);
@@ -28,7 +31,8 @@ class HitSetTestStrap {
         }
         EXPECT_EQ(count, hitset->insert_count());
     }
-    void verify_fill(unsigned count) {
+    void verify_fill(unsigned count)
+    {
         char buf[50];
         for (unsigned i = 0; i < count; ++i) {
             sprintf(buf, "hitsettest_%u", i);
@@ -39,19 +43,23 @@ class HitSetTestStrap {
 
 };
 
-class BloomHitSetTest:public testing::Test, public HitSetTestStrap {
-  public:
+class BloomHitSetTest: public testing::Test, public HitSetTestStrap
+{
+public:
 
-    BloomHitSetTest():HitSetTestStrap(new HitSet(new BloomHitSet)) {
-    } void rebuild(double fp, uint64_t target, uint64_t seed) {
-        BloomHitSet::Params * bparams =
+    BloomHitSetTest(): HitSetTestStrap(new HitSet(new BloomHitSet))
+    {
+    } void rebuild(double fp, uint64_t target, uint64_t seed)
+    {
+        BloomHitSet::Params *bparams =
             new BloomHitSet::Params(fp, target, seed);
         HitSet::Params param(bparams);
         HitSet new_set(param);
         *hitset = new_set;
     }
 
-    BloomHitSet *get_hitset() {
+    BloomHitSet *get_hitset()
+    {
         return static_cast < BloomHitSet * >(hitset->impl.get());
     }
 };
@@ -122,18 +130,22 @@ TEST_F(BloomHitSetTest, RejectsNoMatch)
     for (int i = 100; i < 200; ++i) {
         sprintf(buf, "hitsettest_%d", i);
         hobject_t obj(object_t(buf), "", 0, i, 0, "");
-        if (hitset->contains(obj))
+        if (hitset->contains(obj)) {
             ++matches;
+        }
     }
     // we set a 1 in 1000 false positive; allow one in our 100
     EXPECT_LT(matches, 2);
 }
 
-class ExplicitHashHitSetTest:public testing::Test, public HitSetTestStrap {
-  public:
+class ExplicitHashHitSetTest: public testing::Test, public HitSetTestStrap
+{
+public:
 
-    ExplicitHashHitSetTest():HitSetTestStrap(new HitSet(new ExplicitHashHitSet)) {
-    } ExplicitHashHitSet *get_hitset() {
+    ExplicitHashHitSetTest(): HitSetTestStrap(new HitSet(new ExplicitHashHitSet))
+    {
+    } ExplicitHashHitSet *get_hitset()
+    {
         return static_cast < ExplicitHashHitSet * >(hitset->impl.get());
     }
 };
@@ -170,13 +182,15 @@ TEST_F(ExplicitHashHitSetTest, RejectsNoMatch)
     EXPECT_EQ(matches, 0);
 }
 
-class ExplicitObjectHitSetTest:public testing::Test, public HitSetTestStrap {
-  public:
+class ExplicitObjectHitSetTest: public testing::Test, public HitSetTestStrap
+{
+public:
 
-    ExplicitObjectHitSetTest():HitSetTestStrap(new
-                                               HitSet(new ExplicitObjectHitSet))
+    ExplicitObjectHitSetTest(): HitSetTestStrap(new
+                HitSet(new ExplicitObjectHitSet))
     {
-    } ExplicitObjectHitSet *get_hitset() {
+    } ExplicitObjectHitSet *get_hitset()
+    {
         return static_cast < ExplicitObjectHitSet * >(hitset->impl.get());
     }
 };

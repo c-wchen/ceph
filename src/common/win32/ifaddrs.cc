@@ -33,16 +33,18 @@ int getifaddrs(struct ifaddrs **ifap)
 
     for (PIP_ADAPTER_ADDRESSES curr_addrs = adapter_addrs;
          curr_addrs != NULL; curr_addrs = curr_addrs->Next) {
-        if (curr_addrs->OperStatus != 1)
+        if (curr_addrs->OperStatus != 1) {
             continue;
+        }
 
         for (PIP_ADAPTER_UNICAST_ADDRESS unicast_addrs =
-             curr_addrs->FirstUnicastAddress; unicast_addrs != NULL;
+                 curr_addrs->FirstUnicastAddress; unicast_addrs != NULL;
              unicast_addrs = unicast_addrs->Next) {
             SOCKADDR *unicast_sockaddr = unicast_addrs->Address.lpSockaddr;
             if (unicast_sockaddr->sa_family != AF_INET &&
-                unicast_sockaddr->sa_family != AF_INET6)
+                unicast_sockaddr->sa_family != AF_INET6) {
                 continue;
+            }
             out_list_curr = calloc(sizeof(*out_list_curr), 1);
             if (!out_list_curr) {
                 errno = ENOMEM;
@@ -54,8 +56,9 @@ int getifaddrs(struct ifaddrs **ifap)
             out_list_head = out_list_curr;
 
             out_list_curr->ifa_flags = IFF_UP;
-            if (curr_addrs->IfType == IF_TYPE_SOFTWARE_LOOPBACK)
+            if (curr_addrs->IfType == IF_TYPE_SOFTWARE_LOOPBACK) {
                 out_list_curr->ifa_flags |= IFF_LOOPBACK;
+            }
 
             out_list_curr->ifa_addr =
                 (struct sockaddr *)&out_list_curr->in_addrs;
@@ -80,8 +83,7 @@ int getifaddrs(struct ifaddrs **ifap)
                 netmask4->sin_addr.S_un.S_addr = subnet_mask;
                 addr4->sin_addr =
                     ((struct sockaddr_in *)unicast_sockaddr)->sin_addr;
-            }
-            else {
+            } else {
                 struct sockaddr_in6 *addr6 =
                     (struct sockaddr_in6 *)&out_list_curr->in_addrs;
                 (*addr6) = *(struct sockaddr_in6 *)unicast_sockaddr;
@@ -93,12 +95,13 @@ int getifaddrs(struct ifaddrs **ifap)
         }
     }
     ret = 0;
-  out:
+out:
     free(adapter_addrs);
-    if (ret && out_list_head)
+    if (ret && out_list_head) {
         free(out_list_head);
-    else if (ifap)
+    } else if (ifap) {
         *ifap = out_list_head;
+    }
 
     return ret;
 }
