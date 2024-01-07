@@ -32,75 +32,77 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-static rgw::sal::Driver* driver = NULL;
+static rgw::sal::Driver *driver = NULL;
 
-class StoreDestructor {
-  rgw::sal::Driver* driver;
+class StoreDestructor
+{
+    rgw::sal::Driver *driver;
 
 public:
-  explicit StoreDestructor(rgw::sal::Driver* _s) : driver(_s) {}
-  ~StoreDestructor() {
-    if (driver) {
-      DriverManager::close_storage(driver);
+    explicit StoreDestructor(rgw::sal::Driver *_s) : driver(_s) {}
+    ~StoreDestructor()
+    {
+        if (driver) {
+            DriverManager::close_storage(driver);
+        }
     }
-  }
 };
 
 static void usage()
 {
-  generic_server_usage();
+    generic_server_usage();
 }
 
 int main(const int argc, const char **argv)
 {
-  auto args = argv_to_vec(argc, argv);
-  if (args.empty()) {
-    std::cerr << argv[0] << ": -h or --help for usage" << std::endl;
-    exit(1);
-  }
-  if (ceph_argparse_need_usage(args)) {
-    usage();
-    exit(0);
-  }
-
-  auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
-			 CODE_ENVIRONMENT_DAEMON,
-			 CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS);
-
-  for (std::vector<const char *>::iterator i = args.begin(); i != args.end(); ) {
-    if (ceph_argparse_double_dash(args, i)) {
-      break;
+    auto args = argv_to_vec(argc, argv);
+    if (args.empty()) {
+        std::cerr << argv[0] << ": -h or --help for usage" << std::endl;
+        exit(1);
     }
-  }
+    if (ceph_argparse_need_usage(args)) {
+        usage();
+        exit(0);
+    }
 
-  if (g_conf()->daemonize) {
-    global_init_daemonize(g_ceph_context);
-  }
+    auto cct = global_init(NULL, args, CEPH_ENTITY_TYPE_CLIENT,
+                           CODE_ENVIRONMENT_DAEMON,
+                           CINIT_FLAG_UNPRIVILEGED_DAEMON_DEFAULTS);
 
-  common_init_finish(g_ceph_context);
+    for (std::vector<const char *>::iterator i = args.begin(); i != args.end();) {
+        if (ceph_argparse_double_dash(args, i)) {
+            break;
+        }
+    }
 
-  const DoutPrefix dp(cct.get(), dout_subsys, "rgw object expirer: ");
-  DriverManager::Config cfg;
-  cfg.store_name = "rados";
-  cfg.filter_name = "none";
-  driver = DriverManager::get_storage(&dp, g_ceph_context, cfg, false, false, false, false, false, false, null_yield);
-  if (!driver) {
-    std::cerr << "couldn't init storage provider" << std::endl;
-    return EIO;
-  }
+    if (g_conf()->daemonize) {
+        global_init_daemonize(g_ceph_context);
+    }
 
-  /* Guard to not forget about closing the rados driver. */
-  StoreDestructor store_dtor(driver);
+    common_init_finish(g_ceph_context);
 
-  RGWObjectExpirer objexp(driver);
-  objexp.start_processor();
+    const DoutPrefix dp(cct.get(), dout_subsys, "rgw object expirer: ");
+    DriverManager::Config cfg;
+    cfg.store_name = "rados";
+    cfg.filter_name = "none";
+    driver = DriverManager::get_storage(&dp, g_ceph_context, cfg, false, false, false, false, false, false, null_yield);
+    if (!driver) {
+        std::cerr << "couldn't init storage provider" << std::endl;
+        return EIO;
+    }
 
-  const utime_t interval(g_ceph_context->_conf->rgw_objexp_gc_interval, 0);
-  while (true) {
-    interval.sleep();
-  }
+    /* Guard to not forget about closing the rados driver. */
+    StoreDestructor store_dtor(driver);
 
-  /* unreachable */
+    RGWObjectExpirer objexp(driver);
+    objexp.start_processor();
 
-  return EXIT_SUCCESS;
+    const utime_t interval(g_ceph_context->_conf->rgw_objexp_gc_interval, 0);
+    while (true) {
+        interval.sleep();
+    }
+
+    /* unreachable */
+
+    return EXIT_SUCCESS;
 }

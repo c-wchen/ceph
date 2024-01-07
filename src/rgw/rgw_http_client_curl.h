@@ -19,11 +19,13 @@
 #include <boost/optional.hpp>
 #include "rgw_frontend.h"
 
-namespace rgw {
-namespace curl {
+namespace rgw
+{
+namespace curl
+{
 using fe_map_t = std::multimap <std::string, RGWFrontendConfig *>;
 
-void setup_curl(boost::optional<const fe_map_t&> m);
+void setup_curl(boost::optional<const fe_map_t &> m);
 void cleanup_curl();
 }
 }

@@ -1,12 +1,13 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #pragma once
 #include <string>
 #include <vector>
 
-namespace rgw::notify {
-  enum EventType {
+namespace rgw::notify
+{
+enum EventType {
     ObjectCreated                        = 0xF,
     ObjectCreatedPut                     = 0x1,
     ObjectCreatedPost                    = 0x2,
@@ -30,20 +31,20 @@ namespace rgw::notify {
     ObjectSyncedDelete                   = 0x20000,
     ObjectSyncedDeletionMarkerCreated    = 0x40000,
     UnknownEvent                         = 0x100000
-  };
+};
 
-  using EventTypeList = std::vector<EventType>;
+using EventTypeList = std::vector<EventType>;
 
-  // two event types are considered equal if their bits intersect
-  bool operator==(EventType lhs, EventType rhs);
+// two event types are considered equal if their bits intersect
+bool operator==(EventType lhs, EventType rhs);
 
-  std::string to_string(EventType t);
+std::string to_string(EventType t);
 
-  std::string to_event_string(EventType t);
+std::string to_event_string(EventType t);
 
-  EventType from_string(const std::string& s);
- 
-  // create a vector of event types from comma separated list of event types
-  void from_string_list(const std::string& string_list, EventTypeList& event_list);
+EventType from_string(const std::string &s);
+
+// create a vector of event types from comma separated list of event types
+void from_string_list(const std::string &string_list, EventTypeList &event_list);
 }
 

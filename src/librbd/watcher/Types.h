@@ -8,55 +8,64 @@
 #include "include/buffer_fwd.h"
 #include "include/encoding.h"
 
-namespace ceph { class Formatter; }
+namespace ceph
+{
+class Formatter;
+}
 
-namespace librbd {
+namespace librbd
+{
 
 class Watcher;
 
-namespace watcher {
+namespace watcher
+{
 
 struct ClientId {
-  uint64_t gid;
-  uint64_t handle;
+    uint64_t gid;
+    uint64_t handle;
 
-  ClientId() : gid(0), handle(0) {}
-  ClientId(uint64_t gid, uint64_t handle) : gid(gid), handle(handle) {}
+    ClientId() : gid(0), handle(0) {}
+    ClientId(uint64_t gid, uint64_t handle) : gid(gid), handle(handle) {}
 
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::const_iterator& it);
-  void dump(Formatter *f) const;
+    void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &it);
+    void dump(Formatter *f) const;
 
-  inline bool is_valid() const {
-    return (*this != ClientId());
-  }
-
-  inline bool operator==(const ClientId &rhs) const {
-    return (gid == rhs.gid && handle == rhs.handle);
-  }
-  inline bool operator!=(const ClientId &rhs) const {
-    return !(*this == rhs);
-  }
-  inline bool operator<(const ClientId &rhs) const {
-    if (gid != rhs.gid) {
-      return gid < rhs.gid;
-    } else {
-      return handle < rhs.handle;
+    inline bool is_valid() const
+    {
+        return (*this != ClientId());
     }
-  }
+
+    inline bool operator==(const ClientId &rhs) const
+    {
+        return (gid == rhs.gid && handle == rhs.handle);
+    }
+    inline bool operator!=(const ClientId &rhs) const
+    {
+        return !(*this == rhs);
+    }
+    inline bool operator<(const ClientId &rhs) const
+    {
+        if (gid != rhs.gid) {
+            return gid < rhs.gid;
+        } else {
+            return handle < rhs.handle;
+        }
+    }
 };
 
 struct NotifyResponse {
-  std::map<ClientId, bufferlist> acks;
-  std::vector<ClientId> timeouts;
+    std::map<ClientId, bufferlist> acks;
+    std::vector<ClientId> timeouts;
 
-  void encode(bufferlist& bl) const;
-  void decode(bufferlist::const_iterator& it);
+    void encode(bufferlist &bl) const;
+    void decode(bufferlist::const_iterator &it);
 };
 
 template <typename ImageCtxT>
 struct Traits {
-  typedef librbd::Watcher Watcher;
+    typedef librbd::Watcher Watcher;
 };
 
 std::ostream &operator<<(std::ostream &out,

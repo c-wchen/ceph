@@ -24,7 +24,7 @@
  * Don't be fooled by its emptiness. It does serve a purpose :)
  */
 
-int main(int, char**)
+int main(int, char **)
 {
     return 0;
 }

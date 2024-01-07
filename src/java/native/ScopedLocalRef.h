@@ -23,16 +23,20 @@
 
 // A smart pointer that deletes a JNI local reference when it goes out of scope.
 template<typename T>
-class ScopedLocalRef {
+class ScopedLocalRef
+{
 public:
-    ScopedLocalRef(JNIEnv* env, T localRef) : mEnv(env), mLocalRef(localRef) {
+    ScopedLocalRef(JNIEnv *env, T localRef) : mEnv(env), mLocalRef(localRef)
+    {
     }
 
-    ~ScopedLocalRef() {
+    ~ScopedLocalRef()
+    {
         reset();
     }
 
-    void reset(T ptr = NULL) {
+    void reset(T ptr = NULL)
+    {
         if (ptr != mLocalRef) {
             if (mLocalRef != NULL) {
                 mEnv->DeleteLocalRef(mLocalRef);
@@ -41,23 +45,25 @@ public:
         }
     }
 
-    T release() __attribute__((warn_unused_result)) {
+    T release() __attribute__((warn_unused_result))
+    {
         T localRef = mLocalRef;
         mLocalRef = NULL;
         return localRef;
     }
 
-    T get() const {
+    T get() const
+    {
         return mLocalRef;
     }
 
 private:
-    JNIEnv* mEnv;
+    JNIEnv *mEnv;
     T mLocalRef;
 
     // Disallow copy and assignment.
-    ScopedLocalRef(const ScopedLocalRef&);
-    void operator=(const ScopedLocalRef&);
+    ScopedLocalRef(const ScopedLocalRef &);
+    void operator=(const ScopedLocalRef &);
 };
 
 #endif  // SCOPED_LOCAL_REF_H_included

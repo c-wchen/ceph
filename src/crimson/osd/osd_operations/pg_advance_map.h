@@ -11,47 +11,53 @@
 #include "osd/osd_types.h"
 #include "crimson/common/type_helpers.h"
 
-namespace ceph {
-  class Formatter;
+namespace ceph
+{
+class Formatter;
 }
 
-namespace crimson::osd {
+namespace crimson::osd
+{
 
 class ShardServices;
 class PG;
 
-class PGAdvanceMap : public PhasedOperationT<PGAdvanceMap> {
+class PGAdvanceMap : public PhasedOperationT<PGAdvanceMap>
+{
 public:
-  static constexpr OperationTypeCode type = OperationTypeCode::pg_advance_map;
+    static constexpr OperationTypeCode type = OperationTypeCode::pg_advance_map;
 
 protected:
-  ShardServices &shard_services;
-  Ref<PG> pg;
-  PipelineHandle handle;
+    ShardServices &shard_services;
+    Ref<PG> pg;
+    PipelineHandle handle;
 
-  std::optional<epoch_t> from;
-  epoch_t to;
+    std::optional<epoch_t> from;
+    epoch_t to;
 
-  PeeringCtx rctx;
-  const bool do_init;
+    PeeringCtx rctx;
+    const bool do_init;
 
 public:
-  PGAdvanceMap(
-    ShardServices &shard_services, Ref<PG> pg, epoch_t to,
-    PeeringCtx &&rctx, bool do_init);
-  ~PGAdvanceMap();
+    PGAdvanceMap(
+        ShardServices &shard_services, Ref<PG> pg, epoch_t to,
+        PeeringCtx &&rctx, bool do_init);
+    ~PGAdvanceMap();
 
-  void print(std::ostream &) const final;
-  void dump_detail(ceph::Formatter *f) const final;
-  seastar::future<> start();
-  PipelineHandle &get_handle() { return handle; }
+    void print(std::ostream &) const final;
+    void dump_detail(ceph::Formatter *f) const final;
+    seastar::future<> start();
+    PipelineHandle &get_handle()
+    {
+        return handle;
+    }
 
-  std::tuple<
+    std::tuple <
     PGPeeringPipeline::Process::BlockingEvent
-  > tracking_events;
+    > tracking_events;
 
 private:
-  PGPeeringPipeline &peering_pp(PG &pg);
+    PGPeeringPipeline &peering_pp(PG &pg);
 };
 
 }

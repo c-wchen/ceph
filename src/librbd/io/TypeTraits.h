@@ -6,12 +6,14 @@
 
 #include "common/Timer.h"
 
-namespace librbd {
-namespace io {
+namespace librbd
+{
+namespace io
+{
 
 template <typename IoCtxT>
 struct TypeTraits {
-  typedef ::SafeTimer SafeTimer;
+    typedef ::SafeTimer SafeTimer;
 };
 
 } // namespace io

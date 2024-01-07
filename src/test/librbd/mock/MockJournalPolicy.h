@@ -7,13 +7,14 @@
 #include "librbd/journal/Policy.h"
 #include "gmock/gmock.h"
 
-namespace librbd {
+namespace librbd
+{
 
 struct MockJournalPolicy : public journal::Policy {
 
-  MOCK_CONST_METHOD0(append_disabled, bool());
-  MOCK_CONST_METHOD0(journal_disabled, bool());
-  MOCK_METHOD1(allocate_tag_on_lock, void(Context*));
+    MOCK_CONST_METHOD0(append_disabled, bool());
+    MOCK_CONST_METHOD0(journal_disabled, bool());
+    MOCK_METHOD1(allocate_tag_on_lock, void(Context *));
 
 };
 

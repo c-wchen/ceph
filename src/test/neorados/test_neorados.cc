@@ -8,40 +8,45 @@
 #include "gtest/gtest.h"
 #include <iostream>
 
-namespace neorados {
+namespace neorados
+{
 
-class TestNeoRADOS : public ::testing::Test {
+class TestNeoRADOS : public ::testing::Test
+{
 public:
-  TestNeoRADOS() {
-  }
+    TestNeoRADOS()
+    {
+    }
 };
 
-TEST_F(TestNeoRADOS, MakeWithLibRADOS) {
-  librados::Rados paleo_rados;
-  auto result = connect_cluster_pp(paleo_rados);
-  ASSERT_EQ("", result);
+TEST_F(TestNeoRADOS, MakeWithLibRADOS)
+{
+    librados::Rados paleo_rados;
+    auto result = connect_cluster_pp(paleo_rados);
+    ASSERT_EQ("", result);
 
-  auto rados = RADOS::make_with_librados(paleo_rados);
+    auto rados = RADOS::make_with_librados(paleo_rados);
 
-  ReadOp op;
-  bufferlist bl;
-  op.read(0, 0, &bl);
+    ReadOp op;
+    bufferlist bl;
+    op.read(0, 0, &bl);
 
-  // provide pool that doesn't exists -- just testing round-trip
-  ASSERT_THROW(
-    rados.execute({"dummy-obj"}, std::numeric_limits<int64_t>::max(),
-                  std::move(op), nullptr, ceph::async::use_blocked),
-    boost::system::system_error);
+    // provide pool that doesn't exists -- just testing round-trip
+    ASSERT_THROW(
+        rados.execute({"dummy-obj"}, std::numeric_limits<int64_t>::max(),
+                      std::move(op), nullptr, ceph::async::use_blocked),
+        boost::system::system_error);
 }
 
 } // namespace neorados
 
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
 
-  int seed = getpid();
-  std::cout << "seed " << seed << std::endl;
-  srand(seed);
+    int seed = getpid();
+    std::cout << "seed " << seed << std::endl;
+    srand(seed);
 
-  return RUN_ALL_TESTS();
+    return RUN_ALL_TESTS();
 }

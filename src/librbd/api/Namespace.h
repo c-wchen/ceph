@@ -9,19 +9,21 @@
 #include <string>
 #include <vector>
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace api {
+namespace api
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
 struct Namespace {
 
-  static int create(librados::IoCtx& io_ctx, const std::string& name);
-  static int remove(librados::IoCtx& io_ctx, const std::string& name);
-  static int list(librados::IoCtx& io_ctx, std::vector<std::string>* names);
-  static int exists(librados::IoCtx& io_ctx, const std::string& name, bool *exists);
+    static int create(librados::IoCtx &io_ctx, const std::string &name);
+    static int remove(librados::IoCtx &io_ctx, const std::string &name);
+    static int list(librados::IoCtx &io_ctx, std::vector<std::string> *names);
+    static int exists(librados::IoCtx &io_ctx, const std::string &name, bool *exists);
 
 };
 

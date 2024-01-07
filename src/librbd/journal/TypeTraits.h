@@ -6,21 +6,24 @@
 
 struct ContextWQ;
 
-namespace journal {
+namespace journal
+{
 class Future;
 class Journaler;
 class ReplayEntry;
 }
 
-namespace librbd {
-namespace journal {
+namespace librbd
+{
+namespace journal
+{
 
 template <typename ImageCtxT>
 struct TypeTraits {
-  typedef ::journal::Journaler Journaler;
-  typedef ::journal::Future Future;
-  typedef ::journal::ReplayEntry ReplayEntry;
-  typedef ::ContextWQ ContextWQ;
+    typedef ::journal::Journaler Journaler;
+    typedef ::journal::Future Future;
+    typedef ::journal::ReplayEntry ReplayEntry;
+    typedef ::ContextWQ ContextWQ;
 };
 
 } // namespace journal

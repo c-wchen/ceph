@@ -16,7 +16,10 @@
 
 #include <memory>
 
-namespace rgw::sal { class RadosStore; }
+namespace rgw::sal
+{
+class RadosStore;
+}
 struct rgw_raw_obj;
 class RGWCoroutine;
 
@@ -27,27 +30,29 @@ class RGWCoroutine;
 /// of bids
 ///
 /// sync will only lock and process log shards where it holds the highest bid
-namespace rgw::sync_fairness {
+namespace rgw::sync_fairness
+{
 
-class BidManager {
- public:
-  virtual ~BidManager() {}
+class BidManager
+{
+public:
+    virtual ~BidManager() {}
 
-  /// establish a watch, creating the control object if necessary
-  virtual int start() = 0;
+    /// establish a watch, creating the control object if necessary
+    virtual int start() = 0;
 
-  /// returns true if we're the highest bidder on the given shard index
-  virtual bool is_highest_bidder(std::size_t index) = 0;
+    /// returns true if we're the highest bidder on the given shard index
+    virtual bool is_highest_bidder(std::size_t index) = 0;
 
-  /// return a coroutine that broadcasts our current bids and records the
-  /// bids from other peers that respond
-  virtual RGWCoroutine* notify_cr() = 0;
+    /// return a coroutine that broadcasts our current bids and records the
+    /// bids from other peers that respond
+    virtual RGWCoroutine *notify_cr() = 0;
 };
 
 // rados BidManager factory
-auto create_rados_bid_manager(sal::RadosStore* store,
-                              const rgw_raw_obj& watch_obj,
+auto create_rados_bid_manager(sal::RadosStore *store,
+                              const rgw_raw_obj &watch_obj,
                               std::size_t num_shards)
-  -> std::unique_ptr<BidManager>;
+-> std::unique_ptr<BidManager>;
 
 } // namespace rgw::sync_fairness

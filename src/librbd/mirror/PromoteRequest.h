@@ -9,62 +9,67 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace mirror {
+namespace mirror
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
-class PromoteRequest {
+class PromoteRequest
+{
 public:
-  static PromoteRequest *create(ImageCtxT &image_ctx, bool force,
-                                Context *on_finish) {
-    return new PromoteRequest(image_ctx, force, on_finish);
-  }
+    static PromoteRequest *create(ImageCtxT &image_ctx, bool force,
+                                  Context *on_finish)
+    {
+        return new PromoteRequest(image_ctx, force, on_finish);
+    }
 
-  PromoteRequest(ImageCtxT &image_ctx, bool force, Context *on_finish)
-    : m_image_ctx(image_ctx), m_force(force), m_on_finish(on_finish) {
-  }
+    PromoteRequest(ImageCtxT &image_ctx, bool force, Context *on_finish)
+        : m_image_ctx(image_ctx), m_force(force), m_on_finish(on_finish)
+    {
+    }
 
-  void send();
+    void send();
 
 private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v
-   * GET_INFO
-   *    |
-   *    v
-   * GET_TAG_OWNER
-   *    |
-   *    v
-   * PROMOTE
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   */
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v
+     * GET_INFO
+     *    |
+     *    v
+     * GET_TAG_OWNER
+     *    |
+     *    v
+     * PROMOTE
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     */
 
-  ImageCtxT &m_image_ctx;
-  bool m_force;
-  Context *m_on_finish;
+    ImageCtxT &m_image_ctx;
+    bool m_force;
+    Context *m_on_finish;
 
-  cls::rbd::MirrorImage m_mirror_image;
-  PromotionState m_promotion_state = PROMOTION_STATE_PRIMARY;
-  std::string m_primary_mirror_uuid;
+    cls::rbd::MirrorImage m_mirror_image;
+    PromotionState m_promotion_state = PROMOTION_STATE_PRIMARY;
+    std::string m_primary_mirror_uuid;
 
-  void get_info();
-  void handle_get_info(int r);
+    void get_info();
+    void handle_get_info(int r);
 
-  void promote();
-  void handle_promote(int r);
+    void promote();
+    void handle_promote(int r);
 
-  void finish(int r);
+    void finish(int r);
 
 };
 

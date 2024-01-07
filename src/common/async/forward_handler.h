@@ -17,7 +17,8 @@
 
 #include <boost/asio.hpp>
 
-namespace ceph::async {
+namespace ceph::async
+{
 
 /**
  * A forwarding completion handler for use with boost::asio.
@@ -36,41 +37,46 @@ namespace ceph::async {
  */
 template <typename Handler>
 struct ForwardingHandler {
-  Handler handler;
+    Handler handler;
 
-  ForwardingHandler(Handler&& handler)
-    : handler(std::move(handler))
-  {}
+    ForwardingHandler(Handler&& handler)
+        : handler(std::move(handler))
+    {}
 
-  template <typename ...Args>
-  void operator()(Args&& ...args) {
-    std::move(handler)(std::forward<Args>(args)...);
-  }
+    template <typename ...Args>
+    void operator()(Args&& ...args)
+    {
+        std::move(handler)(std::forward<Args>(args)...);
+    }
 
-  using allocator_type = boost::asio::associated_allocator_t<Handler>;
-  allocator_type get_allocator() const noexcept {
-    return boost::asio::get_associated_allocator(handler);
-  }
+    using allocator_type = boost::asio::associated_allocator_t<Handler>;
+    allocator_type get_allocator() const noexcept
+    {
+        return boost::asio::get_associated_allocator(handler);
+    }
 };
 
 } // namespace ceph::async
 
-namespace boost::asio {
+namespace boost::asio
+{
 
 // specialize boost::asio::associated_executor<> for ForwardingHandler
 template <typename Handler, typename Executor>
 struct associated_executor<ceph::async::ForwardingHandler<Handler>, Executor> {
-  using type = boost::asio::associated_executor_t<Handler, Executor>;
+    using type = boost::asio::associated_executor_t<Handler, Executor>;
 
-  static type get(const ceph::async::ForwardingHandler<Handler>& handler,
-                  const Executor& ex = Executor()) noexcept {
-    return boost::asio::get_associated_executor(handler.handler, ex);
-  }
+    static type get(const ceph::async::ForwardingHandler<Handler> &handler,
+                    const Executor &ex = Executor()) noexcept
+    {
+        return boost::asio::get_associated_executor(handler.handler, ex);
+    }
 };
 
 } // namespace boost::asio
 
-namespace ceph::async {
+namespace ceph::async
+{
 
 /**
  * Returns a single-use completion handler that always forwards on operator().
@@ -95,7 +101,7 @@ namespace ceph::async {
 template <typename Handler>
 auto forward_handler(Handler&& h)
 {
-  return ForwardingHandler{std::forward<Handler>(h)};
+    return ForwardingHandler{std::forward<Handler>(h)};
 }
 
 } // namespace ceph::async

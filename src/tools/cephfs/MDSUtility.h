@@ -30,31 +30,38 @@
  * need access the objects belonging to the MDS without actually
  * acting as an MDS daemon themselves.
  */
-class MDSUtility : public Dispatcher {
+class MDSUtility : public Dispatcher
+{
 protected:
-  Objecter *objecter;
-  FSMap *fsmap;
-  Messenger *messenger;
-  MonClient *monc;
+    Objecter *objecter;
+    FSMap *fsmap;
+    Messenger *messenger;
+    MonClient *monc;
 
-  ceph::mutex lock = ceph::make_mutex("MDSUtility::lock");
-  Finisher finisher;
-  ceph::async::io_context_pool poolctx;
+    ceph::mutex lock = ceph::make_mutex("MDSUtility::lock");
+    Finisher finisher;
+    ceph::async::io_context_pool poolctx;
 
-  Context *waiting_for_mds_map;
+    Context *waiting_for_mds_map;
 
-  bool inited;
+    bool inited;
 public:
-  MDSUtility();
-  ~MDSUtility() override;
+    MDSUtility();
+    ~MDSUtility() override;
 
-  void handle_fs_map(MFSMap* m);
-  bool ms_dispatch(Message *m) override;
-  bool ms_handle_reset(Connection *con) override { return false; }
-  void ms_handle_remote_reset(Connection *con) override {}
-  bool ms_handle_refused(Connection *con) override { return false; }
-  int init();
-  void shutdown();
+    void handle_fs_map(MFSMap *m);
+    bool ms_dispatch(Message *m) override;
+    bool ms_handle_reset(Connection *con) override
+    {
+        return false;
+    }
+    void ms_handle_remote_reset(Connection *con) override {}
+    bool ms_handle_refused(Connection *con) override
+    {
+        return false;
+    }
+    int init();
+    void shutdown();
 };
 
 #endif /* MDS_UTILITY_H_ */

@@ -12,76 +12,86 @@
 
 struct Context;
 
-namespace librbd { struct ImageCtx; }
+namespace librbd
+{
+struct ImageCtx;
+}
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
-namespace journal {
+namespace rbd
+{
+namespace mirror
+{
+namespace image_replayer
+{
+namespace journal
+{
 
 template <typename> class SyncPointHandler;
 
 template <typename ImageCtxT>
-class StateBuilder : public image_replayer::StateBuilder<ImageCtxT> {
+class StateBuilder : public image_replayer::StateBuilder<ImageCtxT>
+{
 public:
-  typedef librbd::journal::TypeTraits<ImageCtxT> TypeTraits;
-  typedef typename TypeTraits::Journaler Journaler;
+    typedef librbd::journal::TypeTraits<ImageCtxT> TypeTraits;
+    typedef typename TypeTraits::Journaler Journaler;
 
-  static StateBuilder* create(const std::string& global_image_id) {
-    return new StateBuilder(global_image_id);
-  }
+    static StateBuilder *create(const std::string &global_image_id)
+    {
+        return new StateBuilder(global_image_id);
+    }
 
-  StateBuilder(const std::string& global_image_id);
-  ~StateBuilder() override;
+    StateBuilder(const std::string &global_image_id);
+    ~StateBuilder() override;
 
-  void close(Context* on_finish) override;
+    void close(Context *on_finish) override;
 
-  bool is_disconnected() const override;
+    bool is_disconnected() const override;
 
-  cls::rbd::MirrorImageMode get_mirror_image_mode() const override;
+    cls::rbd::MirrorImageMode get_mirror_image_mode() const override;
 
-  image_sync::SyncPointHandler* create_sync_point_handler() override;
+    image_sync::SyncPointHandler *create_sync_point_handler() override;
 
-  bool replay_requires_remote_image() const override {
-    return false;
-  }
+    bool replay_requires_remote_image() const override
+    {
+        return false;
+    }
 
-  BaseRequest* create_local_image_request(
-      Threads<ImageCtxT>* threads,
-      librados::IoCtx& local_io_ctx,
-      const std::string& global_image_id,
-      PoolMetaCache* pool_meta_cache,
-      ProgressContext* progress_ctx,
-      Context* on_finish) override;
+    BaseRequest *create_local_image_request(
+        Threads<ImageCtxT> *threads,
+        librados::IoCtx &local_io_ctx,
+        const std::string &global_image_id,
+        PoolMetaCache *pool_meta_cache,
+        ProgressContext *progress_ctx,
+        Context *on_finish) override;
 
-  BaseRequest* create_prepare_replay_request(
-      const std::string& local_mirror_uuid,
-      ProgressContext* progress_ctx,
-      bool* resync_requested,
-      bool* syncing,
-      Context* on_finish) override;
+    BaseRequest *create_prepare_replay_request(
+        const std::string &local_mirror_uuid,
+        ProgressContext *progress_ctx,
+        bool *resync_requested,
+        bool *syncing,
+        Context *on_finish) override;
 
-  image_replayer::Replayer* create_replayer(
-      Threads<ImageCtxT>* threads,
-      InstanceWatcher<ImageCtxT>* instance_watcher,
-      const std::string& local_mirror_uuid,
-      PoolMetaCache* pool_meta_cache,
-      ReplayerListener* replayer_listener) override;
+    image_replayer::Replayer *create_replayer(
+        Threads<ImageCtxT> *threads,
+        InstanceWatcher<ImageCtxT> *instance_watcher,
+        const std::string &local_mirror_uuid,
+        PoolMetaCache *pool_meta_cache,
+        ReplayerListener *replayer_listener) override;
 
-  std::string local_primary_mirror_uuid;
+    std::string local_primary_mirror_uuid;
 
-  Journaler* remote_journaler = nullptr;
-  cls::journal::ClientState remote_client_state =
-    cls::journal::CLIENT_STATE_CONNECTED;
-  librbd::journal::MirrorPeerClientMeta remote_client_meta;
+    Journaler *remote_journaler = nullptr;
+    cls::journal::ClientState remote_client_state =
+        cls::journal::CLIENT_STATE_CONNECTED;
+    librbd::journal::MirrorPeerClientMeta remote_client_meta;
 
-  SyncPointHandler<ImageCtxT>* sync_point_handler = nullptr;
+    SyncPointHandler<ImageCtxT> *sync_point_handler = nullptr;
 
 private:
-  bool is_linked_impl() const override;
+    bool is_linked_impl() const override;
 
-  void shut_down_remote_journaler(Context* on_finish);
-  void handle_shut_down_remote_journaler(int r, Context* on_finish);
+    void shut_down_remote_journaler(Context *on_finish);
+    void handle_shut_down_remote_journaler(int r, Context *on_finish);
 };
 
 } // namespace journal

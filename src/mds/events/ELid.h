@@ -20,24 +20,27 @@
 #include "../LogEvent.h"
 #include "../SegmentBoundary.h"
 
-class ELid : public LogEvent, public SegmentBoundary {
+class ELid : public LogEvent, public SegmentBoundary
+{
 public:
-  ELid() : LogEvent(EVENT_LID) {}
-  ELid(LogSegment::seq_t _seq) : LogEvent(EVENT_SEGMENT), SegmentBoundary(_seq) {}
+    ELid() : LogEvent(EVENT_LID) {}
+    ELid(LogSegment::seq_t _seq) : LogEvent(EVENT_SEGMENT), SegmentBoundary(_seq) {}
 
-  bool is_major_segment_boundary() const override {
-    return true;
-  }
+    bool is_major_segment_boundary() const override
+    {
+        return true;
+    }
 
-  void print(std::ostream& out) const override {
-    out << "ELid(" << seq << ")";
-  }
+    void print(std::ostream &out) const override
+    {
+        out << "ELid(" << seq << ")";
+    }
 
-  void encode(bufferlist& bl, uint64_t features) const override;
-  void decode(bufferlist::const_iterator& bl) override;
-  void dump(Formatter *f) const override;
-  void replay(MDSRank *mds) override;
-  static void generate_test_instances(std::list<ELid*>& ls);
+    void encode(bufferlist &bl, uint64_t features) const override;
+    void decode(bufferlist::const_iterator &bl) override;
+    void dump(Formatter *f) const override;
+    void replay(MDSRank *mds) override;
+    static void generate_test_instances(std::list<ELid *> &ls);
 };
 WRITE_CLASS_ENCODER_FEATURES(ELid)
 

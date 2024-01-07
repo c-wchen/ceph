@@ -13,33 +13,37 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
-namespace io {
+namespace io
+{
 struct AioCompletion;
 struct ReadResult;
 } // namespace io
 
-namespace migration {
+namespace migration
+{
 
 struct SnapshotInterface {
-  virtual ~SnapshotInterface() {
-  }
+    virtual ~SnapshotInterface()
+    {
+    }
 
-  virtual void open(SnapshotInterface* previous_snapshot,
-                    Context* on_finish) = 0;
-  virtual void close(Context* on_finish) = 0;
+    virtual void open(SnapshotInterface *previous_snapshot,
+                      Context *on_finish) = 0;
+    virtual void close(Context *on_finish) = 0;
 
-  virtual const SnapInfo& get_snap_info() const = 0;
+    virtual const SnapInfo &get_snap_info() const = 0;
 
-  virtual void read(io::AioCompletion* aio_comp, io::Extents&& image_extents,
-                    io::ReadResult&& read_result, int op_flags, int read_flags,
-                    const ZTracer::Trace &parent_trace) = 0;
+    virtual void read(io::AioCompletion *aio_comp, io::Extents&& image_extents,
+                      io::ReadResult&& read_result, int op_flags, int read_flags,
+                      const ZTracer::Trace &parent_trace) = 0;
 
-  virtual void list_snap(io::Extents&& image_extents, int list_snaps_flags,
-                         io::SparseExtents* sparse_extents,
-                         const ZTracer::Trace &parent_trace,
-                         Context* on_finish) = 0;
+    virtual void list_snap(io::Extents&& image_extents, int list_snaps_flags,
+                           io::SparseExtents *sparse_extents,
+                           const ZTracer::Trace &parent_trace,
+                           Context *on_finish) = 0;
 };
 
 } // namespace migration

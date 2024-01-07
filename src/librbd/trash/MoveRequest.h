@@ -12,70 +12,75 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace trash {
+namespace trash
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
-class MoveRequest {
+class MoveRequest
+{
 public:
-  static MoveRequest* create(librados::IoCtx& io_ctx,
-                             const std::string& image_id,
-                             const cls::rbd::TrashImageSpec& trash_image_spec,
-                             Context* on_finish) {
-    return new MoveRequest(io_ctx, image_id, trash_image_spec, on_finish);
-  }
+    static MoveRequest *create(librados::IoCtx &io_ctx,
+                               const std::string &image_id,
+                               const cls::rbd::TrashImageSpec &trash_image_spec,
+                               Context *on_finish)
+    {
+        return new MoveRequest(io_ctx, image_id, trash_image_spec, on_finish);
+    }
 
-  MoveRequest(librados::IoCtx& io_ctx, const std::string& image_id,
-              const cls::rbd::TrashImageSpec& trash_image_spec,
-              Context* on_finish)
-    : m_io_ctx(io_ctx), m_image_id(image_id),
-      m_trash_image_spec(trash_image_spec), m_on_finish(on_finish),
-      m_cct(reinterpret_cast<CephContext *>(io_ctx.cct())) {
-  }
+    MoveRequest(librados::IoCtx &io_ctx, const std::string &image_id,
+                const cls::rbd::TrashImageSpec &trash_image_spec,
+                Context *on_finish)
+        : m_io_ctx(io_ctx), m_image_id(image_id),
+          m_trash_image_spec(trash_image_spec), m_on_finish(on_finish),
+          m_cct(reinterpret_cast<CephContext *>(io_ctx.cct()))
+    {
+    }
 
-  void send();
+    void send();
 
 private:
-  /*
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v
-   * TRASH_ADD
-   *    |
-   *    v
-   * REMOVE_ID
-   *    |
-   *    v
-   * DIRECTORY_REMOVE
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   */
+    /*
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v
+     * TRASH_ADD
+     *    |
+     *    v
+     * REMOVE_ID
+     *    |
+     *    v
+     * DIRECTORY_REMOVE
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     */
 
-  librados::IoCtx &m_io_ctx;
-  std::string m_image_id;
-  cls::rbd::TrashImageSpec m_trash_image_spec;
-  Context *m_on_finish;
+    librados::IoCtx &m_io_ctx;
+    std::string m_image_id;
+    cls::rbd::TrashImageSpec m_trash_image_spec;
+    Context *m_on_finish;
 
-  CephContext *m_cct;
+    CephContext *m_cct;
 
-  void trash_add();
-  void handle_trash_add(int r);
+    void trash_add();
+    void handle_trash_add(int r);
 
-  void remove_id();
-  void handle_remove_id(int r);
+    void remove_id();
+    void handle_remove_id(int r);
 
-  void directory_remove();
-  void handle_directory_remove(int r);
+    void directory_remove();
+    void handle_directory_remove(int r);
 
-  void finish(int r);
+    void finish(int r);
 
 };
 

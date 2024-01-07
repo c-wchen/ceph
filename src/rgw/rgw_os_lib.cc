@@ -8,12 +8,13 @@
 #include "rgw_file.h"
 #include "rgw_lib_frontend.h"
 
-namespace rgw {
+namespace rgw
+{
 
 /* static */
-  int RGWHandler_Lib::init_from_header(rgw::sal::Driver* driver,
-				       req_state *s)
-  {
+int RGWHandler_Lib::init_from_header(rgw::sal::Driver *driver,
+                                     req_state *s)
+{
     string req;
     string first;
 
@@ -23,41 +24,43 @@ namespace rgw {
     /* skip request_params parsing, rgw_file should not be
      * seeing any */
     if (*req_name == '?') {
-      p = req_name;
+        p = req_name;
     } else {
-      p = s->info.request_params.c_str();
+        p = s->info.request_params.c_str();
     }
 
     s->info.args.set(p);
     s->info.args.parse(s);
 
-    if (*req_name != '/')
-      return 0;
+    if (*req_name != '/') {
+        return 0;
+    }
 
     req_name++;
 
-    if (!*req_name)
-      return 0;
+    if (!*req_name) {
+        return 0;
+    }
 
     req = req_name;
     int pos = req.find('/');
     if (pos >= 0) {
-      first = req.substr(0, pos);
+        first = req.substr(0, pos);
     } else {
-      first = req;
+        first = req;
     }
 
     if (s->bucket_name.empty()) {
-      s->bucket_name = std::move(first);
-      if (pos >= 0) {
-	// XXX ugh, another copy
-	string encoded_obj_str = req.substr(pos+1);
-	s->object = driver->get_object(rgw_obj_key(encoded_obj_str, s->info.args.get("versionId")));
-      }
+        s->bucket_name = std::move(first);
+        if (pos >= 0) {
+            // XXX ugh, another copy
+            string encoded_obj_str = req.substr(pos + 1);
+            s->object = driver->get_object(rgw_obj_key(encoded_obj_str, s->info.args.get("versionId")));
+        }
     } else {
-      s->object = driver->get_object(rgw_obj_key(req_name, s->info.args.get("versionId")));
+        s->object = driver->get_object(rgw_obj_key(req_name, s->info.args.get("versionId")));
     }
     return 0;
-  } /* init_from_header */
+} /* init_from_header */
 
 } /* namespace rgw */

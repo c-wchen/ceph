@@ -4,12 +4,13 @@
 #ifndef CEPH_JOURNAL_REPLAY_HANDLER_H
 #define CEPH_JOURNAL_REPLAY_HANDLER_H
 
-namespace journal {
+namespace journal
+{
 
 struct ReplayHandler {
-  virtual void handle_entries_available() = 0;
-  virtual void handle_complete(int r) = 0;
-  virtual ~ReplayHandler() {}
+    virtual void handle_entries_available() = 0;
+    virtual void handle_complete(int r) = 0;
+    virtual ~ReplayHandler() {}
 };
 
 } // namespace journal

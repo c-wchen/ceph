@@ -6,20 +6,20 @@
 
 #define dout_subsys ceph_subsys_rgw
 
-std::string RGWSI_Bucket::get_entrypoint_meta_key(const rgw_bucket& bucket)
+std::string RGWSI_Bucket::get_entrypoint_meta_key(const rgw_bucket &bucket)
 {
-  if (bucket.bucket_id.empty()) {
-    return bucket.get_key();
-  }
+    if (bucket.bucket_id.empty()) {
+        return bucket.get_key();
+    }
 
-  rgw_bucket b(bucket);
-  b.bucket_id.clear();
+    rgw_bucket b(bucket);
+    b.bucket_id.clear();
 
-  return b.get_key();
+    return b.get_key();
 }
 
-std::string RGWSI_Bucket::get_bi_meta_key(const rgw_bucket& bucket)
+std::string RGWSI_Bucket::get_bi_meta_key(const rgw_bucket &bucket)
 {
-  return bucket.get_key();
+    return bucket.get_key();
 }
 

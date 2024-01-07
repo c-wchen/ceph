@@ -161,8 +161,8 @@ extern int crush_get_next_bucket_id(struct crush_map *map);
  * @returns 0 on success, < 0 on error
  */
 extern int crush_add_bucket(struct crush_map *map,
-			    int bucketno,
-			    struct crush_bucket *bucket, int *idout);
+                            int bucketno,
+                            struct crush_bucket *bucket, int *idout);
 /** @ingroup API
  *
  * Allocate a crush_bucket with __malloc(3)__ and initialize it. The
@@ -188,7 +188,8 @@ extern int crush_add_bucket(struct crush_map *map,
  *
  * @returns a pointer to the newly created bucket or NULL
  */
-struct crush_bucket *crush_make_bucket(struct crush_map *map, int alg, int hash, int type, int size, int *items, int *weights);
+struct crush_bucket *crush_make_bucket(struct crush_map *map, int alg, int hash, int type, int size, int *items,
+                                       int *weights);
 extern struct crush_choose_arg *crush_make_choose_args(struct crush_map *map, int num_positions);
 extern void crush_destroy_choose_args(struct crush_choose_arg *args);
 /** @ingroup API
@@ -269,21 +270,21 @@ extern int crush_bucket_remove_item(struct crush_map *map, struct crush_bucket *
 
 struct crush_bucket_uniform *
 crush_make_uniform_bucket(int hash, int type, int size,
-			  int *items,
-			  int item_weight);
-struct crush_bucket_list*
+                          int *items,
+                          int item_weight);
+struct crush_bucket_list *
 crush_make_list_bucket(int hash, int type, int size,
-		       int *items,
-		       int *weights);
-struct crush_bucket_tree*
+                       int *items,
+                       int *weights);
+struct crush_bucket_tree *
 crush_make_tree_bucket(int hash, int type, int size,
-		       int *items,    /* in leaf order */
-		       int *weights);
+                       int *items,    /* in leaf order */
+                       int *weights);
 struct crush_bucket_straw *
 crush_make_straw_bucket(struct crush_map *map,
-			int hash, int type, int size,
-			int *items,
-			int *weights);
+                        int hash, int type, int size,
+                        int *items,
+                        int *weights);
 
 extern int crush_addition_is_unsafe(__u32 a, __u32 b);
 extern int crush_multiplication_is_unsafe(__u32  a, __u32 b);

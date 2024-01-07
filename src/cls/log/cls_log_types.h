@@ -16,89 +16,99 @@ class JSONDecoder;
 
 
 struct cls_log_entry {
-  std::string id;
-  std::string section;
-  std::string name;
-  utime_t timestamp;
-  ceph::buffer::list data;
+    std::string id;
+    std::string section;
+    std::string name;
+    utime_t timestamp;
+    ceph::buffer::list data;
 
-  cls_log_entry() {}
+    cls_log_entry() {}
 
-  void encode(ceph::buffer::list& bl) const {
-    ENCODE_START(2, 1, bl);
-    encode(section, bl);
-    encode(name, bl);
-    encode(timestamp, bl);
-    encode(data, bl);
-    encode(id, bl);
-    ENCODE_FINISH(bl);
-  }
+    void encode(ceph::buffer::list &bl) const
+    {
+        ENCODE_START(2, 1, bl);
+        encode(section, bl);
+        encode(name, bl);
+        encode(timestamp, bl);
+        encode(data, bl);
+        encode(id, bl);
+        ENCODE_FINISH(bl);
+    }
 
-  void decode(ceph::buffer::list::const_iterator& bl) {
-    DECODE_START(2, bl);
-    decode(section, bl);
-    decode(name, bl);
-    decode(timestamp, bl);
-    decode(data, bl);
-    if (struct_v >= 2)
-      decode(id, bl);
-    DECODE_FINISH(bl);
-  }
+    void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(2, bl);
+        decode(section, bl);
+        decode(name, bl);
+        decode(timestamp, bl);
+        decode(data, bl);
+        if (struct_v >= 2) {
+            decode(id, bl);
+        }
+        DECODE_FINISH(bl);
+    }
 
-  void dump(ceph::Formatter* f) const {
-    encode_json("section", section, f);
-    encode_json("name", name, f);
-    encode_json("timestamp", timestamp, f);
-    encode_json("data", data, f);
-    encode_json("id", id, f);
-  }
+    void dump(ceph::Formatter *f) const
+    {
+        encode_json("section", section, f);
+        encode_json("name", name, f);
+        encode_json("timestamp", timestamp, f);
+        encode_json("data", data, f);
+        encode_json("id", id, f);
+    }
 
-  void decode_json(JSONObj* obj) {
-    JSONDecoder::decode_json("section", section, obj);
-    JSONDecoder::decode_json("name", name, obj);
-    JSONDecoder::decode_json("timestamp", timestamp, obj);
-    JSONDecoder::decode_json("data", data, obj);
-    JSONDecoder::decode_json("id", id, obj);
-  }
+    void decode_json(JSONObj *obj)
+    {
+        JSONDecoder::decode_json("section", section, obj);
+        JSONDecoder::decode_json("name", name, obj);
+        JSONDecoder::decode_json("timestamp", timestamp, obj);
+        JSONDecoder::decode_json("data", data, obj);
+        JSONDecoder::decode_json("id", id, obj);
+    }
 
-  static void generate_test_instances(std::list<cls_log_entry *>& l) {
-    l.push_back(new cls_log_entry{});
-    l.push_back(new cls_log_entry);
-    l.back()->id = "test_id";
-    l.back()->section = "test_section";
-    l.back()->name = "test_name";
-    l.back()->timestamp = utime_t();
-    ceph::buffer::list bl;
-    ceph::encode(std::string("Test"), bl, 0);
-    l.back()->data = bl;
-  }
+    static void generate_test_instances(std::list<cls_log_entry *> &l)
+    {
+        l.push_back(new cls_log_entry{});
+        l.push_back(new cls_log_entry);
+        l.back()->id = "test_id";
+        l.back()->section = "test_section";
+        l.back()->name = "test_name";
+        l.back()->timestamp = utime_t();
+        ceph::buffer::list bl;
+        ceph::encode(std::string("Test"), bl, 0);
+        l.back()->data = bl;
+    }
 };
 WRITE_CLASS_ENCODER(cls_log_entry)
 
 struct cls_log_header {
-  std::string max_marker;
-  utime_t max_time;
+    std::string max_marker;
+    utime_t max_time;
 
-  void encode(ceph::buffer::list& bl) const {
-    ENCODE_START(1, 1, bl);
-    encode(max_marker, bl);
-    encode(max_time, bl);
-    ENCODE_FINISH(bl);
-  }
+    void encode(ceph::buffer::list &bl) const
+    {
+        ENCODE_START(1, 1, bl);
+        encode(max_marker, bl);
+        encode(max_time, bl);
+        ENCODE_FINISH(bl);
+    }
 
-  void decode(ceph::buffer::list::const_iterator& bl) {
-    DECODE_START(1, bl);
-    decode(max_marker, bl);
-    decode(max_time, bl);
-    DECODE_FINISH(bl);
-  }
+    void decode(ceph::buffer::list::const_iterator &bl)
+    {
+        DECODE_START(1, bl);
+        decode(max_marker, bl);
+        decode(max_time, bl);
+        DECODE_FINISH(bl);
+    }
 };
-inline bool operator ==(const cls_log_header& lhs, const cls_log_header& rhs) {
-  return (lhs.max_marker == rhs.max_marker &&
-	  lhs.max_time == rhs.max_time);
+inline bool operator ==(const cls_log_header &lhs, const cls_log_header &rhs)
+{
+    return (lhs.max_marker == rhs.max_marker &&
+            lhs.max_time == rhs.max_time);
 }
-inline bool operator !=(const cls_log_header& lhs, const cls_log_header& rhs) {
-  return !(lhs == rhs);
+inline bool operator !=(const cls_log_header &lhs, const cls_log_header &rhs)
+{
+    return !(lhs == rhs);
 }
 WRITE_CLASS_ENCODER(cls_log_header)
 

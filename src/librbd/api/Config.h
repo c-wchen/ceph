@@ -9,24 +9,27 @@
 #include "include/rbd/librbd.hpp"
 #include "include/rados/librados_fwd.hpp"
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace api {
+namespace api
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
-class Config {
+class Config
+{
 public:
-  static bool is_option_name(librados::IoCtx& io_ctx, const std::string &name);
-  static int list(librados::IoCtx& io_ctx,
-                  std::vector<config_option_t> *options);
+    static bool is_option_name(librados::IoCtx &io_ctx, const std::string &name);
+    static int list(librados::IoCtx &io_ctx,
+                    std::vector<config_option_t> *options);
 
-  static bool is_option_name(ImageCtxT *image_ctx, const std::string &name);
-  static int list(ImageCtxT *image_ctx, std::vector<config_option_t> *options);
+    static bool is_option_name(ImageCtxT *image_ctx, const std::string &name);
+    static int list(ImageCtxT *image_ctx, std::vector<config_option_t> *options);
 
-  static void apply_pool_overrides(librados::IoCtx& io_ctx,
-                                   ConfigProxy* config);
+    static void apply_pool_overrides(librados::IoCtx &io_ctx,
+                                     ConfigProxy *config);
 };
 
 } // namespace api

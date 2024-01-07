@@ -29,25 +29,25 @@ class CrossProcessSem;
 class StRadosCreatePool : public SysTestRunnable
 {
 public:
-  static std::string get_random_buf(int sz);
-  StRadosCreatePool(int argc, const char **argv,
-		    CrossProcessSem *setup_sem,
-		    CrossProcessSem *pool_setup_sem,
-		    CrossProcessSem *close_create_pool_sem,
-		    const std::string &pool_name,
-		    int num_objects,
-		    const std::string &suffix);
-  ~StRadosCreatePool() override;
-  int run() override;
+    static std::string get_random_buf(int sz);
+    StRadosCreatePool(int argc, const char **argv,
+                      CrossProcessSem *setup_sem,
+                      CrossProcessSem *pool_setup_sem,
+                      CrossProcessSem *close_create_pool_sem,
+                      const std::string &pool_name,
+                      int num_objects,
+                      const std::string &suffix);
+    ~StRadosCreatePool() override;
+    int run() override;
 private:
-  CrossProcessSem *m_setup_sem;
-  CrossProcessSem *m_pool_setup_sem;
-  CrossProcessSem *m_close_create_pool;
-  std::string m_pool_name;
-  int m_num_objects;
-  std::string m_suffix;
+    CrossProcessSem *m_setup_sem;
+    CrossProcessSem *m_pool_setup_sem;
+    CrossProcessSem *m_close_create_pool;
+    std::string m_pool_name;
+    int m_num_objects;
+    std::string m_suffix;
 };
 
-std::string get_temp_pool_name(const char* prefix);
+std::string get_temp_pool_name(const char *prefix);
 
 #endif

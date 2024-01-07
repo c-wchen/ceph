@@ -6,14 +6,15 @@
 
 #include "include/int_types.h"
 
-namespace journal {
+namespace journal
+{
 
 struct Settings {
-  double commit_interval = 5;         ///< commit position throttle (in secs)
-  uint64_t max_payload_bytes = 0;     ///< 0 implies object size limit
-  int max_concurrent_object_sets = 0; ///< 0 implies no limit
-  std::set<std::string> ignored_laggy_clients;
-                                      ///< clients that mustn't be disconnected
+    double commit_interval = 5;         ///< commit position throttle (in secs)
+    uint64_t max_payload_bytes = 0;     ///< 0 implies object size limit
+    int max_concurrent_object_sets = 0; ///< 0 implies no limit
+    std::set<std::string> ignored_laggy_clients;
+    ///< clients that mustn't be disconnected
 };
 
 } // namespace journal

@@ -8,20 +8,24 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace crypto {
+namespace crypto
+{
 
 template <typename I>
-class ShutDownCryptoRequest {
+class ShutDownCryptoRequest
+{
 public:
-    static ShutDownCryptoRequest* create(I* image_ctx, Context* on_finish) {
-      return new ShutDownCryptoRequest(image_ctx, on_finish);
+    static ShutDownCryptoRequest *create(I *image_ctx, Context *on_finish)
+    {
+        return new ShutDownCryptoRequest(image_ctx, on_finish);
     }
 
-    ShutDownCryptoRequest(I* image_ctx, Context* on_finish);
+    ShutDownCryptoRequest(I *image_ctx, Context *on_finish);
 
     void send();
     void shut_down_object_dispatch();
@@ -31,8 +35,8 @@ public:
     void finish(int r);
 
 private:
-    I* m_image_ctx;
-    Context* m_on_finish;
+    I *m_image_ctx;
+    Context *m_on_finish;
 };
 
 } // namespace crypto

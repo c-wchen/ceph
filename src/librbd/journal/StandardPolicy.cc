@@ -10,20 +10,23 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "librbd::journal::StandardPolicy: "
 
-namespace librbd {
-namespace journal {
+namespace librbd
+{
+namespace journal
+{
 
 template<typename I>
-void StandardPolicy<I>::allocate_tag_on_lock(Context *on_finish) {
-  ceph_assert(m_image_ctx->journal != nullptr);
+void StandardPolicy<I>::allocate_tag_on_lock(Context *on_finish)
+{
+    ceph_assert(m_image_ctx->journal != nullptr);
 
-  if (!m_image_ctx->journal->is_tag_owner()) {
-    lderr(m_image_ctx->cct) << "local image not promoted" << dendl;
-    m_image_ctx->op_work_queue->queue(on_finish, -EPERM);
-    return;
-  }
+    if (!m_image_ctx->journal->is_tag_owner()) {
+        lderr(m_image_ctx->cct) << "local image not promoted" << dendl;
+        m_image_ctx->op_work_queue->queue(on_finish, -EPERM);
+        return;
+    }
 
-  m_image_ctx->journal->allocate_local_tag(on_finish);
+    m_image_ctx->journal->allocate_local_tag(on_finish);
 }
 
 } // namespace journal

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab ft=cpp
 
 /*
@@ -27,32 +27,32 @@
 
 class RGWCORSRule_S3 : public RGWCORSRule, public XMLObj
 {
-  const DoutPrefixProvider *dpp;
-  public:
+    const DoutPrefixProvider *dpp;
+public:
     RGWCORSRule_S3(const DoutPrefixProvider *dpp) : dpp(dpp) {}
     ~RGWCORSRule_S3() override {}
-    
+
     bool xml_end(const char *el) override;
-    void to_xml(XMLFormatter& f);
+    void to_xml(XMLFormatter &f);
 };
 
 class RGWCORSConfiguration_S3 : public RGWCORSConfiguration, public XMLObj
 {
-  const DoutPrefixProvider *dpp;
-  public:
+    const DoutPrefixProvider *dpp;
+public:
     RGWCORSConfiguration_S3(const DoutPrefixProvider *dpp) : dpp(dpp) {}
     ~RGWCORSConfiguration_S3() override {}
 
     bool xml_end(const char *el) override;
-    void to_xml(std::ostream& out);
+    void to_xml(std::ostream &out);
 };
 
 class RGWCORSXMLParser_S3 : public RGWXMLParser
 {
-  const DoutPrefixProvider *dpp;
-  CephContext *cct;
+    const DoutPrefixProvider *dpp;
+    CephContext *cct;
 
-  XMLObj *alloc_obj(const char *el) override;
+    XMLObj *alloc_obj(const char *el) override;
 public:
-  explicit RGWCORSXMLParser_S3(const DoutPrefixProvider *_dpp, CephContext *_cct) : dpp(_dpp), cct(_cct) {}
+    explicit RGWCORSXMLParser_S3(const DoutPrefixProvider *_dpp, CephContext *_cct) : dpp(_dpp), cct(_cct) {}
 };

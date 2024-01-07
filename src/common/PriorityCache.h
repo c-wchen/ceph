@@ -23,12 +23,13 @@
 #include "common/perf_counters.h"
 #include "include/ceph_assert.h"
 
-namespace PriorityCache {
-  // Reserve 16384 slots for PriorityCache perf counters
-  const int PERF_COUNTER_LOWER_BOUND = 1073741824;
-  const int PERF_COUNTER_MAX_BOUND = 1073758208;
+namespace PriorityCache
+{
+// Reserve 16384 slots for PriorityCache perf counters
+const int PERF_COUNTER_LOWER_BOUND = 1073741824;
+const int PERF_COUNTER_MAX_BOUND = 1073758208;
 
-  enum MallocStats {
+enum MallocStats {
     M_FIRST = PERF_COUNTER_LOWER_BOUND,
     M_TARGET_BYTES,
     M_MAPPED_BYTES,
@@ -36,9 +37,9 @@ namespace PriorityCache {
     M_HEAP_BYTES,
     M_CACHE_BYTES,
     M_LAST,
-  };
+};
 
-  enum Priority {
+enum Priority {
     PRI0,
     PRI1,
     PRI2,
@@ -52,17 +53,17 @@ namespace PriorityCache {
     PRI10,
     PRI11,
     LAST = PRI11,
-  };
+};
 
-  enum Extra {
-    E_RESERVED = Priority::LAST+1,
+enum Extra {
+    E_RESERVED = Priority::LAST + 1,
     E_COMMITTED,
     E_LAST = E_COMMITTED,
-  };
+};
 
-  int64_t get_chunk(uint64_t usage, uint64_t total_bytes);
+int64_t get_chunk(uint64_t usage, uint64_t total_bytes);
 
-  struct PriCache {
+struct PriCache {
     virtual ~PriCache();
 
     /* Ask the cache to request memory for the given priority. Note that the
@@ -112,12 +113,13 @@ namespace PriorityCache {
 
     // Get bins
     virtual uint64_t get_bins(PriorityCache::Priority pri) const = 0;
-  };
+};
 
-  class Manager {
-    CephContext* cct = nullptr;
-    PerfCounters* logger;
-    std::unordered_map<std::string, PerfCounters*> loggers;
+class Manager
+{
+    CephContext *cct = nullptr;
+    PerfCounters *logger;
+    std::unordered_map<std::string, PerfCounters *> loggers;
     std::unordered_map<std::string, std::vector<int>> indexes;
     std::unordered_map<std::string, std::shared_ptr<PriCache>> caches;
 
@@ -130,32 +132,36 @@ namespace PriorityCache {
     uint64_t tuned_mem = 0;
     bool reserve_extra;
     std::string name;
-  public:
+public:
     Manager(CephContext *c, uint64_t min, uint64_t max, uint64_t target,
-            bool reserve_extra, const std::string& name = std::string());
+            bool reserve_extra, const std::string &name = std::string());
     ~Manager();
-    void set_min_memory(uint64_t min) {
-      min_mem = min;
+    void set_min_memory(uint64_t min)
+    {
+        min_mem = min;
     }
-    void set_max_memory(uint64_t max) {
-      max_mem = max;
+    void set_max_memory(uint64_t max)
+    {
+        max_mem = max;
     }
-    void set_target_memory(uint64_t target) {
-      target_mem = target;
+    void set_target_memory(uint64_t target)
+    {
+        target_mem = target;
     }
-    uint64_t get_tuned_mem() const {
-      return tuned_mem;
+    uint64_t get_tuned_mem() const
+    {
+        return tuned_mem;
     }
-    void insert(const std::string& name, const std::shared_ptr<PriCache> c,
+    void insert(const std::string &name, const std::shared_ptr<PriCache> c,
                 bool enable_perf_counters);
-    void erase(const std::string& name);
+    void erase(const std::string &name);
     void clear();
     void tune_memory();
     void balance();
     void shift_bins();
-  private:
+private:
     void balance_priority(int64_t *mem_avail, Priority pri);
-  };
+};
 }
 
 #endif

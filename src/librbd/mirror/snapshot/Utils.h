@@ -8,19 +8,23 @@
 #include "include/stringify.h"
 #include <string>
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace mirror {
-namespace snapshot {
-namespace util {
+namespace mirror
+{
+namespace snapshot
+{
+namespace util
+{
 
-std::string get_image_meta_key(const std::string& mirror_uuid);
+std::string get_image_meta_key(const std::string &mirror_uuid);
 
 template <typename ImageCtxT = librbd::ImageCtx>
 bool can_create_primary_snapshot(ImageCtxT *image_ctx, bool demoted, bool force,
-                                 bool* requires_orphan,
+                                 bool *requires_orphan,
                                  uint64_t *rollback_snap_id);
 
 template <typename ImageCtxT = librbd::ImageCtx>

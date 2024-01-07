@@ -26,82 +26,82 @@ using namespace std;
 
 TEST(ErasureCodePlugin, factory)
 {
-  ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
-  ErasureCodeProfile profile;
-  {
-    ErasureCodeInterfaceRef erasure_code;
-    EXPECT_FALSE(erasure_code);
-    EXPECT_EQ(0, instance.factory("clay",
-                                  g_conf().get_val<std::string>("erasure_code_dir"),
-				  profile,
-                                  &erasure_code, &cerr));
-    EXPECT_TRUE(erasure_code);
-  }
-  //check clay plugin with scalar_mds=jerasure
-  {
-    const char *techniques[] = {
-      "reed_sol_van",
-      "reed_sol_r6_op",
-      "cauchy_orig",
-      "cauchy_good",
-      "liber8tion",
-      0
-    };
-    for(const char **technique = techniques; *technique; technique++) {
-      ErasureCodeInterfaceRef erasure_code;
-      ErasureCodeProfile profile;
-      profile["scalar_mds"] = "jerasure";
-      profile["technique"] = *technique;
-      EXPECT_FALSE(erasure_code);
-      EXPECT_EQ(0, instance.factory("clay",
-                                    g_conf().get_val<std::string>("erasure_code_dir"),
-				    profile,
-                                    &erasure_code, &cerr));
-      EXPECT_TRUE(erasure_code.get());
+    ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
+    ErasureCodeProfile profile;
+    {
+        ErasureCodeInterfaceRef erasure_code;
+        EXPECT_FALSE(erasure_code);
+        EXPECT_EQ(0, instance.factory("clay",
+                                      g_conf().get_val<std::string>("erasure_code_dir"),
+                                      profile,
+                                      &erasure_code, &cerr));
+        EXPECT_TRUE(erasure_code);
     }
-  }
+    //check clay plugin with scalar_mds=jerasure
+    {
+        const char *techniques[] = {
+            "reed_sol_van",
+            "reed_sol_r6_op",
+            "cauchy_orig",
+            "cauchy_good",
+            "liber8tion",
+            0
+        };
+        for (const char **technique = techniques; *technique; technique++) {
+            ErasureCodeInterfaceRef erasure_code;
+            ErasureCodeProfile profile;
+            profile["scalar_mds"] = "jerasure";
+            profile["technique"] = *technique;
+            EXPECT_FALSE(erasure_code);
+            EXPECT_EQ(0, instance.factory("clay",
+                                          g_conf().get_val<std::string>("erasure_code_dir"),
+                                          profile,
+                                          &erasure_code, &cerr));
+            EXPECT_TRUE(erasure_code.get());
+        }
+    }
 #ifdef WITH_EC_ISA_PLUGIN
-  //check clay plugin with scalar_mds=isa
-  {
-    const char *techniques[] = {
-      "reed_sol_van",
-      "cauchy",
-      0
-    };
-    for(const char **technique = techniques; *technique; technique++) {
-      ErasureCodeInterfaceRef erasure_code;
-      ErasureCodeProfile profile;
-      profile["scalar_mds"] = "isa";
-      profile["technique"] = *technique;
-      EXPECT_FALSE(erasure_code);
-      EXPECT_EQ(0, instance.factory("clay",
-                                    g_conf().get_val<std::string>("erasure_code_dir"),
-				    profile,
-                                    &erasure_code, &cerr));
-      EXPECT_TRUE(erasure_code.get());
+    //check clay plugin with scalar_mds=isa
+    {
+        const char *techniques[] = {
+            "reed_sol_van",
+            "cauchy",
+            0
+        };
+        for (const char **technique = techniques; *technique; technique++) {
+            ErasureCodeInterfaceRef erasure_code;
+            ErasureCodeProfile profile;
+            profile["scalar_mds"] = "isa";
+            profile["technique"] = *technique;
+            EXPECT_FALSE(erasure_code);
+            EXPECT_EQ(0, instance.factory("clay",
+                                          g_conf().get_val<std::string>("erasure_code_dir"),
+                                          profile,
+                                          &erasure_code, &cerr));
+            EXPECT_TRUE(erasure_code.get());
+        }
     }
-  }
 #endif
-  //check clay plugin with scalar_mds=shec
-  {
-    const char *techniques[] = {
-      "single",
-      "multiple",
-      0
-    };
-    for(const char **technique = techniques; *technique; technique++) {
-      ErasureCodeInterfaceRef erasure_code;
-      ErasureCodeProfile profile;
-      profile["scalar_mds"] = "shec";
-      profile["technique"] = *technique;
-      EXPECT_FALSE(erasure_code);
-      EXPECT_EQ(0, instance.factory("clay",
-                                    g_conf().get_val<std::string>("erasure_code_dir"),
-				    profile,
-                                    &erasure_code, &cerr));
-      EXPECT_TRUE(erasure_code.get());
+    //check clay plugin with scalar_mds=shec
+    {
+        const char *techniques[] = {
+            "single",
+            "multiple",
+            0
+        };
+        for (const char **technique = techniques; *technique; technique++) {
+            ErasureCodeInterfaceRef erasure_code;
+            ErasureCodeProfile profile;
+            profile["scalar_mds"] = "shec";
+            profile["technique"] = *technique;
+            EXPECT_FALSE(erasure_code);
+            EXPECT_EQ(0, instance.factory("clay",
+                                          g_conf().get_val<std::string>("erasure_code_dir"),
+                                          profile,
+                                          &erasure_code, &cerr));
+            EXPECT_TRUE(erasure_code.get());
+        }
     }
-  }
 }
 
 /*

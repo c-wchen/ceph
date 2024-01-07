@@ -19,8 +19,9 @@
 class InodeStore;
 class MDSTable;
 
-class RecoveryDriver {
-  protected:
+class RecoveryDriver
+{
+protected:
     // If true, overwrite structures that generate decoding errors.
     bool force_corrupt;
 
@@ -28,21 +29,21 @@ class RecoveryDriver {
     // exist
     bool force_init;
 
-  public:
+public:
     virtual int init(
         librados::Rados &rados,
-	std::string &metadata_pool_name,
+        std::string &metadata_pool_name,
         const FSMap *fsmap,
         fs_cluster_id_t fscid) = 0;
 
     void set_force_corrupt(const bool val)
     {
-      force_corrupt = val;
+        force_corrupt = val;
     }
 
     void set_force_init(const bool val)
     {
-      force_init = val;
+        force_init = val;
     }
 
 
@@ -87,40 +88,40 @@ class RecoveryDriver {
      */
     std::string lost_found_dname(inodeno_t ino)
     {
-      char s[20];
-      snprintf(s, sizeof(s), "%llx", (unsigned long long)ino);
-      return std::string(s);
+        char s[20];
+        snprintf(s, sizeof(s), "%llx", (unsigned long long)ino);
+        return std::string(s);
     }
 
     RecoveryDriver()
-      : force_corrupt(false),
-	force_init(false)
+        : force_corrupt(false),
+          force_init(false)
     {}
 
     virtual ~RecoveryDriver() {}
 };
 
 class LocalFileDriver : public RecoveryDriver
-{ 
-  protected:
+{
+protected:
     const std::string path;
     librados::IoCtx &data_io;
 
-  int inject_data(
-      const std::string &file_path,
-      uint64_t size,
-      uint32_t chunk_size,
-      inodeno_t ino);
-  public:
+    int inject_data(
+        const std::string &file_path,
+        uint64_t size,
+        uint32_t chunk_size,
+        inodeno_t ino);
+public:
 
     LocalFileDriver(const std::string &path_, librados::IoCtx &data_io_)
-      : RecoveryDriver(), path(path_), data_io(data_io_)
+        : RecoveryDriver(), path(path_), data_io(data_io_)
     {}
 
     // Implement RecoveryDriver interface
     int init(
         librados::Rados &rados,
-	std::string &metadata_pool_name,
+        std::string &metadata_pool_name,
         const FSMap *fsmap,
         fs_cluster_id_t fscid) override;
 
@@ -143,39 +144,39 @@ class LocalFileDriver : public RecoveryDriver
  */
 class MetadataTool
 {
-  protected:
+protected:
 
-  librados::IoCtx metadata_io;
+    librados::IoCtx metadata_io;
 
-  /**
-   * Construct a synthetic InodeStore for a normal file
-   */
-  void build_file_dentry(
-    inodeno_t ino, uint64_t file_size, time_t file_mtime,
-    const file_layout_t &layout,
-    InodeStore *out,
-    std::string symlink);
+    /**
+     * Construct a synthetic InodeStore for a normal file
+     */
+    void build_file_dentry(
+        inodeno_t ino, uint64_t file_size, time_t file_mtime,
+        const file_layout_t &layout,
+        InodeStore *out,
+        std::string symlink);
 
-  /**
-   * Construct a synthetic InodeStore for a directory
-   */
-  void build_dir_dentry(
-    inodeno_t ino,
-    const frag_info_t &fragstat,
-    const file_layout_t &layout,
-    InodeStore *out);
+    /**
+     * Construct a synthetic InodeStore for a directory
+     */
+    void build_dir_dentry(
+        inodeno_t ino,
+        const frag_info_t &fragstat,
+        const file_layout_t &layout,
+        InodeStore *out);
 
-  /**
-   * Try and read an fnode from a dirfrag
-   */
-  int read_fnode(inodeno_t ino, frag_t frag,
-                 fnode_t *fnode, uint64_t *read_version);
+    /**
+     * Try and read an fnode from a dirfrag
+     */
+    int read_fnode(inodeno_t ino, frag_t frag,
+                   fnode_t *fnode, uint64_t *read_version);
 
-  /**
-   * Try and read a dentry from a dirfrag
-   */
-  int read_dentry(inodeno_t parent_ino, frag_t frag,
-		  const std::string &dname, InodeStore *inode, snapid_t *dnfirst=nullptr);
+    /**
+     * Try and read a dentry from a dirfrag
+     */
+    int read_dentry(inodeno_t parent_ino, frag_t frag,
+                    const std::string &dname, InodeStore *inode, snapid_t *dnfirst = nullptr);
 };
 
 /**
@@ -183,7 +184,7 @@ class MetadataTool
  */
 class MetadataDriver : public RecoveryDriver, public MetadataTool
 {
-  protected:
+protected:
     /**
      * Create a .inode object, i.e. root or mydir
      */
@@ -210,18 +211,18 @@ class MetadataDriver : public RecoveryDriver, public MetadataTool
         const std::string &dname,
         frag_t *result_ft);
 
-  public:
+public:
 
     // Implement RecoveryDriver interface
     int init(
         librados::Rados &rados,
-	std::string &metadata_pool_name,
+        std::string &metadata_pool_name,
         const FSMap *fsmap,
         fs_cluster_id_t fscid) override;
 
     int inject_linkage(
         inodeno_t dir_ino, const std::string &dname,
-        const frag_t fragment, const InodeStore &inode, snapid_t dnfirst=CEPH_NOSNAP);
+        const frag_t fragment, const InodeStore &inode, snapid_t dnfirst = CEPH_NOSNAP);
 
     int inject_with_backtrace(
         const inode_backtrace_t &bt,
@@ -241,7 +242,7 @@ class MetadataDriver : public RecoveryDriver, public MetadataTool
 
 class DataScan : public MDSUtility, public MetadataTool
 {
-  protected:
+protected:
     RecoveryDriver *driver;
     fs_cluster_id_t fscid;
 
@@ -301,7 +302,7 @@ class DataScan : public MDSUtility, public MetadataTool
      * @return true if argument consumed, else false
      */
     bool parse_kwarg(
-        const std::vector<const char*> &args,
+        const std::vector<const char *> &args,
         std::vector<const char *>::const_iterator &i,
         int *r);
 
@@ -309,8 +310,8 @@ class DataScan : public MDSUtility, public MetadataTool
      * @return true if argument consumed, else false
      */
     bool parse_arg(
-      const std::vector<const char*> &arg,
-      std::vector<const char *>::const_iterator &i);
+        const std::vector<const char *> &arg,
+        std::vector<const char *>::const_iterator &i);
 
     int probe_filter(librados::IoCtx &ioctx);
 
@@ -324,21 +325,21 @@ class DataScan : public MDSUtility, public MetadataTool
         bool untagged_only,
         std::function<int(std::string, uint64_t, uint64_t)> handler);
 
-  public:
+public:
     static void usage();
     int main(const std::vector<const char *> &args);
 
     DataScan()
-      : driver(NULL), fscid(FS_CLUSTER_ID_NONE),
-	data_pool_id(-1), n(0), m(1),
-        force_pool(false), force_corrupt(false),
-        force_init(false)
+        : driver(NULL), fscid(FS_CLUSTER_ID_NONE),
+          data_pool_id(-1), n(0), m(1),
+          force_pool(false), force_corrupt(false),
+          force_init(false)
     {
     }
 
     ~DataScan() override
     {
-      delete driver;
+        delete driver;
     }
 };
 

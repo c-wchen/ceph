@@ -5,8 +5,9 @@
 
 #include <cstdlib>
 
-static inline bool is_crimson_cluster() {
-  return getenv("CRIMSON_COMPAT") != nullptr;
+static inline bool is_crimson_cluster()
+{
+    return getenv("CRIMSON_COMPAT") != nullptr;
 }
 
 #define SKIP_IF_CRIMSON()             \

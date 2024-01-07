@@ -21,7 +21,8 @@
 #include <string>
 
 typedef void (*signal_handler_t)(int);
-namespace ceph {
+namespace ceph
+{
 struct BackTrace;
 }
 
@@ -59,7 +60,7 @@ void register_async_signal_handler_oneshot(int signum, signal_handler_t handler)
 void unregister_async_signal_handler(int signum, signal_handler_t handler);
 
 void generate_crash_dump(char *base,
-			 const ceph::BackTrace& bt,
-			 std::map<std::string,std::string> *extra = 0);
+                         const ceph::BackTrace &bt,
+                         std::map<std::string, std::string> *extra = 0);
 
 #endif

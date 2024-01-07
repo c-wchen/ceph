@@ -10,30 +10,34 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace operation {
+namespace operation
+{
 
 template <typename ImageCtxT = ImageCtx>
-class MetadataRemoveRequest : public Request<ImageCtxT> {
+class MetadataRemoveRequest : public Request<ImageCtxT>
+{
 public:
-  MetadataRemoveRequest(ImageCtxT &image_ctx, Context *on_finish,
-                        const std::string &key);
+    MetadataRemoveRequest(ImageCtxT &image_ctx, Context *on_finish,
+                          const std::string &key);
 
 protected:
-  void send_op() override;
-  bool should_complete(int r) override;
+    void send_op() override;
+    bool should_complete(int r) override;
 
-  journal::Event create_event(uint64_t op_tid) const override {
-    return journal::MetadataRemoveEvent(op_tid, m_key);
-  }
+    journal::Event create_event(uint64_t op_tid) const override
+    {
+        return journal::MetadataRemoveEvent(op_tid, m_key);
+    }
 
 private:
-  std::string m_key;
+    std::string m_key;
 
-  void send_metadata_remove();
+    void send_metadata_remove();
 };
 
 } // namespace operation

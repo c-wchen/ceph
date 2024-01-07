@@ -10,10 +10,13 @@
 #include "librbd/migration/HttpClient.h"
 #include <boost/beast/http.hpp>
 
-namespace librbd {
-namespace migration {
+namespace librbd
+{
+namespace migration
+{
 
-namespace {
+namespace
+{
 
 const std::string URL_KEY {"url"};
 
@@ -24,57 +27,61 @@ const std::string URL_KEY {"url"};
 #define dout_prefix *_dout << "librbd::migration::HttpStream: " << this \
                            << " " << __func__ << ": "
 
-template <typename I>
-HttpStream<I>::HttpStream(I* image_ctx, const json_spirit::mObject& json_object)
-  : m_image_ctx(image_ctx), m_cct(image_ctx->cct),
-    m_asio_engine(image_ctx->asio_engine), m_json_object(json_object) {
+template <typename I> HttpStream<I>::HttpStream(I *image_ctx, const json_spirit::mObject &json_object)
+    : m_image_ctx(image_ctx), m_cct(image_ctx->cct),
+      m_asio_engine(image_ctx->asio_engine), m_json_object(json_object)
+{
+}
+
+template <typename I> HttpStream<I>::~HttpStream()
+{
 }
 
 template <typename I>
-HttpStream<I>::~HttpStream() {
+void HttpStream<I>::open(Context *on_finish)
+{
+    auto &url_value = m_json_object[URL_KEY];
+    if (url_value.type() != json_spirit::str_type) {
+        lderr(m_cct) << "failed to locate '" << URL_KEY << "' key" << dendl;
+        on_finish->complete(-EINVAL);
+        return;
+    }
+
+    m_url = url_value.get_str();
+    ldout(m_cct, 10) << "url=" << m_url << dendl;
+
+    m_http_client.reset(HttpClient<I>::create(m_image_ctx, m_url));
+    m_http_client->open(on_finish);
 }
 
 template <typename I>
-void HttpStream<I>::open(Context* on_finish) {
-  auto& url_value = m_json_object[URL_KEY];
-  if (url_value.type() != json_spirit::str_type) {
-    lderr(m_cct) << "failed to locate '" << URL_KEY << "' key" << dendl;
-    on_finish->complete(-EINVAL);
-    return;
-  }
+void HttpStream<I>::close(Context *on_finish)
+{
+    ldout(m_cct, 10) << dendl;
 
-  m_url = url_value.get_str();
-  ldout(m_cct, 10) << "url=" << m_url << dendl;
+    if (!m_http_client) {
+        on_finish->complete(0);
+        return;
+    }
 
-  m_http_client.reset(HttpClient<I>::create(m_image_ctx, m_url));
-  m_http_client->open(on_finish);
+    m_http_client->close(on_finish);
 }
 
 template <typename I>
-void HttpStream<I>::close(Context* on_finish) {
-  ldout(m_cct, 10) << dendl;
+void HttpStream<I>::get_size(uint64_t *size, Context *on_finish)
+{
+    ldout(m_cct, 10) << dendl;
 
-  if (!m_http_client) {
-    on_finish->complete(0);
-    return;
-  }
-
-  m_http_client->close(on_finish);
+    m_http_client->get_size(size, on_finish);
 }
 
 template <typename I>
-void HttpStream<I>::get_size(uint64_t* size, Context* on_finish) {
-  ldout(m_cct, 10) << dendl;
+void HttpStream<I>::read(io::Extents&& byte_extents, bufferlist *data,
+                         Context *on_finish)
+{
+    ldout(m_cct, 20) << "byte_extents=" << byte_extents << dendl;
 
-  m_http_client->get_size(size, on_finish);
-}
-
-template <typename I>
-void HttpStream<I>::read(io::Extents&& byte_extents, bufferlist* data,
-                         Context* on_finish) {
-  ldout(m_cct, 20) << "byte_extents=" << byte_extents << dendl;
-
-  m_http_client->read(std::move(byte_extents), data, on_finish);
+    m_http_client->read(std::move(byte_extents), data, on_finish);
 }
 
 } // namespace migration

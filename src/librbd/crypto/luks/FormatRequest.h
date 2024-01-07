@@ -10,40 +10,45 @@
 #include "librbd/crypto/CryptoInterface.h"
 #include "librbd/crypto/luks/Header.h"
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace crypto {
-namespace luks {
+namespace crypto
+{
+namespace luks
+{
 
 template <typename I>
-class FormatRequest {
+class FormatRequest
+{
 public:
-    static FormatRequest* create(
-            I* image_ctx, encryption_format_t format,
-            encryption_algorithm_t alg, std::string_view passphrase,
-            std::unique_ptr<CryptoInterface>* result_crypto, Context* on_finish,
-            bool insecure_fast_mode) {
-      return new FormatRequest(image_ctx, format, alg, passphrase,
-                               result_crypto, on_finish, insecure_fast_mode);
+    static FormatRequest *create(
+        I *image_ctx, encryption_format_t format,
+        encryption_algorithm_t alg, std::string_view passphrase,
+        std::unique_ptr<CryptoInterface> *result_crypto, Context *on_finish,
+        bool insecure_fast_mode)
+    {
+        return new FormatRequest(image_ctx, format, alg, passphrase,
+                                 result_crypto, on_finish, insecure_fast_mode);
     }
 
-    FormatRequest(I* image_ctx, encryption_format_t format,
+    FormatRequest(I *image_ctx, encryption_format_t format,
                   encryption_algorithm_t alg, std::string_view passphrase,
-                  std::unique_ptr<CryptoInterface>* result_crypto,
-                  Context* on_finish, bool insecure_fast_mode);
+                  std::unique_ptr<CryptoInterface> *result_crypto,
+                  Context *on_finish, bool insecure_fast_mode);
     void send();
     void finish(int r);
 
 private:
-    I* m_image_ctx;
+    I *m_image_ctx;
 
     encryption_format_t m_format;
     encryption_algorithm_t m_alg;
     std::string_view m_passphrase;
-    std::unique_ptr<CryptoInterface>* m_result_crypto;
-    Context* m_on_finish;
+    std::unique_ptr<CryptoInterface> *m_result_crypto;
+    Context *m_on_finish;
     bool m_insecure_fast_mode;
     Header m_header;
 

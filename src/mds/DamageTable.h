@@ -25,21 +25,20 @@ class CDir;
 
 typedef uint64_t damage_entry_id_t;
 
-typedef enum
-{
-  DAMAGE_ENTRY_DIRFRAG,
-  DAMAGE_ENTRY_DENTRY,
-  DAMAGE_ENTRY_BACKTRACE
+typedef enum {
+    DAMAGE_ENTRY_DIRFRAG,
+    DAMAGE_ENTRY_DENTRY,
+    DAMAGE_ENTRY_BACKTRACE
 
 } damage_entry_type_t;
 
 class DamageEntry
 {
-  public:
+public:
     DamageEntry()
     {
-      id = ceph::util::generate_random_number<damage_entry_id_t>(0, 0xffffffff);
-      reported_at = ceph_clock_now();
+        id = ceph::util::generate_random_number<damage_entry_id_t>(0, 0xffffffff);
+        reported_at = ceph_clock_now();
     }
 
     virtual ~DamageEntry();
@@ -59,18 +58,18 @@ typedef std::shared_ptr<DamageEntry> DamageEntryRef;
 
 class DirFragIdent
 {
-  public:
+public:
     DirFragIdent(inodeno_t ino_, frag_t frag_)
-      : ino(ino_), frag(frag_)
+        : ino(ino_), frag(frag_)
     {}
 
     bool operator<(const DirFragIdent &rhs) const
     {
-      if (ino == rhs.ino) {
-        return frag < rhs.frag;
-      } else {
-        return ino < rhs.ino;
-      }
+        if (ino == rhs.ino) {
+            return frag < rhs.frag;
+        } else {
+            return ino < rhs.ino;
+        }
     }
 
     inodeno_t ino;
@@ -79,18 +78,18 @@ class DirFragIdent
 
 class DentryIdent
 {
-  public:
+public:
     DentryIdent(std::string_view dname_, snapid_t snap_id_)
-      : dname(dname_), snap_id(snap_id_)
+        : dname(dname_), snap_id(snap_id_)
     {}
 
     bool operator<(const DentryIdent &rhs) const
     {
-      if (dname == rhs.dname) {
-        return snap_id < rhs.snap_id;
-      } else {
-        return dname < rhs.dname;
-      }
+        if (dname == rhs.dname) {
+            return snap_id < rhs.snap_id;
+        } else {
+            return dname < rhs.dname;
+        }
     }
 
     std::string dname;
@@ -119,11 +118,11 @@ class DentryIdent
  */
 class DamageTable
 {
-  public:
+public:
     explicit DamageTable(const mds_rank_t rank_)
-      : rank(rank_)
+        : rank(rank_)
     {
-      ceph_assert(rank_ != MDS_RANK_NONE);
+        ceph_assert(rank_ != MDS_RANK_NONE);
     }
 
     /**
@@ -131,7 +130,7 @@ class DamageTable
      */
     bool empty() const
     {
-      return by_id.empty();
+        return by_id.empty();
     }
 
     /**
@@ -147,8 +146,8 @@ class DamageTable
      * @return true if fatal
      */
     bool notify_dentry(
-      inodeno_t ino, frag_t frag,
-      snapid_t snap_id, std::string_view dname, std::string_view path);
+        inodeno_t ino, frag_t frag,
+        snapid_t snap_id, std::string_view dname, std::string_view path);
 
     /**
      * Indicate that a particular Inode could not be loaded by number
@@ -156,9 +155,9 @@ class DamageTable
     bool notify_remote_damaged(inodeno_t ino, std::string_view path);
 
     bool is_dentry_damaged(
-      const CDir *dir_frag,
-      std::string_view dname,
-      const snapid_t snap_id) const;
+        const CDir *dir_frag,
+        std::string_view dname,
+        const snapid_t snap_id) const;
 
     bool is_dirfrag_damaged(const CDir *dir_frag) const;
 
@@ -168,7 +167,7 @@ class DamageTable
 
     void erase(damage_entry_id_t damage_id);
 
-  protected:
+protected:
     // I need to know my MDS rank so that I can check if
     // metadata items are part of my mydir.
     const mds_rank_t rank;

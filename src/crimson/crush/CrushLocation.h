@@ -11,25 +11,28 @@
 
 #include <seastar/core/seastar.hh>
 
-namespace crimson::crush {
+namespace crimson::crush
+{
 
-class CrushLocation {
+class CrushLocation
+{
 public:
-  explicit CrushLocation() {
-  }
+    explicit CrushLocation()
+    {
+    }
 
-  seastar::future<> update_from_conf();  ///< refresh from config
-  seastar::future<> init_on_startup();
-  seastar::future<> update_from_hook();  ///< call hook, if present
+    seastar::future<> update_from_conf();  ///< refresh from config
+    seastar::future<> init_on_startup();
+    seastar::future<> update_from_hook();  ///< call hook, if present
 
-  std::multimap<std::string, std::string> get_location() const;
+    std::multimap<std::string, std::string> get_location() const;
 
 private:
-  void _parse(const std::string& s);
-  std::multimap<std::string, std::string> loc;
+    void _parse(const std::string &s);
+    std::multimap<std::string, std::string> loc;
 };
 
-std::ostream& operator<<(std::ostream& os, const CrushLocation& loc);
+std::ostream &operator<<(std::ostream &os, const CrushLocation &loc);
 }
 
 #if FMT_VERSION >= 90000

@@ -9,63 +9,68 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace mirror {
-namespace snapshot {
+namespace mirror
+{
+namespace snapshot
+{
 
 template <typename ImageCtxT>
-class ImageMeta {
+class ImageMeta
+{
 public:
-  static ImageMeta* create(ImageCtxT* image_ctx,
-                           const std::string& mirror_uuid) {
-    return new ImageMeta(image_ctx, mirror_uuid);
-  }
+    static ImageMeta *create(ImageCtxT *image_ctx,
+                             const std::string &mirror_uuid)
+    {
+        return new ImageMeta(image_ctx, mirror_uuid);
+    }
 
-  ImageMeta(ImageCtxT* image_ctx, const std::string& mirror_uuid);
+    ImageMeta(ImageCtxT *image_ctx, const std::string &mirror_uuid);
 
-  void load(Context* on_finish);
-  void save(Context* on_finish);
+    void load(Context *on_finish);
+    void save(Context *on_finish);
 
-  bool resync_requested = false;
+    bool resync_requested = false;
 
 private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *   |
-   *   v
-   * METADATA_GET
-   *   |
-   *   v
-   * <idle>
-   *   |
-   *   v
-   * METADATA_SET
-   *   |
-   *   v
-   * NOTIFY_UPDATE
-   *   |
-   *   v
-   * <finish>
-   *
-   * @endverbatim
-   */
+    /**
+     * @verbatim
+     *
+     * <start>
+     *   |
+     *   v
+     * METADATA_GET
+     *   |
+     *   v
+     * <idle>
+     *   |
+     *   v
+     * METADATA_SET
+     *   |
+     *   v
+     * NOTIFY_UPDATE
+     *   |
+     *   v
+     * <finish>
+     *
+     * @endverbatim
+     */
 
-  ImageCtxT* m_image_ctx;
-  std::string m_mirror_uuid;
+    ImageCtxT *m_image_ctx;
+    std::string m_mirror_uuid;
 
-  bufferlist m_out_bl;
+    bufferlist m_out_bl;
 
-  void handle_load(Context* on_finish, int r);
+    void handle_load(Context *on_finish, int r);
 
-  void handle_save(Context* on_finish, int r);
+    void handle_save(Context *on_finish, int r);
 
-  void notify_update(Context* on_finish);
-  void handle_notify_update(Context* on_finish, int r);
+    void notify_update(Context *on_finish);
+    void handle_notify_update(Context *on_finish, int r);
 
 };
 

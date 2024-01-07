@@ -14,72 +14,77 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "librbd::object_map::RemoveRequest: "
 
-namespace librbd {
-namespace object_map {
+namespace librbd
+{
+namespace object_map
+{
 
 using util::create_rados_callback;
 
-template <typename I>
-RemoveRequest<I>::RemoveRequest(I *image_ctx, Context *on_finish)
-  : m_image_ctx(image_ctx), m_on_finish(on_finish) {
+template <typename I> RemoveRequest<I>::RemoveRequest(I *image_ctx, Context *on_finish)
+    : m_image_ctx(image_ctx), m_on_finish(on_finish)
+{
 }
 
 template <typename I>
-void RemoveRequest<I>::send() {
-  send_remove_object_map();
+void RemoveRequest<I>::send()
+{
+    send_remove_object_map();
 }
 
 template <typename I>
-void RemoveRequest<I>::send_remove_object_map() {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 20) << __func__ << dendl;
+void RemoveRequest<I>::send_remove_object_map()
+{
+    CephContext *cct = m_image_ctx->cct;
+    ldout(cct, 20) << __func__ << dendl;
 
-  std::unique_lock image_locker{m_image_ctx->image_lock};
-  std::vector<uint64_t> snap_ids;
-  snap_ids.push_back(CEPH_NOSNAP);
-  for (auto it : m_image_ctx->snap_info) {
-    snap_ids.push_back(it.first);
-  }
+    std::unique_lock image_locker{m_image_ctx->image_lock};
+    std::vector<uint64_t> snap_ids;
+    snap_ids.push_back(CEPH_NOSNAP);
+    for (auto it : m_image_ctx->snap_info) {
+        snap_ids.push_back(it.first);
+    }
 
-  std::lock_guard locker{m_lock};
-  ceph_assert(m_ref_counter == 0);
-
-  for (auto snap_id : snap_ids) {
-    m_ref_counter++;
-    std::string oid(ObjectMap<>::object_map_name(m_image_ctx->id, snap_id));
-    using klass = RemoveRequest<I>;
-    librados::AioCompletion *comp =
-      create_rados_callback<klass, &klass::handle_remove_object_map>(this);
-
-    int r = m_image_ctx->md_ctx.aio_remove(oid, comp);
-    ceph_assert(r == 0);
-    comp->release();
-  }
-}
-
-template <typename I>
-Context *RemoveRequest<I>::handle_remove_object_map(int *result) {
-  CephContext *cct = m_image_ctx->cct;
-  ldout(cct, 20) << __func__ << ": r=" << *result << dendl;
-
-  {
     std::lock_guard locker{m_lock};
-    ceph_assert(m_ref_counter > 0);
-    m_ref_counter--;
+    ceph_assert(m_ref_counter == 0);
 
-    if (*result < 0 && *result != -ENOENT) {
-      lderr(cct) << "failed to remove object map: " << cpp_strerror(*result)
-		 << dendl;
-      m_error_result = *result;
+    for (auto snap_id : snap_ids) {
+        m_ref_counter++;
+        std::string oid(ObjectMap<>::object_map_name(m_image_ctx->id, snap_id));
+        using klass = RemoveRequest<I>;
+        librados::AioCompletion *comp =
+            create_rados_callback<klass, &klass::handle_remove_object_map>(this);
+
+        int r = m_image_ctx->md_ctx.aio_remove(oid, comp);
+        ceph_assert(r == 0);
+        comp->release();
     }
-    if (m_ref_counter > 0) {
-      return nullptr;
+}
+
+template <typename I>
+Context *RemoveRequest<I>::handle_remove_object_map(int *result)
+{
+    CephContext *cct = m_image_ctx->cct;
+    ldout(cct, 20) << __func__ << ": r=" << *result << dendl;
+
+    {
+        std::lock_guard locker{m_lock};
+        ceph_assert(m_ref_counter > 0);
+        m_ref_counter--;
+
+        if (*result < 0 && *result != -ENOENT) {
+            lderr(cct) << "failed to remove object map: " << cpp_strerror(*result)
+                       << dendl;
+            m_error_result = *result;
+        }
+        if (m_ref_counter > 0) {
+            return nullptr;
+        }
     }
-  }
-  if (m_error_result < 0) {
-    *result = m_error_result;
-  }
-  return m_on_finish;
+    if (m_error_result < 0) {
+        *result = m_error_result;
+    }
+    return m_on_finish;
 }
 
 } // namespace object_map

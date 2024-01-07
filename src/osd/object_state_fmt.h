@@ -13,11 +13,14 @@
 
 template <>
 struct fmt::formatter<ObjectState> {
-  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    constexpr auto parse(format_parse_context &ctx)
+    {
+        return ctx.begin();
+    }
 
-  template <typename FormatContext>
-  auto format(const ObjectState& os, FormatContext& ctx) const
-  {
-    return fmt::format_to(ctx.out(), "exists {} oi {}", os.exists, os.oi);
-  }
+    template <typename FormatContext>
+    auto format(const ObjectState &os, FormatContext &ctx) const
+    {
+        return fmt::format_to(ctx.out(), "exists {} oi {}", os.exists, os.oi);
+    }
 };

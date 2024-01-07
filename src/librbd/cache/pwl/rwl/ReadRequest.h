@@ -6,24 +6,29 @@
 
 #include "librbd/cache/pwl/ReadRequest.h"
 
-namespace librbd {
-namespace cache {
-namespace pwl {
-namespace rwl {
+namespace librbd
+{
+namespace cache
+{
+namespace pwl
+{
+namespace rwl
+{
 
 typedef std::vector<pwl::ImageExtentBuf> ImageExtentBufs;
 
-class C_ReadRequest : public pwl::C_ReadRequest {
+class C_ReadRequest : public pwl::C_ReadRequest
+{
 protected:
-  using pwl::C_ReadRequest::m_cct;
-  using pwl::C_ReadRequest::m_on_finish;
-  using pwl::C_ReadRequest::m_out_bl;
-  using pwl::C_ReadRequest::m_arrived_time;
-  using pwl::C_ReadRequest::m_perfcounter;
+    using pwl::C_ReadRequest::m_cct;
+    using pwl::C_ReadRequest::m_on_finish;
+    using pwl::C_ReadRequest::m_out_bl;
+    using pwl::C_ReadRequest::m_arrived_time;
+    using pwl::C_ReadRequest::m_perfcounter;
 public:
-  C_ReadRequest(CephContext *cct, utime_t arrived, PerfCounters *perfcounter, bufferlist *out_bl, Context *on_finish)
-    : pwl::C_ReadRequest(cct, arrived, perfcounter, out_bl, on_finish) {}
-  void finish(int r) override;
+    C_ReadRequest(CephContext *cct, utime_t arrived, PerfCounters *perfcounter, bufferlist *out_bl, Context *on_finish)
+        : pwl::C_ReadRequest(cct, arrived, perfcounter, out_bl, on_finish) {}
+    void finish(int r) override;
 };
 
 } // namespace rwl

@@ -8,7 +8,8 @@
 #include "include/buffer.h"
 #include "include/encoding.h"
 
-namespace crimson::common {
+namespace crimson::common
+{
 
 /**
  * do_tmap_up
@@ -20,7 +21,7 @@ namespace crimson::common {
  * @return buffer containing new object contents,
  *   -EINVAL for decoding errors,
  *   -EEXIST for CEPH_OSD_TMAP_CREATE on a key that exists
- *   -ENOENT for CEPH_OSD_TMAP_RM on a key that does not exist 
+ *   -ENOENT for CEPH_OSD_TMAP_RM on a key that does not exist
  */
 using do_tmap_up_ret = tl::expected<bufferlist, int>;
 do_tmap_up_ret do_tmap_up(bufferlist::const_iterator in, bufferlist contents);

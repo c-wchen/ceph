@@ -6,21 +6,23 @@
 
 typedef int MetricQueryID;
 
-typedef std::pair<uint64_t,uint64_t> PerformanceCounter;
+typedef std::pair<uint64_t, uint64_t> PerformanceCounter;
 typedef std::vector<PerformanceCounter> PerformanceCounters;
 
 struct MetricListener {
-  virtual ~MetricListener() {
-  }
+    virtual ~MetricListener()
+    {
+    }
 
-  virtual void handle_query_updated() = 0;
+    virtual void handle_query_updated() = 0;
 };
 
 struct PerfCollector {
-  MetricQueryID query_id;
-  PerfCollector(MetricQueryID query_id)
-    : query_id(query_id) {
-  }
+    MetricQueryID query_id;
+    PerfCollector(MetricQueryID query_id)
+        : query_id(query_id)
+    {
+    }
 };
 
 #endif // CEPH_MGR_TYPES_H

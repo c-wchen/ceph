@@ -17,24 +17,24 @@ struct cross_process_sem_data_t;
 class CrossProcessSem
 {
 public:
-  static int create(int initial_val, CrossProcessSem** ret);
-  ~CrossProcessSem();
+    static int create(int initial_val, CrossProcessSem **ret);
+    ~CrossProcessSem();
 
-  /* Initialize the semaphore. Must be called before any operations */
-  int init();
+    /* Initialize the semaphore. Must be called before any operations */
+    int init();
 
-  /* Semaphore wait */
-  void wait();
+    /* Semaphore wait */
+    void wait();
 
-  /* Semaphore post */
-  void post();
+    /* Semaphore post */
+    void post();
 
-  /* Reinitialize the semaphore to the desired value.
-   * NOT thread-safe if it is in use at the time!
-   */ 
-  int reinit(int dval);
+    /* Reinitialize the semaphore to the desired value.
+     * NOT thread-safe if it is in use at the time!
+     */
+    int reinit(int dval);
 
 private:
-  explicit CrossProcessSem(struct cross_process_sem_data_t *data);
-  struct cross_process_sem_data_t *m_data;
+    explicit CrossProcessSem(struct cross_process_sem_data_t *data);
+    struct cross_process_sem_data_t *m_data;
 };

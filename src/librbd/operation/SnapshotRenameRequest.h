@@ -9,50 +9,53 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace operation {
+namespace operation
+{
 
 template <typename ImageCtxT = ImageCtx>
-class SnapshotRenameRequest : public Request<ImageCtxT> {
+class SnapshotRenameRequest : public Request<ImageCtxT>
+{
 public:
-  /**
-   * Snap Rename goes through the following state machine:
-   *
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v
-   * STATE_RENAME_SNAP
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   *
-   */
-  enum State {
-    STATE_RENAME_SNAP
-  };
+    /**
+     * Snap Rename goes through the following state machine:
+     *
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v
+     * STATE_RENAME_SNAP
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     *
+     */
+    enum State {
+        STATE_RENAME_SNAP
+    };
 
-  SnapshotRenameRequest(ImageCtxT &image_ctx, Context *on_finish,
-                        uint64_t snap_id, const std::string &snap_name);
+    SnapshotRenameRequest(ImageCtxT &image_ctx, Context *on_finish,
+                          uint64_t snap_id, const std::string &snap_name);
 
-  journal::Event create_event(uint64_t op_tid) const override;
+    journal::Event create_event(uint64_t op_tid) const override;
 
 protected:
-  void send_op() override;
-  bool should_complete(int r) override;
+    void send_op() override;
+    bool should_complete(int r) override;
 
 private:
-  uint64_t m_snap_id;
-  std::string m_snap_name;
-  State m_state;
+    uint64_t m_snap_id;
+    std::string m_snap_name;
+    State m_state;
 
-  void send_rename_snap();
+    void send_rename_snap();
 };
 
 } // namespace operation

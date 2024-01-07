@@ -17,26 +17,30 @@
 
 #include "LogSegment.h"
 
-class SegmentBoundary {
+class SegmentBoundary
+{
 public:
-  using seq_t = LogSegment::seq_t;
+    using seq_t = LogSegment::seq_t;
 
-  virtual ~SegmentBoundary() {}
-  SegmentBoundary() = default;
-  SegmentBoundary(seq_t seq) : seq(seq) {}
+    virtual ~SegmentBoundary() {}
+    SegmentBoundary() = default;
+    SegmentBoundary(seq_t seq) : seq(seq) {}
 
-  virtual bool is_major_segment_boundary() const {
-    return false;
-  }
+    virtual bool is_major_segment_boundary() const
+    {
+        return false;
+    }
 
-  seq_t get_seq() const {
-    return seq;
-  }
-  void set_seq(seq_t _seq) {
-    seq = _seq;
-  }
+    seq_t get_seq() const
+    {
+        return seq;
+    }
+    void set_seq(seq_t _seq)
+    {
+        seq = _seq;
+    }
 protected:
-  seq_t seq = 0;
+    seq_t seq = 0;
 };
 
 #endif

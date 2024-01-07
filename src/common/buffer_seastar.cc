@@ -20,85 +20,91 @@
 
 using temporary_buffer = seastar::temporary_buffer<char>;
 
-namespace ceph::buffer {
+namespace ceph::buffer
+{
 
-class raw_seastar_foreign_ptr : public raw {
-  seastar::foreign_ptr<temporary_buffer> ptr;
- public:
-  raw_seastar_foreign_ptr(temporary_buffer&& buf)
-    : raw(buf.get_write(), buf.size()), ptr(std::move(buf)) {}
+class raw_seastar_foreign_ptr : public raw
+{
+    seastar::foreign_ptr<temporary_buffer> ptr;
+public:
+    raw_seastar_foreign_ptr(temporary_buffer&& buf)
+        : raw(buf.get_write(), buf.size()), ptr(std::move(buf)) {}
 };
 
-class raw_seastar_local_ptr : public raw {
-  temporary_buffer buf;
- public:
-  raw_seastar_local_ptr(temporary_buffer&& buf)
-    : raw(buf.get_write(), buf.size()), buf(std::move(buf)) {}
+class raw_seastar_local_ptr : public raw
+{
+    temporary_buffer buf;
+public:
+    raw_seastar_local_ptr(temporary_buffer&& buf)
+        : raw(buf.get_write(), buf.size()), buf(std::move(buf)) {}
 };
 
-inline namespace v15_2_0 {
+inline namespace v15_2_0
+{
 
-ceph::unique_leakable_ptr<buffer::raw> create(temporary_buffer&& buf) {
-  return ceph::unique_leakable_ptr<buffer::raw>(
-    new raw_seastar_foreign_ptr(std::move(buf)));
+ceph::unique_leakable_ptr<buffer::raw> create(temporary_buffer&& buf)
+{
+    return ceph::unique_leakable_ptr<buffer::raw>(
+               new raw_seastar_foreign_ptr(std::move(buf)));
 }
 
-ceph::unique_leakable_ptr<buffer::raw> create_local(temporary_buffer&& buf) {
-  return ceph::unique_leakable_ptr<buffer::raw>(
-    new raw_seastar_local_ptr(std::move(buf)));
+ceph::unique_leakable_ptr<buffer::raw> create_local(temporary_buffer&& buf)
+{
+    return ceph::unique_leakable_ptr<buffer::raw>(
+               new raw_seastar_local_ptr(std::move(buf)));
 }
 
 } // inline namespace v15_2_0
 
 // buffer::ptr conversions
 
-ptr::operator seastar::temporary_buffer<char>() &
-{
-  return {c_str(), _len, seastar::make_object_deleter(*this)};
+ptr::operator seastar::temporary_buffer<char>() & {
+    return {c_str(), _len, seastar::make_object_deleter(*this)};
 }
 
-ptr::operator seastar::temporary_buffer<char>() &&
-{
-  auto data = c_str();
-  auto length = _len;
-  return {data, length, seastar::make_object_deleter(std::move(*this))};
+ptr::operator seastar::temporary_buffer<char>() && {
+    auto data = c_str();
+    auto length = _len;
+    return {data, length, seastar::make_object_deleter(std::move(*this))};
 }
 
 // buffer::list conversions
 
-list::operator seastar::net::packet() &&
-{
-  seastar::net::packet p(_num);
-  for (auto& ptr : _buffers) {
-    // append each ptr as a temporary_buffer
-    p = seastar::net::packet(std::move(p), std::move(ptr));
-  }
-  clear();
-  return p;
+list::operator seastar::net::packet() && {
+    seastar::net::packet p(_num);
+    for (auto &ptr : _buffers)
+    {
+        // append each ptr as a temporary_buffer
+        p = seastar::net::packet(std::move(p), std::move(ptr));
+    }
+    clear();
+    return p;
 }
 
 } // namespace ceph::buffer
 
-namespace {
+namespace
+{
 
 using ceph::buffer::raw;
-class raw_seastar_local_shared_ptr : public raw {
-  temporary_buffer buf;
+class raw_seastar_local_shared_ptr : public raw
+{
+    temporary_buffer buf;
 public:
-  raw_seastar_local_shared_ptr(temporary_buffer& buf)
-    : raw(buf.get_write(), buf.size()), buf(buf.share()) {}
+    raw_seastar_local_shared_ptr(temporary_buffer &buf)
+        : raw(buf.get_write(), buf.size()), buf(buf.share()) {}
 };
 }
 
 buffer::ptr seastar_buffer_iterator::get_ptr(size_t len)
 {
-  buffer::ptr p{ceph::unique_leakable_ptr<buffer::raw>(
-    new raw_seastar_local_shared_ptr{buf})};
-  p.set_length(len);
-  return p;
+    buffer::ptr p{ceph::unique_leakable_ptr<buffer::raw>(
+                      new raw_seastar_local_shared_ptr{buf})};
+    p.set_length(len);
+    return p;
 }
 
 buffer::ptr const_seastar_buffer_iterator::get_ptr(size_t len)
 {
-  return buffer::ptr{ buffer::copy(get_pos_add(len), len) };
+    return buffer::ptr{ buffer::copy(get_pos_add(len), len) };
 }

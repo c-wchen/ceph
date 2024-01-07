@@ -28,10 +28,10 @@ bool is_librados_test_stub(librados::Rados &rados);
 
 bool is_rbd_pwl_enabled(ceph::common::CephContext *ctx);
 
-#define REQUIRE(x) {			  \
-  if (!(x)) {				  \
+#define REQUIRE(x) {              \
+  if (!(x)) {                 \
     GTEST_SKIP() << "Skipping due to unmet REQUIRE"; \
-  } 					  \
+  }                       \
 }
 
 #define REQUIRE_FEATURE(feature) REQUIRE(is_feature_enabled(feature))

@@ -41,8 +41,8 @@ typedef void *rados_striper_t;
  * @param striper where to store the rados striper
  * @returns 0 on success, negative error code on failure
  */
-  int rados_striper_create(rados_ioctx_t ioctx,
-                           rados_striper_t *striper);
+int rados_striper_create(rados_ioctx_t ioctx,
+                         rados_striper_t *striper);
 
 /**
  * Destroys a rados striper
@@ -61,7 +61,7 @@ void rados_striper_destroy(rados_striper_t striper);
  * @returns 0 on success, negative error code on failure
  */
 int rados_striper_set_object_layout_stripe_unit(rados_striper_t striper,
-                                                unsigned int stripe_unit);
+        unsigned int stripe_unit);
 
 /**
  * Sets the object layout's stripe count of a rados striper for future objects.
@@ -73,7 +73,7 @@ int rados_striper_set_object_layout_stripe_unit(rados_striper_t striper,
  * @returns 0 on success, negative error code on failure
  */
 int rados_striper_set_object_layout_stripe_count(rados_striper_t striper,
-                                                 unsigned int stripe_count);
+        unsigned int stripe_count);
 
 /**
  * Sets the object layout's object_size of a rados striper for future objects.
@@ -85,7 +85,7 @@ int rados_striper_set_object_layout_stripe_count(rados_striper_t striper,
  * @returns 0 on success, negative error code on failure
  */
 int rados_striper_set_object_layout_object_size(rados_striper_t striper,
-                                                unsigned int object_size);
+        unsigned int object_size);
 
 /** @} init */
 
@@ -183,7 +183,7 @@ int rados_striper_read(rados_striper_t striper,
  * @returns 0 on success, negative error code on failure
  */
 int rados_striper_remove(rados_striper_t striper,
-                         const char* soid);
+                         const char *soid);
 
 /**
  * Resize an object
@@ -320,14 +320,14 @@ void rados_striper_getxattrs_end(rados_xattrs_iter_t iter);
  * @returns 0 on success, negative error code on failure
  */
 int rados_striper_stat(rados_striper_t striper,
-                       const char* soid,
+                       const char *soid,
                        uint64_t *psize,
                        time_t *pmtime);
 
 int rados_striper_stat2(rados_striper_t striper,
-                       const char* soid,
-                       uint64_t *psize,
-                       struct timespec *pmtime);
+                        const char *soid,
+                        uint64_t *psize,
+                        struct timespec *pmtime);
 
 /**
  * @defgroup libradosstriper_h_asynch_io Asynchronous I/O
@@ -365,9 +365,9 @@ typedef void *rados_striper_multi_completion_t;
  * @returns 0
  */
 int rados_striper_multi_aio_create_completion(void *cb_arg,
-                                              rados_callback_t cb_complete,
-                                              rados_callback_t cb_safe,
-                                              rados_striper_multi_completion_t *pc);
+        rados_callback_t cb_complete,
+        rados_callback_t cb_safe,
+        rados_striper_multi_completion_t *pc);
 
 /**
  * Block until all operation complete
@@ -575,7 +575,7 @@ int rados_striper_aio_read(rados_striper_t striper,
  */
 
 int rados_striper_aio_remove(rados_striper_t striper,
-                             const char* soid,
+                             const char *soid,
                              rados_completion_t completion);
 
 /**
@@ -601,16 +601,16 @@ void rados_striper_aio_flush(rados_striper_t striper);
  * @returns 0 on success, negative error code on failure
  */
 int rados_striper_aio_stat(rados_striper_t striper,
-                           const char* soid,
+                           const char *soid,
                            rados_completion_t completion,
                            uint64_t *psize,
                            time_t *pmtime);
 
 int rados_striper_aio_stat2(rados_striper_t striper,
-                           const char* soid,
-                           rados_completion_t completion,
-                           uint64_t *psize,
-                           struct timespec *pmtime);
+                            const char *soid,
+                            rados_completion_t completion,
+                            uint64_t *psize,
+                            struct timespec *pmtime);
 /** @} Asynchronous I/O */
 
 #ifdef __cplusplus

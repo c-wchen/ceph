@@ -16,19 +16,21 @@
 #include <memory>
 #include "rgw_rest.h"
 
-namespace rgw {
+namespace rgw
+{
 
 class ZeroResource;
 
 // a rest endpoint that's only useful for benchmarking the http frontend.
 // requests are not authenticated, and do no reads/writes to the backend
-class RESTMgr_Zero : public RGWRESTMgr {
-  std::unique_ptr<ZeroResource> resource;
- public:
-  RESTMgr_Zero();
-  RGWHandler_REST* get_handler(sal::Driver* driver, req_state* s,
-                               const auth::StrategyRegistry& auth,
-                               const std::string& prefix) override;
+class RESTMgr_Zero : public RGWRESTMgr
+{
+    std::unique_ptr<ZeroResource> resource;
+public:
+    RESTMgr_Zero();
+    RGWHandler_REST *get_handler(sal::Driver *driver, req_state *s,
+                                 const auth::StrategyRegistry &auth,
+                                 const std::string &prefix) override;
 };
 
 } // namespace rgw

@@ -9,20 +9,23 @@
 #include <string>
 #include <boost/variant.hpp>
 
-namespace rbd {
-namespace mirror {
-namespace service_daemon {
+namespace rbd
+{
+namespace mirror
+{
+namespace service_daemon
+{
 
 typedef uint64_t CalloutId;
 const uint64_t CALLOUT_ID_NONE {0};
 
 enum CalloutLevel {
-  CALLOUT_LEVEL_INFO,
-  CALLOUT_LEVEL_WARNING,
-  CALLOUT_LEVEL_ERROR
+    CALLOUT_LEVEL_INFO,
+    CALLOUT_LEVEL_WARNING,
+    CALLOUT_LEVEL_ERROR
 };
 
-std::ostream& operator<<(std::ostream& os, const CalloutLevel& callout_level);
+std::ostream &operator<<(std::ostream &os, const CalloutLevel &callout_level);
 
 typedef boost::variant<bool, uint64_t, std::string> AttributeValue;
 

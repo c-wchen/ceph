@@ -24,8 +24,8 @@
 
 #include <fcntl.h>
 #ifndef F_OFD_SETLK
-#define F_OFD_SETLK F_SETLK 
-#endif 
+#define F_OFD_SETLK F_SETLK
+#endif
 
 #include <sys/stat.h>
 
@@ -44,7 +44,7 @@
 #if defined(__FreeBSD__)
 
 // FreeBSD supports Linux procfs with its compatibility module
-// And all compatibility stuff is standard mounted on this 
+// And all compatibility stuff is standard mounted on this
 #define PROCPREFIX "/compat/linux"
 
 #ifndef MSG_MORE
@@ -127,8 +127,8 @@ struct cpu_set_t;
 #endif /* __APPLE__ */
 
 #ifndef HOST_NAME_MAX
-#ifdef MAXHOSTNAMELEN 
-#define HOST_NAME_MAX MAXHOSTNAMELEN 
+#ifdef MAXHOSTNAMELEN
+#define HOST_NAME_MAX MAXHOSTNAMELEN
 #else
 #define HOST_NAME_MAX 255
 #endif
@@ -180,36 +180,36 @@ struct cpu_set_t;
 #endif
 
 #if defined(HAVE_PTHREAD_SETNAME_NP)
-  #if defined(__APPLE__)
-    #define ceph_pthread_setname(thread, name) ({ \
+#if defined(__APPLE__)
+#define ceph_pthread_setname(thread, name) ({ \
       int __result = 0;                         \
       if (thread == pthread_self())             \
         __result = pthread_setname_np(name);    \
       __result; })
-  #else
-    #define ceph_pthread_setname pthread_setname_np
-  #endif
+#else
+#define ceph_pthread_setname pthread_setname_np
+#endif
 #elif defined(HAVE_PTHREAD_SET_NAME_NP)
-  /* Fix a small name diff and return 0 */
-  #define ceph_pthread_setname(thread, name) ({ \
+/* Fix a small name diff and return 0 */
+#define ceph_pthread_setname(thread, name) ({ \
     pthread_set_name_np(thread, name);          \
     0; })
 #else
-  /* compiler warning free success noop */
-  #define ceph_pthread_setname(thread, name) ({ \
+/* compiler warning free success noop */
+#define ceph_pthread_setname(thread, name) ({ \
     int __i = 0;                              \
     __i; })
 #endif
 
 #if defined(HAVE_PTHREAD_GETNAME_NP)
-  #define ceph_pthread_getname pthread_getname_np
+#define ceph_pthread_getname pthread_getname_np
 #elif defined(HAVE_PTHREAD_GET_NAME_NP)
-  #define ceph_pthread_getname(thread, name, len) ({ \
+#define ceph_pthread_getname(thread, name, len) ({ \
     pthread_get_name_np(thread, name, len);          \
     0; })
 #else
-  /* compiler warning free success noop */
-  #define ceph_pthread_getname(thread, name, len) ({ \
+/* compiler warning free success noop */
+#define ceph_pthread_getname(thread, name, len) ({ \
     if (name != NULL)                              \
       *name = '\0';                                \
     0; })
@@ -226,7 +226,7 @@ char *ceph_strerror_r(int errnum, char *buf, size_t buflen);
 unsigned get_page_size();
 // On success, returns the number of bytes written to the buffer. On
 // failure, returns -1.
-ssize_t get_self_exe_path(char* path, int buff_length);
+ssize_t get_self_exe_path(char *path, int buff_length);
 
 int ceph_memzero_s(void *dest, size_t destsz, size_t count);
 
@@ -267,15 +267,14 @@ typedef long long loff_t;
 
 #define CPU_SETSIZE (sizeof(size_t)*8)
 
-typedef union
-{
-  char cpuset[CPU_SETSIZE/8];
-  size_t _align;
+typedef union {
+    char cpuset[CPU_SETSIZE / 8];
+    size_t _align;
 } cpu_set_t;
 
 struct iovec {
-  void *iov_base;
-  size_t iov_len;
+    void *iov_base;
+    size_t iov_len;
 };
 
 #define SHUT_RD SD_RECEIVE
@@ -327,7 +326,7 @@ int getgid();
 int win_socketpair(int socks[2]);
 
 #ifdef __MINGW32__
-extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,const char *_Value);
+extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name, const char *_Value);
 
 #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #define htobe16(x) __builtin_bswap16(x)
@@ -355,8 +354,9 @@ extern _CRTIMP errno_t __cdecl _putenv_s(const char *_Name,const char *_Value);
 #define compat_closesocket closesocket
 // Use "aligned_free" when freeing memory allocated using posix_memalign or
 // _aligned_malloc. Using "free" will crash.
-static inline void aligned_free(void* ptr) {
-  _aligned_free(ptr);
+static inline void aligned_free(void *ptr)
+{
+    _aligned_free(ptr);
 }
 
 // O_CLOEXEC is not defined on Windows. Since handles aren't inherited
@@ -371,11 +371,13 @@ static inline void aligned_free(void* ptr) {
 
 #define SOCKOPT_VAL_TYPE void*
 
-static inline void aligned_free(void* ptr) {
-  free(ptr);
+static inline void aligned_free(void *ptr)
+{
+    free(ptr);
 }
-static inline int compat_closesocket(int fildes) {
-  return close(fildes);
+static inline int compat_closesocket(int fildes)
+{
+    return close(fildes);
 }
 
 #define DEV_NULL "/dev/null"
@@ -402,11 +404,12 @@ static inline int compat_closesocket(int fildes) {
 #endif
 
 /* This should only be used with the socket API. */
-static inline int ceph_sock_errno() {
+static inline int ceph_sock_errno()
+{
 #ifdef _WIN32
-  return wsae_to_errno(WSAGetLastError());
+    return wsae_to_errno(WSAGetLastError());
 #else
-  return errno;
+    return errno;
 #endif
 }
 

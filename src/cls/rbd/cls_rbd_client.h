@@ -11,11 +11,19 @@
 #include "include/rados/librados_fwd.hpp"
 
 class Context;
-namespace ceph { template <uint8_t> class BitVector; }
-namespace neorados { struct WriteOp; }
+namespace ceph
+{
+template <uint8_t> class BitVector;
+}
+namespace neorados
+{
+struct WriteOp;
+}
 
-namespace librbd {
-namespace cls_client {
+namespace librbd
+{
+namespace cls_client
+{
 
 // low-level interface (mainly for testing)
 void create_image(librados::ObjectWriteOperation *op, uint64_t size,
@@ -91,35 +99,35 @@ int remove_parent(librados::IoCtx *ioctx, const std::string &oid);
 void remove_parent(librados::ObjectWriteOperation *op);
 
 // v2 parent APIs
-void parent_get_start(librados::ObjectReadOperation* op);
-int parent_get_finish(ceph::buffer::list::const_iterator* it,
-                      cls::rbd::ParentImageSpec* parent_image_spec);
-int parent_get(librados::IoCtx* ioctx, const std::string &oid,
-               cls::rbd::ParentImageSpec* parent_image_spec);
+void parent_get_start(librados::ObjectReadOperation *op);
+int parent_get_finish(ceph::buffer::list::const_iterator *it,
+                      cls::rbd::ParentImageSpec *parent_image_spec);
+int parent_get(librados::IoCtx *ioctx, const std::string &oid,
+               cls::rbd::ParentImageSpec *parent_image_spec);
 
-void parent_overlap_get_start(librados::ObjectReadOperation* op,
+void parent_overlap_get_start(librados::ObjectReadOperation *op,
                               snapid_t snap_id);
-int parent_overlap_get_finish(ceph::buffer::list::const_iterator* it,
-                              std::optional<uint64_t>* parent_overlap);
-int parent_overlap_get(librados::IoCtx* ioctx, const std::string &oid,
+int parent_overlap_get_finish(ceph::buffer::list::const_iterator *it,
+                              std::optional<uint64_t> *parent_overlap);
+int parent_overlap_get(librados::IoCtx *ioctx, const std::string &oid,
                        snapid_t snap_id,
-                       std::optional<uint64_t>* parent_overlap);
+                       std::optional<uint64_t> *parent_overlap);
 
-void parent_attach(librados::ObjectWriteOperation* op,
-                   const cls::rbd::ParentImageSpec& parent_image_spec,
+void parent_attach(librados::ObjectWriteOperation *op,
+                   const cls::rbd::ParentImageSpec &parent_image_spec,
                    uint64_t parent_overlap, bool reattach);
 int parent_attach(librados::IoCtx *ioctx, const std::string &oid,
-                  const cls::rbd::ParentImageSpec& parent_image_spec,
+                  const cls::rbd::ParentImageSpec &parent_image_spec,
                   uint64_t parent_overlap, bool reattach);
 
-void parent_detach(librados::ObjectWriteOperation* op);
+void parent_detach(librados::ObjectWriteOperation *op);
 int parent_detach(librados::IoCtx *ioctx, const std::string &oid);
 
 int add_child(librados::IoCtx *ioctx, const std::string &oid,
               const cls::rbd::ParentImageSpec &pspec,
               const std::string &c_imageid);
 void add_child(librados::ObjectWriteOperation *op,
-               const cls::rbd::ParentImageSpec& pspec,
+               const cls::rbd::ParentImageSpec &pspec,
                const std::string &c_imageid);
 void remove_child(librados::ObjectWriteOperation *op,
                   const cls::rbd::ParentImageSpec &pspec,
@@ -132,14 +140,14 @@ void get_children_start(librados::ObjectReadOperation *op,
 int get_children_finish(ceph::buffer::list::const_iterator *it,
                         std::set<std::string> *children);
 int get_children(librados::IoCtx *ioctx, const std::string &oid,
-                 const cls::rbd::ParentImageSpec& pspec, std::set<std::string>& children);
+                 const cls::rbd::ParentImageSpec &pspec, std::set<std::string> &children);
 
-void snapshot_get_start(librados::ObjectReadOperation* op,
+void snapshot_get_start(librados::ObjectReadOperation *op,
                         snapid_t snap_id);
-int snapshot_get_finish(ceph::buffer::list::const_iterator* it,
-                        cls::rbd::SnapshotInfo* snap_info);
+int snapshot_get_finish(ceph::buffer::list::const_iterator *it,
+                        cls::rbd::SnapshotInfo *snap_info);
 int snapshot_get(librados::IoCtx *ioctx, const std::string &oid,
-                 snapid_t snap_id, cls::rbd::SnapshotInfo* snap_info);
+                 snapid_t snap_id, cls::rbd::SnapshotInfo *snap_info);
 
 void snapshot_add(librados::ObjectWriteOperation *op, snapid_t snap_id,
                   const std::string &snap_name,
@@ -250,23 +258,23 @@ void metadata_remove(librados::ObjectWriteOperation *op,
                      const std::string &key);
 int metadata_remove(librados::IoCtx *ioctx, const std::string &oid,
                     const std::string &key);
-void metadata_get_start(librados::ObjectReadOperation* op,
-                 const std::string &key);
+void metadata_get_start(librados::ObjectReadOperation *op,
+                        const std::string &key);
 int metadata_get_finish(ceph::buffer::list::const_iterator *it,
-                        std::string* value);
+                        std::string *value);
 int metadata_get(librados::IoCtx *ioctx, const std::string &oid,
                  const std::string &key, std::string *v);
 
 void child_attach(librados::ObjectWriteOperation *op, snapid_t snap_id,
-                  const cls::rbd::ChildImageSpec& child_image);
+                  const cls::rbd::ChildImageSpec &child_image);
 int child_attach(librados::IoCtx *ioctx, const std::string &oid,
                  snapid_t snap_id,
-                 const cls::rbd::ChildImageSpec& child_image);
+                 const cls::rbd::ChildImageSpec &child_image);
 void child_detach(librados::ObjectWriteOperation *op, snapid_t snap_id,
-                  const cls::rbd::ChildImageSpec& child_image);
+                  const cls::rbd::ChildImageSpec &child_image);
 int child_detach(librados::IoCtx *ioctx, const std::string &oid,
                  snapid_t snap_id,
-                 const cls::rbd::ChildImageSpec& child_image);
+                 const cls::rbd::ChildImageSpec &child_image);
 void children_list_start(librados::ObjectReadOperation *op,
                          snapid_t snap_id);
 int children_list_finish(ceph::buffer::list::const_iterator *it,
@@ -390,20 +398,20 @@ int mirror_mode_set(librados::IoCtx *ioctx,
                     cls::rbd::MirrorMode mirror_mode);
 
 int mirror_peer_ping(librados::IoCtx *ioctx,
-                     const std::string& site_name,
-                     const std::string& fsid);
+                     const std::string &site_name,
+                     const std::string &fsid);
 void mirror_peer_ping(librados::ObjectWriteOperation *op,
-                      const std::string& site_name,
-                      const std::string& fsid);
+                      const std::string &site_name,
+                      const std::string &fsid);
 void mirror_peer_list_start(librados::ObjectReadOperation *op);
 int mirror_peer_list_finish(ceph::buffer::list::const_iterator *it,
                             std::vector<cls::rbd::MirrorPeer> *peers);
 int mirror_peer_list(librados::IoCtx *ioctx,
                      std::vector<cls::rbd::MirrorPeer> *peers);
 int mirror_peer_add(librados::IoCtx *ioctx,
-                    const cls::rbd::MirrorPeer& mirror_peer);
+                    const cls::rbd::MirrorPeer &mirror_peer);
 void mirror_peer_add(librados::ObjectWriteOperation *op,
-                     const cls::rbd::MirrorPeer& mirror_peer);
+                     const cls::rbd::MirrorPeer &mirror_peer);
 int mirror_peer_remove(librados::IoCtx *ioctx,
                        const std::string &uuid);
 int mirror_peer_set_client(librados::IoCtx *ioctx,
@@ -470,11 +478,11 @@ int mirror_image_status_list_finish(ceph::buffer::list::const_iterator *iter,
                                     std::map<std::string, cls::rbd::MirrorImageStatus> *statuses);
 int mirror_image_status_get_summary(
     librados::IoCtx *ioctx,
-    const std::vector<cls::rbd::MirrorPeer>& mirror_peer_sites,
+    const std::vector<cls::rbd::MirrorPeer> &mirror_peer_sites,
     std::map<cls::rbd::MirrorImageStatusState, int32_t> *states);
 void mirror_image_status_get_summary_start(
     librados::ObjectReadOperation *op,
-    const std::vector<cls::rbd::MirrorPeer>& mirror_peer_sites);
+    const std::vector<cls::rbd::MirrorPeer> &mirror_peer_sites);
 int mirror_image_status_get_summary_finish(
     ceph::buffer::list::const_iterator *iter,
     std::map<cls::rbd::MirrorImageStatusState, int32_t> *states);
@@ -538,12 +546,12 @@ int mirror_image_snapshot_unlink_peer(librados::IoCtx *ioctx,
                                       snapid_t snap_id,
                                       const std::string &mirror_peer_uuid);
 void mirror_image_snapshot_set_copy_progress(librados::ObjectWriteOperation *op,
-                                             snapid_t snap_id, bool complete,
-                                             uint64_t copy_progress);
+        snapid_t snap_id, bool complete,
+        uint64_t copy_progress);
 int mirror_image_snapshot_set_copy_progress(librados::IoCtx *ioctx,
-                                            const std::string &oid,
-                                            snapid_t snap_id, bool complete,
-                                            uint64_t copy_progress);
+        const std::string &oid,
+        snapid_t snap_id, bool complete,
+        uint64_t copy_progress);
 
 // Groups functions
 int group_dir_list(librados::IoCtx *ioctx, const std::string &oid,
@@ -631,7 +639,7 @@ int namespace_list(librados::IoCtx *ioctx,
                    std::list<std::string> *entries);
 
 // operations on data objects
-void assert_snapc_seq(neorados::WriteOp* op,
+void assert_snapc_seq(neorados::WriteOp *op,
                       uint64_t snapc_seq,
                       cls::rbd::AssertSnapcSeqState state);
 void assert_snapc_seq(librados::ObjectWriteOperation *op,
@@ -641,13 +649,13 @@ int assert_snapc_seq(librados::IoCtx *ioctx, const std::string &oid,
                      uint64_t snapc_seq,
                      cls::rbd::AssertSnapcSeqState state);
 
-void copyup(neorados::WriteOp* op, ceph::buffer::list data);
+void copyup(neorados::WriteOp *op, ceph::buffer::list data);
 void copyup(librados::ObjectWriteOperation *op, ceph::buffer::list data);
 int copyup(librados::IoCtx *ioctx, const std::string &oid,
            ceph::buffer::list data);
 
-void sparse_copyup(neorados::WriteOp* op,
-                   const std::vector<std::pair<uint64_t, uint64_t>>& extent_map,
+void sparse_copyup(neorados::WriteOp *op,
+                   const std::vector<std::pair<uint64_t, uint64_t>> &extent_map,
                    ceph::buffer::list data);
 void sparse_copyup(librados::ObjectWriteOperation *op,
                    const std::map<uint64_t, uint64_t> &extent_map,

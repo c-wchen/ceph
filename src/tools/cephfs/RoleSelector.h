@@ -13,18 +13,21 @@
  */
 class MDSRoleSelector
 {
-  public:
-    const std::vector<mds_role_t> &get_roles() const {return roles;}
+public:
+    const std::vector<mds_role_t> &get_roles() const
+    {
+        return roles;
+    }
     int parse(const FSMap &fsmap, std::string const &str,
-            bool allow_unqualified_rank=true);
+              bool allow_unqualified_rank = true);
     MDSRoleSelector()
-      : fscid(FS_CLUSTER_ID_NONE)
+        : fscid(FS_CLUSTER_ID_NONE)
     {}
     fs_cluster_id_t get_ns() const
     {
-      return fscid;
+        return fscid;
     }
-  protected:
+protected:
     int parse_rank(
         const FSMap &fsmap,
         std::string const &str);

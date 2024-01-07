@@ -2,7 +2,8 @@
 // vim: ts=8 sw=2 smarttab
 #pragma once
 
-namespace crimson::admin::pg {
+namespace crimson::admin::pg
+{
 
 class QueryCommand;
 class MarkUnfoundLostCommand;

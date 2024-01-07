@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -32,20 +32,20 @@ class JournalScanner;
  */
 class JournalTool : public MDSUtility
 {
-  private:
+private:
     MDSRoleSelector role_selector;
     // Bit hacky, use this `rank` member to control behaviour of the
     // various main_ functions.
     mds_rank_t rank;
     // when set, generate per rank dump file path
     bool all_ranks = false;
-   
+
     std::string type;
 
     // Entry points
-    int main_journal(std::vector<const char*> &argv);
-    int main_header(std::vector<const char*> &argv);
-    int main_event(std::vector<const char*> &argv);
+    int main_journal(std::vector<const char *> &argv);
+    int main_header(std::vector<const char *> &argv);
+    int main_event(std::vector<const char *> &argv);
 
     // Shared functionality
     int recover_journal();
@@ -92,10 +92,10 @@ class JournalTool : public MDSUtility
     // executed on all ranks.
     bool can_execute_for_all_ranks(const std::string &mode,
                                    const std::string &command);
-  public:
+public:
     static void usage();
     JournalTool() :
-      rank(0), other_pool(false) {}
-    int main(std::vector<const char*> &argv);
+        rank(0), other_pool(false) {}
+    int main(std::vector<const char *> &argv);
 };
 

@@ -14,7 +14,8 @@
 #include "crimson/os/seastore/seastore_types.h"
 #include "crimson/os/seastore/transaction_manager.h"
 
-namespace crimson::os::seastore::omap_manager {
+namespace crimson::os::seastore::omap_manager
+{
 /**
  * BtreeOMapManager
  *
@@ -22,88 +23,90 @@ namespace crimson::os::seastore::omap_manager {
  * string -> string mapping for each onode omap
  */
 
-class BtreeOMapManager : public OMapManager {
-  TransactionManager &tm;
+class BtreeOMapManager : public OMapManager
+{
+    TransactionManager &tm;
 
-  omap_context_t get_omap_context(
-    Transaction &t, laddr_t addr_min) {
-    return omap_context_t{tm, t, addr_min};
-  }
+    omap_context_t get_omap_context(
+        Transaction &t, laddr_t addr_min)
+    {
+        return omap_context_t{tm, t, addr_min};
+    }
 
-  /* get_omap_root
-   *
-   * load omap tree root node
-   */
-  using get_root_iertr = base_iertr;
-  using get_root_ret = get_root_iertr::future<OMapNodeRef>;
-  static get_root_ret get_omap_root(
-    omap_context_t c,
-    const omap_root_t &omap_root);
+    /* get_omap_root
+     *
+     * load omap tree root node
+     */
+    using get_root_iertr = base_iertr;
+    using get_root_ret = get_root_iertr::future<OMapNodeRef>;
+    static get_root_ret get_omap_root(
+        omap_context_t c,
+        const omap_root_t &omap_root);
 
-  /* handle_root_split
-   *
-   * root has been split and needs to update omap_root_t
-   */
-  using handle_root_split_iertr = base_iertr;
-  using handle_root_split_ret = handle_root_split_iertr::future<>;
-  handle_root_split_ret handle_root_split(
-    omap_context_t c,
-    omap_root_t &omap_root,
-    const OMapNode::mutation_result_t& mresult);
+    /* handle_root_split
+     *
+     * root has been split and needs to update omap_root_t
+     */
+    using handle_root_split_iertr = base_iertr;
+    using handle_root_split_ret = handle_root_split_iertr::future<>;
+    handle_root_split_ret handle_root_split(
+        omap_context_t c,
+        omap_root_t &omap_root,
+        const OMapNode::mutation_result_t &mresult);
 
-  /* handle_root_merge
-   *
-   * root node has only one item and it is not leaf node, need remove a layer
-   */
-  using handle_root_merge_iertr = base_iertr;
-  using handle_root_merge_ret = handle_root_merge_iertr::future<>;
-  handle_root_merge_ret handle_root_merge(
-    omap_context_t oc,
-    omap_root_t &omap_root, 
-    OMapNode:: mutation_result_t mresult);
+    /* handle_root_merge
+     *
+     * root node has only one item and it is not leaf node, need remove a layer
+     */
+    using handle_root_merge_iertr = base_iertr;
+    using handle_root_merge_ret = handle_root_merge_iertr::future<>;
+    handle_root_merge_ret handle_root_merge(
+        omap_context_t oc,
+        omap_root_t &omap_root,
+        OMapNode:: mutation_result_t mresult);
 
 public:
-  explicit BtreeOMapManager(TransactionManager &tm);
+    explicit BtreeOMapManager(TransactionManager &tm);
 
-  initialize_omap_ret initialize_omap(Transaction &t, laddr_t hint) final;
+    initialize_omap_ret initialize_omap(Transaction &t, laddr_t hint) final;
 
-  omap_get_value_ret omap_get_value(
-    const omap_root_t &omap_root,
-    Transaction &t,
-    const std::string &key) final;
+    omap_get_value_ret omap_get_value(
+        const omap_root_t &omap_root,
+        Transaction &t,
+        const std::string &key) final;
 
-  omap_set_key_ret omap_set_key(
-    omap_root_t &omap_root,
-    Transaction &t,
-    const std::string &key, const ceph::bufferlist &value) final;
+    omap_set_key_ret omap_set_key(
+        omap_root_t &omap_root,
+        Transaction &t,
+        const std::string &key, const ceph::bufferlist &value) final;
 
-  omap_set_keys_ret omap_set_keys(
-    omap_root_t &omap_root,
-    Transaction &t,
-    std::map<std::string, ceph::bufferlist>&& keys) final;
+    omap_set_keys_ret omap_set_keys(
+        omap_root_t &omap_root,
+        Transaction &t,
+        std::map<std::string, ceph::bufferlist>&& keys) final;
 
-  omap_rm_key_ret omap_rm_key(
-    omap_root_t &omap_root,
-    Transaction &t,
-    const std::string &key) final;
+    omap_rm_key_ret omap_rm_key(
+        omap_root_t &omap_root,
+        Transaction &t,
+        const std::string &key) final;
 
-  omap_rm_key_range_ret omap_rm_key_range(
-    omap_root_t &omap_root,
-    Transaction &t,
-    const std::string &first,
-    const std::string &last,
-    omap_list_config_t config) final;
+    omap_rm_key_range_ret omap_rm_key_range(
+        omap_root_t &omap_root,
+        Transaction &t,
+        const std::string &first,
+        const std::string &last,
+        omap_list_config_t config) final;
 
-  omap_list_ret omap_list(
-    const omap_root_t &omap_root,
-    Transaction &t,
-    const std::optional<std::string> &first,
-    const std::optional<std::string> &last,
-    omap_list_config_t config = omap_list_config_t()) final;
+    omap_list_ret omap_list(
+        const omap_root_t &omap_root,
+        Transaction &t,
+        const std::optional<std::string> &first,
+        const std::optional<std::string> &last,
+        omap_list_config_t config = omap_list_config_t()) final;
 
-  omap_clear_ret omap_clear(
-    omap_root_t &omap_root,
-    Transaction &t) final;
+    omap_clear_ret omap_clear(
+        omap_root_t &omap_root,
+        Transaction &t) final;
 
 };
 using BtreeOMapManagerRef = std::unique_ptr<BtreeOMapManager>;

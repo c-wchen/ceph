@@ -50,38 +50,39 @@ using namespace std;
 
 TEST(LibCephFS, NewOPs)
 {
-  struct ceph_mount_info *cmount;
-  ASSERT_EQ(0, ceph_create(&cmount, NULL));
-  ASSERT_EQ(0, ceph_conf_read_file(cmount, NULL));
-  ASSERT_EQ(0, ceph_conf_parse_env(cmount, NULL));
-  ASSERT_EQ(0, ceph_mount(cmount, "/"));
+    struct ceph_mount_info *cmount;
+    ASSERT_EQ(0, ceph_create(&cmount, NULL));
+    ASSERT_EQ(0, ceph_conf_read_file(cmount, NULL));
+    ASSERT_EQ(0, ceph_conf_parse_env(cmount, NULL));
+    ASSERT_EQ(0, ceph_mount(cmount, "/"));
 
-  const char *test_path = "test_newops_dir";
+    const char *test_path = "test_newops_dir";
 
-  ASSERT_EQ(0, ceph_mkdirs(cmount, test_path, 0777));
+    ASSERT_EQ(0, ceph_mkdirs(cmount, test_path, 0777));
 
-  {
-    char value[1024] = "";
-    int r = ceph_getxattr(cmount, test_path, "ceph.dir.pin.random", (void*)value, sizeof(value));
-    // Clients will return -CEPHFS_ENODATA if new getvxattr op not support yet.
-    EXPECT_THAT(r, AnyOf(Gt(0), Eq(-CEPHFS_ENODATA)));
-  }
+    {
+        char value[1024] = "";
+        int r = ceph_getxattr(cmount, test_path, "ceph.dir.pin.random", (void *)value, sizeof(value));
+        // Clients will return -CEPHFS_ENODATA if new getvxattr op not support yet.
+        EXPECT_THAT(r, AnyOf(Gt(0), Eq(-CEPHFS_ENODATA)));
+    }
 
-  {
-    double val = (double)1.0/(double)128.0;
-    std::stringstream ss;
-    ss << val;
-    int r = ceph_setxattr(cmount, test_path, "ceph.dir.pin.random", (void*)ss.str().c_str(), strlen(ss.str().c_str()), XATTR_CREATE);
-    // Old cephs will return -CEPHFS_EINVAL if not support "ceph.dir.pin.random" yet.
-    EXPECT_THAT(r, AnyOf(Eq(0), Eq(-CEPHFS_EINVAL)));
+    {
+        double val = (double)1.0 / (double)128.0;
+        std::stringstream ss;
+        ss << val;
+        int r = ceph_setxattr(cmount, test_path, "ceph.dir.pin.random", (void *)ss.str().c_str(), strlen(ss.str().c_str()),
+                              XATTR_CREATE);
+        // Old cephs will return -CEPHFS_EINVAL if not support "ceph.dir.pin.random" yet.
+        EXPECT_THAT(r, AnyOf(Eq(0), Eq(-CEPHFS_EINVAL)));
 
-    char value[1024] = "";
-    r = ceph_getxattr(cmount, test_path, "ceph.dir.pin.random", (void*)value, sizeof(value));
-    // Clients will return -CEPHFS_ENODATA if new getvxattr op not support yet.
-    EXPECT_THAT(r, AnyOf(Gt(0), Eq(-CEPHFS_ENODATA)));
-  }
+        char value[1024] = "";
+        r = ceph_getxattr(cmount, test_path, "ceph.dir.pin.random", (void *)value, sizeof(value));
+        // Clients will return -CEPHFS_ENODATA if new getvxattr op not support yet.
+        EXPECT_THAT(r, AnyOf(Gt(0), Eq(-CEPHFS_ENODATA)));
+    }
 
-  ASSERT_EQ(0, ceph_rmdir(cmount, test_path));
+    ASSERT_EQ(0, ceph_rmdir(cmount, test_path));
 
-  ceph_shutdown(cmount);
+    ceph_shutdown(cmount);
 }

@@ -11,9 +11,12 @@
 
 class Context;
 
-namespace cls {
-namespace journal {
-namespace client {
+namespace cls
+{
+namespace journal
+{
+namespace client
+{
 
 void create(librados::ObjectWriteOperation *op,
             uint8_t order, uint8_t splay, int64_t pool_id);
@@ -22,7 +25,7 @@ int create(librados::IoCtx &ioctx, const std::string &oid, uint8_t order,
 
 void get_immutable_metadata(librados::IoCtx &ioctx, const std::string &oid,
                             uint8_t *order, uint8_t *splay_width,
-			    int64_t *pool_id, Context *on_finish);
+                            int64_t *pool_id, Context *on_finish);
 void get_mutable_metadata(librados::IoCtx &ioctx, const std::string &oid,
                           uint64_t *minimum_set, uint64_t *active_set,
                           std::set<cls::journal::Client> *clients,
@@ -57,7 +60,7 @@ void client_update_state(librados::ObjectWriteOperation *op,
 int client_unregister(librados::IoCtx &ioctx, const std::string &oid,
                       const std::string &id);
 void client_unregister(librados::ObjectWriteOperation *op,
-		       const std::string &id);
+                       const std::string &id);
 
 void client_commit(librados::ObjectWriteOperation *op, const std::string &id,
                    const cls::journal::ObjectSetPosition &commit_position);

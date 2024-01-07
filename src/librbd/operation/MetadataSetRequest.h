@@ -11,32 +11,36 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace operation {
+namespace operation
+{
 
 template <typename ImageCtxT = ImageCtx>
-class MetadataSetRequest : public Request<ImageCtxT> {
+class MetadataSetRequest : public Request<ImageCtxT>
+{
 public:
-  MetadataSetRequest(ImageCtxT &image_ctx, Context *on_finish,
-                     const std::string &key, const std::string &value);
+    MetadataSetRequest(ImageCtxT &image_ctx, Context *on_finish,
+                       const std::string &key, const std::string &value);
 
 protected:
-  void send_op() override;
-  bool should_complete(int r) override;
+    void send_op() override;
+    bool should_complete(int r) override;
 
-  journal::Event create_event(uint64_t op_tid) const override {
-    return journal::MetadataSetEvent(op_tid, m_key, m_value);
-  }
+    journal::Event create_event(uint64_t op_tid) const override
+    {
+        return journal::MetadataSetEvent(op_tid, m_key, m_value);
+    }
 
 private:
-  std::string m_key;
-  std::string m_value;
-  std::map<std::string, bufferlist> m_data;
+    std::string m_key;
+    std::string m_value;
+    std::map<std::string, bufferlist> m_data;
 
-  void send_metadata_set();
+    void send_metadata_set();
 };
 
 } // namespace operation

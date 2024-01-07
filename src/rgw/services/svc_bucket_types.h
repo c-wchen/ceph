@@ -32,7 +32,7 @@ using RGWSI_Bucket_EP_Ctx = ptr_wrapper<RGWSI_MetaBackend::Context, RGWSI_META_B
 using RGWSI_Bucket_BI_Ctx = ptr_wrapper<RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::BI>;
 
 struct RGWSI_Bucket_X_Ctx {
-  RGWSI_Bucket_EP_Ctx ep;
-  RGWSI_Bucket_BI_Ctx bi;
+    RGWSI_Bucket_EP_Ctx ep;
+    RGWSI_Bucket_BI_Ctx bi;
 };
 

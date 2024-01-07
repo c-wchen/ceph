@@ -18,7 +18,8 @@
 #ifndef CEPH_TEST_PERFHELPER_H
 #define CEPH_TEST_PERFHELPER_H
 
-namespace PerfHelper {
+namespace PerfHelper
+{
 
 void flush_cache();
 uint64_t plus_one(uint64_t x);

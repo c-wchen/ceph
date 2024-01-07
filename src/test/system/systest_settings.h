@@ -21,16 +21,16 @@
 class SysTestSettings
 {
 public:
-  static SysTestSettings& inst();
-  bool use_threads() const;
-  std::string get_log_name(const std::string &suffix) const;
+    static SysTestSettings &inst();
+    bool use_threads() const;
+    std::string get_log_name(const std::string &suffix) const;
 private:
-  static SysTestSettings* m_inst;
-  SysTestSettings();
-  ~SysTestSettings();
+    static SysTestSettings *m_inst;
+    SysTestSettings();
+    ~SysTestSettings();
 
-  bool m_use_threads;
-  std::string m_log_file_base;
+    bool m_use_threads;
+    std::string m_log_file_base;
 };
 
 #endif

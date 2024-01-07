@@ -10,20 +10,20 @@
 
 int main(int argc, char **argv)
 {
-  ::testing::InitGoogleTest(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
 
-  librados::Rados rados;
-  std::string result = connect_cluster_pp(rados);
-  if (result != "" ) {
-    std::cerr << result << std::endl;
-    return 1;
-  }
+    librados::Rados rados;
+    std::string result = connect_cluster_pp(rados);
+    if (result != "") {
+        std::cerr << result << std::endl;
+        return 1;
+    }
 
-  g_ceph_context = reinterpret_cast<CephContext*>(rados.cct());
+    g_ceph_context = reinterpret_cast<CephContext *>(rados.cct());
 
-  int r = rados.conf_set("lockdep", "true");
-  if (r < 0) {
-    std::cerr << "warning: failed to enable lockdep" << std::endl;
-  }
-  return RUN_ALL_TESTS();
+    int r = rados.conf_set("lockdep", "true");
+    if (r < 0) {
+        std::cerr << "warning: failed to enable lockdep" << std::endl;
+    }
+    return RUN_ALL_TESTS();
 }

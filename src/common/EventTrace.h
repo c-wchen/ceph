@@ -46,34 +46,35 @@
 
 #define LOG_LEVEL 30
 
-class EventTrace {
+class EventTrace
+{
 private:
-  CephContext *ctx;
-  std::string file;
-  std::string func;
-  int line;
-  utime_t last_ts;
+    CephContext *ctx;
+    std::string file;
+    std::string func;
+    int line;
+    utime_t last_ts;
 
-  static bool tpinit;
+    static bool tpinit;
 
-  static void init_tp(CephContext *_ctx);
-  static void set_message_attrs(const Message *m, std::string& oid, std::string& context, bool incl_oid);
+    static void init_tp(CephContext *_ctx);
+    static void set_message_attrs(const Message *m, std::string &oid, std::string &context, bool incl_oid);
 
 public:
 
-  EventTrace(CephContext *_ctx, const char *_file, const char *_func, int line);
-  ~EventTrace();
-  void log_event_latency(const char *tag);
+    EventTrace(CephContext *_ctx, const char *_file, const char *_func, int line);
+    ~EventTrace();
+    void log_event_latency(const char *tag);
 
-  static void trace_oid_event(const char *oid, const char *event, const char *context,
-    const char *file, const char *func, int line);
-  static void trace_oid_event(const Message *m, const char *event, const char *file,
-    const char *func, int line, bool incl_oid);
+    static void trace_oid_event(const char *oid, const char *event, const char *context,
+                                const char *file, const char *func, int line);
+    static void trace_oid_event(const Message *m, const char *event, const char *file,
+                                const char *func, int line, bool incl_oid);
 
-  static void trace_oid_elapsed(const char *oid, const char *event, const char *context,
-    double elapsed, const char *file, const char *func, int line);
-  static void trace_oid_elapsed(const Message *m, const char *event, double elapsed,
-    const char *file, const char *func, int line, bool incl_oid);
-  
+    static void trace_oid_elapsed(const char *oid, const char *event, const char *context,
+                                  double elapsed, const char *file, const char *func, int line);
+    static void trace_oid_elapsed(const Message *m, const char *event, double elapsed,
+                                  const char *file, const char *func, int line, bool incl_oid);
+
 };
 #endif

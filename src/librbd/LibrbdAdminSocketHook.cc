@@ -12,81 +12,89 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "librbdadminsocket: "
 
-namespace librbd {
+namespace librbd
+{
 
-class LibrbdAdminSocketCommand {
+class LibrbdAdminSocketCommand
+{
 public:
-  virtual ~LibrbdAdminSocketCommand() {}
-  virtual int call(Formatter *f) = 0;
+    virtual ~LibrbdAdminSocketCommand() {}
+    virtual int call(Formatter *f) = 0;
 };
 
-class FlushCacheCommand : public LibrbdAdminSocketCommand {
+class FlushCacheCommand : public LibrbdAdminSocketCommand
+{
 public:
-  explicit FlushCacheCommand(ImageCtx *ictx) : ictx(ictx) {}
+    explicit FlushCacheCommand(ImageCtx *ictx) : ictx(ictx) {}
 
-  int call(Formatter *f) override {
-    return api::Io<>::flush(*ictx);
-  }
+    int call(Formatter *f) override
+    {
+        return api::Io<>::flush(*ictx);
+    }
 
 private:
-  ImageCtx *ictx;
+    ImageCtx *ictx;
 };
 
 struct InvalidateCacheCommand : public LibrbdAdminSocketCommand {
 public:
-  explicit InvalidateCacheCommand(ImageCtx *ictx) : ictx(ictx) {}
+    explicit InvalidateCacheCommand(ImageCtx *ictx) : ictx(ictx) {}
 
-  int call(Formatter *f) override {
-    return invalidate_cache(ictx);
-  }
+    int call(Formatter *f) override
+    {
+        return invalidate_cache(ictx);
+    }
 
 private:
-  ImageCtx *ictx;
+    ImageCtx *ictx;
 };
 
 LibrbdAdminSocketHook::LibrbdAdminSocketHook(ImageCtx *ictx) :
-  admin_socket(ictx->cct->get_admin_socket()) {
+    admin_socket(ictx->cct->get_admin_socket())
+{
 
-  std::string command;
-  std::string imagename;
-  int r;
+    std::string command;
+    std::string imagename;
+    int r;
 
-  imagename = ictx->md_ctx.get_pool_name() + "/" + ictx->name;
-  command = "rbd cache flush " + imagename;
+    imagename = ictx->md_ctx.get_pool_name() + "/" + ictx->name;
+    command = "rbd cache flush " + imagename;
 
-  r = admin_socket->register_command(command, this,
-				     "flush rbd image " + imagename +
-				     " cache");
-  if (r == 0) {
-    commands[command] = new FlushCacheCommand(ictx);
-  }
+    r = admin_socket->register_command(command, this,
+                                       "flush rbd image " + imagename +
+                                       " cache");
+    if (r == 0) {
+        commands[command] = new FlushCacheCommand(ictx);
+    }
 
-  command = "rbd cache invalidate " + imagename;
-  r = admin_socket->register_command(command, this,
-				     "invalidate rbd image " + imagename + 
-				     " cache");
-  if (r == 0) {
-    commands[command] = new InvalidateCacheCommand(ictx);
-  }
+    command = "rbd cache invalidate " + imagename;
+    r = admin_socket->register_command(command, this,
+                                       "invalidate rbd image " + imagename +
+                                       " cache");
+    if (r == 0) {
+        commands[command] = new InvalidateCacheCommand(ictx);
+    }
 }
 
-LibrbdAdminSocketHook::~LibrbdAdminSocketHook() {
-  (void)admin_socket->unregister_commands(this);
-  for (Commands::const_iterator i = commands.begin(); i != commands.end();
-       ++i) {
-    delete i->second;
-  }
+LibrbdAdminSocketHook::~LibrbdAdminSocketHook()
+{
+    (void)admin_socket->unregister_commands(this);
+    for (Commands::const_iterator i = commands.begin(); i != commands.end();
+         ++i) {
+        delete i->second;
+    }
 }
 
 int LibrbdAdminSocketHook::call(std::string_view command,
-				const cmdmap_t& cmdmap,
-				const bufferlist&,
-				Formatter *f,
-				std::ostream& errss,
-				bufferlist& out) {
-  Commands::const_iterator i = commands.find(command);
-  ceph_assert(i != commands.end());
-  return i->second->call(f);
+                                const cmdmap_t &cmdmap,
+                                const bufferlist &,
+                                Formatter *f,
+                                std::ostream &errss,
+                                bufferlist &out)
+{
+    Commands::const_iterator i = commands.find(command);
+    ceph_assert(i != commands.end());
+    return i->second->call(f);
 }
 
 } // namespace librbd

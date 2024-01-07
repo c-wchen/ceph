@@ -24,7 +24,8 @@ jclass JniConstants::inetAddressClass;
 jclass JniConstants::inetSocketAddressClass;
 jclass JniConstants::stringClass;
 
-static jclass findClass(JNIEnv* env, const char* name) {
+static jclass findClass(JNIEnv *env, const char *name)
+{
     ScopedLocalRef<jclass> localClass(env, env->FindClass(name));
     jclass result = reinterpret_cast<jclass>(env->NewGlobalRef(localClass.get()));
     if (result == NULL) {
@@ -34,7 +35,8 @@ static jclass findClass(JNIEnv* env, const char* name) {
     return result;
 }
 
-void JniConstants::init(JNIEnv* env) {
+void JniConstants::init(JNIEnv *env)
+{
     inet6AddressClass = findClass(env, "java/net/Inet6Address");
     inetAddressClass = findClass(env, "java/net/InetAddress");
     inetSocketAddressClass = findClass(env, "java/net/InetSocketAddress");

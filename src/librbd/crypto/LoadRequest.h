@@ -9,27 +9,31 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace crypto {
+namespace crypto
+{
 
 template <typename I>
-class LoadRequest {
+class LoadRequest
+{
 public:
     using EncryptionFormat = decltype(I::encryption_format);
 
     static constexpr char UNKNOWN_FORMAT[] = "<unknown>";
 
-    static LoadRequest* create(
-            I* image_ctx, std::vector<EncryptionFormat>&& formats,
-            Context* on_finish) {
-      return new LoadRequest(image_ctx, std::move(formats), on_finish);
+    static LoadRequest *create(
+        I *image_ctx, std::vector<EncryptionFormat>&& formats,
+        Context *on_finish)
+    {
+        return new LoadRequest(image_ctx, std::move(formats), on_finish);
     }
 
-    LoadRequest(I* image_ctx, std::vector<EncryptionFormat>&& formats,
-                Context* on_finish);
+    LoadRequest(I *image_ctx, std::vector<EncryptionFormat>&& formats,
+                Context *on_finish);
     void send();
     void flush();
     void handle_flush(int r);
@@ -40,13 +44,13 @@ public:
     void finish(int r);
 
 private:
-    I* m_image_ctx;
-    Context* m_on_finish;
+    I *m_image_ctx;
+    Context *m_on_finish;
 
     size_t m_format_idx;
     bool m_is_current_format_cloned;
     std::vector<EncryptionFormat> m_formats;
-    I* m_current_image_ctx;
+    I *m_current_image_ctx;
     std::string m_detected_format_name;
 };
 

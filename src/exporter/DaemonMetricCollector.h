@@ -13,14 +13,14 @@
 #include <vector>
 
 struct pstat {
-  unsigned long utime;
-  unsigned long stime;
-  unsigned long minflt;
-  unsigned long majflt;
-  unsigned long start_time;
-  int num_threads;
-  unsigned long vm_size;
-  int resident_size;
+    unsigned long utime;
+    unsigned long stime;
+    unsigned long minflt;
+    unsigned long majflt;
+    unsigned long start_time;
+    int num_threads;
+    unsigned long vm_size;
+    int resident_size;
 };
 
 class MetricsBuilder;
@@ -30,76 +30,80 @@ class Metric;
 
 typedef std::map<std::string, std::string> labels_t;
 
-class DaemonMetricCollector {
+class DaemonMetricCollector
+{
 public:
-  void main();
-  std::string get_metrics();
-  std::pair<labels_t, std::string>
-  get_labels_and_metric_name(std::string daemon_name, std::string metric_name);
+    void main();
+    std::string get_metrics();
+    std::pair<labels_t, std::string> get_labels_and_metric_name(std::string daemon_name, std::string metric_name);
 
 private:
-  std::map<std::string, AdminSocketClient> clients;
-  std::string metrics;
-  std::mutex metrics_mutex;
-  std::unique_ptr<MetricsBuilder> builder;
-  void update_sockets();
-  void request_loop(boost::asio::steady_timer &timer);
+    std::map<std::string, AdminSocketClient> clients;
+    std::string metrics;
+    std::mutex metrics_mutex;
+    std::unique_ptr<MetricsBuilder> builder;
+    void update_sockets();
+    void request_loop(boost::asio::steady_timer &timer);
 
-  void dump_asok_metrics();
-  void dump_asok_metric(boost::json::object perf_info,
-                        boost::json::value perf_values, std::string name,
-                        labels_t labels);
-  std::pair<labels_t, std::string> add_fixed_name_metrics(std::string metric_name);
-  void get_process_metrics(std::vector<std::pair<std::string, int>> daemon_pids);
-  std::string asok_request(AdminSocketClient &asok, std::string command, std::string daemon_name);
+    void dump_asok_metrics();
+    void dump_asok_metric(boost::json::object perf_info,
+                          boost::json::value perf_values, std::string name,
+                          labels_t labels);
+    std::pair<labels_t, std::string> add_fixed_name_metrics(std::string metric_name);
+    void get_process_metrics(std::vector<std::pair<std::string, int>> daemon_pids);
+    std::string asok_request(AdminSocketClient &asok, std::string command, std::string daemon_name);
 };
 
-class Metric {
+class Metric
+{
 private:
-  struct metric_entry {
-    labels_t labels;
-    std::string value;
-  };
-  std::string name;
-  std::string mtype;
-  std::string description;
-  std::vector<metric_entry> entries;
+    struct metric_entry {
+        labels_t labels;
+        std::string value;
+    };
+    std::string name;
+    std::string mtype;
+    std::string description;
+    std::vector<metric_entry> entries;
 
 public:
-  Metric(std::string name, std::string mtype, std::string description)
-      : name(name), mtype(mtype), description(description) {}
-  Metric(const Metric &) = default;
-  Metric() = default;
-  void add(labels_t labels, std::string value);
-  std::string dump();
+    Metric(std::string name, std::string mtype, std::string description)
+        : name(name), mtype(mtype), description(description) {}
+    Metric(const Metric &) = default;
+    Metric() = default;
+    void add(labels_t labels, std::string value);
+    std::string dump();
 };
 
-class MetricsBuilder {
+class MetricsBuilder
+{
 public:
-  virtual ~MetricsBuilder() = default;
-  virtual std::string dump() = 0;
-  virtual void add(std::string value, std::string name, std::string description,
-                   std::string mtype, labels_t labels) = 0;
+    virtual ~MetricsBuilder() = default;
+    virtual std::string dump() = 0;
+    virtual void add(std::string value, std::string name, std::string description,
+                     std::string mtype, labels_t labels) = 0;
 
 protected:
-  std::string out;
+    std::string out;
 };
 
-class OrderedMetricsBuilder : public MetricsBuilder {
+class OrderedMetricsBuilder : public MetricsBuilder
+{
 private:
-  std::map<std::string, Metric> metrics;
+    std::map<std::string, Metric> metrics;
 
 public:
-  std::string dump();
-  void add(std::string value, std::string name, std::string description,
-           std::string mtype, labels_t labels);
+    std::string dump();
+    void add(std::string value, std::string name, std::string description,
+             std::string mtype, labels_t labels);
 };
 
-class UnorderedMetricsBuilder : public MetricsBuilder {
+class UnorderedMetricsBuilder : public MetricsBuilder
+{
 public:
-  std::string dump();
-  void add(std::string value, std::string name, std::string description,
-           std::string mtype, labels_t labels);
+    std::string dump();
+    void add(std::string value, std::string name, std::string description,
+             std::string mtype, labels_t labels);
 };
 
 DaemonMetricCollector &collector_instance();

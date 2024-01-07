@@ -8,61 +8,70 @@
 #include "include/rados/librados_fwd.hpp"
 #include <string>
 
-namespace librbd { struct ImageCtx; }
+namespace librbd
+{
+struct ImageCtx;
+}
 
 struct Context;
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
+namespace rbd
+{
+namespace mirror
+{
+namespace image_replayer
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
-class GetMirrorImageIdRequest {
+class GetMirrorImageIdRequest
+{
 public:
-  static GetMirrorImageIdRequest *create(librados::IoCtx &io_ctx,
-                                         const std::string &global_image_id,
-                                         std::string *image_id,
-                                         Context *on_finish) {
-    return new GetMirrorImageIdRequest(io_ctx, global_image_id, image_id,
-                                       on_finish);
-  }
+    static GetMirrorImageIdRequest *create(librados::IoCtx &io_ctx,
+                                           const std::string &global_image_id,
+                                           std::string *image_id,
+                                           Context *on_finish)
+    {
+        return new GetMirrorImageIdRequest(io_ctx, global_image_id, image_id,
+                                           on_finish);
+    }
 
-  GetMirrorImageIdRequest(librados::IoCtx &io_ctx,
-                           const std::string &global_image_id,
-                           std::string *image_id,
-                           Context *on_finish)
-    : m_io_ctx(io_ctx), m_global_image_id(global_image_id),
-      m_image_id(image_id), m_on_finish(on_finish) {
-  }
+    GetMirrorImageIdRequest(librados::IoCtx &io_ctx,
+                            const std::string &global_image_id,
+                            std::string *image_id,
+                            Context *on_finish)
+        : m_io_ctx(io_ctx), m_global_image_id(global_image_id),
+          m_image_id(image_id), m_on_finish(on_finish)
+    {
+    }
 
-  void send();
+    void send();
 
 private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v
-   * GET_IMAGE_ID
-   *    |
-   *    v
-   * <finish>
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v
+     * GET_IMAGE_ID
+     *    |
+     *    v
+     * <finish>
 
-   * @endverbatim
-   */
+     * @endverbatim
+     */
 
-  librados::IoCtx &m_io_ctx;
-  std::string m_global_image_id;
-  std::string *m_image_id;
-  Context *m_on_finish;
+    librados::IoCtx &m_io_ctx;
+    std::string m_global_image_id;
+    std::string *m_image_id;
+    Context *m_on_finish;
 
-  bufferlist m_out_bl;
+    bufferlist m_out_bl;
 
-  void get_image_id();
-  void handle_get_image_id(int r);
+    void get_image_id();
+    void handle_get_image_id(int r);
 
-  void finish(int r);
+    void finish(int r);
 
 };
 

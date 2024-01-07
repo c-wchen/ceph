@@ -12,14 +12,17 @@
 
 template <>
 struct fmt::formatter<entity_name_t> {
-  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-
-  template <typename FormatContext>
-  auto format(const entity_name_t& addr, FormatContext& ctx)
-  {
-    if (addr.is_new() || addr.num() < 0) {
-      return fmt::format_to(ctx.out(), "{}.?", addr.type_str());
+    constexpr auto parse(format_parse_context &ctx)
+    {
+        return ctx.begin();
     }
-    return fmt::format_to(ctx.out(), "{}.{}", addr.type_str(), addr.num());
-  }
+
+    template <typename FormatContext>
+    auto format(const entity_name_t &addr, FormatContext &ctx)
+    {
+        if (addr.is_new() || addr.num() < 0) {
+            return fmt::format_to(ctx.out(), "{}.?", addr.type_str());
+        }
+        return fmt::format_to(ctx.out(), "{}.{}", addr.type_str(), addr.num());
+    }
 };

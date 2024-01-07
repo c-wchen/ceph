@@ -4,15 +4,20 @@
 #ifndef CEPH_LIBRBD_IMAGE_TYPE_TRAITS_H
 #define CEPH_LIBRBD_IMAGE_TYPE_TRAITS_H
 
-namespace librbd {
+namespace librbd
+{
 
-namespace asio { struct ContextWQ; }
+namespace asio
+{
+struct ContextWQ;
+}
 
-namespace image {
+namespace image
+{
 
 template <typename ImageCtxT>
 struct TypeTraits {
-  typedef asio::ContextWQ ContextWQ;
+    typedef asio::ContextWQ ContextWQ;
 };
 
 } // namespace image

@@ -17,113 +17,120 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace io {
+namespace io
+{
 
 struct AioCompletion;
 template <typename> class FlushTracker;
 
 template <typename ImageCtxT>
-class QosImageDispatch : public ImageDispatchInterface {
+class QosImageDispatch : public ImageDispatchInterface
+{
 public:
-  struct Tag {
-    std::atomic<uint32_t>* image_dispatch_flags;
-    Context* on_dispatched;
+    struct Tag {
+        std::atomic<uint32_t> *image_dispatch_flags;
+        Context *on_dispatched;
 
-    Tag(std::atomic<uint32_t>* image_dispatch_flags, Context* on_dispatched)
-      : image_dispatch_flags(image_dispatch_flags),
-        on_dispatched(on_dispatched) {
+        Tag(std::atomic<uint32_t> *image_dispatch_flags, Context *on_dispatched)
+            : image_dispatch_flags(image_dispatch_flags),
+              on_dispatched(on_dispatched)
+        {
+        }
+    };
+
+    QosImageDispatch(ImageCtxT *image_ctx);
+    ~QosImageDispatch() override;
+
+    ImageDispatchLayer get_dispatch_layer() const override
+    {
+        return IMAGE_DISPATCH_LAYER_QOS;
     }
-  };
 
-  QosImageDispatch(ImageCtxT* image_ctx);
-  ~QosImageDispatch() override;
+    void shut_down(Context *on_finish) override;
 
-  ImageDispatchLayer get_dispatch_layer() const override {
-    return IMAGE_DISPATCH_LAYER_QOS;
-  }
+    void apply_qos_schedule_tick_min(uint64_t tick);
+    void apply_qos_limit(uint64_t flag, uint64_t limit, uint64_t burst,
+                         uint64_t burst_seconds);
+    void apply_qos_exclude_ops(uint64_t exclude_ops);
 
-  void shut_down(Context* on_finish) override;
+    bool read(
+        AioCompletion *aio_comp, Extents &&image_extents,
+        ReadResult &&read_result, IOContext io_context, int op_flags,
+        int read_flags, const ZTracer::Trace &parent_trace, uint64_t tid,
+        std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override;
+    bool write(
+        AioCompletion *aio_comp, Extents &&image_extents, bufferlist &&bl,
+        int op_flags, const ZTracer::Trace &parent_trace,
+        uint64_t tid, std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override;
+    bool discard(
+        AioCompletion *aio_comp, Extents &&image_extents,
+        uint32_t discard_granularity_bytes, const ZTracer::Trace &parent_trace,
+        uint64_t tid, std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override;
+    bool write_same(
+        AioCompletion *aio_comp, Extents &&image_extents, bufferlist &&bl,
+        int op_flags, const ZTracer::Trace &parent_trace,
+        uint64_t tid, std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override;
+    bool compare_and_write(
+        AioCompletion *aio_comp, Extents &&image_extents,
+        bufferlist &&cmp_bl, bufferlist &&bl, uint64_t *mismatch_offset,
+        int op_flags, const ZTracer::Trace &parent_trace,
+        uint64_t tid, std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override;
+    bool flush(
+        AioCompletion *aio_comp, FlushSource flush_source,
+        const ZTracer::Trace &parent_trace, uint64_t tid,
+        std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override;
 
-  void apply_qos_schedule_tick_min(uint64_t tick);
-  void apply_qos_limit(uint64_t flag, uint64_t limit, uint64_t burst,
-                       uint64_t burst_seconds);
-  void apply_qos_exclude_ops(uint64_t exclude_ops);
+    bool list_snaps(
+        AioCompletion *aio_comp, Extents&& image_extents, SnapIds&& snap_ids,
+        int list_snaps_flags, SnapshotDelta *snapshot_delta,
+        const ZTracer::Trace &parent_trace, uint64_t tid,
+        std::atomic<uint32_t> *image_dispatch_flags,
+        DispatchResult *dispatch_result, Context **on_finish,
+        Context *on_dispatched) override
+    {
+        return false;
+    }
 
-  bool read(
-      AioCompletion* aio_comp, Extents &&image_extents,
-      ReadResult &&read_result, IOContext io_context, int op_flags,
-      int read_flags, const ZTracer::Trace &parent_trace, uint64_t tid,
-      std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool write(
-      AioCompletion* aio_comp, Extents &&image_extents, bufferlist &&bl,
-      int op_flags, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool discard(
-      AioCompletion* aio_comp, Extents &&image_extents,
-      uint32_t discard_granularity_bytes, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool write_same(
-      AioCompletion* aio_comp, Extents &&image_extents, bufferlist &&bl,
-      int op_flags, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool compare_and_write(
-      AioCompletion* aio_comp, Extents &&image_extents,
-      bufferlist &&cmp_bl, bufferlist &&bl, uint64_t *mismatch_offset,
-      int op_flags, const ZTracer::Trace &parent_trace,
-      uint64_t tid, std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-  bool flush(
-      AioCompletion* aio_comp, FlushSource flush_source,
-      const ZTracer::Trace &parent_trace, uint64_t tid,
-      std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override;
-
-  bool list_snaps(
-      AioCompletion* aio_comp, Extents&& image_extents, SnapIds&& snap_ids,
-      int list_snaps_flags, SnapshotDelta* snapshot_delta,
-      const ZTracer::Trace &parent_trace, uint64_t tid,
-      std::atomic<uint32_t>* image_dispatch_flags,
-      DispatchResult* dispatch_result, Context** on_finish,
-      Context* on_dispatched) override {
-    return false;
-  }
-
-  bool invalidate_cache(Context* on_finish) override {
-    return false;
-  }
+    bool invalidate_cache(Context *on_finish) override
+    {
+        return false;
+    }
 
 private:
-  ImageCtxT* m_image_ctx;
+    ImageCtxT *m_image_ctx;
 
-  std::list<std::pair<uint64_t, TokenBucketThrottle*> > m_throttles;
-  uint64_t m_qos_enabled_flag = 0;
-  uint64_t m_qos_exclude_ops = 0;
+    std::list<std::pair<uint64_t, TokenBucketThrottle *> > m_throttles;
+    uint64_t m_qos_enabled_flag = 0;
+    uint64_t m_qos_exclude_ops = 0;
 
-  std::unique_ptr<FlushTracker<ImageCtxT>> m_flush_tracker;
+    std::unique_ptr<FlushTracker<ImageCtxT>> m_flush_tracker;
 
-  void handle_finished(int r, uint64_t tid);
+    void handle_finished(int r, uint64_t tid);
 
-  bool set_throttle_flag(std::atomic<uint32_t>* image_dispatch_flags,
-                         uint32_t flag);
-  bool needs_throttle(bool read_op, const Extents& image_extents, uint64_t tid,
-                      std::atomic<uint32_t>* image_dispatch_flags,
-                      DispatchResult* dispatch_result, Context** on_finish,
-                      Context* on_dispatched);
-  void handle_throttle_ready(Tag&& tag, uint64_t flag);
+    bool set_throttle_flag(std::atomic<uint32_t> *image_dispatch_flags,
+                           uint32_t flag);
+    bool needs_throttle(bool read_op, const Extents &image_extents, uint64_t tid,
+                        std::atomic<uint32_t> *image_dispatch_flags,
+                        DispatchResult *dispatch_result, Context **on_finish,
+                        Context *on_dispatched);
+    void handle_throttle_ready(Tag&& tag, uint64_t flag);
 
 };
 

@@ -42,145 +42,146 @@
 
 class WnbdHandler;
 
-class WnbdAdminHook : public AdminSocketHook {
-  WnbdHandler *m_handler;
+class WnbdAdminHook : public AdminSocketHook
+{
+    WnbdHandler *m_handler;
 
 public:
-  explicit WnbdAdminHook(WnbdHandler *handler) :
-        m_handler(handler) {
-    g_ceph_context->get_admin_socket()->register_command(
-      "wnbd stats", this, "get WNBD stats");
-  }
-  ~WnbdAdminHook() override {
-    g_ceph_context->get_admin_socket()->unregister_commands(this);
-  }
+    explicit WnbdAdminHook(WnbdHandler *handler) :
+        m_handler(handler)
+    {
+        g_ceph_context->get_admin_socket()->register_command(
+            "wnbd stats", this, "get WNBD stats");
+    }
+    ~WnbdAdminHook() override
+    {
+        g_ceph_context->get_admin_socket()->unregister_commands(this);
+    }
 
-  int call(std::string_view command, const cmdmap_t& cmdmap,
-	   const bufferlist&,
-	   Formatter *f, std::ostream& errss, bufferlist& out) override;
+    int call(std::string_view command, const cmdmap_t &cmdmap,
+             const bufferlist &,
+             Formatter *f, std::ostream &errss, bufferlist &out) override;
 };
 
 
 class WnbdHandler
 {
 private:
-  librbd::Image &image;
-  std::string instance_name;
-  uint64_t block_count;
-  uint32_t block_size;
-  bool readonly;
-  bool rbd_cache_enabled;
-  uint32_t io_req_workers;
-  uint32_t io_reply_workers;
-  WnbdAdminHook* admin_hook;
-  boost::asio::thread_pool* reply_tpool;
+    librbd::Image &image;
+    std::string instance_name;
+    uint64_t block_count;
+    uint32_t block_size;
+    bool readonly;
+    bool rbd_cache_enabled;
+    uint32_t io_req_workers;
+    uint32_t io_reply_workers;
+    WnbdAdminHook *admin_hook;
+    boost::asio::thread_pool *reply_tpool;
 
 public:
-  WnbdHandler(librbd::Image& _image, std::string _instance_name,
-              uint64_t _block_count, uint32_t _block_size,
-              bool _readonly, bool _rbd_cache_enabled,
-              uint32_t _io_req_workers,
-              uint32_t _io_reply_workers)
-    : image(_image)
-    , instance_name(_instance_name)
-    , block_count(_block_count)
-    , block_size(_block_size)
-    , readonly(_readonly)
-    , rbd_cache_enabled(_rbd_cache_enabled)
-    , io_req_workers(_io_req_workers)
-    , io_reply_workers(_io_reply_workers)
-  {
-    admin_hook = new WnbdAdminHook(this);
-    // Instead of relying on librbd's own thread pool, we're going to use a
-    // separate one. This allows us to make assumptions on the threads that
-    // are going to send the IO replies and thus be able to cache Windows
-    // OVERLAPPED structures.
-    reply_tpool = new boost::asio::thread_pool(_io_reply_workers);
-  }
+    WnbdHandler(librbd::Image &_image, std::string _instance_name,
+                uint64_t _block_count, uint32_t _block_size,
+                bool _readonly, bool _rbd_cache_enabled,
+                uint32_t _io_req_workers,
+                uint32_t _io_reply_workers)
+        : image(_image)
+        , instance_name(_instance_name)
+        , block_count(_block_count)
+        , block_size(_block_size)
+        , readonly(_readonly)
+        , rbd_cache_enabled(_rbd_cache_enabled)
+        , io_req_workers(_io_req_workers)
+        , io_reply_workers(_io_reply_workers)
+    {
+        admin_hook = new WnbdAdminHook(this);
+        // Instead of relying on librbd's own thread pool, we're going to use a
+        // separate one. This allows us to make assumptions on the threads that
+        // are going to send the IO replies and thus be able to cache Windows
+        // OVERLAPPED structures.
+        reply_tpool = new boost::asio::thread_pool(_io_reply_workers);
+    }
 
-  int resize(uint64_t new_size);
-  int start();
-  // Wait for the handler to stop, which normally happens when the driver
-  // passes the "Disconnect" request.
-  int wait();
-  void shutdown();
+    int resize(uint64_t new_size);
+    int start();
+    // Wait for the handler to stop, which normally happens when the driver
+    // passes the "Disconnect" request.
+    int wait();
+    void shutdown();
 
-  int dump_stats(Formatter *f);
+    int dump_stats(Formatter *f);
 
-  ~WnbdHandler();
+    ~WnbdHandler();
 
-  static VOID LogMessage(
-    WnbdLogLevel LogLevel,
-    const char* Message,
-    const char* FileName,
-    UINT32 Line,
-    const char* FunctionName);
+    static VOID LogMessage(
+        WnbdLogLevel LogLevel,
+        const char *Message,
+        const char *FileName,
+        UINT32 Line,
+        const char *FunctionName);
 
 private:
-  ceph::mutex shutdown_lock = ceph::make_mutex("WnbdHandler::DisconnectLocker");
-  bool started = false;
-  bool terminated = false;
-  WNBD_DISK* wnbd_disk = nullptr;
+    ceph::mutex shutdown_lock = ceph::make_mutex("WnbdHandler::DisconnectLocker");
+    bool started = false;
+    bool terminated = false;
+    WNBD_DISK *wnbd_disk = nullptr;
 
-  struct IOContext
-  {
-    xlist<IOContext*>::item item;
-    WnbdHandler *handler = nullptr;
-    WNBD_STATUS wnbd_status = {0};
-    WnbdRequestType req_type = WnbdReqTypeUnknown;
-    uint64_t req_handle = 0;
-    uint32_t err_code = 0;
-    size_t req_size;
-    uint64_t req_from;
-    bufferlist data;
+    struct IOContext {
+        xlist<IOContext *>::item item;
+        WnbdHandler *handler = nullptr;
+        WNBD_STATUS wnbd_status = {0};
+        WnbdRequestType req_type = WnbdReqTypeUnknown;
+        uint64_t req_handle = 0;
+        uint32_t err_code = 0;
+        size_t req_size;
+        uint64_t req_from;
+        bufferlist data;
 
-    IOContext()
-      : item(this)
-    {}
+        IOContext()
+            : item(this)
+        {}
 
-    void set_sense(uint8_t sense_key, uint8_t asc, uint64_t info);
-    void set_sense(uint8_t sense_key, uint8_t asc);
-  };
+        void set_sense(uint8_t sense_key, uint8_t asc, uint64_t info);
+        void set_sense(uint8_t sense_key, uint8_t asc);
+    };
 
-  friend std::ostream &operator<<(std::ostream &os, const IOContext &ctx);
+    friend std::ostream &operator<<(std::ostream &os, const IOContext &ctx);
 
-  void send_io_response(IOContext *ctx);
+    void send_io_response(IOContext *ctx);
 
-  static void aio_callback(librbd::completion_t cb, void *arg);
+    static void aio_callback(librbd::completion_t cb, void *arg);
 
-  // WNBD IO entry points
-  static void Read(
-    PWNBD_DISK Disk,
-    UINT64 RequestHandle,
-    PVOID Buffer,
-    UINT64 BlockAddress,
-    UINT32 BlockCount,
-    BOOLEAN ForceUnitAccess);
-  static void Write(
-    PWNBD_DISK Disk,
-    UINT64 RequestHandle,
-    PVOID Buffer,
-    UINT64 BlockAddress,
-    UINT32 BlockCount,
-    BOOLEAN ForceUnitAccess);
-  static void Flush(
-    PWNBD_DISK Disk,
-    UINT64 RequestHandle,
-    UINT64 BlockAddress,
-    UINT32 BlockCount);
-  static void Unmap(
-    PWNBD_DISK Disk,
-    UINT64 RequestHandle,
-    PWNBD_UNMAP_DESCRIPTOR Descriptors,
-    UINT32 Count);
+    // WNBD IO entry points
+    static void Read(
+        PWNBD_DISK Disk,
+        UINT64 RequestHandle,
+        PVOID Buffer,
+        UINT64 BlockAddress,
+        UINT32 BlockCount,
+        BOOLEAN ForceUnitAccess);
+    static void Write(
+        PWNBD_DISK Disk,
+        UINT64 RequestHandle,
+        PVOID Buffer,
+        UINT64 BlockAddress,
+        UINT32 BlockCount,
+        BOOLEAN ForceUnitAccess);
+    static void Flush(
+        PWNBD_DISK Disk,
+        UINT64 RequestHandle,
+        UINT64 BlockAddress,
+        UINT32 BlockCount);
+    static void Unmap(
+        PWNBD_DISK Disk,
+        UINT64 RequestHandle,
+        PWNBD_UNMAP_DESCRIPTOR Descriptors,
+        UINT32 Count);
 
-  static constexpr WNBD_INTERFACE RbdWnbdInterface =
-  {
-    Read,
-    Write,
-    Flush,
-    Unmap,
-  };
+    static constexpr WNBD_INTERFACE RbdWnbdInterface = {
+        Read,
+        Write,
+        Flush,
+        Unmap,
+    };
 };
 
 std::ostream &operator<<(std::ostream &os, const WnbdHandler::IOContext &ctx);

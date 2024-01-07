@@ -29,20 +29,19 @@
  * daemons and utility programs need to call. It takes care of a lot of
  * initialization, including setting up g_ceph_context.
  */
-boost::intrusive_ptr<CephContext>
-global_init(
-  const std::map<std::string,std::string> *defaults,
-  std::vector < const char* >& args,
-  uint32_t module_type,
-  code_environment_t code_env,
-  int flags, bool run_pre_init = true);
+boost::intrusive_ptr<CephContext> global_init(
+    const std::map<std::string, std::string> *defaults,
+    std::vector < const char * > &args,
+    uint32_t module_type,
+    code_environment_t code_env,
+    int flags, bool run_pre_init = true);
 
 // just the first half; enough to get config parsed but doesn't start up the
 // cct or log.
-void global_pre_init(const std::map<std::string,std::string> *defaults,
-		     std::vector < const char* >& args,
-		     uint32_t module_type, code_environment_t code_env,
-		     int flags);
+void global_pre_init(const std::map<std::string, std::string> *defaults,
+                     std::vector < const char * > &args,
+                     uint32_t module_type, code_environment_t code_env,
+                     int flags);
 
 /*
  * perform all of the steps that global_init_daemonize performs just prior
@@ -64,7 +63,7 @@ void global_init_postfork_finish(CephContext *cct);
 
 
 /*
- * global_init_daemonize handles daemonizing a process. 
+ * global_init_daemonize handles daemonizing a process.
  *
  * If this is called, it *must* be called before common_init_finish.
  * Note that this is equivalent to calling _prefork(), daemon(), and

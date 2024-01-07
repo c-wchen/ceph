@@ -35,45 +35,51 @@ extern "C" {
 
 #include <cephfs/libcephfs.h>
 
-namespace Hypertable {
-  using namespace DfsBroker;
-  /**
-   *
-   */
-  class OpenFileDataCeph : public OpenFileData {
-  public:
-    OpenFileDataCeph(struct ceph_mount_info *cmount_, const String& fname,
-		     int _fd, int _flags);
+namespace Hypertable
+{
+using namespace DfsBroker;
+/**
+ *
+ */
+class OpenFileDataCeph : public OpenFileData
+{
+public:
+    OpenFileDataCeph(struct ceph_mount_info *cmount_, const String &fname,
+                     int _fd, int _flags);
     virtual ~OpenFileDataCeph();
     struct ceph_mount_info *cmount;
     int fd;
     int flags;
     String filename;
-  };
+};
 
-  /**
-   *
-   */
-  class OpenFileDataCephPtr : public OpenFileDataPtr {
-  public:
+/**
+ *
+ */
+class OpenFileDataCephPtr : public OpenFileDataPtr
+{
+public:
     OpenFileDataCephPtr() : OpenFileDataPtr() { }
     explicit OpenFileDataCephPtr(OpenFileDataCeph *ofdl) : OpenFileDataPtr(ofdl, true) { }
-    OpenFileDataCeph *operator->() const { return static_cast<OpenFileDataCeph *>(get()); }
-  };
+    OpenFileDataCeph *operator->() const
+    {
+        return static_cast<OpenFileDataCeph *>(get());
+    }
+};
 
-  /**
-   *
-   */
-  class CephBroker : public DfsBroker::Broker {
-  public:
-    explicit CephBroker(PropertiesPtr& cfg);
+/**
+ *
+ */
+class CephBroker : public DfsBroker::Broker
+{
+public:
+    explicit CephBroker(PropertiesPtr &cfg);
     virtual ~CephBroker();
 
     virtual void open(ResponseCallbackOpen *cb, const char *fname,
                       uint32_t flags, uint32_t bufsz);
-    virtual void
-    create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
-           int32_t bufsz, int16_t replication, int64_t blksz);
+    virtual void create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+                        int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
     virtual void append(ResponseCallbackAppend *cb, uint32_t fd,
@@ -94,24 +100,26 @@ namespace Hypertable {
     virtual void debug(ResponseCallback *, int32_t command,
                        StaticBuffer &serialized_parameters);
 
-  private:
+private:
     struct ceph_mount_info *cmount;
     static std::atomic<int> ms_next_fd;
 
     virtual void report_error(ResponseCallback *cb, int error);
 
-    void make_abs_path(const char *fname, String& abs) {
-      if (fname[0] == '/')
-	abs = fname;
-      else
-	abs = m_root_dir + "/" + fname;
+    void make_abs_path(const char *fname, String &abs)
+    {
+        if (fname[0] == '/') {
+            abs = fname;
+        } else {
+            abs = m_root_dir + "/" + fname;
+        }
     }
 
     int rmdir_recursive(const char *directory);
 
     bool m_verbose;
     String m_root_dir;
-  };
+};
 }
 
 #endif //HYPERTABLE_CEPH_BROKER_H

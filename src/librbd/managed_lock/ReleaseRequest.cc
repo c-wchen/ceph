@@ -18,76 +18,83 @@
 
 using std::string;
 
-namespace librbd {
-namespace managed_lock {
+namespace librbd
+{
+namespace managed_lock
+{
 
 using util::detail::C_AsyncCallback;
 using util::create_context_callback;
 using util::create_rados_callback;
 
 template <typename I>
-ReleaseRequest<I>* ReleaseRequest<I>::create(librados::IoCtx& ioctx,
-                                             Watcher *watcher,
-                                             asio::ContextWQ *work_queue,
-                                             const string& oid,
-                                             const string& cookie,
-                                             Context *on_finish) {
-  return new ReleaseRequest(ioctx, watcher, work_queue, oid, cookie,
-                            on_finish);
+ReleaseRequest<I> *ReleaseRequest<I>::create(librados::IoCtx &ioctx,
+        Watcher *watcher,
+        asio::ContextWQ *work_queue,
+        const string &oid,
+        const string &cookie,
+        Context *on_finish)
+{
+    return new ReleaseRequest(ioctx, watcher, work_queue, oid, cookie,
+                              on_finish);
+}
+
+template <typename I> ReleaseRequest<I>::ReleaseRequest(librados::IoCtx &ioctx, Watcher *watcher,
+        asio::ContextWQ *work_queue,
+        const string &oid, const string &cookie,
+        Context *on_finish)
+    : m_ioctx(ioctx), m_watcher(watcher), m_oid(oid), m_cookie(cookie),
+      m_on_finish(new C_AsyncCallback<asio::ContextWQ>(work_queue, on_finish))
+{
+}
+
+template <typename I> ReleaseRequest<I>::~ReleaseRequest()
+{
+}
+
+
+template <typename I>
+void ReleaseRequest<I>::send()
+{
+    send_unlock();
 }
 
 template <typename I>
-ReleaseRequest<I>::ReleaseRequest(librados::IoCtx& ioctx, Watcher *watcher,
-                                  asio::ContextWQ *work_queue,
-                                  const string& oid, const string& cookie,
-                                  Context *on_finish)
-  : m_ioctx(ioctx), m_watcher(watcher), m_oid(oid), m_cookie(cookie),
-    m_on_finish(new C_AsyncCallback<asio::ContextWQ>(work_queue, on_finish)) {
+void ReleaseRequest<I>::send_unlock()
+{
+    CephContext *cct = reinterpret_cast<CephContext *>(m_ioctx.cct());
+    ldout(cct, 10) << "entity=client." << m_ioctx.get_instance_id() << ", "
+                   << "cookie=" << m_cookie << dendl;
+
+    librados::ObjectWriteOperation op;
+    rados::cls::lock::unlock(&op, RBD_LOCK_NAME, m_cookie);
+
+    using klass = ReleaseRequest;
+    librados::AioCompletion *rados_completion =
+        create_rados_callback<klass, &klass::handle_unlock>(this);
+    int r = m_ioctx.aio_operate(m_oid, rados_completion, &op);
+    ceph_assert(r == 0);
+    rados_completion->release();
 }
 
 template <typename I>
-ReleaseRequest<I>::~ReleaseRequest() {
-}
+void ReleaseRequest<I>::handle_unlock(int r)
+{
+    CephContext *cct = reinterpret_cast<CephContext *>(m_ioctx.cct());
+    ldout(cct, 10) << "r=" << r << dendl;
 
+    if (r < 0 && r != -ENOENT) {
+        lderr(cct) << "failed to unlock: " << cpp_strerror(r) << dendl;
+    }
 
-template <typename I>
-void ReleaseRequest<I>::send() {
-  send_unlock();
-}
-
-template <typename I>
-void ReleaseRequest<I>::send_unlock() {
-  CephContext *cct = reinterpret_cast<CephContext *>(m_ioctx.cct());
-  ldout(cct, 10) << "entity=client." << m_ioctx.get_instance_id() << ", "
-                 << "cookie=" << m_cookie << dendl;
-
-  librados::ObjectWriteOperation op;
-  rados::cls::lock::unlock(&op, RBD_LOCK_NAME, m_cookie);
-
-  using klass = ReleaseRequest;
-  librados::AioCompletion *rados_completion =
-    create_rados_callback<klass, &klass::handle_unlock>(this);
-  int r = m_ioctx.aio_operate(m_oid, rados_completion, &op);
-  ceph_assert(r == 0);
-  rados_completion->release();
+    finish();
 }
 
 template <typename I>
-void ReleaseRequest<I>::handle_unlock(int r) {
-  CephContext *cct = reinterpret_cast<CephContext *>(m_ioctx.cct());
-  ldout(cct, 10) << "r=" << r << dendl;
-
-  if (r < 0 && r != -ENOENT) {
-    lderr(cct) << "failed to unlock: " << cpp_strerror(r) << dendl;
-  }
-
-  finish();
-}
-
-template <typename I>
-void ReleaseRequest<I>::finish() {
-  m_on_finish->complete(0);
-  delete this;
+void ReleaseRequest<I>::finish()
+{
+    m_on_finish->complete(0);
+    delete this;
 }
 
 } // namespace managed_lock

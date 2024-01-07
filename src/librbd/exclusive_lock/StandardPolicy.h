@@ -6,26 +6,31 @@
 
 #include "librbd/exclusive_lock/Policy.h"
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace exclusive_lock {
+namespace exclusive_lock
+{
 
 template <typename ImageCtxT = ImageCtx>
-class StandardPolicy : public Policy {
+class StandardPolicy : public Policy
+{
 public:
-  StandardPolicy(ImageCtxT* image_ctx) : m_image_ctx(image_ctx) {
-  }
+    StandardPolicy(ImageCtxT *image_ctx) : m_image_ctx(image_ctx)
+    {
+    }
 
-  bool may_auto_request_lock() override {
-    return false;
-  }
+    bool may_auto_request_lock() override
+    {
+        return false;
+    }
 
-  int lock_requested(bool force) override;
+    int lock_requested(bool force) override;
 
 private:
-  ImageCtxT* m_image_ctx;
+    ImageCtxT *m_image_ctx;
 
 };
 

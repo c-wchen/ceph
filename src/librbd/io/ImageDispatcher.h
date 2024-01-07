@@ -16,56 +16,59 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace io {
+namespace io
+{
 
 template <typename> struct QosImageDispatch;
 template <typename> struct WriteBlockImageDispatch;
 
 template <typename ImageCtxT = ImageCtx>
-class ImageDispatcher : public Dispatcher<ImageCtxT, ImageDispatcherInterface> {
+class ImageDispatcher : public Dispatcher<ImageCtxT, ImageDispatcherInterface>
+{
 public:
-  ImageDispatcher(ImageCtxT* image_ctx);
+    ImageDispatcher(ImageCtxT *image_ctx);
 
-  void invalidate_cache(Context* on_finish) override;
+    void invalidate_cache(Context *on_finish) override;
 
-  void shut_down(Context* on_finish) override;
+    void shut_down(Context *on_finish) override;
 
-  void apply_qos_schedule_tick_min(uint64_t tick) override;
-  void apply_qos_limit(uint64_t flag, uint64_t limit, uint64_t burst,
-                       uint64_t burst_seconds) override;
-  void apply_qos_exclude_ops(uint64_t exclude_ops) override;
+    void apply_qos_schedule_tick_min(uint64_t tick) override;
+    void apply_qos_limit(uint64_t flag, uint64_t limit, uint64_t burst,
+                         uint64_t burst_seconds) override;
+    void apply_qos_exclude_ops(uint64_t exclude_ops) override;
 
-  bool writes_blocked() const override;
-  int block_writes() override;
-  void block_writes(Context *on_blocked) override;
+    bool writes_blocked() const override;
+    int block_writes() override;
+    void block_writes(Context *on_blocked) override;
 
-  void unblock_writes() override;
-  void wait_on_writes_unblocked(Context *on_unblocked) override;
+    void unblock_writes() override;
+    void wait_on_writes_unblocked(Context *on_unblocked) override;
 
-  void remap_to_physical(Extents& image_extents, ImageArea area) override;
-  ImageArea remap_to_logical(Extents& image_extents) override;
+    void remap_to_physical(Extents &image_extents, ImageArea area) override;
+    ImageArea remap_to_logical(Extents &image_extents) override;
 
 protected:
-  bool send_dispatch(
-    ImageDispatchInterface* image_dispatch,
-    ImageDispatchSpec* image_dispatch_spec) override;
+    bool send_dispatch(
+        ImageDispatchInterface *image_dispatch,
+        ImageDispatchSpec *image_dispatch_spec) override;
 
 private:
-  struct SendVisitor;
-  struct PreprocessVisitor;
+    struct SendVisitor;
+    struct PreprocessVisitor;
 
-  using typename Dispatcher<ImageCtxT, ImageDispatcherInterface>::C_InvalidateCache;
+    using typename Dispatcher<ImageCtxT, ImageDispatcherInterface>::C_InvalidateCache;
 
-  std::atomic<uint64_t> m_next_tid{0};
+    std::atomic<uint64_t> m_next_tid{0};
 
-  QosImageDispatch<ImageCtxT>* m_qos_image_dispatch = nullptr;
-  WriteBlockImageDispatch<ImageCtxT>* m_write_block_dispatch = nullptr;
+    QosImageDispatch<ImageCtxT> *m_qos_image_dispatch = nullptr;
+    WriteBlockImageDispatch<ImageCtxT> *m_write_block_dispatch = nullptr;
 
-  bool preprocess(ImageDispatchSpec* image_dispatch_spec);
+    bool preprocess(ImageDispatchSpec *image_dispatch_spec);
 
 };
 

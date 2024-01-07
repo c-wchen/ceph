@@ -29,13 +29,13 @@
  */
 class RadosImport : public RadosDump
 {
-  protected:
+protected:
     uint64_t align;
     int get_object_rados(librados::IoCtx &ioctx, bufferlist &bl, bool no_overwrite);
 
-  public:
+public:
     RadosImport(int file_fd_, uint64_t align_, bool dry_run_)
-      : RadosDump(file_fd_, dry_run_), align(align_)
+        : RadosDump(file_fd_, dry_run_), align(align_)
     {}
 
     int import(std::string pool, bool no_overwrite);

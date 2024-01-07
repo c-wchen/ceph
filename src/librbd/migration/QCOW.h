@@ -152,8 +152,7 @@ typedef struct QCowHeaderProbe {
     uint32_t version;
 } __attribute__((__packed__)) QCowHeaderProbe;
 
-typedef struct QCowHeaderV1
-{
+typedef struct QCowHeaderV1 {
     uint32_t magic;
     uint32_t version;
     uint64_t backing_file_offset;
@@ -273,10 +272,10 @@ enum {
     QCOW2_INCOMPAT_EXTL2            = 1 << QCOW2_INCOMPAT_EXTL2_BITNR,
 
     QCOW2_INCOMPAT_MASK             = QCOW2_INCOMPAT_DIRTY
-                                    | QCOW2_INCOMPAT_CORRUPT
-                                    | QCOW2_INCOMPAT_DATA_FILE
-                                    | QCOW2_INCOMPAT_COMPRESSION
-                                    | QCOW2_INCOMPAT_EXTL2,
+                                      | QCOW2_INCOMPAT_CORRUPT
+                                      | QCOW2_INCOMPAT_DATA_FILE
+                                      | QCOW2_INCOMPAT_COMPRESSION
+                                      | QCOW2_INCOMPAT_EXTL2,
 };
 
 /* Compatible feature bits */
@@ -295,7 +294,7 @@ enum {
     QCOW2_AUTOCLEAR_DATA_FILE_RAW       = 1 << QCOW2_AUTOCLEAR_DATA_FILE_RAW_BITNR,
 
     QCOW2_AUTOCLEAR_MASK                = QCOW2_AUTOCLEAR_BITMAPS
-                                        | QCOW2_AUTOCLEAR_DATA_FILE_RAW,
+                                          | QCOW2_AUTOCLEAR_DATA_FILE_RAW,
 };
 
 enum qcow2_discard_type {
@@ -347,8 +346,7 @@ typedef struct Qcow2COWRegion {
  * Describes an in-flight (part of a) write request that writes to clusters
  * that are not referenced in their L2 table yet.
  */
-typedef struct QCowL2Meta
-{
+typedef struct QCowL2Meta {
     /** Guest offset of the first newly allocated cluster */
     uint64_t offset;
 

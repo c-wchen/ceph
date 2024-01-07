@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,14 +7,14 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_REFCOUNTEDOBJ_H
 #define CEPH_REFCOUNTEDOBJ_H
- 
+
 #include "common/ceph_mutex.h"
 #include "common/ref.h"
 #include "include/common_fwd.h"
@@ -40,53 +40,59 @@
  * constructors.
  *
  */
-namespace TOPNSPC::common {
-class RefCountedObject {
+namespace TOPNSPC::common
+{
+class RefCountedObject
+{
 public:
-  void set_cct(CephContext *c) {
-    cct = c;
-  }
+    void set_cct(CephContext *c)
+    {
+        cct = c;
+    }
 
-  uint64_t get_nref() const {
-    return nref;
-  }
+    uint64_t get_nref() const
+    {
+        return nref;
+    }
 
-  const RefCountedObject *get() const {
-    _get();
-    return this;
-  }
-  RefCountedObject *get() {
-    _get();
-    return this;
-  }
-  void put() const;
+    const RefCountedObject *get() const
+    {
+        _get();
+        return this;
+    }
+    RefCountedObject *get()
+    {
+        _get();
+        return this;
+    }
+    void put() const;
 
 protected:
-  RefCountedObject() = default;
-  RefCountedObject(const RefCountedObject& o) : cct(o.cct) {}
-  RefCountedObject& operator=(const RefCountedObject& o) = delete;
-  RefCountedObject(RefCountedObject&&) = delete;
-  RefCountedObject& operator=(RefCountedObject&&) = delete;
-  RefCountedObject(CephContext* c) : cct(c) {}
+    RefCountedObject() = default;
+    RefCountedObject(const RefCountedObject &o) : cct(o.cct) {}
+    RefCountedObject &operator=(const RefCountedObject &o) = delete;
+    RefCountedObject(RefCountedObject &&) = delete;
+    RefCountedObject &operator=(RefCountedObject &&) = delete;
+    RefCountedObject(CephContext *c) : cct(c) {}
 
-  virtual ~RefCountedObject();
+    virtual ~RefCountedObject();
 
 private:
-  void _get() const;
+    void _get() const;
 
-  mutable std::atomic<uint64_t> nref{1};
-  CephContext *cct{nullptr};
+    mutable std::atomic<uint64_t> nref{1};
+    CephContext *cct{nullptr};
 };
 
-class RefCountedObjectSafe : public RefCountedObject {
+class RefCountedObjectSafe : public RefCountedObject
+{
 public:
-  RefCountedObject *get() = delete;
-  const RefCountedObject *get() const = delete;
-  void put() const = delete;
+    RefCountedObject *get() = delete;
+    const RefCountedObject *get() const = delete;
+    void put() const = delete;
 protected:
-template<typename... Args>
-  RefCountedObjectSafe(Args&&... args) : RefCountedObject(std::forward<Args>(args)...) {}
-  virtual ~RefCountedObjectSafe() override {}
+    template<typename... Args> RefCountedObjectSafe(Args&&... args) : RefCountedObject(std::forward<Args>(args)...) {}
+    virtual ~RefCountedObjectSafe() override {}
 };
 
 #if !defined(WITH_SEASTAR)|| defined(WITH_ALIEN)
@@ -97,33 +103,36 @@ template<typename... Args>
  *  a refcounted condition, will be removed when all references are dropped
  */
 struct RefCountedCond : public RefCountedObject {
-  RefCountedCond() = default;
-  ~RefCountedCond() = default;
+    RefCountedCond() = default;
+    ~RefCountedCond() = default;
 
-  int wait() {
-    std::unique_lock l(lock);
-    while (!complete) {
-      cond.wait(l);
+    int wait()
+    {
+        std::unique_lock l(lock);
+        while (!complete) {
+            cond.wait(l);
+        }
+        return rval;
     }
-    return rval;
-  }
 
-  void done(int r) {
-    std::lock_guard l(lock);
-    rval = r;
-    complete = true;
-    cond.notify_all();
-  }
+    void done(int r)
+    {
+        std::lock_guard l(lock);
+        rval = r;
+        complete = true;
+        cond.notify_all();
+    }
 
-  void done() {
-    done(0);
-  }
+    void done()
+    {
+        done(0);
+    }
 
 private:
-  bool complete = false;
-  ceph::mutex lock = ceph::make_mutex("RefCountedCond::lock");
-  ceph::condition_variable cond;
-  int rval = 0;
+    bool complete = false;
+    ceph::mutex lock = ceph::make_mutex("RefCountedCond::lock");
+    ceph::condition_variable cond;
+    int rval = 0;
 };
 
 /**
@@ -134,67 +143,73 @@ private:
  * immediately, a put_wait() will return only when the object is destroyed.
  * e.g., useful when we want to wait for a specific event completion. We
  * use RefCountedCond, as the condition can be referenced after the object
- * destruction. 
- *    
+ * destruction.
+ *
  */
 struct RefCountedWaitObject {
-  std::atomic<uint64_t> nref = { 1 };
-  RefCountedCond *c;
+    std::atomic<uint64_t> nref = { 1 };
+    RefCountedCond *c;
 
-  RefCountedWaitObject() {
-    c = new RefCountedCond;
-  }
-  virtual ~RefCountedWaitObject() {
-    c->put();
-  }
-
-  RefCountedWaitObject *get() {
-    nref++;
-    return this;
-  }
-
-  bool put() {
-    bool ret = false;
-    RefCountedCond *cond = c;
-    cond->get();
-    if (--nref == 0) {
-      cond->done();
-      delete this;
-      ret = true;
+    RefCountedWaitObject()
+    {
+        c = new RefCountedCond;
     }
-    cond->put();
-    return ret;
-  }
-
-  void put_wait() {
-    RefCountedCond *cond = c;
-
-    cond->get();
-    if (--nref == 0) {
-      cond->done();
-      delete this;
-    } else {
-      cond->wait();
+    virtual ~RefCountedWaitObject()
+    {
+        c->put();
     }
-    cond->put();
-  }
+
+    RefCountedWaitObject *get()
+    {
+        nref++;
+        return this;
+    }
+
+    bool put()
+    {
+        bool ret = false;
+        RefCountedCond *cond = c;
+        cond->get();
+        if (--nref == 0) {
+            cond->done();
+            delete this;
+            ret = true;
+        }
+        cond->put();
+        return ret;
+    }
+
+    void put_wait()
+    {
+        RefCountedCond *cond = c;
+
+        cond->get();
+        if (--nref == 0) {
+            cond->done();
+            delete this;
+        } else {
+            cond->wait();
+        }
+        cond->put();
+    }
 };
 
 #endif // !defined(WITH_SEASTAR)|| defined(WITH_ALIEN)
 
-static inline void intrusive_ptr_add_ref(const RefCountedObject *p) {
-  p->get();
-}
-static inline void intrusive_ptr_release(const RefCountedObject *p) {
-  p->put();
-}
-struct UniquePtrDeleter
+static inline void intrusive_ptr_add_ref(const RefCountedObject *p)
 {
-  void operator()(RefCountedObject *p) const
-  {
-    // Don't expect a call to `get()` in the ctor as we manually set nref to 1
+    p->get();
+}
+static inline void intrusive_ptr_release(const RefCountedObject *p)
+{
     p->put();
-  }
+}
+struct UniquePtrDeleter {
+    void operator()(RefCountedObject *p) const
+    {
+        // Don't expect a call to `get()` in the ctor as we manually set nref to 1
+        p->put();
+    }
 };
 }
 using RefCountedPtr = ceph::ref_t<TOPNSPC::common::RefCountedObject>;

@@ -22,43 +22,58 @@
  * as public member functions.
  */
 template<class T>
-concept has_fmt_print = requires(T t) {
-  { t.fmt_print() } -> std::same_as<std::string>;
+concept has_fmt_print = requires(T t)
+{
+    {
+        t.fmt_print()
+    }
+    -> std::same_as<std::string>;
 };
 template<class T>
-concept has_alt_fmt_print = requires(T t) {
-  { t.alt_fmt_print(bool{}) } -> std::same_as<std::string>;
+concept has_alt_fmt_print = requires(T t)
+{
+    {
+        t.alt_fmt_print(bool{})
+    }
+    -> std::same_as<std::string>;
 };
 
-namespace fmt {
+namespace fmt
+{
 
 template <has_fmt_print T>
 struct formatter<T> {
-  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-  template <typename FormatContext>
-  auto format(const T& k, FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "{}", k.fmt_print());
-  }
+    constexpr auto parse(format_parse_context &ctx)
+    {
+        return ctx.begin();
+    }
+    template <typename FormatContext>
+    auto format(const T &k, FormatContext &ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", k.fmt_print());
+    }
 };
 
 template <has_alt_fmt_print T>
 struct formatter<T> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    auto it = ctx.begin();
-    if (it != ctx.end() && *it == 's') {
-      verbose = false;
-      ++it;
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext &ctx)
+    {
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == 's') {
+            verbose = false;
+            ++it;
+        }
+        return it;
     }
-    return it;
-  }
-  template <typename FormatContext>
-  auto format(const T& k, FormatContext& ctx) const {
-    if (verbose) {
-      return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(true));
+    template <typename FormatContext>
+    auto format(const T &k, FormatContext &ctx) const
+    {
+        if (verbose) {
+            return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(true));
+        }
+        return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(false));
     }
-    return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(false));
-  }
-  bool verbose{true};
+    bool verbose{true};
 };
 }  // namespace fmt

@@ -17,46 +17,52 @@
 class RGWMultiCompleteUpload : public XMLObj
 {
 public:
-  RGWMultiCompleteUpload() {}
-  ~RGWMultiCompleteUpload() override {}
-  bool xml_end(const char *el) override;
+    RGWMultiCompleteUpload() {}
+    ~RGWMultiCompleteUpload() override {}
+    bool xml_end(const char *el) override;
 
-  std::map<int, std::string> parts;
+    std::map<int, std::string> parts;
 };
 
 class RGWMultiPart : public XMLObj
 {
-  std::string etag;
-  int num;
+    std::string etag;
+    int num;
 public:
-  RGWMultiPart() : num(0) {}
-  ~RGWMultiPart() override {}
-  bool xml_end(const char *el) override;
+    RGWMultiPart() : num(0) {}
+    ~RGWMultiPart() override {}
+    bool xml_end(const char *el) override;
 
-  std::string& get_etag() { return etag; }
-  int get_num() { return num; }
+    std::string &get_etag()
+    {
+        return etag;
+    }
+    int get_num()
+    {
+        return num;
+    }
 };
 
 class RGWMultiPartNumber : public XMLObj
 {
 public:
-  RGWMultiPartNumber() {}
-  ~RGWMultiPartNumber() override {}
+    RGWMultiPartNumber() {}
+    ~RGWMultiPartNumber() override {}
 };
 
 class RGWMultiETag : public XMLObj
 {
 public:
-  RGWMultiETag() {}
-  ~RGWMultiETag() override {}
+    RGWMultiETag() {}
+    ~RGWMultiETag() override {}
 };
 
 class RGWMultiXMLParser : public RGWXMLParser
 {
-  XMLObj *alloc_obj(const char *el) override;
+    XMLObj *alloc_obj(const char *el) override;
 public:
-  RGWMultiXMLParser() {}
-  virtual ~RGWMultiXMLParser() override;
+    RGWMultiXMLParser() {}
+    virtual ~RGWMultiXMLParser() override;
 };
 
-extern bool is_v2_upload_id(const std::string& upload_id);
+extern bool is_v2_upload_id(const std::string &upload_id);

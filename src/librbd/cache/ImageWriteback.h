@@ -11,61 +11,66 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace cache {
+namespace cache
+{
 
-class ImageWritebackInterface {
+class ImageWritebackInterface
+{
 public:
-  typedef std::vector<std::pair<uint64_t,uint64_t> > Extents;
-  virtual ~ImageWritebackInterface() {
-  }
-  virtual void aio_read(Extents &&image_extents, ceph::bufferlist *bl,
-                        int fadvise_flags, Context *on_finish) = 0;
-  virtual void aio_write(Extents &&image_extents, ceph::bufferlist&& bl,
-                         int fadvise_flags, Context *on_finish) = 0;
-  virtual void aio_discard(uint64_t offset, uint64_t length,
-                           uint32_t discard_granularity_bytes, Context *on_finish) = 0;
-  virtual void aio_flush(io::FlushSource flush_source, Context *on_finish) = 0 ;
-  virtual void aio_writesame(uint64_t offset, uint64_t length,
-                             ceph::bufferlist&& bl,
-                             int fadvise_flags, Context *on_finish) = 0;
-  virtual void aio_compare_and_write(Extents &&image_extents,
-                                     ceph::bufferlist&& cmp_bl,
-                                     ceph::bufferlist&& bl,
-                                     uint64_t *mismatch_offset,
-                                     int fadvise_flags, Context *on_finish) = 0;
+    typedef std::vector<std::pair<uint64_t, uint64_t> > Extents;
+    virtual ~ImageWritebackInterface()
+    {
+    }
+    virtual void aio_read(Extents &&image_extents, ceph::bufferlist *bl,
+                          int fadvise_flags, Context *on_finish) = 0;
+    virtual void aio_write(Extents &&image_extents, ceph::bufferlist&& bl,
+                           int fadvise_flags, Context *on_finish) = 0;
+    virtual void aio_discard(uint64_t offset, uint64_t length,
+                             uint32_t discard_granularity_bytes, Context *on_finish) = 0;
+    virtual void aio_flush(io::FlushSource flush_source, Context *on_finish) = 0 ;
+    virtual void aio_writesame(uint64_t offset, uint64_t length,
+                               ceph::bufferlist&& bl,
+                               int fadvise_flags, Context *on_finish) = 0;
+    virtual void aio_compare_and_write(Extents &&image_extents,
+                                       ceph::bufferlist&& cmp_bl,
+                                       ceph::bufferlist&& bl,
+                                       uint64_t *mismatch_offset,
+                                       int fadvise_flags, Context *on_finish) = 0;
 };
 
 /**
  * client-side, image extent cache writeback handler
  */
 template <typename ImageCtxT = librbd::ImageCtx>
-class ImageWriteback : public ImageWritebackInterface {
+class ImageWriteback : public ImageWritebackInterface
+{
 public:
-  using ImageWritebackInterface::Extents;
+    using ImageWritebackInterface::Extents;
 
-  explicit ImageWriteback(ImageCtxT &image_ctx);
+    explicit ImageWriteback(ImageCtxT &image_ctx);
 
-  void aio_read(Extents &&image_extents, ceph::bufferlist *bl,
-                int fadvise_flags, Context *on_finish);
-  void aio_write(Extents &&image_extents, ceph::bufferlist&& bl,
-                 int fadvise_flags, Context *on_finish);
-  void aio_discard(uint64_t offset, uint64_t length,
-                   uint32_t discard_granularity_bytes, Context *on_finish);
-  void aio_flush(io::FlushSource flush_source, Context *on_finish);
-  void aio_writesame(uint64_t offset, uint64_t length,
-                     ceph::bufferlist&& bl,
-                     int fadvise_flags, Context *on_finish);
-  void aio_compare_and_write(Extents &&image_extents,
-                             ceph::bufferlist&& cmp_bl,
-                             ceph::bufferlist&& bl,
-                             uint64_t *mismatch_offset,
-                             int fadvise_flags, Context *on_finish);
+    void aio_read(Extents &&image_extents, ceph::bufferlist *bl,
+                  int fadvise_flags, Context *on_finish);
+    void aio_write(Extents &&image_extents, ceph::bufferlist&& bl,
+                   int fadvise_flags, Context *on_finish);
+    void aio_discard(uint64_t offset, uint64_t length,
+                     uint32_t discard_granularity_bytes, Context *on_finish);
+    void aio_flush(io::FlushSource flush_source, Context *on_finish);
+    void aio_writesame(uint64_t offset, uint64_t length,
+                       ceph::bufferlist&& bl,
+                       int fadvise_flags, Context *on_finish);
+    void aio_compare_and_write(Extents &&image_extents,
+                               ceph::bufferlist&& cmp_bl,
+                               ceph::bufferlist&& bl,
+                               uint64_t *mismatch_offset,
+                               int fadvise_flags, Context *on_finish);
 private:
-  ImageCtxT &m_image_ctx;
+    ImageCtxT &m_image_ctx;
 
 };
 

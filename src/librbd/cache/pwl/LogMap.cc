@@ -6,9 +6,12 @@
 #include "librbd/Utils.h"
 #include "librbd/cache/pwl/LogEntry.h"
 
-namespace librbd {
-namespace cache {
-namespace pwl {
+namespace librbd
+{
+namespace cache
+{
+namespace pwl
+{
 
 #define dout_subsys ceph_subsys_rbd_pwl
 #undef dout_prefix
@@ -16,28 +19,29 @@ namespace pwl {
                            <<  __func__ << ": "
 template <typename T>
 std::ostream &operator<<(std::ostream &os,
-                         LogMapEntry<T> &e) {
-  os << "block_extent=" << e.block_extent
-     << ", log_entry=[" << e.log_entry << "]";
-  return os;
+                         LogMapEntry<T> &e)
+{
+    os << "block_extent=" << e.block_extent
+       << ", log_entry=[" << e.log_entry << "]";
+    return os;
 }
 
-template <typename T>
-LogMapEntry<T>::LogMapEntry(const BlockExtent block_extent,
-                            std::shared_ptr<T> log_entry)
-  : block_extent(block_extent) , log_entry(log_entry) {
+template <typename T> LogMapEntry<T>::LogMapEntry(const BlockExtent block_extent,
+        std::shared_ptr<T> log_entry)
+    : block_extent(block_extent), log_entry(log_entry)
+{
 }
 
-template <typename T>
-LogMapEntry<T>::LogMapEntry(std::shared_ptr<T> log_entry)
-  : block_extent(log_entry->block_extent()) , log_entry(log_entry) {
+template <typename T> LogMapEntry<T>::LogMapEntry(std::shared_ptr<T> log_entry)
+    : block_extent(log_entry->block_extent()), log_entry(log_entry)
+{
 }
 
-template <typename T>
-LogMap<T>::LogMap(CephContext *cct)
-  : m_cct(cct),
-    m_lock(ceph::make_mutex(pwl::unique_lock_name(
-           "librbd::cache::pwl::LogMap::m_lock", this))) {
+template <typename T> LogMap<T>::LogMap(CephContext *cct)
+    : m_cct(cct),
+      m_lock(ceph::make_mutex(pwl::unique_lock_name(
+                                  "librbd::cache::pwl::LogMap::m_lock", this)))
+{
 }
 
 /**
@@ -54,18 +58,20 @@ LogMap<T>::LogMap(CephContext *cct)
  * this.
  */
 template <typename T>
-void LogMap<T>::add_log_entry(std::shared_ptr<T> log_entry) {
-  std::lock_guard locker(m_lock);
-  add_log_entry_locked(log_entry);
+void LogMap<T>::add_log_entry(std::shared_ptr<T> log_entry)
+{
+    std::lock_guard locker(m_lock);
+    add_log_entry_locked(log_entry);
 }
 
 template <typename T>
-void LogMap<T>::add_log_entries(std::list<std::shared_ptr<T>> &log_entries) {
-  std::lock_guard locker(m_lock);
-  ldout(m_cct, 20) << dendl;
-  for (auto &log_entry : log_entries) {
-    add_log_entry_locked(log_entry);
-  }
+void LogMap<T>::add_log_entries(std::list<std::shared_ptr<T>> &log_entries)
+{
+    std::lock_guard locker(m_lock);
+    ldout(m_cct, 20) << dendl;
+    for (auto &log_entry : log_entries) {
+        add_log_entry_locked(log_entry);
+    }
 }
 
 /**
@@ -73,18 +79,20 @@ void LogMap<T>::add_log_entries(std::list<std::shared_ptr<T>> &log_entries) {
  * entry.
  */
 template <typename T>
-void LogMap<T>::remove_log_entry(std::shared_ptr<T> log_entry) {
-  std::lock_guard locker(m_lock);
-  remove_log_entry_locked(log_entry);
+void LogMap<T>::remove_log_entry(std::shared_ptr<T> log_entry)
+{
+    std::lock_guard locker(m_lock);
+    remove_log_entry_locked(log_entry);
 }
 
 template <typename T>
-void LogMap<T>::remove_log_entries(std::list<std::shared_ptr<T>> &log_entries) {
-  std::lock_guard locker(m_lock);
-  ldout(m_cct, 20) << dendl;
-  for (auto &log_entry : log_entries) {
-    remove_log_entry_locked(log_entry);
-  }
+void LogMap<T>::remove_log_entries(std::list<std::shared_ptr<T>> &log_entries)
+{
+    std::lock_guard locker(m_lock);
+    ldout(m_cct, 20) << dendl;
+    for (auto &log_entry : log_entries) {
+        remove_log_entry_locked(log_entry);
+    }
 }
 
 /**
@@ -95,10 +103,11 @@ void LogMap<T>::remove_log_entries(std::list<std::shared_ptr<T>> &log_entries) {
  * (e.g. the middle of that write log entry has been overwritten).
  */
 template <typename T>
-std::list<std::shared_ptr<T>> LogMap<T>::find_log_entries(BlockExtent block_extent) {
-  std::lock_guard locker(m_lock);
-  ldout(m_cct, 20) << dendl;
-  return find_log_entries_locked(block_extent);
+std::list<std::shared_ptr<T>> LogMap<T>::find_log_entries(BlockExtent block_extent)
+{
+    std::lock_guard locker(m_lock);
+    ldout(m_cct, 20) << dendl;
+    return find_log_entries_locked(block_extent);
 }
 
 /**
@@ -106,122 +115,130 @@ std::list<std::shared_ptr<T>> LogMap<T>::find_log_entries(BlockExtent block_exte
  * specified block extent.
  */
 template <typename T>
-LogMapEntries<T> LogMap<T>::find_map_entries(BlockExtent block_extent) {
-  std::lock_guard locker(m_lock);
-  ldout(m_cct, 20) << dendl;
-  return find_map_entries_locked(block_extent);
+LogMapEntries<T> LogMap<T>::find_map_entries(BlockExtent block_extent)
+{
+    std::lock_guard locker(m_lock);
+    ldout(m_cct, 20) << dendl;
+    return find_map_entries_locked(block_extent);
 }
 
 template <typename T>
-void LogMap<T>::add_log_entry_locked(std::shared_ptr<T> log_entry) {
-  LogMapEntry<T> map_entry(log_entry);
-  ldout(m_cct, 20) << "block_extent=" << map_entry.block_extent
-                   << dendl;
-  ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
-  LogMapEntries<T> overlap_entries = find_map_entries_locked(map_entry.block_extent);
-  for (auto &entry : overlap_entries) {
-    ldout(m_cct, 20) << entry << dendl;
-    if (map_entry.block_extent.block_start <= entry.block_extent.block_start) {
-      if (map_entry.block_extent.block_end >= entry.block_extent.block_end) {
-        ldout(m_cct, 20) << "map entry completely occluded by new log entry" << dendl;
-        remove_map_entry_locked(entry);
-      } else {
-        ceph_assert(map_entry.block_extent.block_end < entry.block_extent.block_end);
-        /* The new entry occludes the beginning of the old entry */
-        BlockExtent adjusted_extent(map_entry.block_extent.block_end,
-                                    entry.block_extent.block_end);
-        adjust_map_entry_locked(entry, adjusted_extent);
-      }
-    } else {
-      if (map_entry.block_extent.block_end >= entry.block_extent.block_end) {
-        /* The new entry occludes the end of the old entry */
-        BlockExtent adjusted_extent(entry.block_extent.block_start,
-                                    map_entry.block_extent.block_start);
-        adjust_map_entry_locked(entry, adjusted_extent);
-      } else {
-        /* The new entry splits the old entry */
-        split_map_entry_locked(entry, map_entry.block_extent);
-      }
+void LogMap<T>::add_log_entry_locked(std::shared_ptr<T> log_entry)
+{
+    LogMapEntry<T> map_entry(log_entry);
+    ldout(m_cct, 20) << "block_extent=" << map_entry.block_extent
+                     << dendl;
+    ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
+    LogMapEntries<T> overlap_entries = find_map_entries_locked(map_entry.block_extent);
+    for (auto &entry : overlap_entries) {
+        ldout(m_cct, 20) << entry << dendl;
+        if (map_entry.block_extent.block_start <= entry.block_extent.block_start) {
+            if (map_entry.block_extent.block_end >= entry.block_extent.block_end) {
+                ldout(m_cct, 20) << "map entry completely occluded by new log entry" << dendl;
+                remove_map_entry_locked(entry);
+            } else {
+                ceph_assert(map_entry.block_extent.block_end < entry.block_extent.block_end);
+                /* The new entry occludes the beginning of the old entry */
+                BlockExtent adjusted_extent(map_entry.block_extent.block_end,
+                                            entry.block_extent.block_end);
+                adjust_map_entry_locked(entry, adjusted_extent);
+            }
+        } else {
+            if (map_entry.block_extent.block_end >= entry.block_extent.block_end) {
+                /* The new entry occludes the end of the old entry */
+                BlockExtent adjusted_extent(entry.block_extent.block_start,
+                                            map_entry.block_extent.block_start);
+                adjust_map_entry_locked(entry, adjusted_extent);
+            } else {
+                /* The new entry splits the old entry */
+                split_map_entry_locked(entry, map_entry.block_extent);
+            }
+        }
     }
-  }
-  add_map_entry_locked(map_entry);
+    add_map_entry_locked(map_entry);
 }
 
 template <typename T>
-void LogMap<T>::remove_log_entry_locked(std::shared_ptr<T> log_entry) {
-  ldout(m_cct, 20) << "*log_entry=" << *log_entry << dendl;
-  ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
+void LogMap<T>::remove_log_entry_locked(std::shared_ptr<T> log_entry)
+{
+    ldout(m_cct, 20) << "*log_entry=" << *log_entry << dendl;
+    ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
 
-  LogMapEntries<T> possible_hits = find_map_entries_locked(log_entry->block_extent());
-  for (auto &possible_hit : possible_hits) {
-    if (possible_hit.log_entry == log_entry) {
-      /* This map entry refers to the specified log entry */
-      remove_map_entry_locked(possible_hit);
+    LogMapEntries<T> possible_hits = find_map_entries_locked(log_entry->block_extent());
+    for (auto &possible_hit : possible_hits) {
+        if (possible_hit.log_entry == log_entry) {
+            /* This map entry refers to the specified log entry */
+            remove_map_entry_locked(possible_hit);
+        }
     }
-  }
 }
 
 template <typename T>
-void LogMap<T>::add_map_entry_locked(LogMapEntry<T> &map_entry) {
-  ceph_assert(map_entry.log_entry);
-  m_block_to_log_entry_map.insert(map_entry);
-  map_entry.log_entry->inc_map_ref();
+void LogMap<T>::add_map_entry_locked(LogMapEntry<T> &map_entry)
+{
+    ceph_assert(map_entry.log_entry);
+    m_block_to_log_entry_map.insert(map_entry);
+    map_entry.log_entry->inc_map_ref();
 }
 
 template <typename T>
-void LogMap<T>::remove_map_entry_locked(LogMapEntry<T> &map_entry) {
-  auto it = m_block_to_log_entry_map.find(map_entry);
-  ceph_assert(it != m_block_to_log_entry_map.end());
+void LogMap<T>::remove_map_entry_locked(LogMapEntry<T> &map_entry)
+{
+    auto it = m_block_to_log_entry_map.find(map_entry);
+    ceph_assert(it != m_block_to_log_entry_map.end());
 
-  LogMapEntry<T> erased = *it;
-  m_block_to_log_entry_map.erase(it);
-  erased.log_entry->dec_map_ref();
-  if (0 == erased.log_entry->get_map_ref()) {
-    ldout(m_cct, 20) << "log entry has zero map entries: " << erased.log_entry << dendl;
-  }
+    LogMapEntry<T> erased = *it;
+    m_block_to_log_entry_map.erase(it);
+    erased.log_entry->dec_map_ref();
+    if (0 == erased.log_entry->get_map_ref()) {
+        ldout(m_cct, 20) << "log entry has zero map entries: " << erased.log_entry << dendl;
+    }
 }
 
 template <typename T>
-void LogMap<T>::adjust_map_entry_locked(LogMapEntry<T> &map_entry, BlockExtent &new_extent) {
-  auto it = m_block_to_log_entry_map.find(map_entry);
-  ceph_assert(it != m_block_to_log_entry_map.end());
+void LogMap<T>::adjust_map_entry_locked(LogMapEntry<T> &map_entry, BlockExtent &new_extent)
+{
+    auto it = m_block_to_log_entry_map.find(map_entry);
+    ceph_assert(it != m_block_to_log_entry_map.end());
 
-  LogMapEntry<T> adjusted = *it;
-  m_block_to_log_entry_map.erase(it);
+    LogMapEntry<T> adjusted = *it;
+    m_block_to_log_entry_map.erase(it);
 
-  m_block_to_log_entry_map.insert(LogMapEntry<T>(new_extent, adjusted.log_entry));
+    m_block_to_log_entry_map.insert(LogMapEntry<T>(new_extent, adjusted.log_entry));
 }
 
 template <typename T>
-void LogMap<T>::split_map_entry_locked(LogMapEntry<T> &map_entry, BlockExtent &removed_extent) {
-  auto it = m_block_to_log_entry_map.find(map_entry);
-  ceph_assert(it != m_block_to_log_entry_map.end());
+void LogMap<T>::split_map_entry_locked(LogMapEntry<T> &map_entry, BlockExtent &removed_extent)
+{
+    auto it = m_block_to_log_entry_map.find(map_entry);
+    ceph_assert(it != m_block_to_log_entry_map.end());
 
-  LogMapEntry<T> split = *it;
-  m_block_to_log_entry_map.erase(it);
+    LogMapEntry<T> split = *it;
+    m_block_to_log_entry_map.erase(it);
 
-  BlockExtent left_extent(split.block_extent.block_start,
-                          removed_extent.block_start);
-  m_block_to_log_entry_map.insert(LogMapEntry<T>(left_extent, split.log_entry));
+    BlockExtent left_extent(split.block_extent.block_start,
+                            removed_extent.block_start);
+    m_block_to_log_entry_map.insert(LogMapEntry<T>(left_extent, split.log_entry));
 
-  BlockExtent right_extent(removed_extent.block_end,
-                           split.block_extent.block_end);
-  m_block_to_log_entry_map.insert(LogMapEntry<T>(right_extent, split.log_entry));
+    BlockExtent right_extent(removed_extent.block_end,
+                             split.block_extent.block_end);
+    m_block_to_log_entry_map.insert(LogMapEntry<T>(right_extent, split.log_entry));
 
-  split.log_entry->inc_map_ref();
+    split.log_entry->inc_map_ref();
 }
 
 template <typename T>
-std::list<std::shared_ptr<T>> LogMap<T>::find_log_entries_locked(const BlockExtent &block_extent) {
-  std::list<std::shared_ptr<T>> overlaps;
-  ldout(m_cct, 20) << "block_extent=" << block_extent << dendl;
+std::list<std::shared_ptr<T>> LogMap<T>::find_log_entries_locked(const BlockExtent &block_extent)
+{
+    std::list<std::shared_ptr<T>> overlaps;
+    ldout(m_cct, 20) << "block_extent=" << block_extent << dendl;
 
-  ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
-  LogMapEntries<T> map_entries = find_map_entries_locked(block_extent);
-  for (auto &map_entry : map_entries) {
-    overlaps.emplace_back(map_entry.log_entry);
-  }
-  return overlaps;
+    ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
+    LogMapEntries<T> map_entries = find_map_entries_locked(block_extent);
+    for (auto &map_entry : map_entries) {
+        overlaps.emplace_back(map_entry.log_entry);
+    }
+    return overlaps;
 }
 
 /**
@@ -229,19 +246,20 @@ std::list<std::shared_ptr<T>> LogMap<T>::find_log_entries_locked(const BlockExte
  * extent, instead of returning a list.
  */
 template <typename T>
-LogMapEntries<T> LogMap<T>::find_map_entries_locked(const BlockExtent &block_extent) {
-  LogMapEntries<T> overlaps;
+LogMapEntries<T> LogMap<T>::find_map_entries_locked(const BlockExtent &block_extent)
+{
+    LogMapEntries<T> overlaps;
 
-  ldout(m_cct, 20) << "block_extent=" << block_extent << dendl;
-  ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
-  auto p = m_block_to_log_entry_map.equal_range(LogMapEntry<T>(block_extent));
-  ldout(m_cct, 20) << "count=" << std::distance(p.first, p.second) << dendl;
-  for ( auto i = p.first; i != p.second; ++i ) {
-    LogMapEntry<T> entry = *i;
-    overlaps.emplace_back(entry);
-    ldout(m_cct, 20) << entry << dendl;
-  }
-  return overlaps;
+    ldout(m_cct, 20) << "block_extent=" << block_extent << dendl;
+    ceph_assert(ceph_mutex_is_locked_by_me(m_lock));
+    auto p = m_block_to_log_entry_map.equal_range(LogMapEntry<T>(block_extent));
+    ldout(m_cct, 20) << "count=" << std::distance(p.first, p.second) << dendl;
+    for (auto i = p.first; i != p.second; ++i) {
+        LogMapEntry<T> entry = *i;
+        overlaps.emplace_back(entry);
+        ldout(m_cct, 20) << entry << dendl;
+    }
+    return overlaps;
 }
 
 /* We map block extents to write log entries, or portions of write log
@@ -264,11 +282,12 @@ LogMapEntries<T> LogMap<T>::find_map_entries_locked(const BlockExtent &block_ext
  */
 template <typename T>
 bool LogMap<T>::LogMapEntryCompare::operator()(const LogMapEntry<T> &lhs,
-                                               const LogMapEntry<T> &rhs) const {
-  if (lhs.block_extent.block_end <= rhs.block_extent.block_start) {
-    return true;
-  }
-  return false;
+        const LogMapEntry<T> &rhs) const
+{
+    if (lhs.block_extent.block_end <= rhs.block_extent.block_start) {
+        return true;
+    }
+    return false;
 }
 
 } //namespace pwl

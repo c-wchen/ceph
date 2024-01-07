@@ -21,19 +21,22 @@
 #include <type_traits>
 
 template<typename T, typename U>
-constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> div_round_up(T n, U d) {
-  return (n + d - 1) / d;
+constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> div_round_up(T n, U d)
+{
+    return (n + d - 1) / d;
 }
 
 
 template<typename T, typename U>
-constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> round_up_to(T n, U d) {
-  return (n % d ? (n + d - n % d) : n);
+constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> round_up_to(T n, U d)
+{
+    return (n % d ? (n + d - n % d) : n);
 }
 
 template<typename T, typename U>
-constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> shift_round_up(T x, U y) {
-  return (x + (1 << y) - 1) >> y;
+constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> shift_round_up(T x, U y)
+{
+    return (x + (1 << y) - 1) >> y;
 }
 
 /*
@@ -49,8 +52,9 @@ constexpr inline std::make_unsigned_t<std::common_type_t<T, U>> shift_round_up(T
  * eg, p2align(0x5600, 0x100) == 0x5600 (0x56*align)
  */
 template<typename T>
-constexpr inline T p2align(T x, T align) {
-  return x & -align;
+constexpr inline T p2align(T x, T align)
+{
+    return x & -align;
 }
 
 /*
@@ -59,8 +63,9 @@ constexpr inline T p2align(T x, T align) {
  * eg, p2phase(0x5600, 0x100) == 0x00 (x-0x56*align)
  */
 template<typename T>
-constexpr inline T p2phase(T x, T align) {
-  return x & (align - 1);
+constexpr inline T p2phase(T x, T align)
+{
+    return x & (align - 1);
 }
 
 /*
@@ -70,8 +75,9 @@ constexpr inline T p2phase(T x, T align) {
  * eg, p2nphase(0x5600, 0x100) == 0x00 (0x56*align-x)
  */
 template<typename T>
-constexpr inline T p2nphase(T x, T align) {
-  return -x & (align - 1);
+constexpr inline T p2nphase(T x, T align)
+{
+    return -x & (align - 1);
 }
 
 /*
@@ -80,14 +86,16 @@ constexpr inline T p2nphase(T x, T align) {
  * eg, p2roundup(0x5600, 0x100) == 0x5600 (0x56*align)
  */
 template<typename T>
-constexpr inline T p2roundup(T x, T align) {
-  return -(-x & -align);
+constexpr inline T p2roundup(T x, T align)
+{
+    return -(-x & -align);
 }
 
 // count bits (set + any 0's that follow)
 template<std::integral T>
-unsigned cbits(T v) {
-  return (sizeof(v) * CHAR_BIT) - std::countl_zero(std::make_unsigned_t<T>(v));
+unsigned cbits(T v)
+{
+    return (sizeof(v) * CHAR_BIT) - std::countl_zero(std::make_unsigned_t<T>(v));
 }
 
 #endif

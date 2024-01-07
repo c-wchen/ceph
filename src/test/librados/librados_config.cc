@@ -22,77 +22,81 @@
 
 using std::string;
 
-TEST(LibRadosConfig, SimpleSet) {
-  rados_t cl;
-  int ret = rados_create(&cl, NULL);
-  ASSERT_EQ(ret, 0);
+TEST(LibRadosConfig, SimpleSet)
+{
+    rados_t cl;
+    int ret = rados_create(&cl, NULL);
+    ASSERT_EQ(ret, 0);
 
-  ret = rados_conf_set(cl, "log_max_new", "21");
-  ASSERT_EQ(ret, 0);
+    ret = rados_conf_set(cl, "log_max_new", "21");
+    ASSERT_EQ(ret, 0);
 
-  char buf[128];
-  memset(buf, 0, sizeof(buf));
-  ret = rados_conf_get(cl, "log_max_new", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(string("21"), string(buf));
+    char buf[128];
+    memset(buf, 0, sizeof(buf));
+    ret = rados_conf_get(cl, "log_max_new", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(string("21"), string(buf));
 
-  rados_shutdown(cl);
+    rados_shutdown(cl);
 }
 
-TEST(LibRadosConfig, ArgV) {
-  rados_t cl;
-  int ret = rados_create(&cl, NULL);
-  ASSERT_EQ(ret, 0);
+TEST(LibRadosConfig, ArgV)
+{
+    rados_t cl;
+    int ret = rados_create(&cl, NULL);
+    ASSERT_EQ(ret, 0);
 
-  const char *argv[] = { "foo", "--log_max_new", "2",
-			 "--key", "my-key", NULL };
-  size_t argc = (sizeof(argv) / sizeof(argv[0])) - 1;
-  rados_conf_parse_argv(cl, argc, argv);
+    const char *argv[] = { "foo", "--log_max_new", "2",
+                           "--key", "my-key", NULL
+                         };
+    size_t argc = (sizeof(argv) / sizeof(argv[0])) - 1;
+    rados_conf_parse_argv(cl, argc, argv);
 
-  char buf[128];
-  memset(buf, 0, sizeof(buf));
-  ret = rados_conf_get(cl, "key", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(string("my-key"), string(buf));
+    char buf[128];
+    memset(buf, 0, sizeof(buf));
+    ret = rados_conf_get(cl, "key", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(string("my-key"), string(buf));
 
-  memset(buf, 0, sizeof(buf));
-  ret = rados_conf_get(cl, "log_max_new", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(string("2"), string(buf));
+    memset(buf, 0, sizeof(buf));
+    ret = rados_conf_get(cl, "log_max_new", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(string("2"), string(buf));
 
-  rados_shutdown(cl);
+    rados_shutdown(cl);
 }
 
-TEST(LibRadosConfig, DebugLevels) {
-  rados_t cl;
-  int ret = rados_create(&cl, NULL);
-  ASSERT_EQ(ret, 0);
+TEST(LibRadosConfig, DebugLevels)
+{
+    rados_t cl;
+    int ret = rados_create(&cl, NULL);
+    ASSERT_EQ(ret, 0);
 
-  ret = rados_conf_set(cl, "debug_rados", "3");
-  ASSERT_EQ(ret, 0);
+    ret = rados_conf_set(cl, "debug_rados", "3");
+    ASSERT_EQ(ret, 0);
 
-  char buf[128];
-  memset(buf, 0, sizeof(buf));
-  ret = rados_conf_get(cl, "debug_rados", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(0, strcmp("3/3", buf));
+    char buf[128];
+    memset(buf, 0, sizeof(buf));
+    ret = rados_conf_get(cl, "debug_rados", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(0, strcmp("3/3", buf));
 
-  ret = rados_conf_set(cl, "debug_rados", "7/8");
-  ASSERT_EQ(ret, 0);
+    ret = rados_conf_set(cl, "debug_rados", "7/8");
+    ASSERT_EQ(ret, 0);
 
-  memset(buf, 0, sizeof(buf));
-  ret = rados_conf_get(cl, "debug_rados", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(0, strcmp("7/8", buf));
+    memset(buf, 0, sizeof(buf));
+    ret = rados_conf_get(cl, "debug_rados", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(0, strcmp("7/8", buf));
 
-  ret = rados_conf_set(cl, "debug_rados", "foo");
-  ASSERT_EQ(ret, -EINVAL);
+    ret = rados_conf_set(cl, "debug_rados", "foo");
+    ASSERT_EQ(ret, -EINVAL);
 
-  ret = rados_conf_set(cl, "debug_asdkfasdjfajksdf", "foo");
-  ASSERT_EQ(ret, -ENOENT);
+    ret = rados_conf_set(cl, "debug_asdkfasdjfajksdf", "foo");
+    ASSERT_EQ(ret, -ENOENT);
 
-  ret = rados_conf_get(cl, "debug_radfjadfsdados", buf, sizeof(buf));
-  ASSERT_EQ(ret, -ENOENT);
+    ret = rados_conf_get(cl, "debug_radfjadfsdados", buf, sizeof(buf));
+    ASSERT_EQ(ret, -ENOENT);
 
-  rados_shutdown(cl);
+    rados_shutdown(cl);
 }

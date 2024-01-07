@@ -3,19 +3,25 @@
 
 #include "Utils.h"
 
-namespace rbd {
-namespace mirror {
-namespace image_sync {
-namespace util {
+namespace rbd
+{
+namespace mirror
+{
+namespace image_sync
+{
+namespace util
+{
 
-namespace {
+namespace
+{
 
 static const std::string SNAP_NAME_PREFIX(".rbd-mirror");
 
 } // anonymous namespace
 
-std::string get_snapshot_name_prefix(const std::string& local_mirror_uuid) {
-  return SNAP_NAME_PREFIX + "." + local_mirror_uuid + ".";
+std::string get_snapshot_name_prefix(const std::string &local_mirror_uuid)
+{
+    return SNAP_NAME_PREFIX + "." + local_mirror_uuid + ".";
 }
 
 } // namespace util

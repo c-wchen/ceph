@@ -10,47 +10,51 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace image {
+namespace image
+{
 
 template <typename ImageCtxT = ImageCtx>
-class SetFlagsRequest {
+class SetFlagsRequest
+{
 public:
-  static SetFlagsRequest *create(ImageCtxT *image_ctx, uint64_t flags,
-				 uint64_t mask, Context *on_finish) {
-    return new SetFlagsRequest(image_ctx, flags, mask, on_finish);
-  }
+    static SetFlagsRequest *create(ImageCtxT *image_ctx, uint64_t flags,
+                                   uint64_t mask, Context *on_finish)
+    {
+        return new SetFlagsRequest(image_ctx, flags, mask, on_finish);
+    }
 
-  void send();
+    void send();
 
 private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |   .  .  .
-   *    v   v     .
-   * SET_FLAGS    . (for every snapshot)
-   *    |   .     .
-   *    v   .  .  .
-   * <finis>
-   *
-   * @endverbatim
-   */
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |   .  .  .
+     *    v   v     .
+     * SET_FLAGS    . (for every snapshot)
+     *    |   .     .
+     *    v   .  .  .
+     * <finis>
+     *
+     * @endverbatim
+     */
 
-  SetFlagsRequest(ImageCtxT *image_ctx, uint64_t flags, uint64_t mask,
-		  Context *on_finish);
+    SetFlagsRequest(ImageCtxT *image_ctx, uint64_t flags, uint64_t mask,
+                    Context *on_finish);
 
-  ImageCtxT *m_image_ctx;
-  uint64_t m_flags;
-  uint64_t m_mask;
-  Context *m_on_finish;
+    ImageCtxT *m_image_ctx;
+    uint64_t m_flags;
+    uint64_t m_mask;
+    Context *m_on_finish;
 
-  void send_set_flags();
-  Context *handle_set_flags(int *result);
+    void send_set_flags();
+    Context *handle_set_flags(int *result);
 };
 
 } // namespace image

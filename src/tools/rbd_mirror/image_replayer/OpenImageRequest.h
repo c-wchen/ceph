@@ -9,56 +9,64 @@
 #include <string>
 
 class Context;
-namespace librbd { class ImageCtx; }
+namespace librbd
+{
+class ImageCtx;
+}
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
+namespace rbd
+{
+namespace mirror
+{
+namespace image_replayer
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
-class OpenImageRequest {
+class OpenImageRequest
+{
 public:
-  static OpenImageRequest* create(librados::IoCtx &io_ctx,
-                                  ImageCtxT **image_ctx,
-                                  const std::string &image_id,
-                                  bool read_only, Context *on_finish) {
-    return new OpenImageRequest(io_ctx, image_ctx, image_id, read_only,
-                                on_finish);
-  }
+    static OpenImageRequest *create(librados::IoCtx &io_ctx,
+                                    ImageCtxT **image_ctx,
+                                    const std::string &image_id,
+                                    bool read_only, Context *on_finish)
+    {
+        return new OpenImageRequest(io_ctx, image_ctx, image_id, read_only,
+                                    on_finish);
+    }
 
-  OpenImageRequest(librados::IoCtx &io_ctx, ImageCtxT **image_ctx,
-                   const std::string &image_id, bool read_only,
-                   Context *on_finish);
+    OpenImageRequest(librados::IoCtx &io_ctx, ImageCtxT **image_ctx,
+                     const std::string &image_id, bool read_only,
+                     Context *on_finish);
 
-  void send();
+    void send();
 
 private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |
-   *    v
-   * OPEN_IMAGE
-   *    |
-   *    v
-   * <finish>
-   *
-   * @endverbatim
-   */
-  librados::IoCtx &m_io_ctx;
-  ImageCtxT **m_image_ctx;
-  std::string m_image_id;
-  bool m_read_only;
-  Context *m_on_finish;
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |
+     *    v
+     * OPEN_IMAGE
+     *    |
+     *    v
+     * <finish>
+     *
+     * @endverbatim
+     */
+    librados::IoCtx &m_io_ctx;
+    ImageCtxT **m_image_ctx;
+    std::string m_image_id;
+    bool m_read_only;
+    Context *m_on_finish;
 
-  void send_open_image();
-  void handle_open_image(int r);
+    void send_open_image();
+    void handle_open_image(int r);
 
-  void send_close_image(int r);
-  void handle_close_image(int r);
+    void send_close_image(int r);
+    void handle_close_image(int r);
 
-  void finish(int r);
+    void finish(int r);
 
 };
 

@@ -10,45 +10,49 @@
 
 class Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace object_map {
+namespace object_map
+{
 
 template <typename ImageCtxT = ImageCtx>
-class CreateRequest {
+class CreateRequest
+{
 public:
-  static CreateRequest *create(ImageCtxT *image_ctx, Context *on_finish) {
-    return new CreateRequest(image_ctx, on_finish);
-  }
+    static CreateRequest *create(ImageCtxT *image_ctx, Context *on_finish)
+    {
+        return new CreateRequest(image_ctx, on_finish);
+    }
 
-  void send();
+    void send();
 
 private:
-  /**
-   * @verbatim
-   *
-   * <start>
-   *    |         .  .  .
-   *    v         v     .
-   * OBJECT_MAP_RESIZE  . (for every snapshot)
-   *    |         .     .
-   *    v         .  .  .
-   * <finis>
-   *
-   * @endverbatim
-   */
+    /**
+     * @verbatim
+     *
+     * <start>
+     *    |         .  .  .
+     *    v         v     .
+     * OBJECT_MAP_RESIZE  . (for every snapshot)
+     *    |         .     .
+     *    v         .  .  .
+     * <finis>
+     *
+     * @endverbatim
+     */
 
-  CreateRequest(ImageCtxT *image_ctx, Context *on_finish);
+    CreateRequest(ImageCtxT *image_ctx, Context *on_finish);
 
-  ImageCtxT *m_image_ctx;
-  Context *m_on_finish;
+    ImageCtxT *m_image_ctx;
+    Context *m_on_finish;
 
-  std::vector<uint64_t> m_snap_ids;
+    std::vector<uint64_t> m_snap_ids;
 
-  void send_object_map_resize();
-  Context *handle_object_map_resize(int *result);
+    void send_object_map_resize();
+    Context *handle_object_map_resize(int *result);
 };
 
 } // namespace object_map

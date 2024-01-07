@@ -6,28 +6,34 @@
 
 #include "librbd/journal/Policy.h"
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace journal {
+namespace journal
+{
 
 template<typename ImageCtxT = ImageCtx>
-class StandardPolicy : public Policy {
+class StandardPolicy : public Policy
+{
 public:
-  StandardPolicy(ImageCtxT *image_ctx) : m_image_ctx(image_ctx) {
-  }
+    StandardPolicy(ImageCtxT *image_ctx) : m_image_ctx(image_ctx)
+    {
+    }
 
-  bool append_disabled() const override {
-    return false;
-  }
-  bool journal_disabled() const override {
-    return false;
-  }
-  void allocate_tag_on_lock(Context *on_finish) override;
+    bool append_disabled() const override
+    {
+        return false;
+    }
+    bool journal_disabled() const override
+    {
+        return false;
+    }
+    void allocate_tag_on_lock(Context *on_finish) override;
 
 private:
-  ImageCtxT *m_image_ctx;
+    ImageCtxT *m_image_ctx;
 };
 
 } // namespace journal

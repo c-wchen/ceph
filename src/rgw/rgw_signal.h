@@ -16,8 +16,10 @@
 #pragma once
 
 
-namespace rgw {
-namespace signal {
+namespace rgw
+{
+namespace signal
+{
 
 void signal_shutdown();
 void wait_shutdown();

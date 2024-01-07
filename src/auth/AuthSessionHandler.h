@@ -27,25 +27,27 @@
 class Message;
 
 struct AuthSessionHandler {
-  virtual ~AuthSessionHandler() = default;
-  virtual int sign_message(Message *message) = 0;
-  virtual int check_message_signature(Message *message) = 0;
+    virtual ~AuthSessionHandler() = default;
+    virtual int sign_message(Message *message) = 0;
+    virtual int check_message_signature(Message *message) = 0;
 };
 
 struct DummyAuthSessionHandler : AuthSessionHandler {
-  int sign_message(Message*) final {
-    return 0;
-  }
-  int check_message_signature(Message*) final {
-    return 0;
-  }
+    int sign_message(Message *) final
+    {
+        return 0;
+    }
+    int check_message_signature(Message *) final
+    {
+        return 0;
+    }
 };
 
 struct DecryptionError : public std::exception {};
 
 extern AuthSessionHandler *get_auth_session_handler(
-  CephContext *cct, int protocol,
-  const CryptoKey& key,
-  uint64_t features);
+    CephContext *cct, int protocol,
+    const CryptoKey &key,
+    uint64_t features);
 
 #endif

@@ -12,29 +12,36 @@
 
 class ThreadPool;
 
-namespace librbd {
+namespace librbd
+{
 struct AsioEngine;
 struct ImageCtx;
-namespace asio { struct ContextWQ; }
+namespace asio
+{
+struct ContextWQ;
+}
 } // namespace librbd
 
-namespace rbd {
-namespace mirror {
+namespace rbd
+{
+namespace mirror
+{
 
 template <typename ImageCtxT = librbd::ImageCtx>
-class Threads {
+class Threads
+{
 public:
-  librbd::AsioEngine* asio_engine = nullptr;
-  librbd::asio::ContextWQ* work_queue = nullptr;
+    librbd::AsioEngine *asio_engine = nullptr;
+    librbd::asio::ContextWQ *work_queue = nullptr;
 
-  SafeTimer *timer = nullptr;
-  ceph::mutex timer_lock = ceph::make_mutex("Threads::timer_lock");
+    SafeTimer *timer = nullptr;
+    ceph::mutex timer_lock = ceph::make_mutex("Threads::timer_lock");
 
-  explicit Threads(std::shared_ptr<librados::Rados>& rados);
-  Threads(const Threads&) = delete;
-  Threads& operator=(const Threads&) = delete;
+    explicit Threads(std::shared_ptr<librados::Rados> &rados);
+    Threads(const Threads &) = delete;
+    Threads &operator=(const Threads &) = delete;
 
-  ~Threads();
+    ~Threads();
 };
 
 } // namespace mirror

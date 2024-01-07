@@ -20,20 +20,22 @@
 #include "../LogEvent.h"
 #include "../SegmentBoundary.h"
 
-class ESegment : public LogEvent, public SegmentBoundary {
+class ESegment : public LogEvent, public SegmentBoundary
+{
 public:
-  ESegment() : LogEvent(EVENT_SEGMENT) {}
-  ESegment(LogSegment::seq_t _seq) : LogEvent(EVENT_SEGMENT), SegmentBoundary(_seq) {}
+    ESegment() : LogEvent(EVENT_SEGMENT) {}
+    ESegment(LogSegment::seq_t _seq) : LogEvent(EVENT_SEGMENT), SegmentBoundary(_seq) {}
 
-  void print(std::ostream& out) const override {
-    out << "ESegment(" << seq << ")";
-  }
+    void print(std::ostream &out) const override
+    {
+        out << "ESegment(" << seq << ")";
+    }
 
-  void encode(bufferlist& bl, uint64_t features) const override;
-  void decode(bufferlist::const_iterator& bl) override;
-  void dump(Formatter *f) const override;
-  void replay(MDSRank *mds) override;
-  static void generate_test_instances(std::list<ESegment*>& ls);
+    void encode(bufferlist &bl, uint64_t features) const override;
+    void decode(bufferlist::const_iterator &bl) override;
+    void dump(Formatter *f) const override;
+    void replay(MDSRank *mds) override;
+    static void generate_test_instances(std::list<ESegment *> &ls);
 };
 WRITE_CLASS_ENCODER_FEATURES(ESegment)
 

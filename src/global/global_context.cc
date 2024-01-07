@@ -24,13 +24,15 @@
 /*
  * Global variables for use from process context.
  */
-namespace TOPNSPC::global {
+namespace TOPNSPC::global
+{
 CephContext *g_ceph_context = NULL;
-ConfigProxy& g_conf() {
+ConfigProxy &g_conf()
+{
 #if defined(WITH_SEASTAR) && !defined(WITH_ALIEN)
-  return crimson::common::local_conf();
+    return crimson::common::local_conf();
 #else
-  return g_ceph_context->_conf;
+    return g_ceph_context->_conf;
 #endif
 }
 
@@ -52,26 +54,26 @@ unsigned long long g_eio_offset = 0;
 unsigned long long g_eio_length = 0;
 
 int note_io_error_event(
-  const char *devname,
-  const char *path,
-  int error,
-  int iotype,
-  unsigned long long offset,
-  unsigned long long length)
+    const char *devname,
+    const char *path,
+    int error,
+    int iotype,
+    unsigned long long offset,
+    unsigned long long length)
 {
-  g_eio = true;
-  if (devname) {
-    strncpy(g_eio_devname, devname, sizeof(g_eio_devname) - 1);
-    g_eio_devname[sizeof(g_eio_devname) - 1] = '\0';
-  }
-  if (path) {
-    strncpy(g_eio_path, path, sizeof(g_eio_path) - 1);
-    g_eio_path[sizeof(g_eio_path) - 1] = '\0';
-  }
-  g_eio_error = error;
-  g_eio_iotype = iotype;
-  g_eio_offset = offset;
-  g_eio_length = length;
-  return 0;
+    g_eio = true;
+    if (devname) {
+        strncpy(g_eio_devname, devname, sizeof(g_eio_devname) - 1);
+        g_eio_devname[sizeof(g_eio_devname) - 1] = '\0';
+    }
+    if (path) {
+        strncpy(g_eio_path, path, sizeof(g_eio_path) - 1);
+        g_eio_path[sizeof(g_eio_path) - 1] = '\0';
+    }
+    g_eio_error = error;
+    g_eio_iotype = iotype;
+    g_eio_offset = offset;
+    g_eio_length = length;
+    return 0;
 }
 }

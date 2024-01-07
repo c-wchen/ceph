@@ -28,7 +28,8 @@
 
 /// Seastar apps lib namespace
 
-namespace seastar_apps_lib {
+namespace seastar_apps_lib
+{
 
 
 /// \brief Futurized SIGINT/SIGTERM signals handler class
@@ -48,12 +49,14 @@ namespace seastar_apps_lib {
 ///    stop_signal.wait().get();  // this will wait till we receive SIGINT or SIGTERM signal
 /// });
 /// \endcode
-class stop_signal {
+class stop_signal
+{
     seastar::condition_variable _cond;
     seastar::abort_source _abort_source;
 
 private:
-    void on_signal() {
+    void on_signal()
+    {
         if (stopping()) {
             return;
         }
@@ -61,22 +64,27 @@ private:
         _cond.broadcast();
     }
 public:
-    stop_signal() {
+    stop_signal()
+    {
         seastar::engine().handle_signal(SIGINT, [this] { on_signal(); });
         seastar::engine().handle_signal(SIGTERM, [this] { on_signal(); });
     }
-    ~stop_signal() {
+    ~stop_signal()
+    {
         // There's no way to unregister a handler yet, so register a no-op handler instead.
         seastar::engine().handle_signal(SIGINT, [] {});
         seastar::engine().handle_signal(SIGTERM, [] {});
     }
-    seastar::future<> wait() {
+    seastar::future<> wait()
+    {
         return _cond.wait([this] { return _abort_source.abort_requested(); });
     }
-    bool stopping() const {
+    bool stopping() const
+    {
         return _abort_source.abort_requested();
     }
-    auto& abort_source() {
+    auto &abort_source()
+    {
         return _abort_source;
     }
 };

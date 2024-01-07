@@ -23,17 +23,18 @@
 #include <boost/asio/io_context.hpp>
 // -----------------------------------------------------------------------------
 
-class CryptoPlugin : public ceph::Plugin {
+class CryptoPlugin : public ceph::Plugin
+{
 
 public:
-  CryptoAccelRef cryptoaccel;
-  explicit CryptoPlugin(CephContext* cct) : Plugin(cct)
-  {}
-  ~CryptoPlugin()
-  {}
-  virtual int factory(CryptoAccelRef *cs,
-                      std::ostream *ss,
-                      const size_t chunk_size,
-                      const size_t max_requests) = 0;
+    CryptoAccelRef cryptoaccel;
+    explicit CryptoPlugin(CephContext *cct) : Plugin(cct)
+    {}
+    ~CryptoPlugin()
+    {}
+    virtual int factory(CryptoAccelRef *cs,
+                        std::ostream *ss,
+                        const size_t chunk_size,
+                        const size_t max_requests) = 0;
 };
 #endif

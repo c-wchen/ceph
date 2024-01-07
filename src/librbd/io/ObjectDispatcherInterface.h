@@ -10,22 +10,24 @@
 
 struct Context;
 
-namespace librbd {
-namespace io {
+namespace librbd
+{
+namespace io
+{
 
 struct ObjectDispatcherInterface
-  : public DispatcherInterface<ObjectDispatchInterface> {
+    : public DispatcherInterface<ObjectDispatchInterface> {
 public:
-  virtual void invalidate_cache(Context* on_finish) = 0;
-  virtual void reset_existence_cache(Context* on_finish) = 0;
+    virtual void invalidate_cache(Context *on_finish) = 0;
+    virtual void reset_existence_cache(Context *on_finish) = 0;
 
-  virtual void extent_overwritten(
-      uint64_t object_no, uint64_t object_off, uint64_t object_len,
-      uint64_t journal_tid, uint64_t new_journal_tid) = 0;
+    virtual void extent_overwritten(
+        uint64_t object_no, uint64_t object_off, uint64_t object_len,
+        uint64_t journal_tid, uint64_t new_journal_tid) = 0;
 
-  virtual int prepare_copyup(
-      uint64_t object_no,
-      SnapshotSparseBufferlist* snapshot_sparse_bufferlist) = 0;
+    virtual int prepare_copyup(
+        uint64_t object_no,
+        SnapshotSparseBufferlist *snapshot_sparse_bufferlist) = 0;
 
 };
 

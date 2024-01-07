@@ -7,9 +7,12 @@
 #include "include/int_types.h"
 #include <string>
 
-namespace librbd {
-namespace managed_lock {
-namespace util {
+namespace librbd
+{
+namespace managed_lock
+{
+namespace util
+{
 
 const std::string &get_watcher_lock_tag();
 

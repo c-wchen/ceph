@@ -9,33 +9,35 @@
 
 #include "include/common_fwd.h"
 
-namespace rgw::kafka {
+namespace rgw::kafka
+{
 
 // the reply callback is expected to get an integer parameter
 // indicating the result, and not to return anything
 typedef std::function<void(int)> reply_callback_t;
 
 // initialize the kafka manager
-bool init(CephContext* cct);
+bool init(CephContext *cct);
 
 // shutdown the kafka manager
 void shutdown();
 
 // connect to a kafka endpoint
-bool connect(std::string& broker, const std::string& url, bool use_ssl, bool verify_ssl, boost::optional<const std::string&> ca_location, boost::optional<const std::string&> mechanism);
+bool connect(std::string &broker, const std::string &url, bool use_ssl, bool verify_ssl,
+             boost::optional<const std::string &> ca_location, boost::optional<const std::string &> mechanism);
 
 // publish a message over a connection that was already created
-int publish(const std::string& conn_name,
-    const std::string& topic,
-    const std::string& message);
+int publish(const std::string &conn_name,
+            const std::string &topic,
+            const std::string &message);
 
 // publish a message over a connection that was already created
 // and pass a callback that will be invoked (async) when broker confirms
 // receiving the message
-int publish_with_confirm(const std::string& conn_name,
-    const std::string& topic,
-    const std::string& message,
-    reply_callback_t cb);
+int publish_with_confirm(const std::string &conn_name,
+                         const std::string &topic,
+                         const std::string &message,
+                         reply_callback_t cb);
 
 // convert the integer status returned from the "publish" function to a string
 std::string status_to_string(int s);

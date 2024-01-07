@@ -12,23 +12,26 @@
 #include "osd/PGPeeringEvent.h"
 #include "osd/PeeringState.h"
 
-namespace ceph {
-  class Formatter;
+namespace ceph
+{
+class Formatter;
 }
 
-namespace crimson::osd {
+namespace crimson::osd
+{
 
 class OSD;
 class ShardServices;
 class PG;
 class BackfillRecovery;
 
-  class PGPeeringPipeline {
+class PGPeeringPipeline
+{
     struct AwaitMap : OrderedExclusivePhaseT<AwaitMap> {
-      static constexpr auto type_name = "PeeringEvent::PGPipeline::await_map";
+        static constexpr auto type_name = "PeeringEvent::PGPipeline::await_map";
     } await_map;
     struct Process : OrderedExclusivePhaseT<Process> {
-      static constexpr auto type_name = "PeeringEvent::PGPipeline::process";
+        static constexpr auto type_name = "PeeringEvent::PGPipeline::process";
     } process;
     template <class T>
     friend class PeeringEvent;
@@ -36,105 +39,113 @@ class BackfillRecovery;
     friend class RemotePeeringEvent;
     friend class PGAdvanceMap;
     friend class BackfillRecovery;
-  };
-
-template <class T>
-class PeeringEvent : public PhasedOperationT<T> {
-  T* that() {
-    return static_cast<T*>(this);
-  }
-  const T* that() const {
-    return static_cast<const T*>(this);
-  }
-
-public:
-  static constexpr OperationTypeCode type = OperationTypeCode::peering_event;
-
-protected:
-  PGPeeringPipeline &peering_pp(PG &pg);
-
-  PeeringCtx ctx;
-  pg_shard_t from;
-  spg_t pgid;
-  float delay = 0;
-  PGPeeringEvent evt;
-
-  const pg_shard_t get_from() const {
-    return from;
-  }
-
-  const spg_t get_pgid() const {
-    return pgid;
-  }
-
-  const PGPeeringEvent &get_event() const {
-    return evt;
-  }
-
-  virtual void on_pg_absent(ShardServices &);
-
-  virtual typename PeeringEvent::template interruptible_future<>
-  complete_rctx(ShardServices &, Ref<PG>);
-
-  virtual seastar::future<> complete_rctx_no_pg(
-    ShardServices &shard_services
-  ) { return seastar::now();}
-
-public:
-  template <typename... Args>
-  PeeringEvent(
-    const pg_shard_t &from, const spg_t &pgid,
-    Args&&... args) :
-    from(from),
-    pgid(pgid),
-    evt(std::forward<Args>(args)...)
-  {}
-  template <typename... Args>
-  PeeringEvent(
-    const pg_shard_t &from, const spg_t &pgid,
-    float delay, Args&&... args) :
-    from(from),
-    pgid(pgid),
-    delay(delay),
-    evt(std::forward<Args>(args)...)
-  {}
-
-  void print(std::ostream &) const final;
-  void dump_detail(ceph::Formatter* f) const final;
-  seastar::future<> with_pg(
-    ShardServices &shard_services, Ref<PG> pg);
 };
 
-class RemotePeeringEvent : public PeeringEvent<RemotePeeringEvent> {
-protected:
-  crimson::net::ConnectionRef conn;
-  // must be after conn due to ConnectionPipeline's life-time
-  PipelineHandle handle;
-
-  void on_pg_absent(ShardServices &) final;
-  PeeringEvent::interruptible_future<> complete_rctx(
-    ShardServices &shard_services,
-    Ref<PG> pg) override;
-  seastar::future<> complete_rctx_no_pg(
-    ShardServices &shard_services
-  ) override;
+template <class T>
+class PeeringEvent : public PhasedOperationT<T>
+{
+    T *that()
+    {
+        return static_cast<T *>(this);
+    }
+    const T *that() const
+    {
+        return static_cast<const T *>(this);
+    }
 
 public:
-  class OSDPipeline {
-    struct AwaitActive : OrderedExclusivePhaseT<AwaitActive> {
-      static constexpr auto type_name =
-	"PeeringRequest::OSDPipeline::await_active";
-    } await_active;
-    friend class RemotePeeringEvent;
-  };
+    static constexpr OperationTypeCode type = OperationTypeCode::peering_event;
 
-  template <typename... Args>
-  RemotePeeringEvent(crimson::net::ConnectionRef conn, Args&&... args) :
-    PeeringEvent(std::forward<Args>(args)...),
-    conn(conn)
-  {}
+protected:
+    PGPeeringPipeline &peering_pp(PG &pg);
 
-  std::tuple<
+    PeeringCtx ctx;
+    pg_shard_t from;
+    spg_t pgid;
+    float delay = 0;
+    PGPeeringEvent evt;
+
+    const pg_shard_t get_from() const
+    {
+        return from;
+    }
+
+    const spg_t get_pgid() const
+    {
+        return pgid;
+    }
+
+    const PGPeeringEvent &get_event() const
+    {
+        return evt;
+    }
+
+    virtual void on_pg_absent(ShardServices &);
+
+    virtual typename PeeringEvent::template interruptible_future<> complete_rctx(ShardServices &, Ref<PG>);
+
+    virtual seastar::future<> complete_rctx_no_pg(
+        ShardServices &shard_services
+    )
+    {
+        return seastar::now();
+    }
+
+public:
+    template <typename... Args> PeeringEvent(
+        const pg_shard_t &from, const spg_t &pgid,
+        Args&&... args) :
+        from(from),
+        pgid(pgid),
+        evt(std::forward<Args>(args)...)
+    {}
+    template <typename... Args> PeeringEvent(
+        const pg_shard_t &from, const spg_t &pgid,
+        float delay, Args&&... args) :
+        from(from),
+        pgid(pgid),
+        delay(delay),
+        evt(std::forward<Args>(args)...)
+    {}
+
+    void print(std::ostream &) const final;
+    void dump_detail(ceph::Formatter *f) const final;
+    seastar::future<> with_pg(
+        ShardServices &shard_services, Ref<PG> pg);
+};
+
+class RemotePeeringEvent : public PeeringEvent<RemotePeeringEvent>
+{
+protected:
+    crimson::net::ConnectionRef conn;
+    // must be after conn due to ConnectionPipeline's life-time
+    PipelineHandle handle;
+
+    void on_pg_absent(ShardServices &) final;
+    PeeringEvent::interruptible_future<> complete_rctx(
+        ShardServices &shard_services,
+        Ref<PG> pg) override;
+    seastar::future<> complete_rctx_no_pg(
+        ShardServices &shard_services
+    ) override;
+
+public:
+    class OSDPipeline
+    {
+        struct AwaitActive : OrderedExclusivePhaseT<AwaitActive> {
+            static constexpr auto type_name =
+                "PeeringRequest::OSDPipeline::await_active";
+        } await_active;
+        friend class RemotePeeringEvent;
+    };
+
+    template <typename... Args>
+    RemotePeeringEvent(crimson::net::ConnectionRef conn, Args&&... args) :
+        PeeringEvent(std::forward<Args>(args)...),
+        conn(conn)
+    {}
+
+    std::tuple <
     StartEvent,
     ConnectionPipeline::AwaitActive::BlockingEvent,
     ConnectionPipeline::AwaitMap::BlockingEvent,
@@ -146,55 +157,74 @@ public:
     PGPeeringPipeline::Process::BlockingEvent,
     OSDPipeline::AwaitActive::BlockingEvent,
     CompletionEvent
-  > tracking_events;
+    > tracking_events;
 
-  static constexpr bool can_create() { return true; }
-  auto get_create_info() { return std::move(evt.create_info); }
-  spg_t get_pgid() const {
-    return pgid;
-  }
-  PipelineHandle &get_handle() { return handle; }
-  epoch_t get_epoch() const { return evt.get_epoch_sent(); }
+    static constexpr bool can_create()
+    {
+        return true;
+    }
+    auto get_create_info()
+    {
+        return std::move(evt.create_info);
+    }
+    spg_t get_pgid() const
+    {
+        return pgid;
+    }
+    PipelineHandle &get_handle()
+    {
+        return handle;
+    }
+    epoch_t get_epoch() const
+    {
+        return evt.get_epoch_sent();
+    }
 
-  ConnectionPipeline &get_connection_pipeline();
-  seastar::future<crimson::net::ConnectionFRef> prepare_remote_submission() {
-    assert(conn);
-    return conn.get_foreign(
-    ).then([this](auto f_conn) {
-      conn.reset();
-      return f_conn;
-    });
-  }
-  void finish_remote_submission(crimson::net::ConnectionFRef _conn) {
-    assert(!conn);
-    conn = make_local_shared_foreign(std::move(_conn));
-  }
+    ConnectionPipeline &get_connection_pipeline();
+    seastar::future<crimson::net::ConnectionFRef> prepare_remote_submission()
+    {
+        assert(conn);
+        return conn.get_foreign(
+        ).then([this](auto f_conn) {
+            conn.reset();
+            return f_conn;
+        });
+    }
+    void finish_remote_submission(crimson::net::ConnectionFRef _conn)
+    {
+        assert(!conn);
+        conn = make_local_shared_foreign(std::move(_conn));
+    }
 };
 
-class LocalPeeringEvent final : public PeeringEvent<LocalPeeringEvent> {
+class LocalPeeringEvent final : public PeeringEvent<LocalPeeringEvent>
+{
 protected:
-  Ref<PG> pg;
-  PipelineHandle handle;
+    Ref<PG> pg;
+    PipelineHandle handle;
 
 public:
-  template <typename... Args>
-  LocalPeeringEvent(Ref<PG> pg, Args&&... args) :
-    PeeringEvent(std::forward<Args>(args)...),
-    pg(pg)
-  {}
+    template <typename... Args>
+    LocalPeeringEvent(Ref<PG> pg, Args&&... args) :
+        PeeringEvent(std::forward<Args>(args)...),
+        pg(pg)
+    {}
 
-  seastar::future<> start();
-  virtual ~LocalPeeringEvent();
+    seastar::future<> start();
+    virtual ~LocalPeeringEvent();
 
-  PipelineHandle &get_handle() { return handle; }
+    PipelineHandle &get_handle()
+    {
+        return handle;
+    }
 
-  std::tuple<
+    std::tuple <
     StartEvent,
     PGPeeringPipeline::AwaitMap::BlockingEvent,
     PG_OSDMapGate::OSDMapBlocker::BlockingEvent,
     PGPeeringPipeline::Process::BlockingEvent,
     CompletionEvent
-  > tracking_events;
+    > tracking_events;
 };
 
 

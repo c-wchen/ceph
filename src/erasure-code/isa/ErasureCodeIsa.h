@@ -30,124 +30,124 @@
 #include "ErasureCodeIsaTableCache.h"
 // -----------------------------------------------------------------------------
 
-class ErasureCodeIsa : public ceph::ErasureCode {
+class ErasureCodeIsa : public ceph::ErasureCode
+{
 public:
 
-  enum eMatrix {
-    kVandermonde = 0, kCauchy = 1
-  };
+    enum eMatrix {
+        kVandermonde = 0, kCauchy = 1
+    };
 
-  int k;
-  int m;
-  int w;
+    int k;
+    int m;
+    int w;
 
-  ErasureCodeIsaTableCache &tcache;
-  const char *technique;
+    ErasureCodeIsaTableCache &tcache;
+    const char *technique;
 
-  ErasureCodeIsa(const char *_technique,
-                 ErasureCodeIsaTableCache &_tcache) :
-  k(0),
-  m(0),
-  w(0),
-  tcache(_tcache),
-  technique(_technique)
-  {
-  }
-
-  
-  ~ErasureCodeIsa() override
-  {
-  }
-
-  unsigned int
-  get_chunk_count() const override
-  {
-    return k + m;
-  }
-
-  unsigned int
-  get_data_chunk_count() const override
-  {
-    return k;
-  }
-
-  unsigned int get_chunk_size(unsigned int object_size) const override;
-
-  int encode_chunks(const std::set<int> &want_to_encode,
-                    std::map<int, ceph::buffer::list> *encoded) override;
-
-  int decode_chunks(const std::set<int> &want_to_read,
-                            const std::map<int, ceph::buffer::list> &chunks,
-                            std::map<int, ceph::buffer::list> *decoded) override;
-
-  int init(ceph::ErasureCodeProfile &profile, std::ostream *ss) override;
-
-  virtual void isa_encode(char **data,
-                          char **coding,
-                          int blocksize) = 0;
+    ErasureCodeIsa(const char *_technique,
+                   ErasureCodeIsaTableCache &_tcache) :
+        k(0),
+        m(0),
+        w(0),
+        tcache(_tcache),
+        technique(_technique)
+    {
+    }
 
 
-  virtual int isa_decode(int *erasures,
-                         char **data,
-                         char **coding,
-                         int blocksize) = 0;
+    ~ErasureCodeIsa() override
+    {
+    }
 
-  virtual unsigned get_alignment() const = 0;
+    unsigned int get_chunk_count() const override
+    {
+        return k + m;
+    }
 
-  virtual void prepare() = 0;
+    unsigned int get_data_chunk_count() const override
+    {
+        return k;
+    }
 
- private:
-  virtual int parse(ceph::ErasureCodeProfile &profile,
-                    std::ostream *ss) = 0;
+    unsigned int get_chunk_size(unsigned int object_size) const override;
+
+    int encode_chunks(const std::set<int> &want_to_encode,
+                      std::map<int, ceph::buffer::list> *encoded) override;
+
+    int decode_chunks(const std::set<int> &want_to_read,
+                      const std::map<int, ceph::buffer::list> &chunks,
+                      std::map<int, ceph::buffer::list> *decoded) override;
+
+    int init(ceph::ErasureCodeProfile &profile, std::ostream *ss) override;
+
+    virtual void isa_encode(char **data,
+                            char **coding,
+                            int blocksize) = 0;
+
+
+    virtual int isa_decode(int *erasures,
+                           char **data,
+                           char **coding,
+                           int blocksize) = 0;
+
+    virtual unsigned get_alignment() const = 0;
+
+    virtual void prepare() = 0;
+
+private:
+    virtual int parse(ceph::ErasureCodeProfile &profile,
+                      std::ostream *ss) = 0;
 };
 
 // -----------------------------------------------------------------------------
 
-class ErasureCodeIsaDefault : public ErasureCodeIsa {
+class ErasureCodeIsaDefault : public ErasureCodeIsa
+{
 private:
-  int matrixtype;
+    int matrixtype;
 
 public:
 
-  static const std::string DEFAULT_K;
-  static const std::string DEFAULT_M;
+    static const std::string DEFAULT_K;
+    static const std::string DEFAULT_M;
 
-  unsigned char* encode_coeff; // encoding coefficient
-  unsigned char* encode_tbls; // encoding table
+    unsigned char *encode_coeff; // encoding coefficient
+    unsigned char *encode_tbls; // encoding table
 
-  ErasureCodeIsaDefault(ErasureCodeIsaTableCache &_tcache,
-                        int matrix = kVandermonde) :
+    ErasureCodeIsaDefault(ErasureCodeIsaTableCache &_tcache,
+                          int matrix = kVandermonde) :
 
-  ErasureCodeIsa("default", _tcache),
-  encode_coeff(0), encode_tbls(0)
-  {
-    matrixtype = matrix;
-  }
+        ErasureCodeIsa("default", _tcache),
+        encode_coeff(0), encode_tbls(0)
+    {
+        matrixtype = matrix;
+    }
 
-  
-  ~ErasureCodeIsaDefault() override
-  {
 
-  }
+    ~ErasureCodeIsaDefault() override
+    {
 
-  void isa_encode(char **data,
-                          char **coding,
-                          int blocksize) override;
+    }
 
-  virtual bool erasure_contains(int *erasures, int i);
+    void isa_encode(char **data,
+                    char **coding,
+                    int blocksize) override;
 
-  int isa_decode(int *erasures,
-                         char **data,
-                         char **coding,
-                         int blocksize) override;
+    virtual bool erasure_contains(int *erasures, int i);
 
-  unsigned get_alignment() const override;
+    int isa_decode(int *erasures,
+                   char **data,
+                   char **coding,
+                   int blocksize) override;
 
-  void prepare() override;
+    unsigned get_alignment() const override;
 
- private:
-  int parse(ceph::ErasureCodeProfile &profile,
-            std::ostream *ss) override;
+    void prepare() override;
+
+private:
+    int parse(ceph::ErasureCodeProfile &profile,
+              std::ostream *ss) override;
 };
 
 #endif

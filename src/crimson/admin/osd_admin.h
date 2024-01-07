@@ -4,7 +4,8 @@
 
 #include <memory>
 
-namespace crimson::admin {
+namespace crimson::admin
+{
 
 class AdminSocketHook;
 

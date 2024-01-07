@@ -3,8 +3,10 @@
 
 #include "osd_tracer.h"
 
-namespace tracing {
-namespace osd {
+namespace tracing
+{
+namespace osd
+{
 
 tracing::Tracer tracer;
 

@@ -10,12 +10,14 @@
 
 struct Context;
 
-namespace librbd {
-namespace io {
+namespace librbd
+{
+namespace io
+{
 
 struct MockQosImageDispatch {
-  MOCK_METHOD4(needs_throttle, bool(bool, const Extents&,
-                                    std::atomic<uint32_t>*, Context*));
+    MOCK_METHOD4(needs_throttle, bool(bool, const Extents &,
+                                      std::atomic<uint32_t> *, Context *));
 };
 
 } // namespace io

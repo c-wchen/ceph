@@ -12,27 +12,30 @@ int completed = 0;
 auto cct = (new CephContext(CEPH_ENTITY_TYPE_CLIENT))->get();
 Finisher f(cct);
 
-void completion_cb(librados::completion_t cb, void* arg) {
-  auto c = static_cast<librados::AioCompletion*>(arg);
-  delete c;
-  if (++completed < max_completions) {
-    auto aio = librados::Rados::aio_create_completion();
-    aio->set_complete_callback(static_cast<void*>(aio), &completion_cb);
-    f.queue(new librados::C_AioComplete(aio->pc));
-  }
+void completion_cb(librados::completion_t cb, void *arg)
+{
+    auto c = static_cast<librados::AioCompletion *>(arg);
+    delete c;
+    if (++completed < max_completions) {
+        auto aio = librados::Rados::aio_create_completion();
+        aio->set_complete_callback(static_cast<void *>(aio), &completion_cb);
+        f.queue(new librados::C_AioComplete(aio->pc));
+    }
 }
 
-int main(void) {
-  auto aio = librados::Rados::aio_create_completion();
-  aio->set_complete_callback(static_cast<void*>(aio), &completion_cb);
-  f.queue(new librados::C_AioComplete(aio->pc));
-  f.start();
+int main(void)
+{
+    auto aio = librados::Rados::aio_create_completion();
+    aio->set_complete_callback(static_cast<void *>(aio), &completion_cb);
+    f.queue(new librados::C_AioComplete(aio->pc));
+    f.start();
 
-  while (completed < max_completions)
-    f.wait_for_empty();
+    while (completed < max_completions) {
+        f.wait_for_empty();
+    }
 
-  f.stop();
+    f.stop();
 
-  assert(completed == max_completions);
-  cct->put();
+    assert(completed == max_completions);
+    cct->put();
 }

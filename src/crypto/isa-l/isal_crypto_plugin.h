@@ -22,28 +22,28 @@
 // -----------------------------------------------------------------------------
 
 
-class ISALCryptoPlugin : public CryptoPlugin {
+class ISALCryptoPlugin : public CryptoPlugin
+{
 
 public:
 
-  explicit ISALCryptoPlugin(CephContext* cct) : CryptoPlugin(cct)
-  {}
-  ~ISALCryptoPlugin()
-  {}
-  virtual int factory(CryptoAccelRef *cs,
-                      std::ostream *ss,
-                      const size_t chunk_size,
-                      const size_t max_requests)
-  {
-    if (cryptoaccel == nullptr)
+    explicit ISALCryptoPlugin(CephContext *cct) : CryptoPlugin(cct)
+    {}
+    ~ISALCryptoPlugin()
+    {}
+    virtual int factory(CryptoAccelRef *cs,
+                        std::ostream *ss,
+                        const size_t chunk_size,
+                        const size_t max_requests)
     {
-      ceph_arch_probe();
-      if (ceph_arch_intel_aesni && ceph_arch_intel_sse41) {
-        cryptoaccel = CryptoAccelRef(new ISALCryptoAccel);
-      }
+        if (cryptoaccel == nullptr) {
+            ceph_arch_probe();
+            if (ceph_arch_intel_aesni && ceph_arch_intel_sse41) {
+                cryptoaccel = CryptoAccelRef(new ISALCryptoAccel);
+            }
+        }
+        *cs = cryptoaccel;
+        return 0;
     }
-    *cs = cryptoaccel;
-    return 0;
-  }
 };
 #endif

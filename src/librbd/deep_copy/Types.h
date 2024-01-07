@@ -8,13 +8,15 @@
 #include "include/rados/librados.hpp"
 #include <boost/optional.hpp>
 
-namespace librbd {
-namespace deep_copy {
+namespace librbd
+{
+namespace deep_copy
+{
 
 enum {
-  OBJECT_COPY_REQUEST_FLAG_FLATTEN      = 1U << 0,
-  OBJECT_COPY_REQUEST_FLAG_MIGRATION    = 1U << 1,
-  OBJECT_COPY_REQUEST_FLAG_EXISTS_CLEAN = 1U << 2,
+    OBJECT_COPY_REQUEST_FLAG_FLATTEN      = 1U << 0,
+    OBJECT_COPY_REQUEST_FLAG_MIGRATION    = 1U << 1,
+    OBJECT_COPY_REQUEST_FLAG_EXISTS_CLEAN = 1U << 2,
 };
 
 typedef std::vector<librados::snap_t> SnapIds;

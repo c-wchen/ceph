@@ -11,16 +11,16 @@
 
 int main(int argc, char **argv)
 {
-  ::testing::InitGoogleTest(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
 
-  auto args = argv_to_vec(argc, argv);
+    auto args = argv_to_vec(argc, argv);
 
-  auto cct = global_init(nullptr, args, CEPH_ENTITY_TYPE_OSD,
-			 CODE_ENVIRONMENT_UTILITY,
-			 CINIT_FLAG_NO_MON_CONFIG);
-  g_conf().set_val("lockdep", "true");
-  common_init_finish(g_ceph_context);
+    auto cct = global_init(nullptr, args, CEPH_ENTITY_TYPE_OSD,
+                           CODE_ENVIRONMENT_UTILITY,
+                           CINIT_FLAG_NO_MON_CONFIG);
+    g_conf().set_val("lockdep", "true");
+    common_init_finish(g_ceph_context);
 
-  int r = RUN_ALL_TESTS();
-  return r;
+    int r = RUN_ALL_TESTS();
+    return r;
 }

@@ -4,8 +4,10 @@
 #ifndef CEPH_CACHE_SOCKET_COMMON_H
 #define CEPH_CACHE_SOCKET_COMMON_H
 
-namespace ceph {
-namespace immutable_obj_cache {
+namespace ceph
+{
+namespace immutable_obj_cache
+{
 
 static const int RBDSC_REGISTER        =  0X11;
 static const int RBDSC_READ            =  0X12;
@@ -22,9 +24,9 @@ static const int ASIO_ERROR_MSG_INCOMPLETE = 0X05;
 class ObjectCacheRequest;
 class CacheSession;
 
-typedef GenContextURef<ObjectCacheRequest*> CacheGenContextURef;
+typedef GenContextURef<ObjectCacheRequest *> CacheGenContextURef;
 
-typedef std::function<void(CacheSession*, ObjectCacheRequest*)> ProcessMsg;
+typedef std::function<void(CacheSession *, ObjectCacheRequest *)> ProcessMsg;
 
 }  // namespace immutable_obj_cache
 }  // namespace ceph

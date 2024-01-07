@@ -9,18 +9,21 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "librbd::ExclusiveLock::StandardPolicy "
 
-namespace librbd {
-namespace exclusive_lock {
+namespace librbd
+{
+namespace exclusive_lock
+{
 
 template <typename I>
-int StandardPolicy<I>::lock_requested(bool force) {
-  ceph_assert(ceph_mutex_is_locked(m_image_ctx->owner_lock));
-  ceph_assert(m_image_ctx->exclusive_lock != nullptr);
+int StandardPolicy<I>::lock_requested(bool force)
+{
+    ceph_assert(ceph_mutex_is_locked(m_image_ctx->owner_lock));
+    ceph_assert(m_image_ctx->exclusive_lock != nullptr);
 
-  ldout(m_image_ctx->cct, 20) << this << " " << __func__ << ": force=" << force
-			      << dendl;
+    ldout(m_image_ctx->cct, 20) << this << " " << __func__ << ": force=" << force
+                                << dendl;
 
-  return -EROFS;
+    return -EROFS;
 }
 
 } // namespace exclusive_lock

@@ -29,7 +29,8 @@
 
 class AuthConnectionMeta;
 
-namespace crimson::net {
+namespace crimson::net
+{
 
 using msgr_tag_t = uint8_t;
 using stop_t = seastar::stop_iteration;
@@ -42,7 +43,7 @@ using ConnectionRef = ::crimson::local_shared_foreign_ptr<ConnectionLRef>;
 class Dispatcher;
 class ChainedDispatchers;
 constexpr std::size_t NUM_DISPATCHERS = 4u;
-using dispatchers_t = boost::container::small_vector<Dispatcher*, NUM_DISPATCHERS>;
+using dispatchers_t = boost::container::small_vector<Dispatcher *, NUM_DISPATCHERS>;
 
 class Messenger;
 using MessengerRef = seastar::shared_ptr<Messenger>;

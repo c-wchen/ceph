@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph distributed storage system
@@ -11,7 +11,7 @@
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #ifndef CEPH_ERASURE_CODE_INTERFACE_H
@@ -24,7 +24,7 @@
     **ErasureCodeInterface** to encode and decode content. All codes
     are systematic (i.e. the data is not mangled and can be
     reconstructed by concatenating chunks ).
-    
+
     Methods returning an **int** return **0** on success and a
     negative value on error. If the value returned on error is not
     explained in **ErasureCodeInterface**, the sources or the
@@ -36,18 +36,18 @@
     If an object is small enough, the caller can process it with
     one call to the **encode** or **decode** method.
 
-	+---------------- coded object O -------------------------+
-	|+----------------+ +----------------+ +----------------+ |
-	||    chunk  0    | |    chunk  1    | |    chunk  2    | |
-	||    [0,N)       | |    [N,2N)      | |    [2N,3N)     | |
-	|+----------------+ +----------------+ +----------------+ |
-	+------^--------------------------------------------------+
-	       |
+    +---------------- coded object O -------------------------+
+    |+----------------+ +----------------+ +----------------+ |
+    ||    chunk  0    | |    chunk  1    | |    chunk  2    | |
+    ||    [0,N)       | |    [N,2N)      | |    [2N,3N)     | |
+    |+----------------+ +----------------+ +----------------+ |
+    +------^--------------------------------------------------+
+           |
    chunk B / C | offset B % C ( where C is the chunk size )
-	       |
-	 +-----^---- raw object O ----+------+
-	 |     B     [0,X)            | pad  |
-	 +----------------------------+------+
+           |
+     +-----^---- raw object O ----+------+
+     |     B     [0,X)            | pad  |
+     +----------------------------+------+
 
     The object size is paded so that each chunks are of the same size.
     In the example above, if the actual object size was X, then it
@@ -60,27 +60,27 @@
     If an object is too large to be encoded in memory, the caller
     should divide it in smaller units named **stripes**.
 
-	+---------------------- object O -------------------------+
-	|+----------------+ +----------------+ +----------------+ |
+    +---------------------- object O -------------------------+
+    |+----------------+ +----------------+ +----------------+ |
  stripe ||    chunk  0    | |    chunk  1    | |    chunk  2    | |
    0    ||    [0,N)       | |    [N,2N)      | |    [2N,3N)     | |
-	|+----------------+ +----------------+ +----------------+ |
-	|+----------------+ +----------------+ +----------------+ |
+    |+----------------+ +----------------+ +----------------+ |
+    |+----------------+ +----------------+ +----------------+ |
  stripe ||    chunk  0    | |    chunk  1    | |    chunk  2    | |
    1    ||    [X,M)       | |   [X+M,X+2M)   | |   [X+2M,X+3M)  | |
-	||                | |                | |                | |
-	|+----------------+ +----------------+ +----------------+ |
-	|                         ...                             |
-	+---------------------------------------------------------+
+    ||                | |                | |                | |
+    |+----------------+ +----------------+ +----------------+ |
+    |                         ...                             |
+    +---------------------------------------------------------+
 
     The interface does not concern itself with stripes nor does it
     impose constraints on the size of each stripe. Variable names in
-    the interface always use **object** and never use **stripe**. 
+    the interface always use **object** and never use **stripe**.
 
     Assuming the interface implementer provides three data chunks ( K
     = 3 ) and two coding chunks ( M = 2 ), a buffer could be encoded as
     follows:
-    
+
     ~~~~~~~~~~~~~~~~{.c}
     set<int> want_to_encode(0, 1, 2, // data chunks
                             3, 4     // coding chunks
@@ -118,13 +118,13 @@
                                 &minimum);
     minimum == set<int>(0, 1, 4); // NOT set<int>(0, 1, 3);
     ~~~~~~~~~~~~~~~~
-    
+
     It sets **minimum** with three chunks to reconstruct the desired
     data chunk and will pick the second coding chunk ( 4 ) because it
     is less expensive ( 1 < 9 ) to retrieve than the first coding
     chunk ( 3 ). The caller is responsible for retrieving the chunks
     and call **decode** to reconstruct the second data chunk.
-    
+
     ~~~~~~~~~~~~~~~~{.c}
     map<int,bufferlist> chunks;
     for i in minimum.keys():
@@ -137,8 +137,8 @@
     The semantic of the cost value is defined by the caller and must
     be known to the implementer. For instance, it may be more
     expensive to retrieve two chunks with cost 1 + 9 = 10 than two
-    chunks with cost 6 + 6 = 12. 
- */ 
+    chunks with cost 6 + 6 = 12.
+ */
 
 #include <map>
 #include <set>
@@ -150,25 +150,30 @@
 
 class CrushWrapper;
 
-namespace ceph {
+namespace ceph
+{
 
-  typedef std::map<std::string,std::string> ErasureCodeProfile;
+typedef std::map<std::string, std::string> ErasureCodeProfile;
 
-  inline std::ostream& operator<<(std::ostream& out, const ErasureCodeProfile& profile) {
+inline std::ostream &operator<<(std::ostream &out, const ErasureCodeProfile &profile)
+{
     out << "{";
     for (ErasureCodeProfile::const_iterator it = profile.begin();
-	 it != profile.end();
-	 ++it) {
-      if (it != profile.begin()) out << ",";
-      out << it->first << "=" << it->second;
+         it != profile.end();
+         ++it) {
+        if (it != profile.begin()) {
+            out << ",";
+        }
+        out << it->first << "=" << it->second;
     }
     out << "}";
     return out;
-  }
+}
 
 
-  class ErasureCodeInterface {
-  public:
+class ErasureCodeInterface
+{
+public:
     virtual ~ErasureCodeInterface() {}
 
     /**
@@ -210,8 +215,8 @@ namespace ceph {
      * @return a rule on success or a negative errno on error.
      */
     virtual int create_rule(const std::string &name,
-			    CrushWrapper &crush,
-			    std::ostream *ss) const = 0;
+                            CrushWrapper &crush,
+                            std::ostream *ss) const = 0;
 
     /**
      * Return the number of chunks created by a call to the **encode**
@@ -286,17 +291,17 @@ namespace ceph {
      * **minimum_to_decode_with_cost** where each **available** chunk
      * has the same cost.
      *
-     * @see minimum_to_decode_with_cost 
+     * @see minimum_to_decode_with_cost
      *
      * @param [in] want_to_read chunk indexes to be decoded
      * @param [in] available chunk indexes containing valid data
-     * @param [out] minimum chunk indexes and corresponding 
+     * @param [out] minimum chunk indexes and corresponding
      *              subchunk index offsets, count.
      * @return **0** on success or a negative errno on error.
      */
     virtual int minimum_to_decode(const std::set<int> &want_to_read,
                                   const std::set<int> &available,
-                                  std::map<int, std::vector<std::pair<int, int>>> 
+                                  std::map<int, std::vector<std::pair<int, int>>>
                                   *minimum) = 0;
 
     /**
@@ -308,7 +313,7 @@ namespace ceph {
      *
      * The **available** parameter maps chunk indexes to their
      * retrieval cost. The higher the cost value, the more costly it
-     * is to retrieve the chunk content. 
+     * is to retrieve the chunk content.
      *
      * Returns -EIO if there are not enough chunk indexes in
      * **available** to decode **want_to_read**.
@@ -318,9 +323,9 @@ namespace ceph {
      * The **minimum** argument must be a pointer to an empty set.
      *
      * @param [in] want_to_read chunk indexes to be decoded
-     * @param [in] available map chunk indexes containing valid data 
+     * @param [in] available map chunk indexes containing valid data
      *             to their retrieval cost
-     * @param [out] minimum chunk indexes to retrieve 
+     * @param [out] minimum chunk indexes to retrieve
      * @return **0** on success or a negative errno on error.
      */
     virtual int minimum_to_decode_with_cost(const std::set<int> &want_to_read,
@@ -336,7 +341,7 @@ namespace ceph {
      * The **encoded** map is expected to be a pointer to an empty
      * map.
      *
-     * Assuming the **in** parameter is **length** bytes long, 
+     * Assuming the **in** parameter is **length** bytes long,
      * the concatenation of the first **length** bytes of the
      * **encoded** buffers is equal to the content of the **in**
      * parameter.
@@ -349,7 +354,7 @@ namespace ceph {
      * The **encoded** map may contain pointers to data stored in
      * the **in** parameter. If the caller modifies the content of
      * **in** after calling the encode method, it may have a side
-     * effect on the content of **encoded**. 
+     * effect on the content of **encoded**.
      *
      * The **encoded** map may contain pointers to buffers allocated
      * by the encode method. They will be freed when **encoded** is
@@ -390,7 +395,7 @@ namespace ceph {
      * If a chunk is listed in **want_to_read** and there is a
      * corresponding **bufferlist** in **chunks**, it will be
      * referenced in **decoded**. If not it will be reconstructed from
-     * the existing chunks. 
+     * the existing chunks.
      *
      * Because **decoded** may contain pointers to data found in
      * **chunks**, modifying the content of **chunks** after calling
@@ -458,10 +463,10 @@ namespace ceph {
      * @return **0** on success or a negative errno on error.
      */
     virtual int decode_concat(const std::map<int, bufferlist> &chunks,
-			      bufferlist *decoded) = 0;
-  };
+                              bufferlist *decoded) = 0;
+};
 
-  typedef std::shared_ptr<ErasureCodeInterface> ErasureCodeInterfaceRef;
+typedef std::shared_ptr<ErasureCodeInterface> ErasureCodeInterfaceRef;
 
 }
 
