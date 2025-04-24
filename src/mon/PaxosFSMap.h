@@ -22,79 +22,98 @@
 
 #include "include/ceph_assert.h"
 
-class PaxosFSMap {
+class PaxosFSMap
+{
 public:
-  virtual ~PaxosFSMap() {}
+    virtual ~PaxosFSMap() {}
 
-  const FSMap &get_pending_fsmap() const { ceph_assert(is_leader()); return pending_fsmap; }
-  const FSMap &get_fsmap() const { return fsmap; }
+    const FSMap &get_pending_fsmap() const
+    {
+        ceph_assert(is_leader());
+        return pending_fsmap;
+    }
+    const FSMap &get_fsmap() const
+    {
+        return fsmap;
+    }
 
-  virtual bool is_leader() const = 0;
+    virtual bool is_leader() const = 0;
 
 protected:
-  FSMap &get_pending_fsmap_writeable() { ceph_assert(is_leader()); return pending_fsmap; }
-
-  FSMap &create_pending() {
-    ceph_assert(is_leader());
-    pending_fsmap = fsmap;
-    pending_fsmap.inc_epoch();
-    return pending_fsmap;
-  }
-
-  void prune_fsmap_history() {
-    auto now = real_clock::now();
-    for (auto it = history.begin(); it != history.end(); ) {
-      auto since = now - it->second.get_btime();
-      /* Be sure to not make the map empty */
-      auto itnext = std::next(it);
-      if (itnext == history.end()) {
-        break;
-      }
-      /* Keep the map just before the prune time threshold:
-       * [ e-1             (lifetime > history_prune_time) | e (lifetime 1s) ]
-       * If an mds was removed in (e), then we want to be able to say it was
-       * last seen 1 second ago.
-       */
-      auto since2 = now - itnext->second.get_btime();
-      if (since > history_prune_time && since2 > history_prune_time) {
-        it = history.erase(it);
-      } else {
-        break;
-      }
+    FSMap &get_pending_fsmap_writeable()
+    {
+        ceph_assert(is_leader());
+        return pending_fsmap;
     }
-  }
 
-  void put_fsmap_history(const FSMap& _fsmap) {
-    auto now = real_clock::now();
-    auto since = now - _fsmap.get_btime();
-    if (since < history_prune_time) {
-      history.emplace(std::piecewise_construct, std::forward_as_tuple(_fsmap.get_epoch()), std::forward_as_tuple(_fsmap));
+    FSMap &create_pending()
+    {
+        ceph_assert(is_leader());
+        pending_fsmap = fsmap;
+        pending_fsmap.inc_epoch();
+        return pending_fsmap;
     }
-  }
 
-  void set_fsmap_history_threshold(std::chrono::seconds t) {
-    history_prune_time = t;
-  }
-  std::chrono::seconds get_fsmap_history_threshold() const {
-    return history_prune_time;
-  }
+    void prune_fsmap_history()
+    {
+        auto now = real_clock::now();
+        for (auto it = history.begin(); it != history.end();) {
+            auto since = now - it->second.get_btime();
+            /* Be sure to not make the map empty */
+            auto itnext = std::next(it);
+            if (itnext == history.end()) {
+                break;
+            }
+            /* Keep the map just before the prune time threshold:
+             * [ e-1             (lifetime > history_prune_time) | e (lifetime 1s) ]
+             * If an mds was removed in (e), then we want to be able to say it was
+             * last seen 1 second ago.
+             */
+            auto since2 = now - itnext->second.get_btime();
+            if (since > history_prune_time && since2 > history_prune_time) {
+                it = history.erase(it);
+            } else {
+                break;
+            }
+        }
+    }
 
-  const auto& get_fsmap_history() const {
-    return history;
-  }
+    void put_fsmap_history(const FSMap& _fsmap)
+    {
+        auto now = real_clock::now();
+        auto since = now - _fsmap.get_btime();
+        if (since < history_prune_time) {
+            history.emplace(std::piecewise_construct, std::forward_as_tuple(_fsmap.get_epoch()), std::forward_as_tuple(_fsmap));
+        }
+    }
 
-  void decode(ceph::buffer::list &bl) {
-    fsmap.decode(bl);
-    put_fsmap_history(fsmap);
-    pending_fsmap = FSMap(); /* nuke it to catch invalid access */
-  }
+    void set_fsmap_history_threshold(std::chrono::seconds t)
+    {
+        history_prune_time = t;
+    }
+    std::chrono::seconds get_fsmap_history_threshold() const
+    {
+        return history_prune_time;
+    }
+
+    const auto &get_fsmap_history() const
+    {
+        return history;
+    }
+
+    void decode(ceph::buffer::list &bl)
+    {
+        fsmap.decode(bl);
+        put_fsmap_history(fsmap);
+        pending_fsmap = FSMap(); /* nuke it to catch invalid access */
+    }
 
 private:
-  /* Keep these PRIVATE to prevent unprotected manipulation. */
-  std::map<epoch_t, FSMap> history;
-  std::chrono::seconds history_prune_time = std::chrono::seconds(0);
-  FSMap fsmap; /* the current epoch */
-  FSMap pending_fsmap; /* the next epoch */
+    /* Keep these PRIVATE to prevent unprotected manipulation. */
+    std::map < epoch_t, FSMap > history;
+    std::chrono::seconds history_prune_time = std::chrono::seconds(0);
+    FSMap fsmap; /* the current epoch */
+    FSMap pending_fsmap; /* the next epoch */
 };
 
 

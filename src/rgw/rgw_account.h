@@ -27,7 +27,8 @@ class DoutPrefixProvider;
 class RGWFormatterFlusher;
 class optional_yield;
 
-namespace rgw::account {
+namespace rgw::account
+{
 
 /// generate a randomized account id in a specific format
 std::string generate_id(CephContext* cct);
@@ -40,19 +41,19 @@ bool validate_name(std::string_view name, std::string* err_msg = nullptr);
 
 
 struct AdminOpState {
-  std::string account_id;
-  std::string tenant;
-  std::string account_name;
-  std::string email;
-  std::optional<int32_t> max_users;
-  std::optional<int32_t> max_roles;
-  std::optional<int32_t> max_groups;
-  std::optional<int32_t> max_access_keys;
-  std::optional<int32_t> max_buckets;
-  std::string quota_scope;
-  std::optional<int64_t> quota_max_size;
-  std::optional<int64_t> quota_max_objects;
-  std::optional<bool> quota_enabled;
+    std::string account_id;
+    std::string tenant;
+    std::string account_name;
+    std::string email;
+    std::optional < int32_t > max_users;
+    std::optional < int32_t > max_roles;
+    std::optional < int32_t > max_groups;
+    std::optional < int32_t > max_access_keys;
+    std::optional < int32_t > max_buckets;
+    std::string quota_scope;
+    std::optional < int64_t > quota_max_size;
+    std::optional < int64_t > quota_max_objects;
+    std::optional < bool > quota_enabled;
 };
 
 /// create an account

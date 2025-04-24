@@ -57,11 +57,11 @@ typedef void *cls_method_handle_t;
  *
  * A context for the method of the object class.
  */
-typedef void* cls_method_context_t;
+typedef void *cls_method_context_t;
 
 /*class utils*/
 extern int cls_log(int level, const char *format, ...)
-  __attribute__((__format__(printf, 2, 3)));
+__attribute__((__format__(printf, 2, 3)));
 
 /* class registration api */
 extern int cls_register(const char *name, cls_handle_t *handle);
@@ -74,7 +74,7 @@ extern int cls_register(const char *name, cls_handle_t *handle);
  *
  */
 typedef int (*cls_method_cxx_call_t)(cls_method_context_t ctx,
-    class ceph::buffer::list *inbl, class ceph::buffer::list *outbl);
+                                     class ceph::buffer::list *inbl, class ceph::buffer::list *outbl);
 
 /**
  * Register a method.

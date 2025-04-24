@@ -24,23 +24,24 @@
 
 class RGWSI_ConfigKey_RADOS : public RGWSI_ConfigKey
 {
-  bool maybe_insecure_mon_conn{false};
-  std::atomic_flag warned_insecure = ATOMIC_FLAG_INIT;
+    bool maybe_insecure_mon_conn{false};
+    std::atomic_flag warned_insecure = ATOMIC_FLAG_INIT;
 
-  int do_start(optional_yield, const DoutPrefixProvider *dpp) override;
+    int do_start(optional_yield, const DoutPrefixProvider *dpp) override;
 
-  void warn_if_insecure();
+    void warn_if_insecure();
 
 public:
-  librados::Rados* rados{nullptr};
+    librados::Rados *rados{nullptr};
 
-  void init(librados::Rados* rados_) {
-    rados = rados_;
-  }
+    void init(librados::Rados* rados_)
+    {
+        rados = rados_;
+    }
 
-  RGWSI_ConfigKey_RADOS(CephContext *cct) : RGWSI_ConfigKey(cct) {}
+    RGWSI_ConfigKey_RADOS(CephContext *cct) : RGWSI_ConfigKey(cct) {}
 
-  virtual ~RGWSI_ConfigKey_RADOS() override;
+    virtual ~RGWSI_ConfigKey_RADOS() override;
 
-  int get(const std::string& key, bool secure, bufferlist *result) override;
+    int get(const std::string& key, bool secure, bufferlist *result) override;
 };

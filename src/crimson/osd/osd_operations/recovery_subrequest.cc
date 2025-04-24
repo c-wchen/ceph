@@ -8,58 +8,63 @@
 #include "crimson/osd/pg.h"
 #include "crimson/osd/osd_connection_priv.h"
 
-namespace {
-  seastar::logger& logger() {
+namespace
+{
+seastar::logger &logger()
+{
     return crimson::get_logger(ceph_subsys_osd);
-  }
+}
 }
 
-namespace crimson {
-  template <>
-  struct EventBackendRegistry<osd::RecoverySubRequest> {
-    static std::tuple<> get_backends() {
-      return {};
+namespace crimson
+{
+template < >
+struct EventBackendRegistry < osd::RecoverySubRequest > {
+    static std::tuple < > get_backends()
+    {
+        return {};
     }
-  };
+};
 }
 
 SET_SUBSYS(osd);
 
-namespace crimson::osd {
-
-seastar::future<> RecoverySubRequest::with_pg(
-  ShardServices &shard_services, Ref<PG> pgref)
+namespace crimson::osd
 {
-  track_event<StartEvent>();
-  IRef opref = this;
-  return interruptor::with_interruption([this, pgref] {
-    LOG_PREFIX(RecoverySubRequest::with_pg);
-    DEBUGI("{}: {}", "RecoverySubRequest::with_pg", *this);
-    return pgref->get_recovery_backend()->handle_recovery_op(m, r_conn
-    ).then_interruptible([this] {
-      LOG_PREFIX(RecoverySubRequest::with_pg);
-      DEBUGI("{}: complete", *this);
-      return handle.complete();
+
+seastar::future < > RecoverySubRequest::with_pg(
+    ShardServices &shard_services, Ref < PG > pgref)
+{
+    track_event < StartEvent > ();
+    IRef opref = this;
+    return interruptor::with_interruption([this, pgref] {
+        LOG_PREFIX(RecoverySubRequest::with_pg);
+        DEBUGI("{}: {}", "RecoverySubRequest::with_pg", *this);
+        return pgref->get_recovery_backend()->handle_recovery_op(m, r_conn
+        ).then_interruptible([this] {
+            LOG_PREFIX(RecoverySubRequest::with_pg);
+            DEBUGI("{}: complete", *this);
+            return handle.complete();
+        });
+    }, [](std::exception_ptr) {
+        return seastar::now();
+    }, pgref, pgref->get_osdmap_epoch()).finally([this, opref = std::move(opref), pgref] {
+        logger().debug("{}: exit", *this);
+        track_event < CompletionEvent > ();
+        handle.exit();
     });
-  }, [](std::exception_ptr) {
-    return seastar::now();
-  }, pgref, pgref->get_osdmap_epoch()).finally([this, opref=std::move(opref), pgref] {
-    logger().debug("{}: exit", *this);
-    track_event<CompletionEvent>();
-    handle.exit();
-  });
 }
 
 ConnectionPipeline &RecoverySubRequest::get_connection_pipeline()
 {
-  return get_osd_priv(&get_local_connection()
-         ).peering_request_conn_pipeline;
+    return get_osd_priv(&get_local_connection()
+                       ).peering_request_conn_pipeline;
 }
 
 PerShardPipeline &RecoverySubRequest::get_pershard_pipeline(
     ShardServices &shard_services)
 {
-  return shard_services.get_peering_request_pipeline();
+    return shard_services.get_peering_request_pipeline();
 }
 
 }

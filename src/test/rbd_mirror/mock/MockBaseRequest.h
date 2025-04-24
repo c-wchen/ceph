@@ -9,15 +9,17 @@
 
 struct Context;
 
-namespace rbd {
-namespace mirror {
+namespace rbd
+{
+namespace mirror
+{
 
 struct MockBaseRequest : public BaseRequest {
-  MockBaseRequest() : BaseRequest(nullptr) {}
+    MockBaseRequest() : BaseRequest(nullptr) {}
 
-  Context* on_finish = nullptr;
+    Context *on_finish = nullptr;
 
-  MOCK_METHOD0(send, void());
+    MOCK_METHOD0(send, void());
 };
 
 } // namespace mirror

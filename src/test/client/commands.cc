@@ -10,13 +10,14 @@
 #include "test/client/TestClient.h"
 
 
-TEST_F(TestClient, SingleTargetMdsCommand) {
+TEST_F(TestClient, SingleTargetMdsCommand)
+{
     auto mds_spec = "a";
     auto cmd = "{\"prefix\": \"session ls\", \"format\": \"json\"}";
     bufferlist inbl;
     bufferlist outbl;
     std::string outs;
-    std::vector<std::string> cmdv;
+    std::vector < std::string > cmdv;
     C_SaferCond cond;
 
     cmdv.push_back(cmd);
@@ -28,13 +29,14 @@ TEST_F(TestClient, SingleTargetMdsCommand) {
     ASSERT_TRUE(r == 0 || r == -38);
 }
 
-TEST_F(TestClient, MultiTargetMdsCommand) {
+TEST_F(TestClient, MultiTargetMdsCommand)
+{
     auto mds_spec = "*";
     auto cmd = "{\"prefix\": \"session ls\", \"format\": \"json\"}";
     bufferlist inbl;
     bufferlist outbl;
     std::string outs;
-    std::vector<std::string> cmdv;
+    std::vector < std::string > cmdv;
     C_SaferCond cond;
 
     cmdv.push_back(cmd);

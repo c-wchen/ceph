@@ -7,16 +7,16 @@
 bool match_wildcards(const std::string& pattern, const std::string& input,
                      uint32_t flags)
 {
-  bool case_insensive = flags & MATCH_CASE_INSENSITIVE;
-  uint32_t  flag = 0;
+    bool case_insensive = flags & MATCH_CASE_INSENSITIVE;
+    uint32_t  flag = 0;
 
-  if (case_insensive) {
-    flag = FNM_CASEFOLD;
-  }
+    if (case_insensive) {
+        flag = FNM_CASEFOLD;
+    }
 
-  if (fnmatch(pattern.data(), input.data(), flag) == 0) {
-    return true;
-  } else {
-    return false;
-  }
+    if (fnmatch(pattern.data(), input.data(), flag) == 0) {
+        return true;
+    } else {
+        return false;
+    }
 }

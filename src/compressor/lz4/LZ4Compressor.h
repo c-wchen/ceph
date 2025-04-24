@@ -7,7 +7,7 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
  *
  */
@@ -25,27 +25,28 @@
 
 class QatAccel;
 
-class LZ4Compressor : public Compressor {
+class LZ4Compressor : public Compressor
+{
 #ifdef HAVE_QATZIP
-  bool qat_enabled;
-  static QatAccel qat_accel;
+    bool qat_enabled;
+    static QatAccel qat_accel;
 #endif
 
- public:
-  explicit LZ4Compressor(CephContext* cct);
+public:
+    explicit LZ4Compressor(CephContext* cct);
 
-  int compress(const ceph::buffer::list &src,
-               ceph::buffer::list &dst,
-               std::optional<int32_t> &compressor_message) override;
-
-  int decompress(const ceph::buffer::list &src,
+    int compress(const ceph::buffer::list &src,
                  ceph::buffer::list &dst,
-                 std::optional<int32_t> compressor_message) override;
+                 std::optional < int32_t > &compressor_message) override;
 
-  int decompress(ceph::buffer::list::const_iterator &p,
-		 size_t compressed_len,
-		 ceph::buffer::list &dst,
-		 std::optional<int32_t> compressor_message) override;
+    int decompress(const ceph::buffer::list &src,
+                   ceph::buffer::list &dst,
+                   std::optional < int32_t > compressor_message) override;
+
+    int decompress(ceph::buffer::list::const_iterator &p,
+                   size_t compressed_len,
+                   ceph::buffer::list &dst,
+                   std::optional < int32_t > compressor_message) override;
 };
 
 #endif

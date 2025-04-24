@@ -16,7 +16,7 @@ extern uint32_t ceph_crc32c_intel_fast(uint32_t crc, unsigned char const *buffer
 
 static inline uint32_t ceph_crc32c_intel_fast(uint32_t crc, unsigned char const *buffer, unsigned len)
 {
-	return 0;
+    return 0;
 }
 
 #endif

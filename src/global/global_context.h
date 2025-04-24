@@ -20,9 +20,10 @@
 #include "common/config_fwd.h"
 #include "include/common_fwd.h"
 
-namespace TOPNSPC::global {
+namespace TOPNSPC::global
+{
 extern CephContext *g_ceph_context;
-ConfigProxy& g_conf();
+ConfigProxy &g_conf();
 
 extern const char *g_assert_file;
 extern int g_assert_line;
@@ -42,12 +43,12 @@ extern unsigned long long g_eio_offset;
 extern unsigned long long g_eio_length;
 
 extern int note_io_error_event(
-  const char *devname,
-  const char *path,
-  int error,
-  int iotype,
-  unsigned long long offset,
-  unsigned long long length);
+    const char *devname,
+    const char *path,
+    int error,
+    int iotype,
+    unsigned long long offset,
+    unsigned long long length);
 
 }
 using namespace TOPNSPC::global;

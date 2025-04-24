@@ -19,12 +19,16 @@
 #include <boost/asio/spawn.hpp>
 
 class DoutPrefixProvider;
-namespace rgw::sal { class RadosStore; }
+namespace rgw::sal
+{
+class RadosStore;
+}
 
 // the squid release changes the format of topic/notification metadata. once the
 // notification_v2 feature gets enabled, this migration logic runs on startup to
 // convert all v1 metadata to the v2 format
-namespace rgwrados::topic_migration {
+namespace rgwrados::topic_migration
+{
 
 int migrate(const DoutPrefixProvider* dpp,
             rgw::sal::RadosStore* driver,

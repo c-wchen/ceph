@@ -42,23 +42,27 @@ extern "C" {
 #endif
 }
 
-class QccCrypto {
+class QccCrypto
+{
     friend class QatCrypto;
     size_t chunk_size{0};
     size_t max_requests{0};
 
     boost::asio::thread_pool my_pool{1};
 
-    boost::circular_buffer<boost::asio::any_completion_handler<void(int)>> instance_completions;
+    boost::circular_buffer < boost::asio::any_completion_handler < void(int)>> instance_completions;
 
-    template <typename CompletionToken>
+    template < typename CompletionToken >
     auto async_get_instance(CompletionToken&& token);
 
-  public:
+public:
     CpaCySymCipherDirection qcc_op_type;
 
     QccCrypto()  {};
-    ~QccCrypto() { destroy(); };
+    ~QccCrypto()
+    {
+        destroy();
+    };
 
     bool init(const size_t chunk_size, const size_t max_requests);
     bool destroy();
@@ -68,7 +72,7 @@ class QccCrypto {
                           CpaCySymCipherDirection op_type,
                           optional_yield y);
 
-  private:
+private:
     // Currently only supporting AES_256_CBC.
     // To-Do: Needs to be expanded
     static const size_t AES_256_IV_LEN = 16;
@@ -84,9 +88,9 @@ class QccCrypto {
      * independently.
      */
     struct QCCINST {
-      CpaInstanceHandle *cy_inst_handles;
-      CpaBoolean *is_polled;
-      Cpa16U num_instances;
+        CpaInstanceHandle *cy_inst_handles;
+        CpaBoolean *is_polled;
+        Cpa16U num_instances;
     } *qcc_inst;
 
     /*
@@ -97,8 +101,8 @@ class QccCrypto {
      * single crypto or multi-buffer crypto.
      */
     struct QCCSESS {
-      Cpa32U sess_ctx_sz;
-      CpaCySymSessionCtx sess_ctx;
+        Cpa32U sess_ctx_sz;
+        CpaCySymSessionCtx sess_ctx;
     } *qcc_sess;
 
     /*
@@ -107,18 +111,18 @@ class QccCrypto {
      * by QAT to perform the operation. Also buffers for IV, SRC, DEST.
      */
     struct QCCOPMEM {
-      // Op common  items
-      bool is_mem_alloc;
-      bool op_complete;
-      CpaCySymDpOpData *sym_op_data[MAX_NUM_SYM_REQ_BATCH];
-      Cpa8U *src_buff[MAX_NUM_SYM_REQ_BATCH];
-      Cpa8U *iv_buff[MAX_NUM_SYM_REQ_BATCH];
+        // Op common  items
+        bool is_mem_alloc;
+        bool op_complete;
+        CpaCySymDpOpData *sym_op_data[MAX_NUM_SYM_REQ_BATCH];
+        Cpa8U *src_buff[MAX_NUM_SYM_REQ_BATCH];
+        Cpa8U *iv_buff[MAX_NUM_SYM_REQ_BATCH];
     } *qcc_op_mem;
 
     /*
      * Handle queue with free instances to handle op
      */
-    boost::circular_buffer<int> open_instances;
+    boost::circular_buffer < int > open_instances;
     void QccFreeInstance(int entry);
     std::thread qat_poll_thread;
     bool thread_stop{false};
@@ -129,43 +133,45 @@ class QccCrypto {
      * hugepages.
      * To-Do: A kernel based one.
      */
-    static inline void qcc_contig_mem_free(void **ptr) {
-      if (*ptr) {
-        qaeMemFreeNUMA(ptr);
-        *ptr = NULL;
-      }
+    static inline void qcc_contig_mem_free(void **ptr)
+    {
+        if (*ptr) {
+            qaeMemFreeNUMA(ptr);
+            *ptr = NULL;
+        }
     }
 
-    static inline CpaStatus qcc_contig_mem_alloc(void **ptr, Cpa32U size, Cpa32U alignment = 1) {
-      *ptr = qaeMemAllocNUMA(size, 0, alignment);
-      if (NULL == *ptr)
-      {
-        return CPA_STATUS_RESOURCE;
-      }
-      return CPA_STATUS_SUCCESS;
+    static inline CpaStatus qcc_contig_mem_alloc(void **ptr, Cpa32U size, Cpa32U alignment = 1)
+    {
+        *ptr = qaeMemAllocNUMA(size, 0, alignment);
+        if (NULL == *ptr) {
+            return CPA_STATUS_RESOURCE;
+        }
+        return CPA_STATUS_SUCCESS;
     }
 
     /*
      * Malloc & free calls masked to maintain consistency and future kernel
      * alloc support.
      */
-    static inline void qcc_os_mem_free(void **ptr) {
-      if (*ptr) {
-        free(*ptr);
-        *ptr = NULL;
-      }
+    static inline void qcc_os_mem_free(void **ptr)
+    {
+        if (*ptr) {
+            free(*ptr);
+            *ptr = NULL;
+        }
     }
 
-    static inline CpaStatus qcc_os_mem_alloc(void **ptr, Cpa32U size) {
-      *ptr = malloc(size);
-      if (*ptr == NULL)
-      {
-        return CPA_STATUS_RESOURCE;
-      }
-      return CPA_STATUS_SUCCESS;
+    static inline CpaStatus qcc_os_mem_alloc(void **ptr, Cpa32U size)
+    {
+        *ptr = malloc(size);
+        if (*ptr == NULL) {
+            return CPA_STATUS_RESOURCE;
+        }
+        return CPA_STATUS_SUCCESS;
     }
 
-    std::atomic<bool> is_init = { false };
+    std::atomic < bool > is_init = { false };
 
     /*
      * Function to cleanup memory if constructor fails
@@ -179,7 +185,7 @@ class QccCrypto {
      * library creates an internal callback for the operation.
      */
     void poll_instances(void);
-    std::atomic<size_t> poll_retry_num{0};
+    std::atomic < size_t > poll_retry_num{0};
 
     bool symPerformOp(int avail_inst,
                       CpaCySymSessionCtx sessionCtx,
@@ -202,21 +208,22 @@ class QccCrypto {
 
 };
 
-class QatCrypto {
- private:
-  boost::asio::any_io_executor ex;
-  boost::asio::any_completion_handler<void(CpaStatus stat)> completion_handler;
-  std::atomic<std::size_t> count;
- public:
-  void complete();
+class QatCrypto
+{
+private:
+    boost::asio::any_io_executor ex;
+    boost::asio::any_completion_handler < void(CpaStatus stat) > completion_handler;
+    std::atomic < std::size_t > count;
+public:
+    void complete();
 
-  QatCrypto (boost::asio::any_io_executor ex) : ex(ex), count(0) {}
-  QatCrypto (const QatCrypto &qat) = delete;
-  QatCrypto (QatCrypto &&qat) = delete;
-  void operator=(const QatCrypto &qat) = delete;
-  void operator=(QatCrypto &&qat) = delete;
+    QatCrypto(boost::asio::any_io_executor ex) : ex(ex), count(0) {}
+    QatCrypto(const QatCrypto &qat) = delete;
+    QatCrypto(QatCrypto &&qat) = delete;
+    void operator=(const QatCrypto &qat) = delete;
+    void operator=(QatCrypto &&qat) = delete;
 
-  template <typename CompletionToken>
-  auto async_perform_op(std::span<CpaCySymDpOpData*> pOpDataVec, CompletionToken&& token);
+    template < typename CompletionToken >
+    auto async_perform_op(std::span < CpaCySymDpOpData* > pOpDataVec, CompletionToken&& token);
 };
 #endif //QCCCRYPTO_H

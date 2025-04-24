@@ -3,14 +3,17 @@
 
 #include "crimson/os/seastore/btree/fixed_kv_node.h"
 
-namespace crimson::os::seastore {
+namespace crimson::os::seastore
+{
 
-bool is_valid_child_ptr(ChildableCachedExtent* child) {
-  return child != nullptr && child != get_reserved_ptr();
+bool is_valid_child_ptr(ChildableCachedExtent* child)
+{
+    return child != nullptr && child != get_reserved_ptr();
 }
 
-bool is_reserved_ptr(ChildableCachedExtent* child) {
-  return child == get_reserved_ptr();
+bool is_reserved_ptr(ChildableCachedExtent* child)
+{
+    return child == get_reserved_ptr();
 }
 
 } // namespace crimson::os::seastore

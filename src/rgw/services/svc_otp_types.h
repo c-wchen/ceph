@@ -24,6 +24,6 @@
 
 class RGWSI_MetaBackend_Handler;
 
-using RGWSI_OTP_BE_Handler = ptr_wrapper<RGWSI_MetaBackend_Handler, RGWSI_META_BE_TYPES::OTP>;
-using RGWSI_OTP_BE_Ctx = ptr_wrapper<RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::OTP>;
+using RGWSI_OTP_BE_Handler = ptr_wrapper < RGWSI_MetaBackend_Handler, RGWSI_META_BE_TYPES::OTP >;
+using RGWSI_OTP_BE_Ctx = ptr_wrapper < RGWSI_MetaBackend::Context, RGWSI_META_BE_TYPES::OTP >;
 

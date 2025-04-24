@@ -44,8 +44,8 @@ TYPE(errorcode32_t)
 TYPE(client_t)
 
 #include "common/bit_vector.hpp"
-TYPE(BitVector<2>)
-TYPE(ceph::BitVector<2>)
+TYPE(BitVector < 2 >)
+TYPE(ceph::BitVector < 2 >)
 
 #include "common/bloom_filter.hpp"
 TYPE(bloom_filter)
@@ -355,7 +355,7 @@ MESSAGE(MMDSFragmentNotify)
 MESSAGE(MMDSLoadTargets)
 
 #include "messages/MMDSMap.h"
-MESSAGE(MMDSMap) 
+MESSAGE(MMDSMap)
 
 #include "messages/MMgrBeacon.h"
 MESSAGE(MMgrBeacon)
@@ -547,7 +547,7 @@ MESSAGE(MTimeCheck2)
 #include "messages/MWatchNotify.h"
 MESSAGE(MWatchNotify)
 
-#include "messages/MMgrUpdate.h" 
+#include "messages/MMgrUpdate.h"
 MESSAGE(MMgrUpdate)
 
 #include "messages/MOSDECSubOpRead.h"

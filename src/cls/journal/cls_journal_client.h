@@ -11,9 +11,12 @@
 
 class Context;
 
-namespace cls {
-namespace journal {
-namespace client {
+namespace cls
+{
+namespace journal
+{
+namespace client
+{
 
 void create(librados::ObjectWriteOperation *op,
             uint8_t order, uint8_t splay, int64_t pool_id);
@@ -22,10 +25,10 @@ int create(librados::IoCtx &ioctx, const std::string &oid, uint8_t order,
 
 void get_immutable_metadata(librados::IoCtx &ioctx, const std::string &oid,
                             uint8_t *order, uint8_t *splay_width,
-			    int64_t *pool_id, Context *on_finish);
+                            int64_t *pool_id, Context *on_finish);
 void get_mutable_metadata(librados::IoCtx &ioctx, const std::string &oid,
                           uint64_t *minimum_set, uint64_t *active_set,
-                          std::set<cls::journal::Client> *clients,
+                          std::set < cls::journal::Client > *clients,
                           Context *on_finish);
 
 void set_minimum_set(librados::ObjectWriteOperation *op, uint64_t object_set);
@@ -57,15 +60,15 @@ void client_update_state(librados::ObjectWriteOperation *op,
 int client_unregister(librados::IoCtx &ioctx, const std::string &oid,
                       const std::string &id);
 void client_unregister(librados::ObjectWriteOperation *op,
-		       const std::string &id);
+                       const std::string &id);
 
 void client_commit(librados::ObjectWriteOperation *op, const std::string &id,
                    const cls::journal::ObjectSetPosition &commit_position);
 
 int client_list(librados::IoCtx &ioctx, const std::string &oid,
-                std::set<cls::journal::Client> *clients);
+                std::set < cls::journal::Client > *clients);
 void client_list(librados::IoCtx &ioctx, const std::string &oid,
-                 std::set<cls::journal::Client> *clients, Context *on_finish);
+                 std::set < cls::journal::Client > *clients, Context *on_finish);
 
 // journal tag helpers
 int get_next_tag_tid(librados::IoCtx &ioctx, const std::string &oid,
@@ -88,14 +91,14 @@ void tag_create(librados::ObjectWriteOperation *op,
                 const bufferlist &data);
 
 int tag_list(librados::IoCtx &ioctx, const std::string &oid,
-             const std::string &client_id, boost::optional<uint64_t> tag_class,
-             std::set<cls::journal::Tag> *tags);
+             const std::string &client_id, boost::optional < uint64_t > tag_class,
+             std::set < cls::journal::Tag > *tags);
 void tag_list_start(librados::ObjectReadOperation *op,
                     uint64_t start_after_tag_tid, uint64_t max_return,
                     const std::string &client_id,
-                    boost::optional<uint64_t> tag_class);
+                    boost::optional < uint64_t > tag_class);
 int tag_list_finish(bufferlist::const_iterator *iter,
-                    std::set<cls::journal::Tag> *tags);
+                    std::set < cls::journal::Tag > *tags);
 
 // journal entry helpers
 void guard_append(librados::ObjectWriteOperation *op, uint64_t soft_max_size);

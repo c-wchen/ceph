@@ -20,12 +20,12 @@ static inline void *ERR_PTR(long error)
 
 static inline intptr_t PTR_ERR(const void *ptr)
 {
-  return (intptr_t) ptr;
+    return (intptr_t) ptr;
 }
 
 static inline bool IS_ERR(const void *ptr)
 {
-  return IS_ERR_VALUE((uintptr_t)ptr);
+    return IS_ERR_VALUE((uintptr_t)ptr);
 }
 
 #endif

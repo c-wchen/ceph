@@ -27,73 +27,75 @@ struct RGWUID;
 class RGWSI_User : public RGWServiceInstance
 {
 public:
-  RGWSI_User(CephContext *cct);
-  virtual ~RGWSI_User();
+    RGWSI_User(CephContext *cct);
+    virtual ~RGWSI_User();
 
-  static std::string get_meta_key(const rgw_user& user) {
-    return user.to_str();
-  }
+    static std::string get_meta_key(const rgw_user& user)
+    {
+        return user.to_str();
+    }
 
-  static rgw_user user_from_meta_key(const std::string& key) {
-    return rgw_user(key);
-  }
+    static rgw_user user_from_meta_key(const std::string& key)
+    {
+        return rgw_user(key);
+    }
 
-  virtual RGWSI_MetaBackend_Handler *get_be_handler() = 0;
+    virtual RGWSI_MetaBackend_Handler *get_be_handler() = 0;
 
-  /* base svc_user interfaces */
+    /* base svc_user interfaces */
 
-  virtual rgw_raw_obj get_buckets_obj(const rgw_user& user_id) const = 0;
+    virtual rgw_raw_obj get_buckets_obj(const rgw_user& user_id) const = 0;
 
-  virtual int read_user_info(RGWSI_MetaBackend::Context *ctx,
-                             const rgw_user& user,
-                             RGWUserInfo *info,
-                             RGWObjVersionTracker * const objv_tracker,
-                             real_time * const pmtime,
-                             rgw_cache_entry_info * const cache_info,
-                             std::map<std::string, bufferlist> * const pattrs,
-                             optional_yield y,
-                             const DoutPrefixProvider *dpp) = 0;
-
-  virtual int store_user_info(RGWSI_MetaBackend::Context *ctx,
-                              const RGWUserInfo& info,
-                              RGWUserInfo *old_info,
-                              RGWObjVersionTracker *objv_tracker,
-                              const real_time& mtime,
-                              bool exclusive,
-                              std::map<std::string, bufferlist> *attrs,
-                              optional_yield y,
-                              const DoutPrefixProvider *dpp) = 0;
-
-  virtual int remove_user_info(RGWSI_MetaBackend::Context *ctx,
-                               const RGWUserInfo& info,
-                               RGWObjVersionTracker *objv_tracker,
+    virtual int read_user_info(RGWSI_MetaBackend::Context *ctx,
+                               const rgw_user& user,
+                               RGWUserInfo *info,
+                               RGWObjVersionTracker * const objv_tracker,
+                               real_time * const pmtime,
+                               rgw_cache_entry_info * const cache_info,
+                               std::map < std::string, bufferlist > * const pattrs,
                                optional_yield y,
                                const DoutPrefixProvider *dpp) = 0;
 
-  virtual int get_user_info_by_email(RGWSI_MetaBackend::Context *ctx,
-                             const std::string& email, RGWUserInfo *info,
-                             RGWObjVersionTracker *objv_tracker,
-                             std::map<std::string, bufferlist>* pattrs,
-                             real_time *pmtime,
-                             optional_yield y,
-                             const DoutPrefixProvider *dpp) = 0;
-  virtual int get_user_info_by_swift(RGWSI_MetaBackend::Context *ctx,
-                             const std::string& swift_name,
-                             RGWUserInfo *info,        /* out */
-                             RGWObjVersionTracker * const objv_tracker,
-                             std::map<std::string, bufferlist>* pattrs,
-                             real_time * const pmtime,
-                             optional_yield y,
-                             const DoutPrefixProvider *dpp) = 0;
-  virtual int get_user_info_by_access_key(RGWSI_MetaBackend::Context *ctx,
-                                  const std::string& access_key,
-                                  RGWUserInfo *info,
-                                  RGWObjVersionTracker* objv_tracker,
-                                  std::map<std::string, bufferlist>* pattrs,
-                                  real_time *pmtime,
-                                  optional_yield y,
-                                  const DoutPrefixProvider *dpp) = 0;
-  virtual int read_email_index(const DoutPrefixProvider* dpp, optional_yield y,
-                               std::string_view email, RGWUID& uid) = 0;
+    virtual int store_user_info(RGWSI_MetaBackend::Context *ctx,
+                                const RGWUserInfo& info,
+                                RGWUserInfo *old_info,
+                                RGWObjVersionTracker *objv_tracker,
+                                const real_time& mtime,
+                                bool exclusive,
+                                std::map < std::string, bufferlist > *attrs,
+                                optional_yield y,
+                                const DoutPrefixProvider *dpp) = 0;
+
+    virtual int remove_user_info(RGWSI_MetaBackend::Context *ctx,
+                                 const RGWUserInfo& info,
+                                 RGWObjVersionTracker *objv_tracker,
+                                 optional_yield y,
+                                 const DoutPrefixProvider *dpp) = 0;
+
+    virtual int get_user_info_by_email(RGWSI_MetaBackend::Context *ctx,
+                                       const std::string& email, RGWUserInfo *info,
+                                       RGWObjVersionTracker *objv_tracker,
+                                       std::map < std::string, bufferlist > * pattrs,
+                                       real_time *pmtime,
+                                       optional_yield y,
+                                       const DoutPrefixProvider *dpp) = 0;
+    virtual int get_user_info_by_swift(RGWSI_MetaBackend::Context *ctx,
+                                       const std::string& swift_name,
+                                       RGWUserInfo *info,        /* out */
+                                       RGWObjVersionTracker * const objv_tracker,
+                                       std::map < std::string, bufferlist > * pattrs,
+                                       real_time * const pmtime,
+                                       optional_yield y,
+                                       const DoutPrefixProvider *dpp) = 0;
+    virtual int get_user_info_by_access_key(RGWSI_MetaBackend::Context *ctx,
+                                            const std::string& access_key,
+                                            RGWUserInfo *info,
+                                            RGWObjVersionTracker* objv_tracker,
+                                            std::map < std::string, bufferlist > * pattrs,
+                                            real_time *pmtime,
+                                            optional_yield y,
+                                            const DoutPrefixProvider *dpp) = 0;
+    virtual int read_email_index(const DoutPrefixProvider* dpp, optional_yield y,
+                                 std::string_view email, RGWUID& uid) = 0;
 };
 

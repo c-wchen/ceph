@@ -9,20 +9,24 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace crypto {
+namespace crypto
+{
 
-template <typename I>
-class FormatRequest {
+template < typename I >
+class FormatRequest
+{
 public:
     using EncryptionFormat = decltype(I::encryption_format);
 
-    static FormatRequest* create(
-            I* image_ctx, EncryptionFormat format, Context* on_finish) {
-      return new FormatRequest(image_ctx, std::move(format), on_finish);
+    static FormatRequest *create(
+        I* image_ctx, EncryptionFormat format, Context* on_finish)
+    {
+        return new FormatRequest(image_ctx, std::move(format), on_finish);
     }
 
     FormatRequest(I* image_ctx, EncryptionFormat format, Context* on_finish);
@@ -35,15 +39,15 @@ public:
     void finish(int r);
 
 private:
-    I* m_image_ctx;
+    I *m_image_ctx;
 
     EncryptionFormat m_format;
-    Context* m_on_finish;
+    Context *m_on_finish;
 };
 
 } // namespace crypto
 } // namespace librbd
 
-extern template class librbd::crypto::FormatRequest<librbd::ImageCtx>;
+extern template class librbd::crypto::FormatRequest < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_CRYPTO_FORMAT_REQUEST_H

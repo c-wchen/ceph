@@ -23,18 +23,18 @@
  */
 class TableTool : public MDSUtility
 {
-  private:
+private:
     MDSRoleSelector role_selector;
 
     // I/O handles
     librados::Rados rados;
     librados::IoCtx io;
 
-    int apply_role_fn(std::function<int(mds_role_t, Formatter *)> fptr, Formatter *f);
+    int apply_role_fn(std::function < int(mds_role_t, Formatter *) > fptr, Formatter *f);
 
-  public:
+public:
     static void usage();
-    int main(std::vector<const char*> &argv);
+    int main(std::vector < const char* > &argv);
 
 };
 

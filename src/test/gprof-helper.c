@@ -21,7 +21,7 @@
 #include <dlfcn.h>
 #include <pthread.h>
 
-static void * wrapper_routine(void *);
+static void *wrapper_routine(void *);
 
 /* Original pthread function */
 static int (*pthread_create_orig)(pthread_t *__restrict,
@@ -36,11 +36,9 @@ void wooinit(void)
 {
     pthread_create_orig = dlsym(RTLD_NEXT, "pthread_create");
     fprintf(stderr, "pthreads: using profiling hooks for gprof\n");
-    if(pthread_create_orig == NULL)
-    {
+    if (pthread_create_orig == NULL) {
         char *error = dlerror();
-        if(error == NULL)
-        {
+        if (error == NULL) {
             error = "pthread_create is NULL";
         }
         fprintf(stderr, "%s\n", error);
@@ -49,10 +47,9 @@ void wooinit(void)
 }
 
 /* Our data structure passed to the wrapper */
-typedef struct wrapper_s
-{
-    void * (*start_routine)(void *);
-    void * arg;
+typedef struct wrapper_s {
+    void *(*start_routine)(void *);
+    void *arg;
 
     pthread_mutex_t lock;
     pthread_cond_t  wait;
@@ -62,11 +59,11 @@ typedef struct wrapper_s
 } wrapper_t;
 
 /* The wrapper function in charge for setting the itimer value */
-static void * wrapper_routine(void * data)
+static void *wrapper_routine(void * data)
 {
     /* Put user data in thread-local variables */
     void * (*start_routine)(void *) = ((wrapper_t*)data)->start_routine;
-    void * arg = ((wrapper_t*)data)->arg;
+    void *arg = ((wrapper_t*)data)->arg;
 
     /* Set the profile timer value */
     setitimer(ITIMER_PROF, &((wrapper_t*)data)->itimer, NULL);
@@ -105,8 +102,7 @@ int pthread_create(pthread_t *__restrict thread,
 
     /* If the thread was successfully spawned, wait for the data
      * to be released */
-    if(i_return == 0)
-    {
+    if (i_return == 0) {
         pthread_cond_wait(&wrapper_data.wait, &wrapper_data.lock);
     }
 

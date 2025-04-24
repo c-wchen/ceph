@@ -24,16 +24,16 @@
 class RadosClientCache
 {
 private:
-  std::map<std::string, std::weak_ptr<librados::Rados>> cache;
-  ceph::mutex cache_lock = ceph::make_mutex("RadosClientCache::MapLock");
+    std::map < std::string, std::weak_ptr < librados::Rados>> cache;
+    ceph::mutex cache_lock = ceph::make_mutex("RadosClientCache::MapLock");
 
-  // Remove deleted objects from the map.
-  void remove_expired();
+    // Remove deleted objects from the map.
+    void remove_expired();
 
-  std::shared_ptr<librados::Rados> init_client(
-    std::string& entity_name, std::string& cluster_name);
+    std::shared_ptr < librados::Rados > init_client(
+        std::string& entity_name, std::string& cluster_name);
 
 public:
-  std::shared_ptr<librados::Rados> get_client(
-    std::string& entity_name, std::string& cluster_name);
+    std::shared_ptr < librados::Rados > get_client(
+        std::string& entity_name, std::string& cluster_name);
 };

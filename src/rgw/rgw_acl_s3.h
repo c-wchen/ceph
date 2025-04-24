@@ -15,7 +15,8 @@
 
 class RGWEnv;
 
-namespace rgw::s3 {
+namespace rgw::s3
+{
 
 ACLGroupTypeEnum acl_uri_to_group(std::string_view uri);
 bool acl_group_to_uri(ACLGroupTypeEnum group, std::string& uri);

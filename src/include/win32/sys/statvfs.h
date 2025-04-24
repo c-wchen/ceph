@@ -5,8 +5,7 @@ typedef unsigned __int64 fsfilcnt64_t;
 typedef unsigned __int64 fsblkcnt64_t;
 typedef unsigned __int64 fsblkcnt_t;
 
-struct statvfs
-{
+struct statvfs {
     unsigned long int f_bsize;
     unsigned long int f_frsize;
     fsblkcnt64_t f_blocks;

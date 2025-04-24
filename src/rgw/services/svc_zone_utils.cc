@@ -14,31 +14,33 @@ using namespace std;
 
 int RGWSI_ZoneUtils::do_start(optional_yield, const DoutPrefixProvider *dpp)
 {
-  init_unique_trans_id_deps();
+    init_unique_trans_id_deps();
 
-  return 0;
+    return 0;
 }
 
-string RGWSI_ZoneUtils::gen_host_id() {
-  /* uint64_t needs 16, two '-' separators and a trailing null */
-  return fmt::format("{}-{}-{}", rados->get_instance_id(),
-		     zone_svc->get_zone().name,
-		     zone_svc->get_zonegroup().get_name());
+string RGWSI_ZoneUtils::gen_host_id()
+{
+    /* uint64_t needs 16, two '-' separators and a trailing null */
+    return fmt::format("{}-{}-{}", rados->get_instance_id(),
+                       zone_svc->get_zone().name,
+                       zone_svc->get_zonegroup().get_name());
 }
 
 string RGWSI_ZoneUtils::unique_id(uint64_t unique_num)
 {
-  return fmt::format("{}.{}.{}",
-		     zone_svc->get_zone_params().get_id(),
-		     rados->get_instance_id(),
-		     unique_num);
+    return fmt::format("{}.{}.{}",
+                       zone_svc->get_zone_params().get_id(),
+                       rados->get_instance_id(),
+                       unique_num);
 }
 
-void RGWSI_ZoneUtils::init_unique_trans_id_deps() {
-  url_encode(fmt::format("-{}-{}",
-			 rados->get_instance_id(),
-			 zone_svc->get_zone().name),
-	     trans_id_suffix);
+void RGWSI_ZoneUtils::init_unique_trans_id_deps()
+{
+    url_encode(fmt::format("-{}-{}",
+                           rados->get_instance_id(),
+                           zone_svc->get_zone().name),
+               trans_id_suffix);
 }
 
 /* In order to preserve compatibility with Swift API, transaction ID
@@ -52,14 +54,15 @@ void RGWSI_ZoneUtils::init_unique_trans_id_deps() {
  *    range;
  *  - last, optional part of transaction ID is any url-encoded string
  *    without restriction on length. */
-string RGWSI_ZoneUtils::unique_trans_id(const uint64_t unique_num) {
-  char buf[41]; /* 2 + 21 + 1 + 16 (timestamp can consume up to 16) + 1 */
-  time_t timestamp = time(NULL);
+string RGWSI_ZoneUtils::unique_trans_id(const uint64_t unique_num)
+{
+    char buf[41]; /* 2 + 21 + 1 + 16 (timestamp can consume up to 16) + 1 */
+    time_t timestamp = time(NULL);
 
-  snprintf(buf, sizeof(buf), "tx%021llx-%010llx",
-           (unsigned long long)unique_num,
-           (unsigned long long)timestamp);
+    snprintf(buf, sizeof(buf), "tx%021llx-%010llx",
+             (unsigned long long)unique_num,
+             (unsigned long long)timestamp);
 
-  return string(buf) + trans_id_suffix;
+    return string(buf) + trans_id_suffix;
 }
 

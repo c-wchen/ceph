@@ -7,36 +7,42 @@
 #include "msg/msg_types.h"
 #include <string>
 
-namespace librbd {
-namespace managed_lock {
+namespace librbd
+{
+namespace managed_lock
+{
 
 struct Locker {
-  entity_name_t entity;
-  std::string cookie;
-  std::string address;
-  uint64_t handle = 0;
+    entity_name_t entity;
+    std::string cookie;
+    std::string address;
+    uint64_t handle = 0;
 
-  Locker() {
-  }
-  Locker(const entity_name_t& entity, const std::string &cookie,
-         const std::string &address, uint64_t handle)
-    : entity(entity), cookie(cookie), address(address), handle(handle) {
-  }
+    Locker()
+    {
+    }
+    Locker(const entity_name_t &entity, const std::string &cookie,
+           const std::string &address, uint64_t handle)
+        : entity(entity), cookie(cookie), address(address), handle(handle)
+    {
+    }
 
-  inline bool operator==(const Locker &rhs) const {
-    return (entity == rhs.entity &&
-            cookie == rhs.cookie &&
-            address == rhs.address &&
-            handle == rhs.handle);
-  }
-  inline bool operator!=(const Locker &rhs) const {
-    return !(*this == rhs);
-  }
+    inline bool operator==(const Locker &rhs) const
+    {
+        return (entity == rhs.entity &&
+                cookie == rhs.cookie &&
+                address == rhs.address &&
+                handle == rhs.handle);
+    }
+    inline bool operator!=(const Locker &rhs) const
+    {
+        return !(*this == rhs);
+    }
 };
 
 enum Mode {
-  EXCLUSIVE,
-  SHARED
+    EXCLUSIVE,
+    SHARED
 };
 
 

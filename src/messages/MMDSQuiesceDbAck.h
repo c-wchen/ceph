@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation. See file COPYING.
- * 
+ *
  */
 
 
@@ -18,41 +18,50 @@
 #include "messages/MMDSOp.h"
 #include "mds/QuiesceDbEncoding.h"
 
-class MMDSQuiesceDbAck final : public MMDSOp {
+class MMDSQuiesceDbAck final : public MMDSOp
+{
 protected:
-  MMDSQuiesceDbAck() : MMDSOp{MSG_MDS_QUIESCE_DB_ACK} {}
-  MMDSQuiesceDbAck(auto&& _ack)
-    : MMDSOp{MSG_MDS_QUIESCE_DB_ACK}
-    , ack(std::forward<decltype(_ack)>(_ack))
+    MMDSQuiesceDbAck() : MMDSOp{MSG_MDS_QUIESCE_DB_ACK} {}
+    MMDSQuiesceDbAck(auto&& _ack)
+        : MMDSOp
+    {
+        MSG_MDS_QUIESCE_DB_ACK
+    }
+    , ack(std::forward < decltype(_ack) > (_ack))
     {}
-  ~MMDSQuiesceDbAck() final {}
+    ~MMDSQuiesceDbAck() final {}
 
 public:
-  std::string_view get_type_name() const override { return "mds_quiesce_db_ack"; }
-  void print(std::ostream& o) const override {
-    o << get_type_name();
-  }
+    std::string_view get_type_name() const override
+    {
+        return "mds_quiesce_db_ack";
+    }
+    void print(std::ostream& o) const override
+    {
+        o << get_type_name();
+    }
 
-  void encode_payload(uint64_t features) override
-  {
-    ::encode(ack, payload);
-  }
+    void encode_payload(uint64_t features) override
+    {
+        ::encode(ack, payload);
+    }
 
-  void decode_payload() override {
-    // noop to prevent unnecessary overheads
-  }
+    void decode_payload() override
+    {
+        // noop to prevent unnecessary overheads
+    }
 
-  void decode_payload_into(QuiesceDbPeerAck &_ack) const
-  {
-    auto p = payload.cbegin();
-    ::decode(_ack, p);
-  }
+    void decode_payload_into(QuiesceDbPeerAck &_ack) const
+    {
+        auto p = payload.cbegin();
+        ::decode(_ack, p);
+    }
 
 private:
-  template<class T, typename... Args>
-  friend boost::intrusive_ptr<T> ceph::make_message(Args&&... args);
-  template<class T, typename... Args>
-  friend MURef<T> crimson::make_message(Args&&... args);
+    template < class T, typename... Args >
+    friend boost::intrusive_ptr < T > ceph::make_message(Args&&... args);
+    template < class T, typename... Args >
+    friend MURef < T > crimson::make_message(Args&&... args);
 
-  QuiesceDbPeerAck ack;
+    QuiesceDbPeerAck ack;
 };

@@ -20,21 +20,21 @@
 class RGWOp;
 
 // IAM Group op factory functions
-RGWOp* make_iam_create_group_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_get_group_op(const ceph::bufferlist& unused);
-RGWOp* make_iam_update_group_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_delete_group_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_list_groups_op(const ceph::bufferlist& unused);
+RGWOp *make_iam_create_group_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_get_group_op(const ceph::bufferlist& unused);
+RGWOp *make_iam_update_group_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_delete_group_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_list_groups_op(const ceph::bufferlist& unused);
 
-RGWOp* make_iam_add_user_to_group_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_remove_user_from_group_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_list_groups_for_user_op(const ceph::bufferlist& unused);
+RGWOp *make_iam_add_user_to_group_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_remove_user_from_group_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_list_groups_for_user_op(const ceph::bufferlist& unused);
 
 // IAM GroupPolicy op factory functions
-RGWOp* make_iam_put_group_policy_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_get_group_policy_op(const ceph::bufferlist& unused);
-RGWOp* make_iam_delete_group_policy_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_list_group_policies_op(const ceph::bufferlist& unused);
-RGWOp* make_iam_attach_group_policy_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_detach_group_policy_op(const ceph::bufferlist& post_body);
-RGWOp* make_iam_list_attached_group_policies_op(const ceph::bufferlist& unused);
+RGWOp *make_iam_put_group_policy_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_get_group_policy_op(const ceph::bufferlist& unused);
+RGWOp *make_iam_delete_group_policy_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_list_group_policies_op(const ceph::bufferlist& unused);
+RGWOp *make_iam_attach_group_policy_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_detach_group_policy_op(const ceph::bufferlist& post_body);
+RGWOp *make_iam_list_attached_group_policies_op(const ceph::bufferlist& unused);

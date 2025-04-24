@@ -24,96 +24,97 @@
 
 int construct_devpath_if_missing(Config* cfg)
 {
-  // Windows doesn't allow us to request specific disk paths when mapping an
-  // image. This will just be used by rbd-wnbd and wnbd as an identifier.
-  if (cfg->devpath.empty()) {
-    if (cfg->imgname.empty()) {
-      derr << "Missing image name." << dendl;
-      return -EINVAL;
+    // Windows doesn't allow us to request specific disk paths when mapping an
+    // image. This will just be used by rbd-wnbd and wnbd as an identifier.
+    if (cfg->devpath.empty()) {
+        if (cfg->imgname.empty()) {
+            derr << "Missing image name." << dendl;
+            return -EINVAL;
+        }
+
+        if (!cfg->poolname.empty()) {
+            cfg->devpath += cfg->poolname;
+            cfg->devpath += '/';
+        }
+        if (!cfg->nsname.empty()) {
+            cfg->devpath += cfg->nsname;
+            cfg->devpath += '/';
+        }
+
+        cfg->devpath += cfg->imgname;
+
+        if (!cfg->snapname.empty()) {
+            cfg->devpath += '@';
+            cfg->devpath += cfg->snapname;
+        }
     }
 
-    if (!cfg->poolname.empty()) {
-      cfg->devpath += cfg->poolname;
-      cfg->devpath += '/';
-    }
-    if (!cfg->nsname.empty()) {
-      cfg->devpath += cfg->nsname;
-      cfg->devpath += '/';
-    }
-
-    cfg->devpath += cfg->imgname;
-
-    if (!cfg->snapname.empty()) {
-      cfg->devpath += '@';
-      cfg->devpath += cfg->snapname;
-    }
-  }
-
-  return 0;
+    return 0;
 }
 
 int save_config_to_registry(Config* cfg)
 {
-  std::string strKey{ SERVICE_REG_KEY };
-  strKey.append("\\");
-  strKey.append(cfg->devpath);
-  auto reg_key = RegistryKey(
-    g_ceph_context, HKEY_LOCAL_MACHINE, strKey.c_str(), true);
-  if (!reg_key.hKey) {
-      return -EINVAL;
-  }
+    std::string strKey{ SERVICE_REG_KEY };
+    strKey.append("\\");
+    strKey.append(cfg->devpath);
+    auto reg_key = RegistryKey(
+                       g_ceph_context, HKEY_LOCAL_MACHINE, strKey.c_str(), true);
+    if (!reg_key.hKey) {
+        return -EINVAL;
+    }
 
-  int ret_val = 0;
-  // Registry writes are immediately available to other processes.
-  // Still, we'll do a flush to ensure that the mapping can be
-  // recreated after a system crash.
-  if (reg_key.set("pid", getpid()) ||
-      reg_key.set("devpath", cfg->devpath) ||
-      reg_key.set("poolname", cfg->poolname) ||
-      reg_key.set("nsname", cfg->nsname) ||
-      reg_key.set("imgname", cfg->imgname) ||
-      reg_key.set("snapname", cfg->snapname) ||
-      reg_key.set("command_line", cfg->command_line) ||
-      reg_key.set("persistent", cfg->persistent) ||
-      reg_key.set("admin_sock_path", g_conf()->admin_socket) ||
-      reg_key.flush()) {
-    ret_val = -EINVAL;
-  }
+    int ret_val = 0;
+    // Registry writes are immediately available to other processes.
+    // Still, we'll do a flush to ensure that the mapping can be
+    // recreated after a system crash.
+    if (reg_key.set("pid", getpid()) ||
+        reg_key.set("devpath", cfg->devpath) ||
+        reg_key.set("poolname", cfg->poolname) ||
+        reg_key.set("nsname", cfg->nsname) ||
+        reg_key.set("imgname", cfg->imgname) ||
+        reg_key.set("snapname", cfg->snapname) ||
+        reg_key.set("command_line", cfg->command_line) ||
+        reg_key.set("persistent", cfg->persistent) ||
+        reg_key.set("admin_sock_path", g_conf()->admin_socket) ||
+        reg_key.flush()) {
+        ret_val = -EINVAL;
+    }
 
-  return ret_val;
+    return ret_val;
 }
 
 int remove_config_from_registry(Config* cfg)
 {
-  std::string strKey{ SERVICE_REG_KEY };
-  strKey.append("\\");
-  strKey.append(cfg->devpath);
-  return RegistryKey::remove(
-    g_ceph_context, HKEY_LOCAL_MACHINE, strKey.c_str());
+    std::string strKey{ SERVICE_REG_KEY };
+    strKey.append("\\");
+    strKey.append(cfg->devpath);
+    return RegistryKey::remove(
+               g_ceph_context, HKEY_LOCAL_MACHINE, strKey.c_str());
 }
 
 int load_mapping_config_from_registry(std::string devpath, Config* cfg)
 {
-  std::string strKey{ SERVICE_REG_KEY };
-  strKey.append("\\");
-  strKey.append(devpath);
-  auto reg_key = RegistryKey(
-    g_ceph_context, HKEY_LOCAL_MACHINE, strKey.c_str(), false);
-  if (!reg_key.hKey) {
-    if (reg_key.missingKey)
-      return -ENOENT;
-    else
-      return -EINVAL;
-  }
+    std::string strKey{ SERVICE_REG_KEY };
+    strKey.append("\\");
+    strKey.append(devpath);
+    auto reg_key = RegistryKey(
+                       g_ceph_context, HKEY_LOCAL_MACHINE, strKey.c_str(), false);
+    if (!reg_key.hKey) {
+        if (reg_key.missingKey) {
+            return -ENOENT;
+        } else {
+            return -EINVAL;
+        }
+    }
 
-  reg_key.get("devpath", cfg->devpath);
-  reg_key.get("poolname", cfg->poolname);
-  reg_key.get("nsname", cfg->nsname);
-  reg_key.get("imgname", cfg->imgname);
-  reg_key.get("snapname", cfg->snapname);
-  reg_key.get("command_line", cfg->command_line);
-  reg_key.get("persistent", cfg->persistent);
-  reg_key.get("admin_sock_path", cfg->admin_sock_path);
+    reg_key.get("devpath", cfg->devpath);
+    reg_key.get("poolname", cfg->poolname);
+    reg_key.get("nsname", cfg->nsname);
+    reg_key.get("imgname", cfg->imgname);
+    reg_key.get("snapname", cfg->snapname);
+    reg_key.get("command_line", cfg->command_line);
+    reg_key.get("persistent", cfg->persistent);
+    reg_key.get("admin_sock_path", cfg->admin_sock_path);
 
-  return 0;
+    return 0;
 }

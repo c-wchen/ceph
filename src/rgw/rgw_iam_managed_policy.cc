@@ -16,7 +16,8 @@
 #include "rgw_iam_managed_policy.h"
 #include "rgw_iam_policy.h"
 
-namespace rgw::IAM {
+namespace rgw::IAM
+{
 
 // Type: AWS managed policy
 // Creation time: February 06, 2015, 18:40 UTC
@@ -154,38 +155,38 @@ static constexpr std::string_view AmazonS3ReadOnlyAccess = R"(
 })";
 
 auto get_managed_policy(CephContext* cct, std::string_view arn)
-    -> std::optional<Policy>
+-> std::optional < Policy >
 {
-  const std::string* tenant = nullptr;
-  constexpr bool reject = false; // reject_invalid_principals
-  if (arn == "arn:aws:iam::aws:policy/IAMFullAccess") {
-    return Policy{cct, tenant, std::string{IAMFullAccess}, reject};
-  } else if (arn == "arn:aws:iam::aws:policy/IAMReadOnlyAccess") {
-    return Policy{cct, tenant, std::string{IAMReadOnlyAccess}, reject};
-  } else if (arn == "arn:aws:iam::aws:policy/AmazonSNSFullAccess") {
-    return Policy{cct, tenant, std::string{AmazonSNSFullAccess}, reject};
-  } else if (arn == "arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess") {
-    return Policy{cct, tenant, std::string{AmazonSNSReadOnlyAccess}, reject};
-  } else if (arn == "arn:aws:iam::aws:policy/AmazonS3FullAccess") {
-    return Policy{cct, tenant, std::string{AmazonS3FullAccess}, reject};
-  } else if (arn == "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess") {
-    return Policy{cct, tenant, std::string{AmazonS3ReadOnlyAccess}, reject};
-  }
-  return {};
+    const std::string* tenant = nullptr;
+    constexpr bool reject = false; // reject_invalid_principals
+    if (arn == "arn:aws:iam::aws:policy/IAMFullAccess") {
+        return Policy{cct, tenant, std::string{IAMFullAccess}, reject};
+    } else if (arn == "arn:aws:iam::aws:policy/IAMReadOnlyAccess") {
+        return Policy{cct, tenant, std::string{IAMReadOnlyAccess}, reject};
+    } else if (arn == "arn:aws:iam::aws:policy/AmazonSNSFullAccess") {
+        return Policy{cct, tenant, std::string{AmazonSNSFullAccess}, reject};
+    } else if (arn == "arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess") {
+        return Policy{cct, tenant, std::string{AmazonSNSReadOnlyAccess}, reject};
+    } else if (arn == "arn:aws:iam::aws:policy/AmazonS3FullAccess") {
+        return Policy{cct, tenant, std::string{AmazonS3FullAccess}, reject};
+    } else if (arn == "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess") {
+        return Policy{cct, tenant, std::string{AmazonS3ReadOnlyAccess}, reject};
+    }
+    return {};
 }
 
 void encode(const ManagedPolicies& m, bufferlist& bl, uint64_t f)
 {
-  ENCODE_START(1, 1, bl);
-  encode(m.arns, bl);
-  ENCODE_FINISH(bl);
+    ENCODE_START(1, 1, bl);
+    encode(m.arns, bl);
+    ENCODE_FINISH(bl);
 }
 
 void decode(ManagedPolicies& m, bufferlist::const_iterator& bl)
 {
-  DECODE_START(1, bl);
-  decode(m.arns, bl);
-  DECODE_FINISH(bl);
+    DECODE_START(1, bl);
+    decode(m.arns, bl);
+    DECODE_FINISH(bl);
 }
 
 } // namespace rgw::IAM

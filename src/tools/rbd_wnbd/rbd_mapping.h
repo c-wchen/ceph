@@ -19,81 +19,81 @@
 class WNBDWatchCtx : public librbd::UpdateWatchCtx
 {
 private:
-  librados::IoCtx &io_ctx;
-  WnbdHandler* handler;
-  librbd::Image &image;
-  uint64_t size;
+    librados::IoCtx &io_ctx;
+    WnbdHandler *handler;
+    librbd::Image &image;
+    uint64_t size;
 public:
-  WNBDWatchCtx(librados::IoCtx& io_ctx, WnbdHandler* handler,
-               librbd::Image& image, uint64_t size)
-    : io_ctx(io_ctx)
-    , handler(handler)
-    , image(image)
-    , size(size)
-  {
-  }
-
-  ~WNBDWatchCtx() override {}
-
-  void handle_notify() override
-  {
-    uint64_t new_size;
-
-    if (image.size(&new_size) == 0 && new_size != size &&
-        handler->resize(new_size) == 0) {
-      size = new_size;
+    WNBDWatchCtx(librados::IoCtx& io_ctx, WnbdHandler* handler,
+                 librbd::Image& image, uint64_t size)
+        : io_ctx(io_ctx)
+        , handler(handler)
+        , image(image)
+        , size(size)
+    {
     }
-  }
+
+    ~WNBDWatchCtx() override {}
+
+    void handle_notify() override
+    {
+        uint64_t new_size;
+
+        if (image.size(&new_size) == 0 && new_size != size &&
+            handler->resize(new_size) == 0) {
+            size = new_size;
+        }
+    }
 };
 
-typedef std::function<void(std::string devpath, int ret)> disconnect_cbk_t;
+typedef std::function < void(std::string devpath, int ret) > disconnect_cbk_t;
 
 class RbdMapping
 {
 private:
-  Config cfg;
-  // We're sharing the rados object across mappings in order to
-  // reuse the OSD connections.
-  RadosClientCache& client_cache;
-  std::shared_ptr<librados::Rados> rados;
+    Config cfg;
+    // We're sharing the rados object across mappings in order to
+    // reuse the OSD connections.
+    RadosClientCache &client_cache;
+    std::shared_ptr < librados::Rados > rados;
 
-  librbd::RBD rbd;
-  librados::IoCtx io_ctx;
-  librbd::Image image;
-  uint64_t initial_image_size;
+    librbd::RBD rbd;
+    librados::IoCtx io_ctx;
+    librbd::Image image;
+    uint64_t initial_image_size;
 
-  WnbdHandler* handler = nullptr;
-  uint64_t watch_handle;
-  WNBDWatchCtx* watch_ctx = nullptr;
-  bool saved_cfg_to_registry = false;
-  disconnect_cbk_t disconnect_cbk;
+    WnbdHandler *handler = nullptr;
+    uint64_t watch_handle;
+    WNBDWatchCtx *watch_ctx = nullptr;
+    bool saved_cfg_to_registry = false;
+    disconnect_cbk_t disconnect_cbk;
 
-  ceph::mutex shutdown_lock = ceph::make_mutex("RbdMapping::ShutdownLock");
-  std::thread monitor_thread;
+    ceph::mutex shutdown_lock = ceph::make_mutex("RbdMapping::ShutdownLock");
+    std::thread monitor_thread;
 
-  int init();
+    int init();
 
 public:
-  RbdMapping(Config& _cfg,
-             RadosClientCache& _client_cache)
-    : cfg(_cfg)
-    , client_cache(_client_cache)
-  {}
+    RbdMapping(Config& _cfg,
+               RadosClientCache& _client_cache)
+        : cfg(_cfg)
+        , client_cache(_client_cache)
+    {}
 
-  RbdMapping(Config& _cfg,
-             RadosClientCache& _client_cache,
-             disconnect_cbk_t _disconnect_cbk)
-    : cfg(_cfg)
-    , client_cache(_client_cache)
-    , disconnect_cbk(_disconnect_cbk)
-  {}
+    RbdMapping(Config& _cfg,
+               RadosClientCache& _client_cache,
+               disconnect_cbk_t _disconnect_cbk)
+        : cfg(_cfg)
+        , client_cache(_client_cache)
+        , disconnect_cbk(_disconnect_cbk)
+    {}
 
-  ~RbdMapping();
+    ~RbdMapping();
 
-  int start();
-  // Wait until the image gets disconnected.
-  int wait();
-  void shutdown();
+    int start();
+    // Wait until the image gets disconnected.
+    int wait();
+    void shutdown();
 };
 
 // Wait for the mapped disk to become available.
@@ -102,26 +102,26 @@ int wait_mapped_disk(Config& cfg);
 class RbdMappingDispatcher
 {
 private:
-  RadosClientCache& client_cache;
+    RadosClientCache &client_cache;
 
-  std::map<std::string, std::shared_ptr<RbdMapping>> mappings;
-  ceph::mutex map_mutex = ceph::make_mutex("RbdMappingDispatcher::MapMutex");
+    std::map < std::string, std::shared_ptr < RbdMapping>> mappings;
+    ceph::mutex map_mutex = ceph::make_mutex("RbdMappingDispatcher::MapMutex");
 
-  std::atomic<bool> stop_requested = false;
+    std::atomic < bool > stop_requested = false;
 
-  void disconnect_cbk(std::string devpath, int ret);
-  int wait_for_mappings_removal(int timeout_ms);
-  std::vector<std::string> get_mapped_devpaths();
-  int get_mappings_count();
+    void disconnect_cbk(std::string devpath, int ret);
+    int wait_for_mappings_removal(int timeout_ms);
+    std::vector < std::string > get_mapped_devpaths();
+    int get_mappings_count();
 
 public:
-  RbdMappingDispatcher(RadosClientCache& _client_cache)
-    : client_cache(_client_cache)
-  {}
+    RbdMappingDispatcher(RadosClientCache& _client_cache)
+        : client_cache(_client_cache)
+    {}
 
-  int create(Config& cfg);
-  std::shared_ptr<RbdMapping> get_mapping(std::string& devpath);
-  int stop(bool hard_disconnect,
-           int soft_disconnect_timeout,
-           int worker_count);
+    int create(Config& cfg);
+    std::shared_ptr < RbdMapping > get_mapping(std::string& devpath);
+    int stop(bool hard_disconnect,
+             int soft_disconnect_timeout,
+             int worker_count);
 };

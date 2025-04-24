@@ -16,8 +16,8 @@
  * such classes in Crimson.
  */
 
-template <typename T>
-concept has_formatter = fmt::has_formatter<T, fmt::format_context>::value;
+template < typename T >
+concept has_formatter = fmt::has_formatter < T, fmt::format_context >::value;
 
 /**
  * Tagging classes that provide support for default fmtlib formatting,
@@ -29,72 +29,99 @@ concept has_formatter = fmt::has_formatter<T, fmt::format_context>::value;
  * *or*
  * auto fmt_print_ctx(auto &ctx) -> decltype(ctx.out());
  */
-template<class T>
-concept has_fmt_print = requires(T t) {
-  { t.fmt_print() } -> std::same_as<std::string>;
+template < class T >
+concept has_fmt_print = requires(T t)
+{
+    {
+        t.fmt_print()
+    }
+    -> std::same_as < std::string >;
 };
-template<class T>
-concept has_alt_fmt_print = requires(T t) {
-  { t.alt_fmt_print(bool{}) } -> std::same_as<std::string>;
+template < class T >
+concept has_alt_fmt_print = requires(T t)
+{
+    {
+        t.alt_fmt_print(bool{})
+    }
+    -> std::same_as < std::string >;
 };
-template<class T>
+template < class T >
 concept has_fmt_print_ctx = requires(
-  T t, fmt::buffer_context<char> &ctx) {
-  { t.fmt_print_ctx(ctx) } -> std::same_as<decltype(ctx.out())>;
-};
-
-namespace fmt {
-
-template <has_fmt_print T>
-struct formatter<T> {
-  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-  template <typename FormatContext>
-  auto format(const T& k, FormatContext& ctx) const {
-    return fmt::format_to(ctx.out(), "{}", k.fmt_print());
-  }
-};
-
-template <has_alt_fmt_print T>
-struct formatter<T> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    auto it = ctx.begin();
-    if (it != ctx.end() && *it == 's') {
-      verbose = false;
-      ++it;
+                                T t, fmt::buffer_context < char > &ctx)
+{
+    {
+        t.fmt_print_ctx(ctx)
     }
-    return it;
-  }
-  template <typename FormatContext>
-  auto format(const T& k, FormatContext& ctx) const {
-    if (verbose) {
-      return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(true));
-    }
-    return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(false));
-  }
-  bool verbose{true};
+    -> std::same_as < decltype(ctx.out()) >;
 };
 
-template <has_fmt_print_ctx T>
-struct formatter<T> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-  template <typename FormatContext>
-  auto format(const T& k, FormatContext& ctx) const {
-    return k.fmt_print_ctx(ctx);
-  }
+namespace fmt
+{
+
+template < has_fmt_print T >
+struct formatter < T > {
+    constexpr auto parse(format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+    template < typename FormatContext >
+    auto format(const T& k, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", k.fmt_print());
+    }
 };
 
-template <typename T>
-struct formatter<std::optional<T>> {
-  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-  template <typename FormatContext>
-  auto format(const std::optional<T> &v, FormatContext& ctx) const {
-    if (v.has_value()) {
-      return fmt::format_to(ctx.out(), "{}", *v);
+template < has_alt_fmt_print T >
+struct formatter < T > {
+    template < typename ParseContext >
+    constexpr auto parse(ParseContext& ctx)
+    {
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == 's') {
+            verbose = false;
+            ++it;
+        }
+        return it;
     }
-    return fmt::format_to(ctx.out(), "<null>");
-  }
+    template < typename FormatContext >
+    auto format(const T& k, FormatContext& ctx) const
+    {
+        if (verbose) {
+            return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(true));
+        }
+        return fmt::format_to(ctx.out(), "{}", k.alt_fmt_print(false));
+    }
+    bool verbose{true};
+};
+
+template < has_fmt_print_ctx T >
+struct formatter < T > {
+    template < typename ParseContext >
+    constexpr auto parse(ParseContext& ctx)
+    {
+        return ctx.begin();
+    }
+    template < typename FormatContext >
+    auto format(const T& k, FormatContext& ctx) const
+    {
+        return k.fmt_print_ctx(ctx);
+    }
+};
+
+template < typename T >
+struct formatter < std::optional < T>> {
+    constexpr auto parse(format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+    template < typename FormatContext >
+    auto format(const std::optional < T > &v, FormatContext& ctx) const
+    {
+        if (v.has_value()) {
+            return fmt::format_to(ctx.out(), "{}", *v);
+        }
+        return fmt::format_to(ctx.out(), "<null>");
+    }
 };
 
 }  // namespace fmt

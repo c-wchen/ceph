@@ -18,4 +18,4 @@
 
 #include "include/buffer.h"
 
-typedef std::function<void(int,std::string_view,ceph::buffer::list&)> asok_finisher;
+typedef std::function < void(int, std::string_view, ceph::buffer::list &) > asok_finisher;

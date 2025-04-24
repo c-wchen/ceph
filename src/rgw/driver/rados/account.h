@@ -23,7 +23,10 @@
 #include "include/rados/librados_fwd.hpp"
 #include "common/async/yield_context.h"
 
-namespace ceph { class Formatter; }
+namespace ceph
+{
+class Formatter;
+}
 class DoutPrefixProvider;
 class JSONObj;
 struct rgw_raw_obj;
@@ -35,11 +38,12 @@ class RGWSI_SysObj;
 class RGWStorageStats;
 class RGWZoneParams;
 
-namespace rgwrados::account {
+namespace rgwrados::account
+{
 
 /// Account metadata handler factory
 auto create_metadata_handler(RGWSI_SysObj& sysobj, const RGWZoneParams& zone)
-    -> std::unique_ptr<RGWMetadataHandler>;
+-> std::unique_ptr < RGWMetadataHandler >;
 
 /// Return the rados object that tracks the given account's buckets. This
 /// can be used with the cls_user interface in namespace rgwrados::buckets.
@@ -74,7 +78,7 @@ int read(const DoutPrefixProvider* dpp,
          const RGWZoneParams& zone,
          std::string_view account_id,
          RGWAccountInfo& info,
-         std::map<std::string, ceph::buffer::list>& attrs,
+         std::map < std::string, ceph::buffer::list > & attrs,
          ceph::real_time& mtime,
          RGWObjVersionTracker& objv);
 
@@ -86,7 +90,7 @@ int read_by_name(const DoutPrefixProvider* dpp,
                  std::string_view tenant,
                  std::string_view name,
                  RGWAccountInfo& info,
-                 std::map<std::string, ceph::buffer::list>& attrs,
+                 std::map < std::string, ceph::buffer::list > & attrs,
                  RGWObjVersionTracker& objv);
 
 /// Read account info by email
@@ -96,7 +100,7 @@ int read_by_email(const DoutPrefixProvider* dpp,
                   const RGWZoneParams& zone,
                   std::string_view email,
                   RGWAccountInfo& info,
-                  std::map<std::string, ceph::buffer::list>& attrs,
+                  std::map < std::string, ceph::buffer::list > & attrs,
                   RGWObjVersionTracker& objv);
 
 /// Write account info and update name/email indices
@@ -106,7 +110,7 @@ int write(const DoutPrefixProvider* dpp,
           const RGWZoneParams& zone,
           const RGWAccountInfo& info,
           const RGWAccountInfo* old_info,
-          const std::map<std::string, ceph::buffer::list>& attrs,
+          const std::map < std::string, ceph::buffer::list > & attrs,
           ceph::real_time mtime,
           bool exclusive,
           RGWObjVersionTracker& objv);
@@ -125,6 +129,6 @@ int resource_count(const DoutPrefixProvider* dpp,
                    optional_yield y,
                    librados::Rados& rados,
                    const rgw_raw_obj& obj,
-                   uint32_t& count);
+                   uint32_t &count);
 
 } // namespace rgwrados::account

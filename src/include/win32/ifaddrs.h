@@ -20,17 +20,17 @@
 #include <ifdef.h>
 
 struct ifaddrs {
-  struct ifaddrs  *ifa_next;    /* Next item in list */
-  char            *ifa_name;    /* Name of interface */
-  unsigned int     ifa_flags;   /* Flags from SIOCGIFFLAGS */
-  struct sockaddr *ifa_addr;    /* Address of interface */
-  struct sockaddr *ifa_netmask; /* Netmask of interface */
+    struct ifaddrs  *ifa_next;    /* Next item in list */
+    char            *ifa_name;    /* Name of interface */
+    unsigned int     ifa_flags;   /* Flags from SIOCGIFFLAGS */
+    struct sockaddr *ifa_addr;    /* Address of interface */
+    struct sockaddr *ifa_netmask; /* Netmask of interface */
 
-  struct sockaddr_storage in_addrs;
-  struct sockaddr_storage in_netmasks;
+    struct sockaddr_storage in_addrs;
+    struct sockaddr_storage in_netmasks;
 
-  char             ad_name[IF_MAX_STRING_SIZE];
-  size_t           speed;
+    char             ad_name[IF_MAX_STRING_SIZE];
+    size_t           speed;
 };
 
 int getifaddrs(struct ifaddrs **ifap);

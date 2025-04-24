@@ -23,16 +23,17 @@ class RGWCoroutine;
 struct rgw_raw_obj;
 struct rgw_bucket_shard;
 
-namespace rgw::error_repo {
+namespace rgw::error_repo
+{
 
 // binary-encode a bucket/shard/gen and return it as a string
 std::string encode_key(const rgw_bucket_shard& bs,
-                       std::optional<uint64_t> gen);
+                       std::optional < uint64_t > gen);
 
 // try to decode a key. returns -EINVAL if not in binary format
 int decode_key(std::string encoded,
                rgw_bucket_shard& bs,
-               std::optional<uint64_t>& gen);
+               std::optional < uint64_t > & gen);
 
 // decode a timestamp as a uint64_t for CMPXATTR_MODE_U64
 ceph::real_time decode_value(const ceph::bufferlist& bl);
@@ -41,7 +42,7 @@ ceph::real_time decode_value(const ceph::bufferlist& bl);
 int write(librados::ObjectWriteOperation& op,
           const std::string& key,
           ceph::real_time timestamp);
-RGWCoroutine* write_cr(librados::Rados* rados,
+RGWCoroutine *write_cr(librados::Rados* rados,
                        const rgw_raw_obj& obj,
                        const std::string& key,
                        ceph::real_time timestamp);
@@ -50,7 +51,7 @@ RGWCoroutine* write_cr(librados::Rados* rados,
 int remove(librados::ObjectWriteOperation& op,
            const std::string& key,
            ceph::real_time timestamp);
-RGWCoroutine* remove_cr(librados::Rados* rados,
+RGWCoroutine *remove_cr(librados::Rados* rados,
                         const rgw_raw_obj& obj,
                         const std::string& key,
                         ceph::real_time timestamp);

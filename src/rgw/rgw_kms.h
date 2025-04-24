@@ -33,19 +33,19 @@ static const std::string RGW_SSE_KMS_KMIP_SE_KV = "kv";
  * \return
  */
 int make_actual_key_from_kms(const DoutPrefixProvider *dpp,
-                             std::map<std::string, bufferlist>& attrs,
+                             std::map < std::string, bufferlist > & attrs,
                              optional_yield y,
                              std::string& actual_key);
 int reconstitute_actual_key_from_kms(const DoutPrefixProvider *dpp,
-                                     std::map<std::string, bufferlist>& attrs,
+                                     std::map < std::string, bufferlist > & attrs,
                                      optional_yield y,
                                      std::string& actual_key);
 int make_actual_key_from_sse_s3(const DoutPrefixProvider *dpp,
-                                std::map<std::string, bufferlist>& attrs,
+                                std::map < std::string, bufferlist > & attrs,
                                 optional_yield y,
                                 std::string& actual_key);
 int reconstitute_actual_key_from_sse_s3(const DoutPrefixProvider *dpp,
-                                        std::map<std::string, bufferlist>& attrs,
+                                        std::map < std::string, bufferlist > & attrs,
                                         optional_yield y,
                                         std::string& actual_key);
 
@@ -62,10 +62,11 @@ int remove_sse_s3_bucket_key(const DoutPrefixProvider *dpp,
  * Defining interface here such that we can use both a real implementation
  * of this interface, and a mock implementation in tests.
 **/
-class SecretEngine {
+class SecretEngine
+{
 
 public:
-  virtual int get_key(const DoutPrefixProvider *dpp, std::string_view key_id,
-                      optional_yield y, std::string& actual_key) = 0;
-  virtual ~SecretEngine(){};
+    virtual int get_key(const DoutPrefixProvider *dpp, std::string_view key_id,
+                        optional_yield y, std::string& actual_key) = 0;
+    virtual ~SecretEngine() {};
 };

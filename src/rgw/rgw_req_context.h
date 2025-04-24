@@ -9,8 +9,8 @@ class DoutPrefixProvider;
 // this struct holds information which is created at the frontend
 // and should trickle down through all function calls to the backend
 struct req_context {
-  const DoutPrefixProvider* dpp{nullptr};
-  optional_yield y;
-  const jspan* span;
+    const DoutPrefixProvider *dpp{nullptr};
+    optional_yield y;
+    const jspan *span;
 };
 

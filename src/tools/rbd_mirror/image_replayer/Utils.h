@@ -7,13 +7,29 @@
 #include "include/rados/librados_fwd.hpp"
 #include <string>
 
-namespace cls { namespace journal { struct Client; } }
-namespace librbd { namespace journal { struct MirrorPeerClientMeta; } }
+namespace cls
+{
+namespace journal
+{
+struct Client;
+}
+}
+namespace librbd
+{
+namespace journal
+{
+struct MirrorPeerClientMeta;
+}
+}
 
-namespace rbd {
-namespace mirror {
-namespace image_replayer {
-namespace util {
+namespace rbd
+{
+namespace mirror
+{
+namespace image_replayer
+{
+namespace util
+{
 
 std::string compute_image_spec(librados::IoCtx& io_ctx,
                                const std::string& image_name);

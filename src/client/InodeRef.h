@@ -8,5 +8,5 @@
 class Inode;
 void intrusive_ptr_add_ref(Inode *in);
 void intrusive_ptr_release(Inode *in);
-typedef boost::intrusive_ptr<Inode> InodeRef;
+typedef boost::intrusive_ptr < Inode > InodeRef;
 #endif

@@ -11,27 +11,30 @@
 #include <map>
 #include <string>
 
-namespace librbd {
+namespace librbd
+{
 
 class ImageCtx;
 
-namespace api {
+namespace api
+{
 
-template <typename ImageCtxT = librbd::ImageCtx>
-class PoolMetadata {
+template < typename ImageCtxT = librbd::ImageCtx >
+class PoolMetadata
+{
 public:
-  static int get(librados::IoCtx& io_ctx, const std::string &key,
-                 std::string *value);
-  static int set(librados::IoCtx& io_ctx, const std::string &key,
-                 const std::string &value);
-  static int remove(librados::IoCtx& io_ctx, const std::string &key);
-  static int list(librados::IoCtx& io_ctx, const std::string &start,
-                  uint64_t max, std::map<std::string, ceph::bufferlist> *pairs);
+    static int get(librados::IoCtx& io_ctx, const std::string &key,
+                   std::string *value);
+    static int set(librados::IoCtx& io_ctx, const std::string &key,
+                   const std::string &value);
+    static int remove(librados::IoCtx& io_ctx, const std::string &key);
+    static int list(librados::IoCtx& io_ctx, const std::string &start,
+                    uint64_t max, std::map < std::string, ceph::bufferlist > *pairs);
 };
 
 } // namespace api
 } // namespace librbd
 
-extern template class librbd::api::PoolMetadata<librbd::ImageCtx>;
+extern template class librbd::api::PoolMetadata < librbd::ImageCtx >;
 
 #endif // CEPH_LIBRBD_API_POOL_METADATA_H
