@@ -214,7 +214,7 @@ public:
     }
     mempool_xattr_map *get_xattrs()
     {
-        return const_cast < mempool_xattr_map* > (xattrs.get());
+        return const_cast < mempool_xattr_map * > (xattrs.get());
     }
 
     void encode(ceph::buffer::list &bl, uint64_t features) const

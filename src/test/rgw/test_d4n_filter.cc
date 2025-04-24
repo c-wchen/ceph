@@ -1821,7 +1821,7 @@ TEST_F(D4NFilterFixture, StoreGetMetadata)
     ASSERT_EQ(testROp->prepare(null_yield, dpp), 0);
 
     /* Check updated metadata values */
-    static StoreObject* storeObject = static_cast < StoreObject * > (dynamic_cast < rgw::sal::FilterObject*>
+    static StoreObject* storeObject = static_cast < StoreObject * > (dynamic_cast < rgw::sal::FilterObject* >
                                       (testObject_StoreGetMetadata.get())->get_next());
 
     EXPECT_EQ(to_iso_8601(storeObject->state.mtime), "2021-11-08T21:13:38.334696731Z");

@@ -336,7 +336,7 @@ public:
     bool drain_children(int num_cr_left,
                         RGWCoroutinesStack *skip_stack = nullptr,
                         std::optional < std::function < void(uint64_t stack_id,
-                            int ret)> > cb = std::nullopt); /* returns true if needed to be called again,
+                            int ret) > > cb = std::nullopt); /* returns true if needed to be called again,
                                                                                                              cb will be called on completion of every
                                                                                                              completion. */
     bool drain_children(int num_cr_left,

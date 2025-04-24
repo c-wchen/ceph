@@ -5723,8 +5723,8 @@ bool MDCache::process_imported_caps()
         }
 
         // process caps that were exported by peer rename
-        for (map < inodeno_t, pair < mds_rank_t, map<client_t,
-             Capability::Export> > >::iterator p = rejoin_peer_exports.begin();
+        for (map < inodeno_t, pair < mds_rank_t, map < client_t,
+             Capability::Export > > >::iterator p = rejoin_peer_exports.begin();
              p != rejoin_peer_exports.end();
              ++p) {
             CInode *in = get_inode(p->first);

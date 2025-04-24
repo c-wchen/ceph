@@ -185,7 +185,7 @@ class RGWOrphanSearch
     };
 
     int log_oids(const DoutPrefixProvider *dpp, std::map < int, std::string > & log_shards, std::map < int,
-                 std::list<std::string > > & oids);
+                 std::list < std::string > > & oids);
 
 #define RGW_ORPHANSEARCH_HASH_PRIME 7877
     int orphan_shard(const std::string& str)
@@ -195,7 +195,7 @@ class RGWOrphanSearch
 
     int handle_stat_result(const DoutPrefixProvider *dpp, std::map < int, std::list < std::string> > & oids,
                            RGWRados::Object::Stat::Result& result);
-    int pop_and_handle_stat_op(const DoutPrefixProvider *dpp, std::map < int, std::list < std::string> >& oids,
+    int pop_and_handle_stat_op(const DoutPrefixProvider *dpp, std::map < int, std::list < std::string> > & oids,
                                std::deque < RGWRados::Object::Stat > & ops);
 
     int remove_index(std::map < int, std::string > & index);
@@ -219,7 +219,7 @@ public:
     int build_all_oids_index(const DoutPrefixProvider *dpp);
     int build_buckets_instance_index(const DoutPrefixProvider *dpp);
     int build_linked_oids_for_bucket(const DoutPrefixProvider *dpp, const std::string& bucket_instance_id, std::map < int,
-                                     std::list < std::string> > & oids);
+                                     std::list < std::string > > & oids);
     int build_linked_oids_index(const DoutPrefixProvider *dpp);
     int compare_oid_indexes(const DoutPrefixProvider *dpp);
 

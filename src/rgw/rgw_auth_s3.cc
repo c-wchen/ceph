@@ -364,7 +364,7 @@ static bool get_next_token(const std::string_view& s,
 
 template < std::size_t ExpectedStrNum >
 boost::container::small_vector < std::string_view, ExpectedStrNum > get_str_vec(const std::string_view& str,
-        const char* const delims)
+        const char *const delims)
 {
     boost::container::small_vector < std::string_view, ExpectedStrNum > str_vec;
 

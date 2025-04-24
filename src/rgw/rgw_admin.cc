@@ -2195,7 +2195,7 @@ stringstream &push_ss(stringstream& ss, list < string > & l, int tab = 0)
 static void get_md_sync_status(list < string > & status)
 {
     RGWMetaSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                  static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor);
+                                  static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor);
 
     int ret = sync.init(dpp());
     if (ret < 0) {
@@ -2352,7 +2352,7 @@ static void get_data_sync_status(const rgw_zone_id& source_zone, list < string >
         return;
     }
     RGWDataSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                  static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor, source_zone, nullptr);
+                                  static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor, source_zone, nullptr);
 
     int ret = sync.init(dpp());
     if (ret < 0) {
@@ -2999,7 +2999,7 @@ static int bucket_sync_status(rgw::sal::Driver* driver, const RGWBucketInfo& inf
             }
             if (pipe.source.zone.value_or(rgw_zone_id()) == z->second.id) {
                 bucket_source_sync_status(dpp(), static_cast < rgw::sal::RadosStore* > (driver),
-                                          static_cast < rgw::sal::RadosStore*>(driver)->svc()->zone->get_zone(), z->second,
+                                          static_cast < rgw::sal::RadosStore * > (driver)->svc()->zone->get_zone(), z->second,
                                           c->second,
                                           info, pipe,
                                           width, out);
@@ -9578,7 +9578,7 @@ next:
 
     if (opt_cmd == OPT::METADATA_SYNC_STATUS) {
         RGWMetaSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                      static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor);
+                                      static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor);
 
         int ret = sync.init(dpp());
         if (ret < 0) {
@@ -9623,7 +9623,7 @@ next:
 
     if (opt_cmd == OPT::METADATA_SYNC_INIT) {
         RGWMetaSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                      static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor);
+                                      static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor);
 
         int ret = sync.init(dpp());
         if (ret < 0) {
@@ -9640,7 +9640,7 @@ next:
 
     if (opt_cmd == OPT::METADATA_SYNC_RUN) {
         RGWMetaSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                      static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor);
+                                      static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor);
 
         int ret = sync.init(dpp());
         if (ret < 0) {
@@ -9661,7 +9661,7 @@ next:
             return EINVAL;
         }
         RGWDataSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                      static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor, source_zone, nullptr);
+                                      static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor, source_zone, nullptr);
 
         int ret = sync.init(dpp());
         if (ret < 0) {
@@ -9732,7 +9732,7 @@ next:
         }
 
         RGWDataSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                      static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor, source_zone, nullptr);
+                                      static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor, source_zone, nullptr);
 
         int ret = sync.init(dpp());
         if (ret < 0) {
@@ -9755,7 +9755,7 @@ next:
 
         RGWSyncModuleInstanceRef sync_module;
         int ret = static_cast < rgw::sal::RadosStore * > (driver)->svc()->sync_modules->get_manager()->create_instance(dpp(),
-                  g_ceph_context, static_cast < rgw::sal::RadosStore*>(driver)->svc()->zone->get_zone().tier_type,
+                  g_ceph_context, static_cast < rgw::sal::RadosStore * > (driver)->svc()->zone->get_zone().tier_type,
                   static_cast < rgw::sal::RadosStore * > (driver)->svc()->zone->get_zone_params().tier_config, &sync_module);
         if (ret < 0) {
             ldpp_dout(dpp(), -1) << "ERROR: failed to init sync module instance, ret=" << ret << dendl;
@@ -9763,7 +9763,7 @@ next:
         }
 
         RGWDataSyncStatusManager sync(static_cast < rgw::sal::RadosStore* > (driver),
-                                      static_cast < rgw::sal::RadosStore*>(driver)->svc()->async_processor, source_zone, nullptr, sync_module);
+                                      static_cast < rgw::sal::RadosStore * > (driver)->svc()->async_processor, source_zone, nullptr, sync_module);
 
         ret = sync.init(dpp());
         if (ret < 0) {

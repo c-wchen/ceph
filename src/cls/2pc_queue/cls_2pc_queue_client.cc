@@ -200,7 +200,7 @@ int cls_2pc_queue_list_entries(IoCtx& io_ctx,
 #endif
 
 void cls_2pc_queue_list_entries(ObjectReadOperation& op, const std::string& marker, uint32_t max, bufferlist* obl,
-                                int* prval)
+                                int *prval)
 {
     bufferlist in;
     cls_queue_list_op list_op;

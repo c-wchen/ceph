@@ -497,8 +497,8 @@ public:
             }
             // converting constructor, from iterator -> const_iterator only
             template < class U, typename std::enable_if <
-                           std::is_const < T >::value && !std::is_const < U>::value,
-                           int>::type = 0 > buffers_iterator(const buffers_iterator < U > & other)
+                           std::is_const < T >::value && !std::is_const < U >::value,
+                           int >::type = 0 > buffers_iterator(const buffers_iterator < U > & other)
                 : cur(other.cur)
             {
             }

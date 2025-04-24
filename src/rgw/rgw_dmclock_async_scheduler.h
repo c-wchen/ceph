@@ -35,7 +35,7 @@ class AsyncScheduler : public md_config_obs_t, public Scheduler
 {
 public:
     template < typename ...Args > // args forwarded to PullPriorityQueue ctor AsyncScheduler(CephContext *cct,
-    boost::asio::io_context& context,
+    boost::asio::io_context &context,
           GetClientCounters&& counters, md_config_obs_t *observer,
           Args&& ...args);
     ~AsyncScheduler();

@@ -402,7 +402,7 @@ TokenEngine::result_t TokenEngine::authenticate(const DoutPrefixProvider* dpp,
 /*
  * Try to validate S3 auth against keystone s3token interface
  */
-std::pair < boost::optional < rgw::keystone::TokenEnvelope>,
+std::pair < boost::optional < rgw::keystone::TokenEnvelope >,
     int > EC2Engine::get_from_keystone(const DoutPrefixProvider* dpp, const std::string_view& access_key_id,
                                        const std::string& string_to_sign,
                                        const std::string_view& signature,

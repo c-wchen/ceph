@@ -387,8 +387,8 @@ public:
         : exists(false), dirty(false),
           version(0), flushed(false)
     {
-        layers.push_front(std::pair < std::shared_ptr < ContentsGenerator>,
-                          ContDesc>(std::shared_ptr < ContentsGenerator > (cont_gen), init));
+        layers.push_front(std::pair < std::shared_ptr < ContentsGenerator >,
+                          ContDesc > (std::shared_ptr < ContentsGenerator > (cont_gen), init));
     }
 
     class iterator

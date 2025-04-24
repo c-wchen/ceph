@@ -66,8 +66,8 @@ void string_to_vec(std::vector < std::string > & args, std::string argstr)
     }
 }
 
-std::pair < std::vector < const char *>,
-    std::vector<const char * >> split_dashdash(const std::vector < const char* > & args)
+std::pair < std::vector < const char * >,
+    std::vector < const char * >> split_dashdash(const std::vector < const char* > & args)
 {
     auto dashdash = std::find_if(args.begin(), args.end(),
     [](const char* arg) {

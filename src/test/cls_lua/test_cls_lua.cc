@@ -559,9 +559,9 @@ protected:
     }
 
     /*
-         * Helper function. This functionality should eventually make its way into
-         * a clslua client library of some sort.
-         */
+             * Helper function. This functionality should eventually make its way into
+             * a clslua client library of some sort.
+             */
     int __clslua_exec(const string& oid, const string& script,
                       librados::bufferlist *input = NULL,  const string& funcname = "")
     {
@@ -659,12 +659,12 @@ TEST_F(ClsLua, Pcall) {
     ASSERT_EQ(-EEXIST, clslua_exec(test_script, NULL, "pcall_pcr"));
 
     /*
-       * the first call in pcr2 will fail (check ret != 0), and the second pcall
-       * should also fail (we check with a bogus return value to mask real
-       * errors). This is also an important check for our error handling because
-       * we need a case where two functions in the same handler fail to exercise
-       * our internal error book keeping.
-       */
+           * the first call in pcr2 will fail (check ret != 0), and the second pcall
+           * should also fail (we check with a bogus return value to mask real
+           * errors). This is also an important check for our error handling because
+           * we need a case where two functions in the same handler fail to exercise
+           * our internal error book keeping.
+           */
     ASSERT_EQ(-9999, clslua_exec(test_script, NULL, "pcall_pcr2"));
 }
 

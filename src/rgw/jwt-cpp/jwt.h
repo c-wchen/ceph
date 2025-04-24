@@ -87,7 +87,7 @@ std::string extract_pubkey_from_cert(const std::string& certstr, const std::stri
     std::unique_ptr < BIO, decltype(&BIO_free_all) > keybio(BIO_new(BIO_s_mem()), BIO_free_all);
 
     std::unique_ptr < X509, decltype(&X509_free) > cert(PEM_read_bio_X509(certbio.get(), nullptr, nullptr,
-            const_cast < char* > (pw.c_str())), X509_free);
+            const_cast < char * > (pw.c_str())), X509_free);
     if (!cert) {
         throw rsa_exception("Error loading cert into memory");
     }
@@ -139,7 +139,7 @@ std::shared_ptr < EVP_PKEY > load_private_key_from_string(const std::string& key
         throw rsa_exception("failed to load private key: bio_write failed");
     }
     std::shared_ptr < EVP_PKEY > pkey(PEM_read_bio_PrivateKey(privkey_bio.get(), nullptr, nullptr,
-                                      const_cast < char* > (password.c_str())), EVP_PKEY_free);
+                                      const_cast < char * > (password.c_str())), EVP_PKEY_free);
     if (!pkey) {
         throw rsa_exception("failed to load private key: PEM_read_bio_PrivateKey failed");
     }
@@ -395,7 +395,7 @@ struct ecdsa {
                 throw rsa_exception("failed to load private key: bio_write failed");
             }
             pkey.reset(PEM_read_bio_ECPrivateKey(privkey_bio.get(), nullptr, nullptr,
-                                                 const_cast < char* > (private_key_password.c_str())), EC_KEY_free);
+                                                 const_cast < char * > (private_key_password.c_str())), EC_KEY_free);
             if (!pkey) {
                 throw rsa_exception("failed to load private key: PEM_read_bio_ECPrivateKey failed");
             }
@@ -905,8 +905,7 @@ public:
     {}
 #endif
 
-    template < typename Iterator >
-    claim(Iterator start, Iterator end)
+    template < typename Iterator > claim(Iterator start, Iterator end)
         : val(picojson::array())
     {
         auto& arr = val.get < picojson::array > ();

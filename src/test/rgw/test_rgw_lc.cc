@@ -101,9 +101,9 @@ TEST(TestLCFilterInvalidAnd, XMLDoc3)
     auto val1 = tag_map.find("spongebob");
     ASSERT_TRUE(val1 == tag_map.end());
     /* because the invalid 2nd tag element was not recognized,
-       * we cannot access it:
-      ASSERT_EQ(val1->second, "squarepants");
-      */
+           * we cannot access it:
+          ASSERT_EQ(val1->second, "squarepants");
+          */
     /* check our flags */
     ASSERT_EQ(filter.get_flags(), uint32_t(LCFlagType::none));
 }

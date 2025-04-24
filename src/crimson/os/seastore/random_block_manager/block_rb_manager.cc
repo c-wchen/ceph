@@ -85,7 +85,7 @@ BlockRBManager::allocate_ret_bare BlockRBManager::alloc_extents(size_t size)
                             device->get_device_id());
         DEBUG("allocated addr: {}, size: {}, requested size: {}",
               paddr, extent.get_len(), size);
-        ret.push_back( {
+        ret.push_back({
             std::move(paddr),
             static_cast < extent_len_t > (extent.get_len())});
     }

@@ -191,7 +191,7 @@ struct NamespaceReplayer < librbd::MockTestImageCtx > {
     }
 };
 
-std::map < std::string, NamespaceReplayer < librbd::MockTestImageCtx> *> NamespaceReplayer <
+std::map < std::string, NamespaceReplayer < librbd::MockTestImageCtx> * > NamespaceReplayer <
 librbd::MockTestImageCtx >::s_instances;
 
 template < >

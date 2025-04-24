@@ -150,7 +150,7 @@ public:
     template < class T >
     const T *get_req() const
     {
-        return static_cast < const T* > (request);
+        return static_cast < const T * > (request);
     }
 
     const Message *get_req() const

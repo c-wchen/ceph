@@ -656,7 +656,7 @@ private:
                    class = std::void_t <
                        typename ErroratedFuture <
                            ::crimson::errorated_future_marker < ValueT >>::errorator_type >> operator ErroratedFuture < errorated_future_marker <
-        ValueT>> () &&
+        ValueT >> () &&
         {
             using dest_errorator_t = \
                                      typename ErroratedFuture <

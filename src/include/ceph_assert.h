@@ -57,7 +57,7 @@ extern void __ceph_assert_fail(const assert_data &ctx)
 __attribute__((__noreturn__));
 
 extern void __ceph_assertf_fail(const char *assertion, const char *file, int line, const char *function,
-                                const char* msg, ...)
+                                const char *msg, ...)
 __attribute__((__noreturn__));
 extern void __ceph_assert_warn(const char *assertion, const char *file, int line, const char *function);
 

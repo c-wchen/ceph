@@ -675,7 +675,7 @@ seastar::future < Ref < PG>> ShardServices::handle_pg_create_info(
             auto [pg, startmap] = std::move(ret);
             if (!pg)
                 return seastar::make_ready_future < Ref < PG>>(Ref < PG > ());
-            const pg_pool_t * pp = startmap->get_pg_pool(info->pgid.pool());
+            const pg_pool_t *pp = startmap->get_pg_pool(info->pgid.pool());
 
             int up_primary, acting_primary;
             vector < int > up, acting;

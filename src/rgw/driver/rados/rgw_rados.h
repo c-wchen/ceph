@@ -1364,7 +1364,7 @@ public:
     void wakeup_meta_sync_shards(std::set < int > & shard_ids);
 
     void wakeup_data_sync_shards(const DoutPrefixProvider *dpp, const rgw_zone_id& source_zone, bc::flat_map < int,
-                                 bc::flat_set < rgw_data_notify_entry> > & entries);
+                                 bc::flat_set < rgw_data_notify_entry > > & entries);
 
     RGWMetaSyncStatusManager *get_meta_sync_manager();
     RGWDataSyncStatusManager *get_data_sync_manager(const rgw_zone_id& source_zone);

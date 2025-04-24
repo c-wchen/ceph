@@ -1807,7 +1807,7 @@ void RADOS::enable_application_(std::string pool, std::string app_name,
         asio::post(get_executor(),
                    asio::append(std::move(c), ceph::to_error_code(-EOPNOTSUPP)));
     } else {
-        impl->monclient.start_mon_command( {
+        impl->monclient.start_mon_command({
             fmt::format("{{ \"prefix\": \"osd pool application enable\","
                         "\"pool\": \"{}\", \"app\": \"{}\"{}}}",
             pool, app_name,
@@ -1825,7 +1825,7 @@ void RADOS::blocklist_add_(std::string client_address,
 {
     auto expire_arg = (expire ?
                        fmt::format(", \"expire\": \"{}.0\"", expire->count()) : std::string{});
-    impl->monclient.start_mon_command( {
+    impl->monclient.start_mon_command({
         fmt::format("{{"
                     "\"prefix\": \"osd blocklist\", "
                     "\"blocklistop\": \"add\", "

@@ -447,8 +447,8 @@ struct inode_t
      * Do not forget to add any new fields to the compare() function.
      * ***************
      */
-    using client_range_map = std::map < client_t, client_writeable_range_t, std::less < client_t>,
-          Allocator<std::pair<const client_t, client_writeable_range_t >>>;
+    using client_range_map = std::map < client_t, client_writeable_range_t, std::less < client_t >,
+          Allocator < std::pair < const client_t, client_writeable_range_t >>>;
 
     static const uint8_t F_EPHEMERAL_DISTRIBUTED_PIN = (1 << 0);
     static const uint8_t F_QUIESCE_BLOCK             = (1 << 1);

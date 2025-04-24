@@ -47,6 +47,9 @@ ASTYLE_CMD_OPTION="                   \
 --break-after-logical                 \
 --mode=c                              \
 --suffix=none                         \
+--align-reference=name                \
+--align-pointer=name                  \
+--unpad-paren                         \
 "
 
 for path in ${SCAN_PATH_ARR[@]}

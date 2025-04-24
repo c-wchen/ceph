@@ -5478,7 +5478,7 @@ class RGWGetBucketPeersCR : public RGWCoroutine
     using pipe_const_iter = map < rgw_zone_id, RGWBucketSyncFlowManager::pipe_set >::const_iterator;
 
     static pair < pipe_const_iter, pipe_const_iter > get_pipe_iters(const map < rgw_zone_id,
-            RGWBucketSyncFlowManager::pipe_set>& m, std::optional < rgw_zone_id > zone)
+            RGWBucketSyncFlowManager::pipe_set > & m, std::optional < rgw_zone_id > zone)
     {
         if (!zone) {
             return { m.begin(), m.end() };

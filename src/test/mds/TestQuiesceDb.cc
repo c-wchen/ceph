@@ -54,7 +54,7 @@ class QuiesceDbTest: public testing::Test
 {
 protected:
     template < class _Rep = std::chrono::seconds::rep, class _Period = std::chrono::seconds::period,
-               typename D = std::chrono::duration < _Rep, _Period>, class Function, class... Args >
+               typename D = std::chrono::duration < _Rep, _Period >, class Function, class... Args >
     static bool timed_run(D timeout, Function && f, Args && ... args)
     {
         std::promise < void > done;

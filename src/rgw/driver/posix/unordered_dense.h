@@ -1692,7 +1692,7 @@ template < class Key,
            class Bucket = bucket_type::standard >
 using map = detail::table < Key, T, Hash, KeyEqual, ANKERL_UNORDERED_DENSE_PMR_ALLOCATOR < std::pair<Key, T>>, Bucket >;
 
-template < class Key, class Hash = hash < Key>, class KeyEqual = std::equal_to<Key >,
+template < class Key, class Hash = hash < Key>, class KeyEqual = std::equal_to < Key >,
            class Bucket = bucket_type::standard >
 using set = detail::table < Key, void, Hash, KeyEqual, ANKERL_UNORDERED_DENSE_PMR_ALLOCATOR < Key>, Bucket >;
 

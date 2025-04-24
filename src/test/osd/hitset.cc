@@ -59,7 +59,7 @@ public:
 
     BloomHitSet *get_hitset()
     {
-        return static_cast < BloomHitSet* > (hitset->impl.get());
+        return static_cast < BloomHitSet * > (hitset->impl.get());
     }
 };
 
@@ -145,7 +145,7 @@ public:
 
     ExplicitHashHitSet *get_hitset()
     {
-        return static_cast < ExplicitHashHitSet* > (hitset->impl.get());
+        return static_cast < ExplicitHashHitSet * > (hitset->impl.get());
     }
 };
 
@@ -189,7 +189,7 @@ public:
 
     ExplicitObjectHitSet *get_hitset()
     {
-        return static_cast < ExplicitObjectHitSet* > (hitset->impl.get());
+        return static_cast < ExplicitObjectHitSet * > (hitset->impl.get());
     }
 };
 

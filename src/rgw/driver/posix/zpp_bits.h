@@ -451,29 +451,29 @@ struct access {
                 auto && [a1] = object;
                 return visitor.template operator() < decltype(a1) > ();
             }; /*......................................................................................................................................................................................................................................................................*/
-            return decltype(f(std::declval<type>()))();
+            return decltype(f(std::declval < type > ()))();
         } else if constexpr(count == 2) {
             auto f = [&](auto && object) {
                 auto && [a1, a2] = object;
-                return visitor.template operator()<decltype(a1), decltype(a2)>();
+                return visitor.template operator() < decltype(a1), decltype(a2) > ();
             };
-            return decltype(f(std::declval<type>()))();
+            return decltype(f(std::declval < type > ()))();
         } else if constexpr(count == 3) {
             auto f = [&](auto && object) {
                 auto && [a1, a2, a3] = object;
-                return visitor.template operator()<decltype(a1), decltype(a2), decltype(a3)>();
+                return visitor.template operator() < decltype(a1), decltype(a2), decltype(a3) > ();
             };
-            return decltype(f(std::declval<type>()))();
+            return decltype(f(std::declval < type > ()))();
         } else if constexpr(count == 4) {
             auto f = [&](auto && object) {
                 auto && [a1, a2, a3, a4] = object;
-                return visitor.template operator()<decltype(a1), decltype(a2), decltype(a3), decltype(a4)>();
+                return visitor.template operator() < decltype(a1), decltype(a2), decltype(a3), decltype(a4) > ();
             };
-            return decltype(f(std::declval<type>()))();
+            return decltype(f(std::declval < type > ()))();
         } else if constexpr(count == 5) {
             auto f = [&](auto && object) {
                 auto && [a1, a2, a3, a4, a5] = object;
-                return visitor.template operator()<decltype(a1), decltype(a2), decltype(a3), decltype(a4), decltype(a5)>();
+                return visitor.template operator() < decltype(a1), decltype(a2), decltype(a3), decltype(a4), decltype(a5) > ();
             };
             return decltype(f(std::declval < type > ()))();
         } else if constexpr(count == 6) {

@@ -932,7 +932,7 @@ protected:
 
     // -- waiters --
     mempool::mds_co::map < string_snap_t,
-            MDSContext::vec_alloc < mempool::mds_co::pool_allocator> > waiting_on_dentry; // FIXME string_snap_t not in mempool
+            MDSContext::vec_alloc < mempool::mds_co::pool_allocator > > waiting_on_dentry; // FIXME string_snap_t not in mempool
 
 private:
     friend std::ostream &operator<<(std::ostream& out, const class CDir& dir);

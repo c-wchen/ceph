@@ -1155,7 +1155,7 @@ public:
 std::ostream &operator<<(std::ostream &out, snapset_test_case_t rhs)
 {
     for (auto &[s, type] :
-    std::vector < std::pair < std::string, snapset_test_case_t::type_t>>( {
+    std::vector < std::pair < std::string, snapset_test_case_t::type_t>>({
     {"M", snapset_test_case_t::MISSING},
     {"E", snapset_test_case_t::EXTRA},
     {"S", snapset_test_case_t::SIZE}})) {

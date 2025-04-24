@@ -30,7 +30,7 @@
 
 void
 // ----------------------------------------------------------------------------- byte_xor(unsigned char* cw,
-unsigned char* dw, unsigned char* ew)
+unsigned char *dw, unsigned char *ew)
 // -----------------------------------------------------------------------------
 {
     while (cw < ew) {

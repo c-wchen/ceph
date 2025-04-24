@@ -642,7 +642,7 @@ public:
     virtual int get_config_key_val(std::string name, bufferlist* bl) = 0;
     /** Start a metadata listing of the given section */
     virtual int meta_list_keys_init(const DoutPrefixProvider *dpp, const std::string& section, const std::string& marker,
-                                    void** phandle) = 0;
+                                    void **phandle) = 0;
     /** Get the next key from a metadata list */
     virtual int meta_list_keys_next(const DoutPrefixProvider *dpp, void* handle, int max, std::list < std::string > & keys,
                                     bool* truncated) = 0;

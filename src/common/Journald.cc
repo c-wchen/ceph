@@ -263,8 +263,8 @@ int JournaldClient::send()
         return -1;
     }
     /* Message doesn't fit... Let's dump the data in a memfd and
-       * just pass a file descriptor of it to the other side.
-       */
+           * just pass a file descriptor of it to the other side.
+           */
     int buffer_fd = open_mem_file();
     if (buffer_fd < 0) {
         std::cerr << "Failed to open buffer_fd while sending log to journald: " << strerror(errno) << std::endl;

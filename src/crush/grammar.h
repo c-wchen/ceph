@@ -78,60 +78,60 @@ struct crush_grammar : public boost::spirit::grammar < crush_grammar > {
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >, boost::spirit::parser_tag<_device > >      device;
 
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_bucket_type > >    bucket_type;
+              boost::spirit::parser_tag < _bucket_type > >    bucket_type;
 
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_bucket_id > >      bucket_id;
+              boost::spirit::parser_tag < _bucket_id > >      bucket_id;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_bucket_alg > >     bucket_alg;
+              boost::spirit::parser_tag < _bucket_alg > >     bucket_alg;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_bucket_hash > >    bucket_hash;
+              boost::spirit::parser_tag < _bucket_hash > >    bucket_hash;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_bucket_item > >    bucket_item;
+              boost::spirit::parser_tag < _bucket_item > >    bucket_item;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >, boost::spirit::parser_tag<_bucket > >      bucket;
 
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_take > >      step_take;
+              boost::spirit::parser_tag < _step_take > >      step_take;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_choose_tries > >    step_set_choose_tries;
+              boost::spirit::parser_tag < _step_set_choose_tries > >    step_set_choose_tries;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_choose_local_tries > >    step_set_choose_local_tries;
+              boost::spirit::parser_tag < _step_set_choose_local_tries > >    step_set_choose_local_tries;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_choose_local_fallback_tries > >    step_set_choose_local_fallback_tries;
+              boost::spirit::parser_tag < _step_set_choose_local_fallback_tries > >    step_set_choose_local_fallback_tries;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_chooseleaf_tries > >    step_set_chooseleaf_tries;
+              boost::spirit::parser_tag < _step_set_chooseleaf_tries > >    step_set_chooseleaf_tries;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_chooseleaf_vary_r > >    step_set_chooseleaf_vary_r;
+              boost::spirit::parser_tag < _step_set_chooseleaf_vary_r > >    step_set_chooseleaf_vary_r;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_chooseleaf_stable > >    step_set_chooseleaf_stable;
+              boost::spirit::parser_tag < _step_set_chooseleaf_stable > >    step_set_chooseleaf_stable;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_msr_descents > >    step_set_msr_descents;
+              boost::spirit::parser_tag < _step_set_msr_descents > >    step_set_msr_descents;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_set_msr_collision_tries > >    step_set_msr_collision_tries;
+              boost::spirit::parser_tag < _step_set_msr_collision_tries > >    step_set_msr_collision_tries;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_choose > >    step_choose;
+              boost::spirit::parser_tag < _step_choose > >    step_choose;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_chooseleaf > >      step_chooseleaf;
+              boost::spirit::parser_tag < _step_chooseleaf > >      step_chooseleaf;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_choose_msr > >      step_choose_msr;
+              boost::spirit::parser_tag < _step_choose_msr > >      step_choose_msr;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_step_emit > >      step_emit;
+              boost::spirit::parser_tag < _step_emit > >      step_emit;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >, boost::spirit::parser_tag<_step > >      step;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_crushrule > >      crushrule;
+              boost::spirit::parser_tag < _crushrule > >      crushrule;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_weight_set_weights > >     weight_set_weights;
+              boost::spirit::parser_tag < _weight_set_weights > >     weight_set_weights;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_weight_set > >     weight_set;
+              boost::spirit::parser_tag < _weight_set > >     weight_set;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_choose_arg_ids > >     choose_arg_ids;
+              boost::spirit::parser_tag < _choose_arg_ids > >     choose_arg_ids;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_choose_arg > >     choose_arg;
+              boost::spirit::parser_tag < _choose_arg > >     choose_arg;
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_choose_args > >     choose_args;
+              boost::spirit::parser_tag < _choose_args > >     choose_args;
 
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag<_crushmap > >      crushmap;
+              boost::spirit::parser_tag < _crushmap > >      crushmap;
 
         definition(crush_grammar const & /*self*/)
         {
@@ -229,7 +229,7 @@ struct crush_grammar : public boost::spirit::grammar < crush_grammar > {
         }
 
         boost::spirit::rule < ScannerT, boost::spirit::parser_context < >,
-              boost::spirit::parser_tag < _crushmap > > const&start() const
+              boost::spirit::parser_tag < _crushmap > > const &start() const
         {
             return crushmap;
         }

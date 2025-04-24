@@ -162,7 +162,7 @@ public:
     template < class T >
     T *get_req() const
     {
-        return static_cast < T* > (request);
+        return static_cast < T * > (request);
     }
 
     Message *get_req() const

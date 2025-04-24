@@ -707,7 +707,7 @@ void ObjectCopyRequest < I >::compute_zero_ops()
         // src snapshot. If this is the first snapshot, we might need to handle
         // the whiteout case if it overlaps with the parent
         auto first_src_snap_id = m_snap_map.begin()->first;
-        auto snapshot_delta_it = m_snapshot_delta.lower_bound( {
+        auto snapshot_delta_it = m_snapshot_delta.lower_bound({
             (hide_parent && src_snap_seq == first_src_snap_id ?
             0 : src_snap_seq), 0});
         for (; snapshot_delta_it != m_snapshot_delta.end() &&

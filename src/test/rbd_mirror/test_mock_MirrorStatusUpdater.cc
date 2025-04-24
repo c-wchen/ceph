@@ -440,7 +440,7 @@ TEST_F(TestMockMirrorStatusUpdater, OverwriteStatus)
     Context* update_task = nullptr;
     fire_timer_event(&timer_event, &update_task);
 
-    expect_mirror_status_update( {
+    expect_mirror_status_update({
         {
             "1", cls::rbd::MirrorImageSiteStatus{
                 "", cls::rbd::MIRROR_IMAGE_STATUS_STATE_REPLAYING, "description"}
@@ -516,7 +516,7 @@ TEST_F(TestMockMirrorStatusUpdater, OverwriteRemoveStatus)
     Context* update_task = nullptr;
     fire_timer_event(&timer_event, &update_task);
 
-    expect_mirror_status_update( {
+    expect_mirror_status_update({
         {
             "1", cls::rbd::MirrorImageSiteStatus{
                 "", cls::rbd::MIRROR_IMAGE_STATUS_STATE_REPLAYING, "description"}
@@ -560,7 +560,7 @@ TEST_F(TestMockMirrorStatusUpdater, OverwriteStatusInFlight)
     }));
     expect_mirror_status_update("1", cls::rbd::MirrorImageSiteStatus{}, 0);
     expect_work_queue(false);
-    expect_mirror_status_update( {
+    expect_mirror_status_update({
         {
             "1", cls::rbd::MirrorImageSiteStatus{
                 "", cls::rbd::MIRROR_IMAGE_STATUS_STATE_REPLAYING, "description"}

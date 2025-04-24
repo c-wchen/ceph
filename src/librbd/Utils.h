@@ -239,14 +239,14 @@ Context *create_context_callback(T *obj, RefCountedPtr refptr)
 
 //for objects that don't inherit from RefCountedObj, to handle unit tests
 template < typename T, void(T::*MF)(int) = &T::complete, typename R >
-typename std::enable_if < not std::is_base_of < RefCountedPtr, R>::value,
+typename std::enable_if < not std::is_base_of < RefCountedPtr, R >::value,
          Context * >::type create_context_callback(T *obj, R *refptr)
 {
     return new detail::C_CallbackAdapter < T, MF > (obj);
 }
 
 template < typename T, Context *(T::*MF)(int*), typename R, bool destroy = true >
-typename std::enable_if < not std::is_base_of < RefCountedPtr, R>::value,
+typename std::enable_if < not std::is_base_of < RefCountedPtr, R >::value,
          Context * >::type create_context_callback(T *obj, R *refptr)
 {
     return new detail::C_StateCallbackAdapter < T, MF, destroy > (obj);

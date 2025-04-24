@@ -198,7 +198,7 @@ public:
         return get_config().get_osd_pool_default_min_size(*values, size);
     }
 
-    seastar::future < > set_mon_vals(const std::map < std::string, std::string, std::less < >>& kv)
+    seastar::future < > set_mon_vals(const std::map < std::string, std::string, std::less < >> & kv)
     {
         return do_change([kv, this](ConfigValues & values) {
             get_config().set_mon_vals(nullptr, values, obs_mgr, kv, nullptr);

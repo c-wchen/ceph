@@ -1983,7 +1983,7 @@ int RadosStore::get_config_key_val(std::string name, bufferlist* bl)
 }
 
 int RadosStore::meta_list_keys_init(const DoutPrefixProvider *dpp, const std::string& section,
-                                    const std::string& marker, void** phandle)
+                                    const std::string& marker, void **phandle)
 {
     return ctl()->meta.mgr->list_keys_init(dpp, section, marker, phandle);
 }
@@ -2708,7 +2708,7 @@ int RadosObject::write_cloud_tier(const DoutPrefixProvider* dpp,
 }
 
 int RadosObject::get_max_chunk_size(const DoutPrefixProvider* dpp, rgw_placement_rule placement_rule,
-                                    uint64_t* max_chunk_size, uint64_t* alignment)
+                                    uint64_t *max_chunk_size, uint64_t *alignment)
 {
     return store->getRados()->get_max_chunk_size(placement_rule, get_obj(), max_chunk_size, dpp, alignment);
 }

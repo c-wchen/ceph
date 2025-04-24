@@ -1216,7 +1216,7 @@ public:
     virtual int trim_all_usage(const DoutPrefixProvider *dpp, uint64_t start_epoch, uint64_t end_epoch) override;
     virtual int get_config_key_val(std::string name, bufferlist* bl) override;
     virtual int meta_list_keys_init(const DoutPrefixProvider *dpp, const std::string& section, const std::string& marker,
-                                    void** phandle) override;
+                                    void **phandle) override;
     virtual int meta_list_keys_next(const DoutPrefixProvider *dpp, void* handle, int max, std::list < std::string > & keys,
                                     bool* truncated) override;
     virtual void meta_list_keys_complete(void* handle) override;

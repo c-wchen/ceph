@@ -1549,8 +1549,8 @@ struct cls_rgw_lc_list_entries_ret {
             decode(oes, bl);
             std::for_each(oes.begin(), oes.end(),
             [this](const std::pair < std::string, int > & oe) {
-                entries.push_back( {oe.first, 0 /* start */,
-                                    uint32_t(oe.second)});
+                entries.push_back({oe.first, 0 /* start */,
+                                   uint32_t(oe.second)});
             });
         } else {
             decode(entries, bl);

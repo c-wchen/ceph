@@ -130,7 +130,7 @@ public:
                      const cls::rbd::SnapshotNamespace &ns,
                      const std::string& snap_name)
     {
-        ASSERT_TRUE(mock_image_ctx.snap_info.insert( {
+        ASSERT_TRUE(mock_image_ctx.snap_info.insert({
             m_snap_seq++,
             SnapInfo{snap_name, ns, 0, {}, 0, 0, {}}}).second);
     }

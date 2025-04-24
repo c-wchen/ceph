@@ -90,5 +90,6 @@ void C_WriteSameRequest < T >::setup_buffer_resources(
 
 template class librbd::cache::pwl::rwl::C_WriteRequest < librbd::cache::pwl::AbstractWriteLog < librbd::ImageCtx> >;
 template class librbd::cache::pwl::rwl::C_WriteSameRequest < librbd::cache::pwl::AbstractWriteLog < librbd::ImageCtx> >;
-template class librbd::cache::pwl::rwl::C_CompAndWriteRequest < librbd::cache::pwl::AbstractWriteLog < librbd::ImageCtx>
+template class librbd::cache::pwl::rwl::C_CompAndWriteRequest < librbd::cache::pwl::AbstractWriteLog < librbd::ImageCtx
+        >
         >;

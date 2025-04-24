@@ -273,26 +273,26 @@ std::unique_ptr < TempURLEngine::SignatureHelper > TempURLEngine::SignatureHelpe
         switch (x.length()) {
             case CEPH_CRYPTO_HMACSHA1_DIGESTSIZE*2:
                 return std::make_unique < TempURLSignature::SignatureHelper_x < ceph::crypto::HMACSHA1,
-                       rgw::auth::swift::SignatureFlavor::BARE_HEX>>();
+                       rgw::auth::swift::SignatureFlavor::BARE_HEX >> ();
             case CEPH_CRYPTO_HMACSHA256_DIGESTSIZE*2:
                 return std::make_unique < TempURLSignature::SignatureHelper_x < ceph::crypto::HMACSHA256,
-                       rgw::auth::swift::SignatureFlavor::BARE_HEX>>();
+                       rgw::auth::swift::SignatureFlavor::BARE_HEX >> ();
             case CEPH_CRYPTO_HMACSHA512_DIGESTSIZE*2:
                 return std::make_unique < TempURLSignature::SignatureHelper_x < ceph::crypto::HMACSHA512,
-                       rgw::auth::swift::SignatureFlavor::BARE_HEX>>();
+                       rgw::auth::swift::SignatureFlavor::BARE_HEX >> ();
         }
         return std::make_unique < TempURLSignature::BadSignatureHelper > ();
     }
     std::string_view type { x.substr(0, pos) };
     if (type == "sha1") {
         return std::make_unique < TempURLSignature::SignatureHelper_x < ceph::crypto::HMACSHA1,
-               rgw::auth::swift::SignatureFlavor::NAMED_BASE64>>();
+               rgw::auth::swift::SignatureFlavor::NAMED_BASE64 >> ();
     } else if (type == "sha256") {
         return std::make_unique < TempURLSignature::SignatureHelper_x < ceph::crypto::HMACSHA256,
-               rgw::auth::swift::SignatureFlavor::NAMED_BASE64>>();
+               rgw::auth::swift::SignatureFlavor::NAMED_BASE64 >> ();
     } else if (type == "sha512") {
         return std::make_unique < TempURLSignature::SignatureHelper_x < ceph::crypto::HMACSHA512,
-               rgw::auth::swift::SignatureFlavor::NAMED_BASE64>>();
+               rgw::auth::swift::SignatureFlavor::NAMED_BASE64 >> ();
     }
     return std::make_unique < TempURLSignature::BadSignatureHelper > ();
 };

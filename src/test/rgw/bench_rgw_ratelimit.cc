@@ -34,7 +34,7 @@ struct parameters {
     size_t wait_between_retries_ms = 1;
     int num_clients = 1;
 };
-std::shared_ptr < std::vector < client_info>> ds = std::make_shared<std::vector<client_info >>
+std::shared_ptr < std::vector < client_info>> ds = std::make_shared<std::vector < client_info >>
     (std::vector < client_info > ());
 
 std::string method[2] = {"PUT", "GET"};

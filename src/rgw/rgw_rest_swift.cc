@@ -146,13 +146,13 @@ std::unique_ptr < RGWFormPost::SignatureHelper > RGWFormPost::SignatureHelper::g
     std::string_view type { x.substr(0, pos) };
     if (type == "sha1") {
         return std::make_unique < SignatureHelper_x < ceph::crypto::HMACSHA1,
-               rgw::auth::swift::SignatureFlavor::NAMED_BASE64>>();
+               rgw::auth::swift::SignatureFlavor::NAMED_BASE64 >> ();
     } else if (type == "sha256") {
         return std::make_unique < SignatureHelper_x < ceph::crypto::HMACSHA256,
-               rgw::auth::swift::SignatureFlavor::NAMED_BASE64>>();
+               rgw::auth::swift::SignatureFlavor::NAMED_BASE64 >> ();
     } else if (type == "sha512") {
         return std::make_unique < SignatureHelper_x < ceph::crypto::HMACSHA512,
-               rgw::auth::swift::SignatureFlavor::NAMED_BASE64>>();
+               rgw::auth::swift::SignatureFlavor::NAMED_BASE64 >> ();
     }
     return std::make_unique < BadSignatureHelper > ();
 };

@@ -1646,7 +1646,7 @@ void InternalNode::track_insert(
 #endif
 }
 template void InternalNode::track_insert < true > (const search_position_t &, match_stage_t, Ref < Node>, Ref < Node >);
-template void InternalNode::track_insert < false > (const search_position_t &, match_stage_t, Ref < Node>,
+template void InternalNode::track_insert < false > (const search_position_t &, match_stage_t, Ref < Node >,
         Ref < Node >);
 
 void InternalNode::replace_track(

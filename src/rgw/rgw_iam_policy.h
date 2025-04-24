@@ -476,8 +476,8 @@ struct Condition {
         }
     };
 
-    using unordered_multimap_it_pair = std::pair < std::unordered_multimap < std::string, std::string>::const_iterator,
-          std::unordered_multimap<std::string, std::string >::const_iterator >;
+    using unordered_multimap_it_pair = std::pair < std::unordered_multimap < std::string, std::string >::const_iterator,
+          std::unordered_multimap < std::string, std::string >::const_iterator >;
 
     template < typename F >
     static bool andible(F&& f, const unordered_multimap_it_pair& it,

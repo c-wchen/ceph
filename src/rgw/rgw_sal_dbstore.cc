@@ -2086,7 +2086,7 @@ int DBStore::get_config_key_val(string name, bufferlist *bl)
 }
 
 int DBStore::meta_list_keys_init(const DoutPrefixProvider *dpp, const string& section, const string& marker,
-                                 void** phandle)
+                                 void **phandle)
 {
     return 0;
 }

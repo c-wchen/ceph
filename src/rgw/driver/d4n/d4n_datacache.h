@@ -25,7 +25,7 @@ public:
     int existKey(std::string key);
     int setObject(std::string oid, rgw::sal::Attrs* attrs);
     int getObject(std::string oid, rgw::sal::Attrs* newAttrs, std::vector < std::pair < std::string,
-                  std::string> > * newMetadata);
+                  std::string > > * newMetadata);
     int copyObject(std::string original_oid, std::string copy_oid, rgw::sal::Attrs* attrs);
     int delObject(std::string oid);
     int updateAttr(std::string oid, rgw::sal::Attrs* attr);

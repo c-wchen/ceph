@@ -3116,7 +3116,7 @@ vector < snapid_t >::iterator find(vector < snapid_t > &v, snapid_t clid)
     return std::find(v.begin(), v.end(), clid);
 }
 
-map < snapid_t, interval_set < uint64_t> >::iterator find(map < snapid_t, interval_set < uint64_t> > &m, snapid_t clid)
+map < snapid_t, interval_set < uint64_t> >::iterator find(map < snapid_t, interval_set < uint64_t > > &m, snapid_t clid)
 {
     return m.find(clid);
 }

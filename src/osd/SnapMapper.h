@@ -423,7 +423,7 @@ public:
      * Returns snaps for hoid as in get_snaps(), but additionally validates the
      * snap->hobject_t mappings ('SNA_' entries).
      */
-    tl::expected < std::set < snapid_t>,
+    tl::expected < std::set < snapid_t >,
     SnapMapReaderI::result_t > get_snaps_check_consistency(const hobject_t &hoid) const final;
 };
 WRITE_CLASS_ENCODER(SnapMapper::object_snaps)

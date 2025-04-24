@@ -12928,7 +12928,7 @@ TEST_F(TestLibRBD, ImageSpec)
 
     children.clear();
     ASSERT_EQ(0, parent_image.list_descendants(&children));
-    expected_children.push_back( {
+    expected_children.push_back({
         .pool_id = ioctx.get_id(),
         .pool_name = ioctx.get_pool_name(),
         .pool_namespace = ioctx.get_namespace(),

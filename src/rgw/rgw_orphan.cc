@@ -252,7 +252,7 @@ int RGWOrphanSearch::init(const DoutPrefixProvider *dpp, const string& job_name,
 }
 
 int RGWOrphanSearch::log_oids(const DoutPrefixProvider *dpp, map < int, string > & log_shards, map < int,
-                              list<string > > & oids)
+                              list < string > > & oids)
 {
     map < int, list < string> >::iterator miter = oids.begin();
 
@@ -475,7 +475,7 @@ int RGWOrphanSearch::handle_stat_result(const DoutPrefixProvider *dpp, map < int
     return 0;
 }
 
-int RGWOrphanSearch::pop_and_handle_stat_op(const DoutPrefixProvider *dpp, map < int, list < string> >& oids,
+int RGWOrphanSearch::pop_and_handle_stat_op(const DoutPrefixProvider *dpp, map < int, list < string> > & oids,
         std::deque < RGWRados::Object::Stat > & ops)
 {
     RGWRados::Object::Stat& front_op = ops.front();

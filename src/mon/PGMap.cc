@@ -2510,19 +2510,25 @@ void PGMap::get_health_checks(
         { PG_STATE_DEGRADED,         {DEGRADED,    {}} },
         { PG_STATE_DOWN,             {UNAVAILABLE, {}} },
         // Delayed (wait until stuck) reports
-        { PG_STATE_PEERING,          {UNAVAILABLE, [](const pg_stat_t &p)
+        {
+            PG_STATE_PEERING,          {
+                UNAVAILABLE, [](const pg_stat_t &p)
                 {
                     return p.last_peered;
                 }
             }
         },
-        { PG_STATE_UNDERSIZED,       {DEGRADED,    [](const pg_stat_t &p)
+        {
+            PG_STATE_UNDERSIZED,       {
+                DEGRADED,    [](const pg_stat_t &p)
                 {
                     return p.last_fullsized;
                 }
             }
         },
-        { PG_STATE_STALE,            {UNAVAILABLE, [](const pg_stat_t &p)
+        {
+            PG_STATE_STALE,            {
+                UNAVAILABLE, [](const pg_stat_t &p)
                 {
                     return p.last_unstale;
                 }

@@ -152,7 +152,7 @@ ImageDispatch < MockExclusiveLockImageCtx > * ImageDispatch < MockExclusiveLockI
 
 template < >
 struct PreAcquireRequest < MockExclusiveLockImageCtx > : public BaseRequest <
-    PreAcquireRequest<MockExclusiveLockImageCtx > > {
+    PreAcquireRequest < MockExclusiveLockImageCtx > > {
     static PreAcquireRequest < MockExclusiveLockImageCtx > *create(
         MockExclusiveLockImageCtx &image_ctx, Context *on_finish)
     {
@@ -163,13 +163,13 @@ struct PreAcquireRequest < MockExclusiveLockImageCtx > : public BaseRequest <
 
 template < >
 struct PostAcquireRequest < MockExclusiveLockImageCtx > : public BaseRequest <
-    PostAcquireRequest<MockExclusiveLockImageCtx > > {
+    PostAcquireRequest < MockExclusiveLockImageCtx > > {
     MOCK_METHOD0(send, void());
 };
 
 template < >
 struct PreReleaseRequest < MockExclusiveLockImageCtx > : public BaseRequest <
-    PreReleaseRequest<MockExclusiveLockImageCtx > > {
+    PreReleaseRequest < MockExclusiveLockImageCtx > > {
     static PreReleaseRequest < MockExclusiveLockImageCtx > *create(
         MockExclusiveLockImageCtx &image_ctx,
         ImageDispatch < MockExclusiveLockImageCtx > * ImageDispatch,

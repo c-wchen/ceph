@@ -94,7 +94,7 @@ struct AcquireRequest < MockManagedLockImageCtx >
 };
 
 template < >
-struct ReacquireRequest < MockManagedLockImageCtx > : public BaseRequest < ReacquireRequest<MockManagedLockImageCtx >
+struct ReacquireRequest < MockManagedLockImageCtx > : public BaseRequest < ReacquireRequest < MockManagedLockImageCtx >
     > {
     static ReacquireRequest *create(librados::IoCtx &ioctx, const std::string& oid,
                                     const string& old_cookie, const std::string& new_cookie,

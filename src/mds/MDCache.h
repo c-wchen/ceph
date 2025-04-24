@@ -1266,7 +1266,7 @@ public:
     std::map < int, std::map < inodeno_t, MDSContext::vec > > waiting_for_base_ino;
 
     std::map < inodeno_t, std::map < client_t,
-        reconnected_cap_info_t> > reconnected_caps; // inode -> client -> snap_follows,realmino
+        reconnected_cap_info_t > > reconnected_caps; // inode -> client -> snap_follows,realmino
     std::map < inodeno_t, std::map < client_t, snapid_t> > reconnected_snaprealms; // realmino -> client -> realmseq
 
     //  realm inodes
@@ -1497,11 +1497,11 @@ protected:
     std::map < client_t, client_metadata_t > rejoin_client_metadata_map;
     std::map < client_t, std::pair < Session *, uint64_t> > rejoin_session_map;
 
-    std::map < inodeno_t, std::pair < mds_rank_t, std::map<client_t,
-        cap_reconnect_t> > > cap_exports; // ino -> target, client -> capex
+    std::map < inodeno_t, std::pair < mds_rank_t, std::map < client_t,
+        cap_reconnect_t > > > cap_exports; // ino -> target, client -> capex
 
-    std::map < inodeno_t, std::map < client_t, std::map<mds_rank_t,
-        cap_reconnect_t> > > cap_imports; // ino -> client -> frommds -> capex
+    std::map < inodeno_t, std::map < client_t, std::map < mds_rank_t,
+        cap_reconnect_t > > > cap_imports; // ino -> client -> frommds -> capex
     std::set < inodeno_t > cap_imports_missing;
     std::map < inodeno_t, MDSContext::vec > cap_reconnect_waiters;
     int cap_imports_num_opening = 0;

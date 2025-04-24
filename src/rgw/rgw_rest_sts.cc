@@ -120,7 +120,7 @@ bool WebTokenEngine::is_cert_valid(const vector < string > & thumbprints, const 
     std::unique_ptr < BIO, decltype(&BIO_free_all) > keybio(BIO_new(BIO_s_mem()), BIO_free_all);
     string pw = "";
     std::unique_ptr < X509, decltype(&X509_free) > x_509cert(PEM_read_bio_X509(certbio.get(), nullptr, nullptr,
-            const_cast < char* > (pw.c_str())), X509_free);
+            const_cast < char * > (pw.c_str())), X509_free);
     const EVP_MD* fprint_type = EVP_sha1();
     unsigned int fprint_size;
     unsigned char fprint[EVP_MAX_MD_SIZE];
@@ -197,7 +197,7 @@ WebTokenEngine::token_t WebTokenEngine::get_token_claims(const jwt::decoded_jwt&
 
 //Offline validation of incoming Web Token which is a signed JWT (JSON Web Token)
 std::tuple < boost::optional < WebTokenEngine::token_t >,
-    boost::optional<WebTokenEngine::principal_tags_t >> WebTokenEngine::get_from_jwt(const DoutPrefixProvider* dpp,
+    boost::optional < WebTokenEngine::principal_tags_t >> WebTokenEngine::get_from_jwt(const DoutPrefixProvider* dpp,
             const std::string& token, const req_state* const s,
             optional_yield y) const
 {

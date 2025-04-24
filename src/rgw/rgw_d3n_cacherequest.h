@@ -54,7 +54,7 @@ struct D3nL1CacheRequest {
         using Completion = ceph::async::Completion < Signature, AsyncFileReadOp >;
 
         int init_async_read(const DoutPrefixProvider *dpp, const std::string& location, off_t read_ofs, off_t read_len,
-                            void* arg)
+                            void *arg)
         {
             ldpp_dout(dpp, 20) << "D3nDataCache: " << __func__ << "(): location=" << location << dendl;
             aio_cb.reset(new struct aiocb);

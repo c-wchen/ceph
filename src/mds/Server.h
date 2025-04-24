@@ -206,8 +206,7 @@ public:
     CDentry *rdlock_path_xlock_dentry(const MDRequestRef& mdr, bool create,
                                       bool okexist = false, bool authexist = false,
                                       bool want_layout = false);
-    std::pair < CDentry *, CDentry * >
-    rdlock_two_paths_xlock_destdn(const MDRequestRef& mdr, bool xlock_srcdn);
+    std::pair < CDentry *, CDentry * > rdlock_two_paths_xlock_destdn(const MDRequestRef& mdr, bool xlock_srcdn);
 
     CDir *try_open_auth_dirfrag(CInode *diri, frag_t fg, const MDRequestRef& mdr);
 

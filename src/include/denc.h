@@ -300,7 +300,7 @@ concept is_const_iterator = requires(It& it, size_t n)
     {
         it.get_pos_add(n)
     }
-    -> std::same_as < const char* >;
+    -> std::same_as < const char * >;
 };
 
 template < typename T, is_const_iterator It >
@@ -395,7 +395,7 @@ template < typename T >
 using ExtType_t = typename ExtType < T >::type;
 } // namespace _denc
 
-template < typename T > requires(!std::is_void_v < _denc::ExtType_t < T>>)
+template < typename T > requires(!std::is_void_v < _denc::ExtType_t < T >>)
 struct denc_traits < T > {
     static constexpr bool supported = true;
     static constexpr bool featured = false;

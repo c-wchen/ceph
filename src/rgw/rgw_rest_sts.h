@@ -52,8 +52,8 @@ class WebTokenEngine : public rgw::auth::Engine
 
     std::string get_cert_url(const std::string& iss, const DoutPrefixProvider *dpp, optional_yield y) const;
 
-    std::tuple < boost::optional < WebTokenEngine::token_t>,
-        boost::optional<WebTokenEngine::principal_tags_t >> get_from_jwt(const DoutPrefixProvider* dpp,
+    std::tuple < boost::optional < WebTokenEngine::token_t >,
+        boost::optional < WebTokenEngine::principal_tags_t >> get_from_jwt(const DoutPrefixProvider* dpp,
                 const std::string& token, const req_state* const s, optional_yield y) const;
 
     void validate_signature(const DoutPrefixProvider* dpp, const jwt::decoded_jwt& decoded, const std::string& algorithm,

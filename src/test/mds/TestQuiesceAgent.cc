@@ -32,7 +32,7 @@ class QuiesceAgentTest : public testing::Test
     using QuiescingRoot = std::pair < RequestHandle, Context * >;
 protected:
     template < class _Rep = std::chrono::seconds::rep, class _Period = std::chrono::seconds::period,
-               typename D = std::chrono::duration < _Rep, _Period>, class Function, class... Args >
+               typename D = std::chrono::duration < _Rep, _Period >, class Function, class... Args >
     static bool timed_run(D timeout, Function && f, Args && ... args)
     {
         std::promise < void > done;
@@ -216,7 +216,7 @@ protected:
     }
 
     template < class _Rep = std::chrono::seconds::rep, class _Period = std::chrono::seconds::period,
-               typename D = std::chrono::duration < _Rep, _Period>>
+               typename D = std::chrono::duration < _Rep, _Period >>
     bool await_idle_v(QuiesceSetVersion v, D timeout = std::chrono::duration_cast < D > (std::chrono::seconds(10)))
     {
         return timed_run(timeout, [this, v] {
@@ -225,7 +225,7 @@ protected:
     }
 
     template < class _Rep = std::chrono::seconds::rep, class _Period = std::chrono::seconds::period,
-               typename D = std::chrono::duration < _Rep, _Period>>
+               typename D = std::chrono::duration < _Rep, _Period >>
     bool await_idle(D timeout = std::chrono::duration_cast < D > (std::chrono::seconds(10)))
     {
         return timed_run(timeout, [this] {

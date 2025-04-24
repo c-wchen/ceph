@@ -419,7 +419,7 @@ inline void decode(compact_map_base < Key, T, Map > & m, ceph::buffer::list::con
     m.decode(p);
 }
 
-template < class Key, class T, class Compare = std::less < Key>, class Alloc = std::allocator< std::pair<const Key,
+template < class Key, class T, class Compare = std::less < Key >, class Alloc = std::allocator < std::pair < const Key,
            T > > >
 class compact_map : public compact_map_base < Key, T, std::map < Key, T, Compare, Alloc> >
 {
@@ -431,7 +431,7 @@ public:
     }
 };
 
-template < class Key, class T, class Compare = std::less < Key>, class Alloc = std::allocator< std::pair<const Key,
+template < class Key, class T, class Compare = std::less < Key >, class Alloc = std::allocator < std::pair < const Key,
            T > > >
 inline std::ostream & operator<<(std::ostream& out, const compact_map < Key, T, Compare, Alloc > & m)
 {
@@ -448,13 +448,13 @@ inline std::ostream & operator<<(std::ostream& out, const compact_map < Key, T, 
     return out;
 }
 
-template < class Key, class T, class Compare = std::less < Key>, class Alloc = std::allocator< std::pair<const Key,
+template < class Key, class T, class Compare = std::less < Key >, class Alloc = std::allocator < std::pair < const Key,
            T > > >
 class compact_multimap : public compact_map_base < Key, T, std::multimap < Key, T, Compare, Alloc> >
 {
 };
 
-template < class Key, class T, class Compare = std::less < Key>, class Alloc = std::allocator< std::pair<const Key,
+template < class Key, class T, class Compare = std::less < Key >, class Alloc = std::allocator < std::pair < const Key,
            T > > >
 inline std::ostream & operator<<(std::ostream& out, const compact_multimap < Key, T, Compare, Alloc > & m)
 {

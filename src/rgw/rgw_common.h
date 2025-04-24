@@ -1785,10 +1785,10 @@ extern int parse_key_value(const std::string& in_str, std::string& key, std::str
 extern int parse_key_value(const std::string& in_str, const char *delim, std::string& key, std::string& val);
 
 extern boost::optional < std::pair < std::string_view,
-       std::string_view>> parse_key_value(const std::string_view& in_str,
+       std::string_view >> parse_key_value(const std::string_view& in_str,
                const std::string_view& delim);
 extern boost::optional < std::pair < std::string_view,
-       std::string_view>> parse_key_value(const std::string_view& in_str);
+       std::string_view >> parse_key_value(const std::string_view& in_str);
 
 struct rgw_name_to_flag {
     const char *type_name;
