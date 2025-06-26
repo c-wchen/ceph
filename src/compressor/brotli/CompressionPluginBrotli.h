@@ -17,20 +17,21 @@
 #include "compressor/CompressionPlugin.h"
 #include "BrotliCompressor.h"
 
-class CompressionPluginBrotli : public CompressionPlugin {
+class CompressionPluginBrotli : public CompressionPlugin
+{
 public:
-  explicit CompressionPluginBrotli(CephContext *cct) : CompressionPlugin(cct)
-  {}
-  
-  virtual int factory(CompressorRef *cs, std::ostream *ss)
-  {
-    if (compressor == nullptr) {
-      BrotliCompressor *interface = new BrotliCompressor();
-      compressor = CompressorRef(interface);
+    explicit CompressionPluginBrotli(CephContext *cct) : CompressionPlugin(cct)
+    {}
+
+    virtual int factory(CompressorRef *cs, std::ostream *ss)
+    {
+        if (compressor == nullptr) {
+            BrotliCompressor *interface = new BrotliCompressor();
+            compressor = CompressorRef(interface);
+        }
+        *cs = compressor;
+        return 0;
     }
-    *cs = compressor;
-    return 0;
-  }
 };
 
 #endif

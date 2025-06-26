@@ -6,7 +6,8 @@
 
 #include "./scrubber_generators.h"
 
-namespace ScrubDatasets {
+namespace ScrubDatasets
+{
 /*
  * Two objects with some clones. No inconsitencies.
  */

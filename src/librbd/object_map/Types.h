@@ -4,21 +4,23 @@
 #ifndef CEPH_LIBRBD_OBJECT_MAP_TYPES_H
 #define CEPH_LIBRBD_OBJECT_MAP_TYPES_H
 
-namespace librbd {
-namespace object_map {
+namespace librbd
+{
+namespace object_map
+{
 
 enum DiffState {
-  // diff-iterate: hole with or without data captured in intermediate snapshot
-  // deep-copy: hole without data captured in intermediate snapshot
-  DIFF_STATE_HOLE         = 0,
-  // diff-iterate, deep-copy: unchanged data
-  DIFF_STATE_DATA         = 1,
-  // diff-iterate: new hole (data -> hole)
-  // deep-copy: new hole (data -> hole) or hole with data captured in
-  //            intermediate snapshot
-  DIFF_STATE_HOLE_UPDATED = 2,
-  // diff-iterate, deep-copy: new data (hole -> data) or changed data
-  DIFF_STATE_DATA_UPDATED = 3
+    // diff-iterate: hole with or without data captured in intermediate snapshot
+    // deep-copy: hole without data captured in intermediate snapshot
+    DIFF_STATE_HOLE         = 0,
+    // diff-iterate, deep-copy: unchanged data
+    DIFF_STATE_DATA         = 1,
+    // diff-iterate: new hole (data -> hole)
+    // deep-copy: new hole (data -> hole) or hole with data captured in
+    //            intermediate snapshot
+    DIFF_STATE_HOLE_UPDATED = 2,
+    // diff-iterate, deep-copy: new data (hole -> data) or changed data
+    DIFF_STATE_DATA_UPDATED = 3
 };
 
 } // namespace object_map

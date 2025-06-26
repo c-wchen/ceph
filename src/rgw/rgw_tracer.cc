@@ -3,8 +3,10 @@
 
 #include "rgw_tracer.h"
 
-namespace tracing {
-namespace rgw {
+namespace tracing
+{
+namespace rgw
+{
 
 tracing::Tracer tracer;
 

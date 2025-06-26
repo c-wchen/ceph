@@ -25,35 +25,35 @@
 
 const char *ceph_version_to_str()
 {
-  char* debug_version_for_testing = getenv("ceph_debug_version_for_testing");
-  if (debug_version_for_testing) {
-    return debug_version_for_testing;
-  } else {
-    return CEPH_GIT_NICE_VER;
-  }
+    char *debug_version_for_testing = getenv("ceph_debug_version_for_testing");
+    if (debug_version_for_testing) {
+        return debug_version_for_testing;
+    } else {
+        return CEPH_GIT_NICE_VER;
+    }
 }
 
 const char *ceph_release_to_str(void)
 {
-  return ceph_release_name(CEPH_RELEASE);
+    return ceph_release_name(CEPH_RELEASE);
 }
 
 const char *git_version_to_str(void)
 {
-  return STRINGIFY(CEPH_GIT_VER);
+    return STRINGIFY(CEPH_GIT_VER);
 }
 
 std::string const pretty_version_to_str(void)
 {
-  std::ostringstream oss;
-  oss << "ceph version " << CEPH_GIT_NICE_VER
-      << " (" << STRINGIFY(CEPH_GIT_VER) << ") "
-      << ceph_release_name(CEPH_RELEASE)
-      << " (" << CEPH_RELEASE_TYPE << ")";
-  return oss.str();
+    std::ostringstream oss;
+    oss << "ceph version " << CEPH_GIT_NICE_VER
+        << " (" << STRINGIFY(CEPH_GIT_VER) << ") "
+        << ceph_release_name(CEPH_RELEASE)
+        << " (" << CEPH_RELEASE_TYPE << ")";
+    return oss.str();
 }
 
 const char *ceph_release_type(void)
 {
-  return CEPH_RELEASE_TYPE;
+    return CEPH_RELEASE_TYPE;
 }

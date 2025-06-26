@@ -24,58 +24,61 @@
 
 #include "include/ceph_assert.h"
 
-namespace ceph::osd::scheduler {
+namespace ceph::osd::scheduler
+{
 
 using client = uint64_t;
-using WorkItem = std::variant<std::monostate, OpSchedulerItem, double>;
+using WorkItem = std::variant < std::monostate, OpSchedulerItem, double >;
 
 /**
  * Base interface for classes responsible for choosing
  * op processing order in the OSD.
  */
-class OpScheduler {
+class OpScheduler
+{
 public:
-  // Enqueue op for scheduling
-  virtual void enqueue(OpSchedulerItem &&item) = 0;
+    // Enqueue op for scheduling
+    virtual void enqueue(OpSchedulerItem &&item) = 0;
 
-  // Enqueue op for processing as though it were enqueued prior
-  // to other items already scheduled.
-  virtual void enqueue_front(OpSchedulerItem &&item) = 0;
+    // Enqueue op for processing as though it were enqueued prior
+    // to other items already scheduled.
+    virtual void enqueue_front(OpSchedulerItem &&item) = 0;
 
-  // Returns true iff there are no ops scheduled
-  virtual bool empty() const = 0;
+    // Returns true iff there are no ops scheduled
+    virtual bool empty() const = 0;
 
-  // Return next op to be processed
-  virtual WorkItem dequeue() = 0;
+    // Return next op to be processed
+    virtual WorkItem dequeue() = 0;
 
-  // Dump formatted representation for the queue
-  virtual void dump(ceph::Formatter &f) const = 0;
+    // Dump formatted representation for the queue
+    virtual void dump(ceph::Formatter &f) const = 0;
 
-  // Print human readable brief description with relevant parameters
-  virtual void print(std::ostream &out) const = 0;
+    // Print human readable brief description with relevant parameters
+    virtual void print(std::ostream &out) const = 0;
 
-  // Apply config changes to the scheduler (if any)
-  virtual void update_configuration() = 0;
+    // Apply config changes to the scheduler (if any)
+    virtual void update_configuration() = 0;
 
-  // Get the scheduler type set for the queue
-  virtual op_queue_type_t get_type() const = 0;
+    // Get the scheduler type set for the queue
+    virtual op_queue_type_t get_type() const = 0;
 
-  virtual double get_cost_per_io() const {
-    ceph_assert(0 == "impossible for wpq");
-    return 0.0;
-  }
+    virtual double get_cost_per_io() const
+    {
+        ceph_assert(0 == "impossible for wpq");
+        return 0.0;
+    }
 
-  // Destructor
-  virtual ~OpScheduler() {};
+    // Destructor
+    virtual ~OpScheduler() {};
 };
 
 std::ostream &operator<<(std::ostream &lhs, const OpScheduler &);
-using OpSchedulerRef = std::unique_ptr<OpScheduler>;
+using OpSchedulerRef = std::unique_ptr < OpScheduler >;
 
 OpSchedulerRef make_scheduler(
-  CephContext *cct, int whoami, uint32_t num_shards, int shard_id,
-  bool is_rotational, std::string_view osd_objectstore,
-  op_queue_type_t osd_scheduler, unsigned op_queue_cut_off, MonClient *monc);
+    CephContext *cct, int whoami, uint32_t num_shards, int shard_id,
+    bool is_rotational, std::string_view osd_objectstore,
+    op_queue_type_t osd_scheduler, unsigned op_queue_cut_off, MonClient *monc);
 
 /**
  * Implements OpScheduler in terms of OpQueue
@@ -85,70 +88,79 @@ OpSchedulerRef make_scheduler(
  * the boilerplate priority cutoff/strict concept which is needed for
  * OpQueue based implementations.
  */
-template <typename T>
-class ClassedOpQueueScheduler final : public OpScheduler {
-  unsigned cutoff;
-  T queue;
+template < typename T >
+class ClassedOpQueueScheduler final : public OpScheduler
+{
+    unsigned cutoff;
+    T queue;
 
 public:
-  template <typename... Args>
-  ClassedOpQueueScheduler(CephContext *cct, unsigned prio_cut, Args&&... args) :
-    cutoff(prio_cut),
-    queue(std::forward<Args>(args)...)
-  {}
+    template < typename... Args >
+    ClassedOpQueueScheduler(CephContext *cct, unsigned prio_cut, Args&&... args) :
+        cutoff(prio_cut),
+        queue(std::forward < Args > (args)...)
+    {}
 
-  void enqueue(OpSchedulerItem &&item) final {
-    unsigned priority = item.get_priority();
-    unsigned cost = item.get_cost();
+    void enqueue(OpSchedulerItem &&item) final
+    {
+        unsigned priority = item.get_priority();
+        unsigned cost = item.get_cost();
 
-    if (priority >= cutoff)
-      queue.enqueue_strict(
-	item.get_owner(), priority, std::move(item));
-    else
-      queue.enqueue(
-	item.get_owner(), priority, cost, std::move(item));
-  }
+        if (priority >= cutoff)
+            queue.enqueue_strict(
+                item.get_owner(), priority, std::move(item));
+        else
+            queue.enqueue(
+                item.get_owner(), priority, cost, std::move(item));
+    }
 
-  void enqueue_front(OpSchedulerItem &&item) final {
-    unsigned priority = item.get_priority();
-    unsigned cost = item.get_cost();
-    if (priority >= cutoff)
-      queue.enqueue_strict_front(
-	item.get_owner(),
-	priority, std::move(item));
-    else
-      queue.enqueue_front(
-	item.get_owner(),
-	priority, cost, std::move(item));
-  }
+    void enqueue_front(OpSchedulerItem &&item) final
+    {
+        unsigned priority = item.get_priority();
+        unsigned cost = item.get_cost();
+        if (priority >= cutoff)
+            queue.enqueue_strict_front(
+                item.get_owner(),
+                priority, std::move(item));
+        else
+            queue.enqueue_front(
+                item.get_owner(),
+                priority, cost, std::move(item));
+    }
 
-  bool empty() const final {
-    return queue.empty();
-  }
+    bool empty() const final
+    {
+        return queue.empty();
+    }
 
-  WorkItem dequeue() final {
-    return queue.dequeue();
-  }
+    WorkItem dequeue() final
+    {
+        return queue.dequeue();
+    }
 
-  void dump(ceph::Formatter &f) const final {
-    return queue.dump(&f);
-  }
+    void dump(ceph::Formatter &f) const final
+    {
+        return queue.dump(&f);
+    }
 
-  void print(std::ostream &out) const final {
-    out << "ClassedOpQueueScheduler(queue=";
-    queue.print(out);
-    out << ", cutoff=" << cutoff << ")";
-  }
+    void print(std::ostream &out) const final
+    {
+        out << "ClassedOpQueueScheduler(queue=";
+        queue.print(out);
+        out << ", cutoff=" << cutoff << ")";
+    }
 
-  void update_configuration() final {
-    // no-op
-  }
+    void update_configuration() final
+    {
+        // no-op
+    }
 
-  op_queue_type_t get_type() const final {
-    return queue.get_type();
-  }
+    op_queue_type_t get_type() const final
+    {
+        return queue.get_type();
+    }
 
-  ~ClassedOpQueueScheduler() final {};
+    ~ClassedOpQueueScheduler() final {};
 };
 
 }

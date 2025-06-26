@@ -20,17 +20,17 @@ typedef void *ggate_drv_req_t;
  * GGATE driver commands. They are mapped to GgateReq::Command.
  */
 enum {
-  GGATE_DRV_CMD_UNKNOWN = 0,
-  GGATE_DRV_CMD_WRITE = 1,
-  GGATE_DRV_CMD_READ = 2,
-  GGATE_DRV_CMD_FLUSH = 3,
-  GGATE_DRV_CMD_DISCARD = 4,
+    GGATE_DRV_CMD_UNKNOWN = 0,
+    GGATE_DRV_CMD_WRITE = 1,
+    GGATE_DRV_CMD_READ = 2,
+    GGATE_DRV_CMD_FLUSH = 3,
+    GGATE_DRV_CMD_DISCARD = 4,
 };
 
 struct ggate_drv_info {
-  char id[16];
-  char name[NAME_MAX];
-  char info[2048]; /* G_GATE_INFOSIZE */
+    char id[16];
+    char name[NAME_MAX];
+    char info[2048]; /* G_GATE_INFOSIZE */
 };
 
 uint64_t ggate_drv_req_id(ggate_drv_req_t req);
@@ -46,7 +46,7 @@ void *ggate_drv_req_release_buf(ggate_drv_req_t req);
 int ggate_drv_load();
 
 int ggate_drv_create(char *name, size_t namelen, size_t sectorsize,
-    size_t mediasize, bool readonly, const char *info, ggate_drv_t *drv);
+                     size_t mediasize, bool readonly, const char *info, ggate_drv_t *drv);
 void ggate_drv_destroy(ggate_drv_t drv);
 
 int ggate_drv_recv(ggate_drv_t drv, ggate_drv_req_t *req);

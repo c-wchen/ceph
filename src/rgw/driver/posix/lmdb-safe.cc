@@ -17,15 +17,17 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 
 using namespace std;
 
-namespace LMDBSafe {
+namespace LMDBSafe
+{
 
 MDBDbi::MDBDbi(MDB_env *env, MDB_txn *txn, const string_view dbname, unsigned int flags)
 {
     (void)env;
     // A transaction that uses this function must finish (either commit or abort) before any other transaction in the process may use this function.
 
-    if (const auto rc = mdb_dbi_open(txn, dbname.empty() ? 0 : &dbname[0], flags, &d_dbi))
+    if (const auto rc = mdb_dbi_open(txn, dbname.empty() ? 0 : &dbname[0], flags, &d_dbi)) {
         throw LMDBError("Unable to open named database: ", rc);
+    }
 
     // Database names are keys in the unnamed database, and may be read but not written.
 }
@@ -51,72 +53,74 @@ MDBEnv::MDBEnv(const char *fname, unsigned int flags, mdb_mode_t mode, MDB_dbi m
 
 void MDBEnv::incROTX()
 {
-    std::lock_guard<std::mutex> l(d_countmutex);
+    std::lock_guard < std::mutex > l(d_countmutex);
     ++d_ROtransactionsOut[std::this_thread::get_id()];
 }
 
 void MDBEnv::decROTX()
 {
-    std::lock_guard<std::mutex> l(d_countmutex);
+    std::lock_guard < std::mutex > l(d_countmutex);
     --d_ROtransactionsOut[std::this_thread::get_id()];
 }
 
 void MDBEnv::incRWTX()
 {
-    std::lock_guard<std::mutex> l(d_countmutex);
+    std::lock_guard < std::mutex > l(d_countmutex);
     ++d_RWtransactionsOut[std::this_thread::get_id()];
 }
 
 void MDBEnv::decRWTX()
 {
-    std::lock_guard<std::mutex> l(d_countmutex);
+    std::lock_guard < std::mutex > l(d_countmutex);
     --d_RWtransactionsOut[std::this_thread::get_id()];
 }
 
 int MDBEnv::getRWTX()
 {
-    std::lock_guard<std::mutex> l(d_countmutex);
+    std::lock_guard < std::mutex > l(d_countmutex);
     return d_RWtransactionsOut[std::this_thread::get_id()];
 }
 int MDBEnv::getROTX()
 {
-    std::lock_guard<std::mutex> l(d_countmutex);
+    std::lock_guard < std::mutex > l(d_countmutex);
     return d_ROtransactionsOut[std::this_thread::get_id()];
 }
 
-std::shared_ptr<MDBEnv> getMDBEnv(const char *fname, unsigned int flags, mdb_mode_t mode, MDB_dbi maxDBs)
+std::shared_ptr < MDBEnv > getMDBEnv(const char *fname, unsigned int flags, mdb_mode_t mode, MDB_dbi maxDBs)
 {
     struct Value {
-        weak_ptr<MDBEnv> wp;
+        weak_ptr < MDBEnv > wp;
         unsigned int flags;
     };
 
-    static std::map<tuple<dev_t, ino_t>, Value> s_envs;
+    static std::map < tuple < dev_t, ino_t>, Value > s_envs;
     static std::mutex mut;
 
     struct stat statbuf;
     if (stat(fname, &statbuf)) {
-        if (errno != ENOENT)
+        if (errno != ENOENT) {
             throw LMDBError("Unable to stat prospective mdb database: " + string(strerror(errno)));
-        else {
-            std::lock_guard<std::mutex> l(mut);
-            auto fresh = std::make_shared<MDBEnv>(fname, flags, mode, maxDBs);
-            if (stat(fname, &statbuf))
+        } else {
+            std::lock_guard < std::mutex > l(mut);
+            auto fresh = std::make_shared < MDBEnv > (fname, flags, mode, maxDBs);
+            if (stat(fname, &statbuf)) {
                 throw LMDBError("Unable to stat prospective mdb database: " + string(strerror(errno)));
+            }
             auto key = std::tie(statbuf.st_dev, statbuf.st_ino);
             s_envs[key] = { fresh, flags };
             return fresh;
         }
     }
 
-    std::lock_guard<std::mutex> l(mut);
+    std::lock_guard < std::mutex > l(mut);
     auto key = std::tie(statbuf.st_dev, statbuf.st_ino);
     auto iter = s_envs.find(key);
     if (iter != s_envs.end()) {
         auto sp = iter->second.wp.lock();
         if (sp) {
-            if (iter->second.flags != flags)
+            if (iter->second.flags != flags) {
                 throw LMDBError("Can't open mdb with differing flags");
+            }
 
             return sp;
         } else {
@@ -124,7 +128,7 @@ std::shared_ptr<MDBEnv> getMDBEnv(const char *fname, unsigned int flags, mdb_mod
         }
     }
 
-    auto fresh = std::make_shared<MDBEnv>(fname, flags, mode, maxDBs);
+    auto fresh = std::make_shared < MDBEnv > (fname, flags, mode, maxDBs);
     s_envs[key] = { fresh, flags };
 
     return fresh;
@@ -136,8 +140,8 @@ MDBDbi MDBEnv::openDB(const string_view dbname, unsigned int flags)
     mdb_env_get_flags(d_env, &envflags);
     /*
     This function must not be called from multiple concurrent transactions in the same process. A transaction that uses this function must finish (either commit or abort) before any other transaction in the process may use this function.
-  */
-    std::lock_guard<std::mutex> l(d_openmut);
+    */
+    std::lock_guard < std::mutex > l(d_openmut);
 
     if (!(envflags & MDB_RDONLY)) {
         auto rwt = getRWTransaction();
@@ -163,8 +167,9 @@ MDBRWTransactionImpl::MDBRWTransactionImpl(MDBEnv *parent, MDB_txn *txn)
 MDB_txn *MDBRWTransactionImpl::openRWTransaction(MDBEnv *env, MDB_txn *parent, unsigned int flags)
 {
     MDB_txn *result;
-    if (env->getRWTX())
+    if (env->getRWTX()) {
         throw LMDBError("Duplicate RW transaction");
+    }
 
     for (int tries = 0; tries < 3; ++tries) { // it might happen twice, who knows
         if (int rc = mdb_txn_begin(env->d_env, parent, flags, &result)) {
@@ -228,8 +233,9 @@ MDBROTransactionImpl::MDBROTransactionImpl(MDBEnv *parent, MDB_txn *txn)
 
 MDB_txn *MDBROTransactionImpl::openROTransaction(MDBEnv *env, MDB_txn *parent, unsigned int flags)
 {
-    if (env->getRWTX())
+    if (env->getRWTX()) {
         throw LMDBError("Duplicate RO transaction");
+    }
 
     /*
     A transaction and its cursors must only be used by a single thread, and a thread may only have a single transaction at a time. If MDB_NOTLS is in use, this does not apply to read-only transactions. */
@@ -254,7 +260,7 @@ MDB_txn *MDBROTransactionImpl::openROTransaction(MDBEnv *env, MDB_txn *parent, u
 void MDBROTransactionImpl::closeROCursors()
 {
     // we need to move the vector away to ensure that the cursors don’t mess with our iteration.
-    std::vector<MDBROCursor *> buf;
+    std::vector < MDBROCursor * > buf;
     std::swap(d_cursors, buf);
     for (auto &cursor : buf) {
         cursor->close();

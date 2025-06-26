@@ -22,4 +22,4 @@
 
 struct RGWSI_MetaBackend_CtxParams_SObj {};
 
-using RGWSI_MetaBackend_CtxParams = std::variant<RGWSI_MetaBackend_CtxParams_SObj>;
+using RGWSI_MetaBackend_CtxParams = std::variant < RGWSI_MetaBackend_CtxParams_SObj >;

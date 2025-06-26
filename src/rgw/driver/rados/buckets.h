@@ -31,7 +31,8 @@ struct RGWStorageStats;
 
 /// Interface for bucket owners (users or accounts) to manage
 /// their list of buckets and storage stats with cls_user.
-namespace rgwrados::buckets {
+namespace rgwrados::buckets
+{
 
 /// Add the given bucket to the list.
 int add(const DoutPrefixProvider* dpp,
@@ -79,7 +80,7 @@ int read_stats(const DoutPrefixProvider* dpp,
 int read_stats_async(const DoutPrefixProvider* dpp,
                      librados::Rados& rados,
                      const rgw_raw_obj& obj,
-                     boost::intrusive_ptr<rgw::sal::ReadStatsCB> cb);
+                     boost::intrusive_ptr < rgw::sal::ReadStatsCB > cb);
 
 /// Recalculate the sum of bucket usage.
 int reset_stats(const DoutPrefixProvider* dpp,

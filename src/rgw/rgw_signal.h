@@ -16,8 +16,10 @@
 #pragma once
 
 
-namespace rgw {
-namespace signal {
+namespace rgw
+{
+namespace signal
+{
 
 void sig_handler_noop(int signum);
 void signal_shutdown();

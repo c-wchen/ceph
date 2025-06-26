@@ -7,14 +7,16 @@
 #include "librbd/exclusive_lock/Policy.h"
 #include <gmock/gmock.h>
 
-namespace librbd {
-namespace exclusive_lock {
+namespace librbd
+{
+namespace exclusive_lock
+{
 
 struct MockPolicy : public Policy {
 
-  MOCK_METHOD0(may_auto_request_lock, bool());
-  MOCK_METHOD1(lock_requested, int(bool));
-  MOCK_METHOD1(accept_blocked_request, bool(OperationRequestType));
+    MOCK_METHOD0(may_auto_request_lock, bool());
+    MOCK_METHOD1(lock_requested, int(bool));
+    MOCK_METHOD1(accept_blocked_request, bool(OperationRequestType));
 };
 
 } // namespace exclusive_lock

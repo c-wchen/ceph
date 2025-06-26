@@ -29,26 +29,27 @@
 
 class AuthConnectionMeta;
 
-namespace crimson::net {
+namespace crimson::net
+{
 
 using msgr_tag_t = uint8_t;
 using stop_t = seastar::stop_iteration;
 
 class Connection;
-using ConnectionLRef = seastar::shared_ptr<Connection>;
-using ConnectionFRef = seastar::foreign_ptr<ConnectionLRef>;
-using ConnectionRef = ::crimson::local_shared_foreign_ptr<ConnectionLRef>;
-using ConnectionFFRef = seastar::foreign_ptr<ConnectionRef>;
-using ConnectionXcoreRef = ::crimson::local_shared_foreign_ptr<ConnectionRef>;
+using ConnectionLRef = seastar::shared_ptr < Connection >;
+using ConnectionFRef = seastar::foreign_ptr < ConnectionLRef >;
+using ConnectionRef = ::crimson::local_shared_foreign_ptr < ConnectionLRef >;
+using ConnectionFFRef = seastar::foreign_ptr < ConnectionRef >;
+using ConnectionXcoreRef = ::crimson::local_shared_foreign_ptr < ConnectionRef >;
 
 class Dispatcher;
 class ChainedDispatchers;
 constexpr std::size_t NUM_DISPATCHERS = 4u;
-using dispatchers_t = boost::container::small_vector<Dispatcher*, NUM_DISPATCHERS>;
+using dispatchers_t = boost::container::small_vector < Dispatcher *, NUM_DISPATCHERS >;
 
 class Messenger;
-using MessengerRef = seastar::shared_ptr<Messenger>;
+using MessengerRef = seastar::shared_ptr < Messenger >;
 
-using MessageFRef = seastar::foreign_ptr<MessageURef>;
+using MessageFRef = seastar::foreign_ptr < MessageURef >;
 
 } // namespace crimson::net

@@ -19,7 +19,8 @@
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
 
-namespace ceph::async {
+namespace ceph::async
+{
 
 /**
  * A bound completion handler for use with boost::asio.
@@ -33,50 +34,55 @@ namespace ceph::async {
  *
  * @see bind_handler
  */
-template <typename Handler, typename Tuple>
+template < typename Handler, typename Tuple >
 struct CompletionHandler {
-  Handler handler;
-  Tuple args;
+    Handler handler;
+    Tuple args;
 
-  CompletionHandler(Handler&& handler, Tuple&& args)
-    : handler(std::move(handler)),
-      args(std::move(args))
-  {}
+    CompletionHandler(Handler&& handler, Tuple&& args)
+        : handler(std::move(handler)),
+          args(std::move(args))
+    {}
 
-  void operator()() & {
-    std::apply(handler, args);
-  }
-  void operator()() const & {
-    std::apply(handler, args);
-  }
-  void operator()() && {
-    std::apply(std::move(handler), std::move(args));
-  }
+    void operator()() & {
+        std::apply(handler, args);
+    }
+    void operator()() const &
+    {
+        std::apply(handler, args);
+    }
+    void operator()() && {
+        std::apply(std::move(handler), std::move(args));
+    }
 
-  using allocator_type = boost::asio::associated_allocator_t<Handler>;
-  allocator_type get_allocator() const noexcept {
-    return boost::asio::get_associated_allocator(handler);
-  }
+    using allocator_type = boost::asio::associated_allocator_t < Handler >;
+    allocator_type get_allocator() const noexcept
+    {
+        return boost::asio::get_associated_allocator(handler);
+    }
 };
 
 } // namespace ceph::async
 
-namespace boost::asio {
+namespace boost::asio
+{
 
 // specialize boost::asio::associated_executor<> for CompletionHandler
-template <typename Handler, typename Tuple, typename Executor>
-struct associated_executor<ceph::async::CompletionHandler<Handler, Tuple>, Executor> {
-  using type = boost::asio::associated_executor_t<Handler, Executor>;
+template < typename Handler, typename Tuple, typename Executor >
+struct associated_executor < ceph::async::CompletionHandler < Handler, Tuple>, Executor > {
+    using type = boost::asio::associated_executor_t < Handler, Executor >;
 
-  static type get(const ceph::async::CompletionHandler<Handler, Tuple>& handler,
-                  const Executor& ex = Executor()) noexcept {
-    return boost::asio::get_associated_executor(handler.handler, ex);
-  }
+    static type get(const ceph::async::CompletionHandler < Handler, Tuple > & handler,
+                    const Executor& ex = Executor()) noexcept
+    {
+        return boost::asio::get_associated_executor(handler.handler, ex);
+    }
 };
 
 } // namespace boost::asio
 
-namespace ceph::async {
+namespace ceph::async
+{
 
 /**
  * Returns a wrapped completion handler with bound arguments.
@@ -100,11 +106,11 @@ namespace ceph::async {
  *
  * @see CompletionHandler
  */
-template <typename Handler, typename ...Args>
+template < typename Handler, typename ...Args >
 auto bind_handler(Handler&& h, Args&& ...args)
 {
-  return CompletionHandler{std::forward<Handler>(h),
-                           std::make_tuple(std::forward<Args>(args)...)};
+    return CompletionHandler{std::forward < Handler > (h),
+                             std::make_tuple(std::forward < Args > (args)...)};
 }
 
 } // namespace ceph::async

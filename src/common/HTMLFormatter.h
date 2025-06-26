@@ -5,9 +5,11 @@
 
 #include "Formatter.h"
 
-namespace ceph {
-  class HTMLFormatter : public XMLFormatter {
-  public:
+namespace ceph
+{
+class HTMLFormatter : public XMLFormatter
+{
+public:
     explicit HTMLFormatter(bool pretty = false);
     ~HTMLFormatter() override;
     void reset() override;
@@ -19,17 +21,17 @@ namespace ceph {
     void dump_int(std::string_view name, int64_t u) override;
     void dump_float(std::string_view name, double d) override;
     void dump_string(std::string_view name, std::string_view s) override;
-    std::ostream& dump_stream(std::string_view name) override;
+    std::ostream &dump_stream(std::string_view name) override;
     void dump_format_va(std::string_view name, const char *ns, bool quoted, const char *fmt, va_list ap) override;
 
     /* with attrs */
     void dump_string_with_attrs(std::string_view name, std::string_view s, const FormatterAttrs& attrs) override;
-  private:
-    template <typename T> void dump_template(std::string_view name, T arg);
+private:
+    template < typename T > void dump_template(std::string_view name, T arg);
 
     int m_status;
-    const char* m_status_name;
-  };
+    const char *m_status_name;
+};
 
 }
 

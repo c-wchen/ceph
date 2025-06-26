@@ -21,7 +21,7 @@
 
 const char *__ceph_plugin_version()
 {
-  return CEPH_GIT_NICE_VER;
+    return CEPH_GIT_NICE_VER;
 }
 
 // -----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ int __ceph_plugin_init(CephContext *cct,
                        const std::string& type,
                        const std::string& name)
 {
-  auto instance = cct->get_plugin_registry();
+    auto instance = cct->get_plugin_registry();
 
-  return instance->add(type, name, new CompressionPluginLZ4(cct));
+    return instance->add(type, name, new CompressionPluginLZ4(cct));
 }

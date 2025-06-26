@@ -11,11 +11,19 @@
 #include "include/rados/librados_fwd.hpp"
 
 class Context;
-namespace ceph { template <uint8_t> class BitVector; }
-namespace neorados { struct WriteOp; }
+namespace ceph
+{
+template < uint8_t > class BitVector;
+}
+namespace neorados
+{
+struct WriteOp;
+}
 
-namespace librbd {
-namespace cls_client {
+namespace librbd
+{
+namespace cls_client
+{
 
 // low-level interface (mainly for testing)
 void create_image(librados::ObjectWriteOperation *op, uint64_t size,
@@ -100,10 +108,10 @@ int parent_get(librados::IoCtx* ioctx, const std::string &oid,
 void parent_overlap_get_start(librados::ObjectReadOperation* op,
                               snapid_t snap_id);
 int parent_overlap_get_finish(ceph::buffer::list::const_iterator* it,
-                              std::optional<uint64_t>* parent_overlap);
+                              std::optional < uint64_t > * parent_overlap);
 int parent_overlap_get(librados::IoCtx* ioctx, const std::string &oid,
                        snapid_t snap_id,
-                       std::optional<uint64_t>* parent_overlap);
+                       std::optional < uint64_t > * parent_overlap);
 
 void parent_attach(librados::ObjectWriteOperation* op,
                    const cls::rbd::ParentImageSpec& parent_image_spec,
@@ -130,9 +138,9 @@ int remove_child(librados::IoCtx *ioctx, const std::string &oid,
 void get_children_start(librados::ObjectReadOperation *op,
                         const cls::rbd::ParentImageSpec &pspec);
 int get_children_finish(ceph::buffer::list::const_iterator *it,
-                        std::set<std::string> *children);
+                        std::set < std::string > *children);
 int get_children(librados::IoCtx *ioctx, const std::string &oid,
-                 const cls::rbd::ParentImageSpec& pspec, std::set<std::string>& children);
+                 const cls::rbd::ParentImageSpec& pspec, std::set < std::string > & children);
 
 void snapshot_get_start(librados::ObjectReadOperation* op,
                         snapid_t snap_id);
@@ -237,21 +245,21 @@ int set_modify_timestamp(librados::IoCtx *ioctx, const std::string &oid);
 
 int metadata_list(librados::IoCtx *ioctx, const std::string &oid,
                   const std::string &start, uint64_t max_return,
-                  std::map<std::string, ceph::buffer::list> *pairs);
+                  std::map < std::string, ceph::buffer::list > *pairs);
 void metadata_list_start(librados::ObjectReadOperation *op,
                          const std::string &start, uint64_t max_return);
 int metadata_list_finish(ceph::buffer::list::const_iterator *it,
-                         std::map<std::string, ceph::buffer::list> *pairs);
+                         std::map < std::string, ceph::buffer::list > *pairs);
 void metadata_set(librados::ObjectWriteOperation *op,
-                  const std::map<std::string, ceph::buffer::list> &data);
+                  const std::map < std::string, ceph::buffer::list > &data);
 int metadata_set(librados::IoCtx *ioctx, const std::string &oid,
-                 const std::map<std::string, ceph::buffer::list> &data);
+                 const std::map < std::string, ceph::buffer::list > &data);
 void metadata_remove(librados::ObjectWriteOperation *op,
                      const std::string &key);
 int metadata_remove(librados::IoCtx *ioctx, const std::string &oid,
                     const std::string &key);
 void metadata_get_start(librados::ObjectReadOperation* op,
-                 const std::string &key);
+                        const std::string &key);
 int metadata_get_finish(ceph::buffer::list::const_iterator *it,
                         std::string* value);
 int metadata_get(librados::IoCtx *ioctx, const std::string &oid,
@@ -313,10 +321,10 @@ int dir_get_name(librados::IoCtx *ioctx, const std::string &oid,
                  const std::string &id, std::string *name);
 void dir_list_start(librados::ObjectReadOperation *op,
                     const std::string &start, uint64_t max_return);
-int dir_list_finish(ceph::buffer::list::const_iterator *it, std::map<std::string, std::string> *images);
+int dir_list_finish(ceph::buffer::list::const_iterator *it, std::map < std::string, std::string > *images);
 int dir_list(librados::IoCtx *ioctx, const std::string &oid,
              const std::string &start, uint64_t max_return,
-             std::map<std::string, std::string> *images);
+             std::map < std::string, std::string > *images);
 void dir_add_image(librados::ObjectWriteOperation *op,
                    const std::string &name, const std::string &id);
 int dir_add_image(librados::IoCtx *ioctx, const std::string &oid,
@@ -341,20 +349,20 @@ int dir_state_set(librados::IoCtx *ioctx, const std::string &oid,
 // operations on the rbd_object_map.$image_id object
 void object_map_load_start(librados::ObjectReadOperation *op);
 int object_map_load_finish(ceph::buffer::list::const_iterator *it,
-                           ceph::BitVector<2> *object_map);
+                           ceph::BitVector < 2 > *object_map);
 int object_map_load(librados::IoCtx *ioctx, const std::string &oid,
-                    ceph::BitVector<2> *object_map);
+                    ceph::BitVector < 2 > *object_map);
 void object_map_save(librados::ObjectWriteOperation *rados_op,
-                     const ceph::BitVector<2> &object_map);
+                     const ceph::BitVector < 2 > &object_map);
 void object_map_resize(librados::ObjectWriteOperation *rados_op,
                        uint64_t object_count, uint8_t default_state);
 void object_map_update(librados::ObjectWriteOperation *rados_op,
                        uint64_t start_object_no, uint64_t end_object_no,
                        uint8_t new_object_state,
-                       const boost::optional<uint8_t> &current_object_state);
+                       const boost::optional < uint8_t > &current_object_state);
 void object_map_snap_add(librados::ObjectWriteOperation *rados_op);
 void object_map_snap_remove(librados::ObjectWriteOperation *rados_op,
-                            const ceph::BitVector<2> &object_map);
+                            const ceph::BitVector < 2 > &object_map);
 
 // class operations on the old format, kept for
 // backwards compatibility
@@ -367,12 +375,12 @@ void old_snapshot_rename(librados::ObjectWriteOperation *rados_op,
 
 void old_snapshot_list_start(librados::ObjectReadOperation *op);
 int old_snapshot_list_finish(ceph::buffer::list::const_iterator *it,
-                             std::vector<std::string> *names,
-                             std::vector<uint64_t> *sizes,
+                             std::vector < std::string > *names,
+                             std::vector < uint64_t > *sizes,
                              ::SnapContext *snapc);
 int old_snapshot_list(librados::IoCtx *ioctx, const std::string &oid,
-                      std::vector<std::string> *names,
-                      std::vector<uint64_t> *sizes,
+                      std::vector < std::string > *names,
+                      std::vector < uint64_t > *sizes,
                       ::SnapContext *snapc);
 
 // operations on the rbd_mirroring object
@@ -397,9 +405,9 @@ void mirror_peer_ping(librados::ObjectWriteOperation *op,
                       const std::string& fsid);
 void mirror_peer_list_start(librados::ObjectReadOperation *op);
 int mirror_peer_list_finish(ceph::buffer::list::const_iterator *it,
-                            std::vector<cls::rbd::MirrorPeer> *peers);
+                            std::vector < cls::rbd::MirrorPeer > *peers);
 int mirror_peer_list(librados::IoCtx *ioctx,
-                     std::vector<cls::rbd::MirrorPeer> *peers);
+                     std::vector < cls::rbd::MirrorPeer > *peers);
 int mirror_peer_add(librados::IoCtx *ioctx,
                     const cls::rbd::MirrorPeer& mirror_peer);
 void mirror_peer_add(librados::ObjectWriteOperation *op,
@@ -419,10 +427,10 @@ int mirror_peer_set_direction(
 void mirror_image_list_start(librados::ObjectReadOperation *op,
                              const std::string &start, uint64_t max_return);
 int mirror_image_list_finish(ceph::buffer::list::const_iterator *it,
-                             std::map<std::string, std::string> *mirror_image_ids);
+                             std::map < std::string, std::string > *mirror_image_ids);
 int mirror_image_list(librados::IoCtx *ioctx,
                       const std::string &start, uint64_t max_return,
-                      std::map<std::string, std::string> *mirror_image_ids);
+                      std::map < std::string, std::string > *mirror_image_ids);
 void mirror_image_get_image_id_start(librados::ObjectReadOperation *op,
                                      const std::string &global_image_id);
 int mirror_image_get_image_id_finish(ceph::buffer::list::const_iterator *it,
@@ -460,24 +468,24 @@ int mirror_image_status_get_finish(ceph::buffer::list::const_iterator *iter,
                                    cls::rbd::MirrorImageStatus *status);
 int mirror_image_status_list(librados::IoCtx *ioctx,
                              const std::string &start, uint64_t max_return,
-                             std::map<std::string, cls::rbd::MirrorImage> *images,
-                             std::map<std::string, cls::rbd::MirrorImageStatus> *statuses);
+                             std::map < std::string, cls::rbd::MirrorImage > *images,
+                             std::map < std::string, cls::rbd::MirrorImageStatus > *statuses);
 void mirror_image_status_list_start(librados::ObjectReadOperation *op,
                                     const std::string &start,
                                     uint64_t max_return);
 int mirror_image_status_list_finish(ceph::buffer::list::const_iterator *iter,
-                                    std::map<std::string, cls::rbd::MirrorImage> *images,
-                                    std::map<std::string, cls::rbd::MirrorImageStatus> *statuses);
+                                    std::map < std::string, cls::rbd::MirrorImage > *images,
+                                    std::map < std::string, cls::rbd::MirrorImageStatus > *statuses);
 int mirror_image_status_get_summary(
     librados::IoCtx *ioctx,
-    const std::vector<cls::rbd::MirrorPeer>& mirror_peer_sites,
-    std::map<cls::rbd::MirrorImageStatusState, int32_t> *states);
+    const std::vector < cls::rbd::MirrorPeer > & mirror_peer_sites,
+    std::map < cls::rbd::MirrorImageStatusState, int32_t > *states);
 void mirror_image_status_get_summary_start(
     librados::ObjectReadOperation *op,
-    const std::vector<cls::rbd::MirrorPeer>& mirror_peer_sites);
+    const std::vector < cls::rbd::MirrorPeer > & mirror_peer_sites);
 int mirror_image_status_get_summary_finish(
     ceph::buffer::list::const_iterator *iter,
-    std::map<cls::rbd::MirrorImageStatusState, int32_t> *states);
+    std::map < cls::rbd::MirrorImageStatusState, int32_t > *states);
 int mirror_image_status_remove(librados::IoCtx *ioctx,
                                const std::string &global_image_id);
 void mirror_image_status_remove(librados::ObjectWriteOperation *op,
@@ -494,18 +502,18 @@ int mirror_image_instance_get_finish(ceph::buffer::list::const_iterator *iter,
                                      entity_inst_t *instance);
 int mirror_image_instance_list(librados::IoCtx *ioctx,
                                const std::string &start, uint64_t max_return,
-                               std::map<std::string, entity_inst_t> *instances);
+                               std::map < std::string, entity_inst_t > *instances);
 void mirror_image_instance_list_start(librados::ObjectReadOperation *op,
                                       const std::string &start,
                                       uint64_t max_return);
 int mirror_image_instance_list_finish(ceph::buffer::list::const_iterator *iter,
-                                      std::map<std::string, entity_inst_t> *instances);
+                                      std::map < std::string, entity_inst_t > *instances);
 
 void mirror_instances_list_start(librados::ObjectReadOperation *op);
 int mirror_instances_list_finish(ceph::buffer::list::const_iterator *iter,
-                                 std::vector<std::string> *instance_ids);
+                                 std::vector < std::string > *instance_ids);
 int mirror_instances_list(librados::IoCtx *ioctx,
-                          std::vector<std::string> *instance_ids);
+                          std::vector < std::string > *instance_ids);
 void mirror_instances_add(librados::ObjectWriteOperation *op,
                           const std::string &instance_id);
 int mirror_instances_add(librados::IoCtx *ioctx,
@@ -520,10 +528,10 @@ void mirror_image_map_list_start(librados::ObjectReadOperation *op,
                                  const std::string &start_after,
                                  uint64_t max_read);
 int mirror_image_map_list_finish(ceph::buffer::list::const_iterator *iter,
-                                 std::map<std::string, cls::rbd::MirrorImageMap> *image_mapping);
+                                 std::map < std::string, cls::rbd::MirrorImageMap > *image_mapping);
 int mirror_image_map_list(librados::IoCtx *ioctx,
                           const std::string &start_after, uint64_t max_read,
-                          std::map<std::string, cls::rbd::MirrorImageMap> *image_mapping);
+                          std::map < std::string, cls::rbd::MirrorImageMap > *image_mapping);
 void mirror_image_map_update(librados::ObjectWriteOperation *op,
                              const std::string &global_image_id,
                              const cls::rbd::MirrorImageMap &image_map);
@@ -538,17 +546,17 @@ int mirror_image_snapshot_unlink_peer(librados::IoCtx *ioctx,
                                       snapid_t snap_id,
                                       const std::string &mirror_peer_uuid);
 void mirror_image_snapshot_set_copy_progress(librados::ObjectWriteOperation *op,
-                                             snapid_t snap_id, bool complete,
-                                             uint64_t copy_progress);
+        snapid_t snap_id, bool complete,
+        uint64_t copy_progress);
 int mirror_image_snapshot_set_copy_progress(librados::IoCtx *ioctx,
-                                            const std::string &oid,
-                                            snapid_t snap_id, bool complete,
-                                            uint64_t copy_progress);
+        const std::string &oid,
+        snapid_t snap_id, bool complete,
+        uint64_t copy_progress);
 
 // Groups functions
 int group_dir_list(librados::IoCtx *ioctx, const std::string &oid,
                    const std::string &start, uint64_t max_return,
-                   std::map<std::string, std::string> *groups);
+                   std::map < std::string, std::string > *groups);
 int group_dir_add(librados::IoCtx *ioctx, const std::string &oid,
                   const std::string &name, const std::string &id);
 int group_dir_rename(librados::IoCtx *ioctx, const std::string &oid,
@@ -561,7 +569,7 @@ int group_image_remove(librados::IoCtx *ioctx, const std::string &oid,
 int group_image_list(librados::IoCtx *ioctx, const std::string &oid,
                      const cls::rbd::GroupImageSpec &start,
                      uint64_t max_return,
-                     std::vector<cls::rbd::GroupImageStatus> *images);
+                     std::vector < cls::rbd::GroupImageStatus > *images);
 int group_image_set(librados::IoCtx *ioctx, const std::string &oid,
                     const cls::rbd::GroupImageStatus &st);
 int image_group_add(librados::IoCtx *ioctx, const std::string &oid,
@@ -583,7 +591,7 @@ int group_snap_get_by_id(librados::IoCtx *ioctx, const std::string &oid,
 int group_snap_list(librados::IoCtx *ioctx, const std::string &oid,
                     const cls::rbd::GroupSnapshot &start,
                     uint64_t max_return,
-                    std::vector<cls::rbd::GroupSnapshot> *snapshots);
+                    std::vector < cls::rbd::GroupSnapshot > *snapshots);
 
 // operations on rbd_trash object
 void trash_add(librados::ObjectWriteOperation *op,
@@ -597,10 +605,10 @@ int trash_remove(librados::IoCtx *ioctx, const std::string &id);
 void trash_list_start(librados::ObjectReadOperation *op,
                       const std::string &start, uint64_t max_return);
 int trash_list_finish(ceph::buffer::list::const_iterator *it,
-                      std::map<std::string, cls::rbd::TrashImageSpec> *entries);
+                      std::map < std::string, cls::rbd::TrashImageSpec > *entries);
 int trash_list(librados::IoCtx *ioctx,
                const std::string &start, uint64_t max_return,
-               std::map<std::string, cls::rbd::TrashImageSpec> *entries);
+               std::map < std::string, cls::rbd::TrashImageSpec > *entries);
 void trash_get_start(librados::ObjectReadOperation *op,
                      const std::string &id);
 int trash_get_finish(ceph::buffer::list::const_iterator *it,
@@ -625,10 +633,10 @@ int namespace_remove(librados::IoCtx *ioctx, const std::string &name);
 void namespace_list_start(librados::ObjectReadOperation *op,
                           const std::string &start, uint64_t max_return);
 int namespace_list_finish(ceph::buffer::list::const_iterator *it,
-                          std::list<std::string> *entries);
+                          std::list < std::string > *entries);
 int namespace_list(librados::IoCtx *ioctx,
                    const std::string &start, uint64_t max_return,
-                   std::list<std::string> *entries);
+                   std::list < std::string > *entries);
 
 // operations on data objects
 void assert_snapc_seq(neorados::WriteOp* op,
@@ -647,13 +655,13 @@ int copyup(librados::IoCtx *ioctx, const std::string &oid,
            ceph::buffer::list data);
 
 void sparse_copyup(neorados::WriteOp* op,
-                   const std::vector<std::pair<uint64_t, uint64_t>>& extent_map,
+                   const std::vector < std::pair < uint64_t, uint64_t>>& extent_map,
                    ceph::buffer::list data);
 void sparse_copyup(librados::ObjectWriteOperation *op,
-                   const std::map<uint64_t, uint64_t> &extent_map,
+                   const std::map < uint64_t, uint64_t > &extent_map,
                    ceph::buffer::list data);
 int sparse_copyup(librados::IoCtx *ioctx, const std::string &oid,
-                  const std::map<uint64_t, uint64_t> &extent_map,
+                  const std::map < uint64_t, uint64_t > &extent_map,
                   ceph::buffer::list data);
 
 void sparsify(librados::ObjectWriteOperation *op, uint64_t sparse_size,

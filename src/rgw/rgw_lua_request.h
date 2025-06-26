@@ -9,7 +9,8 @@ class req_state;
 class RGWREST;
 class OpsLogSink;
 
-namespace rgw::lua::request {
+namespace rgw::lua::request
+{
 
 // create the request metatable
 void create_top_metatable(lua_State* L, req_state* s, const char* op_name);
@@ -19,7 +20,7 @@ int execute(
     rgw::sal::Driver* driver,
     RGWREST* rest,
     OpsLogSink* olog,
-    req_state *s, 
+    req_state *s,
     RGWOp* op,
     const std::string& script);
 } // namespace rgw::lua::request

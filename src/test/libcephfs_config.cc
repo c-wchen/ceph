@@ -22,43 +22,46 @@
 
 using std::string;
 
-TEST(LibCephConfig, SimpleSet) {
-  struct ceph_mount_info *cmount;
-  int ret = ceph_create(&cmount, NULL);
-  ASSERT_EQ(ret, 0);
+TEST(LibCephConfig, SimpleSet)
+{
+    struct ceph_mount_info *cmount;
+    int ret = ceph_create(&cmount, NULL);
+    ASSERT_EQ(ret, 0);
 
-  ret = ceph_conf_set(cmount, "log_max_new", "21");
-  ASSERT_EQ(ret, 0);
+    ret = ceph_conf_set(cmount, "log_max_new", "21");
+    ASSERT_EQ(ret, 0);
 
-  char buf[128];
-  memset(buf, 0, sizeof(buf));
-  ret = ceph_conf_get(cmount, "log_max_new", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(string("21"), string(buf));
+    char buf[128];
+    memset(buf, 0, sizeof(buf));
+    ret = ceph_conf_get(cmount, "log_max_new", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(string("21"), string(buf));
 
-  ceph_shutdown(cmount);
+    ceph_shutdown(cmount);
 }
 
-TEST(LibCephConfig, ArgV) {
-  struct ceph_mount_info *cmount;
-  int ret = ceph_create(&cmount, NULL);
-  ASSERT_EQ(ret, 0);
+TEST(LibCephConfig, ArgV)
+{
+    struct ceph_mount_info *cmount;
+    int ret = ceph_create(&cmount, NULL);
+    ASSERT_EQ(ret, 0);
 
-  const char *argv[] = { "foo", "--log_max_new", "2",
-			 "--key", "my-key", NULL };
-  size_t argc = (sizeof(argv) / sizeof(argv[0])) - 1;
-  ceph_conf_parse_argv(cmount, argc, argv);
+    const char *argv[] = { "foo", "--log_max_new", "2",
+                           "--key", "my-key", NULL
+                         };
+    size_t argc = (sizeof(argv) / sizeof(argv[0])) - 1;
+    ceph_conf_parse_argv(cmount, argc, argv);
 
-  char buf[128];
-  memset(buf, 0, sizeof(buf));
-  ret = ceph_conf_get(cmount, "key", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(string("my-key"), string(buf));
+    char buf[128];
+    memset(buf, 0, sizeof(buf));
+    ret = ceph_conf_get(cmount, "key", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(string("my-key"), string(buf));
 
-  memset(buf, 0, sizeof(buf));
-  ret = ceph_conf_get(cmount, "log_max_new", buf, sizeof(buf));
-  ASSERT_EQ(ret, 0);
-  ASSERT_EQ(string("2"), string(buf));
+    memset(buf, 0, sizeof(buf));
+    ret = ceph_conf_get(cmount, "log_max_new", buf, sizeof(buf));
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(string("2"), string(buf));
 
-  ceph_shutdown(cmount);
+    ceph_shutdown(cmount);
 }

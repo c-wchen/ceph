@@ -35,5 +35,5 @@ DENC_API void register_dencoders(DencoderPlugin* plugin)
 
 DENC_API void unregister_dencoders(DencoderPlugin* plugin)
 {
-  plugin->unregister_dencoders();
+    plugin->unregister_dencoders();
 }

@@ -10,14 +10,15 @@
 #include "common/Formatter.h"
 #include "osd/osd_types.h"
 
-namespace Scrub {
+namespace Scrub
+{
 
 /**
  * an interface allowing the ScrubResources to log directly into its
  * owner's log. This way, we do not need the full dout() mechanism
  * (prefix func, OSD id, etc.)
  */
-using log_upwards_t = std::function<void(std::string msg)>;
+using log_upwards_t = std::function < void(std::string msg) >;
 class LocalResourceWrapper;
 
 /**
@@ -26,47 +27,48 @@ class LocalResourceWrapper;
  * maintaining a count of the number of scrubs currently performed by primary
  * PGs on this OSD, and for enforcing the limit.
  */
-class ScrubResources {
-  friend class LocalResourceWrapper;
+class ScrubResources
+{
+    friend class LocalResourceWrapper;
 
-  /**
-   * the number of concurrent scrubs performed by Primaries on this OSD.
-   *
-   * Note that, as high priority scrubs are always allowed to proceed, this
-   * counter may exceed the configured limit. When in this state - no new
-   * regular scrubs will be allowed to start.
-   */
-  int scrubs_local{0};
+    /**
+     * the number of concurrent scrubs performed by Primaries on this OSD.
+     *
+     * Note that, as high priority scrubs are always allowed to proceed, this
+     * counter may exceed the configured limit. When in this state - no new
+     * regular scrubs will be allowed to start.
+     */
+    int scrubs_local{0};
 
-  mutable ceph::mutex resource_lock =
-      ceph::make_mutex("ScrubQueue::resource_lock");
+    mutable ceph::mutex resource_lock =
+        ceph::make_mutex("ScrubQueue::resource_lock");
 
-  log_upwards_t log_upwards;  ///< access into the owner's dout()
+    log_upwards_t log_upwards;  ///< access into the owner's dout()
 
-  const ceph::common::ConfigProxy& conf;
+    const ceph::common::ConfigProxy &conf;
 
-  /// an aux used to check available local scrubs. Must be called with
-  /// the resource lock held.
-  bool can_inc_local_scrubs_unlocked() const;
+    /// an aux used to check available local scrubs. Must be called with
+    /// the resource lock held.
+    bool can_inc_local_scrubs_unlocked() const;
 
- public:
-  explicit ScrubResources(
-      log_upwards_t log_access,
-      const ceph::common::ConfigProxy& config);
+public:
+    explicit ScrubResources(
+        log_upwards_t log_access,
+        const ceph::common::ConfigProxy& config);
 
-  /**
-   * \returns true if the number of concurrent scrubs is
-   *  below osd_max_scrubs
-   */
-  bool can_inc_scrubs() const;
+    /**
+     * \returns true if the number of concurrent scrubs is
+     *  below osd_max_scrubs
+     */
+    bool can_inc_scrubs() const;
 
-  /// increments the number of scrubs acting as a Primary
-  std::unique_ptr<LocalResourceWrapper> inc_scrubs_local(bool is_high_priority);
+    /// increments the number of scrubs acting as a Primary
+    std::unique_ptr < LocalResourceWrapper > inc_scrubs_local(bool is_high_priority);
 
-  /// decrements the number of scrubs acting as a Primary
-  void dec_scrubs_local();
+    /// decrements the number of scrubs acting as a Primary
+    void dec_scrubs_local();
 
-  void dump_scrub_reservations(ceph::Formatter* f) const;
+    void dump_scrub_reservations(ceph::Formatter* f) const;
 };
 
 
@@ -76,13 +78,14 @@ class ScrubResources {
  * resources. The PGs use these to release the resources when they are
  * done scrubbing.
  */
-class LocalResourceWrapper {
-  ScrubResources& m_resource_bookkeeper;
+class LocalResourceWrapper
+{
+    ScrubResources &m_resource_bookkeeper;
 
- public:
-  LocalResourceWrapper(
-      ScrubResources& resource_bookkeeper);
-  ~LocalResourceWrapper();
+public:
+    LocalResourceWrapper(
+        ScrubResources& resource_bookkeeper);
+    ~LocalResourceWrapper();
 };
 
 }  // namespace Scrub

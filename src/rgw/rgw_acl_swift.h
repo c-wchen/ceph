@@ -11,16 +11,17 @@ struct ACLOwner;
 class DoutPrefixProvider;
 class RGWAccessControlPolicy;
 
-namespace rgw::swift {
+namespace rgw::swift
+{
 
 /// Create a policy based on swift container acl headers
 /// X-Container-Read/X-Container-Write.
 int create_container_policy(const DoutPrefixProvider *dpp,
                             rgw::sal::Driver* driver,
                             const ACLOwner& owner,
-                            const char* read_list,
-                            const char* write_list,
-                            uint32_t& rw_mask,
+                            const char *read_list,
+                            const char *write_list,
+                            uint32_t &rw_mask,
                             RGWAccessControlPolicy& policy);
 
 /// Copy grants matching the permission mask (SWIFT_PERM_READ/WRITE) from
@@ -42,6 +43,6 @@ int create_account_policy(const DoutPrefixProvider* dpp,
 /// Format the policy in terms of the X-Account-Access-Control string. Returns
 /// std::nullopt if there are no admin/read-write/read-only entries.
 auto format_account_acl(const RGWAccessControlPolicy& policy)
-  -> std::optional<std::string>;
+-> std::optional < std::string >;
 
 } // namespace rgw::swift

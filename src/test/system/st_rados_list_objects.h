@@ -31,23 +31,23 @@ class CrossProcessSem;
 class StRadosListObjects : public SysTestRunnable
 {
 public:
-  static std::string get_random_buf(int sz);
-  StRadosListObjects(int argc, const char **argv,
-		     const std::string &pool_name,
-		     bool accept_list_errors,
-		     int midway_cnt,
-		     CrossProcessSem *pool_setup_sem,
-		     CrossProcessSem *midway_sem_wait,
-		     CrossProcessSem *midway_sem_post);
-  ~StRadosListObjects() override;
-  int run() override;
+    static std::string get_random_buf(int sz);
+    StRadosListObjects(int argc, const char **argv,
+                       const std::string &pool_name,
+                       bool accept_list_errors,
+                       int midway_cnt,
+                       CrossProcessSem *pool_setup_sem,
+                       CrossProcessSem *midway_sem_wait,
+                       CrossProcessSem *midway_sem_post);
+    ~StRadosListObjects() override;
+    int run() override;
 private:
-  std::string m_pool_name;
-  bool m_accept_list_errors;
-  int m_midway_cnt;
-  CrossProcessSem *m_pool_setup_sem;
-  CrossProcessSem *m_midway_sem_wait;
-  CrossProcessSem *m_midway_sem_post;
+    std::string m_pool_name;
+    bool m_accept_list_errors;
+    int m_midway_cnt;
+    CrossProcessSem *m_pool_setup_sem;
+    CrossProcessSem *m_midway_sem_wait;
+    CrossProcessSem *m_midway_sem_post;
 };
 
 #endif

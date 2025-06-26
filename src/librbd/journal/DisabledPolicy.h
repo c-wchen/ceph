@@ -6,23 +6,29 @@
 
 #include "librbd/journal/Policy.h"
 
-namespace librbd {
+namespace librbd
+{
 
 struct ImageCtx;
 
-namespace journal {
+namespace journal
+{
 
-class DisabledPolicy : public Policy {
+class DisabledPolicy : public Policy
+{
 public:
-  bool append_disabled() const override {
-    return true;
-  }
-  bool journal_disabled() const override {
-    return true;
-  }
-  void allocate_tag_on_lock(Context *on_finish) override {
-    ceph_abort();
-  }
+    bool append_disabled() const override
+    {
+        return true;
+    }
+    bool journal_disabled() const override
+    {
+        return true;
+    }
+    void allocate_tag_on_lock(Context *on_finish) override
+    {
+        ceph_abort();
+    }
 };
 
 } // namespace journal

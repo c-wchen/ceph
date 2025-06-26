@@ -21,19 +21,20 @@
 #include "common/ceph_context.h"
 #include "include/buffer_fwd.h"
 
-namespace rgw::IAM {
+namespace rgw::IAM
+{
 
 struct Policy;
 
 /// Return a managed policy by ARN.
 auto get_managed_policy(CephContext* cct, std::string_view arn)
-    -> std::optional<Policy>;
+-> std::optional < Policy >;
 
 /// A serializable container for managed policy ARNs.
 struct ManagedPolicies {
-  boost::container::flat_set<std::string> arns;
+    boost::container::flat_set < std::string > arns;
 };
-void encode(const ManagedPolicies&, bufferlist&, uint64_t f=0);
-void decode(ManagedPolicies&, bufferlist::const_iterator&);
+void encode(const ManagedPolicies &, bufferlist &, uint64_t f = 0);
+void decode(ManagedPolicies &, bufferlist::const_iterator &);
 
 } // namespace rgw::IAM

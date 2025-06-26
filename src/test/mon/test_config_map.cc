@@ -13,131 +13,131 @@
 
 TEST(ConfigMap, parse_key)
 {
-  ConfigMap cm;
-  {
-    std::string name, who;
-    cm.parse_key("global/foo", &name, &who);
-    ASSERT_EQ("foo", name);
-    ASSERT_EQ("global", who);
-  }
-  {
-    std::string name, who;
-    cm.parse_key("mon/foo", &name, &who);
-    ASSERT_EQ("foo", name);
-    ASSERT_EQ("mon", who);
-  }
-  {
-    std::string name, who;
-    cm.parse_key("mon.a/foo", &name, &who);
-    ASSERT_EQ("foo", name);
-    ASSERT_EQ("mon.a", who);
-  }
-  {
-    std::string name, who;
-    cm.parse_key("mon.a/mgr/foo", &name, &who);
-    ASSERT_EQ("mgr/foo", name);
-    ASSERT_EQ("mon.a", who);
-  }
-  {
-    std::string name, who;
-    cm.parse_key("mon.a/a=b/foo", &name, &who);
-    ASSERT_EQ("foo", name);
-    ASSERT_EQ("mon.a/a=b", who);
-  }
-  {
-    std::string name, who;
-    cm.parse_key("mon.a/a=b/c=d/foo", &name, &who);
-    ASSERT_EQ("foo", name);
-    ASSERT_EQ("mon.a/a=b/c=d", who);
-  }
+    ConfigMap cm;
+    {
+        std::string name, who;
+        cm.parse_key("global/foo", &name, &who);
+        ASSERT_EQ("foo", name);
+        ASSERT_EQ("global", who);
+    }
+    {
+        std::string name, who;
+        cm.parse_key("mon/foo", &name, &who);
+        ASSERT_EQ("foo", name);
+        ASSERT_EQ("mon", who);
+    }
+    {
+        std::string name, who;
+        cm.parse_key("mon.a/foo", &name, &who);
+        ASSERT_EQ("foo", name);
+        ASSERT_EQ("mon.a", who);
+    }
+    {
+        std::string name, who;
+        cm.parse_key("mon.a/mgr/foo", &name, &who);
+        ASSERT_EQ("mgr/foo", name);
+        ASSERT_EQ("mon.a", who);
+    }
+    {
+        std::string name, who;
+        cm.parse_key("mon.a/a=b/foo", &name, &who);
+        ASSERT_EQ("foo", name);
+        ASSERT_EQ("mon.a/a=b", who);
+    }
+    {
+        std::string name, who;
+        cm.parse_key("mon.a/a=b/c=d/foo", &name, &who);
+        ASSERT_EQ("foo", name);
+        ASSERT_EQ("mon.a/a=b/c=d", who);
+    }
 }
 
 TEST(ConfigMap, add_option)
 {
-  ConfigMap cm;
-  auto cct = new CephContext(CEPH_ENTITY_TYPE_MON);
-  int r;
+    ConfigMap cm;
+    auto cct = new CephContext(CEPH_ENTITY_TYPE_MON);
+    int r;
 
-  r = cm.add_option(
-    cct, "foo", "global", "fooval",
-    [&](const std::string& name) {
-      return nullptr;
+    r = cm.add_option(
+            cct, "foo", "global", "fooval",
+    [&](const std::string & name) {
+        return nullptr;
     });
-  ASSERT_EQ(0, r);
-  ASSERT_EQ(1, cm.global.options.size());
+    ASSERT_EQ(0, r);
+    ASSERT_EQ(1, cm.global.options.size());
 
-  r = cm.add_option(
-    cct, "foo", "mon", "fooval",
-    [&](const std::string& name) {
-      return nullptr;
+    r = cm.add_option(
+            cct, "foo", "mon", "fooval",
+    [&](const std::string & name) {
+        return nullptr;
     });
-  ASSERT_EQ(0, r);
-  ASSERT_EQ(1, cm.by_type.size());
-  ASSERT_EQ(1, cm.by_type["mon"].options.size());
-  
-  r = cm.add_option(
-    cct, "foo", "mon.a", "fooval",
-    [&](const std::string& name) {
-      return nullptr;
+    ASSERT_EQ(0, r);
+    ASSERT_EQ(1, cm.by_type.size());
+    ASSERT_EQ(1, cm.by_type["mon"].options.size());
+
+    r = cm.add_option(
+            cct, "foo", "mon.a", "fooval",
+    [&](const std::string & name) {
+        return nullptr;
     });
-  ASSERT_EQ(0, r);
-  ASSERT_EQ(1, cm.by_id.size());
-  ASSERT_EQ(1, cm.by_id["mon.a"].options.size());
+    ASSERT_EQ(0, r);
+    ASSERT_EQ(1, cm.by_id.size());
+    ASSERT_EQ(1, cm.by_id["mon.a"].options.size());
 }
 
 
 TEST(ConfigMap, result_sections)
 {
-  ConfigMap cm;
-  auto cct = new CephContext(CEPH_ENTITY_TYPE_MON);
-  auto crush = new CrushWrapper;
-  crush->finalize();
+    ConfigMap cm;
+    auto cct = new CephContext(CEPH_ENTITY_TYPE_MON);
+    auto crush = new CrushWrapper;
+    crush->finalize();
 
-  int r;
+    int r;
 
-  r = cm.add_option(
-    cct, "foo", "global", "g",
-    [&](const std::string& name) {
-      return nullptr;
+    r = cm.add_option(
+            cct, "foo", "global", "g",
+    [&](const std::string & name) {
+        return nullptr;
     });
-  ASSERT_EQ(0, r);
-  ASSERT_EQ(1, cm.global.options.size());
+    ASSERT_EQ(0, r);
+    ASSERT_EQ(1, cm.global.options.size());
 
-  r = cm.add_option(
-    cct, "foo", "mon", "m",
-    [&](const std::string& name) {
-      return nullptr;
+    r = cm.add_option(
+            cct, "foo", "mon", "m",
+    [&](const std::string & name) {
+        return nullptr;
     });
-  ASSERT_EQ(0, r);
-  ASSERT_EQ(1, cm.by_type.size());
-  ASSERT_EQ(1, cm.by_type["mon"].options.size());
+    ASSERT_EQ(0, r);
+    ASSERT_EQ(1, cm.by_type.size());
+    ASSERT_EQ(1, cm.by_type["mon"].options.size());
 
-  r = cm.add_option(
-    cct, "foo", "mon.a", "a",
-    [&](const std::string& name) {
-      return nullptr;
+    r = cm.add_option(
+            cct, "foo", "mon.a", "a",
+    [&](const std::string & name) {
+        return nullptr;
     });
-  ASSERT_EQ(0, r);
-  ASSERT_EQ(1, cm.by_id.size());
-  ASSERT_EQ(1, cm.by_id["mon.a"].options.size());
+    ASSERT_EQ(0, r);
+    ASSERT_EQ(1, cm.by_id.size());
+    ASSERT_EQ(1, cm.by_id["mon.a"].options.size());
 
-  EntityName n;
-  n.set(CEPH_ENTITY_TYPE_MON, "a");
-  auto c = cm.generate_entity_map(
-    n, {}, crush, "none", nullptr);
-  ASSERT_EQ(1, c.size());
-  ASSERT_EQ("a", c["foo"]);
+    EntityName n;
+    n.set(CEPH_ENTITY_TYPE_MON, "a");
+    auto c = cm.generate_entity_map(
+                 n, {}, crush, "none", nullptr);
+    ASSERT_EQ(1, c.size());
+    ASSERT_EQ("a", c["foo"]);
 
-  n.set(CEPH_ENTITY_TYPE_MON, "b");
-  c = cm.generate_entity_map(
-    n, {}, crush, "none", nullptr);
-  ASSERT_EQ(1, c.size());
-  ASSERT_EQ("m", c["foo"]);
+    n.set(CEPH_ENTITY_TYPE_MON, "b");
+    c = cm.generate_entity_map(
+            n, {}, crush, "none", nullptr);
+    ASSERT_EQ(1, c.size());
+    ASSERT_EQ("m", c["foo"]);
 
-  n.set(CEPH_ENTITY_TYPE_MDS, "c");
-  c = cm.generate_entity_map(
-    n, {}, crush, "none", nullptr);
-  ASSERT_EQ(1, c.size());
-  ASSERT_EQ("g", c["foo"]);
+    n.set(CEPH_ENTITY_TYPE_MDS, "c");
+    c = cm.generate_entity_map(
+            n, {}, crush, "none", nullptr);
+    ASSERT_EQ(1, c.size());
+    ASSERT_EQ("g", c["foo"]);
 }
 

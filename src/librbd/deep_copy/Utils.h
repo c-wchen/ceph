@@ -11,9 +11,12 @@
 
 #include <boost/optional.hpp>
 
-namespace librbd {
-namespace deep_copy {
-namespace util {
+namespace librbd
+{
+namespace deep_copy
+{
+namespace util
+{
 
 void compute_snap_map(CephContext* cct,
                       librados::snap_t src_snap_id_start,

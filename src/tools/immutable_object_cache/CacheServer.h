@@ -12,31 +12,34 @@
 #include "CacheSession.h"
 
 
-namespace ceph {
-namespace immutable_obj_cache {
+namespace ceph
+{
+namespace immutable_obj_cache
+{
 
 using boost::asio::local::stream_protocol;
 
-class CacheServer {
- public:
-  CacheServer(CephContext* cct, const std::string& file, ProcessMsg processmsg);
-  ~CacheServer();
+class CacheServer
+{
+public:
+    CacheServer(CephContext* cct, const std::string& file, ProcessMsg processmsg);
+    ~CacheServer();
 
-  int run();
-  int start_accept();
-  int stop();
+    int run();
+    int start_accept();
+    int stop();
 
- private:
-  void accept();
-  void handle_accept(CacheSessionPtr new_session,
-                     const boost::system::error_code& error);
+private:
+    void accept();
+    void handle_accept(CacheSessionPtr new_session,
+                       const boost::system::error_code& error);
 
- private:
-  CephContext* cct;
-  boost::asio::io_context m_io_service;
-  ProcessMsg m_server_process_msg;
-  stream_protocol::endpoint m_local_path;
-  stream_protocol::acceptor m_acceptor;
+private:
+    CephContext *cct;
+    boost::asio::io_context m_io_service;
+    ProcessMsg m_server_process_msg;
+    stream_protocol::endpoint m_local_path;
+    stream_protocol::acceptor m_acceptor;
 };
 
 }  // namespace immutable_obj_cache

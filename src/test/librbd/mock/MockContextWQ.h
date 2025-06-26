@@ -8,10 +8,11 @@
 
 struct Context;
 
-namespace librbd {
+namespace librbd
+{
 
 struct MockContextWQ {
-  MOCK_METHOD2(queue, void(Context *, int r));
+    MOCK_METHOD2(queue, void(Context *, int r));
 };
 
 } // namespace librbd

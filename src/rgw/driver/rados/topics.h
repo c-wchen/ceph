@@ -27,7 +27,8 @@ struct rgw_raw_obj;
 struct rgw_pubsub_topic;
 
 
-namespace rgwrados::topics {
+namespace rgwrados::topics
+{
 
 /// Add the given topic to the list.
 int add(const DoutPrefixProvider* dpp,
@@ -51,7 +52,7 @@ int list(const DoutPrefixProvider* dpp,
          const rgw_raw_obj& obj,
          std::string_view marker,
          uint32_t max_items,
-         std::vector<std::string>& names,
+         std::vector < std::string > & names,
          std::string& next_marker);
 
 } // namespace rgwrados::topics

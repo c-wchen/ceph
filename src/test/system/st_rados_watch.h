@@ -33,24 +33,24 @@ class CrossProcessSem;
 class StRadosWatch : public SysTestRunnable
 {
 public:
-  StRadosWatch(int argc, const char **argv,
-	       CrossProcessSem *setup_sem,
-	       CrossProcessSem *watch_sem,
-	       CrossProcessSem *notify_sem,
-	       int num_notifies,
-	       int watch_retcode,
-	       const std::string &pool_name,
-	       const std::string &obj_name);
-  ~StRadosWatch() override;
-  int run() override;
+    StRadosWatch(int argc, const char **argv,
+                 CrossProcessSem *setup_sem,
+                 CrossProcessSem *watch_sem,
+                 CrossProcessSem *notify_sem,
+                 int num_notifies,
+                 int watch_retcode,
+                 const std::string &pool_name,
+                 const std::string &obj_name);
+    ~StRadosWatch() override;
+    int run() override;
 private:
-  CrossProcessSem *m_setup_sem;
-  CrossProcessSem *m_watch_sem;
-  CrossProcessSem *m_notify_sem;
-  int m_num_notifies;
-  int m_watch_retcode;
-  std::string m_pool_name;
-  std::string m_obj_name;
+    CrossProcessSem *m_setup_sem;
+    CrossProcessSem *m_watch_sem;
+    CrossProcessSem *m_notify_sem;
+    int m_num_notifies;
+    int m_watch_retcode;
+    std::string m_pool_name;
+    std::string m_obj_name;
 };
 
 #endif
